@@ -1,8 +1,12 @@
+const { Console } = require("console");
 const { MessageEmbed, Message } = require("discord.js");
 const prefix = "§";
 
 var fs = require('fs');
 var inventory = JSON.parse(fs.readFileSync('Storage/inventory.json', 'utf8'));
+var cooldown = JSON.parse(fs.readFileSync('Storage/cooldown.json', 'utf8'));
+var pulllimit = JSON.parse(fs.readFileSync('Storage/pulllimit.json', 'utf8'));
+
 
 module.exports = {
     name: 'characters',
@@ -313,8 +317,37 @@ module.exports = {
         // Pull
         if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
+            let cooldownTime = 30000;
+            var pullLimitTime = 0;  
+            var timeLeft = 0; 
+            /*if (cooldown[message.author.id + message.guild.id] === null || cooldown[message.author.id + message.guild.id] === undefined || !cooldown[message.author.id + message.guild.id]) {
+                cooldown[message.author.id + message.guild.id] = 0;
+            };
+            */ //Do I need that?
+            // pull Limit Time + entry in json
+            if (cooldown[message.author.id + message.guild.id] === 4) {
+                
+                pullLimitTime = Date.now();
+                pulllimit[message.author.id + message.guild.id] = pullLimitTime;
+            }
+            fs.writeFile('Storage/pulllimit.json', JSON.stringify(pulllimit), (err) => {
+                if (err) console.error(err);
+            });
+            // timeLeft Rechner
+            if (cooldown[message.author.id + message.guild.id] >= 4) {
+                timeLeft = cooldownTime - (Date.now() - pulllimit[message.author.id + message.guild.id]);
+                console.log(cooldown[message.author.id + message.guild.id]);
+                console.log(timeLeft);
+            }
+            // json Reset
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 4) {
+                cooldown[message.author.id + message.guild.id] = 0;
+            }
+            // Pull Command
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] < 4) {
             if (!inventory[message.author.id + message.guild.id]) inventory[message.author.id + message.guild.id] = []
 
+            //Rarity Control
             const ranRar = Math.floor(Math.random() * 1000); // 0-999
 
             if (ranRar < 3) {
@@ -322,36 +355,55 @@ module.exports = {
                 const ssNum = Math.floor(Math.random() * Object.keys(ssClass).length);
                 ssClass[ssNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(ssClass[ssNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 24) {
                 const sClass = characters.filter((e) => e.rarity === "S");
                 const sNum = Math.floor(Math.random() * Object.keys(sClass).length);
                 sClass[sNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(sClass[sNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 108) {
                 const aClass = characters.filter((e) => e.rarity === "A");
                 const aNum = Math.floor(Math.random() * Object.keys(aClass).length);
                 aClass[aNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(aClass[aNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 246) {
                 const bClass = characters.filter((e) => e.rarity === "B");
                 const bNum = Math.floor(Math.random() * Object.keys(bClass).length);
                 bClass[bNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(bClass[bNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 509) {
                 const cClass = characters.filter((e) => e.rarity === "C");
                 const cNum = Math.floor(Math.random() * Object.keys(cClass).length);
                 cClass[cNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(cClass[cNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 1000) {
                 const dClass = characters.filter((e) => e.rarity === "D");
                 const dNum = Math.floor(Math.random() * Object.keys(dClass).length);
                 dClass[dNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(dClass[dNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             };
+        }
+
+            // cooldown message
+          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 4) {
+            timeLeftMinutes = Math.floor(timeLeft /  100000 * 2);
+            message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`)
+            cooldown[message.author.id + message.guild.id]++;
+        }
 
             fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => {
                 if (err) console.error(err);
             });
+
+            fs.writeFile('Storage/cooldown.json', JSON.stringify(cooldown), (err) => {
+                if (err) console.error(err);
+            });
+            
         };
 
         // Inventory

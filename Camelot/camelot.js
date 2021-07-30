@@ -22,7 +22,7 @@ const { MessageEmbed, MessageAttachment } = require('discord.js');
 
 client.on('ready', () => {
     console.log("Connected as " + client.user.tag)
-	client.user.setPresence({ activity: { name: 'Fate', type: 'WATCHING'}, status: 'online'})
+	client.user.setPresence({ activity: { name: 'SAO', type: 'WATCHING'}, status: 'online'})
 });
 
 client.on("message", async message => {
@@ -46,6 +46,7 @@ client.on("message", async message => {
   if (!message.guild) return;
   if (message.author.bot) return;
   if (!message.content.startsWith(prefix)) return;
+
 
 
   // user stats
