@@ -38,7 +38,7 @@ client.on("message", async message => {
   });
 
 
-  const prefix = "!";
+  const prefix = "§";
   const args = message.content.slice(prefix.length).trim().split(/ +/g);
   const cmd = args.shift().toLowerCase();
 
@@ -133,7 +133,7 @@ client.on("message", async message => {
   // Math
   // RAM Usage
   if (cmd === "ram" || cmd === "memory") {
-    const ramUsage = Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 10 (+ 64)) / 10;
+    const ramUsage = Math.round(process.memoryUsage().heapUsed / 1024 / 1024 * 10) / 10;
     const ramEmbed = new MessageEmbed()
     .setTitle('Total Memory Usage')
     .setColor(0xbbffff)

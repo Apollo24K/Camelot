@@ -1,5 +1,5 @@
 const { MessageEmbed, Message } = require("discord.js");
-const prefix = "!";
+const prefix = "§";
 
 var fs = require('fs');
 var inventory = JSON.parse(fs.readFileSync('Storage/inventory.json', 'utf8'));
@@ -237,7 +237,7 @@ module.exports = {
         ];
 
         // Profile
-        if (message.content.startsWith("!pr") || message.content.startsWith("!Pr") || message.content.startsWith("!pR") || message.content.startsWith("!PR")) {
+        if (message.content.startsWith("§pr") || message.content.startsWith("§Pr") || message.content.startsWith("§pR") || message.content.startsWith("§PR")) {
             
             if (!inventory[message.author.id + message.guild.id] || inventory[message.author.id + message.guild.id][0] === undefined) {
                 return message.channel.send("You don't have any characters");
@@ -311,7 +311,7 @@ module.exports = {
         };
 
         // Pull
-        if (message.content.startsWith("!p") || message.content.startsWith("!P")) {
+        if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
             if (!inventory[message.author.id + message.guild.id]) inventory[message.author.id + message.guild.id] = []
 
@@ -355,7 +355,7 @@ module.exports = {
         };
 
         // Inventory
-        if (message.content.startsWith("!inv") || message.content.startsWith("!Inv") || message.content.startsWith("!iNv") || message.content.startsWith("!inV") || message.content.startsWith("!INv") || message.content.startsWith("!InV") || message.content.startsWith("!iNV") || message.content.startsWith("!INV")) {
+        if (message.content.startsWith("§inv") || message.content.startsWith("§Inv") || message.content.startsWith("§iNv") || message.content.startsWith("§inV") || message.content.startsWith("§INv") || message.content.startsWith("§InV") || message.content.startsWith("§iNV") || message.content.startsWith("§INV")) {
             
             if (!inventory[message.author.id + message.guild.id]) {
                 return message.channel.send("You don't have any characters");
@@ -490,7 +490,7 @@ module.exports = {
         };
 
         // Stats
-        if (message.content.startsWith("!st") || message.content.startsWith("!St") || message.content.startsWith("!sT") || message.content.startsWith("!ST")) {
+        if (message.content.startsWith("§st") || message.content.startsWith("§St") || message.content.startsWith("§sT") || message.content.startsWith("§ST")) {
             const waifuT = characters.filter((e) => e.gender === "F");
             const husbT = characters.filter((e) => e.gender === "M");
             const charT = waifuT.length + husbT.length;
@@ -526,7 +526,7 @@ module.exports = {
         };
 
         // Charakter search
-        if (message.content.startsWith("!i ") || message.content.startsWith("!I ") || message.content === "!i" || message.content === "!I" || message.content.startsWith("!inf") || message.content.startsWith("!Inf") || message.content.startsWith("!iNf") || message.content.startsWith("!inF") || message.content.startsWith("!INf") || message.content.startsWith("!InF") || message.content.startsWith("!iNF") || message.content.startsWith("!INF")) {
+        if (message.content.startsWith("§i ") || message.content.startsWith("§I ") || message.content === "§i" || message.content === "§I" || message.content.startsWith("§inf") || message.content.startsWith("§Inf") || message.content.startsWith("§iNf") || message.content.startsWith("§inF") || message.content.startsWith("§INf") || message.content.startsWith("§InF") || message.content.startsWith("§iNF") || message.content.startsWith("§INF")) {
 
             if (!args[0]) {
                 return message.channel.send("Please provide a name");
@@ -568,7 +568,7 @@ module.exports = {
         };
 
         // Anime search
-        if (message.content.startsWith("!s ") || message.content.startsWith("!S ") || message.content === "!s" || message.content === "!S" || message.content.startsWith("!se") || message.content.startsWith("!Se") || message.content.startsWith("!sE") || message.content.startsWith("!SE")) {
+        if (message.content.startsWith("§s ") || message.content.startsWith("§S ") || message.content === "§s" || message.content === "§S" || message.content.startsWith("§se") || message.content.startsWith("§Se") || message.content.startsWith("§sE") || message.content.startsWith("§SE")) {
             
             if (!args[0]) {
                 return message.channel.send("Please provide a name");

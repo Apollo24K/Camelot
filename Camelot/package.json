@@ -12,6 +12,8 @@
   "author": "Apollo24",
   "license": "ISC",
   "dependencies": {
-    "mathjs": "^6.6.4"
+    "discord-buttons": "^4.0.0",
+    "fs": "^0.0.1-security",
+    "mathjs": "^9.4.4"
   }
 }
