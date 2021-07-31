@@ -434,7 +434,7 @@ module.exports = {
 
             // cooldown message
           if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 4) {
-            timeLeftMinutes = Math.floor(timeLeft /  100000 * 2);
+            timeLeftMinutes = Math.floor(timeLeft /  60000);
             message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`)
             cooldown[message.author.id + message.guild.id]++;
         }
