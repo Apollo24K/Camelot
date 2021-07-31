@@ -317,7 +317,8 @@ module.exports = {
         // Pull
         if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
-            let cooldownTime = 30000;
+            // 120 Minuten in ms
+            let cooldownTime = 72000000;
             var pullLimitTime = 0;  
             var timeLeft = 0; 
             /*if (cooldown[message.author.id + message.guild.id] === null || cooldown[message.author.id + message.guild.id] === undefined || !cooldown[message.author.id + message.guild.id]) {
@@ -325,7 +326,7 @@ module.exports = {
             };
             */ //Do I need that?
             // pull Limit Time + entry in json
-            if (cooldown[message.author.id + message.guild.id] === 4) {
+            if (cooldown[message.author.id + message.guild.id] === 3) {
                 
                 pullLimitTime = Date.now();
                 pulllimit[message.author.id + message.guild.id] = pullLimitTime;
@@ -334,13 +335,13 @@ module.exports = {
                 if (err) console.error(err);
             });
             // timeLeft Rechner
-            if (cooldown[message.author.id + message.guild.id] >= 4) {
+            if (cooldown[message.author.id + message.guild.id] >= 3) {
                 timeLeft = cooldownTime - (Date.now() - pulllimit[message.author.id + message.guild.id]);
                 console.log(cooldown[message.author.id + message.guild.id]);
                 console.log(timeLeft);
             }
             // json Reset
-            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 4) {
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 3) {
                 cooldown[message.author.id + message.guild.id] = 0;
             }
             // Pull Command
@@ -390,7 +391,7 @@ module.exports = {
         }
 
             // cooldown message
-          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 4) {
+          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 3) {
             timeLeftMinutes = Math.floor(timeLeft /  100000 * 2);
             message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`)
             cooldown[message.author.id + message.guild.id]++;
