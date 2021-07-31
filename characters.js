@@ -391,7 +391,7 @@ module.exports = {
                 console.log(timeLeft);
             }
             // json Reset
-            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 4) {
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] >= 4) {
                 cooldown[message.author.id + message.guild.id] = 0;
             }
             // Pull Command
