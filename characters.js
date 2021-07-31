@@ -6,6 +6,7 @@ var fs = require('fs');
 var inventory = JSON.parse(fs.readFileSync('Storage/inventory.json', 'utf8'));
 var cooldown = JSON.parse(fs.readFileSync('Storage/cooldown.json', 'utf8'));
 var pulllimit = JSON.parse(fs.readFileSync('Storage/pulllimit.json', 'utf8'));
+var favChar = JSON.parse(fs.readFileSync('Storage/favchar.json', 'utf8'));
 
 
 module.exports = {
@@ -231,7 +232,7 @@ module.exports = {
             new charInfo("Arima Saki", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/7KIKwWl.png", 118, "D"),
             new charInfo("Seto Hiroko", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/2pJStwH.png", 119, "C"),
             new charInfo("Aiza Nagi", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/QXVYRT3.png", 120, "C"),
-            new charInfo("Kashiwagi Nao", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/rugJY1e.png", 121, "C"),
+            new charInfo("Kashiwagi Nao", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/24nxkMt.png", 121, "C"),
             new charInfo("Miike Toshiya", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "M", "https://i.imgur.com/FFr2NYm.jpg", 122, "D"),
             new charInfo("Seto Koharu", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/d7rZiLs.png", 123, "D"),
             new charInfo("Ochiai Yuriko", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://i.imgur.com/SyexScK.jpg", 124, "D"),
@@ -240,16 +241,25 @@ module.exports = {
             new charInfo("Miyazono Yoshiyuki", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "M", "https://i.imgur.com/PMzvQiD.png", 127, "D"),
         ];
 
+        //console.log(!favChar[message.author.id + message.guild.id])
+
         // Profile
         if (message.content.startsWith("§pr") || message.content.startsWith("§Pr") || message.content.startsWith("§pR") || message.content.startsWith("§PR")) {
             
-            if (!inventory[message.author.id + message.guild.id] || inventory[message.author.id + message.guild.id][0] === undefined) {
-                return message.channel.send("You don't have any characters");
+            var user
+            const mentionUser =  message.guild.member(message.mentions.users.first());
+            if (mentionUser) user = mentionUser.user;
+            if (!mentionUser) user = message.author;
+
+                 
+            if (!inventory[user.id + message.guild.id] || inventory[user.id + message.guild.id][0] === undefined) {
+                if (mentionUser) return message.channel.send(`${user.username} doesn't have any characters`);
+                if (!mentionUser) return message.channel.send(`You don't have any characters`);
             };
             
             const inv = [];
-            for (i=0; i < inventory[message.author.id + message.guild.id].length; i++) {
-                inv.push(inventory[message.author.id + message.guild.id][i]);
+            for (i=0; i < inventory[user.id + message.guild.id].length; i++) {
+                inv.push(inventory[user.id + message.guild.id][i]);
             };
             const uniq =  inv.reduce(function(a,b) {
                 if (a.indexOf(b) < 0 ) a.push(b);
@@ -259,6 +269,7 @@ module.exports = {
             for (i=0; i < uniq.length; i++) {
                 chars.push(characters[uniq[i]]);
             };
+        
 
             const charsTotal = Object.keys(characters).length;
             const charsTotalF = characters.filter((e) => e.gender === "F").length;
@@ -300,11 +311,15 @@ module.exports = {
                 };
             };
             
+            // Thumbnail
+            var thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]].image
+            if (favChar[user.id + message.guild.id]) thumbnail = characters[favChar[user.id + message.guild.id]].image
+
             const Embed = new MessageEmbed()
             .setColor(0xbbffff)
-            .setAuthor(`${message.author.username}'s profile`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
+            .setAuthor(`${user.username}'s profile`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
             .setDescription("_ _\n**Collected**: " + collected + "/" + charsTotal + " (" + collectedF + "/" + charsTotalF + "<:female:870076411430436914> " + collectedM + "/" + charsTotalM + "<:male:870076394649047080>)\n**Completion**: " + collRatio + "% (" + collRatioF + "%<:female:870076411430436914> " + collRatioM + "%<:male:870076394649047080>)\n**Anime Completed**: " + aniCompleted + "/" + aTuniq.length)
-            .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+            .setThumbnail(thumbnail)
             .addFields(
                 { name: 'Rarity', value: "<:SSTier:869316489931546644> **Tier**: " + `${collSS}/${ssT}` + "\n<:ATier:869316558013464627> **Tier**: " + `${collA}/${aT}` + "\n<:CTier:869316602858991657> **Tier**: " + `${collC}/${cT}`, inline: true },
                 { name: '_ _', value: "<:STier:869316518675095552> **Tier**: " + `${collS}/${sT}` + "\n<:BTier:869316586803179571> **Tier**: " + `${collB}/${bT}` + "\n<:DTier:869316616071032843> **Tier**: " + `${collD}/${dT}`, inline: true },
@@ -314,11 +329,46 @@ module.exports = {
             return;
         };
 
+        // Favourite Character
+
+        if (message.content.startsWith("§fav") || message.content.startsWith("§Fav") || message.content.startsWith("§FAv") || message.content.startsWith("§FAV") || message.content.startsWith("§fAv") || message.content.startsWith("§fAV") || message.content.startsWith("§faV")) {
+
+            var favCharUpdate = false;
+            const inv = [];
+            if (!inventory[message.author.id + message.guild.id]) return message.channel.send("You don't have any characters");
+            for (i=0; i < inventory[message.author.id + message.guild.id].length; i++) inv.push(inventory[message.author.id + message.guild.id][i]);
+
+                const uniq =  inv.reduce(function(a,b) {
+                if (a.indexOf(b) < 0 ) a.push(b);
+                return a;
+                },[]);
+
+           for (i = 0; i < uniq.length; i++) 
+            {
+                const charArray = characters.filter((e) => e.id === uniq[i])
+                const favCharArray = charArray.filter((e) => e.name === args.join(" ")); 
+                if (favCharArray[0] !== undefined) {
+                    favChar[message.author.id + message.guild.id] = favCharArray[0].id;
+                    fs.writeFile('Storage/favchar.json', JSON.stringify(favChar), (err) => {
+                        if (err) console.error(err);
+                    });
+        
+                    const embed = new MessageEmbed()
+                    .setColor(0xbbffff)
+                    .setTitle(`${message.author.username}'s favourite character`)
+                    .setImage(characters[favChar[message.author.id + message.guild.id]].image)
+                    message.channel.send(embed);
+
+                    favCharUpdate = true;
+                }
+                if (favCharUpdate === false && i === uniq.length - 1) message.channel.send("Please provide a character in your inventory");
+            }
+        };
+
         // Pull
         if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
-            // 120 Minuten in ms
-            let cooldownTime = 72000000;
+            let cooldownTime = 30000;
             var pullLimitTime = 0;  
             var timeLeft = 0; 
             /*if (cooldown[message.author.id + message.guild.id] === null || cooldown[message.author.id + message.guild.id] === undefined || !cooldown[message.author.id + message.guild.id]) {
@@ -335,13 +385,13 @@ module.exports = {
                 if (err) console.error(err);
             });
             // timeLeft Rechner
-            if (cooldown[message.author.id + message.guild.id] >= 3) {
+            if (cooldown[message.author.id + message.guild.id] >= 4) {
                 timeLeft = cooldownTime - (Date.now() - pulllimit[message.author.id + message.guild.id]);
                 console.log(cooldown[message.author.id + message.guild.id]);
                 console.log(timeLeft);
             }
             // json Reset
-            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 3) {
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 4) {
                 cooldown[message.author.id + message.guild.id] = 0;
             }
             // Pull Command
@@ -388,10 +438,10 @@ module.exports = {
                 inventory[message.author.id + message.guild.id].push(dClass[dNum].id);
                 cooldown[message.author.id + message.guild.id]++;
             };
-        }
+        }        
 
             // cooldown message
-          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 3) {
+          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 4) {
             timeLeftMinutes = Math.floor(timeLeft /  100000 * 2);
             message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`)
             cooldown[message.author.id + message.guild.id]++;
@@ -407,16 +457,23 @@ module.exports = {
             
         };
 
+        // YOU bei mention
         // Inventory
         if (message.content.startsWith("§inv") || message.content.startsWith("§Inv") || message.content.startsWith("§iNv") || message.content.startsWith("§inV") || message.content.startsWith("§INv") || message.content.startsWith("§InV") || message.content.startsWith("§iNV") || message.content.startsWith("§INV")) {
             
-            if (!inventory[message.author.id + message.guild.id]) {
-                return message.channel.send("You don't have any characters");
+            var user
+            const mentionUser =  message.guild.member(message.mentions.users.first());
+            if (mentionUser) user = mentionUser.user;
+            if (!mentionUser) user = message.author;
+            
+            if (!inventory[user.id + message.guild.id]) {
+                if (mentionUser) return message.channel.send(`${user.username} don't have any characters`);
+                if (!mentionUser) return message.channel.send("You don't have any characters");
             };
 
             const inv = [];
-            for (i=0; i < inventory[message.author.id + message.guild.id].length; i++) {
-                inv.push(inventory[message.author.id + message.guild.id][i]);
+            for (i=0; i < inventory[user.id + message.guild.id].length; i++) {
+                inv.push(inventory[user.id + message.guild.id][i]);
             };
             
             const uniq =  inv.reduce(function(a,b) {
@@ -424,6 +481,9 @@ module.exports = {
                 return a;
             },[]);
 
+            // Thumbnail
+            var thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]].image
+            if (favChar[user.id + message.guild.id]) thumbnail = characters[favChar[user.id + message.guild.id]].image
             let chars = [];
             for (i=0; i < uniq.length; i++) {
                 chars.push(characters[uniq[i]].name);
@@ -440,6 +500,7 @@ module.exports = {
                 showChars = [];
                 showChars.push(chars[i]);
             };
+        
 
             let button1 = new disbut.MessageButton()
             .setLabel("previous")
@@ -451,11 +512,12 @@ module.exports = {
             .setID("button2")
             .setStyle("blurple");
 
+
             if (uniq.length < 16) {
-                const Embed = new MessageEmbed()
+                var Embed = new MessageEmbed()
                 .setColor(0xbbffff)
-                .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                .setAuthor(`${user.username}'s inventory`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+                .setThumbnail(thumbnail)
                 .setDescription(chars.join('\n'))
                 .setFooter(`Page 1/1`)
                 message.channel.send(Embed);
@@ -471,11 +533,11 @@ module.exports = {
                         showChars.push(chars[i]);
                     };
                 };
-                
-                const Embed = new MessageEmbed()
+
+                var Embed = new MessageEmbed()
                 .setColor(0xbbffff)
-                .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                .setAuthor(`${user.username}'s inventory`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+                .setThumbnail(thumbnail)
                 .setDescription(showChars.join('\n'))
                 .setFooter(`Page ${currPage}/${pagesTotal}`)
                 message.channel.send(Embed, { buttons: [button1, button2] });
@@ -498,16 +560,17 @@ module.exports = {
                                 showChars.push(chars[i]);
                             };
                         };
-                        const Embed2 = new MessageEmbed()
+                        var Embed2 = new MessageEmbed()
                         .setColor(0xbbffff)
-                        .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                        .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                        .setAuthor(`${user.username}'s inventory`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+                        .setThumbnail(thumbnail)
                         .setDescription(showChars.join('\n'))
                         .setFooter(`Page ${currPage}/${pagesTotal}`)
-
+                        
                         button.message.edit(Embed2);
                     };
                     button.reply.defer();
+                    
                 });
                 client.on('clickButton', async (button) => {
                     if (button.id === 'button1') {
@@ -529,19 +592,19 @@ module.exports = {
                         };
                         const Embed2 = new MessageEmbed()
                         .setColor(0xbbffff)
-                        .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                        .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                        .setAuthor(`${user.username}'s inventory`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+                        .setThumbnail(thumbnail)
                         .setDescription(showChars.join('\n'))
                         .setFooter(`Page ${currPage}/${pagesTotal}`)
 
                         button.message.edit(Embed2);
                     };
                     button.reply.defer();
+                    
                 });
-            };
-
+            }
         };
-
+    
         // Stats
         if (message.content.startsWith("§st") || message.content.startsWith("§St") || message.content.startsWith("§sT") || message.content.startsWith("§ST")) {
             const waifuT = characters.filter((e) => e.gender === "F");
@@ -634,4 +697,4 @@ module.exports = {
         };
 
     }
-};
+}
