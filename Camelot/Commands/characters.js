@@ -1,8 +1,13 @@
+const { Console } = require("console");
 const { MessageEmbed, Message } = require("discord.js");
-const prefix = "!";
+const prefix = "§";
 
 var fs = require('fs');
 var inventory = JSON.parse(fs.readFileSync('Storage/inventory.json', 'utf8'));
+var cooldown = JSON.parse(fs.readFileSync('Storage/cooldown.json', 'utf8'));
+var pulllimit = JSON.parse(fs.readFileSync('Storage/pulllimit.json', 'utf8'));
+var favChar = JSON.parse(fs.readFileSync('Storage/favchar.json', 'utf8'));
+
 
 module.exports = {
     name: 'characters',
@@ -236,8 +241,10 @@ module.exports = {
             new charInfo("Miyazono Yoshiyuki", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "M", "https://i.imgur.com/PMzvQiD.png", 127, "D"),
         ];
 
+        //console.log(!favChar[message.author.id + message.guild.id])
+
         // Profile
-        if (message.content.startsWith("!pr") || message.content.startsWith("!Pr") || message.content.startsWith("!pR") || message.content.startsWith("!PR")) {
+        if (message.content.startsWith("§pr") || message.content.startsWith("§Pr") || message.content.startsWith("§pR") || message.content.startsWith("§PR")) {
             
             if (!inventory[message.author.id + message.guild.id] || inventory[message.author.id + message.guild.id][0] === undefined) {
                 return message.channel.send("You don't have any characters");
@@ -296,11 +303,15 @@ module.exports = {
                 };
             };
             
+            // Thumbnail
+            var thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]].image
+            if (favChar[message.author.id + message.guild.id]) thumbnail = characters[favChar[message.author.id + message.guild.id]].image
+
             const Embed = new MessageEmbed()
             .setColor(0xbbffff)
             .setAuthor(`${message.author.username}'s profile`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
             .setDescription("_ _\n**Collected**: " + collected + "/" + charsTotal + " (" + collectedF + "/" + charsTotalF + "<:female:870076411430436914> " + collectedM + "/" + charsTotalM + "<:male:870076394649047080>)\n**Completion**: " + collRatio + "% (" + collRatioF + "%<:female:870076411430436914> " + collRatioM + "%<:male:870076394649047080>)\n**Anime Completed**: " + aniCompleted + "/" + aTuniq.length)
-            .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+            .setThumbnail(thumbnail)
             .addFields(
                 { name: 'Rarity', value: "<:SSTier:869316489931546644> **Tier**: " + `${collSS}/${ssT}` + "\n<:ATier:869316558013464627> **Tier**: " + `${collA}/${aT}` + "\n<:CTier:869316602858991657> **Tier**: " + `${collC}/${cT}`, inline: true },
                 { name: '_ _', value: "<:STier:869316518675095552> **Tier**: " + `${collS}/${sT}` + "\n<:BTier:869316586803179571> **Tier**: " + `${collB}/${bT}` + "\n<:DTier:869316616071032843> **Tier**: " + `${collD}/${dT}`, inline: true },
@@ -310,11 +321,76 @@ module.exports = {
             return;
         };
 
-        // Pull
-        if (message.content.startsWith("!p") || message.content.startsWith("!P")) {
+        // Favourite Character
 
+        if (message.content.startsWith("§fav")) {
+
+            var favCharUpdate = false;
+            const inv = [];
+            if (!inventory[message.author.id + message.guild.id]) return message.channel.send("You don't have any characters");
+            for (i=0; i < inventory[message.author.id + message.guild.id].length; i++) inv.push(inventory[message.author.id + message.guild.id][i]);
+
+                const uniq =  inv.reduce(function(a,b) {
+                if (a.indexOf(b) < 0 ) a.push(b);
+                return a;
+                },[]);
+
+           for (i = 0; i < uniq.length; i++) 
+            {
+                const charArray = characters.filter((e) => e.id === uniq[i])
+                const favCharArray = charArray.filter((e) => e.name === args.join(" ")); 
+                if (favCharArray[0] !== undefined) {
+                    favChar[message.author.id + message.guild.id] = favCharArray[0].id;
+                    fs.writeFile('Storage/favchar.json', JSON.stringify(favChar), (err) => {
+                        if (err) console.error(err);
+                    });
+        
+                    const embed = new MessageEmbed()
+                    .setColor("RANDOM")
+                    .setTitle(`${message.author.username}'s favourite character`)
+                    .setImage(characters[favChar[message.author.id + message.guild.id]].image)
+                    message.channel.send(embed);
+
+                    favCharUpdate = true;
+                }
+                if (favCharUpdate === false && i === uniq.length - 1) message.channel.send("Please provide a character in your inventory");
+            }
+        };
+
+        // Pull
+        if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
+
+            let cooldownTime = 30000;
+            var pullLimitTime = 0;  
+            var timeLeft = 0; 
+            /*if (cooldown[message.author.id + message.guild.id] === null || cooldown[message.author.id + message.guild.id] === undefined || !cooldown[message.author.id + message.guild.id]) {
+                cooldown[message.author.id + message.guild.id] = 0;
+            };
+            */ //Do I need that?
+            // pull Limit Time + entry in json
+            if (cooldown[message.author.id + message.guild.id] === 4) {
+                
+                pullLimitTime = Date.now();
+                pulllimit[message.author.id + message.guild.id] = pullLimitTime;
+            }
+            fs.writeFile('Storage/pulllimit.json', JSON.stringify(pulllimit), (err) => {
+                if (err) console.error(err);
+            });
+            // timeLeft Rechner
+            if (cooldown[message.author.id + message.guild.id] >= 4) {
+                timeLeft = cooldownTime - (Date.now() - pulllimit[message.author.id + message.guild.id]);
+                console.log(cooldown[message.author.id + message.guild.id]);
+                console.log(timeLeft);
+            }
+            // json Reset
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] > 4) {
+                cooldown[message.author.id + message.guild.id] = 0;
+            }
+            // Pull Command
+            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] < 4) {
             if (!inventory[message.author.id + message.guild.id]) inventory[message.author.id + message.guild.id] = []
 
+            //Rarity Control
             const ranRar = Math.floor(Math.random() * 1000); // 0-999
 
             if (ranRar < 3) {
@@ -322,40 +398,59 @@ module.exports = {
                 const ssNum = Math.floor(Math.random() * Object.keys(ssClass).length);
                 ssClass[ssNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(ssClass[ssNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 24) {
                 const sClass = characters.filter((e) => e.rarity === "S");
                 const sNum = Math.floor(Math.random() * Object.keys(sClass).length);
                 sClass[sNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(sClass[sNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 108) {
                 const aClass = characters.filter((e) => e.rarity === "A");
                 const aNum = Math.floor(Math.random() * Object.keys(aClass).length);
                 aClass[aNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(aClass[aNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 246) {
                 const bClass = characters.filter((e) => e.rarity === "B");
                 const bNum = Math.floor(Math.random() * Object.keys(bClass).length);
                 bClass[bNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(bClass[bNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 509) {
                 const cClass = characters.filter((e) => e.rarity === "C");
                 const cNum = Math.floor(Math.random() * Object.keys(cClass).length);
                 cClass[cNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(cClass[cNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             } else if (ranRar < 1000) {
                 const dClass = characters.filter((e) => e.rarity === "D");
                 const dNum = Math.floor(Math.random() * Object.keys(dClass).length);
                 dClass[dNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(dClass[dNum].id);
+                cooldown[message.author.id + message.guild.id]++;
             };
+        }
+
+            // cooldown message
+          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 4) {
+            timeLeftMinutes = Math.floor(timeLeft /  100000 * 2);
+            message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`)
+            cooldown[message.author.id + message.guild.id]++;
+        }
 
             fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => {
                 if (err) console.error(err);
             });
+
+            fs.writeFile('Storage/cooldown.json', JSON.stringify(cooldown), (err) => {
+                if (err) console.error(err);
+            });
+            
         };
 
         // Inventory
-        if (message.content.startsWith("!inv") || message.content.startsWith("!Inv") || message.content.startsWith("!iNv") || message.content.startsWith("!inV") || message.content.startsWith("!INv") || message.content.startsWith("!InV") || message.content.startsWith("!iNV") || message.content.startsWith("!INV")) {
+        if (message.content.startsWith("§inv") || message.content.startsWith("§Inv") || message.content.startsWith("§iNv") || message.content.startsWith("§inV") || message.content.startsWith("§INv") || message.content.startsWith("§InV") || message.content.startsWith("§iNV") || message.content.startsWith("§INV")) {
             
             if (!inventory[message.author.id + message.guild.id]) {
                 return message.channel.send("You don't have any characters");
@@ -371,6 +466,9 @@ module.exports = {
                 return a;
             },[]);
 
+            // Thumbnail
+            var thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]].image
+            if (favChar[message.author.id + message.guild.id]) thumbnail = characters[favChar[message.author.id + message.guild.id]].image
             let chars = [];
             for (i=0; i < uniq.length; i++) {
                 chars.push(characters[uniq[i]].name);
@@ -402,7 +500,7 @@ module.exports = {
                 const Embed = new MessageEmbed()
                 .setColor(0xbbffff)
                 .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                .setThumbnail(thumbnail)
                 .setDescription(chars.join('\n'))
                 .setFooter(`Page 1/1`)
                 message.channel.send(Embed);
@@ -422,7 +520,7 @@ module.exports = {
                 const Embed = new MessageEmbed()
                 .setColor(0xbbffff)
                 .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                .setThumbnail(thumbnail)
                 .setDescription(showChars.join('\n'))
                 .setFooter(`Page ${currPage}/${pagesTotal}`)
                 message.channel.send(Embed, { buttons: [button1, button2] });
@@ -448,13 +546,14 @@ module.exports = {
                         const Embed2 = new MessageEmbed()
                         .setColor(0xbbffff)
                         .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                        .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                        .setThumbnail(thumbnail)
                         .setDescription(showChars.join('\n'))
                         .setFooter(`Page ${currPage}/${pagesTotal}`)
 
                         button.message.edit(Embed2);
                     };
                     button.reply.defer();
+                    
                 });
                 client.on('clickButton', async (button) => {
                     if (button.id === 'button1') {
@@ -477,20 +576,21 @@ module.exports = {
                         const Embed2 = new MessageEmbed()
                         .setColor(0xbbffff)
                         .setAuthor(`${message.author.username}'s inventory`, message.author.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                        .setThumbnail(characters[uniq[Math.floor(Math.random() * uniq.length)]].image)
+                        .setThumbnail(thumbnail)
                         .setDescription(showChars.join('\n'))
                         .setFooter(`Page ${currPage}/${pagesTotal}`)
 
                         button.message.edit(Embed2);
                     };
                     button.reply.defer();
+                    
                 });
             };
 
         };
 
         // Stats
-        if (message.content.startsWith("!st") || message.content.startsWith("!St") || message.content.startsWith("!sT") || message.content.startsWith("!ST")) {
+        if (message.content.startsWith("§st") || message.content.startsWith("§St") || message.content.startsWith("§sT") || message.content.startsWith("§ST")) {
             const waifuT = characters.filter((e) => e.gender === "F");
             const husbT = characters.filter((e) => e.gender === "M");
             const charT = waifuT.length + husbT.length;
@@ -526,7 +626,7 @@ module.exports = {
         };
 
         // Charakter search
-        if (message.content.startsWith("!i ") || message.content.startsWith("!I ") || message.content === "!i" || message.content === "!I" || message.content.startsWith("!inf") || message.content.startsWith("!Inf") || message.content.startsWith("!iNf") || message.content.startsWith("!inF") || message.content.startsWith("!INf") || message.content.startsWith("!InF") || message.content.startsWith("!iNF") || message.content.startsWith("!INF")) {
+        if (message.content.startsWith("§i ") || message.content.startsWith("§I ") || message.content === "§i" || message.content === "§I" || message.content.startsWith("§inf") || message.content.startsWith("§Inf") || message.content.startsWith("§iNf") || message.content.startsWith("§inF") || message.content.startsWith("§INf") || message.content.startsWith("§InF") || message.content.startsWith("§iNF") || message.content.startsWith("§INF")) {
 
             if (!args[0]) {
                 return message.channel.send("Please provide a name");
@@ -568,7 +668,7 @@ module.exports = {
         };
 
         // Anime search
-        if (message.content.startsWith("!s ") || message.content.startsWith("!S ") || message.content === "!s" || message.content === "!S" || message.content.startsWith("!se") || message.content.startsWith("!Se") || message.content.startsWith("!sE") || message.content.startsWith("!SE")) {
+        if (message.content.startsWith("§s ") || message.content.startsWith("§S ") || message.content === "§s" || message.content === "§S" || message.content.startsWith("§se") || message.content.startsWith("§Se") || message.content.startsWith("§sE") || message.content.startsWith("§SE")) {
             
             if (!args[0]) {
                 return message.channel.send("Please provide a name");
