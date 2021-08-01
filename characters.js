@@ -470,13 +470,24 @@ module.exports = {
         // Pull
         if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
-            var timeMinutes = new Date().getMinutes();
+             var timeMinutes = new Date().getMinutes();
             var timeHours = new Date().getHours();
             var pullReady = false;
             if (!pulltime[message.author.id + message.guild.id]) pulltime[message.author.id + message.guild.id] = [];
             if (pullcount[message.author.id + message.guild.id] === null || pullcount[message.author.id + message.guild.id] === undefined || !(pullcount[message.author.id + message.guild.id]) && pullcount[message.author.id + message.guild.id] != 0) pullcount[message.author.id + message.guild.id] = -1;
-            fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
             if(pulltime[message.author.id + message.guild.id][0] > timeHours) pulltime[message.author.id + message.guild.id][0] = 0;
+
+            
+            if(pulltime[message.author.id + message.guild.id][0] < timeHours - 2) pullcount[message.author.id + message.guild.id] = -1
+            if(pulltime[message.author.id + message.guild.id][0] < timeHours - 2) pulltime[message.author.id + message.guild.id][0] = timeHours - 1
+
+            if (pullcount[message.author.id + message.guild.id] === 2) {
+                timeHours = new Date().getHours();
+                pulltime[message.author.id + message.guild.id][0] = timeHours;
+                pulltime[message.author.id + message.guild.id][1] = timeMinutes;
+            }
+            fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
+            fs.writeFile('Storage/pulltime.json', JSON.stringify(pulltime), (err) => { if (err) console.error(err) });
             
             if (pulltime[message.author.id + message.guild.id][0] === timeHours - 1 && (timeHours%2 === 0) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 1 || -1%2 === -1) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 0)) pullReady = true;
             if (pulltime[message.author.id + message.guild.id][0] === timeHours - 1 && (timeHours%2 === 0) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 1) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 0) && pullcount[message.author.id + message.guild.id] >= 3) pullReady = true;
@@ -528,16 +539,8 @@ module.exports = {
                 pullcount[message.author.id + message.guild.id]++;
             };
         }        
-
+            
             fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => { if (err) console.error(err) });
-            fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
-
-            if (pullcount[message.author.id + message.guild.id] === 2) {
-                timeHours = new Date().getHours();
-                pulltime[message.author.id + message.guild.id][0] = timeHours;
-                pulltime[message.author.id + message.guild.id][1] = timeMinutes;
-            }
-            fs.writeFile('Storage/pulltime.json', JSON.stringify(pulltime), (err) => { if (err) console.error(err) });
             
             // cooldown Message
         if (!pullReady || (pulltime[message.author.id + message.guild.id][0] === 0 && (timeHours === 0 || timeHours === 1)) || pullcount[message.author.id + message.guild.id] === -1) {
