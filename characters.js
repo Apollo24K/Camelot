@@ -3,10 +3,9 @@ const { MessageEmbed, Message } = require("discord.js");
 const prefix = "§";
 
 var fs = require('fs');
-const { to, e } = require("mathjs");
+const { to, e, combinations, cos, neutronMassDependencies } = require("mathjs");
 var inventory = JSON.parse(fs.readFileSync('Storage/inventory.json', 'utf8'));
 var pullcount = JSON.parse(fs.readFileSync('Storage/pullcount.json', 'utf8'));
-var pulltime = JSON.parse(fs.readFileSync('Storage/pulltime.json', 'utf8'));
 var favChar = JSON.parse(fs.readFileSync('Storage/favchar.json', 'utf8'));
 
 
@@ -343,6 +342,52 @@ module.exports = {
             new charInfo("Tougane Misako", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/VeMImBi.jpg", 226, "D"),
             new charInfo("Shindou Arata", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/dGwremD.png", 227, "B"),
             new charInfo("Ignatov Kei Mikhail", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/LjR1Dha.jpg", 228, "C"),
+            new charInfo("Vivy", ["Diva"], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "F", "https://i.imgur.com/bG5XdmT.png", 229, "A"), //A? weil es schöner aussieht?
+            new charInfo("Matsumoto", [], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "M", "https://imgur.com/9A3u1JT.png", 230, "A"), // ziemlich gutes Character Development und ähnlich viel Spielzeit wie Vivy (der Rest nur 1-3 Folgen max.)
+            new charInfo("Estella", [], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "F", "https://imgur.com/CagOcrE.png", 231, "B"),
+            new charInfo("Kakitani Yugo", [], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "M", "https://imgur.com/7X3MU6x.png", 232, "B"),
+            new charInfo("Ophelia", ["The Small Theater Fairy"], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "F", "https://imgur.com/jHxmNYv.png", 233, "C"),
+            new charInfo("Elizabeth", [], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "F", "https://imgur.com/6R3dM7c.png", 234, "B"),
+            new charInfo("Grace", [], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "F", "https://imgur.com/OdNq6aP.png", 235, "D"),
+            new charInfo("Dr. Matsumoto", ["Matsumoto Osamu"], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "M", "https://imgur.com/1GmozYl.png", 236, "B"),
+            new charInfo("Navi", [], "Vivy: Fluorite Eye's Song", ["Vivy -Fluorite Eye's Song-"], "", "https://imgur.com/qJ1yhWe.png", 237, "C"), // reine AI deswegen kein Gender
+            new charInfo("Rimuru Tempest", ["Satoru Mikami", "Slime-san"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://imgur.com/PwhLSnY.png", 238, "S"), // SS Tier?
+            new charInfo("Veldora Tempest", ["Storm Dragon Veldora", "Veldora"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/XxQxKMy.png", 239, "B"),
+            new charInfo("Milim Nava", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/dR0rRUJ.png", 240, "A"),
+            new charInfo("Diablo (TenSura)", ["Noir"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/oByOvuI.png", 241, "B"),
+            new charInfo("Shuna", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/HbPTSok.png", 242, "A"),
+            new charInfo("Shion", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://imgur.com/MbAoTYu.png", 243, "A"),
+            new charInfo("Benimaru", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/5aMNTJC.png", 244, "A"),
+            new charInfo("Souei", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/ymHcPHf.png", 245, "B"),
+            new charInfo("Hakurou", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/fjxtCp1.png", 246, "B"),
+            new charInfo("Gobuta", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/orAd8Rs.png", 247, "A"),
+            new charInfo("Aubert Chloe", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://imgur.com/ckVpOkn.png", 248, "C"), //Chloe Aubert?
+            new charInfo("Carrion", ["Beast King"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://imgur.com/YmkX4ze.png", 249, "C"),
+            new charInfo("Clayman", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/2DNWa7H.png", 250, "B"),
+            new charInfo("Gazel Dwargo", ["Heroic King"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/PcfMucQ.png", 251, "B"),
+            new charInfo("Ellen (TenSura)", ["Eren (TenSura)", "Elyune H. Grimwald"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/zTodkIe.png", 252, "C"),
+            new charInfo("Fuse", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/IdP3PxQ.png", 253, "C"),
+            new charInfo("Gabiru", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/BdQ3YDn.png", 254, "B"),
+            new charInfo("Geld", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/PfMP0Ou.png", 255, "D"),
+            new charInfo("Gido", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/vrJ9XZr.png", 256, "D"),
+            new charInfo("Izawa Shizue", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/W0l5RxF.png", 257, "B"), // absolut unsicher mit der Rarity
+            new charInfo("Kagurazaka Yuuki", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/SU6Z8dT.png", 258, "C"),
+            new charInfo("Kaijin", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/6VQCnWP.png", 259, "B"),
+            new charInfo("Kurobee", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/4ierWgO.png", 260, "D"),
+            new charInfo("Lamrys", ["Ramiris", "Fairy of the Labyrinth"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/8UNLwvT.png", 261, "C"),
+            new charInfo("Laplace", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://imgur.com/HeIAcz7.png", 262, "C"),
+            new charInfo("Ranga", ["Tempest Wolf", "Star Wolf"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/fkRaNnj.png", 263, "A"), 
+            new charInfo("Rigurd", ["Rigur"], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/6eYfoKN.png", 264, "B"),
+            new charInfo("Treyni", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://imgur.com/UO4PJBf.png", 265, "B"),
+            new charInfo("Vesta", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/Z6jpQCw.png", 266, "D"),
+            new charInfo("Albis", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://imgur.com/Nfrkyma.png", 267, "D"),
+            new charInfo("Grucius", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://imgur.com/YdaNnTt.png", 268, "C"),
+            new charInfo("Mjurran", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/a352v1q.jpg", 269, "C"),
+            new charInfo("Suphia", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://imgur.com/kUNHI9R.png", 270, "D"),
+            new charInfo("Taguchi Shougo", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/f9VyvCv.jpg", 271, "D"),
+            new charInfo("Mizutani Kirara", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "F", "https://i.imgur.com/aqw5Vqs.jpg", 272, "D"),
+            new charInfo("Tachibana Kyouya", [], "That Time I Got Reincarnated as a Slime", ["Tensei shitara Slime Datta Ken"], "M", "https://i.imgur.com/1ENFf7y.jpg", 273, "D"),
+
         ];
        
         // Profile
@@ -467,36 +512,19 @@ module.exports = {
             }
         };
 
+
         // Pull
+
         if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
             var timeMinutes = new Date().getMinutes();
             var timeHours = new Date().getHours();
-            var pullReady = false;
-            if (!pulltime[message.author.id + message.guild.id]) pulltime[message.author.id + message.guild.id] = [];
-            
-            if (pulltime[message.author.id + message.guild.id][0] === null || pulltime[message.author.id + message.guild.id][0] === undefined || !(pulltime[message.author.id + message.guild.id[0]]) && pulltime[message.author.id + message.guild.id][0] != 0) pulltime[message.author.id + message.guild.id][0] = timeHours - 2;
-            if (pullcount[message.author.id + message.guild.id] === null || pullcount[message.author.id + message.guild.id] === undefined || !(pullcount[message.author.id + message.guild.id]) && pullcount[message.author.id + message.guild.id] != 0) pullcount[message.author.id + message.guild.id] = -1;
-            if(pulltime[message.author.id + message.guild.id][0] > timeHours) pulltime[message.author.id + message.guild.id][0] = 0;
-            
-            if(pulltime[message.author.id + message.guild.id][0] < timeHours - 2 || pulltime[message.author.id + message.guild.id][0] > timeHours - 2) pullcount[message.author.id + message.guild.id] = -1
-            if(pulltime[message.author.id + message.guild.id][0] < timeHours - 2) pulltime[message.author.id + message.guild.id][0] = timeHours - 2
 
-            if (pullcount[message.author.id + message.guild.id] === 2) {
-                timeHours = new Date().getHours();
-                pulltime[message.author.id + message.guild.id][0] = timeHours;
-                pulltime[message.author.id + message.guild.id][1] = timeMinutes;
-            }
-            fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
-            fs.writeFile('Storage/pulltime.json', JSON.stringify(pulltime), (err) => { if (err) console.error(err) });
-            
-            if (pulltime[message.author.id + message.guild.id][0] === timeHours - 1 && (timeHours%2 === 0) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 1 || -1%2 === -1) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 0)) pullReady = true;
-            if (pulltime[message.author.id + message.guild.id][0] === timeHours - 1 && (timeHours%2 === 0) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 1) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 0) && pullcount[message.author.id + message.guild.id] >= 3) pullReady = true;
-            
-            if (pullReady && pullcount[message.author.id + message.guild.id] >= 3) pullcount[message.author.id + message.guild.id] = 0;
+            if (pullcount[message.author.id + message.guild.id] === 3) pullcount[message.author.id + message.guild.id] = 4;
+            if (pullcount[message.author.id + message.guild.id] === null || pullcount[message.author.id + message.guild.id] === undefined || (!(pullcount[message.author.id + message.guild.id]) && pullcount[message.author.id + message.guild.id] != 0)) pullcount[message.author.id + message.guild.id] = 0;
+
             // Pull Command
-            if (pullReady && pullcount[message.author.id + message.guild.id] < 3) {
-
+            if (pullcount[message.author.id + message.guild.id] < 3) {
             if (!inventory[message.author.id + message.guild.id]) inventory[message.author.id + message.guild.id] = []
 
             //Rarity Control
@@ -540,12 +568,14 @@ module.exports = {
                 pullcount[message.author.id + message.guild.id]++;
             };
         }        
-            
-            fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => { if (err) console.error(err) });
-            
+
+        fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
+        fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => { if (err) console.error(err) });
+
             // cooldown Message
-        if (!pullReady || (pulltime[message.author.id + message.guild.id][0] === 0 && (timeHours === 0 || timeHours === 1)) || pullcount[message.author.id + message.guild.id] === -1) {
-            timeLeftMinutes = 60 - pulltime[message.author.id + message.guild.id][1];
+        if (pullcount[message.author.id + message.guild.id] > 3) 
+        {
+            timeLeftMinutes = 60 - timeMinutes;
             if (!(timeHours%2 === 0)) message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`);
             if (timeHours%2 === 0) message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have 1 hour and ${timeLeftMinutes} minutes left to wait`);
         }
