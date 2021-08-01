@@ -1,11 +1,12 @@
-const { Console } = require("console");
+const { Console, time } = require("console");
 const { MessageEmbed, Message } = require("discord.js");
 const prefix = "§";
 
 var fs = require('fs');
+const { to, e } = require("mathjs");
 var inventory = JSON.parse(fs.readFileSync('Storage/inventory.json', 'utf8'));
-var cooldown = JSON.parse(fs.readFileSync('Storage/cooldown.json', 'utf8'));
-var pulllimit = JSON.parse(fs.readFileSync('Storage/pulllimit.json', 'utf8'));
+var pullcount = JSON.parse(fs.readFileSync('Storage/pullcount.json', 'utf8'));
+var pulltime = JSON.parse(fs.readFileSync('Storage/pulltime.json', 'utf8'));
 var favChar = JSON.parse(fs.readFileSync('Storage/favchar.json', 'utf8'));
 
 
@@ -31,6 +32,8 @@ module.exports = {
                 return "https://i.imgur.com/zPpfb14.jpeg";
             };
         };
+
+
 
         class charInfo {
             constructor(name, alias, anime, anialias, gender, image, id, rarity) {
@@ -239,10 +242,109 @@ module.exports = {
             new charInfo("Takayanagi Akira", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "M", "https://i.imgur.com/Oe9mAHj.jpg", 125, "D"),
             new charInfo("Miyazono Ryouko", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "F", "https://imgur.com/l22dDM8.png", 126, "D"),
             new charInfo("Miyazono Yoshiyuki", [], "Your Lie in April", ["Shigatsu wa Kimi no Uso", "YLiA"], "M", "https://i.imgur.com/PMzvQiD.png", 127, "D"),
+            new charInfo("Hanako Honda", [], "Asobi Asobase", [], "F", "https://i.imgur.com/9tEqv2e.png", 128, "A"),
+            new charInfo("Olivia", [], "Asobi Asobase", [], "F", "https://i.imgur.com/sYEz9dV.png", 129, "A"),
+            new charInfo("Kasumi Nomura", [], "Asobi Asobase", [], "F", "https://i.imgur.com/hdM5wJ2.png", 130, "A"),
+            new charInfo("Maeda", [], "Asobi Asobase", [], "M", "https://i.imgur.com/3chkI9X.png", 131, "D"),
+            new charInfo("Tsugumi Aozora", [], "Asobi Asobase", [], "F", "https://i.imgur.com/oowniNN.png", 132, "C"),
+            new charInfo("Tokuko Sharekoube", [], "Asobi Asobase", [], "F", "https://i.imgur.com/OYJc6c0.png", 133, "D"),
+            new charInfo("Akira Takizawa", ["Air King"], "Eden of The East", ["Higashi no Eden"], "M", "https://i.imgur.com/dCj636b.png", 134, "B"),
+            new charInfo("Saki Morimi", [], "Eden of The East", ["Higashi no Eden"], "F", "https://i.imgur.com/30TbbbV.png", 135, "B"),
+            new charInfo("Kuroha Shiratori", ["Diana (HnE)"], "Eden of The East", ["Higashi no Eden"], "F", "https://i.imgur.com/kWRNreN.png", 136, "D"),
+            new charInfo("Kazuomi Hirasawa", [], "Eden of The East", ["Higashi no Eden"], "M", "https://i.imgur.com/IHAz1vH.png", 137, "C"),
+            new charInfo("Yutaka Itazu", [], "Eden of The East", ["Higashi no Eden"], "M", "https://i.imgur.com/WrqyVBo.png", 138, "C"),
+            new charInfo("Mikuru Katsuhara", ["Micchon", "Mittan"], "Eden of The East", ["Higashi no Eden"], "F", "https://i.imgur.com/DRYnY7x.png", 139, "C"),
+            new charInfo("Satoshi Ohsugi", [], "Eden of The East", ["Higashi no Eden"], "M", "https://i.imgur.com/iSrdd5K.png", 140, "D"),
+            new charInfo("Yuusei Kondou", [], "Eden of The East", ["Higashi no Eden"], "M", "https://i.imgur.com/aCz13fn.png", 141, "D"),
+            new charInfo("Tachibana Kanade", ["Kanade Tachibana"], "Angel Beats!", ["Angel Beats"], "F", "https://imgur.com/tu4umn4.png", 142, "SS"),
+            new charInfo("Yuri Nakamura", ["Yurippe"], "Angel Beats!", ["Angel Beats"], "F", "https://imgur.com/wJ2IjyU.png", 143, "A"),
+            new charInfo("Yui (AB)", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/QyH97El.png", 144, "A"),
+            new charInfo("Yuzuru Otonashi", [], "Angel Beats!", ["Angel Beats"], "M", "https://i.imgur.com/At0ieyA.png", 145, "B"),
+            new charInfo("Hideki Hinata", [], "Angel Beats!", ["Angel Beats"], "M", "https://i.imgur.com/KOwG8xW.png", 146, "B"),
+            new charInfo("T.K.", ["TK"], "Angel Beats!", ["Angel Beats"], "M", "https://i.imgur.com/i5MGzc8.png", 147, "D"),
+            new charInfo("Masami Iwasawa", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/rZRcZD7.png", 148, "B"),
+            new charInfo("Ayato Naoi", [], "Angel Beats!", ["Angel Beats"], "M", "https://i.imgur.com/tAYHNF0.png", 149, "C"),
+            new charInfo("Shiina", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/ydmVgC7.png", 150, "C"),
+            new charInfo("Noda", [], "Angel Beats!", ["Angel Beats"], "M", "https://i.imgur.com/ewP4giE.png", 151, "D"),
+            new charInfo("Fujimaki", [], "Angel Beats!", ["Angel Beats"], "M", "https://i.imgur.com/X0YIBZr.png", 152, "D"),
+            new charInfo("Hisako", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/EeFoyiH.png", 153, "C"),
+            new charInfo("Hitomi", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/tWHKPwz.png", 154, "D"),
+            new charInfo("Miyuki Irie", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/EXYL5fS.png", 155, "C"),
+            new charInfo("Yusa", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/hewh7sE.png", 156, "C"),
+            new charInfo("Hatsune Otonashi", [], "Angel Beats!", ["Angel Beats"], "F", "https://i.imgur.com/ZSd0g5p.png", 157, "D"),
+            new charInfo("Zenitsu Agatsuma", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/P54BqWy.png", 158, "S"),
+            new charInfo("Tanjirou Kamado", ["Kamado Tanjirou", "Gonpachirou Kamaboko", "Kamaboko Gonpachirou", "Monjirou"], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/RqsLOue.png", 159, "S"),
+            new charInfo("Mitsuri Kanroji", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/HCvkjV3.png", 160, "A"),
+            new charInfo("Shinobu Kochou", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/pzCg8Pn.png", 161, "S"),
+            new charInfo("Kanao Tsuyuri", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/Ukj0VSo.png", 162, "A"),
+            new charInfo("Giyuu Tomioka", ["Tomioka Giyuu"], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/tb3UHR6.png", 163, "A"),
+            new charInfo("Inosuke Hashibira", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/lwTCWVV.png", 164, "A"),
+            new charInfo("Kyoujurou Rengoku", ["Rengoku Kyoujurou"], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/0r7isIJ.png", 165, "B"),
+            new charInfo("Kibutsuji Muzan", ["Muzan Kibutsuji"], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/HtDM46i.png", 166, "B"),
+            new charInfo("Muichirou Tokitou", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/MNvq0XX.png", 167, "C"),
+            new charInfo("Enmu", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/UuHSWtS.png", 168, "B"),
+            new charInfo("Aoi Kanzaki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/7Vrl6GH.png", 169, "C"),
+            new charInfo("Gotou", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/dSVQChd.png", 170, "D"),
+            new charInfo("Hisa", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/iKea5EB.png", 171, "D"),
+            new charInfo("Kozo Kanamori", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/CKaRrPu.png", 172, "D"),
+            new charInfo("Hotaru Haganezuka", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/YkVIfBc.png", 173, "C"),
+            new charInfo("Gyoumei Himejima", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/1f6Ikuo.png", 174, "C"),
+            new charInfo("Shigeru Kamado", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/vH4emSW.png", 175, "D"),
+            new charInfo("Rokuta Kamado", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/UFX3ISW.png", 176, "D"),
+            new charInfo("Takeo Kamado", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/U23adFJ.png", 177, "D"),
+            new charInfo("Hanako Kamado", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/GgK79YJ.png", 178, "D"),
+            new charInfo("Kie Kamado", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/xWFKqPe.png", 179, "D"),
+            new charInfo("Tanjuurou Kamado", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/uIi3njP.png", 180, "C"),
+            new charInfo("Kamanue", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/8fQK1V5.png", 181, "D"),
+            new charInfo("Kazumi", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/kgp0Cgq.png", 182, "D"),
+            new charInfo("Kiyoshi", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/p2YTsPS.png", 183, "D"),
+            new charInfo("Kanae Kochou", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/x4WBwVX.png", 184, "B"),
+            new charInfo("Jigorou Kuwajima", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/IuhUD1o.png", 185, "C"),
+            new charInfo("Makomo", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/VKpog7E.png", 186, "C"),
+            new charInfo("Murata", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/6NwWhzA.png", 187, "D"),
+            new charInfo("Sumi Nakahara", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/YU1rRRg.png", 188, "D"),
+            new charInfo("Rui", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/bWwcoY8.png", 189, "B"),
+            new charInfo("Sabito", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/mVzAKFB.png", 190, "B"),
+            new charInfo("Genya Shinazugawa", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/GznXxvV.png", 191, "C"),
+            new charInfo("Shoichi", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/C68Eo0G.png", 192, "D"),
+            new charInfo("Susamaru", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/2uuvtgW.png", 193, "D"),
+            new charInfo("Naho Takada", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/kSBodEb.png", 194, "D"),
+            new charInfo("Tamayo", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/BfrASpa.png", 195, "C"),
+            new charInfo("Kiyo Terauchi", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/rOHiAPZ.png", 196, "D"),
+            new charInfo("Kagaya Ubuyashiki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/cefiLm7.png", 197, "C"),
+            new charInfo("Kiriya Ubuyashiki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/szZXunC.png", 198, "C"),
+            new charInfo("Nichika Ubuyashiki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/K5WlWIb.png", 199, "C"),
+            new charInfo("Hinaki Ubuyashiki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/P29sjf4.png", 200, "C"),
+            new charInfo("Kanata Ubuyashiki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "F", "https://i.imgur.com/TZJQbMj.png", 201, "C"),
+            new charInfo("Sakonji Urokodaki", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/XmRUdTM.png", 202, "B"),
+            new charInfo("Tengen Uzui", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/1xiLGWM.png", 203, "C"),
+            new charInfo("Yahaba", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/Xy5tquR.png", 204, "D"),
+            new charInfo("Yushirou", [], "Demon Slayer", ["Kimetsu no Yaiba"], "M", "https://i.imgur.com/hYbg0YY.png", 205, "C"),
+            new charInfo("Tsunemori Akane", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://imgur.com/pXXmN8N.png", 206, "A"),
+            new charInfo("Kogami Shinya", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/5zXd1Sf.png", 207, "S"),
+            new charInfo("Makishima Shogo", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://imgur.com/KvDyljr.png", 208, "S"),
+            new charInfo("Ginoza Nobuchika", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://imgur.com/mO0sVao.png", 209, "A"),
+            new charInfo("Kunidzuka Yayoi", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/kyIqsJC.png", 210, "A"),
+            new charInfo("Kagari Shuusei", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/zaejTyA.png", 211, "B"),
+            new charInfo("Masaoka Tomomi", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/yDCcguq.png", 212, "B"),
+            new charInfo("Karanomori Shion", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/RlJd7TX.png", 213, "B"),
+            new charInfo("Saiga Jouji", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/DC2WgbE.png", 214, "B"),
+            new charInfo("Aoyanagai Risa", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://imgur.com/BX10k9n.png", 215, "C"),
+            new charInfo("Funahara Yuki", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/Lz0p9uJ.jpg", 216, "D"),
+            new charInfo("Kasei Joushuu", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/alGkWkk.png", 217, "B"),
+            new charInfo("Tougane Sakuya", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://imgur.com/xrwtsFp.png", 218, "C"),
+            new charInfo("Shimotsuki Mika", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/4qvTIJ9.png", 219, "C"),
+            new charInfo("Kamui  Kirito", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://imgur.com/Dw8ahfi.png", 220, "C"),
+            new charInfo("Aikawa Tsubaki", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/2V8tIUJ.jpg", 221, "D"),
+            new charInfo("Hasuike Kaede", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/JBaKD9R.jpg", 222, "D"),
+            new charInfo("Suzuki Moe", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/oHdYKzf.jpg", 223, "D"),
+            new charInfo("Hinakawa Shou", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/5Ptm39A.png", 224, "C"),
+            new charInfo("Sugou Teppei", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/DsdKgAf.jpg", 225, "D"),
+            new charInfo("Tougane Misako", [], "Psycho Pass", ["Psycho-Pass"], "F", "https://i.imgur.com/VeMImBi.jpg", 226, "D"),
+            new charInfo("Shindou Arata", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/dGwremD.png", 227, "B"),
+            new charInfo("Ignatov Kei Mikhail", [], "Psycho Pass", ["Psycho-Pass"], "M", "https://i.imgur.com/LjR1Dha.jpg", 228, "C"),
         ];
-
-        //console.log(!favChar[message.author.id + message.guild.id])
-
+       
         // Profile
         if (message.content.startsWith("§pr") || message.content.startsWith("§Pr") || message.content.startsWith("§pR") || message.content.startsWith("§PR")) {
             
@@ -368,34 +470,21 @@ module.exports = {
         // Pull
         if (message.content.startsWith("§p") || message.content.startsWith("§P")) {
 
-            let cooldownTime = 30000;
-            var pullLimitTime = 0;  
-            var timeLeft = 0; 
-            /*if (cooldown[message.author.id + message.guild.id] === null || cooldown[message.author.id + message.guild.id] === undefined || !cooldown[message.author.id + message.guild.id]) {
-                cooldown[message.author.id + message.guild.id] = 0;
-            };
-            */ //Do I need that?
-            // pull Limit Time + entry in json
-            if (cooldown[message.author.id + message.guild.id] === 3) {
-                
-                pullLimitTime = Date.now();
-                pulllimit[message.author.id + message.guild.id] = pullLimitTime;
-            }
-            fs.writeFile('Storage/pulllimit.json', JSON.stringify(pulllimit), (err) => {
-                if (err) console.error(err);
-            });
-            // timeLeft Rechner
-            if (cooldown[message.author.id + message.guild.id] >= 4) {
-                timeLeft = cooldownTime - (Date.now() - pulllimit[message.author.id + message.guild.id]);
-                console.log(cooldown[message.author.id + message.guild.id]);
-                console.log(timeLeft);
-            }
-            // json Reset
-            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] >= 4) {
-                cooldown[message.author.id + message.guild.id] = 0;
-            }
+            var timeMinutes = new Date().getMinutes();
+            var timeHours = new Date().getHours();
+            var pullReady = false;
+            if (!pulltime[message.author.id + message.guild.id]) pulltime[message.author.id + message.guild.id] = [];
+            if (pullcount[message.author.id + message.guild.id] === null || pullcount[message.author.id + message.guild.id] === undefined || !(pullcount[message.author.id + message.guild.id]) && pullcount[message.author.id + message.guild.id] != 0) pullcount[message.author.id + message.guild.id] = -1;
+            fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
+            if(pulltime[message.author.id + message.guild.id][0] > timeHours) pulltime[message.author.id + message.guild.id][0] = 0;
+            
+            if (pulltime[message.author.id + message.guild.id][0] === timeHours - 1 && (timeHours%2 === 0) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 1 || -1%2 === -1) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 0)) pullReady = true;
+            if (pulltime[message.author.id + message.guild.id][0] === timeHours - 1 && (timeHours%2 === 0) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 1) || pulltime[message.author.id + message.guild.id][0] === timeHours - 2 && (timeHours%2 === 0) && pullcount[message.author.id + message.guild.id] >= 3) pullReady = true;
+            
+            if (pullReady && pullcount[message.author.id + message.guild.id] >= 3) pullcount[message.author.id + message.guild.id] = 0;
             // Pull Command
-            if (timeLeft <= 0 && cooldown[message.author.id + message.guild.id] < 4) {
+            if (pullReady && pullcount[message.author.id + message.guild.id] < 3) {
+
             if (!inventory[message.author.id + message.guild.id]) inventory[message.author.id + message.guild.id] = []
 
             //Rarity Control
@@ -406,58 +495,58 @@ module.exports = {
                 const ssNum = Math.floor(Math.random() * Object.keys(ssClass).length);
                 ssClass[ssNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(ssClass[ssNum].id);
-                cooldown[message.author.id + message.guild.id]++;
+                pullcount[message.author.id + message.guild.id]++;
             } else if (ranRar < 24) {
                 const sClass = characters.filter((e) => e.rarity === "S");
                 const sNum = Math.floor(Math.random() * Object.keys(sClass).length);
                 sClass[sNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(sClass[sNum].id);
-                cooldown[message.author.id + message.guild.id]++;
+                pullcount[message.author.id + message.guild.id]++;
             } else if (ranRar < 108) {
                 const aClass = characters.filter((e) => e.rarity === "A");
                 const aNum = Math.floor(Math.random() * Object.keys(aClass).length);
                 aClass[aNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(aClass[aNum].id);
-                cooldown[message.author.id + message.guild.id]++;
+                pullcount[message.author.id + message.guild.id]++;
             } else if (ranRar < 246) {
                 const bClass = characters.filter((e) => e.rarity === "B");
                 const bNum = Math.floor(Math.random() * Object.keys(bClass).length);
                 bClass[bNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(bClass[bNum].id);
-                cooldown[message.author.id + message.guild.id]++;
+                pullcount[message.author.id + message.guild.id]++;
             } else if (ranRar < 509) {
                 const cClass = characters.filter((e) => e.rarity === "C");
                 const cNum = Math.floor(Math.random() * Object.keys(cClass).length);
                 cClass[cNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(cClass[cNum].id);
-                cooldown[message.author.id + message.guild.id]++;
+                pullcount[message.author.id + message.guild.id]++;
             } else if (ranRar < 1000) {
                 const dClass = characters.filter((e) => e.rarity === "D");
                 const dNum = Math.floor(Math.random() * Object.keys(dClass).length);
                 dClass[dNum].displayMy();
                 inventory[message.author.id + message.guild.id].push(dClass[dNum].id);
-                cooldown[message.author.id + message.guild.id]++;
+                pullcount[message.author.id + message.guild.id]++;
             };
         }        
 
-            // cooldown message
-          if (timeLeft > 0 && cooldown[message.author.id + message.guild.id] >= 4) {
-            timeLeftMinutes = Math.floor(timeLeft /  100000 * 2);
-            message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`)
-            cooldown[message.author.id + message.guild.id]++;
-        }
+            fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => { if (err) console.error(err) });
+            fs.writeFile('Storage/pullcount.json', JSON.stringify(pullcount), (err) => { if (err) console.error(err) });
 
-            fs.writeFile('Storage/inventory.json', JSON.stringify(inventory), (err) => {
-                if (err) console.error(err);
-            });
-
-            fs.writeFile('Storage/cooldown.json', JSON.stringify(cooldown), (err) => {
-                if (err) console.error(err);
-            });
+            if (pullcount[message.author.id + message.guild.id] === 2) {
+                timeHours = new Date().getHours();
+                pulltime[message.author.id + message.guild.id][0] = timeHours;
+                pulltime[message.author.id + message.guild.id][1] = timeMinutes;
+            }
+            fs.writeFile('Storage/pulltime.json', JSON.stringify(pulltime), (err) => { if (err) console.error(err) });
             
+            // cooldown Message
+        if (!pullReady || (pulltime[message.author.id + message.guild.id][0] === 0 && (timeHours === 0 || timeHours === 1)) || pullcount[message.author.id + message.guild.id] === -1) {
+            timeLeftMinutes = 60 - pulltime[message.author.id + message.guild.id][1];
+            if (!(timeHours%2 === 0)) message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have ${timeLeftMinutes} minutes left to wait`);
+            if (timeHours%2 === 0) message.channel.send(`The Pull System is limited to 3 uses per 2 hours \n You have 1 hour and ${timeLeftMinutes} minutes left to wait`);
+        }
         };
 
-        // YOU bei mention
         // Inventory
         if (message.content.startsWith("§inv") || message.content.startsWith("§Inv") || message.content.startsWith("§iNv") || message.content.startsWith("§inV") || message.content.startsWith("§INv") || message.content.startsWith("§InV") || message.content.startsWith("§iNV") || message.content.startsWith("§INV")) {
             
