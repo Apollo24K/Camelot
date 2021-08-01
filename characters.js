@@ -474,6 +474,8 @@ module.exports = {
             var timeHours = new Date().getHours();
             var pullReady = false;
             if (!pulltime[message.author.id + message.guild.id]) pulltime[message.author.id + message.guild.id] = [];
+            
+            if (pulltime[message.author.id + message.guild.id][0] === null || pulltime[message.author.id + message.guild.id][0] === undefined || !(pulltime[message.author.id + message.guild.id[0]]) && pulltime[message.author.id + message.guild.id][0] != 0) pulltime[message.author.id + message.guild.id][0] = timeHours - 2;
             if (pullcount[message.author.id + message.guild.id] === null || pullcount[message.author.id + message.guild.id] === undefined || !(pullcount[message.author.id + message.guild.id]) && pullcount[message.author.id + message.guild.id] != 0) pullcount[message.author.id + message.guild.id] = -1;
             if(pulltime[message.author.id + message.guild.id][0] > timeHours) pulltime[message.author.id + message.guild.id][0] = 0;
             
