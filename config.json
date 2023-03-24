@@ -1,0 +1,15 @@
+{
+	"prefix": "/",
+	"token": "your_bot_token",
+	"patreon": {
+		"token": "your_patreon_token",
+		"campaignId": "your_patreon_campaign_id"
+	},
+	"topgg": {
+		"token": "your_topgg_token",
+		"auth": "your_topgg_auth"
+	},
+	"donatebot": {
+		"key": "your_donatebot_key"
+	}
+}
