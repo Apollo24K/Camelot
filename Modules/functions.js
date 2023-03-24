@@ -1,0 +1,797 @@
+/* eslint-disable no-unused-vars */
+const { MessageEmbed } = require("discord.js");
+const imagesize = require('imagesize');
+const https = require("https");
+const { characters } = require("./chars.js");
+const { achievements } = require("./achievements.js");
+const { dailies } = require("../Modules/dailyQuests.js");
+const { classes } = require("./classes.js");
+const buffInfo = require("./buffs.js");
+const { db, query } = require("../db_handler.js");
+
+const statsOp = {"base": {
+        "hp":{"238":-20,"405":-6,"460":54,"2016":-10,"2079":12,"2360":12,"2597":24,"3150":6,"3307":-20,"3408":-20,"3409":12,"3886":20,"4769":-20,"5032":-9,"5341":20,"5344":16,"5819":-20,"8188":30,"8189":40,"8521":12,"8582":20,"9606":-6,"10520":37,"10521":-14,"10523":30,"10530":40,"12000":16,"12121":10,"12424":1},
+        "atk":{"238":-11,"405":12,"460":-12,"2079":9,"2016":-2,"3150":4,"3409":14,"3886":4,"4250":10,"4712":-8,"5341":6,"5344":10,"6082":-13,"8187":7,"8189":10,"8521":5,"9606":3,"10517":10,"10520":20,"10521":-4,"10523":5,"10530":8,"12000":10,"12121":7,"12393":-5,"12424":15},
+        "def":{"405":1,"460":1,"2360":9,"2597":5,"3150":8,"3409":6,"9606":19,"10517":5,"12121":5,"12393":10,"12424":10},
+        "expertise":{"405":"sword","8521":"dagger","12407":"lance","12450":"sword"},
+    },
+};
+
+module.exports.getDimensions = (url) => {
+    return new Promise((resolve, rejects) => {
+        let request = https.get(url, (response) => {
+            imagesize(response, (err, result) => {
+                request.destroy();
+                resolve(result);
+            });
+        });
+    });
+};
+
+function strCode(id) {
+    let inp = characters[id].anime + characters[id].gender + characters[id].name;
+    let hash = 0;
+    if (inp.length < 2) return 111;
+    for (let bi = 0; bi < inp.length; bi++) {
+        let char = inp.charCodeAt(bi);
+        hash = ((hash<<5)-hash)+char;
+        hash = hash & hash; // Convert to 32bit integer
+    };
+    if (hash < 0) return -hash;
+    return hash;
+};
+
+function baseHP(id) {
+    let hash = strCode(id) % 10;
+    switch (characters[id].rarity) {
+        case "SS" : hash = Math.floor(380 + (60*(hash/9))); break; // 380-440
+        case "S" : hash = Math.floor(300 + (60*(hash/9))); break;  // 300-360
+        case "A" : hash = Math.floor(240 + (60*(hash/9))); break;  // 240-300
+        case "B" : hash = Math.floor(200 + (40*(hash/9))); break;  // 200-240
+        case "C" : hash = Math.floor(160 + (40*(hash/9))); break;   // 160-200
+        case "D" : hash = Math.floor(120 + (40*(hash/9))); break;   // 120-160
+        default : hash = 1; break;
+    };
+    if (statsOp.base.hp[id]) hash += statsOp.base.hp[id];
+    return hash;
+};
+
+function baseATK(id) {
+    let hash = Math.round(((strCode(id)%100)/10)+0.01);
+    switch (characters[id].rarity) {
+        case "SS" : hash = Math.floor(60 + (2*hash)); break;  // 60-80
+        case "S" : hash = Math.floor(48 + (1.2*hash)); break; // 48-60
+        case "A" : hash = Math.floor(36 + (1.2*hash)); break; // 36-48
+        case "B" : hash = Math.floor(30 + (1*hash)); break;   // 30-40
+        case "C" : hash = Math.floor(24 + (1*hash)); break;   // 24-34
+        case "D" : hash = Math.floor(20 + (1*hash)); break;   // 20-30
+        default : hash = 1; break;
+    };
+    if (statsOp.base.atk[id]) hash += statsOp.base.atk[id];
+    return hash;
+};
+
+function baseDEF(id) {
+    let hash = strCode(id);
+    let sum = 0;
+    while (hash) {
+        sum += hash % 10;
+        hash = Math.floor(hash / 10);
+    };
+    hash = sum%10;
+
+    switch (characters[id].rarity) {
+        case "SS" : hash = Math.floor(48 + (22/(hash+1))); break; // 50-70
+        case "S" : hash = Math.floor(39 + (11/(hash+1))); break;  // 40-50
+        case "A" : hash = Math.floor(32 + (8/(hash+1))); break;  // 32-40
+        case "B" : hash = Math.floor(28 + (6/(hash+1))); break;  // 28-34
+        case "C" : hash = Math.floor(24 + (6/(hash+1))); break;  // 24-30
+        case "D" : hash = Math.floor(20 + (6/(hash+1))); break;  // 20-26
+        default : hash = 1; break;
+    };
+    if (statsOp.base.def[id]) hash += statsOp.base.def[id];
+    return hash;
+};
+
+function baseEP(id, hp=baseHP(id), atk=baseATK(id), def=baseDEF(id), md=atk, mr=def, cd=1.25, cr=0.18, dodge=0.1) {
+    return Math.floor(((1/(1-dodge))*(hp/Math.pow(0.99895,Math.max(def, mr))) / (200/(Math.max(atk, md)*(1+(cat1(cr)*(cd-1))))))*100) / 100;
+};
+
+function baseExpertise(id) {
+    if (statsOp.base.expertise[id]) return statsOp.base.expertise[id];
+    let hash = Math.floor(((strCode(id)%60)/10)+0.01);
+
+    switch (hash) {
+        case 0: return "sword";
+        case 1: return "staff";
+        case 2: return "axe";
+        case 3: return "bow";
+        case 4: return "lance";
+        case 5: return "dagger";
+        default: return "sword";
+    };
+};
+
+module.exports.baseHP = id => baseHP(id);
+module.exports.baseATK = id => baseATK(id);
+module.exports.baseDEF = id => baseDEF(id);
+module.exports.baseEP = id => baseEP(id);
+module.exports.baseExpertise = id => baseExpertise(id);
+
+
+function cat1(num) {
+    if (num > 1) return 1;
+    if (num < 0) return 0;
+    return num;
+};
+
+module.exports.cat1 = id => cat1(id);
+
+const lvlupStats = {
+    "SS": {"hp": {"base": 5, "add": 1}},
+    "S": {"hp": {"base": 3.9, "add": 0.6}},
+    "A": {"hp": {"base": 3.3, "add": 0.4}},
+    "B": {"hp": {"base": 2.8, "add": 0.4}},
+    "C": {"hp": {"base": 2.4, "add": 0.4}},
+    "D": {"hp": {"base": 2, "add": 0.4}},
+};
+
+module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false) => {
+
+    let dStats = {
+        "name": characters[id].name,
+        "hp": baseHP(id),
+        "maxhp": 1,
+        "bhp": 1,
+        "atk": baseATK(id),
+        "batk": 1,
+        "def": baseDEF(id),
+        "bdef": 1,
+        "ep": 0,
+        "md": 0,
+        "bmd": 1,
+        "mr": 0,
+        "bmr": 0,
+        "cr": 0.18,
+        "cd": 1.25,
+        "td": 0,
+        "br": 0.2,
+        "agility": 80,
+        "dodge": 0.1,
+        "mana": 80,
+        "mg": 15,
+        "sm": 20,
+        "shield": 0,
+        "rev": 0,
+        "revhp": 0.5,
+        "revivedTotal": 0,
+        "maxRevivals": 0,
+        "dodgeHeal": 0,
+        "critmana": 0,
+        "usedBlockRound": -1,
+        "blockBuffDef": 0,
+        "blockBurn": 0,
+        "damageTaken": 0,
+        "executeHP": 0,
+        "ignoreShield": false,
+        "delayedBuffs": [],
+        "replaceButton": {},
+        "lvl": 1,
+        "ref": 0,
+        "class": -1,
+        "clvl": 1,
+        "expertise": baseExpertise(id),
+        "weapon": -1,
+        "weaponinfo": {},
+        "weaponicon": {"sword": "<:sword_empty:1034502134474997790>", "staff": "<:staff_empty:1034502136622485524>", "axe": "<:axe_empty:1034567413527760917>", "bow": "<:bow_empty:1034567415209664672>", "lance": "<:lance_empty:1034567416522473502>", "dagger": "<:dagger_empty:1034567417982091434>"}[baseExpertise(id)],
+    };
+
+    if (inv.level[id]) dStats.lvl = inv.level[id];
+    dStats.lvl += lu;
+    if (inv.ref[id]) dStats.ref = inv.ref[id];
+    if (refine) dStats.ref++;
+    if (dStats.ref > 5) dStats.ref = 5;
+
+    let clsStats;
+    if (id in inv.class) {
+        dStats.class = inv.class[id];
+        dStats.clvl = getClassLvl(dStats.class, classLevel);
+        clsStats = classes[dStats.class].stats;
+        Object.keys(clsStats).forEach((s) => dStats[s] = dStats[s] * clsStats[s][0] + clsStats[s][1]);
+        ["mana", "mg", "sm"].forEach((stat) => dStats[stat] = Math.floor(dStats[stat]));
+    };
+    
+    // Add level bonus
+    dStats.hp = Math.floor((1+0.25*(dStats.ref-1))*dStats.hp) + Math.round((lvlupStats[characters[id].rarity].hp.base+(lvlupStats[characters[id].rarity].hp.add*((strCode(id)%10)/9)))*(dStats.lvl-1));
+    switch (characters[id].rarity) {
+        case "SS" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((2.4+(0.35*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((1.25+(0.25*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "S" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.9+(0.3*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((1+(0.2*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "A" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.6+(0.25*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.8+(0.15*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "B" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.2+(0.3*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.6+(0.2*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "C" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((0.9+(0.35*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.5+(0.15*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "D" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((0.75+(0.25*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.4+(0.5*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        default : dStats.hp = 1; dStats.atk = 1; dStats.def = 1; break;
+    };
+    dStats.bhp = dStats.hp, dStats.td = dStats.atk, dStats.md = dStats.atk, dStats.batk = dStats.atk, dStats.bmd = dStats.atk, dStats.mr = dStats.def, dStats.bdef = dStats.def, dStats.bmr = dStats.def;
+
+    if (dStats.class !== -1) {
+        ["td","md","mr"].forEach((s) => dStats[s] = Math.floor(dStats[s] * clsStats[s][0] + clsStats[s][1]));
+        let scale;
+        switch (classes[dStats.class].tier) {
+            case 1: scale = {"hp": 1.25, "atk": 0.75, "md": 0.75, "def": 0.3, "mr": 0.3, "mana": 0.15}; break;
+            case 2: scale = {"hp": 1.6, "atk": 1, "md": 1, "def": 0.5, "mr": 0.5, "mana": 0.2}; break;
+            case 3: scale = {"hp": 2.25, "atk": 1.1, "md": 1.1, "def": 0.6, "mr": 0.6, "mana": 0.25}; break;
+            case 4: scale = {"hp": 3, "atk": 1.4, "md": 1.4, "def": 0.8, "mr": 0.8, "mana": 0.32}; break;
+            default: break;
+        };
+        ["hp", "atk", "md", "mana"].forEach((s) => dStats[s] += Math.floor((scale[s] * clsStats[s][0]) * (dStats.clvl-1)));
+        if (Math.floor((scale["def"] * clsStats["def"][0]) * (dStats.clvl-1)) >= classes[dStats.class].tier*100) dStats["def"] += classes[dStats.class].tier*100;
+        else dStats["def"] += Math.floor((scale["def"] * clsStats["def"][0]) * (dStats.clvl-1));
+        if (Math.floor((scale["mr"] * clsStats["mr"][0]) * (dStats.clvl-1)) >= classes[dStats.class].tier*100) dStats["mr"] += classes[dStats.class].tier*100;
+        else dStats["mr"] += Math.floor((scale["mr"] * clsStats["mr"][0]) * (dStats.clvl-1));
+    };
+
+    // Item Stats
+    if (inv?.equipment?.[id]) {
+        const { items } = require("./items.js");
+        let weapon, shield, helmet, cuirass, gloves, boots;
+
+        // Add weapon stats if available
+        if (inv.equipment[id].weapon) {
+            weapon = await query(`SELECT itemid, level, ascension, purity FROM weapons WHERE uniqueid = '${inv.equipment[id].weapon}'`);
+            weapon = {id: weapon[0].itemid, level: getItemLevel(weapon[0].level), ascension: weapon[0].ascension, purity: weapon[0].purity};
+            const item = items[weapon.id];
+            
+            // Set item to dStats
+            dStats.weapon = weapon.id;
+            dStats.weaponicon = item.emoji;
+            dStats.weaponinfo = {...weapon};
+            
+            // Primary Stat
+            if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(item.primaryStat)) {
+                if (item.primaryStat.endsWith("%")) {
+                    const statBuff = dStats["b"+item.primaryStat.slice(0, -1)] * (1 + Math.floor(item.psmin + ((item.psmax - item.psmin)/150)*((weapon.level-1)+(weapon.ascension*3)))/100)
+                    dStats[item.primaryStat.slice(0, -1)] += Math.floor(statBuff * (item.type === dStats.expertise ? 1.2 : 1));
+                } else {
+                    const statBuff = (item.psmin + ((item.psmax - item.psmin)*((weapon.level-1)+(weapon.ascension*3))/150))/100;
+                    dStats[item.primaryStat] += Math.floor(statBuff * (item.type === dStats.expertise ? 1.2 : 1));
+                };
+            } else {
+                const statBuff = Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((weapon.level-1)+(weapon.ascension*3)));
+                dStats[item.primaryStat] += Math.floor(statBuff * (item.type === dStats.expertise ? 1.2 : 1));
+            };
+
+            // Secondary Stat
+            if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(item.secondaryStat)) {
+                if (item.secondaryStat.endsWith("%")) {
+                    dStats[item.secondaryStat.slice(0, -1)] += Math.floor(dStats["b"+item.secondaryStat.slice(0, -1)] * (Math.floor(parseInt(item.ssmin.slice(0,-1)) + ((parseInt(item.ssmax.slice(0,-1)) - parseInt(item.ssmin.slice(0,-1)))/10)*weapon.ascension)/100));
+                } else {
+                    dStats[item.secondaryStat] += (parseInt(item.ssmin.slice(0,-1)) + ((parseInt(item.ssmax.slice(0,-1)) - parseInt(item.ssmin.slice(0,-1)))*weapon.ascension/10))/100;
+                };
+            } else {
+                dStats[item.secondaryStat] += Math.floor(parseInt(item.ssmin) + ((parseInt(item.ssmax) - parseInt(item.ssmin))/10)*weapon.ascension);
+            };
+        };
+
+        // Add shield stats if available
+        if (inv.equipment[id].shield && inv.premium > 3) {
+            shield = await query(`SELECT itemid, level, ascension, purity FROM weapons WHERE uniqueid = '${inv.equipment[id].shield}'`);
+            shield = {id: shield[0].itemid, level: getItemLevel(shield[0].level), ascension: shield[0].ascension, purity: shield[0].purity};
+            const item = items[shield.id];
+            
+            // Set item to dStats
+            dStats.shield = shield.id;
+            dStats.shieldicon = item.emoji;
+            dStats.shieldinfo = {...shield};
+            
+            // Primary Stat
+            if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(item.primaryStat)) {
+                if (item.primaryStat.endsWith("%")) {
+                    dStats[item.primaryStat.slice(0, -1)] += dStats["b"+item.primaryStat.slice(0, -1)] * (1 + Math.floor(item.psmin + ((item.psmax - item.psmin)/150)*((shield.level-1)+(shield.ascension*3)))/100);
+                } else {
+                    dStats[item.primaryStat] += (item.psmin + ((item.psmax - item.psmin)*((shield.level-1)+(shield.ascension*3))/150))/100;
+                };
+            } else {
+                dStats[item.primaryStat] += Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((shield.level-1)+(shield.ascension*3)));
+            };
+
+            // Secondary Stat
+            if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(item.secondaryStat)) {
+                if (item.secondaryStat.endsWith("%")) {
+                    dStats[item.secondaryStat.slice(0, -1)] += Math.floor(dStats["b"+item.secondaryStat.slice(0, -1)] * (Math.floor(parseInt(item.ssmin.slice(0,-1)) + ((parseInt(item.ssmax.slice(0,-1)) - parseInt(item.ssmin.slice(0,-1)))/10)*shield.ascension)/100));
+                } else {
+                    dStats[item.secondaryStat] += (parseInt(item.ssmin.slice(0,-1)) + ((parseInt(item.ssmax.slice(0,-1)) - parseInt(item.ssmin.slice(0,-1)))*shield.ascension/10))/100;
+                };
+            } else {
+                dStats[item.secondaryStat] += Math.floor(parseInt(item.ssmin) + ((parseInt(item.ssmax) - parseInt(item.ssmin))/10)*shield.ascension);
+            };
+        };
+
+        // Add helmet stat if available
+        if (inv.equipment[id].helmet) {
+            helmet = await query(`SELECT itemid, level, ascension, purity, substats FROM weapons WHERE uniqueid = '${inv.equipment[id].helmet}'`);
+            helmet = {id: helmet[0].itemid, level: getItemLevel(helmet[0].level), ascension: helmet[0].ascension, purity: helmet[0].purity, substats: JSON.parse(helmet[0].substats)};
+            const item = items[helmet.id];
+            
+            // Set item to dStats
+            dStats.helmet = helmet.id;
+            dStats.helmeticon = item.emoji;
+            dStats.helmetinfo = {...helmet};
+
+            dStats[item.primaryStat] += Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((helmet.level-1)+(helmet.ascension*3)));
+        };
+
+        // Add cuirass stat if available
+        if (inv.equipment[id].cuirass) {
+            cuirass = await query(`SELECT itemid, level, ascension, purity, substats FROM weapons WHERE uniqueid = '${inv.equipment[id].cuirass}'`);
+            cuirass = {id: cuirass[0].itemid, level: getItemLevel(cuirass[0].level), ascension: cuirass[0].ascension, purity: cuirass[0].purity, substats: JSON.parse(cuirass[0].substats)};
+            const item = items[cuirass.id];
+            
+            // Set item to dStats
+            dStats.cuirass = cuirass.id;
+            dStats.cuirassicon = item.emoji;
+            dStats.cuirassinfo = {...cuirass};
+
+            dStats[item.primaryStat] += Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((cuirass.level-1)+(cuirass.ascension*3)));
+        };
+
+        // Add gloves stat if available
+        if (inv.equipment[id].gloves) {
+            gloves = await query(`SELECT itemid, level, ascension, purity, substats FROM weapons WHERE uniqueid = '${inv.equipment[id].gloves}'`);
+            gloves = {id: gloves[0].itemid, level: getItemLevel(gloves[0].level), ascension: gloves[0].ascension, purity: gloves[0].purity, substats: JSON.parse(gloves[0].substats)};
+            const item = items[gloves.id];
+            
+            // Set item to dStats
+            dStats.gloves = gloves.id;
+            dStats.glovesicon = item.emoji;
+            dStats.glovesinfo = {...gloves};
+
+            dStats[item.primaryStat] += Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((gloves.level-1)+(gloves.ascension*3)));
+        };
+
+        // Add gloves stat if available
+        if (inv.equipment[id].boots) {
+            boots = await query(`SELECT itemid, level, ascension, purity, substats FROM weapons WHERE uniqueid = '${inv.equipment[id].boots}'`);
+            boots = {id: boots[0].itemid, level: getItemLevel(boots[0].level), ascension: boots[0].ascension, purity: boots[0].purity, substats: JSON.parse(boots[0].substats)};
+            const item = items[boots.id];
+            
+            // Set item to dStats
+            dStats.boots = boots.id;
+            dStats.bootsicon = item.emoji;
+            dStats.bootsinfo = {...boots};
+
+            dStats[item.primaryStat] += Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((boots.level-1)+(boots.ascension*3)));
+        };
+
+    };
+    
+    dStats.maxhp = dStats.hp;
+
+    // old formula: HP, ATK, DEF=0.99818
+    // dStats.ep = Math.floor(((dStats.hp/Math.pow(0.99818,dStats.def)) / (200/dStats.atk))*100) / 100;
+    
+    // new formula: HP, ATK, DEF=0.99895, CR, CD, dodge
+    dStats.ep = baseEP(id, dStats.hp, dStats.atk, dStats.def, dStats.md, dStats.mr, dStats.cd, dStats.cr, dStats.dodge);
+
+    return dStats;
+};
+
+module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags={}) => {
+    const options = { // true = enabled, false = disabled
+        block: target.usedBlockRound === matchStats.round,
+        dodge: true,
+        overwriteDamage: 0,
+        atkMultiplier: 1,
+        magicDamage: false,
+        mdChance: Math.random(),
+        trueDamage: false,
+        tdPercentage: 0,
+        canCrit: true,
+        critChance: Math.random(),
+        critBuff: 0,
+        critMultiplier: 1,
+        defMultiplier: 1,
+        overwriteNotice: false,
+        ignoreShield: attacker.ignoreShield,
+        shieldBreak: false,
+        combodmg: false,
+        selfdmg: false,
+        selfheal: true,
+        selfhealChance: Math.random(),
+        critbleed: matchStats.critbleed,
+        execute: matchStats.allowExecution,
+    };
+    Object.keys(flags).forEach((e) => options[e] = flags[e]);
+
+    // Try blocking or dodging
+    if (options.block && Math.random() < target.br) {
+        notice.push(`\n🛡️ **${target.name}** blocked the attack!`);
+        matchStats.attackStreak = 0;
+        matchStats.blockStreak++;
+        if (target.blockBuffDef) targetBuff.def.push(new buffInfo("+", target.blockBuffDef, 6)), targetBuff.mr.push(new buffInfo("+", target.blockBuffDef, 6));
+        if (target.blockBurn) attacker.hp -= Math.floor(attacker.hp > 2*target.hp ? 2*target.hp*target.blockBurn : attacker.hp*target.blockBurn);
+        // Daily Quests
+        console.log(matchStats.blockStreak);
+        if (matchStats.blockStreak === 2) dailies[6].update(matchStats.interaction); // Impenetrable Defense
+        return 0;
+    }; /* Reset BlockStreak */ matchStats.blockStreak = 0;
+    if (options.dodge && Math.random() < target.dodge) {
+        notice.push(`\n💨 **${target.name}** dodged the attack!`);
+        matchStats.attackStreak = 0;
+        if (target.dodgeHeal) {
+            target.hp += Math.floor(target.maxhp*target.dodgeHeal);
+            if (target.hp > target.maxhp) target.hp = target.maxhp;
+        };
+
+        // Achievements
+        achievements[13].check(matchStats.interaction, matchStats.interaction.user, matchStats.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, matchStats.blockStreak); // Invincible
+        return 0;
+    };
+    
+    let damage;
+    // If it executes
+    if (options.execute && (target.hp/target.maxhp) < attacker.executeHP) {
+        notice.push(`\n⚔️ **${target.name}** was executed!`);
+        damage = target.hp;
+        target.hp = 0;
+        return damage;
+    };
+
+    // Otherwise calculate damage
+    if (options.magicDamage && options.mdChance < attacker.mdChance) {
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * (options.combodmg ? (1+(matchStats.attackStreak*matchStats.combodmg)) : 1)) * Math.pow(0.99895, options.defMultiplier*target.mr)) * (1 - (0.2*Math.random())) * ((options.canCrit && options.critChance < (attacker.cr+options.critBuff)) ? (options.critMultiplier*attacker.cd) : 1));
+    } else {
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * (options.combodmg ? (1+(matchStats.attackStreak*matchStats.combodmg)) : 1)) * Math.pow(0.99895, options.defMultiplier*target.def)) * (1 - (0.2*Math.random())) * ((options.canCrit && options.critChance < (attacker.cr+options.critBuff)) ? (options.critMultiplier*attacker.cd) : 1));
+    };
+
+    // Apply damage to target
+    if (!options.ignoreShield && target.shield > 0) {
+        target.shield = Math.floor(target.shield - damage);
+        if (target.shield < 0 || options.shieldBreak) target.shield = 0;
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${(options.canCrit && options.critChance < attacker.cr) ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+    } else {
+        target.hp = Math.floor(target.hp - damage);
+        if (target.hp < 0) target.hp = 0;
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${(options.canCrit && options.critChance < attacker.cr) ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+    };
+    
+    // Passives
+    target.damageTaken += damage;
+    if (options.combodmg) matchStats.attackStreak++;
+    if (options.critbleed && options.canCrit && options.critChance < attacker.cr) targetBuff.hp.push(new buffInfo("+", -target.maxhp*0.03, matchStats.critbleedlast));
+    if (attacker.critmana && options.canCrit && options.critChance < attacker.cr) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
+    if (options.selfheal && matchStats.selfhealChance > options.selfhealChance) attacker.hp += Math.floor(damage * matchStats.selfheal);
+    if (options.selfdmg) attacker.hp -= Math.floor(damage * matchStats.selfdmg);
+    if (attacker.hp < 0) attacker.hp = 0;
+
+    return damage;
+};
+
+module.exports.generateSubstats = (n=4) => {
+    const stats = ["hp", "atk", "atk%", "def", "md", "md%", "mr", "shield", "cr", "cd", "dodge", "br", "mana", "mg", "sm"];
+    return stats.sort((a, b) => 0.5 - Math.random()).slice(0, n).reduce((acc,curr)=> (acc[curr]=1,acc),{});
+};
+
+module.exports.getAscensionMaterial = (id, ascItems) => {
+    id += "camelot";
+    let hash = 3;
+    for (let i=0; i < id.length; i++) {
+        hash = ((hash << 5) - hash) + id.charCodeAt(i);
+        hash |= 0;
+    };
+    return ascItems[Math.abs(hash) % ascItems.length];
+};
+
+module.exports.showPage = (currPage, pagesTotal, left, push, elements=15) => {
+    const arr = [];
+    if (currPage < pagesTotal) {
+        for (let i=(currPage-1)*elements; i < currPage * elements; i++) {
+            arr.push(push[i]);
+        };
+    } else {
+        for (let i=(currPage-1)*elements; i < (currPage * elements) - (left ? elements-left : 0); i++) {
+            arr.push(push[i]);
+        };
+    };
+    return arr;
+};
+
+module.exports.search = (name, inv, interaction, silent=false) => {
+    name = name.toLowerCase();
+    if (name === "last" || name === "latest") name = inv[inv.length-1].toString();
+
+    if (!isNaN(name)) {
+        if (name < 0) return silent ? false : interaction.reply("The ID can't be negative.");
+        if (name >= characters.length) return silent ? false : interaction.reply(`The ID must be smaller than ${characters.length}`);
+        if (!(name[0] === "0" && name.length > 1)) return characters[parseInt(name)];
+    };
+    
+    let cArgs = name.split(" ");
+
+    let fastCheck = characters.filter((e) => e.name.toLowerCase() === cArgs.join(' ') || e.alias.some((a) => a.toLowerCase() === cArgs.join(' ')));
+    if (fastCheck[0] !== undefined) return fastCheck[0];
+
+    let fArray = characters.filter((e) => e.name.toLowerCase()[0] === cArgs[0][0] || e.alias.some((a) => a.toLowerCase()[0] === cArgs[0][0]));
+
+    let letter = 0;
+    for (let word=0; word < cArgs.length; word++) {
+        let { length:wl } = cArgs[word];
+
+        while (wl--) {
+            fArray = fArray.filter((e) => e.name.toLowerCase().split(" ")[word] === undefined ? false :  e.name.toLowerCase().split(" ")[word][letter] === cArgs[word][letter] || e.alias.some((a) => a.toLowerCase()[letter] === cArgs[word][letter]));
+            letter++;
+        };
+
+        if (fArray.length < 2) break;
+        letter = 0;
+    };
+          
+    if (fArray.length === 0) return silent ? false : interaction.reply("No match found");
+    if (fArray.length > 1) return silent ? false : interaction.reply(fArray.length + " matches found");
+    return fArray[0];
+};
+
+function rarity(rar) {
+    switch (rar) {
+        case "SS" : return "https://i.ibb.co/GdhDTj1/n3qj4i2.png";
+        case "S" : return "https://i.ibb.co/8KZJLLZ/aSXEB8J.png";
+        case "A" : return "https://i.ibb.co/8MTkwzf/MNNSMIP.png";
+        case "B" : return "https://i.ibb.co/WswjB19/HHgIQsZ.png";
+        case "C" : return "https://i.ibb.co/ZHRxzFB/bF4Uwq7.png";
+        case "D" : return "https://i.ibb.co/Yp26KZG/qHR5lBz.png";
+        default : return "https://i.ibb.co/j6Vhb5B/zPpfb14.jpg";
+    };
+};
+
+module.exports.rarity = (rar) => {
+    return rarity(rar);
+};
+
+function getRefinement(cid) {
+    if (cid > 4) return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552>";
+    switch (cid) {
+        case 4: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement_hollow:869132322857947136>";
+        case 3: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136>";
+        case 2: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136>";
+        case 1: return "<:refinement:869132309125824552><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136>";
+        default: return "<:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136>";
+    };
+};
+
+module.exports.getRefinement = (cid) => {
+    return getRefinement(cid);
+};
+
+function splitTitle(title) {
+    if (title.length <= 30) return title;
+    let add = ""
+    while (title.length > 30) {
+      let spaceIndex = title.slice(0,30).lastIndexOf(" ");
+      add += title.slice(0,30).replace(/\s+\S*$/, "\n")
+      title = title.slice(spaceIndex+1)
+    };
+    add += title;
+    return add;
+};
+
+module.exports.splitTitle = title => splitTitle(title);
+
+module.exports.displayPull = (user, thisChar, pCount, dupes, pullsMade, lastVote, refinement) => {
+    let animeL = splitTitle(thisChar.anime);
+    refinement = getRefinement(refinement);
+
+    // Check if vote
+    let canVote = "";
+    if ((pCount-pullsMade) === 0) {
+        canVote = ` | You can /vote`;
+        if (lastVote && ((new Date().getTime() - lastVote) < 12*60*60*1000)) canVote = "";
+    };
+
+    const Embed = new MessageEmbed()
+    .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[thisChar.rarity])
+    .setImage(thisChar.image)
+    .setThumbnail(rarity(thisChar.rarity))
+    .setDescription(`**${thisChar.name}**\n${animeL}\n\n**Ref**. ${refinement}`)
+    .setFooter(`You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of this\n${pCount-pullsMade} ${pCount-pullsMade == 1 ? "pull" : "pulls"} left${canVote}`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+    return { embeds: [Embed] };
+};
+
+module.exports.searchAnime = (name, inv, interaction) => {
+    name = name.toLowerCase();
+    if (name === "last" || name === "latest") name = characters[inv[inv.length -1]].anime.toLowerCase();
+
+    // Full Title Search
+    let fastCheck = characters.filter((e) => e.anime.toLowerCase() === name.toLowerCase() || e.anialias.some((a) => a.toLowerCase() === name.toLowerCase()));
+    if (fastCheck[0] !== undefined) return fastCheck;
+
+    // Acronym Search
+    fastCheck = characters.filter((e) => e.anime.toLowerCase().match(/\b(\w)/g).join('') === name.toLowerCase() || e.anialias.some((a => a.toLowerCase().match(/\b(\w)/g).join('') === name.toLowerCase())));
+    for (let i=0; i < fastCheck.length; i++) {
+        if (fastCheck[i].anime != fastCheck[0].anime) fastCheck = [];
+    };
+    if (fastCheck[0] !== undefined) return fastCheck;
+
+    // Filter
+    const fArray = characters.filter((e) => e.anime.toLowerCase().startsWith(name) || e.anialias.some((a) => a.toLowerCase().startsWith(name)) );
+
+    if (fArray.length === 0) return interaction.reply("No match found");
+    if ([...new Set(fArray.map((e) => e.anime))].length > 1) return interaction.reply(`${[...new Set(fArray.map((e) => e.anime))].length} matches found:\n> ‧ ${[...new Set(fArray.sort((a, b) => b.anime.toLowerCase().startsWith(name) - a.anime.toLowerCase().startsWith(name)).map((e) => e.anime.toLowerCase().startsWith(name) ? e.anime : e.anime  + " (alias: "+ e.anialias.find((a) => a.toLowerCase().startsWith(name)) + ")" ))].slice(0, 8).join('\n> ‧ ')}${[...new Set(fArray.map((e) => e.anime))].length > 8 ? `\n+ ${[...new Set(fArray.map((e) => e.anime))].length-8} more` : ""}`);
+    return fArray;
+};
+
+module.exports.userLevel = (xpr) => {
+    let level = 0;
+    for (let i=1; xpr >= 0; i++) {
+        xpr -= Math.floor(5*Math.log(i)**4 + 30);
+        level++;
+    };
+    return level;
+};
+
+function getClassLvl(cls, classLvl) {
+    let clvl = 1, classxp = 0;
+    if (cls in classLvl) classxp = classLvl[cls];
+    for (let ci=1; classxp > 0; ci++) {
+        clvl++;
+        classxp -= ci*50;
+    };
+    if (classxp < 0) clvl--;
+
+    switch (classes[cls].tier) {
+        case 1: if (clvl > 50) clvl = 50; break;
+        case 2: if (clvl > 70) clvl = 70; break;
+        default: break;
+    };
+
+    return clvl;
+};
+module.exports.getClassLvl = (cls, classLvl) => getClassLvl(cls, classLvl);
+
+function classLevelToXP(clvl) {
+    if (clvl < 1) return 0;
+    let classxp = 0;
+    while (--clvl) classxp += clvl*50;
+    return classxp;
+};
+module.exports.classLevelToXP = (clvl) => classLevelToXP(clvl);
+
+function getItemLevel(xp) {
+    let level = 1;
+    while (xp >= 0) {
+      xp -= Math.floor(20 * Math.pow(level, 1.290349));
+      level++;
+    };
+    return level-1;
+};
+module.exports.getItemLevel = (xp) => getItemLevel(xp);
+
+module.exports.searchClass = (name, interaction, silent=false) => {
+    name = name.toLowerCase();
+
+    if (!isNaN(name)) {
+        if (name < 0) return silent ? false : interaction.reply("The ID can't be negative.");
+        if (name >= classes.length) return silent ? false : interaction.reply("The ID must be smaller than " + classes.length);
+        return classes[parseInt(name)];
+    };
+
+    let fastCheck = classes.find((e) => e.name.toLowerCase() === name);
+    if (fastCheck) return fastCheck;
+
+    let cArgs = name.split(" ");
+
+    let fArray = classes.filter((e) => e.name.toLowerCase()[0] === cArgs[0][0]);
+
+    let letter = 0;
+    for (let word=0; word < cArgs.length; word++) {
+        let { length:wl } = cArgs[word];
+
+        while (wl--) {
+            fArray = fArray.filter((e) => e.name.toLowerCase().split(" ")[word] === undefined ? false : e.name.toLowerCase().split(" ")[word][letter] === cArgs[word][letter]);
+            letter++;
+        };
+
+        if (fArray.length < 2) break;
+        letter = 0;
+    };
+
+    if (fArray.length === 0) return silent ? false : interaction.reply("No match found");
+    if (fArray.length > 1) return silent ? false : interaction.reply(fArray.length + " matches found");
+    return fArray[0];
+};
+
+module.exports.searchItem = (name, interaction, silent=false) => {
+    const { items } = require("./items.js");
+    name = name.toLowerCase();
+
+    if (!isNaN(name)) {
+        if (name < 0) return silent ? false : interaction.reply("The ID can't be negative.");
+        if (name >= items.length) return silent ? false : interaction.reply("The ID must be smaller than " + items.length);
+        return items[parseInt(name)];
+    };
+
+    let fastCheck = items.find((e) => e.name.toLowerCase() === name);
+    if (fastCheck) return fastCheck;
+
+    let cArgs = name.split(" ");
+
+    let fArray = items.filter((e) => e.name.toLowerCase()[0] === cArgs[0][0]);
+
+    let letter = 0;
+    for (let word=0; word < cArgs.length; word++) {
+        let { length:wl } = cArgs[word];
+
+        while (wl--) {
+            fArray = fArray.filter((e) => e.name.toLowerCase().split(" ")[word] === undefined ? false : e.name.toLowerCase().split(" ")[word][letter] === cArgs[word][letter]);
+            letter++;
+        };
+
+        if (fArray.length < 2) break;
+        letter = 0;
+    };
+
+    if (fArray.length === 0) return silent ? false : interaction.reply("No match found");
+    if (fArray.length > 1) return silent ? false : interaction.reply(fArray.length + " matches found");
+    return fArray[0];
+};
+
+const customEmojis = {
+    "hp": "<:HP:1062043800979116143>",
+    "hp%": "<:HP:1062043800979116143>",
+    "atk": "<:ATK:1063214925528440832>",
+    "atk%": "<:ATK:1063214925528440832>",
+    "def": "<:DEF:1047269141662417037>",
+    "def%": "<:DEF:1047269141662417037>",
+    "md": "<:magic_dmg:948568336621527040>",
+    "md%": "<:magic_dmg:948568336621527040>",
+    "mr": "<:magic_resistance:1047269149237334086>",
+    "cr": "<:crit_rate:1047269144195776512>",
+    "cd": "<:crit_damage:1047269146511016046>",
+    "dodge": "<:dodge_chance:1047269150948606063>",
+    "br": "<:DEF:1047269141662417037>",
+    "mana": "<:mana:1047269152957661255>",
+    "sm": "<:mana:1047269152957661255>",
+    "mg": "<:mana_generation:1063215562349629570>",
+    "shield": "<:shield:1062050038211166310>",
+
+    "coins": "<:coins:872926669055356939>",
+};
+module.exports.customEmojis = customEmojis;
+
+const pullsToResetList = new Set();
+module.exports.pullsToResetList = pullsToResetList;
+
+const deleteReplyIn = 2400;
+module.exports.deleteReplyIn = deleteReplyIn;
+
+class idInfo {
+    constructor(symbols) {
+        this._symbols = symbols.split("");
+        this._length = symbols.split("").length;
+        this._blacklisted = ["", "shit", "poo", "poop", "jiz", "jizz", "fuck", "fck", "fick", "fock", "fuk", "fik", "anal", "dick", "cock", "porn", "tit", "tits", "nude", "boob", "sex", "s3x", "seks", "sexy", "bitch", "ass", "arse", "gay", "gey", "jew", "lgbt", "isis", "damn", "cunt", "nigger", "niga", "nigga", "neger", "negro", "whore", "wench", "slut", "thot", "penis", "pussy", "vagina", "coon", "rape", "suck", "sucker", "suk", "lick", "anus", "blow", "bum", "bums", "but", "butt", "clit", "cum", "horny", "god", "jerk", "piss", "trump", "biden", "cp", "pedo"];
+    };
+
+    generate(len=2) {
+        let gen = "";
+        while (this._blacklisted.includes(gen.toLowerCase())) {
+            gen = "";
+            let iter = 0;
+            while (iter < len) {
+                gen += this._symbols[Math.floor(this._length*Math.random())];
+                iter++;
+            };
+        };
+        return gen;
+    };
+
+};
+const itemIDs = new idInfo("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_");
+
+// module.exports.itemIDs = itemIDs;
+module.exports.generateUniqueItemId = (userid, existing, len=2) => {
+    let gen = itemIDs.generate();
+    while (existing.includes(gen+":"+userid)) {
+        gen = itemIDs.generate(Math.floor(len));
+        len += 0.5;
+    };
+    return gen;
+};

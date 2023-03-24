@@ -1,0 +1,107 @@
+const fs = require('fs');
+const { db, query } = require("../db_handler.js");
+const { dailies } = require("../Modules/dailyQuests.js");
+const { characters } = require("../Modules/chars.js");
+const { MessageEmbed } = require("discord.js");
+
+function getHash(key, hash) {
+    for (let i=0; i < key.length; i++) {
+        hash = ((hash << 5) - hash) + key.charCodeAt(i);
+        hash |= 0;
+    }
+    return hash;
+};
+
+function getQuests(id, len) {
+    const quests = new Set();
+    const key = new Date(new Date().getTime()+(60*60*1000)).toISOString().slice(0, 10) + id;
+    let i = 0;
+    while (quests.size < 4 && i < 100) {
+        const hash = getHash(key, i++);
+        quests.add(Math.abs(hash) % len);
+    };
+    return [...quests].map((e) => dailies[e]);
+};
+
+module.exports = {
+	name: 'quests',
+	description: 'show daily quests',
+	execute(interaction) {
+
+        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+
+        const user = interaction.options.getUser('user') || interaction.user;
+
+        db.serialize(async () => {
+            let stats = await query(`SELECT dailies, favchar, premium FROM users WHERE id = ${user.id}`);
+            if (!stats[0]) return interaction.reply(`${user.id === interaction.user.id ? "You haven't" : `${user.username} hasn't`} started playing yet.`)
+            stats = {premium: stats[0].premium, favchar: stats[0].favchar, dailies: JSON.parse(stats[0].dailies)};
+            
+            let inv = await query(`SELECT chars, skin FROM characters WHERE id = ${user.id}`);
+            inv = {chars: JSON.parse(inv[0].chars), skin: JSON.parse(inv[0].skin)};
+
+            let thumbnail = characters[inv.chars[Math.floor(Math.random() * inv.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
+            if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], inv.skin[stats.favchar]);
+
+            const todaysQuests = getQuests(user.id, dailies.length);
+
+            function achvmBar(ratio, sep="\n") {
+                if (ratio >= 1) return sep+"<:bar_ld:943133923674820608><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_d:943133923007930379><:bar_rd:943133923490299965>";
+                if (ratio > 0.93) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_rh:942597277627863081>";
+                if (ratio > 0.87) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.8) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.73) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.67) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.6) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.53) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.47) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.4) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.33) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.27) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.2) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.13) return sep+"<:bar_l:942597277606895707><:bar:942597277854359632><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                if (ratio > 0.07) return sep+"<:bar_l:942597277606895707><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+                return sep+"<:bar_lh:942597277548171355><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_h:942597277665599499><:bar_rh:942597277627863081>";
+            };
+
+            function progress(id) {
+                if (dailies[id]._check(stats.dailies[id])) return achvmBar(1);
+                switch (id) {
+                  case 0: return achvmBar((stats.dailies[id]||0)/20, ` (${stats.dailies[id]||0}/20)\n`);
+                  case 1: return achvmBar((stats.dailies[id]||0)/50, ` (${stats.dailies[id]||0}/50)\n`);
+                  case 2: return achvmBar((stats.dailies[id]||0)/20, ` (${stats.dailies[id]||0}/20)\n`);
+                  case 3: return achvmBar((stats.dailies[id]||0)/5, ` (${stats.dailies[id]||0}/5)\n`);
+                  case 4: 
+                  case 5: 
+                  case 6: return achvmBar(0);
+                  case 7: return achvmBar((stats.dailies[id]||0)/10, ` (${stats.dailies[id]||0}/10)\n`);
+                  case 8: return achvmBar(0);
+                  default: return achvmBar(0);
+                };
+            };
+
+            const Embed = new MessageEmbed()
+            .setColor(0xbbffff)
+            .setTitle(`Daily Quests (${todaysQuests.reduce((count,e) => count+(e._check(stats.dailies[e.id])), 0)}/4)`)
+            .setDescription(`**Completion Rewards**: 500<:coins:872926669055356939>, 1<:genesis_gems:1034179687720681492>, 10XP ${todaysQuests.reduce((count,e) => count+(e._check(stats.dailies[e.id])), 0) === 4 ? "<a:check:873196253276700682>" : ""}\nㅤ`)
+            .setThumbnail(thumbnail)
+            .addFields(
+                { name: todaysQuests[0].title, value: `> ${todaysQuests[0].description+progress(todaysQuests[0].id)}`, inline: true },
+                { name: `Rewards ${todaysQuests[0]._check(stats.dailies[todaysQuests[0].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **1**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: '\u200B', value: '_ _', inline: true },
+                { name: todaysQuests[1].title, value: `> ${todaysQuests[1].description+progress(todaysQuests[1].id)}`, inline: true },
+                { name: `Rewards ${todaysQuests[1]._check(stats.dailies[todaysQuests[1].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **1**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: '\u200B', value: '_ _', inline: true },
+                { name: todaysQuests[2].title, value: `> ${todaysQuests[2].description+progress(todaysQuests[2].id)}`, inline: true },
+                { name: `Rewards ${todaysQuests[2]._check(stats.dailies[todaysQuests[2].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **1**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: '\u200B', value: '_ _', inline: true },
+                { name: todaysQuests[3].title, value: `> ${todaysQuests[3].description+progress(todaysQuests[3].id)}`, inline: true },
+                { name: `Rewards ${todaysQuests[3]._check(stats.dailies[todaysQuests[3].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **1**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: '\u200B', value: '_ _', inline: true },
+            )
+            .setFooter(`dailies reset in ${(23-new Date().getHours()) ? `${23-new Date().getHours()}h ` : ""}${60-new Date().getMinutes()}min`);
+            return interaction.reply({ embeds: [Embed] });
+        });
+
+	},
+};
