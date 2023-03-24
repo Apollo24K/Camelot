@@ -1,0 +1,22 @@
+{
+  "name": "camelot",
+  "version": "2.5.4",
+  "description": "Absent in the early Arthurian material, Camelot came to be described as the fantastic capital of Arthur's realm and a symbol of the Arthurian world.",
+  "main": "camelot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node .",
+    "lint": "eslint ."
+  },
+  "keywords": [],
+  "author": "Apollo24",
+  "license": "ISC",
+  "dependencies": {
+    "mathjs": "^6.6.4"
+  },
+  "devDependencies": {
+    "eslint": "^8.30.0",
+    "eslint-config-neon": "^0.1.40",
+    "prettier": "^2.8.1"
+  }
+}
