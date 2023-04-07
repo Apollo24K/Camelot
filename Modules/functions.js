@@ -278,9 +278,9 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
             shield = await query(`SELECT itemid, level, ascension, purity FROM weapons WHERE uniqueid = '${inv.equipment[id].shield}'`);
             shield = {id: shield[0].itemid, level: getItemLevel(shield[0].level), ascension: shield[0].ascension, purity: shield[0].purity};
             const item = items[shield.id];
-            
+
             // Set item to dStats
-            dStats.shield = shield.id;
+            dStats.shieldid = shield.id;
             dStats.shieldicon = item.emoji;
             dStats.shieldinfo = {...shield};
             
@@ -294,7 +294,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
             } else {
                 dStats[item.primaryStat] += Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((shield.level-1)+(shield.ascension*3)));
             };
-
+            
             // Secondary Stat
             if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(item.secondaryStat)) {
                 if (item.secondaryStat.endsWith("%")) {
@@ -482,18 +482,8 @@ module.exports.getAscensionMaterial = (id, ascItems) => {
     return ascItems[Math.abs(hash) % ascItems.length];
 };
 
-module.exports.showPage = (currPage, pagesTotal, left, push, elements=15) => {
-    const arr = [];
-    if (currPage < pagesTotal) {
-        for (let i=(currPage-1)*elements; i < currPage * elements; i++) {
-            arr.push(push[i]);
-        };
-    } else {
-        for (let i=(currPage-1)*elements; i < (currPage * elements) - (left ? elements-left : 0); i++) {
-            arr.push(push[i]);
-        };
-    };
-    return arr;
+module.exports.showPage = (currPage, pagesTotal, left, arr, elements=15) => {
+    return arr.slice((currPage-1)*elements, currPage*elements);
 };
 
 module.exports.search = (name, inv, interaction, silent=false) => {
@@ -734,6 +724,19 @@ module.exports.searchItem = (name, interaction, silent=false) => {
     return fArray[0];
 };
 
+module.exports.searchGuild = (name, guilds) => {
+    name = name.toLowerCase();
+    if (!name) return guilds.sort((a, b) => 0.5 - Math.random());
+
+    const matches = guilds.filter((e) => e.name.toLowerCase() === name);
+    guilds = guilds.filter((e) => e.name.toLowerCase() !== name);
+    const starts = guilds.filter((e) => e.name.toLowerCase().startsWith(name));
+    guilds = guilds.filter((e) => !e.name.toLowerCase().startsWith(name));
+    const includes = guilds.filter((e) => e.name.toLowerCase().includes(name));
+
+    return [...matches, ...starts, ...includes];
+};
+
 const customEmojis = {
     "hp": "<:HP:1062043800979116143>",
     "hp%": "<:HP:1062043800979116143>",
@@ -790,6 +793,15 @@ const itemIDs = new idInfo("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
 module.exports.generateUniqueItemId = (userid, existing, len=2) => {
     let gen = itemIDs.generate();
     while (existing.includes(gen+":"+userid)) {
+        gen = itemIDs.generate(Math.floor(len));
+        len += 0.5;
+    };
+    return gen;
+};
+
+module.exports.generateUniqueGuildId = (existing, len=5) => {
+    let gen = itemIDs.generate(len);
+    while (existing.includes(gen)) {
         gen = itemIDs.generate(Math.floor(len));
         len += 0.5;
     };

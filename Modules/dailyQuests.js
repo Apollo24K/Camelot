@@ -10,7 +10,7 @@ function getHash(key, hash) {
 
 function getQuests(id, len) {
     const quests = new Set();
-    const key = new Date(new Date().getTime()+(60*60*1000)).toISOString().slice(0, 10) + id;
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + id;
     let i = 0;
     while (quests.size < 4 && i < 100) {
         const hash = getHash(key, i++);
@@ -85,6 +85,7 @@ const dailies = [
     new dailyQuestInfo("Impenetrable Defense", "Block 2 attacks in a row", 6, (stat) => {return stat >= 1}),
     new dailyQuestInfo("A Fishy Task", "Catch 10 fish", 7, (stat) => {return stat >= 10}),
     new dailyQuestInfo("Another Fishy Task", "Catch a rare or higher fish", 8, (stat) => {return stat >= 1}),
+    new dailyQuestInfo("Fortune's Favor", "Donate 2000 coins to a guild", 9, (stat) => {return stat >= 2000}),
 ];
 
 module.exports.dailies = dailies;

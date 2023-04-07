@@ -243,7 +243,7 @@ const items = [
     // Loot - Ascension Material
     new lootInfo("Slime Concentrate", "loot", "ascension material", ["dungeon", "floors 1-4, 6-9, 94"], "<:slime_concentrate:1046083943428001964>", "https://i.imgur.com/mh26gVo.png", "normal", 40),
     new lootInfo("Bones", "loot", "ascension material", ["dungeon", "floors 1-9, 11-14, 61-64, 66-69, 71-75, 81-84, 86-89"], "<:bones:1046084545969139752>", "https://i.imgur.com/qoBPImH.png", "normal", 41),
-    new lootInfo("Wolf Teeth", "loot", "ascension material", ["dungeon", "floors 1-4, 6-9, 10-15"], "<:wolf_teeth:1046085926360719490>", "https://i.imgur.com/nB4YLLC.png", "normal", 42),
+    new lootInfo("Wolf Teeth", "loot", "ascension material", ["dungeon", "floors 1-4, 6-9, 11-15"], "<:wolf_teeth:1046085926360719490>", "https://i.imgur.com/nB4YLLC.png", "normal", 42),
     new lootInfo("Goblin Mask", "loot", "ascension material", ["dungeon", "floors 3-4, 6-9, 11-14"], "<:goblin_mask:1046080758466490398>", "https://i.imgur.com/6EYBRsV.png", "normal", 43),
     new lootInfo("Silver Plume", "loot", "ascension material", ["dungeon", "floors 16-19, 21-24"], "<:silver_plume:1046087833640775710>", "https://i.imgur.com/dyhdOGJ.png", "normal", 44),
     new lootInfo("Lizard Tail", "loot", "ascension material", ["dungeon", "floors 16-19, 21-24"], "<:lizard_tail:1046088687508783124>", "https://i.imgur.com/ZxbwMrm.png", "normal", 45),
@@ -1743,7 +1743,7 @@ const items = [
     new weaponInfo("Vasavi Shakti", "weapon", "lance", ["crafting", "chest"], "<:vasavi_shakti:1068649163451015228>", "https://i.imgur.com/yQ2BSy4.png", "atk", 54, 847, "cd", 0.08, 0.5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vasavi_shakti:1068649163451015228> **${char.name}**`, {critChance: 0, magicDamage: true});
     }, "Immediately after the battle begins, deals a crititcal hit to the enemy.", "The Vasavi Shakti is a weapon of incredible power, said to be wielded by the great warrior goddess herself. With a single strike, it is capable of shattering mountains and splitting the very earth in two. It is a weapon of divine fury, capable of laying waste to entire armies in the hands of a skilled wielder. Those who face the Vasavi Shakti in battle are said to tremble in fear, knowing that they face not just a weapon, but the wrath of the gods themselves.", "legendary", 360),
-    new weaponInfo("Windrider", "weapon", "lance", ["chest"], "<:windrider:1068649166869364756>", "https://i.imgur.com/r5UiHTF.png", "atk", 47, 794, "mr", 0.08, 158, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Windrider", "weapon", "lance", ["chest"], "<:windrider:1068649166869364756>", "https://i.imgur.com/r5UiHTF.png", "atk", 47, 794, "mr", 30, 158, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(10, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.mr += Math.floor(myStats.mr*0.3);
             mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr*0.3), 9999));
@@ -2318,7 +2318,7 @@ const items = [
             },
         };
     }, "Normal attacks ignite the enemy dealing, dealing **25%** true damage for 2 rounds.\n\n_true damage = ignores shield_", "The Vermillion Vane is a powerful magic staff imbued with the fiery essence of the sun. Its intricate carvings of molten rocks dance and twist along its length, radiating heat and energy. In the hands of a skilled pyromancer, the Vermillion Vane becomes a deadly weapon, capable of unleashing devastating blasts of searing fire, said to burn hotter than the deepest flames of hell.", "genesis", 437),
-    new weaponInfo("Vestiges of Brilliant Light", "weapon", "staff", ["chest"], "<:vestiges_of_brilliant_light:1069025804064915486>", "https://i.imgur.com/ltd5Uqs.png", "md", 196, 1204, "md", 0.12, 0.26, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Vestiges of Brilliant Light", "weapon", "staff", ["chest"], "<:vestiges_of_brilliant_light:1069025804064915486>", "https://i.imgur.com/ltd5Uqs.png", "md", 196, 1204, "md%", 0.12, 0.26, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round%4 === 0) {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vestiges_of_brilliant_light:1069025804064915486> **${char.name}**`, {atkMultiplier: 1.3, mdChance: -1, magicDamage: true});
@@ -2771,7 +2771,7 @@ const items = [
     // Mythical Armor
     new armorInfo("Deepsea Guardian Helmet", "armor", "helmet", "Deepsea Guardian Set", ["chest"], "<:deepsea_guardian_helmet:1081561801042444328>", "https://i.imgur.com/sSFo0Cf.png", "mr", 16, 167, "mythical", 615),
     new armorInfo("Deepsea Guardian Chestplate", "armor", "cuirass", "Deepsea Guardian Set", ["chest"], "<:deepsea_guardian_chestplate:1081562689039499395>", "https://i.imgur.com/RLX7PI4.png", "hp", 108, 2205, "mythical", 616),
-    new armorInfo("Deepsea Guardian Gloves", "armor", "gloves", "Deepsea Guardian Set", ["chest"], "<:deepsea_guardian_gloves:1081563506459025478>", "https://i.imgur.com/NzItjL8.png", "hp", 102, 22089, "mythical", 617),
+    new armorInfo("Deepsea Guardian Gloves", "armor", "gloves", "Deepsea Guardian Set", ["chest"], "<:deepsea_guardian_gloves:1081563506459025478>", "https://i.imgur.com/NzItjL8.png", "hp", 102, 2209, "mythical", 617),
     new armorInfo("Deepsea Guardian Boots", "armor", "boots", "Deepsea Guardian Set", ["chest"], "<:deepsea_guardian_boots:1081564262935306371>", "https://i.imgur.com/itmqnvp.png", "def", 15, 162, "mythical", 618, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.def = {
             "emoji": "<:deepsea_guardian_helmet:1081561801042444328>",
