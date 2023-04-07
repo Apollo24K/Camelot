@@ -63,7 +63,7 @@ module.exports = {
                 const Embed = new MessageEmbed()
                 .setColor(0xbbffff)
                 .setTitle(`List of Classes`)
-                .setThumbnail("https://i.ibb.co/cgh59Lb/WWM4K98.png")
+                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                 .setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n"))
                 .setFooter(`Page ${currPage}/${pagesTotal}`)
                 interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
@@ -423,6 +423,27 @@ module.exports = {
             });
             return;
         };
+
+        // Class upgrade
+        // if (subcommand === "switch") {
+        //     const to = interaction.options.getString('to');
+
+        //     // Search class
+        //     const fClass = searchClass(to, interaction);
+        //     if (!fClass?.name) return;
+
+        //     db.serialize(async () => {
+        //         let stats = await query(`SELECT users.gems, dungeon.classes, dungeon.classlevels FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+        //         stats = {gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+                
+        //         if (!stats.classes.length) return interaction.reply(`You don't have a class yet. Choose a beginner class with \`/class pick <class name or ID>\``)
+        //         if (stats.gems < 50) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/50<:genesis_gems:1034179687720681492>)`)
+
+
+
+        //     });
+        //     return;
+        // };
 
     },
 };

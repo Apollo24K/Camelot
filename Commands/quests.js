@@ -14,7 +14,8 @@ function getHash(key, hash) {
 
 function getQuests(id, len) {
     const quests = new Set();
-    const key = new Date(new Date().getTime()+(60*60*1000)).toISOString().slice(0, 10) + id;
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + id;
+    console.log(key)
     let i = 0;
     while (quests.size < 4 && i < 100) {
         const hash = getHash(key, i++);
@@ -76,6 +77,7 @@ module.exports = {
                   case 6: return achvmBar(0);
                   case 7: return achvmBar((stats.dailies[id]||0)/10, ` (${stats.dailies[id]||0}/10)\n`);
                   case 8: return achvmBar(0);
+                  case 9: return achvmBar((stats.dailies[id]||0)/2000, ` (${stats.dailies[id]||0}/2000)\n`);
                   default: return achvmBar(0);
                 };
             };
@@ -99,7 +101,7 @@ module.exports = {
                 { name: `Rewards ${todaysQuests[3]._check(stats.dailies[todaysQuests[3].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **1**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
             )
-            .setFooter(`dailies reset in ${(23-new Date().getHours()) ? `${23-new Date().getHours()}h ` : ""}${60-new Date().getMinutes()}min`);
+            .setFooter(`dailies reset in ${(23-new Date().getHours()) ? `${23-new Date().getHours()}h ` : ""}${60-new Date().getMinutes()}min\nneed help? ➜ see /support`);
             return interaction.reply({ embeds: [Embed] });
         });
 

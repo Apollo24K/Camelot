@@ -28,7 +28,7 @@ module.exports = {
 	description: 'See your tickets',
 	execute(interaction) {
         
-        var customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         let user = interaction.options.getUser('user') || interaction.user;
 

@@ -110,7 +110,8 @@ module.exports = {
                     return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
                 });
                 
-                let inv = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
+                let inv = await query(`SELECT items, genesispity FROM users WHERE users.id = ${interaction.user.id}`);
+                let genesispity = inv[0].genesispity;
                 inv = JSON.parse(inv[0].items);
                 if (!inv[chest.id]) return interaction.editReply(`You don't have any **${chest.name}** left`);
 
@@ -124,8 +125,8 @@ module.exports = {
                 inv[chest.id] -= amount;
 
                 // Add exchange points
-                if (chest.id === 458) inv[677] = (inv[677]+amount) || 1; // Deluxe Chest adds mythical points
-                if (chest.id === 457) inv[678] = (inv[678]+amount) || 1; // Royal Chest adds Legendary points
+                if (chest.id === 458) inv[677] = (inv[677]+amount) || amount; // Deluxe Chest adds mythical points
+                if (chest.id === 457) inv[678] = (inv[678]+amount) || amount; // Royal Chest adds Legendary points
 
                 // Update item inv
                 await query(`UPDATE users SET items = '${JSON.stringify(inv)}' WHERE id = ${interaction.user.id}`);
@@ -137,7 +138,9 @@ module.exports = {
                 // Generate drops
                 const drops = [];
                 for (let j=0; j < chest.drops*amount; j++) {
-                    const grade = weightedRandom(chest.droprates);
+                    let grade = weightedRandom(chest.droprates);
+                    if (chest.id === 458 && j%6 === 0 && ++genesispity === 30) grade = "genesis";
+                    if (chest.id === 458 && grade === "genesis") genesispity = 0;
                     const fItems = items.filter((e) => e.obtain.includes("chest") && e.grade === grade);
                     drops.push(fItems[Math.floor(Math.random() * fItems.length)]);
                     
@@ -148,6 +151,9 @@ module.exports = {
                     await query(`INSERT INTO weapons (id, itemid, uniqueid${drops[j].category === "armor" ? ", substats" : ""}) VALUES (${interaction.user.id}, ${drops[j].id}, '${uid + ":" + interaction.user.id}'${drops[j].category === "armor" ? ", '"+ JSON.stringify(generateSubstats()) + "'" : ""})`, 'run');
                 };
                 drops.sort((a, b) => a.gradeValue - b.gradeValue);
+                
+                // Update genesispity
+                await query(`UPDATE users SET genesispity = ${genesispity} WHERE id = ${interaction.user.id}`);
                 
                 const row = new MessageActionRow()
                     .addComponents(

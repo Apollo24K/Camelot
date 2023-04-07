@@ -1,9 +1,9 @@
+/* eslint-disable no-case-declarations */
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-var fs = require('fs');
+const fs = require('fs');
 const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
 const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
+const { characters, auniq } = require("../Modules/chars.js");
 const { userLevel, getClassLvl, showPage } = require("../Modules/functions.js");
 const { classes } = require("../Modules/classes.js");
 const { PageRow } = require("../Modules/components.js");
@@ -13,7 +13,7 @@ module.exports = {
 	description: 'rank players',
 	execute(interaction) {
 
-        let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         let page = interaction.options.getInteger('page');
         let flag = interaction.options.getString('flag');
@@ -24,11 +24,7 @@ module.exports = {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
 
-            let servers;
-            if (scope === "server") {
-                servers = await query(`SELECT user_ids FROM servers WHERE id = ${interaction.guild.id}`);
-                servers = servers[0];
-            };
+            const { 0: servers} = await query(`SELECT user_ids FROM servers WHERE id = ${interaction.guild.id}`);
 
             let stats; // = await query(`SELECT users.name, users.id, users.xp, users.favchar, users.lilies, users.pullstotal, users.achievements, users.premium, characters.chars, dungeon.floors, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""}`);
             let count = 1;
@@ -39,19 +35,24 @@ module.exports = {
                 case "pulls": stats = await query(`SELECT users.name, users.id, users.pullstotal, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""} ORDER BY users.pullstotal DESC`);
                               showUsers = stats.map((e) => `${count++}. **${e.name}** - **${e.pullstotal}** pulls` ); break;
                 case "chars": stats = await query(`SELECT users.name, users.id, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""}`);
-                              stats.sort((a, b) => new Set(JSON.parse(b.chars)).size - new Set(JSON.parse(a.chars)).size);
-                              showUsers = stats.map((e) => `${count++}. **${e.name}** - has **${new Set(JSON.parse(e.chars)).size}** characters` ); break;
+                              stats.forEach((e) => e.chars = [...new Set(JSON.parse(e.chars))]);
+                              stats.sort((a, b) => b.chars.length - a.chars.length);
+                              showUsers = stats.map((e) => `${count++}. **${e.name}** - has **${e.chars.length}** characters` ); break;
                 case "progress": stats = await query(`SELECT users.name, users.id, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""}`);
-                                 stats.sort((a, b) => new Set(JSON.parse(b.chars)).size - new Set(JSON.parse(a.chars)).size);
-                                 showUsers = stats.map((e) => `${count++}. **${e.name}** - has completed **${Math.floor((new Set(JSON.parse(e.chars)).size/characters.length)*1000)/10}%**` ); break;
+                                 stats.forEach((e) => e.chars = [...new Set(JSON.parse(e.chars))]);
+                                 stats.sort((a, b) => b.chars.length - a.chars.length);
+                                 showUsers = stats.map((e) => `${count++}. **${e.name}** - has completed **${Math.floor((e.chars.length/characters.length)*1000)/10}%**` ); break;
                 case "anime": stats = await query(`SELECT users.name, users.id, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""}`);
-                              stats.sort((a, b) => [... new Set(JSON.parse(b.chars).map((e) => characters[e].anime))].filter((e) => [...new Set(JSON.parse(b.chars))].filter((t) => characters[t].anime === e).length === characters.filter((t) => t.anime === e).length).length - [... new Set(JSON.parse(a.chars).map((e) => characters[e].anime))].filter((e) => [...new Set(JSON.parse(a.chars))].filter((t) => characters[t].anime === e).length === characters.filter((t) => t.anime === e).length).length);
-                              showUsers = stats.map((e) => `${count++}. **${e.name}** - has completed **${[... new Set(JSON.parse(e.chars).map((a) => characters[a].anime))].filter((a) => [...new Set(JSON.parse(e.chars))].filter((t) => characters[t].anime === a).length === characters.filter((t) => t.anime === a).length).length}** anime` ); break;
+                              const charsTotal = auniq.reduce((obj, e) => {return {...obj, [e]: characters.filter((c) => c.anime === e).length}}, {});
+                              stats.forEach((e) => { e.chars = [...new Set(JSON.parse(e.chars))]; e.charsTotal = {}; e.chars.forEach((a) => e.charsTotal[characters[a].anime] = (e.charsTotal[characters[a].anime] || 0)+1 ); e.anime = Object.keys(e.charsTotal).filter((a) => e.charsTotal[a] === charsTotal[a]).length; delete e.charsTotal });
+                              stats.sort((a, b) => b.anime - a.anime);
+                              showUsers = stats.map((e) => `${count++}. **${e.name}** - has completed **${e.anime}** anime` ); break;
                 case "lilies": stats = await query(`SELECT users.name, users.id, users.lilies, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""} ORDER BY users.lilies DESC`);
                                showUsers = stats.map((e) => `${count++}. **${e.name}** - **${e.lilies}** <:lilium:974057059618291732>` ); break;
                 case "achievements": stats = await query(`SELECT users.name, users.id, users.achievements, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""}`);
-                                     stats.sort((a, b) => JSON.parse(b.achievements).length - JSON.parse(a.achievements).length);
-                                     showUsers = stats.map((e) => `${count++}. **${e.name}** - has completed **${JSON.parse(e.achievements).length}** achievements` ); break;
+                                     stats.forEach((e) => e.achievements = JSON.parse(e.achievements).length);
+                                     stats.sort((a, b) => b.achievements - a.achievements);
+                                     showUsers = stats.map((e) => `${count++}. **${e.name}** - has completed **${e.achievements}** achievements` ); break;
                 case "dungeon": stats = await query(`SELECT users.name, users.id, users.favchar, users.premium, characters.chars, characters.skin, dungeon.floors FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""} ORDER BY LENGTH(dungeon.floors) - LENGTH(REPLACE(dungeon.floors,',','')) DESC`);
                                 showUsers = stats.map((e) => `${count++}. **${e.name}** - Floor **${e.floors.split(",").length}**` ); break;
                 case "coins": stats = await query(`SELECT users.name, users.id, users.coins, users.favchar, users.premium, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id ${scope === "server" ? `WHERE users.rowid IN (${servers.user_ids})`: ""} ORDER BY users.coins DESC`);
@@ -67,16 +68,17 @@ module.exports = {
 
             if (!stats[0]) interaction.editReply("Empty leaderboard");
 
-            let thumbnail = characters[JSON.parse(stats[0].chars)[Math.floor(Math.random() * JSON.parse(stats[0].chars).length)]]?.image || "https://i.ibb.co/jZ7fHSj/camelot.png";
+            const topChars = (typeof stats[0].chars === "string") ? JSON.parse(stats[0].chars) : stats[0].chars;
+            let thumbnail = characters[topChars[Math.floor(Math.random() * topChars.length)]]?.image || "https://i.ibb.co/jZ7fHSj/camelot.png";
             if (stats[0].favchar !== null) thumbnail = characters[stats[0].favchar].getImage(stats[0].premium, customSettings[interaction.user.id]?.cimg[stats[0].favchar], JSON.parse(stats[0].skin)[stats[0].favchar]);
 
             // Pages
-            let pagesTotal = Math.ceil(stats.length / 15);
+            const pagesTotal = Math.ceil(stats.length / 15);
             let currPage = 1;
             if (page <= pagesTotal && page > 0) {
                 currPage = page;
             };
-            let left = stats.length % 15;
+            const left = stats.length % 15;
 
             const Embed = new MessageEmbed()
             .setColor(0xbbffff)

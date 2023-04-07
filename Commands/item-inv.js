@@ -78,6 +78,9 @@ module.exports = {
             if (subcommand === "loot") {
                 let itemsR = Object.entries(stats.items);
                 itemsR = itemsR.filter((e) => (items[e[0]].category === "loot" || items[e[0]].type === "fish") && e[1]);
+                if (type === "loot") itemsR = itemsR.filter((e) => items[e[0]].category === type);
+                else if (["chest", "fish"].includes(type)) itemsR = itemsR.filter((e) => items[e[0]].type === type);
+                else if (["ascension", "crafting", "levelup"].includes(type)) itemsR = itemsR.filter((e) => items[e[0]].type === type+" material");
                 
                 // Return if empty
                 if (!itemsR.length) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);

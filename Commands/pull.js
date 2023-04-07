@@ -41,8 +41,10 @@ module.exports = {
 	execute(interaction) {
 
         db.serialize(async () => {
-            let stats = await query(`SELECT rowid, xp, lastvote, lastpull, pullcount, pullstotal, pullreminder, lastss, lasts, premium FROM users WHERE id = ${interaction.user.id}`);
+            let stats = await query(`SELECT rowid, xp, guild, lastvote, lastpull, pullcount, pullstotal, pullreminder, lastss, lasts, premium FROM users WHERE id = ${interaction.user.id}`);
             stats = stats[0];
+
+            const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
 
             // Some vars
             let pullLimit = 5;
@@ -64,6 +66,7 @@ module.exports = {
                 case 7: pullLimit += 5; sPit = 60; ssPit = 200; pullTimer = 30*60*1000; break;
                 default : false; break;
             };
+            if (guild) pullTimer -= (60*1000*guild.cdreduction);
 
             // Check if vote
             let canVote = `\nYou can **/vote** now! To reset your pull counter (use \`/rp\` after the vote)`;

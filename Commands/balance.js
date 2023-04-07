@@ -29,7 +29,7 @@ module.exports = {
             .setAuthor(`${user.username}'s Balance`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
             .setThumbnail(thumbnail)
             if (choice === "coins") Embed.setDescription(`**Balance**: \`${stats[choice]}\` <:coins:872926669055356939>\n${stats.dailyclaimed === 1 ? "You have claimed your daily" : "Your daily is available"}`);
-            else if (choice === "gems") Embed.setDescription(`**Balance**: \`${stats[choice]}\` <:genesis_gems:1034179687720681492>\nSee </shop:1012711410343620618> if you need more <:LuminousPsssh:1064218138960474222>`);
+            else if (choice === "gems") Embed.setDescription(`**Balance**: \`${stats[choice]}\` <:genesis_gems:1034179687720681492>\nSee </shop:1012711410343620618> if you need more <:LuminousPsssh:1071574041116295328>`);
             else Embed.setDescription(`**Balance**: \`${stats[choice]}\` <:lilium:974057059618291732>\nYes, you actually can't do anything with lilies <:MikuHappy:1045096947876368404>`);
 
             return interaction.reply({ embeds: [Embed] });

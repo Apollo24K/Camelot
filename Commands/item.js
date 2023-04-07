@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
 const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { classes } = require("../Modules/classes.js");
@@ -113,7 +112,7 @@ module.exports = {
                         // Secondary Stat
                         if (["atk%", "md%", "cr", "cd", "dodge"].includes(fItem.secondaryStat)) {
                             if (fItem.secondaryStat.endsWith("%")) {
-                                sstat += Math.floor((Math.floor(parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))/10)*item.ascension)/100));
+                                sstat += (Math.floor(parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))/10)*item.ascension)/100);
                             } else {
                                 sstat += (parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))*item.ascension/10))/100;
                             };
@@ -447,6 +446,11 @@ module.exports = {
             });
         };
 
+        // Item Disassemble
+        // if (subcommand === "disassemble") {
+        //     
+        // };
+
         // Item Equip
         if (subcommand === "equip") {
             const charChoice = interaction.options.getString('character');
@@ -486,6 +490,7 @@ module.exports = {
                 const fItem = searchItem(itemChoice, interaction);
                 if (!fItem?.name) return;
                 
+                return interaction.reply(`Please use the weapons id instead of name. You can find the id with \`/items\``)
             });
 
         };

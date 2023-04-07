@@ -9,12 +9,14 @@ module.exports = {
         let user = interaction.options.getUser('user') || interaction.user;
 
         db.serialize(async () => {
-            let stats = await query(`SELECT lastvote, lastpull, pullcount, dailyclaimed, weeklyclaimed, dailies, premium FROM users WHERE id = ${user.id}`);
+            let stats = await query(`SELECT lastvote, lastpull, guild, pullcount, dailyclaimed, weeklyclaimed, dailies, premium FROM users WHERE id = ${user.id}`);
             stats = stats[0];
             if (!stats) return interaction.reply(`${user.id === interaction.user.id ? "You haven't" : `${user.username} hasn't started`} playing yet.`)
 
             let dg = await query(`SELECT "limit" FROM dungeon WHERE id = ${user.id}`);
             dg = dg[0];
+
+            const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
 
             // Limits
             let pullLimit = 5;
@@ -53,7 +55,8 @@ module.exports = {
                 } else {
                     weeklymsg = `Your weekly is ready! => \`/weekly\``;
                 }
-            }
+            };
+            if (guild) pullTimer -= (60*1000*guild.cdreduction);
             
             // Pulls
             if (stats.pullcount >= pullLimit) pull = `**${Math.ceil((pullTimer + stats.lastpull - new Date().getTime())/(60*1000))}** min left`;

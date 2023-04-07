@@ -92,7 +92,7 @@ module.exports = {
             await interaction.deferReply();
             
             const Embed = new MessageEmbed()
-            .setColor(0xbbffff)
+            .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[pick.rarity])
             .setImage(pick.image)
             .setTitle("Guess the Character")
             .setDescription(`**Anime**: ${animeTitle}\n${scores}`)
@@ -127,7 +127,7 @@ module.exports = {
                             await query(`UPDATE users SET lilies = lilies + ${points} WHERE id = ${modalInteraction.user.id}`);
 
                             // Daily Quests
-                            dailies[1].update(interaction, points);
+                            dailies[1].update(interaction, points, modalInteraction.user.id);
                         };
                     };
                 };

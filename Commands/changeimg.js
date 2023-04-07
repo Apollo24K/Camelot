@@ -10,10 +10,10 @@ module.exports = {
 	execute(interaction, client) {
 
         db.serialize(async () => {
-            var stats = await query(`SELECT premium FROM users WHERE id = ${interaction.user.id}`);
+            let stats = await query(`SELECT premium FROM users WHERE id = ${interaction.user.id}`);
             stats = stats[0];
 
-            var inv = await query(`SELECT chars FROM characters WHERE id = ${interaction.user.id}`);
+            let inv = await query(`SELECT chars FROM characters WHERE id = ${interaction.user.id}`);
             inv = {chars: JSON.parse(inv[0].chars)};
 
             if (stats.premium < 3) return interaction.reply("This is a `/premium` feature to change the image of a character. If you're enjoying the bot we would appreciate your help <:RaphiSmile:868998036645380197>\nIf you're having any issues, you can ask us on our `/support` Server.");
@@ -25,7 +25,7 @@ module.exports = {
             if (!char.name) return;
             if (!inv.chars.includes(char.id)) return interaction.reply(`You don't have a copy of ${char.name}`);
 
-            var customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+            let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
             if (!customSettings[interaction.user.id]) customSettings[interaction.user.id] = { cimg:{}, aimg:{} };
             fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
@@ -45,7 +45,7 @@ module.exports = {
                 };
             };
             if (!(imgurl.startsWith("https://i.ibb.co/") || imgurl.startsWith("https://i.imgur.com/") || imgurl.startsWith("https://imgur.com/"))) return interaction.reply("Please use an image URL from imgur.com or imgbb.com");
-            if (!(imgurl.endsWith(".png") || imgurl.endsWith(".jpg") || imgurl.endsWith(".jpeg") || imgurl.endsWith(".gif"))) return interaction.reply("Please use an image URL from imgur.com or imgbb.com that end with .png, .jpg, .jpeg or .gif");
+            if (!(imgurl.endsWith(".png") || imgurl.endsWith(".jpg") || imgurl.endsWith(".jpeg") || imgurl.endsWith(".gif"))) return interaction.reply("Please use an image URL from imgur.com or imgbb.com that ends with .png, .jpg, .jpeg or .gif");
             
             let uploadLimit = 0;
             let hasGif = false;

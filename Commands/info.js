@@ -100,6 +100,8 @@ module.exports = {
             let dupes = inv.chars.filter((e) => e === char.id).length;
 
             if (flag === "my") {
+                img = char.getImage(stats.premium, customSettings[user.id]?.cimg[char.id], inv.skin[char.id]);
+
                 const Embed = new MessageEmbed()
                 .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[char.rarity])
                 .setImage(img)

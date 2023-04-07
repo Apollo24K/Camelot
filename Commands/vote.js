@@ -16,7 +16,7 @@ module.exports = {
                 canVote = `You can't vote now. You'll have to wait ${hr ? `**${hr}**h ` : ""}${`**${min}**min`}`;
             }
 
-            await interaction.reply(`${canVote}\nYou will be able to reset your pull counter afterwards with \`/rp\` (**${stats.pullresets}** left)\nYou can vote for Camelot at top.gg: https://top.gg/bot/706183309943767112/vote`);
+            return interaction.reply(`${canVote}\nYou will be able to reset your pull counter afterwards with \`/rp\` (**${stats.pullresets}** left)\nYou can vote for Camelot at top.gg: https://top.gg/bot/706183309943767112/vote`);
         });
 
     },

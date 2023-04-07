@@ -73,7 +73,6 @@ module.exports = {
                 function tierNamesInv(rarity) {
                     const arr = [], t = showChars.filter((b) => b.rarity === rarity);
                     if (sort === "dupes") {
-                        
                         for (let h=0; h < t.length; h++) {
                             arr.push(t[h].name + ` | **x${invd.get(t[h].id)}**`);
                         };
@@ -122,7 +121,7 @@ module.exports = {
                         if (showChars.find((e) => e.rarity === "D")) desc += "\n\n<:DTier:869316616071032843> **Tier**\n> " + tierNamesInv("D").join("\n> ");
                         
                         Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                        interaction.editReply({ embeds: [Embed] });
                     });
 
                     next.on('collect', async r => {
@@ -141,7 +140,7 @@ module.exports = {
                         if (showChars.find((e) => e.rarity === "D")) desc += "\n\n<:DTier:869316616071032843> **Tier**\n> " + tierNamesInv("D").join("\n> ");
 
                         Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                        interaction.editReply({ embeds: [Embed] });
                     });
                     
                 });
@@ -170,7 +169,7 @@ module.exports = {
                     let showChars = showPage(currPage, pagesTotal, left, chars);
 
                     Embed.setDescription(showChars.join('\n')).setFooter(`Page ${currPage}/${pagesTotal}`);
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    interaction.editReply({ embeds: [Embed] });
                 });
                   
                 next.on('collect', async r => {
@@ -180,7 +179,7 @@ module.exports = {
                     let showChars = showPage(currPage, pagesTotal, left, chars);
 
                     Embed.setDescription(showChars.join('\n')).setFooter(`Page ${currPage}/${pagesTotal}`);
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    interaction.editReply({ embeds: [Embed] });
                 });
 
             });

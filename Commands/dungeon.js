@@ -100,10 +100,12 @@ module.exports = {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
 
-            let stats = await query(`SELECT users.id, users.coins, users.battlechar, users.animationdelay, users.premium, users.tutorial, characters.chars, characters.ref, characters.level, characters.class, characters.equipment, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-            stats = {id: stats[0].id, coins: stats[0].coins, battlechar: stats[0].battlechar, animationdelay: stats[0].animationdelay, premium: stats[0].premium, tutorial: JSON.parse(stats[0].tutorial), chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), class: JSON.parse(stats[0].class), equipment: JSON.parse(stats[0].equipment), skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+            let stats = await query(`SELECT users.id, users.coins, users.battlechar, users.guild, users.animationdelay, users.premium, users.tutorial, characters.chars, characters.ref, characters.level, characters.class, characters.equipment, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+            stats = {id: stats[0].id, coins: stats[0].coins, battlechar: stats[0].battlechar, guild: stats[0].guild, animationdelay: stats[0].animationdelay, premium: stats[0].premium, tutorial: JSON.parse(stats[0].tutorial), chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), class: JSON.parse(stats[0].class), equipment: JSON.parse(stats[0].equipment), skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
 
             if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+            
+            const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
             
             // Tutorial
             if (!stats.tutorial.includes(8)) await waitForTutorial(interaction, stats);
@@ -214,19 +216,25 @@ module.exports = {
                             default: false; break;
                         };
                     });
-                    if (stats.premium) {
-                        switch (stats.premium) {
-                            case 3: boost += 0.2; break;
-                            case 4: boost += 0.3; break;
-                            case 5: boost += 0.5; break;
-                            case 6: boost += 0.75; break;
-                            case 7: boost += 1; break;
-                            default : false; break;
-                        };
+
+                    // Premium Buff
+                    switch (stats.premium) {
+                        case 3: boost += 0.2; break;
+                        case 4: boost += 0.3; break;
+                        case 5: boost += 0.5; break;
+                        case 6: boost += 0.75; break;
+                        case 7: boost += 1; break;
+                        default : false; break;
                     };
+                    
+                    // Weekend Buff
                     if (new Date().getDay() === 6 || new Date().getDay() === 0) boost *= 2;
+
+                    // Guild Buff
+                    if (guild) boost += (0.2*guild.xpbuff);
+
                     boost = Math.round(boost*100)/100;
-                    let cxp = Math.floor((10 + floor - Math.ceil(Math.random() * 10)) * boost) + 3; // 4-13 -> 103-112
+                    let cxp = Math.floor(((floor < 100 ? floor : 100 + (floor/3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
                     if (enemy.boss) cxp = Math.floor(cxp*1.5);
                     cxp = Math.floor(cxp*skipRounds);
                     cxpmsg = `Class XP: **${cxp}** (Boost: x${boost}${new Date().getDay() === 6 || new Date().getDay() === 0 ? " weekend" : ""})`;
@@ -238,7 +246,13 @@ module.exports = {
                 if (floors[floor]?.boss) achievements[27].check(interaction, interaction.user, stats.floors[floor]), achievements[28].check(interaction, interaction.user, stats.floors[floor]), achievements[29].check(interaction, interaction.user, stats.floors[floor]); // Coming Back
                 achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
                 
-                let loot = Math.floor((((dunLim[0] - stats.limit >= 0) ? 80 + (floor * 5) + (Math.floor(Math.random() * 30) * Math.random() < 0.5 ? 1 : -1) : 0)*matchStats.lootm + matchStats.loot) * skipRounds);
+                // Coins
+                let loot = 0;
+                if (dunLim[0] >= stats.limit) loot = 60 + Math.floor(Math.random()*30) + (floor < 100 ? floor*5 : 500 + (floor*2));
+                if (guild?.lootbuff) loot *= 1+(0.2*guild.lootbuff);
+                loot *= matchStats.lootm;
+                loot += matchStats.loot;
+                loot = Math.floor(loot * skipRounds);
                 
                 function shardCount(p, n) {
                     let shard = 0;
@@ -250,12 +264,12 @@ module.exports = {
                 
                 // Crafting Ressources
                 let craftItem;
-                if (floor <= 30) craftItem = items[33];
-                else if (floor <= 70) craftItem = items[34];
-                else if (floor <= 130) craftItem = items[35];
-                else if (floor <= 170) craftItem = items[36];
-                else if (floor <= 230) craftItem = items[37];
-                else if (floor <= 270) craftItem = items[38];
+                if (floor <= 20) craftItem = items[33];
+                else if (floor <= 50) craftItem = items[34];
+                else if (floor <= 90) craftItem = items[35];
+                else if (floor <= 130) craftItem = items[36];
+                else if (floor <= 180) craftItem = items[37];
+                else if (floor <= 260) craftItem = items[38];
                 else if (floor <= 300) craftItem = items[39];
 
                 // Chests
@@ -272,7 +286,7 @@ module.exports = {
                 let ascCount = 0;
 
                 // First loot cap
-                if (dunLim[0] - stats.limit >= 0) {
+                if (dunLim[0] >= stats.limit) {
                     for (let i=0; i<skipRounds; i++) {
                         // Shards
                         ssShards += shardCount(0.01, 3);
@@ -284,10 +298,10 @@ module.exports = {
                         if (floors[floor]?.boss && stats.floors[floor] === 1) ssShards += 2, loot *= 2;
 
                         // Crafting Materials
-                        craftCount += drops(0.4, 8);
+                        craftCount += drops(0.4, 7);
                         
                         // Ascension Materials
-                        ascCount += drops(0.6, 8);
+                        ascCount += drops(0.6, 7);
 
                         // Chests
                         chestDrops[0] += drops(0.1);
@@ -297,13 +311,13 @@ module.exports = {
                     };
                 } else
                 // Second Loot Cap
-                if (dunLim[2] - stats.limit >= 0) {
+                if (dunLim[2] >= stats.limit) {
                     for (let i=0; i<skipRounds; i++) {
                         // Crafting Ressources
-                        craftCount += drops(0.08, 4);
+                        craftCount += drops(0.07, 4);
                         
                         // Ascension Materials
-                        ascCount += drops(0.12, 4);
+                        ascCount += drops(0.1, 4);
                         
                         // Chests
                         chestDrops[0] += drops(0.04);
@@ -406,7 +420,9 @@ module.exports = {
             if (skill && myChar.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user, interaction.commandName);
             if (myAbility?.passive && myChar.id !== 4767) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
             if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
+            if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
             if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
+
 
             const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️', 
                 DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',

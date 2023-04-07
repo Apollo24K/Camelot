@@ -3,20 +3,21 @@
 const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
 const { characters } = require("../Modules/chars.js");
 const { db, query } = require("../db_handler.js");
-const { searchAnime, splitTitle, rarity } = require("../Modules/functions.js");
+const { searchAnime, showPage, splitTitle, rarity } = require("../Modules/functions.js");
+const { PageRow } = require("../Modules/components.js");
 
 module.exports = {
     name: 'search',
 	description: 'Search an anime',
 	execute(interaction) {
 
-        let anime = interaction.options.getString('anime');
-        let user = interaction.options.getUser('user') || interaction.user;
-        let page = interaction.options.getInteger('page');
-        let searchflag = interaction.options.getString('flags');
+        const anime = interaction.options.getString('anime');
+        const user = interaction.options.getUser('user') || interaction.user;
+        const page = interaction.options.getInteger('page');
+        const searchflag = interaction.options.getString('flags');
         
         db.serialize(async () => {
-            var inv = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
+            let inv = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
             if (!inv[0]) inv[0] = {chars: "[]"};
             inv = {chars: JSON.parse(inv[0].chars)};
 
@@ -31,27 +32,16 @@ module.exports = {
             let allChars = sorted["SS"].concat(sorted["S"]).concat(sorted["A"]).concat(sorted["B"]).concat(sorted["C"]).concat(sorted["D"]);
             let charsOwned = chars.filter((b) => b.anime === fastCheck[0].anime);
 
-            const row = new MessageActionRow()
-            .addComponents(
-                new MessageButton()
-                    .setCustomId('prev')
-                    .setEmoji('⏪')
-                    .setStyle('SECONDARY'),
-                new MessageButton()
-                    .setCustomId('next')
-                    .setEmoji('⏩')
-                    .setStyle('SECONDARY'),
-            );
-
             if (searchflag === null) {
                 
-                let pagesTotal = Math.ceil(fastCheck.length / 15);
+                // Setup Pages
+                const elementsPerPage = 15;
+                let pagesTotal = Math.ceil(fastCheck.length / elementsPerPage);
                 let currPage = 1;
                 if (page <= pagesTotal && page > 0) {
                     currPage = page;
                 };
-    
-                let left = allChars.length % 15;
+                let left = allChars.length % elementsPerPage;
     
                 // eslint-disable-next-line no-inner-declarations
                 function tierNames(t, arr=[]) {
@@ -66,23 +56,15 @@ module.exports = {
                 };
                 
                 // eslint-disable-next-line no-inner-declarations
-                function charPage(showChars=[], desc="") {                
-                    if (currPage < pagesTotal || left === 0) {
-                        for (let i=(currPage-1)*15; i < currPage * 15; i++) {
-                            showChars.push(allChars[i]);
-                        };
-                    } else {
-                        for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
-                            showChars.push(allChars[i]);
-                        };
-                    };
+                function charPage(desc="") {
+                    const showChars = showPage(currPage, pagesTotal, left, allChars, elementsPerPage);
                     let sorted = {"SS": [], "S": [], "A": [], "B": [], "C": [], "D": []};
                     showChars.forEach((b) => sorted[b.rarity].push(b));
                     let emoji = {"SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>"};
                     Object.keys(sorted).forEach((b) => sorted[b].length ? desc += `\n\n${emoji[b]} **Tier**\n> ` + tierNames(sorted[b]).join("\n> ") : false)
                     return desc;
                 };
-    
+                
                 const Embed = new MessageEmbed()
                 .setColor(0xbbffff)
                 .setTitle(`**${fastCheck[0].anime}** (` + charsOwned.length + "/" + fastCheck.length + ")")
@@ -90,7 +72,7 @@ module.exports = {
                 .setDescription(charPage())
                 .setFooter(`Page ${currPage}/${pagesTotal}`)
                 if (fastCheck.length < 16) return interaction.reply({ embeds: [Embed] });
-                return interaction.reply({ embeds: [Embed.setDescription(charPage())], components: [row], fetchReply: true }).then(msg => {
+                return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
 
                     const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
                     const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
@@ -100,7 +82,7 @@ module.exports = {
                         else currPage = pagesTotal;
 
                         Embed.setDescription(charPage()).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [row] });
+                        interaction.editReply({ embeds: [Embed] });
                     });
 
                     next.on('collect', async r => {
@@ -108,7 +90,7 @@ module.exports = {
                         else currPage = 1;
 
                         Embed.setDescription(charPage()).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [row] });
+                        interaction.editReply({ embeds: [Embed] });
                     });
 
                 });
@@ -130,7 +112,7 @@ module.exports = {
                 .setDescription(`**${allChars[currPage-1].name}**${uniq.includes(allChars[currPage-1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage-1].id}`)
                 .setImage(allChars[currPage-1].image)
                 .setFooter(`Page ${currPage}/${pagesTotal}`)
-                return interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
+                return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
 
                     const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
                     const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
@@ -138,13 +120,13 @@ module.exports = {
                     prev.on('collect', async r => {
                         currPage > 1 ? currPage-- : currPage = pagesTotal;
                         Embed.setThumbnail(rarity(allChars[currPage-1].rarity)).setDescription(`**${allChars[currPage-1].name}**${uniq.includes(allChars[currPage-1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage-1].id}`).setImage(allChars[currPage-1].image).setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[allChars[currPage-1].rarity]).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [row] });
+                        interaction.editReply({ embeds: [Embed] });
                     });
 
                     next.on('collect', async r => {
                         currPage < pagesTotal ? currPage++ : currPage = 1;
                         Embed.setThumbnail(rarity(allChars[currPage-1].rarity)).setDescription(`**${allChars[currPage-1].name}**${uniq.includes(allChars[currPage-1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage-1].id}`).setImage(allChars[currPage-1].image).setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[allChars[currPage-1].rarity]).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [row] });
+                        interaction.editReply({ embeds: [Embed] });
                     });
                     
                 });
