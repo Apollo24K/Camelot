@@ -81,7 +81,8 @@ const commands = [
 		data: new SlashCommandBuilder()
 				.setName('boss')
 				.setDescription('An event gamemode')
-				.addSubcommand((subcommand) => subcommand.setName('rush').setDescription('boss rush (event)')),
+				.addSubcommand((subcommand) => subcommand.setName('rush').setDescription('boss rush (event)'))
+				.addSubcommand((subcommand) => subcommand.setName('hunt').setDescription('boss hunt (event)')),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -252,6 +253,27 @@ const commands = [
 	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+				.setName('disassemble')
+				.setDescription('Disassemble your items')
+				.addSubcommand((subcommand) => subcommand.setName('items').setDescription('Dissassemble an item').addStringOption(option => option.setName('items').setDescription('Select items to disassemble (use their IDs separated by comma ",")').setRequired(true)))
+				// .addSubcommand((subcommand) => subcommand.setName('all').setDescription('Dissassemble multiple items')
+				// 	.addIntegerOption(option => option.setName('copies').setDescription('How many copies should they have?').setRequired(false))
+				// 	.addStringOption(option =>
+				// 	option.setName('grade')
+				// 		.setDescription('Select grade of dupes | all rarities will be sold if left empty')
+				// 		.setRequired(false)
+				// 		.addChoices(
+				// 			{ name: 'Mythical', value: 'mythical' },
+				// 			{ name: 'Legendary', value: 'legendary' },
+				// 			{ name: 'Unique', value: 'unique' },
+				// 			{ name: 'Rare', value: 'rare' },
+				// 			{ name: 'Special', value: 'special' },
+				// 			{ name: 'Normal', value: 'normal' },
+				// 		)
+				// ))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 				.setName('dungeon')
 				.setDescription('Challenge yourself in the dungeon')
 				.addIntegerOption(option => option.setName('floor').setDescription('Choose a floor to play in').setRequired(false))
@@ -362,6 +384,74 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+				.setName('guild')
+				.setDescription('Item related commands')
+				.addSubcommand((subcommand) => subcommand.setName('create').setDescription('Create a guild')
+					.addStringOption(option => option.setName('name').setDescription('name your guild').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('find').setDescription('Search for a guild')
+					.addStringOption(option => option.setName('name').setDescription('name to search for').setRequired(false))
+					.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false)))
+				.addSubcommand((subcommand) => subcommand.setName('join').setDescription('Join a guild')
+					.addStringOption(option => option.setName('code').setDescription('join code of the guild').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('leave').setDescription('Leave a guild'))
+				.addSubcommand((subcommand) => subcommand.setName('promote').setDescription('Promote someone in your guild')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('demote').setDescription('Demote someone in your guild')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('kick').setDescription('Kick someone from your guild')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('invite').setDescription('Invite someone to your guild')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to invite').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('view').setDescription('View a guild')
+					.addStringOption(option => option.setName('id').setDescription('search for a guild using its ID').setRequired(false))
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(false)))
+				.addSubcommand((subcommand) => subcommand.setName('edit').setDescription('Edit guild settings')
+					.addStringOption(option =>
+						option.setName('setting')
+							.setDescription('Choose a difficulty')
+							.setRequired(true)
+							.addChoices(
+								{ name: 'Embed Color', value: 'color' },
+								{ name: 'Description', value: 'description' },
+								{ name: 'Banner', value: 'banner'},
+								{ name: 'Icon', value: 'icon'},
+								{ name: 'Rename', value: 'rename' },
+								{ name: 'Join Settings', value: 'canjoin' },
+								{ name: 'Change Join Code', value: 'changecode' },
+							)
+					)
+					.addStringOption(option => option.setName('input').setDescription('setting').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('top').setDescription('See the guild leaderboards')
+					.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false)))
+				.addSubcommand((subcommand) => subcommand.setName('donate').setDescription('Donate coins or gems to your guild')
+					.addStringOption(option =>
+						option.setName('currency')
+							.setDescription('choose the currency to donate')
+							.setRequired(true)
+							.addChoices(
+								{ name: 'Coins', value: 'coins' },
+								{ name: 'Gems', value: 'gems' },
+							)
+					)
+					.addIntegerOption(option => option.setName('amount').setDescription('choose how much you want to donate').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('levelup').setDescription('Level up a guild'))
+				.addSubcommand((subcommand) => subcommand.setName('upgrade').setDescription('upgrade a perk of your guild')
+					.addStringOption(option =>
+						option.setName('perk')
+							.setDescription('choose the perk you want to upgrade')
+							.setRequired(true)
+							.addChoices(
+								{ name: 'XP Buffs', value: 'xpbuff' },
+								{ name: 'Loot Buffs', value: 'lootbuff' },
+								{ name: 'Timers', value: 'cdreduction' },
+							)
+					))
+				.addSubcommand((subcommand) => subcommand.setName('convert').setDescription('Convert gems in your treasury into coins')
+					.addIntegerOption(option => option.setName('amount').setDescription('Choose how many you want to convert').setRequired(true)))
+
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 				.setName('help')
 				.setDescription('List all commands')
 				.addStringOption(option => option.setName('command').setDescription('Need help with a specific command? Type it\'s name in here').setRequired(false)),
@@ -454,7 +544,20 @@ const commands = [
 				.setDescription('Look up your item inventory')
 				.addSubcommand((subcommand) => subcommand.setName('loot').setDescription('See your loot inventory')
 					.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
-					.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
+					.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+					.addStringOption(option =>
+						option.setName('type')
+							.setDescription('filter for a specific item')
+							.setRequired(false)
+							.addChoices(
+								{ name: 'loot', value: 'loot' },
+								{ name: 'chest', value: 'chest' },
+								{ name: 'fish', value: 'fish' },
+								{ name: 'ascension', value: 'ascension' },
+								{ name: 'crafting', value: 'crafting' },
+								{ name: 'levelup', value: 'levelup' },
+							)
+					))
 				.addSubcommand((subcommand) => subcommand.setName('weapons').setDescription('See your weapon inventory')
 					.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 					.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
@@ -808,6 +911,7 @@ const commands = [
 							{ name: 'dungeon', value: 'dungeon' },
 							{ name: 'chars', value: 'chars' },
 							{ name: 'progress', value: 'progress' },
+							{ name: 'anime', value: 'anime' },
 							{ name: 'lilies', value: 'lilies' },
 							{ name: 'achievements', value: 'achievements' },
 							{ name: 'coins', value: 'coins' },
@@ -825,6 +929,12 @@ const commands = [
 				.addStringOption(option => option.setName('give').setDescription('Select a character to give').setRequired(true))
 				.addStringOption(option => option.setName('receive').setDescription('Select a character to receive').setRequired(true))
 	}.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 			.setName('transactions')
+	// 			.setDescription('See your past transactions')
+	// 			.addUserOption(option => option.setName('user').setDescription('See transactions')),
+	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 				.setName('trial')

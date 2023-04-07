@@ -40,15 +40,6 @@ client.on('ready', () => {
     console.log("Connected as " + client.user.tag);
     client.user.setPresence({ activities: [{ name: 'Fate', type: 'WATCHING', status: 'online' }] });
     
-    // POST bot stats to top.gg (only if Camelot)
-    if (client.user.id === "706183309943767112") {
-        const { AutoPoster } = require('topgg-autoposter');
-        const ap = AutoPoster(config.topgg.token, client);
-        ap.on('posted', () => {
-          console.log('Posted stats to Top.gg!')
-        });
-    };
-
     let interval = () => setInterval(function() {
         // Daily
         if (new Date().getHours() === 0 && new Date().getMinutes() === 0) {
@@ -128,6 +119,15 @@ client.on('ready', () => {
         };
     }, 24*60*60*1000);
 
+    // POST bot stats to top.gg (only if Camelot)
+    if (client.user.id === "706183309943767112") {
+        const { AutoPoster } = require('topgg-autoposter');
+        const ap = AutoPoster(config.topgg.token, client);
+        ap.on('posted', (stats) => {
+            console.log(`Posted stats to Top.gg | ${stats.serverCount} servers`)
+        });
+    };
+
 });
 
 client.on('interactionCreate', async interaction => {
@@ -152,6 +152,12 @@ client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
     if (!interaction.guild) return;
     if (interaction.user.bot) return;
+    if (interaction.guild.me.isCommunicationDisabled()) return;
+    if (interaction.user.id in blacklist) return interaction.reply(`Your account has been suspended${blacklist[interaction.user.id]}.\nIf you believe there to be a mistake, please join the support server below to appeal for this decision.\n**Support Server**: https://discord.gg/myy9PBCdEW`);
+    if (!interaction.channel.permissionsFor(interaction.guild.me).has(["SEND_MESSAGES", "VIEW_CHANNEL", "USE_EXTERNAL_EMOJIS", "EMBED_LINKS"])) {
+        if (interaction.channel.permissionsFor(interaction.guild.me).has(["SEND_MESSAGES"])) interaction.channel.send("Camelot needs the following permissions to work\n‧ Send Messages\n‧ View Channel\n‧ Use External Emojis\n‧ Embed Links");
+        return;
+    };
 
     // Spam Control (User)
     if (userCooldown.has(interaction.user.id)) {
@@ -167,18 +173,6 @@ client.on('interactionCreate', async interaction => {
     if (channelCooldown.has(interaction.channel.id)) return;
     channelCooldown.add(interaction.channel.id);
     setTimeout(() => channelCooldown.delete(interaction.channel.id), 750);
-
-    // Exit and stop if it's not there
-    if (interaction.guild.me.isCommunicationDisabled()) return;
-    if (!interaction.channel.permissionsFor(interaction.guild.me).has(["SEND_MESSAGES", "VIEW_CHANNEL", "USE_EXTERNAL_EMOJIS", "EMBED_LINKS"])) {
-        if (interaction.channel.permissionsFor(interaction.guild.me).has(["SEND_MESSAGES"])) interaction.channel.send("Camelot needs the following permissions to work\n‧ Send Messages\n‧ View Channel\n‧ Use External Emojis\n‧ Embed Links");
-        return;
-    };
-
-    // Blacklist
-    if (interaction.user.id in blacklist) {
-        return interaction.reply(`Your account has been suspended${blacklist[interaction.user.id]}.\nIf you believe there to be a mistake, please join the support server below to appeal for this decision.\n**Support Server**: https://discord.gg/myy9PBCdEW`);
-    };
 
     // ADMIN ACTIONS
     if (interaction.commandName === "admin") {
@@ -252,6 +246,7 @@ client.on('interactionCreate', async interaction => {
 
         // Execute command
         if (interaction.commandName === "arena" && interaction.options.getUser('user').id === "706183309943767112") return client.commands.get('trial').execute(interaction);
+        if (interaction.commandName === "boss" && interaction.options.getSubcommand() === "hunt") return client.commands.get('bosshunt').execute(interaction);
         if (["camelot", "changeimg", "convert", "give", "guess", "list", "open", "sell"].includes(interaction.commandName)) client.commands.get(interaction.commandName).execute(interaction, client);
         else client.commands.get(interaction.commandName)?.execute(interaction);
     });
@@ -291,77 +286,17 @@ const app = express();
 const webhook = new Topgg.Webhook(config.topgg.auth);
 app.post('/dblwebhook', webhook.listener(vote => {
     db.serialize(async () => {
-        await query(`UPDATE users SET pullresets = pullresets + 1, votestotal = votestotal + 1, lootbox = lootbox + 1, lastvote = ${new Date().getTime()} WHERE id = ${vote.user}`);
+        await query(`UPDATE users SET pullresets = pullresets + 1, votestotal = votestotal + 1, lootbox = lootbox + 1, gems = gems + 1, lastvote = ${new Date().getTime()} WHERE id = ${vote.user}`);
         let stats = await query(`SELECT votereminder FROM users WHERE id = ${vote.user}`);
         if (stats[0]?.votereminder) {
             setTimeout(async () => {
-                let dmUser = await client.users.fetch(vote.user);
+                const dmUser = await client.users.fetch(vote.user);
                 if (dmUser) dmUser.send("You're off cooldown!\nYou can vote again at https://top.gg/bot/706183309943767112/vote\nYou are receiving this message because you enabled vote reminders. Use `/reminder` if you want to turn it off again.");
             }, 12*60*60*1000);
         };
     });
 }));
 app.listen(3000);
-
-// Donatebot API
-// const DonateBotAPI = require('donatebot-node-api');
-// const api = new DonateBotAPI({
-// 	serverID: "927257132624130119",
-// 	apiKey: config.donatebot.key,
-// });
-
-// // Check for new donations every 5 minutes
-// setInterval(() => {
-//     api.getNewDonations().then(donations => {
-//         if (donations.length) {
-//             const product = {
-//                 "RQ-Xy86yos": [160, 60],
-//                 "n9D2AeoMzr": [300, 100],
-//                 "EQAnsf2I7q": [680, 160],
-//                 "ExAXfcW-7J": [1000, 240],
-//                 "bwSNjx7yWm": [1760, 360, 238], // Rimuru Tempest
-//                 "O7bkg49rJD": [3680, 720],
-//                 "7BsfSbcV_1": [7420, 1440, 10517], // Luminous
-//             };
-//             db.serialize(async () => {
-//                 for (const donation of donations) {
-//                     let stats = await query(`SELECT users.gems, users.transactions, characters.chars FROM users JOIN characters ON users.id = characters.id WHERE users.id = ${donation.buyer_id}`);
-//                     if (stats[0]) {
-//                         stats = {gems: stats[0].gems, transactions: JSON.parse(stats[0].transactions), chars: JSON.parse(stats[0].chars)};
-//                         const gems = (product[donation.product_id]?.[0] + (stats.transactions.some((e) => e.product_id === donation.product_id) ? 0 : product[donation.product_id]?.[1])) || 0;
-//                         await query(`UPDATE users SET gems = gems + ${gems}, transactions = '${JSON.stringify([...stats.transactions, donation])}' WHERE id = ${donation.buyer_id}`);
-//                         if (product[donation.product_id][2]) await query(`UPDATE characters SET chars = '${JSON.stringify([...stats.chars, product[donation.product_id][2]])}' WHERE id = ${donation.buyer_id}`);
-
-//                         // Send DM
-//                         const dmUser = await client.users.fetch(donation.buyer_id);
-//                         if (dmUser) {
-//                             const Embed = new MessageEmbed()
-//                             .setColor(0xbbffff)
-//                             .setTitle("Thank you for your support!")
-//                             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-//                             .setDescription(`We have received and processed your order! <:ClaraThumbsUp:1034899843505721514>\nPlease [contact](https://discord.gg/myy9PBCdEW) us if you encounter any issues. You can see the transaction details below.\n\n\`\`\`yaml\nOrder: ${product[donation.product_id]?.[0]} genesis gems\nPrice: ${donation.price} ${donation.currency}\nProduct ID: ${donation.product_id}\nTransaction ID: ${donation.txn_id}\nStatus: ${donation.status}\nBuyer ID: ${donation.buyer_id}\nDate: ${new Date(donation.timestamp*1000).toISOString()}\`\`\``)
-//                             dmUser.send({ embeds: [Embed] });
-//                         };
-
-//                         // Mark transaction as processed
-//                         const chnl = client.channels.cache.find(channel => channel.id === "1030963832136417320");
-//                         api.markDonation({txnID: donation.txn_id}).then(() => {
-//                             if (chnl) chnl.send(`Successfully processed transaction ${donation.txn_id}\nBuyer: <@${donation.buyer_id}> | ${donation.buyer_id}\nBalance: **${stats.gems}**<:genesis_gems:1034179687720681492>\nPrice: **${donation.price} ${donation.currency}**`);
-//                         }).catch(err => {
-//                             console.log(err);
-//                             if (chnl) chnl.send(`Failed to mark transaction ${donation.txn_id} as processed.\nBuyer: <@${donation.buyer_id}> | ${donation.buyer_id}\nBalance: **${stats.gems}**<:genesis_gems:1034179687720681492>\nPrice: **${donation.price} ${donation.currency}**`);
-//                         });
-//                     } else {
-//                         const chnl = client.channels.cache.find(channel => channel.id === "1030963832136417320");
-//                         if (chnl) chnl.send(`User <@${donation.buyer_id}> (${donation.buyer_id}) has no profile.\nEmail: **${donation.buyer_email}**\nOrder: **${donation.product_id}**\nPrice: **${donation.price} ${donation.currency}**`);        
-//                     };
-//                 };
-//             });
-//         };
-//     }).catch(err => {
-//         console.log(err);
-//     });
-// }, 5*60*1000);
 
 // Using Donatebot API
 const https = require("https");
