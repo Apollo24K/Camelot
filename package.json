@@ -1,6 +1,6 @@
 {
   "name": "camelot",
-  "version": "2.5.4",
+  "version": "2.5.5",
   "description": "Absent in the early Arthurian material, Camelot came to be described as the fantastic capital of Arthur's realm and a symbol of the Arthurian world.",
   "main": "camelot.js",
   "scripts": {
