@@ -2827,8 +2827,8 @@ const items = [
     new armorInfo("Radiant Gryphon's Boots", "armor", "boots", "Radiant Gryphon's Set", ["chest"], "<:radiant_gryphons_boots:1081564006906609754>", "https://i.imgur.com/Aa1lvLV.png", "def", 12, 125, "mythical", 638, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mr += 340;
         mybuff.mr.push(new buffInfo("+", 340, 9999));
-        matchStats.lootm += 1;
-    }, "The wearer takes **30%** less magic damage. Increases gold earned from the dungeon by **100%**.\n\n_30% magic damage reduction = 340 MR_"),
+        matchStats.lootm += 0.5;
+    }, "The wearer takes **30%** less magic damage. Increases gold earned from the dungeon by **50%**.\n\n_30% magic damage reduction = 340 MR_"),
     new armorInfo("Shadow Weaver Hat", "armor", "helmet", "Shadow Weaver Set", ["chest"], "<:shadow_weaver_hat:1081561956114235445>", "https://i.imgur.com/NRbZojM.png", "mr", 17, 149, "mythical", 639),
     new armorInfo("Shadow Weaver Robe", "armor", "cuirass", "Shadow Weaver Set", ["chest"], "<:shadow_weaver_robe:1081562683205238874>", "https://i.imgur.com/hn7TIUz.png", "hp", 111, 2222, "mythical", 640),
     new armorInfo("Shadow Weaver Vambrace", "armor", "gloves", "Shadow Weaver Set", ["chest"], "<:shadow_weaver_vambrace:1081563389597319228>", "https://i.imgur.com/gh0uFoc.png", "hp", 114, 2252, "mythical", 641),
