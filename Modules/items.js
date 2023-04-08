@@ -1,5 +1,4 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
 const buffInfo = require("./buffs.js");
 const delayedBuffs = require("./delayedBuffs.js");
 const { dealDamage } = require("./functions.js");

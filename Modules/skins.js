@@ -1,4 +1,3 @@
-/* eslint-disable no-extra-semi */
 class skinInfo {
     constructor(name, cid, obtain, creator, artist, price, currency, image, id) {
         this._name = name;
@@ -67,9 +66,7 @@ const skins = [
     new skinInfo("Nino Nakano (Valentine 2023)", 2, "valentine's event 2023", "seki#0001", "", 0, "", "https://i.imgur.com/RpBiydW.png", 22),
     new skinInfo("Miku Nakano (Valentine 2023)", 3, "valentine's event 2023", "seki#0001", "", 0, "", "https://i.imgur.com/1vPP5Ko.png", 23),
     new skinInfo("Mahiru Shiina (Maid)", 12400, "shop", "seki#0001", "", 0, "", "https://i.imgur.com/GaytFe7.png", 24),
-
     
 ];
-
 
 module.exports.skins = skins;

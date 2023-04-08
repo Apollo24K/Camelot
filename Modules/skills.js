@@ -1,4 +1,3 @@
-/* eslint-disable no-extra-semi */
 /* eslint-disable no-unused-vars */
 const buffInfo = require("./buffs.js");
 const { dealDamage } = require("./functions.js");
