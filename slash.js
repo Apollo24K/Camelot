@@ -256,40 +256,39 @@ const commands = [
 				.setName('disassemble')
 				.setDescription('Disassemble your items')
 				.addSubcommand((subcommand) => subcommand.setName('items').setDescription('Dissassemble an item').addStringOption(option => option.setName('items').setDescription('Select items to disassemble (use their IDs separated by comma ",")').setRequired(true)))
-				.addSubcommand((subcommand) => subcommand.setName('all').setDescription('Dissassemble items in mass')
+				.addSubcommand((subcommand) => subcommand.setName('all').setDescription('Dissassemble multiple items')
+					.addIntegerOption(option => option.setName('copies').setDescription('How many copies should they have?').setRequired(false))
 					.addStringOption(option =>
 					option.setName('grade')
-						.setDescription('Select grade of items | all rarities (excluding genesis) will be sold if left empty')
+						.setDescription('Select grade of dupes | all rarities will be sold if left empty')
 						.setRequired(false)
 						.addChoices(
+							{ name: 'Genesis', value: 'genesis'},
 							{ name: 'Mythical', value: 'mythical' },
 							{ name: 'Legendary', value: 'legendary' },
 							{ name: 'Unique', value: 'unique' },
 							{ name: 'Rare', value: 'rare' },
 							{ name: 'Special', value: 'special' },
 							{ name: 'Normal', value: 'normal' },
-						)
-					)
+				 		))
 					.addStringOption(option =>
-						option.setName('type')
-							.setDescription('Select type of items | all types will be sold if left empty')
-							.setRequired(false)
-							.addChoices(
-								{ name: 'Sword', value: 'sword' },
-								{ name: 'Staff', value: 'staff' },
-								{ name: 'Axe', value: 'axe' },
-								{ name: 'Bow', value: 'bow' },
-								{ name: 'Lance', value: 'lance' },
-								{ name: 'Dagger', value: 'dagger' },
-								{ name: 'Shield', value: 'shield' },
-								{ name: 'Helmet', value: 'helmet' },
-								{ name: 'Cuirass', value: 'cuirass' },
-								{ name: 'Gloves', value: 'gloves' },
-								{ name: 'Boots', value: 'boots' },
-							)
-					)
-					.addStringOption(option => option.setName('exclude').setDescription('Select items to be excluded (use their IDs separated by comma ",")').setRequired(false))
-				)
+					option.setName('type')
+						.setDescription('Filter for a specific type of weapon or armor')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'Sword', value: 'sword'},
+							{ name: 'Staff', value: 'staff'},
+							{ name: 'Axe', value: 'axe'},
+							{ name: 'Bow', value: 'bow'},
+							{ name: 'Lance', value: 'lance'},
+							{ name: 'Dagger', value: 'dagger'},
+							{ name: 'Shield', value: 'shield'},
+							{ name: 'Helmet', value: 'helmet'},
+							{ name: 'Cuirass', value: 'cuirass'},
+							{ name: 'Gloves', value: 'gloves'},
+							{ name: 'Boots', value: 'boots'},
+						))
+					.addStringOption(option => option.setName('exclude').setDescription('Select items to exclude disassembling (use their IDs separated by comma ",")').setRequired(false)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -905,6 +904,19 @@ const commands = [
 		data: new SlashCommandBuilder()
 				.setName('tickets')
 				.setDescription('See and open your tickets')
+				.addStringOption(option =>
+					option.setName('open') //if empty => show all tickets
+						.setDescription('Select the type of ticket')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'SS Ticket', value: 'ssticket'},
+							{ name: 'S Ticket', value: 'sticket'},
+							{ name: 'A Ticket', value: 'aticket'},
+							{ name: 'B Ticket', value: 'bticket'},
+							{ name: 'C Ticket', value: 'cticket'},
+							{ name: 'D Ticket', value: 'dticket'},
+						))
+				.addStringOption(option => option.setName('amount').setDescription('Select how many you want to use').setRequired(false)) //if empty => use all tickets
 				.addUserOption(option => option.setName('user').setDescription('See someone elses tickets')),
 	}.data.toJSON(),
 	{
@@ -977,7 +989,7 @@ const commands = [
 
 
 // Place your client and guild ids here
-const clientId = '695286837568340119'; // Elder: "695286837568340119" Camelot: "706183309943767112"
+const clientId = '691399125517992086'; // Elder: "695286837568340119" Camelot: "706183309943767112"
 
 // commands = commands.map((e) => e.data.toJSON());
 
