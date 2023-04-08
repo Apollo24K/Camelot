@@ -2751,7 +2751,7 @@ const items = [
             myStats.md += Math.floor(myStats.md * (0.1 + (0.2*(1-(myStats.hp/myStats.maxhp)))));
         }, 9999));
         matchStats.xpboost += 0.75;
-    }, "Increas the wearers attack and magic damage by **10**-**30%** depending on their HP. Gets **+75%** more class xp in the dungeon after a win."),
+    }, "Increases the wearers attack and magic damage by **10**-**30%** depending on their HP. Gets **+75%** more class xp in the dungeon after a win."),
     new armorInfo("Shadow Strider Hood", "armor", "helmet", "Shadow Strider Set", ["crafting", "chest"], "<:shadow_strider_hood:1081545897307033761>", "https://i.imgur.com/e5TgwBx.png", "mr", 12, 127, "legendary", 607),
     new armorInfo("Shadow Strider Vest", "armor", "cuirass", "Shadow Strider Set", ["crafting", "chest"], "<:shadow_strider_vest:1081546622187618304>", "https://i.imgur.com/gyIqP19.png", "def", 12, 128, "legendary", 608),
     new armorInfo("Shadow Strider Gloves", "armor", "gloves", "Shadow Strider Set", ["crafting", "chest"], "<:shadow_strider_gloves:1081547372187897947>", "https://i.imgur.com/LWB4CtA.png", "hp", 46, 1639, "legendary", 609),
