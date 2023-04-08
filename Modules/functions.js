@@ -472,7 +472,7 @@ module.exports.generateSubstats = (n=4) => {
     return stats.sort((a, b) => 0.5 - Math.random()).slice(0, n).reduce((acc,curr)=> (acc[curr]=1,acc),{});
 };
 
-module.exports.getAscensionMaterial = (id, ascItems) => {
+function getAscensionMaterial(id, ascItems) {
     id += "camelot";
     let hash = 3;
     for (let i=0; i < id.length; i++) {
@@ -480,6 +480,59 @@ module.exports.getAscensionMaterial = (id, ascItems) => {
         hash |= 0;
     };
     return ascItems[Math.abs(hash) % ascItems.length];
+};
+module.exports.getAscensionMaterial = (id, ascItems) => getAscensionMaterial(id, ascItems);
+
+module.exports.filterItems = (userItems, choice, exclude=[], sellGrade=false, sellType=false, stats=false) => {
+    const { items } = require("./items.js");
+    const itemsToDisassemble = [];
+    const itemIdsToDisassemble = [];
+    const loot = {};
+    
+    for (const item of userItems) {
+        const fItem = items[item.itemid];
+
+        // Filter items to be deleted
+        if (choice[0]) {
+            if (!choice.includes(item.uniqueid.split(":")[0])) continue;
+        } else {
+            if (exclude.includes(item.uniqueid.split(":")[0])) continue;
+            if (fItem.grade === "genesis") continue;
+            if (sellGrade && fItem.grade !== sellGrade) continue;
+            if (sellType && fItem.type !== sellType) continue;
+        };
+
+        const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
+        const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade);
+        const levelItem = items[fItem.category === "weapon" ? 56 : 57];
+
+        let exchangeItem = false;
+        if (fItem.grade === "genesis") exchangeItem = items[676];
+        else if (fItem.grade === "mythical") exchangeItem = items[677];
+        else if (fItem.grade === "legendary") exchangeItem = items[678];
+
+        const ascMatsNeeded = Math.round((1/6) * 12 * ((0.5*item.ascension*item.ascension) + (3.5*item.ascension) + 3));
+        const craftMatsNeeded = Math.round((1/6) * 8 * ((0.5*item.ascension*item.ascension) + (3.5*item.ascension) + 3));
+        const levelMatsNeeded = Math.floor(item.level/5000);
+
+        loot[ascItem.id] = (loot[ascItem.id] + ascMatsNeeded) || ascMatsNeeded;
+        loot[craftItem.id] = (loot[craftItem.id] + craftMatsNeeded) || craftMatsNeeded;
+        if (levelMatsNeeded) loot[levelItem.id] = (loot[levelItem.id] + levelMatsNeeded) || levelMatsNeeded;
+        if (exchangeItem) loot[exchangeItem.id] = (loot[exchangeItem.id] + 1) || 1;
+        
+        // Unequip if equipped
+        if (stats) {
+            let type = fItem.category;
+            if (type === "armor" || fItem.type === "shield") type = fItem.type;
+            if (type === "shield" && stats.premium < 4) type = "weapon";
+            if (item.character in stats.equipment && stats.equipment[item.character][type] === item.uniqueid) delete stats.equipment[item.character][type];
+        };
+
+        itemsToDisassemble.push(fItem);
+        itemIdsToDisassemble.push(item);
+    };
+
+    return { itemsToDisassemble, itemIdsToDisassemble, loot };
 };
 
 module.exports.showPage = (currPage, pagesTotal, left, arr, elements=15) => {
