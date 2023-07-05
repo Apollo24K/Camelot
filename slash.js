@@ -10,6 +10,16 @@ const commands = [
 				.setName('ability')
 				.setDescription('Look up characters with abilities')
 				.addStringOption(option => option.setName('character').setDescription('Get more information about a characters ability').setRequired(false))
+				.addStringOption(option =>
+					option.setName('filter')
+						.setDescription('Select a filter')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'active', value: 'ability' },
+							{ name: 'passive', value: 'passive' },
+							{ name: 'party', value: 'party' },
+						)
+				)
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 	}.data.toJSON(),
@@ -46,6 +56,15 @@ const commands = [
 		data: new SlashCommandBuilder()
 				.setName('anime')
 				.setDescription('Get a list of all anime included in the bot')
+				.addStringOption(option =>
+					option.setName('filter')
+						.setDescription('Select a filter')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'completed', value: 'completed' },
+							{ name: 'missing', value: 'missing' },
+						)
+				)
 				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 	}.data.toJSON(),
@@ -128,6 +147,12 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+				.setName('captcha')
+				.setDescription('Verify you\'re human')
+				.addStringOption(option => option.setName('code').setDescription('Enter the verification code').setRequired(true))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 				.setName('convert')
 				.setDescription('Convert shards')
 				.addSubcommand((subcommand) => subcommand.setName('shards').setDescription('convert shards')
@@ -173,6 +198,7 @@ const commands = [
 							.setDescription('Select shards to use')
 							.setRequired(true)
 							.addChoices(
+								{ name: 'All', value: '0' },
 								{ name: 'Mythical', value: '54' },
 								{ name: 'Rare', value: '52' },
 								{ name: 'Common', value: '50' },
@@ -212,8 +238,7 @@ const commands = [
 					.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
 				.addSubcommand((subcommand) => subcommand.setName('info').setDescription('See detailed info about a class')
 					.addStringOption(option => option.setName('class').setDescription('Choose a class').setRequired(true)))
-				.addSubcommand((subcommand) => subcommand.setName('assign').setDescription('Assign your character a class')
-					.addStringOption(option => option.setName('character').setDescription('Choose a character').setRequired(true))
+				.addSubcommand((subcommand) => subcommand.setName('select').setDescription('select a class')
 					.addStringOption(option => option.setName('class').setDescription('Choose a class').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('pick').setDescription('Pick a beginner class'))
 				.addSubcommand((subcommand) => subcommand.setName('upgrade').setDescription('Upgrade to an advanced or master class')
@@ -223,7 +248,9 @@ const commands = [
 					.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)))
 				.addSubcommand((subcommand) => subcommand.setName('transfer').setDescription('Transfer your class xp to another class')
 					.addStringOption(option => option.setName('from').setDescription('Your old class').setRequired(true))
-					.addStringOption(option => option.setName('to').setDescription('Your new class').setRequired(true))),
+					.addStringOption(option => option.setName('to').setDescription('Your new class').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('switch').setDescription('Switch your class path')
+					.addStringOption(option => option.setName('to').setDescription('Your new class').setRequired(true)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -257,6 +284,11 @@ const commands = [
 				.setDescription('Disassemble your items')
 				.addSubcommand((subcommand) => subcommand.setName('items').setDescription('Dissassemble an item').addStringOption(option => option.setName('items').setDescription('Select items to disassemble (use their IDs separated by comma ",")').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('all').setDescription('Dissassemble items in mass')
+					.addBooleanOption(option =>
+						option.setName('dupes')
+							.setDescription('Should only dupes be disassembled?')
+							.setRequired(false)
+					)
 					.addStringOption(option =>
 					option.setName('grade')
 						.setDescription('Select grade of items | all rarities (excluding genesis) will be sold if left empty')
@@ -337,7 +369,8 @@ const commands = [
 		data: new SlashCommandBuilder()
 				.setName('event')
 				.setDescription('Event commands')
-				.addSubcommand((subcommand) => subcommand.setName('rewards').setDescription('Event rewards')),
+				.addSubcommand((subcommand) => subcommand.setName('rewards').setDescription('Event rewards'))
+				.addSubcommand((subcommand) => subcommand.setName('shop').setDescription('Event shop')),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -381,7 +414,7 @@ const commands = [
 				.setName('give')
 				.setDescription('Give coins or characters to other players')
 				.addSubcommand((subcommand) => subcommand.setName('coins').setDescription('Give someone coins').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addIntegerOption(option => option.setName('amount').setDescription('How much coins should be sent?').setRequired(true)))
-				.addSubcommand((subcommand) => subcommand.setName('character').setDescription('Give someone a character').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Give someone characters').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addStringOption(option => option.setName('characters').setDescription('Select characters separated by comma (,)').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('premium').setDescription('Give someone premium (premium only)').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addIntegerOption(option => option.setName('tier').setDescription('Select the tier you want to gift').setRequired(true)))
 	}.data.toJSON(),
 	{
@@ -404,7 +437,7 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 				.setName('guild')
-				.setDescription('Item related commands')
+				.setDescription('Guild related commands')
 				.addSubcommand((subcommand) => subcommand.setName('create').setDescription('Create a guild')
 					.addStringOption(option => option.setName('name').setDescription('name your guild').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('find').setDescription('Search for a guild')
@@ -414,20 +447,20 @@ const commands = [
 					.addStringOption(option => option.setName('code').setDescription('join code of the guild').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('leave').setDescription('Leave a guild'))
 				.addSubcommand((subcommand) => subcommand.setName('promote').setDescription('Promote someone in your guild')
-					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be promoted').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('demote').setDescription('Demote someone in your guild')
-					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be demoted').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('kick').setDescription('Kick someone from your guild')
 					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('invite').setDescription('Invite someone to your guild')
 					.addUserOption(option => option.setName('user').setDescription('Select a user to invite').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('view').setDescription('View a guild')
 					.addStringOption(option => option.setName('id').setDescription('search for a guild using its ID').setRequired(false))
-					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(false)))
+					.addUserOption(option => option.setName('user').setDescription('Select a user to see their guild').setRequired(false)))
 				.addSubcommand((subcommand) => subcommand.setName('edit').setDescription('Edit guild settings')
 					.addStringOption(option =>
 						option.setName('setting')
-							.setDescription('Choose a difficulty')
+							.setDescription('Choose a setting')
 							.setRequired(true)
 							.addChoices(
 								{ name: 'Embed Color', value: 'color' },
@@ -441,6 +474,15 @@ const commands = [
 					)
 					.addStringOption(option => option.setName('input').setDescription('setting').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('top').setDescription('See the guild leaderboards')
+					.addStringOption(option =>
+						option.setName('sort')
+							.setDescription('sort guilds by')
+							.setRequired(false)
+							.addChoices(
+								{ name: 'level', value: 'level' },
+								{ name: 'event', value: 'event' },
+							)
+					)
 					.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false)))
 				.addSubcommand((subcommand) => subcommand.setName('donate').setDescription('Donate coins or gems to your guild')
 					.addStringOption(option =>
@@ -465,9 +507,8 @@ const commands = [
 								{ name: 'Timers', value: 'cdreduction' },
 							)
 					))
-				.addSubcommand((subcommand) => subcommand.setName('convert').setDescription('Convert gems in your treasury into coins')
-					.addIntegerOption(option => option.setName('amount').setDescription('Choose how many you want to convert').setRequired(true)))
-
+				// .addSubcommand((subcommand) => subcommand.setName('convert').setDescription('Convert gems in your treasury into coins')
+				// 	.addIntegerOption(option => option.setName('amount').setDescription('Choose how many you want to convert').setRequired(true)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -510,6 +551,15 @@ const commands = [
 				)
 				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addStringOption(option =>
+					option.setName('ephemeral')
+						.setDescription('Ephemeral?')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'true', value: 'true' },
+							{ name: 'false', value: 'false' },
+						)
+				),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -550,12 +600,25 @@ const commands = [
 				.addSubcommand((subcommand) => subcommand.setName('equip').setDescription('Equip your character with an item')
 					.addStringOption(option => option.setName('character').setDescription('Choose a character').setRequired(true))
 					.addStringOption(option => option.setName('item').setDescription('Choose an item').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('unequip').setDescription('Unequip an item')
+					.addStringOption(option => option.setName('item').setDescription('Choose an item').setRequired(true)))
 				.addSubcommand((subcommand) => subcommand.setName('levelup').setDescription('Levelup an item')
-					.addStringOption(option => option.setName('id').setDescription('Choose an item to level up').setRequired(true)))
-				// .addSubcommand((subcommand) => subcommand.setName('pick').setDescription('Pick a beginner class'))
-				// .addSubcommand((subcommand) => subcommand.setName('level').setDescription('See your class level')
-				// 	.addStringOption(option => option.setName('class').setDescription('Choose a class').setRequired(false))
-				// 	.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)))
+					.addStringOption(option => option.setName('id').setDescription('Choose an item to level up').setRequired(true))
+					.addStringOption(option =>
+						option.setName('flag')
+							.setDescription('Choose how to display the character')
+							.setRequired(false)
+							.addChoices(
+								{ name: 'max', value: 'max' },
+							)
+					))
+				.addSubcommand((subcommand) => subcommand.setName('rename').setDescription('Change item codes (T3+)')
+					.addStringOption(option => option.setName('before').setDescription('Choose the item you want to rename').setRequired(true))
+					.addStringOption(option => option.setName('after').setDescription('Choose a new item code').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('lock').setDescription('Lock items so they won\'t get disassembled by accident')
+					.addStringOption(option => option.setName('items').setDescription('Choose the items to be locked').setRequired(false)))
+				.addSubcommand((subcommand) => subcommand.setName('unlock').setDescription('Unlock items so you can disassemble locked items again')
+					.addStringOption(option => option.setName('items').setDescription('Choose the items to be locked').setRequired(false)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -577,7 +640,7 @@ const commands = [
 								{ name: 'levelup', value: 'levelup' },
 							)
 					))
-				.addSubcommand((subcommand) => subcommand.setName('weapons').setDescription('See your weapon inventory')
+				.addSubcommand((subcommand) => subcommand.setName('weapon').setDescription('See your weapon inventory')
 					.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 					.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 					.addStringOption(option =>
@@ -593,6 +656,14 @@ const commands = [
 								{ name: 'dagger', value: 'dagger' },
 								{ name: 'shield', value: 'shield' },
 							)
+					)
+					.addStringOption(option =>
+						option.setName('flag')
+							.setDescription('Choose how to display the items')
+							.setRequired(false)
+							.addChoices(
+								{ name: 'detailed', value: 'detailed' },
+							)
 					))
 				.addSubcommand((subcommand) => subcommand.setName('armor').setDescription('See your armor inventory')
 					.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
@@ -607,6 +678,14 @@ const commands = [
 								{ name: 'cuirass', value: 'cuirass' },
 								{ name: 'gloves', value: 'gloves' },
 								{ name: 'boots', value: 'boots' },
+							)
+					)
+					.addStringOption(option =>
+						option.setName('flag')
+							.setDescription('Choose how to display the items')
+							.setRequired(false)
+							.addChoices(
+								{ name: 'detailed', value: 'detailed' },
 							)
 					))
 	}.data.toJSON(),
@@ -674,6 +753,22 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+				.setName('mod')
+				.setDescription('Only bot moderators can use this command')
+				.addStringOption(option => option.setName('action').setDescription('Choose an action to take').setRequired(true))
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addStringOption(option =>
+					option.setName('ephemeral')
+						.setDescription('Ephemeral?')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'true', value: "true" },
+							{ name: 'false', value: "false" },
+						)
+				)
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 				.setName('open')
 				.setDescription('Open a lootbox')
 				.addStringOption(option =>
@@ -693,6 +788,37 @@ const commands = [
 						)
 				)
 				.addStringOption(option => option.setName('amount').setDescription('select how many you want to open').setRequired(false)),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+				.setName('party')
+				.setDescription('Party related commands')
+				.addSubcommand((subcommand) => subcommand.setName('create').setDescription('Create a party')
+					.addStringOption(option => option.setName('name').setDescription('name your party').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('view').setDescription('View a party')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to view their party').setRequired(false)))
+				.addSubcommand((subcommand) => subcommand.setName('join').setDescription('Join a party')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to joing their party').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('invite').setDescription('Invite someone to your party')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to invite them to your party').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('leave').setDescription('Leave a party'))
+				.addSubcommand((subcommand) => subcommand.setName('kick').setDescription('Kick someone from your party')
+					.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked from the party').setRequired(true)))
+				.addSubcommand((subcommand) => subcommand.setName('dissolve').setDescription('Delete a party'))
+				.addSubcommand((subcommand) => subcommand.setName('edit').setDescription('Edit party settings')
+					.addStringOption(option =>
+						option.setName('setting')
+							.setDescription('Choose a setting')
+							.setRequired(true)
+							.addChoices(
+								{ name: 'Embed Color', value: 'color' },
+								{ name: 'Description', value: 'description' },
+								{ name: 'Banner', value: 'banner'},
+								{ name: 'Icon', value: 'icon'},
+								{ name: 'Rename', value: 'rename' },
+							)
+					)
+					.addStringOption(option => option.setName('input').setDescription('setting').setRequired(true)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -717,9 +843,37 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+				.setName('preset')
+				.setDescription('Quickly swap builds')
+				.addSubcommand((subcommand) => subcommand.setName('view').setDescription('See your sets')
+					.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)
+				))
+				.addSubcommand((subcommand) => subcommand.setName('equip').setDescription('Select a set to be used')
+					.addIntegerOption(option => option.setName('set').setDescription('Choose which set you want to use').setRequired(true))
+					.addStringOption(option => option.setName('character').setDescription('Select a character to equip on').setRequired(false))
+				)
+				.addSubcommand((subcommand) => subcommand.setName('edit').setDescription('Edit your presets | leave empty to remove everything from the preset')
+					.addIntegerOption(option => option.setName('set').setDescription('Choose which set you want to use').setRequired(true))
+					.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(false))
+					.addStringOption(option => option.setName('class').setDescription('Select a class').setRequired(false))
+					.addStringOption(option => option.setName('items').setDescription('Select items separated by comma (,)').setRequired(false))
+				)
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 				.setName('profile')
 				.setDescription('Display User Profiles')
-				.addUserOption(option => option.setName('user').setDescription('Profile of user')),
+				.addUserOption(option => option.setName('user').setDescription('Profile of user'))
+				.addStringOption(option => option.setName('bio').setDescription('Change your bio').setRequired(false))
+				.addStringOption(option =>
+					option.setName('ephemeral')
+						.setDescription('Ephemeral?')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'true', value: 'true' },
+							{ name: 'false', value: 'false' },
+						)
+				),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -829,6 +983,14 @@ const commands = [
 				.setName('select')
 				.setDescription('Select a battle character for the dungeon and more')
 				.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(true))
+				.addStringOption(option =>
+					option.setName('mode')
+						.setDescription('Select which game mode it should be used for')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'stampede', value: 'stampede' },
+						)
+				)
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -887,6 +1049,11 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+				.setName('stampede')
+				.setDescription('A recurring special battle event'),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 				.setName('stats')
 				.setDescription('See some stats of camelot'),
 	}.data.toJSON(),
@@ -905,7 +1072,21 @@ const commands = [
 		data: new SlashCommandBuilder()
 				.setName('tickets')
 				.setDescription('See and open your tickets')
-				.addUserOption(option => option.setName('user').setDescription('See someone elses tickets')),
+				.addUserOption(option => option.setName('user').setDescription('See someone elses tickets'))
+				.addStringOption(option =>
+					option.setName('open')
+						.setDescription('Open a ticket')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'SS Ticket', value: 'ssticket' },
+							{ name: 'S Ticket', value: 'sticket' },
+							{ name: 'A Ticket', value: 'aticket' },
+							{ name: 'B Ticket', value: 'bticket' },
+							{ name: 'C Ticket', value: 'cticket' },
+							{ name: 'D Ticket', value: 'dticket' },
+						)
+				)
+				.addStringOption(option => option.setName('amount').setDescription('Amount of tickets to open | Keywords: max').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -977,7 +1158,7 @@ const commands = [
 
 
 // Place your client and guild ids here
-const clientId = '695286837568340119'; // Elder: "695286837568340119" Camelot: "706183309943767112"
+const clientId = '695286837568340119'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
 
 // commands = commands.map((e) => e.data.toJSON());
 
