@@ -2,15 +2,15 @@ const fs = require('fs');
 const config = require('./config.json');
 const package = require('./package.json');
 const { db, query } = require("./db_handler.js");
-const { Client, Options, Collection, MessageEmbed } = require('discord.js');
+const { Client, GatewayIntentBits, Partials, Options, Collection, PermissionsBitField, EmbedBuilder } = require('discord.js');
 
 // Create Client
 const client = new Client({
-    intents: ["GUILDS", "GUILD_MESSAGES", "DIRECT_MESSAGES"], // , "GUILD_MESSAGE_REACTIONS", "GUILD_VOICE_STATES"
-    partials: ["CHANNEL"],
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.DirectMessages],
+    partials: [Partials.Channel],
     makeCache: Options.cacheWithLimits({
         MessageManager: 0,
-        // UserManager: 0,
+        UserManager: 0,
 	}),
     shards: "auto",
 });
@@ -32,13 +32,13 @@ const myCampaign = new Campaign({
 });
 
 // Global Variables
-const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
 const userCooldown = new Map();
 const channelCooldown = new Set();
 
 client.on('ready', () => {
     console.log("Connected as " + client.user.tag);
-    client.user.setPresence({ activities: [{ name: 'Fate', type: 'WATCHING', status: 'online' }] });
+    if (client.user.id === "706183309943767112") client.user.setPresence({ activities: [{ name: 'Fate', type: 'WATCHING', status: 'online' }] });
+    else client.user.setPresence({ activities: [{ name: 'You', type: 'WATCHING', status: 'online' }] });
     
     let interval = () => setInterval(function() {
         // Daily
@@ -117,6 +117,13 @@ client.on('ready', () => {
                 if (err) console.error(err);
             });
         };
+
+        // Start new Stampede
+        if (new Date().getDate() === 14) {
+            db.serialize(async () => {
+                await query(`INSERT INTO stampedes (type, bosshp, bosshpmax, generalhp, generalhpmax, generalstotal, generalsleft, monsterstotal, monstersleft) values (0, 13728460, 13728460, 482760, 482760, 47, 47, 4728, 4728)`);
+            });
+        };
     }, 24*60*60*1000);
 
     // POST bot stats to top.gg (only if Camelot)
@@ -150,14 +157,17 @@ client.on('interactionCreate', async interaction => {
 
     // Exit and stop if it's not there
     if (!interaction.isCommand()) return;
-    if (!interaction.guild) return;
     if (interaction.user.bot) return;
-    if (interaction.guild.me.isCommunicationDisabled()) return;
-    if (interaction.user.id in blacklist) return interaction.reply(`Your account has been suspended${blacklist[interaction.user.id]}.\nIf you believe there to be a mistake, please join the support server below to appeal for this decision.\n**Support Server**: https://discord.gg/myy9PBCdEW`);
-    if (!interaction.channel.permissionsFor(interaction.guild.me).has(["SEND_MESSAGES", "VIEW_CHANNEL", "USE_EXTERNAL_EMOJIS", "EMBED_LINKS"])) {
-        if (interaction.channel.permissionsFor(interaction.guild.me).has(["SEND_MESSAGES"])) interaction.channel.send("Camelot needs the following permissions to work\n‧ Send Messages\n‧ View Channel\n‧ Use External Emojis\n‧ Embed Links");
+    if (!interaction.guild) return interaction.reply({content: `Please use the bot on a server.`, ephemeral: true});;
+    if (interaction.guild.members.me.isCommunicationDisabled()) return;
+    if (!interaction.guild.members.me.permissions.has([PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.UseExternalEmojis, PermissionsBitField.Flags.EmbedLinks, PermissionsBitField.Flags.AttachFiles])) {
+        if (interaction.guild.members.me.permissions.has([PermissionsBitField.Flags.SendMessages])) interaction.channel.send("Camelot needs the following permissions to work\n- Send Messages\n- View Channel\n- Use External Emojis\n- Embed Links\n- Attach Files");
         return;
     };
+
+    // Blacklist
+    const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
+    if (interaction.user.id in blacklist) return interaction.reply(`Your account has been suspended${blacklist[interaction.user.id]}.\nIf you believe there to be a mistake, please join the support server below to appeal for this decision.\n**Support Server**: https://discord.gg/myy9PBCdEW`);
 
     // Spam Control (User)
     if (userCooldown.has(interaction.user.id)) {
@@ -181,28 +191,28 @@ client.on('interactionCreate', async interaction => {
 
     // Ping!
     if (interaction.commandName === "ping") {
-        return interaction.reply({ content: "pong! 🏓 " + client.ws.ping + "ms" });
+        return interaction.reply({ content: "pong! 🏓" + Math.floor(client.ws.ping) + "ms" });
     };
 
     // Support Server
     if (interaction.commandName === "support") {
-        const Embed = new MessageEmbed()
+        const Embed = new EmbedBuilder()
         .setTitle("Camelot Support")
         .setColor(0xbbffff)
         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
         .setDescription("Join our support server to reach us!\nYou can ask for help and help us improve the bot <:RaphiSmile:868998036645380197>\n\nServer Link: https://discord.gg/myy9PBCdEW")
-        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLink`, iconURL: "https://i.imgur.com/syj1LqO.jpeg" })
+        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/syj1LqO.jpeg" })
         return interaction.reply({ embeds: [Embed] });
     };
 
     // Premium
     if (interaction.commandName === "premium" || interaction.commandName === "patreon") {
-        const Embed = new MessageEmbed()
+        const Embed = new EmbedBuilder()
         .setTitle("Camelot Premium")
         .setColor(0xbbffff)
         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
         .setDescription("Camelot Premium offers a lot of features to improve your playing experience. If you enjoy playing with Camelot, we would really appreciate your support! <:fumino_heart:794983494534955038>\nYou can find out more about the features and benefits of premium on our patreon.\n\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees")
-        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLink`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
+        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
         return interaction.reply({ embeds: [Embed] });
     };
 
@@ -211,7 +221,7 @@ client.on('interactionCreate', async interaction => {
         const msg = interaction.options.getString('msg');
         if (msg.length > 1500) return interaction.reply("Your submission is too long!");
         const chnl = client.channels.cache.find(channel => channel.id === "943950237779755089");
-        const Embed = new MessageEmbed()
+        const Embed = new EmbedBuilder()
         .setColor(0xbbffff)
         .setFooter({text: `${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
         .setTitle("New Submission")
@@ -224,25 +234,33 @@ client.on('interactionCreate', async interaction => {
         // ADD NEW PLAYERS
         const entryExists = await query(`SELECT name FROM users WHERE id = ${interaction.user.id}`); // Check if user exists in the db
         if (entryExists.length) { // Update username if changed
-            if (entryExists[0].name !== interaction.user.tag) await query(`UPDATE users SET name = "${interaction.user.tag.split('"').join('""')}" WHERE id = ${interaction.user.id}`, 'run');
+            if (entryExists[0].name !== interaction.user.username) await query(`UPDATE users SET name = "${interaction.user.username}" WHERE id = ${interaction.user.id}`, 'run');
         } else { // Add new player if not exists
-            await query(`INSERT INTO users (id, name) VALUES (${interaction.user.id}, "${interaction.user.tag.split('"').join('""')}")`, 'run');
+            await query(`INSERT INTO users (id, name) VALUES (${interaction.user.id}, "${interaction.user.username}")`, 'run');
             await query(`INSERT INTO characters (id) VALUES (${interaction.user.id})`, 'run');
             await query(`INSERT INTO dungeon (id) VALUES (${interaction.user.id})`, 'run');
         };
         // ADD NEW SERVERS
         const serverExists = await query(`SELECT user_ids FROM servers WHERE id = ${interaction.guild.id}`); // Check if server exists in the db
-        const userExists = await query(`SELECT rowid FROM users WHERE id = ${interaction.user.id}`); // Get user id
         if (serverExists.length) { // Add players to guild
-            if (!serverExists[0].user_ids.split(",").includes(""+userExists[0].rowid)) await query(`UPDATE servers SET user_ids = "${serverExists[0].user_ids+","+userExists[0].rowid}" WHERE id = ${interaction.guild.id}`, 'run');
+            if (!serverExists[0].user_ids.split(",").includes(interaction.user.id)) await query(`UPDATE servers SET user_ids = "${serverExists[0].user_ids+","+interaction.user.id}" WHERE id = ${interaction.guild.id}`, 'run');
         } else { // Add new server if not exists
-            await query(`INSERT INTO servers (id, name, user_ids) VALUES (${interaction.guild.id}, "${interaction.guild.name.split('"').join('""')}", "${userExists[0].rowid}")`, 'run');
+            await query(`INSERT INTO servers (id, name, user_ids) VALUES (${interaction.guild.id}, "${interaction.guild.name.split('"').join('""')}", "${interaction.user.id}")`, 'run');
         };
 
         // TUTORIAL
-        let tutorial = await query(`SELECT tutorial FROM users WHERE id = ${interaction.user.id}`);
-        tutorial = JSON.parse(tutorial[0]?.tutorial);
-        if (!([0,1,2,3,4,5,6,7].every((e) => tutorial.includes(e)))) return client.commands.get('tutorial').execute(interaction);
+        const { 0: userStats } = await query(`SELECT tutorial, mailbox, mailreceived FROM users WHERE id = ${interaction.user.id}`);
+        userStats.tutorial = JSON.parse(userStats.tutorial);
+        if (!([0,1,2,3,4,5,6,7].every((e) => userStats.tutorial.includes(e)))) return client.commands.get('tutorial').execute(interaction);
+
+        // Check new mails
+        userStats.mailbox = JSON.parse(userStats.mailbox);
+        if (userStats.mailbox.length > userStats.mailreceived) {
+            await query(`UPDATE users SET mailreceived = ${userStats.mailbox.length} WHERE id = ${interaction.user.id}`);
+            setTimeout(() => {
+                interaction.channel.send(interaction.user.toString() + " you have received a **new mail**! Open it using </profile:1010583712527810641>");
+            }, 1000);
+        };
 
         // Execute command
         if (interaction.commandName === "arena" && interaction.options.getUser('user').id === "706183309943767112") return client.commands.get('trial').execute(interaction);
@@ -258,10 +276,10 @@ client.on("messageCreate", async message => {
     if (message.guild) {
         if (message.mentions.users.first()?.id !== client.user.id) return;
         const emojis = ["<:LuminousPsssh:1071574041116295328>", "<:HayasakaSmile:928369469301088326>", "<:ClaraLove:1034899845539962890>", "<:DizzyWorried:1025876785470111766>", "<:KannaWave:1025884100445339660>", "<:CirWave:1025884103565914252>", "<:KazuhaWave:1025884094975967324>", "<:HowCute:1026605362960408576>", "<:KanaoSmile:1025876532587151486>", "<:KannaPat:1026921369650331648>", "<a:KannaFire:1045096950070001687>", "<:KaguyaThink:1045096923255816253>", "<:MashaWave:928370055354400799>", "<:RoxyConcern:1041990236307197972>", "<:RaphiSmile:928370490270183485>", "<:RemWink:928370529742757960>", "<:MikuHappy:1045096947876368404>", "<:LoliSip:928369879348805692>", "<:LoveHeart:928369932683595827>", "<:OhMy:928370383495770112>", "<:AzusaSmug:1025884097299615774>", "<:KotoWave:1025884105281372260>", "<:omoshiroi:1029435114637246575>", "<:wow:1020442064409874462>", "<:umu:1025876213853605919>", "<:yayyy:1031583211828035655>", "<:pewpew:928370427112357918>", "<:ara:1071573953509863465>", "<:cuteXD:1031583207562428488>", "<:ThumbsUp:1020442047712350298>", "<:TohruPoint:928370972132782090>", "<:Woah:928370799965003826>", "<:SmugSip:928368817078407229>", "<a:ShiroeGlassesPush:1027582770211463358>", "<:SataniaEvil:928369432307331162>"];
-        if (message.type === 'DEFAULT') message.channel.send("Welcome, Adventurer " + emojis[Math.floor(Math.random() * emojis.length)] + "\nPlease use slash commands (i.e. `/pull`) to interact with the bot.\nIf it doesn't work it's probably because of some missing permissions, make sure that Camelot has all required permissions to function! Please reach out to us if you need help at any step: <https://discord.gg/myy9PBCdEW>");
+        if (message.type === 'DEFAULT') message.channel.send("Welcome, Adventurer " + emojis[Math.floor(Math.random() * emojis.length)] + "\nPlease use slash commands (i.e. </pull:1011014030103674913>) to interact with the bot.\nIf it doesn't work it's probably because of some missing permissions, make sure that Camelot has all required permissions to function! Please reach out to us if you need help at any step: <https://discord.gg/myy9PBCdEW>");
     } else {
         const channel = client.channels.cache.find(channel => channel.id === "1077264632412110890");
-        const Embed = new MessageEmbed()
+        const Embed = new EmbedBuilder()
         .setColor(0xbbffff)
         .setDescription(message.content)
         .setAuthor({name: message.author.tag, url: "https://"+message.author.id+".com", iconURL: message.author.displayAvatarURL({ dynamic: true }) + "?size=2048"})
@@ -269,8 +287,24 @@ client.on("messageCreate", async message => {
     };
 });
 
-client.on("rateLimit", rateLimitData => {
-    console.log(rateLimitData);
+// Debugging
+client.on("rateLimit", console.log)
+    // .on("debug", console.log)
+    // .on("warn", console.log)
+
+client.on('disconnect', () => {
+    console.log('Bot is disconnecting...');
+    console.log('ws status is ' + client.ws.status)
+
+    // Wait for 15 seconds before checking the WebSocket status
+    // setTimeout(() => {
+    //     if(client.ws.status === 5) { // If the WebSocket is disconnected
+    //         console.log('Reconnecting...');
+    //         client.destroy().then(() => {
+    //             client.login(config.token);
+    //         });
+    //     }
+    // }, 15000);
 });
 
 // Don't crash
@@ -286,7 +320,7 @@ const app = express();
 const webhook = new Topgg.Webhook(config.topgg.auth);
 app.post('/dblwebhook', webhook.listener(vote => {
     db.serialize(async () => {
-        await query(`UPDATE users SET pullresets = pullresets + 1, votestotal = votestotal + 1, lootbox = lootbox + 1, gems = gems + 1, lastvote = ${new Date().getTime()} WHERE id = ${vote.user}`);
+        await query(`UPDATE users SET pullresets = pullresets + 1, votestotal = votestotal + 1, lootbox = lootbox + 1, gems = gems + 3, lastvote = ${new Date().getTime()} WHERE id = ${vote.user}`);
         let stats = await query(`SELECT votereminder FROM users WHERE id = ${vote.user}`);
         if (stats[0]?.votereminder) {
             setTimeout(async () => {
@@ -310,11 +344,22 @@ const product = {
     "O7bkg49rJD": [3680, 720],         //  $50
     "7BsfSbcV_1": [7420, 1440, 10517], // $100 // + Luminous
 };
+// const product = { // +30% Summer Sale 
+//     "RQ-Xy86yos": [208, 60],           //   $3
+//     "n9D2AeoMzr": [390, 100],          //   $5
+//     "EQAnsf2I7q": [680+68+68+68, 160],          //  $10
+//     "ExAXfcW-7J": [1300, 240],         //  $15
+//     "bwSNjx7yWm": [1760+176+176+176, 360, 238],    //  $25 // + Rimuru Tempest
+//     "O7bkg49rJD": [3680+368+368+368, 720],         //  $50
+//     "7BsfSbcV_1": [7420+742+742+742, 1440, 10517], // $100 // + Luminous
+// };
 
 function httpGet(url, headers) {
     return new Promise((resolve, reject) => {
-        const options = {headers};
-      
+        const options = {
+            headers,
+        };
+
         https.get(url, options, (res) => {
             let data = "";
             
@@ -337,7 +382,7 @@ function httpPost(url, headers, body) {
             method: "POST",
             headers,
         };
-      
+        
         const req = https.request(url, options, (res) => {
             if (res.statusCode === 200) {
                 resolve();
@@ -374,6 +419,11 @@ async function markDonationAsProcessed(txnID, processed=true) {
     await httpPost(url, headers, body);
 };
 
+// // Unmark
+// markDonationAsProcessed("2JU19147XS2779314", false).then(() => {
+//     console.log("Unmarked");
+// });
+
 setInterval(() => {
     getNewDonations().then((donations) => {
         donations = donations.donations;
@@ -385,19 +435,19 @@ setInterval(() => {
                         stats = {gems: stats[0].gems, transactions: JSON.parse(stats[0].transactions), chars: JSON.parse(stats[0].chars)};
                         const gems = (product[donation.product_id]?.[0] + (stats.transactions.some((e) => e.product_id === donation.product_id) ? 0 : product[donation.product_id]?.[1])) || 0;
                         await query(`UPDATE users SET gems = gems + ${gems}, transactions = '${JSON.stringify([...stats.transactions, donation])}' WHERE id = ${donation.buyer_id}`);
-                        if (product[donation.product_id][2]) await query(`UPDATE characters SET chars = '${JSON.stringify([...stats.chars, product[donation.product_id][2]])}' WHERE id = ${donation.buyer_id}`);
-        
+                        if (product[donation.product_id][2] && !stats.transactions.some((e) => e.product_id === donation.product_id)) await query(`UPDATE characters SET chars = '${JSON.stringify([...stats.chars, product[donation.product_id][2]])}' WHERE id = ${donation.buyer_id}`);
+                        
                         // Send DM
                         const dmUser = await client.users.fetch(donation.buyer_id);
                         if (dmUser) {
-                            const Embed = new MessageEmbed()
+                            const Embed = new EmbedBuilder()
                             .setColor(0xbbffff)
                             .setTitle("Thank you for your support!")
                             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                             .setDescription(`We have received and processed your order! <:ClaraThumbsUp:1034899843505721514>\nPlease [contact](https://discord.gg/myy9PBCdEW) us if you encounter any issues. You can see the transaction details below.\n\n\`\`\`yaml\nOrder: ${product[donation.product_id]?.[0]} genesis gems\nPrice: ${donation.price} ${donation.currency}\nProduct ID: ${donation.product_id}\nTransaction ID: ${donation.txn_id}\nStatus: ${donation.status}\nBuyer ID: ${donation.buyer_id}\nDate: ${new Date(donation.timestamp*1000).toISOString()}\`\`\``)
                             dmUser.send({ embeds: [Embed] });
                         };
-        
+                        
                         // Mark transaction as processed
                         const chnl = client.channels.cache.find(channel => channel.id === "1030963832136417320");
 
@@ -427,13 +477,13 @@ setInterval(() => {
 // -- -- -- PLAYGROUND -- -- -- //
 
 // // Send messages to python script and back
-// if (cmd === "ajax") {
+// if (true ||cmd === "py") {
 //     const {spawn} = require('child_process');
-//     const pythonProcess = spawn('python',["scriptl.py", "JS_input"]);
+//     const pythonProcess = spawn('python',["./Python/scriptl.py", "JS_input"]);
 //     console.log("A");
 //     pythonProcess.stdout.on('data', (data) => {
 //         let readableData = data.toString('utf8');
-//         message.channel.send(readableData);
+//         console.log(readableData);
 //     });
 //     console.log("C");
 // };
