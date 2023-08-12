@@ -1,33 +1,35 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require("discord.js");
 
-const PageRow = new MessageActionRow()
+const PageRow = new ActionRowBuilder()
     .addComponents(
-        new MessageButton()
+        new ButtonBuilder()
             .setCustomId('prev')
             .setEmoji('⏪')
-            .setStyle('SECONDARY'),
-        new MessageButton()
+            .setStyle('Secondary'),
+        new ButtonBuilder()
             .setCustomId('next')
             .setEmoji('⏩')
-            .setStyle('SECONDARY'),
+            .setStyle('Secondary'),
     );
 
 module.exports.PageRow = PageRow;
 
-const OfferRow = new MessageActionRow()
+const OfferRow = new ActionRowBuilder()
     .addComponents(
-        new MessageButton()
+        new ButtonBuilder()
             .setCustomId('confirm')
             .setEmoji('<:check_icon:683671903143067743>')
             .setLabel('confirm')
-            .setStyle('SUCCESS'),
-        new MessageButton()
+            .setStyle('Success'),
+        new ButtonBuilder()
             .setCustomId('cancel')
             .setEmoji('<:stop_icon:683671917353369600>')
             .setLabel('cancel')
-            .setStyle('DANGER'),
+            .setStyle('Danger'),
     );
 
 module.exports.OfferRow = OfferRow;
+
+module.exports.requestVerification = new Map();

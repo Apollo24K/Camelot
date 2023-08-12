@@ -100,6 +100,16 @@ const enemies = [
     new enemyInfo("Veldora", "True Dragon", "a True Dragon", true, {mdChance: 0.75}, {}, {}, [48, 667], ["https://i.ibb.co/DrSCF5S/veldora.png"], [100], 48),
 ];
 
+const bossMobs = [
+    new enemyInfo("Rumbleguard", "Golem", "a Golem", true, {}, {}, {mana: 120}, [], ["https://i.imgur.com/06ZhghA.png"], [], 0),
+    new enemyInfo("Sylvanoss", "Treant", "a Treant", true, {}, {}, {mana: 160}, [], ["https://i.imgur.com/uev7lLN.png"], [], 1),
+    new enemyInfo("Celestion", "Dragon", "a Dragon", true, {}, {}, {mana: 200}, [], ["https://i.imgur.com/a8JPnUA.png"], [], 2),
+    new enemyInfo("Malevokar", "Demon", "a Demon", true, {}, {}, {mana: 300}, [], ["https://i.imgur.com/PNUriwl.png"], [], 3),
+    new enemyInfo("Goblin King", "Goblin", "the Goblin King", true, {}, {}, {mana: 300}, [], ["https://i.imgur.com/my5sSRm.png"], [], 4),
+    new enemyInfo("Goblin General", "Goblin", "a Goblin General", true, {}, {}, {mana: 300}, [], ["https://i.imgur.com/wOPVWnw.png"], [], 5),
+
+];
+
 
 class floorInfo {
     constructor(floor, boss, winsNeeded, monsters, stats) {
@@ -175,7 +185,6 @@ class floorInfo {
     90% dmg reduction = 2192 DEF
 */
 
-// eslint-disable-next-line no-unused-vars
 const floors = [
     new floorInfo(0, false, 0, [], {}),
 
@@ -487,6 +496,7 @@ const floors = [
 ];
 
 module.exports.enemies = enemies;
+module.exports.bossMobs = bossMobs;
 module.exports.floors = floors;
 
 // Loot Drops

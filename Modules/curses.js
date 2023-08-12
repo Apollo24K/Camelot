@@ -85,7 +85,7 @@ const curses = [
         ebuff.def.push(new buffInfo("+", 100, 4)); // Gains +100 DEF/MR, +5% block rate
         ebuff.mr.push(new buffInfo("+", 100, 4));
         ebuff.br.push(new buffInfo("+", 0.05, 4));
-        notice.push(`\n${curses[4].emblem} **${enemy.name}** has gained **100** DEF and **5%** block rate for 4 rounds`)
+        notice.push(`\n${curses[4].emblem} **${enemy.name}** has gained **100** DEF&MR and **5%** block rate for 4 rounds`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.br.push(new buffInfo("+", 0.01, 9999, 0.01, "+"));
     }, "https://i.ibb.co/M2nC4Df/Steel-Strength.png", "The monster gains +100 DEF and Magic Resist, as well as +5% block rate for 4 rounds.", "He gains +1% block rate after each round."),
@@ -153,12 +153,17 @@ const curses = [
         mybuff.hp.push(new buffInfo("*", 0.98, 9999, -0.02, "+"));
         ebuff.hp.push(new buffInfo("*", 0.98, 9999, -0.02, "+"));
     }, "https://i.ibb.co/1qDLDLP/Black-Flame.png", "Burns 10% of your max HP ignoring your defense.", "Both you and the monster burn for 2% HP after each round."),
-    new curseInfo("Body Double", 13, "<:Body_Double:958741540866490378>", 0, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.eStatsCC = {...eStats}; // Creates a clone of itself
-        matchStats.currentOpponent = 1;
-        eStats.maxhp = Math.floor(eStats.maxhp*0.2);
-        eStats.hp = eStats.maxhp;
-        notice.push(`\n${curses[13].emblem} **${enemy.name}** has created a body double of itself`);
+    new curseInfo("Body Double", 13, "<:Body_Double:958741540866490378>", 0, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (Math.random() < 0.8) {
+            eStats.sm += 60;
+        } else {
+            matchStats.eStatsCC = {...eStats}; // Creates a clone of itself
+            matchStats.eStatsCC.sm -= (60 + (2*eStats.mg));
+            matchStats.currentOpponent = 1;
+            eStats.maxhp = Math.floor(eStats.maxhp*0.2);
+            eStats.hp = eStats.maxhp;
+            notice.push(`\n${curses[13].emblem} **${enemy.name}** has created a body double of itself`);
+        };
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     }, "https://i.ibb.co/TKX8JQp/Body-Double.png", "The monster creates a body double (clone) of itself. You will have to fight the clone until you beat him to continue fighting the real body of the monster.", "None"),
     new curseInfo("Absorb", 14, "<:Absorb:958774653348880484>", 0, 35, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

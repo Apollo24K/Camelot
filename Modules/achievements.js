@@ -34,7 +34,7 @@ class achievInfo {
     addRewards(interaction, user) {
 
         db.serialize(async () => {
-            var stats = await query(`SELECT achievements FROM users WHERE id = ${user.id}`);
+            let stats = await query(`SELECT achievements FROM users WHERE id = ${user.id}`);
             stats = stats[0];
 
             stats.achievements = JSON.parse(stats.achievements);
@@ -117,8 +117,7 @@ class achievInfo {
     check(interaction, user=undefined, ...list) {
         user ||= interaction.user;
         db.serialize(async () => {
-            let stats = await query(`SELECT achievements, pullstotal, arenawins, xp FROM users WHERE id = ${user.id}`);
-            stats = stats[0];
+            const { 0: stats } = await query(`SELECT achievements, pullstotal, arenawins, xp FROM users WHERE id = ${user.id}`);
             if (!stats) return;
             
             stats.achievements = JSON.parse(stats.achievements);
@@ -128,12 +127,12 @@ class achievInfo {
             inv = {chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref)};
 
             switch(this._id) {
-                case 0: if (stats.pullstotal === 1) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 0: if (stats.pullstotal >= 1) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 1: if (new Set(inv.chars).size >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 2: if (new Set(inv.chars).size >= 2000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 3: if (new Set(inv.chars).size >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 4: if (list[0] === "S") this.addRewards(interaction, user), this.notify(interaction); break;
-                case 5: if (list[0] === "SS") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 4: if (list[0] > 0) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 5: if (list[0] > 0) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 6: if (stats.arenawins >= 1) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 7: if (stats.arenawins >= 20) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 8: if (stats.arenawins >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
@@ -168,9 +167,9 @@ class achievInfo {
                 case 27: if (list[0] >= 5) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 28: if (list[0] >= 30) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 29: if (list[0] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 30: if (list[0] === "S") this.addRewards(interaction, user), this.notify(interaction); break;
-                case 31: if (list[0] === "SS") this.addRewards(interaction, user), this.notify(interaction); break;
-                case 32: this.addRewards(interaction, user), this.notify(interaction); break;
+                case 30: if (list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 31: if (list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 32: if (list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 33: this.addRewards(interaction, user), this.notify(interaction); break;
                 case 34: if (list[0] === 6) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 35: if (list[0] === 11) this.addRewards(interaction, user), this.notify(interaction); break;

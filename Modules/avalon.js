@@ -85,10 +85,10 @@ class Avalon {
     };
 
     static getDifficulty(epDiff) { // epDiff = myEP/eEP
-        if (epDiff >= 1.25) return "<a:arrow_green:916716811842621450> Difficulty: **Easy**";
-        if (epDiff >= 0.75) return "<a:arrow_orange:916716747623641210> Difficulty: **Medium**";
-        if (epDiff >= 0.5) return "<a:arrow_red:916716702618767401> Difficulty: **Hard**";
-        return "<a:arrow_black:916718325386588221> Difficulty: **Impossible**";
+        if (epDiff >= 1.25) return "<a:arrow_green:916716811842621450> Threat Level: **Easy**";
+        if (epDiff >= 0.75) return "<a:arrow_orange:916716747623641210> Threat Level: **Medium**";
+        if (epDiff >= 0.5) return "<a:arrow_red:916716702618767401> Threat Level: **Hard**";
+        return "<a:arrow_black:916718325386588221> Threat Level: **Impossible**";
     };
 
     static getMatchStats(interaction, flags={}) {

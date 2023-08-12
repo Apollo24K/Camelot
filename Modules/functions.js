@@ -1,7 +1,12 @@
 /* eslint-disable no-unused-vars */
-const { MessageEmbed } = require("discord.js");
+const fs = require('fs');
+const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
 const imagesize = require('imagesize');
+const axios = require('axios');
+const sharp = require('sharp');
 const https = require("https");
+const { createCanvas } = require('@napi-rs/canvas');
+const crypto = require('crypto');
 const { characters } = require("./chars.js");
 const { achievements } = require("./achievements.js");
 const { dailies } = require("../Modules/dailyQuests.js");
@@ -10,10 +15,10 @@ const buffInfo = require("./buffs.js");
 const { db, query } = require("../db_handler.js");
 
 const statsOp = {"base": {
-        "hp":{"238":-20,"405":-6,"460":54,"2016":-10,"2079":12,"2360":12,"2597":24,"3150":6,"3307":-20,"3408":-20,"3409":12,"3886":20,"4769":-20,"5032":-9,"5341":20,"5344":16,"5819":-20,"8188":30,"8189":40,"8521":12,"8582":20,"9606":-6,"10520":37,"10521":-14,"10523":30,"10530":40,"12000":16,"12121":10,"12424":1},
-        "atk":{"238":-11,"405":12,"460":-12,"2079":9,"2016":-2,"3150":4,"3409":14,"3886":4,"4250":10,"4712":-8,"5341":6,"5344":10,"6082":-13,"8187":7,"8189":10,"8521":5,"9606":3,"10517":10,"10520":20,"10521":-4,"10523":5,"10530":8,"12000":10,"12121":7,"12393":-5,"12424":15},
-        "def":{"405":1,"460":1,"2360":9,"2597":5,"3150":8,"3409":6,"9606":19,"10517":5,"12121":5,"12393":10,"12424":10},
-        "expertise":{"405":"sword","8521":"dagger","12407":"lance","12450":"sword"},
+        "hp":{"238":-20,"405":-6,"460":54,"512":60,"2016":-10,"2079":12,"2360":12,"2597":24,"3150":6,"3307":-20,"3408":-20,"3409":12,"3886":20,"4769":-20,"5032":-9,"5341":20,"5344":16,"5819":-20,"8188":30,"8189":40,"8521":12,"8582":20,"9606":-6,"10520":37,"10521":-14,"10523":30,"10530":40,"12000":16,"12121":10,"12424":1},
+        "atk":{"238":-11,"405":12,"460":-12,"512":-10,"2079":9,"2016":-2,"3150":4,"3409":14,"3886":4,"4250":10,"4712":-8,"5341":6,"5344":10,"6082":-13,"8187":7,"8189":10,"8521":5,"9606":3,"10517":10,"10520":20,"10521":-4,"10523":5,"10530":8,"12000":10,"12121":7,"12393":-5,"12424":15},
+        "def":{"405":1,"460":1,"512":15,"2360":9,"2597":5,"3150":8,"3409":6,"9606":19,"10517":5,"12121":5,"12393":10,"12424":10},
+        "expertise":{"72":"sword","73":"sword","77":"bow","159":"sword","405":"sword","408":"any","512":"shield","523":"sword","577":"staff","578":"staff","680":"lance","688":"sword","712":"lance","733":"sword","735":"bow","767":"staff","769":"sword","999":"lance","1001":"sword","1550":"sword","1824":"dagger","1850":"lance","1851":"lance","2078":"staff","2079":"axe","2080":"lance","2291":"staff","2420":"sword","2597":"sword","2814":"bow","2848":"dagger","3109":"shield","3150":"dagger","3307":"axe","3308":"lance","4250":"sword","4474":"staff","4767":"sword","4769":"staff","5341":"lance","6029":"bow","6030":"bow","8189":"sword","8521":"dagger","9000":"sword","9365":"staff","9454":"dagger","9648":"dagger","9677":"sword","9824":"axe","10300":"lance","10324":"sword","10517":"sword","10520":"lance","10521":"staff","10522":"dagger","10523":"bow","10524":"staff","10527":"dagger","10800":"sword","10958":"sword","11244":"sword","11246":"sword","12345":"staff","12387":"axe","12388":"any","12393":"bow","12399":"bow","12450":"lance","12451":"sword","12775":"dagger","12776":"dagger","12857":"sword","13186":"bow","13285":"sword","13574":"staff","13780":"sword","14091":"bow","14405":"bow","14903":"bow","15251":"lance","16107":"bow","16109":"sword","16110":"lance","16119":"bow","16919":"sword"},
     },
 };
 
@@ -44,6 +49,7 @@ function strCode(id) {
 function baseHP(id) {
     let hash = strCode(id) % 10;
     switch (characters[id].rarity) {
+        case "EX" : hash = Math.floor(420 + (20*(hash/9))); break; // 420-440
         case "SS" : hash = Math.floor(380 + (60*(hash/9))); break; // 380-440
         case "S" : hash = Math.floor(300 + (60*(hash/9))); break;  // 300-360
         case "A" : hash = Math.floor(240 + (60*(hash/9))); break;  // 240-300
@@ -59,6 +65,7 @@ function baseHP(id) {
 function baseATK(id) {
     let hash = Math.round(((strCode(id)%100)/10)+0.01);
     switch (characters[id].rarity) {
+        case "EX" : hash = Math.floor(70 + (1*hash)); break;  // 70-80
         case "SS" : hash = Math.floor(60 + (2*hash)); break;  // 60-80
         case "S" : hash = Math.floor(48 + (1.2*hash)); break; // 48-60
         case "A" : hash = Math.floor(36 + (1.2*hash)); break; // 36-48
@@ -81,6 +88,7 @@ function baseDEF(id) {
     hash = sum%10;
 
     switch (characters[id].rarity) {
+        case "EX" : hash = Math.floor(59 + (11/(hash+1))); break; // 60-70
         case "SS" : hash = Math.floor(48 + (22/(hash+1))); break; // 50-70
         case "S" : hash = Math.floor(39 + (11/(hash+1))); break;  // 40-50
         case "A" : hash = Math.floor(32 + (8/(hash+1))); break;  // 32-40
@@ -94,7 +102,7 @@ function baseDEF(id) {
 };
 
 function baseEP(id, hp=baseHP(id), atk=baseATK(id), def=baseDEF(id), md=atk, mr=def, cd=1.25, cr=0.18, dodge=0.1) {
-    return Math.floor(((1/(1-dodge))*(hp/Math.pow(0.99895,Math.max(def, mr))) / (200/(Math.max(atk, md)*(1+(cat1(cr)*(cd-1))))))*100) / 100;
+    return Math.floor(((1/(1-dodge)) * (hp/Math.pow(0.99895,Math.max(def, mr))) / (200/(Math.max(atk, md)*(1+(cat1(cr)*(cd-1))))))*100) / 100;
 };
 
 function baseExpertise(id) {
@@ -118,7 +126,6 @@ module.exports.baseDEF = id => baseDEF(id);
 module.exports.baseEP = id => baseEP(id);
 module.exports.baseExpertise = id => baseExpertise(id);
 
-
 function cat1(num) {
     if (num > 1) return 1;
     if (num < 0) return 0;
@@ -128,6 +135,7 @@ function cat1(num) {
 module.exports.cat1 = id => cat1(id);
 
 const lvlupStats = {
+    "EX": {"hp": {"base": 5, "add": 1}},
     "SS": {"hp": {"base": 5, "add": 1}},
     "S": {"hp": {"base": 3.9, "add": 0.6}},
     "A": {"hp": {"base": 3.3, "add": 0.4}},
@@ -162,6 +170,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
         "mg": 15,
         "sm": 20,
         "shield": 0,
+        "mdChance": 0,
         "rev": 0,
         "revhp": 0.5,
         "revivedTotal": 0,
@@ -183,7 +192,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
         "expertise": baseExpertise(id),
         "weapon": -1,
         "weaponinfo": {},
-        "weaponicon": {"sword": "<:sword_empty:1034502134474997790>", "staff": "<:staff_empty:1034502136622485524>", "axe": "<:axe_empty:1034567413527760917>", "bow": "<:bow_empty:1034567415209664672>", "lance": "<:lance_empty:1034567416522473502>", "dagger": "<:dagger_empty:1034567417982091434>"}[baseExpertise(id)],
+        "weaponicon": {"sword": "<:sword_empty:1034502134474997790>", "staff": "<:staff_empty:1034502136622485524>", "axe": "<:axe_empty:1034567413527760917>", "bow": "<:bow_empty:1034567415209664672>", "lance": "<:lance_empty:1034567416522473502>", "dagger": "<:dagger_empty:1034567417982091434>", "shield": "<:shield_empty:1087089686809415730>", "any": "<:any_empty:1113010026664169494>"}[baseExpertise(id)],
     };
 
     if (inv.level[id]) dStats.lvl = inv.level[id];
@@ -193,8 +202,8 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
     if (dStats.ref > 5) dStats.ref = 5;
 
     let clsStats;
-    if (id in inv.class) {
-        dStats.class = inv.class[id];
+    if (inv.class !== null) {
+        dStats.class = inv.class;
         dStats.clvl = getClassLvl(dStats.class, classLevel);
         clsStats = classes[dStats.class].stats;
         Object.keys(clsStats).forEach((s) => dStats[s] = dStats[s] * clsStats[s][0] + clsStats[s][1]);
@@ -204,18 +213,19 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
     // Add level bonus
     dStats.hp = Math.floor((1+0.25*(dStats.ref-1))*dStats.hp) + Math.round((lvlupStats[characters[id].rarity].hp.base+(lvlupStats[characters[id].rarity].hp.add*((strCode(id)%10)/9)))*(dStats.lvl-1));
     switch (characters[id].rarity) {
-        case "SS" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((2.4+(0.35*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((1.25+(0.25*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
-        case "S" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.9+(0.3*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((1+(0.2*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
-        case "A" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.6+(0.25*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.8+(0.15*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
-        case "B" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.2+(0.3*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.6+(0.2*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
-        case "C" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((0.9+(0.35*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.5+(0.15*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
-        case "D" : dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((0.75+(0.25*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.4+(0.5*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
-        default : dStats.hp = 1; dStats.atk = 1; dStats.def = 1; break;
+        case "EX": 
+        case "SS": dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((2.4+(0.35*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((1.25+(0.25*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "S": dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.9+(0.3*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((1+(0.2*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "A": dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.6+(0.25*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.8+(0.15*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "B": dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((1.2+(0.3*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.6+(0.2*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "C": dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((0.9+(0.35*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.5+(0.15*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        case "D": dStats.atk = Math.floor((1+0.25*(dStats.ref-1))*dStats.atk) + Math.round((0.75+(0.25*((dStats.atk-50)/30)))*(dStats.lvl-1)); dStats.def = Math.floor((1+0.25*(dStats.ref-1))*dStats.def) + Math.round((0.4+(0.5*((dStats.def-50)/30)))*(dStats.lvl-1)); break;
+        default: dStats.hp = 1; dStats.atk = 1; dStats.def = 1; break;
     };
     dStats.bhp = dStats.hp, dStats.td = dStats.atk, dStats.md = dStats.atk, dStats.batk = dStats.atk, dStats.bmd = dStats.atk, dStats.mr = dStats.def, dStats.bdef = dStats.def, dStats.bmr = dStats.def;
 
     if (dStats.class !== -1) {
-        ["td","md","mr"].forEach((s) => dStats[s] = Math.floor(dStats[s] * clsStats[s][0] + clsStats[s][1]));
+        // ["td","md","mr"].forEach((s) => dStats[s] = Math.floor(dStats[s] * clsStats[s][0] + clsStats[s][1]));
         let scale;
         switch (classes[dStats.class].tier) {
             case 1: scale = {"hp": 1.25, "atk": 0.75, "md": 0.75, "def": 0.3, "mr": 0.3, "mana": 0.15}; break;
@@ -246,19 +256,21 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu=0, refine=false
             dStats.weapon = weapon.id;
             dStats.weaponicon = item.emoji;
             dStats.weaponinfo = {...weapon};
+
+            if (item.type === "staff") dStats.mdChance = 1;
             
             // Primary Stat
             if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(item.primaryStat)) {
                 if (item.primaryStat.endsWith("%")) {
                     const statBuff = dStats["b"+item.primaryStat.slice(0, -1)] * (1 + Math.floor(item.psmin + ((item.psmax - item.psmin)/150)*((weapon.level-1)+(weapon.ascension*3)))/100)
-                    dStats[item.primaryStat.slice(0, -1)] += Math.floor(statBuff * (item.type === dStats.expertise ? 1.2 : 1));
+                    dStats[item.primaryStat.slice(0, -1)] += Math.floor(statBuff * ((item.type === dStats.expertise || dStats.expertise === "any") ? 1.2 : 1));
                 } else {
                     const statBuff = (item.psmin + ((item.psmax - item.psmin)*((weapon.level-1)+(weapon.ascension*3))/150))/100;
-                    dStats[item.primaryStat] += Math.floor(statBuff * (item.type === dStats.expertise ? 1.2 : 1));
+                    dStats[item.primaryStat] += Math.floor(statBuff * ((item.type === dStats.expertise || dStats.expertise === "any") ? 1.2 : 1));
                 };
             } else {
                 const statBuff = Math.floor(parseInt(item.psmin) + ((parseInt(item.psmax) - parseInt(item.psmin))/150)*((weapon.level-1)+(weapon.ascension*3)));
-                dStats[item.primaryStat] += Math.floor(statBuff * (item.type === dStats.expertise ? 1.2 : 1));
+                dStats[item.primaryStat] += Math.floor(statBuff * ((item.type === dStats.expertise || dStats.expertise === "any") ? 1.2 : 1));
             };
 
             // Secondary Stat
@@ -410,38 +422,38 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
         matchStats.blockStreak++;
         if (target.blockBuffDef) targetBuff.def.push(new buffInfo("+", target.blockBuffDef, 6)), targetBuff.mr.push(new buffInfo("+", target.blockBuffDef, 6));
         if (target.blockBurn) attacker.hp -= Math.floor(attacker.hp > 2*target.hp ? 2*target.hp*target.blockBurn : attacker.hp*target.blockBurn);
-        // Daily Quests
-        console.log(matchStats.blockStreak);
+
+        // Achievements & Daily Quests
+        achievements[13].check(matchStats.interaction, matchStats.interaction.user, matchStats.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, matchStats.blockStreak); // Invincible
         if (matchStats.blockStreak === 2) dailies[6].update(matchStats.interaction); // Impenetrable Defense
         return 0;
     }; /* Reset BlockStreak */ matchStats.blockStreak = 0;
     if (options.dodge && Math.random() < target.dodge) {
-        notice.push(`\n💨 **${target.name}** dodged the attack!`);
+        notice.push(`\n💨 **${target.name}** dodged the attack!${matchStats.dodgebuff ? ` Gained **+${matchStats.dodgebuff*100}%** ATK` : ""}`);
         matchStats.attackStreak = 0;
         if (target.dodgeHeal) {
             target.hp += Math.floor(target.maxhp*target.dodgeHeal);
             if (target.hp > target.maxhp) target.hp = target.maxhp;
         };
-
-        // Achievements
-        achievements[13].check(matchStats.interaction, matchStats.interaction.user, matchStats.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, matchStats.blockStreak); // Invincible
+        
+        // Passives
+        if (matchStats.dodgebuff) targetBuff.atk.push(new buffInfo("*", 1+matchStats.dodgebuff, 5));
         return 0;
     };
     
+    // Calculate damage
     let damage;
-    // If it executes
-    if (options.execute && (target.hp/target.maxhp) < attacker.executeHP) {
-        notice.push(`\n⚔️ **${target.name}** was executed!`);
-        damage = target.hp;
-        target.hp = 0;
-        return damage;
+    if (options.magicDamage && options.mdChance < attacker.mdChance) {
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1+(matchStats.attackStreak*attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier*target.mr), 0.1)) * (1 - (0.2*Math.random())) * ((options.canCrit && options.critChance < (attacker.cr+options.critBuff)) ? (options.critMultiplier*attacker.cd) : 1));
+    } else {
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1+(matchStats.attackStreak*attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier*target.def), 0.1)) * (1 - (0.2*Math.random())) * ((options.canCrit && options.critChance < (attacker.cr+options.critBuff)) ? (options.critMultiplier*attacker.cd) : 1));
     };
 
-    // Otherwise calculate damage
-    if (options.magicDamage && options.mdChance < attacker.mdChance) {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * (options.combodmg ? (1+(matchStats.attackStreak*matchStats.combodmg)) : 1)) * Math.pow(0.99895, options.defMultiplier*target.mr)) * (1 - (0.2*Math.random())) * ((options.canCrit && options.critChance < (attacker.cr+options.critBuff)) ? (options.critMultiplier*attacker.cd) : 1));
-    } else {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * (options.combodmg ? (1+(matchStats.attackStreak*matchStats.combodmg)) : 1)) * Math.pow(0.99895, options.defMultiplier*target.def)) * (1 - (0.2*Math.random())) * ((options.canCrit && options.critChance < (attacker.cr+options.critBuff)) ? (options.critMultiplier*attacker.cd) : 1));
+    // Counter the attack
+    if (target.counter > 0) {
+        target.counter--;
+        notice.push(`\n⚜️ **${target.name}** countered the attack!`);
+        return module.exports.dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);        
     };
 
     // Apply damage to target
@@ -455,13 +467,22 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
         notice.push(options.overwriteNotice ? log : `\n${log} has dealt${(options.canCrit && options.critChance < attacker.cr) ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
     };
     
+    // If it executes
+    if (options.execute && (target.hp/target.maxhp) < attacker.executeHP) {
+        notice.push(`\n⚔️ **${target.name}** was executed!`);
+        damage += target.hp;
+        target.hp = 0;
+        return damage;
+    };
+
     // Passives
     target.damageTaken += damage;
-    if (options.combodmg) matchStats.attackStreak++;
+    if (options.combodmg && attacker.combodmg) matchStats.attackStreak++;
     if (options.critbleed && options.canCrit && options.critChance < attacker.cr) targetBuff.hp.push(new buffInfo("+", -target.maxhp*0.03, matchStats.critbleedlast));
     if (attacker.critmana && options.canCrit && options.critChance < attacker.cr) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
     if (options.selfheal && matchStats.selfhealChance > options.selfhealChance) attacker.hp += Math.floor(damage * matchStats.selfheal);
-    if (options.selfdmg) attacker.hp -= Math.floor(damage * matchStats.selfdmg);
+    if (options.selfdmg && Math.random() < matchStats.selfdmg) attacker.hp -= damage;
+    if (attacker.hp > attacker.maxhp) attacker.hp = attacker.maxhp;
     if (attacker.hp < 0) attacker.hp = 0;
 
     return damage;
@@ -505,6 +526,7 @@ module.exports.filterItems = (userItems, choice, exclude=[], sellGrade=false, se
         const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
         const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade);
         const levelItem = items[fItem.category === "weapon" ? 56 : 57];
+        const awakenItem = items[683];
 
         let exchangeItem = false;
         if (fItem.grade === "genesis") exchangeItem = items[676];
@@ -512,13 +534,16 @@ module.exports.filterItems = (userItems, choice, exclude=[], sellGrade=false, se
         else if (fItem.grade === "legendary") exchangeItem = items[678];
 
         const ascMatsNeeded = Math.round((1/6) * 12 * ((0.5*item.ascension*item.ascension) + (3.5*item.ascension) + 3));
-        const craftMatsNeeded = Math.round((1/6) * 8 * ((0.5*item.ascension*item.ascension) + (3.5*item.ascension) + 3));
+        const craftMatsNeeded = Math.round((1/6) * 8 * ((0.5*item.ascension*item.ascension) + (3.5*item.ascension) + 3)) + (fItem.grade === "legendary" ? 4 : (fItem.grade === "mythical" ? 12 : (fItem.grade === "genesis" ? 28 : 0)));
         const levelMatsNeeded = Math.floor(item.level/5000);
+        const awakenMatsNeeded = item.ascension > 10 ? (8 * (item.ascension-10) * (item.ascension-9)) : 0;
+        // const awakenItemNeeded = currLevel < 120 ? 0 : (item[0].ascension-9) * 16;
 
         loot[ascItem.id] = (loot[ascItem.id] + ascMatsNeeded) || ascMatsNeeded;
         loot[craftItem.id] = (loot[craftItem.id] + craftMatsNeeded) || craftMatsNeeded;
         if (levelMatsNeeded) loot[levelItem.id] = (loot[levelItem.id] + levelMatsNeeded) || levelMatsNeeded;
         if (exchangeItem) loot[exchangeItem.id] = (loot[exchangeItem.id] + 1) || 1;
+        if (awakenMatsNeeded) loot[awakenItem.id] = (loot[awakenItem.id] + awakenMatsNeeded) || awakenMatsNeeded;
         
         // Unequip if equipped
         if (stats) {
@@ -535,12 +560,12 @@ module.exports.filterItems = (userItems, choice, exclude=[], sellGrade=false, se
     return { itemsToDisassemble, itemIdsToDisassemble, loot };
 };
 
-module.exports.showPage = (currPage, pagesTotal, left, arr, elements=15) => {
+module.exports.showPage = (currPage, arr, elements=15) => {
     return arr.slice((currPage-1)*elements, currPage*elements);
 };
 
 module.exports.search = (name, inv, interaction, silent=false) => {
-    name = name.toLowerCase();
+    name = name.toLowerCase().split(" ").filter((e) => e).join(" ");
     if (name === "last" || name === "latest") name = inv[inv.length-1].toString();
 
     if (!isNaN(name)) {
@@ -549,40 +574,28 @@ module.exports.search = (name, inv, interaction, silent=false) => {
         if (!(name[0] === "0" && name.length > 1)) return characters[parseInt(name)];
     };
     
-    let cArgs = name.split(" ");
-
-    let fastCheck = characters.filter((e) => e.name.toLowerCase() === cArgs.join(' ') || e.alias.some((a) => a.toLowerCase() === cArgs.join(' ')));
+    // Full Name Search
+    let fastCheck = characters.filter((e) => e.name.toLowerCase() === name || e.alias.some((a) => a.toLowerCase() === name));
     if (fastCheck[0] !== undefined) return fastCheck[0];
 
-    let fArray = characters.filter((e) => e.name.toLowerCase()[0] === cArgs[0][0] || e.alias.some((a) => a.toLowerCase()[0] === cArgs[0][0]));
+    // Filter
+    const fArray = characters.filter((e) => e.name.toLowerCase().startsWith(name) || e.alias.some((a) => a.toLowerCase().startsWith(name)) );
 
-    let letter = 0;
-    for (let word=0; word < cArgs.length; word++) {
-        let { length:wl } = cArgs[word];
-
-        while (wl--) {
-            fArray = fArray.filter((e) => e.name.toLowerCase().split(" ")[word] === undefined ? false :  e.name.toLowerCase().split(" ")[word][letter] === cArgs[word][letter] || e.alias.some((a) => a.toLowerCase()[letter] === cArgs[word][letter]));
-            letter++;
-        };
-
-        if (fArray.length < 2) break;
-        letter = 0;
-    };
-          
     if (fArray.length === 0) return silent ? false : interaction.reply("No match found");
-    if (fArray.length > 1) return silent ? false : interaction.reply(fArray.length + " matches found");
+    if (fArray.length > 1) return silent ? false : interaction.reply(`${fArray.length} matches found:\n> ‧ ${fArray.sort((a, b) => b.name.toLowerCase().startsWith(name) - a.name.toLowerCase().startsWith(name)).map((e) => e.name.toLowerCase().startsWith(name) ? e.name : e.name  + " (alias: "+ e.alias.find((a) => a.toLowerCase().startsWith(name)) + ")" ).slice(0, 8).join('\n> ‧ ')}${fArray.length > 8 ? `\n+ ${fArray.length-8} more` : ""}`);
     return fArray[0];
 };
 
 function rarity(rar) {
     switch (rar) {
-        case "SS" : return "https://i.ibb.co/GdhDTj1/n3qj4i2.png";
-        case "S" : return "https://i.ibb.co/8KZJLLZ/aSXEB8J.png";
-        case "A" : return "https://i.ibb.co/8MTkwzf/MNNSMIP.png";
-        case "B" : return "https://i.ibb.co/WswjB19/HHgIQsZ.png";
-        case "C" : return "https://i.ibb.co/ZHRxzFB/bF4Uwq7.png";
-        case "D" : return "https://i.ibb.co/Yp26KZG/qHR5lBz.png";
-        default : return "https://i.ibb.co/j6Vhb5B/zPpfb14.jpg";
+        case "EX": return "https://i.ibb.co/1GDqXkg/extra-dark.gif"; // "https://i.ibb.co/0V1bDLm/ex.png";
+        case "SS": return "https://i.ibb.co/GdhDTj1/n3qj4i2.png";
+        case "S": return "https://i.ibb.co/8KZJLLZ/aSXEB8J.png";
+        case "A": return "https://i.ibb.co/8MTkwzf/MNNSMIP.png";
+        case "B": return "https://i.ibb.co/WswjB19/HHgIQsZ.png";
+        case "C": return "https://i.ibb.co/ZHRxzFB/bF4Uwq7.png";
+        case "D": return "https://i.ibb.co/Yp26KZG/qHR5lBz.png";
+        default: return "https://i.ibb.co/j6Vhb5B/zPpfb14.jpg";
     };
 };
 
@@ -630,12 +643,12 @@ module.exports.displayPull = (user, thisChar, pCount, dupes, pullsMade, lastVote
         if (lastVote && ((new Date().getTime() - lastVote) < 12*60*60*1000)) canVote = "";
     };
 
-    const Embed = new MessageEmbed()
-    .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[thisChar.rarity])
+    const Embed = new EmbedBuilder()
+    .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[thisChar.rarity])
     .setImage(thisChar.image)
     .setThumbnail(rarity(thisChar.rarity))
     .setDescription(`**${thisChar.name}**\n${animeL}\n\n**Ref**. ${refinement}`)
-    .setFooter(`You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of this\n${pCount-pullsMade} ${pCount-pullsMade == 1 ? "pull" : "pulls"} left${canVote}`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+    .setFooter({text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of this\n${pCount-pullsMade} ${pCount-pullsMade == 1 ? "pull" : "pulls"} left${canVote}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
     return { embeds: [Embed] };
 };
 
@@ -790,6 +803,110 @@ module.exports.searchGuild = (name, guilds) => {
     return [...matches, ...starts, ...includes];
 };
 
+// const downloadImage = async (url) => {
+//     const response = await axios.get(url, { responseType: 'arraybuffer' });
+//     // eslint-disable-next-line no-undef
+//     return Buffer.from(response.data, 'binary');
+// };
+
+const downloadImage = async (url) => {
+    try {
+        const response = await axios.get(url, { responseType: 'arraybuffer' });
+        // eslint-disable-next-line no-undef
+        return Buffer.from(response.data, 'binary');
+    } catch (error) {
+        if (error.response && error.response.status === 429) {
+            console.log("Too many requests. Please try again later.");
+            // you could throw the error again to handle it further up in your call stack, or just return null or a default value
+            throw error;
+        } else {
+            throw error; // if it's an error other than 429, just throw it again so you can handle it outside of this function
+        };
+    };
+};
+
+module.exports.generateImage = async (base, effect, filename=`${Math.floor(Math.random()*100000)}.png`) => {
+    // Download images
+    const [charImageBuffer, effectImageBuffer] = await Promise.all([
+        downloadImage(base),
+        downloadImage(effect)
+    ]);
+    
+    // Get char image dimensions
+    const charImage = sharp(charImageBuffer);
+    const { width, height } = await charImage.metadata();
+
+    // Resize effect image to match char image dimensions
+    const effectImage = await sharp(effectImageBuffer)
+        .resize(width, height)
+        .toBuffer();
+
+    // Combine images
+    const outputImage = await charImage
+        .composite([{ input: effectImage, blend: 'atop' }])
+        .toBuffer();
+
+    // Save image locally
+    fs.writeFileSync(`Images/${filename}`, outputImage);
+    
+    // Delete local file after 20 seconds
+    setTimeout(() => {
+        fs.unlink(`Images/${filename}`, (err) => {
+            if (err) console.error(`Error while deleting file ${`Images/${filename}`}`);
+        });
+    }, 5*60*1000); // Delete in 5 minutes
+
+    return filename;
+};
+
+module.exports.generateCaptcha = () => {
+    const canvas = createCanvas(120, 50);
+    const ctx = canvas.getContext('2d');
+
+    // Generate a random 5 character string
+    const captchaText = crypto.randomBytes(3).toString('hex');
+
+    // Draw the captcha text
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 120, 50);
+    ctx.fillStyle = '#000000';
+    ctx.font = '30px Arial';
+
+    // Slightly rotate each character
+    let x = 10;
+    for (const char of captchaText) {
+        const rotateAngle = (Math.random() - 0.5) * Math.PI / 6; // Random angle between -15 and 15 degrees
+        ctx.save();
+        ctx.translate(x, 40);
+        ctx.rotate(rotateAngle);
+        ctx.fillText(char, 0, 0);
+        ctx.restore();
+        x += ctx.measureText(char).width;
+    };
+
+    // Add 1-3 random lines
+    for(let i = 0; i < (2+(Math.random() < 0.3)); i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.stroke();
+    };
+
+    // Add 1-3 random dots
+    for(let i = 0; i < (3+(Math.random() < 0.3)); i++) {
+        ctx.beginPath();
+        ctx.arc(Math.random() * canvas.width, Math.random() * canvas.height, 1, 0, 2 * Math.PI);
+        ctx.fill();
+    };
+    
+    // Convert to buffer then return
+    const buffer = canvas.toBuffer('image/jpeg');
+    return {
+        attachement: new AttachmentBuilder(buffer),
+        text: captchaText
+    };
+};
+
 const customEmojis = {
     "hp": "<:HP:1062043800979116143>",
     "hp%": "<:HP:1062043800979116143>",
@@ -860,3 +977,26 @@ module.exports.generateUniqueGuildId = (existing, len=5) => {
     };
     return gen;
 };
+
+// Export CSV
+// const csvWriter = require('fast-csv');
+
+// let data = characters.map((e) => ({
+//     character: e.name,
+//     series: e.anime,
+//     rarity: e.rarity,
+//     id: e.id,
+//     hp: baseHP(e.id),
+//     atk_md: baseATK(e.id),
+//     def_mr: baseDEF(e.id),
+//     ep: baseEP(e.id),
+//     expertise: baseExpertise(e.id),
+// }));
+
+// const ws = fs.createWriteStream('output.csv');
+
+
+// csvWriter.writeToStream(ws, data, { headers: true, delimiter: ';' })
+//     .on('finish', function() {
+//         console.log('CSV file successfully created');
+//     });

@@ -59,11 +59,11 @@ class dailyQuestInfo {
             // Check if it was completed now
             if (this._check(stats.dailies[this._id])) {
                 if (todaysQuests.every((quest) => quest._check(stats.dailies[quest.id]))) {
-                    await query(`UPDATE users SET xp = xp + 20, coins = coins + 1000, gems = gems + 2, dailies = '${JSON.stringify(stats.dailies)}' WHERE id = ${user.id}`);
-                    interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
+                    await query(`UPDATE users SET xp = xp + 20, coins = coins + 1000, gems = gems + 4, dailies = '${JSON.stringify(stats.dailies)}' WHERE id = ${user.id}`);
+                    interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
                 } else {
-                    await query(`UPDATE users SET xp = xp + 10, coins = coins + 500, gems = gems + 1, dailies = '${JSON.stringify(stats.dailies)}' WHERE id = ${user.id}`);
-                    interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **1** <:genesis_gems:1034179687720681492>`);
+                    await query(`UPDATE users SET xp = xp + 10, coins = coins + 500, gems = gems + 2, dailies = '${JSON.stringify(stats.dailies)}' WHERE id = ${user.id}`);
+                    interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
                 };
             } else {
                 await query(`UPDATE users SET dailies = '${JSON.stringify(stats.dailies)}' WHERE id = ${user.id}`);

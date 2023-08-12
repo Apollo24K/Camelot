@@ -117,7 +117,7 @@ const skills = [
     }),
     new skillInfo(11, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Duelist counters the next attack
-        matchStats.counter++;
+        myStats.counter = 1;
         matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** prepares to counter the next attack`);
     }),
@@ -198,7 +198,8 @@ const skills = [
     new skillInfo(17, 45, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Arbalist deals 150% dmg and poisons the enemy for 3 rounds
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: 1.5});
-        ebuff.hp.push(new buffInfo("*", 0.95, 3));
+        const dmg = Math.floor(eStats.hp > 2*myStats.hp ? myStats.hp*0.1 : eStats.hp*0.05);
+        ebuff.hp.push(new buffInfo("+", -dmg, 3));
         matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** poisoned the enemy for 3 rounds`);
     }),
@@ -233,7 +234,7 @@ const skills = [
     }),
     new skillInfo(23, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Soulfist ignores 75% of DEF
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}** ignored **50%** DEF and`, {defMultiplier: 0.25});
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}** ignored **75%** DEF and`, {defMultiplier: 0.25});
         matchStats.turn = matchStats.turnSkill;
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mdChance = 0.33;
@@ -274,7 +275,7 @@ const skills = [
     }),
     new skillInfo(27, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Saint heals 40/36/32/...% of max HP
-        let hhp = Math.floor(myStats.maxhp*(0.4-(matchStats.heap1++*0.04)));
+        let hhp = Math.floor(myStats.maxhp*(0.4-(matchStats.saintCount++*0.04)));
         if (hhp < 1) {
             notice.push(`\n⚜️ **${char.name}** has reached ${char.gender === "F" ? "her" : "his"} limit`);    
             return myStats.sm += 40;
@@ -289,6 +290,7 @@ const skills = [
         myStats.rev = 1;
         myStats.revhp = 0.5;
         myStats.maxRevivals += 1;
+        matchStats.saintCount = 0;
     }),
     new skillInfo(28, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Traditionalist deals true damage and ignores 45% of DEF
@@ -299,8 +301,8 @@ const skills = [
     }),
     new skillInfo(29, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Asura deals more damage with less HP
-        if (Math.random() > 0.2) dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (2.5 - myStats.hp/myStats.maxhp)});
-        else dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (2.5 - myStats.hp/myStats.maxhp), magicDamage: true, mdChance: -1});
+        if (Math.random() > 0.2) dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (2.5 - myStats.hp/myStats.maxhp), selfdmg: true});
+        else dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (2.5 - myStats.hp/myStats.maxhp), magicDamage: true, mdChance: -1, selfdmg: true});
         matchStats.turn = matchStats.turnSkill;
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.atk.push(new buffInfo("*", 1.05, 9999, 0.05, "+"));
@@ -334,15 +336,15 @@ const skills = [
         matchStats.selfheal = 0.4;
     }),
     new skillInfo(31, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Rogue steals the equivalent of 10% of his stats from the enemy for 5 rounds
-        let satk = Math.floor(myStats.atk*0.1); eStats.atk -= satk; myStats.atk += satk;
-        let sdef = Math.floor(myStats.def*0.1); eStats.def -= sdef; myStats.def += sdef;
-        let smd = Math.floor(myStats.md*0.1); eStats.md -= smd; myStats.md += smd;
-        let smr = Math.floor(myStats.mr*0.1); eStats.mr -= smr; myStats.mr += smr;
-        let sdodge = Math.floor(myStats.dodge*10)/100; eStats.dodge -= sdodge; myStats.dodge += sdodge;
-        let scr = Math.floor(myStats.cr*10)/100; eStats.cr -= scr; myStats.cr += scr;
-        let scd = Math.floor(myStats.cd*10)/100; eStats.cd -= scd; myStats.cd += scd;
-        let sbr = Math.floor(myStats.br*10)/100; eStats.br -= sbr; myStats.br += sbr;
+        // Rogue steals the equivalent of 16% of his stats from the enemy for 5 rounds
+        const satk = Math.floor(myStats.atk*0.16); eStats.atk -= satk; myStats.atk += satk;
+        const sdef = Math.floor(myStats.def*0.16); eStats.def -= sdef; myStats.def += sdef;
+        const smd = Math.floor(myStats.md*0.16); eStats.md -= smd; myStats.md += smd;
+        const smr = Math.floor(myStats.mr*0.16); eStats.mr -= smr; myStats.mr += smr;
+        const sdodge = Math.floor(myStats.dodge*16)/100; eStats.dodge -= sdodge; myStats.dodge += sdodge;
+        const scr = Math.floor(myStats.cr*16)/100; eStats.cr -= scr; myStats.cr += scr;
+        const scd = Math.floor(myStats.cd*16)/100; eStats.cd -= scd; myStats.cd += scd;
+        const sbr = Math.floor(myStats.br*16)/100; eStats.br -= sbr; myStats.br += sbr;
 
         ebuff.atk.push(new buffInfo("+", -satk, 5)); mybuff.atk.push(new buffInfo("+", satk, 5));
         ebuff.def.push(new buffInfo("+", -sdef, 5)); mybuff.def.push(new buffInfo("+", sdef, 5));
@@ -354,24 +356,24 @@ const skills = [
         ebuff.br.push(new buffInfo("+", -sbr, 5)); mybuff.br.push(new buffInfo("+", sbr, 5));
 
         matchStats.turn = matchStats.turnSkill;
-        notice.push(`\n⚜️ **${char.name}** stole the equivalent of **10%** of his stats from the enemy for 5 rounds`);
+        notice.push(`\n⚜️ **${char.name}** stole the equivalent of **16%** of his stats from the enemy for 5 rounds`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         matchStats.selfhealChance = 0.4;
         matchStats.selfheal = 0.6;
     }),
     new skillInfo(32, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Barbarian deals 10% more damage after every round
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (1 + (matchStats.round * 0.1))});
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (1 + Math.min(matchStats.round * 0.1, 1))});
         matchStats.turn = matchStats.turnSkill;
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        mybuff.atk.push(new buffInfo("+", 10, 9999, 10, "+"));
+        mybuff.hp.push(new buffInfo("*", 0.97, 9999));
     }),
     new skillInfo(33, 45, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Berserker deals 15% more damage after every round
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (1 + (matchStats.round * 0.15))});
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: (1 + Math.min(matchStats.round * 0.2, 1.4))});
         matchStats.turn = matchStats.turnSkill;
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        mybuff.atk.push(new buffInfo("+", 15, 9999, 15, "+"));
+        mybuff.hp.push(new buffInfo("*", 0.98, 9999));
     }),
     new skillInfo(34, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Deathblade deals 150% dmg and causes bleeding for 2 rounds
@@ -468,13 +470,13 @@ const skills = [
         mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp*0.03), 9999));
         matchStats.heap1 = [];
     }),
-    new skillInfo(40, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new skillInfo(40, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Slayer counters the next 2 attacks
-        matchStats.counter += 2;
+        myStats.counter = 2;
         matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** prepares to counter the next 2 attacks`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.combodmg = 0.1;
+        myStats.combodmg = 0.1;
     }),
     new skillInfo(41, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Warlord increases his ATK by 1% for every 50 characters in inv
@@ -485,7 +487,7 @@ const skills = [
         myStats.atk += Math.floor(myStats.atk*atkbuff);
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "M" ? "his" : "her"} ATK by **${atkbuff*100}%** for 3 rounds`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.lootm = 1.2;
+        matchStats.lootm += 0.25;
     }),
     new skillInfo(42, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Paladin gains +200 DEF and Magic Resist for 2 rounds
@@ -558,8 +560,8 @@ const skills = [
     }),
     new skillInfo(48, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Wizard deals 150% Magic Damage
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: 1.5, magicDamage: true, mdChance: 0});
-        ebuff.hp.push(new buffInfo("*", 0.96, 3));
+        const dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, {atkMultiplier: 1.5, magicDamage: true, mdChance: 0});
+        ebuff.hp.push(new buffInfo("+", -Math.floor(dmg/5), 3)); // 30% for 3 rounds
         matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${enemy.name}** will take burning damage for the next 3 rounds`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -588,7 +590,7 @@ const skills = [
         mybuff.atk.push(new buffInfo("+", atkbuff, 9999));
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} ATK by **${atkbuff}**`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.combodmg = 0.1;
+        myStats.combodmg = 0.1;
     }),
     new skillInfo(52, 25, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Wardancer increases dodge chance and crit rate by +10% for 3 rounds
@@ -598,7 +600,7 @@ const skills = [
         mybuff.cr.push(new buffInfo("+", 0.1, 2));
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} dodge chance and crit rate by **+10%** each`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.dodgebuff = 0.05;
+        matchStats.dodgebuff = 0.04;
     }),
 ];
 
@@ -653,9 +655,9 @@ const bossAbilities = [
         notice.push(`\n✨ **${enemy.name}** poisoned you. You will lose **-20**HP after each round`);
     }, () => {}, [40, "Entoma poisons you to lose 20 hp every round"]),
     new skillInfo(1, 35, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        mybuff.def.push(new buffInfo("*", 0.2, 3));
+        mybuff.mr.push(new buffInfo("*", 0.2, 3));
         eStats.sm -= 35;
-        notice.push(`\n✨ **${enemy.name}** decreased your DEF by **80%** for 3 rounds`);
+        notice.push(`\n✨ **${enemy.name}** decreased your MR by **80%** for 3 rounds`);
     }, () => {}, [45, "CZ2128 Delta decreases your DEF by 80% for the next 3 rounds"]),
     new skillInfo(1, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2*Math.random()))) * 1.2);
@@ -787,5 +789,77 @@ const bossAbilities = [
     }, () => {}, [100, "Veldora makes a complete recovery"]),
 ];
 
+const eventBossAbilities = [
+    new skillInfo(0, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.shield += Math.floor(eStats.hp*0.001);
+        notice.push(`\n✨ **${enemy.name}** has recovered **${Math.floor(eStats.hp*0.001)}** shield`);
+    }, () => {}, [99, "Rumbleguard deals 300% magic damage, heals himself for 20% missing health"]),
+    new skillInfo(1, 80, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.def += 100;
+        eStats.mr += 100;
+        notice.push(`\n✨ **${enemy.name}** increased his DEF and MR by **${100}**`);
+    }, () => {}, [99, "Sylvanoss deals 300% magic damage, heals himself for 20% missing health"]),
+    new skillInfo(2, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2*Math.random()))) * 1.5);
+        myStats.hp -= satk;
+        if (myStats.hp < 0) myStats.hp = 0;
+        eStats.sm -= 40;
+        notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** magic damage`);
+    }, () => {}, [99, "Celestion deals 200% magic damage"]),
+    new skillInfo(3, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (Math.random() < 0.32) {
+            const md = Math.random() < 0.5;
+            let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2*Math.random()))) * 1.25);
+            myStats.hp -= satk;
+            if (myStats.hp < 0) myStats.hp = 0;
+            notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
+        } else if (Math.random() < 0.33) {
+            const md = Math.random() < 0.5;
+            if (md) eStats.md += Math.floor(eStats.md*0.1);
+            else eStats.atk += Math.floor(eStats.atk*0.1);
+            notice.push(`\n✨ **${enemy.name}** has increased ${md ? "MD" : "ATK"} by **10%**`);
+        } else {
+            myStats.hp -= Math.floor(myStats.maxhp*0.1);
+            if (myStats.hp < 0) myStats.hp = 0;
+            notice.push(`\n✨ **${enemy.name}** has burned **${10}%** of your HP`);
+        };
+    }, () => {}, [99, "Malevokar deals 300% magic damage, heals himself for 20% missing health"]),
+    new skillInfo(4, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if ((eStats.hp/eStats.maxhp) > 0.6) {
+            ebuff.def.push(new buffInfo("+", 100, 4));
+            ebuff.md.push(new buffInfo("+", 100, 4));
+            mybuff.dodge.push(new buffInfo("+", -0.1, 4));
+            notice.push(`\n✨ **${enemy.name}** increased DEF and MD by **+100** and decreased **${char.name}**'s dodge chance by **10%** for 4 rounds`);
+        } else if ((eStats.hp/eStats.maxhp) > 0.3) {
+            ebuff.cr.push(new buffInfo("+", 0.15, 4));
+            ebuff.cd.push(new buffInfo("+", 0.3, 4));
+            notice.push(`\n✨ **${enemy.name}** increased crit rate by **15%** and crit damage by **30%** for 4 rounds!`);
+        } else {
+            eStats.shield += Math.floor(eStats.hp*0.001);
+            ebuff.dodge.push(new buffInfo("+", 0.1, 4));
+            notice.push(`\n✨ **${enemy.name}** gained **${Math.floor(eStats.hp*0.001)}** shield! Increased dodge chance by **10%** for 4 rounds!`);
+        };
+    }, () => {}, [99, "Goblin King"]),
+    new skillInfo(5, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (Math.random() < 0.4) {
+            const md = Math.random() < 0.5;
+            let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2*Math.random()))) * 1.25);
+            myStats.hp -= satk;
+            if (myStats.hp < 0) myStats.hp = 0;
+            notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
+        } else if (Math.random() < 0.38) {
+            const md = Math.random() < 0.5;
+            if (md) eStats.md += Math.floor(eStats.md*0.1);
+            else eStats.atk += Math.floor(eStats.atk*0.1);
+            notice.push(`\n✨ **${enemy.name}** has increased ${md ? "MD" : "ATK"} by **10%**`);
+        } else {
+            const addShield = 1000 + Math.floor(Math.random()*1000)
+            eStats.shield += addShield;
+            notice.push(`\n✨ **${enemy.name}** has gained **${addShield}** shield!`);
+        };
+    }, () => {}, [99, "Goblin General"]),
+];
+
 module.exports.skills = skills;
 module.exports.bossAbilities = bossAbilities;
+module.exports.eventBossAbilities = eventBossAbilities;
