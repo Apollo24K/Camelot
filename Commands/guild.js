@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { dailies } = require("../Modules/dailyQuests.js");
 const { generateUniqueGuildId, showPage, searchGuild } = require("../Modules/functions.js");
@@ -33,13 +32,6 @@ function upgradePrice(level) {
         case 8: return 12000000;
         default: return (level-7)*10000000;
     };
-};
-
-function listGuilds(guilds) {
-
-    guilds.map((e) => `**__${e.name}__** ()`).join("\n\n");
-
-    return;
 };
 
 module.exports = {
@@ -89,11 +81,11 @@ module.exports = {
                     else e.status = "", e.value = 0;
                 });
 
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setTitle(guild.name)
                 .setColor(guild.color || 0xbbffff)
                 .setThumbnail(guild.icon)
-                .setDescription((guild.description || "_Missing description. Use `/guild setting` to add one._")
+                .setDescription((guild.description?.replace(/\\n/g, "\n") || "_Missing description. Use `/guild edit` to add one._")
                 + `\n\n**Guild Level**: \`${guild.level}\`\n**Capacity**: \`${members.length}/${10+Math.min(guild.level-1, 10)}\`\n**Treasury**: \`${guild.treasury}\`<:coins:872926669055356939>, \`${guild.treasury_gems}\`<:genesis_gems:1034179687720681492>`
                 + `\n\n<:ATK:1063214925528440832> **XP Buffs**: level ${guild.xpbuff}${guild.xpbuff ? `<:blank:917804200363171860>ㅤ(__+${20*guild.xpbuff}__%)` : ""}\n<:coins:872926669055356939> **Loot Buffs**: level ${guild.lootbuff}${guild.lootbuff ? `<:blank:917804200363171860>(__+${20*guild.lootbuff}__%)` : ""}\n⏱️ **Timers**: level ${guild.cdreduction}${guild.cdreduction ? `<:blank:917804200363171860> <:blank:917804200363171860>(__-${guild.cdreduction}__ min)` : ""}`
                 )//+ `\n\n**Members**\n${members.sort((a, b) => b.value-a.value).map((e) => `${e.name}${e.status} ➜ last online __${lastActive(e.lastdaily)}__`).join("\n")}`)
@@ -217,10 +209,10 @@ module.exports = {
 
                 return interaction.reply({content: `${user.toString()} ${interaction.user.username} is inviting you to join **${guild.name}**`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => (r.user.id === interaction.user.id || r.user.id === user.id) && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => (r.user.id === interaction.user.id || r.user.id === user.id) && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
 
                         const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
@@ -233,7 +225,7 @@ module.exports = {
                         return interaction.channel.send(`${user.toString()} has joined **${guild.name}**`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -252,22 +244,16 @@ module.exports = {
                 if (guild.master === interaction.user.id) {
                     if (guild.members.split(",").length > 1) return interaction.reply(`Please promote someone else to the position of guild master before you can leave.`);
                     return interaction.reply({content: `You are the last member in **${guild.name}**. Leaving will permanently delete any related data, do you want to proceed?`, components: [OfferRow], fetchReply: true}).then(msg => {
+                        const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
                         
-                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
-                        
-                        confirm.on('collect', async r => {
-                            confirm.stop(), cancel.stop();
+                        collector.on('collect', async r => {
+                            collector.stop();
+                            if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
                             await query(`UPDATE users SET guild = NULL WHERE id = ${interaction.user.id}`);
                             await query(`DELETE FROM guilds WHERE id = '${guild.id}'`);
                             
                             return interaction.channel.send(`You have left **${guild.name}**.`);
-                        });
-                        
-                        cancel.on('collect', async r => {
-                            confirm.stop(), cancel.stop();
-                            return interaction.channel.send("Action cancelled");
                         });
                         
                     });
@@ -303,10 +289,10 @@ module.exports = {
 
                 return interaction.reply({content: `Are you sure you want to kick **${user.username}** from **${guild.name}**?`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
 
                         guild.members = guild.members.split(",").filter((e) => e !== user.id).join(",");
@@ -318,7 +304,7 @@ module.exports = {
                         return interaction.channel.send(`**${user.toString()}** was kicked from **${guild.name}** by ${interaction.user.toString()}`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -346,10 +332,10 @@ module.exports = {
                 if (guild.elders.includes(user.id)) {
                     return interaction.reply({content: `Are you sure you want to promote **${user.username}** to the guild master position?\nThis will demote you to the position of an elder.`, components: [OfferRow], fetchReply: true}).then(msg => {
                         
-                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                         
-                        confirm.on('collect', async r => {
+                        confirm.on('collect', async () => {
                             confirm.stop(), cancel.stop();
                             
                             guild.elders = guild.elders.split(",").filter((e) => e !== user.id).join(",");
@@ -361,7 +347,7 @@ module.exports = {
                             return interaction.channel.send(`**${user.toString()}** was promoted to guild master!`);
                         });
                         
-                        cancel.on('collect', async r => {
+                        cancel.on('collect', () => {
                             confirm.stop(), cancel.stop();
                             return interaction.channel.send("Action cancelled");
                         });
@@ -370,10 +356,10 @@ module.exports = {
                 } else {
                     return interaction.reply({content: `Are you sure you want to promote **${user.username}** to the position of an elder?`, components: [OfferRow], fetchReply: true}).then(msg => {
                         
-                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                         
-                        confirm.on('collect', async r => {
+                        confirm.on('collect', async () => {
                             confirm.stop(), cancel.stop();
     
                             if (guild.elders.split(",").length) guild.elders += `,${user.id}`;
@@ -384,7 +370,7 @@ module.exports = {
                             return interaction.channel.send(`**${user.toString()}** was promoted to elder!`);
                         });
                         
-                        cancel.on('collect', async r => {
+                        cancel.on('collect', () => {
                             confirm.stop(), cancel.stop();
                             return interaction.channel.send("Action cancelled");
                         });
@@ -413,10 +399,10 @@ module.exports = {
                 if (!guild.elders.includes(user.id)) return interaction.reply(`You can't further demote **${user.username}**`);
                 return interaction.reply({content: `Are you sure you want to demote **${user.username}**?`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
                         guild.elders = guild.elders.split(",").filter((e) => e !== user.id).join(",");
                         
@@ -424,7 +410,7 @@ module.exports = {
                         return interaction.channel.send(`${user.toString()} was demoted by ${interaction.user.toString()}`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -433,13 +419,11 @@ module.exports = {
             });
         } else if (subcommand === "top") {
             let page = interaction.options.getInteger('page');
+            let sort = interaction.options.getString('sort') || "level";
             db.serialize(async () => {
                 const guilds = await query(`SELECT * FROM guilds`);
                 if (!guilds[0]) return interaction.reply(`There are no guilds in Camelot.`);
-    
-                // Sort guilds
-                guilds.sort((a, b) => b.level-a.level);
-
+                
                 // Pages
                 const elementsPerPage = 15;
                 let pagesTotal = Math.ceil(guilds.length / elementsPerPage);
@@ -447,40 +431,43 @@ module.exports = {
                 if (page <= pagesTotal && page > 0) {
                     currPage = page;
                 };
-                let left = guilds.length % elementsPerPage;
-    
-                let showItems = showPage(currPage, pagesTotal, left, guilds, elementsPerPage);
 
-                const Embed = new MessageEmbed()
+                // Sort guilds
+                let listPage;
+                if (sort === "level") {
+                    guilds.sort((a, b) => b.level-a.level);
+                    listPage = (e, i) => `${((currPage-1)*15)+i+1}) **${e.name}** ➜ Level **${e.level}**`
+                };
+                if (sort === "event") {
+                    guilds.sort((a, b) => b.bosshuntstage - a.bosshuntstage);
+                    listPage = (e, i) => `${((currPage-1)*15)+i+1}) **${e.name}** ➜ Stage **${e.bosshuntstage}**`
+                };
+    
+                let showItems = showPage(currPage, guilds, elementsPerPage);
+
+                const Embed = new EmbedBuilder()
                 .setColor(guilds[0].color || 0xbbffff)
                 .setTitle(`⚔️ Top Guilds of Camelot ⚔️`)
-                .setDescription(showItems.map((e, i) => `${((currPage-1)*15)+i+1}) **${e.name}** ➜ Level **${e.level}**`).join("\n"))
+                .setDescription(showItems.map(listPage).join("\n"))
                 .setThumbnail(guilds[0].icon)
-                .setFooter(`Page ${currPage}/${pagesTotal}`)
+                .setFooter({text: `Page ${currPage}/${pagesTotal}`})
                 if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
                 return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
     
-                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
-    
-                    prev.on('collect', async r => {
-                        if (currPage > 1) currPage--;
-                        else currPage = pagesTotal;
+                    collector.on('collect', r => {
+                        if (r.customId === "prev") {
+                            if (currPage > 1) currPage--;
+                            else currPage = pagesTotal;
+                        } else {
+                            if (currPage < pagesTotal) currPage++;
+                            else currPage = 1;
+                        };
 
-                        showItems = showPage(currPage, pagesTotal, left, guilds, elementsPerPage);
+                        showItems = showPage(currPage, guilds, elementsPerPage);
                         
-                        Embed.setDescription(showItems.map((e, i) => `${((currPage-1)*15)+i+1}) **${e.name}** ➜ Level **${e.level}**`).join("\n"));
-                        return interaction.editReply({ embeds: [Embed], components: [PageRow] });
-                    });
-    
-                    next.on('collect', async r => {
-                        if (currPage < pagesTotal) currPage++;
-                        else currPage = 1;
-
-                        showItems = showPage(currPage, pagesTotal, left, guilds, elementsPerPage);
-    
-                        Embed.setDescription(showItems.map((e, i) => `${((currPage-1)*15)+i+1}) **${e.name}** ➜ Level **${e.level}**`).join("\n"));
-                        return interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                        Embed.setDescription(showItems.map(listPage).join("\n"));
+                        return interaction.editReply({ embeds: [Embed] });
                     });
                     
                 });
@@ -502,10 +489,10 @@ module.exports = {
 
                 return interaction.reply({content: `Do you want to donate **${donation}**${emoji} to **${guild.name}**?`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
                         
                         const { 0: stats } = await query(`SELECT coins, gems, guild FROM users WHERE id = ${interaction.user.id}`);        
@@ -519,7 +506,7 @@ module.exports = {
                         return interaction.channel.send(`${interaction.user.username} has donated **${donation}**${emoji} to **${guild.name}**!`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -536,10 +523,10 @@ module.exports = {
 
                 return interaction.reply({content: `Are you sure you want to upgrade **${guild.name}** to level **${guild.level+1}** for **${price}**<:coins:872926669055356939>?`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
 
                         const { 0: guild } = await query(`SELECT * FROM guilds WHERE master = ${interaction.user.id}`);
@@ -552,7 +539,7 @@ module.exports = {
                         return interaction.channel.send(`Successfully upgraded **${guild.name}** to level **${guild.level+1}**!`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -571,10 +558,10 @@ module.exports = {
 
                 return interaction.reply({content: `Are you sure you want to upgrade **${perkName}** to level **${guild[perk]+1}** by using 1 out of your currently available ${guild.tokens === 1 ? "1 token" : `${guild.tokens} tokens`}?`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
 
                         const { 0: guild } = await query(`SELECT * FROM guilds WHERE master = ${interaction.user.id}`);
@@ -587,7 +574,7 @@ module.exports = {
                         return interaction.channel.send(`Successfully upgraded **${perk}** to level **${guild[perk]+1}**!`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -606,10 +593,10 @@ module.exports = {
 
                 return interaction.reply({content: `Are you sure you want to convert **${amount}**<:genesis_gems:1034179687720681492> into **${1000*amount}**<:coins:872926669055356939>? (gems to coins conversion = 1:1000)`, components: [OfferRow], fetchReply: true}).then(msg => {
                     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 45000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 45000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
                     
-                    confirm.on('collect', async r => {
+                    confirm.on('collect', async () => {
                         confirm.stop(), cancel.stop();
 
                         const { 0: guild } = await query(`SELECT * FROM guilds WHERE master = ${interaction.user.id}`);
@@ -621,7 +608,7 @@ module.exports = {
                         return interaction.channel.send(`Converted **${amount}**<:genesis_gems:1034179687720681492> into **${1000*amount}**<:coins:872926669055356939>`);
                     });
                     
-                    cancel.on('collect', async r => {
+                    cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
                         return interaction.channel.send("Action cancelled");
                     });
@@ -647,51 +634,40 @@ module.exports = {
                 if (page <= pagesTotal && page > 0) {
                     currPage = page;
                 };
-                let left = matchingGuilds.length % elementsPerPage;
                 
                 // Filter items to show on the current page
-                let showItems = showPage(currPage, pagesTotal, left, matchingGuilds, elementsPerPage);
+                let showItems = showPage(currPage, matchingGuilds, elementsPerPage);
                 
                 // Join elements to string
                 let desc = showItems.map((e) => `**${e.name}** (Guild Rank #${e.rank})\n<:barg:994958341128339536>Join Code: \`${e.id}\` | ${e.canjoin ? "Everyone can join" : "Invite only"} | \`(${e.members.split(",").length}/${10+Math.min(e.level-1, 10)})\``).join("\n\n");
                 
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setColor(matchingGuilds[0].color || 0xbbffff)
                 .setTitle(name ? `Guilds matching "${name}"` : "Guilds")
                 .setThumbnail(matchingGuilds[0].icon)
                 .setDescription(desc)
-                .setFooter(`Page ${currPage}/${pagesTotal}`)
+                .setFooter({text: `Page ${currPage}/${pagesTotal}`})
                 if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
                 return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                    
+                    collector.on('collect', async r => {
+                        if (r.customId === "prev") {
+                            if (currPage > 1) currPage--;
+                            else currPage = pagesTotal;
+                        } else {
+                            if (currPage < pagesTotal) currPage++;
+                            else currPage = 1;
+                        };
+    
+                        showItems = showPage(currPage, matchingGuilds, elementsPerPage);
+                        desc = showItems.map((e) => `**${e.name}** (Guild Rank #${e.rank})\n<:barg:994958341128339536>Join Code: \`${e.id}\` | ${e.canjoin ? "Everyone can join" : "Invite only"} | \`(${e.members.split(",").length}/${10+Math.min(e.level-1, 10)})\``).join("\n\n");
+    
+                        Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                        interaction.editReply({ embeds: [Embed] });
+                    });
 
-                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
-                    
-                    prev.on('collect', async r => {
-                        if (currPage > 1) currPage--;
-                        else currPage = pagesTotal;
-    
-                        showItems = showPage(currPage, pagesTotal, left, matchingGuilds, elementsPerPage);
-                        desc = showItems.map((e) => `**${e.name}** (Guild Rank #${e.rank})\n<:barg:994958341128339536>Join Code: \`${e.id}\` | ${e.canjoin ? "Everyone can join" : "Invite only"} | \`(${e.members.split(",").length}/${10+Math.min(e.level-1, 10)})\``).join("\n\n");
-    
-                        Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [PageRow] });
-                    });
-    
-                    next.on('collect', async r => {
-                        if (currPage < pagesTotal) currPage++;
-                        else currPage = 1;
-    
-                        showItems = showPage(currPage, pagesTotal, left, matchingGuilds, elementsPerPage);
-                        desc = showItems.map((e) => `**${e.name}** (Guild Rank #${e.rank})\n<:barg:994958341128339536>Join Code: \`${e.id}\` | ${e.canjoin ? "Everyone can join" : "Invite only"} | \`(${e.members.split(",").length}/${10+Math.min(e.level-1, 10)})\``).join("\n\n");
-    
-                        Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [PageRow] });
-                    });
-                    
                 });
-
-                // return interaction.reply({content: `Content`, components: [], fetchReply: true})
             });
         };
 

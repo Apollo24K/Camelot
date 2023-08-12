@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, ComponentType } = require("discord.js");
 const { characters, auniq } = require("../Modules/chars.js");
 const { showPage } = require("../Modules/functions.js");
 const { PageRow } = require("../Modules/components.js");
@@ -17,7 +15,13 @@ function itemsToShow(show, chars) {
             showAnime.push(`‧ ${anime} **(${charsOwned.length}/${charsInTotal.length})**`);
         };
     }
-    return showAnime.join("\n");
+    return showAnime;
+};
+
+function getMissingAmount(str) {
+    const matches = str.match(/(\d+)\/(\d+)/);
+    if (matches?.length !== 3) return 0;
+    return parseInt(matches[2]) - parseInt(matches[1]);
 };
 
 module.exports = {
@@ -25,6 +29,7 @@ module.exports = {
 	description: 'List all anime',
 	execute(interaction) {
 
+        const filter = interaction.options.getString('filter');
         const user = interaction.options.getUser('user') || interaction.user;
         const page = interaction.options.getInteger('page');
         
@@ -33,16 +38,24 @@ module.exports = {
             if (!inv[0]) inv[0] = {chars: "[]"};
             inv = {chars: JSON.parse(inv[0].chars)};
 
-            let uniq = auniq.sort();
+            let uniq = [...new Set(auniq.sort())];
             let chars = [...new Set(inv.chars)].map((e) => characters[e]);
 
             let aniCompleted = 0;
-            for (let i=0; i < uniq.length; i++) {
+            for (let i=uniq.length-1; i >= 0; i--) {
                 let animeCheck = characters.filter((e) => e.anime === uniq[i]).length;
                 let invCheck = chars.filter((e) => e.anime === uniq[i]).length;
-                if (animeCheck === invCheck) aniCompleted++;
+                if (animeCheck === invCheck) {
+                    aniCompleted++;
+                    if (filter === "missing") uniq.splice(i, 1);
+                } else if (filter === "completed") uniq.splice(i, 1);
             };
 
+            // Add completion status
+            uniq = itemsToShow(uniq, chars);
+
+            if (filter === "missing") uniq.sort((a, b) => getMissingAmount(a) - getMissingAmount(b) );
+            
             // Setup Pages
             const elementsPerPage = 15;
             let pagesTotal = Math.ceil(uniq.length / elementsPerPage);
@@ -50,44 +63,31 @@ module.exports = {
             if (page <= pagesTotal && page > 0) {
                 currPage = page;
             };
-            let left = uniq.length % elementsPerPage;
+            
+            let showAnime = showPage(currPage, uniq, elementsPerPage);
 
-            // Filter items to show on the current page
-            let showAnime = showPage(currPage, pagesTotal, left, uniq, elementsPerPage);
-            let desc = itemsToShow(showAnime, chars);
-
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
-            .setTitle(`**Anime Included** (${aniCompleted}/${uniq.length})`)
+            .setTitle(filter === null ? `**Anime Included** (${aniCompleted}/${auniq.length})` : filter === "completed" ? `**Anime Completed** (${aniCompleted}/${auniq.length})` : `**Anime Missing** (${auniq.length - aniCompleted}/${auniq.length})`)
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-            .setDescription(desc)
-            .setFooter(`Page ${currPage}/${pagesTotal}`)
-            interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then((msg) => {
+            .setDescription(showAnime.join("\n"))
+            .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+            return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then((msg) => {
                 
-                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
+                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                prev.on('collect', async r => {
-                    if (currPage > 1) currPage--;
-                    else currPage = pagesTotal;
+                collector.on('collect', r => {
+                    if (r.customId === "prev") {
+                        if (currPage > 1) currPage--;
+                        else currPage = pagesTotal;
+                    } else {
+                        if (currPage < pagesTotal) currPage++;
+                        else currPage = 1;
+                    };
 
-                    // Filter items to show on the current page
-                    let showAnime = showPage(currPage, pagesTotal, left, uniq, elementsPerPage);
-                    let desc = itemsToShow(showAnime, chars);
+                    showAnime = showPage(currPage, uniq, elementsPerPage);
 
-                    Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
-                    interaction.editReply({ embeds: [Embed] });
-                });
-
-                next.on('collect', async r => {
-                    if (currPage < pagesTotal) currPage++;
-                    else currPage = 1;
-
-                    // Filter items to show on the current page
-                    let showAnime = showPage(currPage, pagesTotal, left, uniq, elementsPerPage);
-                    let desc = itemsToShow(showAnime, chars);
-                    
-                    Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
+                    Embed.setDescription(showAnime.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
                     interaction.editReply({ embeds: [Embed] });
                 });
 

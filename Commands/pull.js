@@ -1,5 +1,4 @@
-/* eslint-disable no-extra-semi */
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD, auniq } = require("../Modules/chars.js");
 const { db, query } = require("../db_handler.js");
 const { displayPull, pullsToResetList, userLevel } = require("../Modules/functions.js");
@@ -78,7 +77,7 @@ module.exports = {
                 setTimeout(() => { db.serialize(async () => {
                     await query(`UPDATE users SET pullcount = 0 WHERE id = ${interaction.user.id}`);
                     pullsToResetList.delete(interaction.user.id);
-                     if (stats.pullreminder) interaction.channel.send(`${interaction.user.toString()} is off cooldown!`);
+                     if (stats.pullreminder) interaction.channel.send(`${interaction.user.toString()} is off </pull:1011014030103674913> cooldown!`);
                 })}, pullTimer);
             };
 
@@ -90,6 +89,7 @@ module.exports = {
             
             let ranRar = Math.floor(Math.random() * 1000); // 0-999
             let rar = "D";
+            let rarStats = {"SS":0,"S":0,"A":0,"B":0,"C":0,"D":0};
             let droprates;
             if (user_level < 10) droprates = {"SS": 1, "S": 4, "A": 34, "B": 130, "C": 388, "D": 1000}; // {"SS": 1, "S": 4, "A": 29, "B": 96, "C": 258, "D": 612}
             else if (user_level < 20) droprates = {"SS": 1, "S": 9, "A": 42, "B": 142, "C": 394, "D": 1000}; // {"SS": 1, "S": 8, "A": 33, "B": 100, "C": 252, "D": 606}
@@ -99,7 +99,6 @@ module.exports = {
             if (interaction.options.getString('premium')) {
                 if (stats.premium < 3) return interaction.reply("This is a `/premium` feature. If you like the bot and want to help us out we'd appreciate your support <:RaphiSmile:868998036645380197>");
                 let left = pullLimit - stats.pullcount;
-                let rarStats = {"SS":0,"S":0,"A":0,"B":0,"C":0,"D":0};
                 let thumbnail = "";
                 let topCharSS = [];
                 let topCharS = [];
@@ -131,9 +130,9 @@ module.exports = {
                 stats.pullcount = pullLimit;
                 stats.pullstotal += left;
                 add_xp += 5*left;
-        
+                
                 if (!thumbnail.length) thumbnail = characters[inv.chars[inv.chars.length-1]].image;
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setThumbnail(thumbnail)
                 .setTitle(`Pulled ${left} ${left === 1 ? "character" : "characters"}`)
@@ -162,8 +161,8 @@ module.exports = {
                 if (ranRar < droprates["S"] && ranRar >= droprates["SS"]) add_xp += ranXp;
                 else if (ranRar < droprates["SS"]) add_xp += 20;
         
-                if (ranRar < droprates["SS"]) rar = "SS", stats.lastss = 0;
-                else if (ranRar < droprates["S"]) rar = "S", stats.lasts = 0;
+                if (ranRar < droprates["SS"]) rar = "SS", rarStats["SS"]++, stats.lastss = 0;
+                else if (ranRar < droprates["S"]) rar = "S", rarStats["S"]++, stats.lasts = 0;
                 else if (ranRar < droprates["A"]) rar = "A";
                 else if (ranRar < droprates["B"]) rar = "B";
                 else if (ranRar < droprates["C"]) rar = "C";
@@ -185,7 +184,7 @@ module.exports = {
             // Achievements
             achievements[0].check(interaction); // First Character
             achievements[1].check(interaction), achievements[2].check(interaction), achievements[3].check(interaction); // Collector
-            achievements[4].check(interaction, interaction.user, rar), achievements[5].check(interaction, interaction.user, rar); // Something Rare
+            achievements[4].check(interaction, interaction.user, rarStats["S"]), achievements[5].check(interaction, interaction.user, rarStats["SS"]); // Something Rare
             achievements[15].check(interaction), achievements[16].check(interaction), achievements[17].check(interaction), achievements[18].check(interaction); // Rising
             achievements[19].check(interaction, interaction.user, characters, auniq), achievements[20].check(interaction, interaction.user, characters, auniq), achievements[21].check(interaction, interaction.user, characters, auniq), achievements[22].check(interaction, interaction.user, characters, auniq), achievements[23].check(interaction, interaction.user, characters, auniq); // Diligent
             

@@ -1,5 +1,5 @@
-var fs = require('fs');
-const { MessageEmbed } = require("discord.js");
+const fs = require('fs');
+const { EmbedBuilder } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { characters } = require("../Modules/chars.js");
 
@@ -37,9 +37,9 @@ module.exports = {
                 default : false; break;
             };
 
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
-            .setAuthor(`${user.username}'s profile`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+            .setAuthor({name: `${user.username}'s profile`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
             .setDescription(`Since last <:STier:869316518675095552> pull: **${stats.lasts}**/${sPit}\nSince last <:SSTier:869316489931546644> pull: **${stats.lastss}**/${ssPit}\n\nYou have pulled a total of **${stats.pullstotal}** times!`)
             .setThumbnail(thumbnail)
             return interaction.reply({ embeds: [Embed] });

@@ -1,5 +1,5 @@
 var fs = require('fs');
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { characters } = require("../Modules/chars.js");
 const { db, query } = require("../db_handler.js");
 
@@ -24,9 +24,9 @@ module.exports = {
             let thumbnail = characters[inv.chars[Math.floor(Math.random() * inv.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
             if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], inv.skin[stats.favchar]);
 
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
-            .setAuthor(`${user.username}'s Balance`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+            .setAuthor({name: `${user.username}'s Balance`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
             .setThumbnail(thumbnail)
             if (choice === "coins") Embed.setDescription(`**Balance**: \`${stats[choice]}\` <:coins:872926669055356939>\n${stats.dailyclaimed === 1 ? "You have claimed your daily" : "Your daily is available"}`);
             else if (choice === "gems") Embed.setDescription(`**Balance**: \`${stats[choice]}\` <:genesis_gems:1034179687720681492>\nSee </shop:1012711410343620618> if you need more <:LuminousPsssh:1071574041116295328>`);

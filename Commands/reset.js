@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-const { MessageActionRow, MessageButton } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { search } = require("../Modules/functions.js");
 
@@ -34,32 +33,32 @@ module.exports = {
             // price = Math.floor(price*rPer);
 
             const buttons = [
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('confirm')
                     .setEmoji('<:check_icon:683671903143067743>')
-                    .setStyle('SUCCESS'),
-                new MessageButton()
+                    .setStyle('Success'),
+                new ButtonBuilder()
                     .setCustomId('cancel')
                     .setEmoji('<:stop_icon:683671917353369600>')
-                    .setStyle('DANGER'),
+                    .setStyle('Danger'),
             ];
 
             if (gems) {
                 buttons.push(
-                    new MessageButton()
+                    new ButtonBuilder()
                         .setCustomId('gems')
                         .setEmoji('<:genesis_gems:1034179687720681492>')
                         .setLabel(`reset using ${gems} gems`)
-                        .setStyle('PRIMARY'),
+                        .setStyle('Primary'),
                 );
             };
 
-            const row = new MessageActionRow().addComponents(...buttons);
+            const row = new ActionRowBuilder().addComponents(...buttons);
 
             interaction.reply({content: `Do you want to reset **${char.name}**'s level for **${Math.floor(price*rPer)}**<:coins:872926669055356939>? (You will get ${rPer*100}% back of what you've invested)${gems ? `\nAlternatively you can reset your character using **${gems}** <:genesis_gems:1034179687720681492> to get 100% of your coins back (**${price}**<:coins:872926669055356939>)` : ""}`, components: [row], fetchReply: true}).then(msg => {
 
-                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && (r.customId === "confirm" || r.customId === "gems"), componentType: 'BUTTON', time: 15000 });
-                const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 15000 });
+                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && (r.customId === "confirm" || r.customId === "gems"), componentType: ComponentType.Button, time: 15000 });
+                const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
                 
                 confirm.on('collect', async r => {
                     confirm.stop(), cancel.stop();
@@ -73,8 +72,6 @@ module.exports = {
 
                     delete inv.level[char.id];
 
-                    console.log(inv.gems, gems);
-
                     interaction.channel.send(`Action completed successfully. Added **${price}**<:coins:872926669055356939> to your balance.`);
                     confirm.stop(), cancel.stop();
 
@@ -82,7 +79,7 @@ module.exports = {
                     await query(`UPDATE characters SET level = '${JSON.stringify(inv.level)}' WHERE id = ${interaction.user.id}`);
                 });
 
-                cancel.on('collect', async r => {
+                cancel.on('collect', () => {
                     confirm.stop(), cancel.stop();
                     interaction.channel.send("Action cancelled");
                 });

@@ -1,7 +1,5 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-var fs = require('fs');
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const fs = require('fs');
+const { EmbedBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { achievements } = require("../Modules/achievements.js");
 const { search, getDetailedStats } = require("../Modules/functions.js");
@@ -19,8 +17,8 @@ module.exports = {
 
         db.serialize(async () => {
 
-            let inv = await query(`SELECT users.coins, users.premium, characters.chars, characters.ref, characters.level, characters.class, characters.equipment, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id JOIN users ON characters.id = users.id WHERE characters.id = ${interaction.user.id}`);
-            inv = {coins: inv[0].coins, premium: inv[0].premium, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), class: JSON.parse(inv[0].class), equipment: JSON.parse(inv[0].equipment), classlevels: JSON.parse(inv[0].classlevels)};
+            let inv = await query(`SELECT users.coins, users.premium, users.class, characters.chars, characters.ref, characters.level, characters.equipment, characters.skin, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id JOIN users ON characters.id = users.id WHERE characters.id = ${interaction.user.id}`);
+            inv = {id: interaction.user.id, coins: inv[0].coins, premium: inv[0].premium, class: inv[0].class, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), equipment: JSON.parse(inv[0].equipment), skin: JSON.parse(inv[0].skin), classlevels: JSON.parse(inv[0].classlevels)};
 
             let toMax = false;
             if (up.toLowerCase() === "max") {
@@ -56,11 +54,11 @@ module.exports = {
             };
             if (inv.coins < price) return interaction.reply(`You don't have enough coins (**${inv.coins}**/${price}<:coins:872926669055356939>)`);
             
-            let thumbnail = char.image;
-            if (inv.premium > 3) if (customSettings[interaction.user.id] && customSettings[interaction.user.id].cimg[char.id]) thumbnail = customSettings[interaction.user.id].cimg[char.id];
-
-            const Embed = new MessageEmbed()
-            .setColor(0xbbffff)
+            // Thumbnail
+            const thumbnail = char.getImage(inv.premium, customSettings[interaction.user.id]?.cimg[char.id], inv.skin[char.id]);
+            
+            const Embed = new EmbedBuilder()
+            .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[char.rarity])
             .setDescription(`**${char.name}**\nLevel up from ${currLvl} ➜ **${currLvl+up}** for **${price}**<:coins:872926669055356939>`)
             .addFields(
                 { name: 'HP ️️️💖', value: `${stats.hp} ➜ **${stats2.hp}**`, inline: true },
@@ -68,16 +66,16 @@ module.exports = {
                 { name: 'DEF ️️️🛡️', value: `${stats.def} ➜ **${stats2.def}**`, inline: true },
             )
             .setThumbnail(thumbnail)
-            .setFooter(`EP: ${stats.ep} ➜ ${stats2.ep}`)
+            .setFooter({text: `EP: ${stats.ep} ➜ ${stats2.ep}`})
             return interaction.reply({ embeds: [Embed], components: [OfferRow], fetchReply: true }).then(msg => {
-                
-                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 15000 });
-                const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 15000 });
+                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                confirm.on('collect', async r => {
-                    confirm.stop(), cancel.stop();
-                    inv = await query(`SELECT users.coins, users.premium, characters.chars, characters.ref, characters.level, characters.class, characters.equipment, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id JOIN users ON characters.id = users.id WHERE characters.id = ${interaction.user.id}`);
-                    inv = {coins: inv[0].coins, premium: inv[0].premium, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), class: JSON.parse(inv[0].class), equipment: JSON.parse(inv[0].equipment), classlevels: JSON.parse(inv[0].classlevels)};
+                collector.on('collect', async r => {
+                    collector.stop();
+                    if (r.customId === "cancel") interaction.channel.send("Action cancelled");
+
+                    inv = await query(`SELECT users.coins, users.premium, users.class, characters.chars, characters.ref, characters.level, characters.equipment, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id JOIN users ON characters.id = users.id WHERE characters.id = ${interaction.user.id}`);
+                    inv = {id: interaction.user.id, coins: inv[0].coins, premium: inv[0].premium, class: inv[0].class, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), equipment: JSON.parse(inv[0].equipment), classlevels: JSON.parse(inv[0].classlevels)};
 
                     if (inv.coins < price) return interaction.channel.send(`You don't have enough coins (**${inv.coins}**/${price}<:coins:872926669055356939>)`);
 
@@ -95,13 +93,11 @@ module.exports = {
                     achievements[42].check(interaction, interaction.user, currLvl+up), achievements[43].check(interaction, interaction.user, currLvl+up), achievements[44].check(interaction, interaction.user, currLvl+up), achievements[45].check(interaction, interaction.user, currLvl+up); // The Battle is to the Strongest
                 });
 
-                cancel.on('collect', async r => {
-                    confirm.stop(), cancel.stop();
-                    interaction.channel.send("Action cancelled");
+                collector.on('end', () => {
+                    interaction.editReply({ components: [] });
                 });
 
             });
-            
         });
 
     },

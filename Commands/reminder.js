@@ -8,8 +8,7 @@ module.exports = {
         let reminder = interaction.options.getString('select');
 
         db.serialize(async () => {
-            var stats = await query(`SELECT pullreminder, votereminder FROM users WHERE id = ${interaction.user.id}`);
-            stats = stats[0];
+            const { 0: stats } = await query(`SELECT pullreminder, votereminder FROM users WHERE id = ${interaction.user.id}`);
 
             if (reminder === "pulls") {
                 await query(`UPDATE users SET pullreminder = ${stats.pullreminder ? 0 : 1} WHERE id = ${interaction.user.id}`);

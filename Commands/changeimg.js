@@ -1,6 +1,6 @@
 /* eslint-disable no-extra-semi */
 var fs = require('fs');
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { search, getDimensions } = require("../Modules/functions.js");
 const { db, query } = require("../db_handler.js");
 
@@ -75,13 +75,13 @@ module.exports = {
                     if (err) console.error(err);
                 });
                 const channel = client.channels.cache.find(channel => channel.id === "934117922039791627");
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setTitle(char.name)
                 .setColor(0xbbffff)
                 .setImage(imgurl)
                 .setThumbnail(char.image)
                 .setDescription(`Server: ${interaction.guild.name}\nType \`!remove <img link>\` to remove it`)
-                .setFooter(`${interaction.user.tag}`, interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+                .setFooter({text: `${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
                 channel.send({ embeds: [Embed] });
             };
 

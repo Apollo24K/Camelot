@@ -1,42 +1,42 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton, Modal, TextInputComponent } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ModalBuilder, TextInputBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } = require("../Modules/chars.js");
 const { splitTitle } = require("../Modules/functions.js");
 const { dailies } = require("../Modules/dailyQuests.js");
 
-const row = new MessageActionRow()
+const row = new ActionRowBuilder()
     .addComponents(
-        new MessageButton()
+        new ButtonBuilder()
             .setCustomId('letter')
             .setLabel('Letter')
-            .setStyle('SECONDARY'),
-        new MessageButton()
+            .setStyle('Secondary'),
+        new ButtonBuilder()
             .setCustomId('anime')
             .setLabel('Anime')
-            .setStyle('SECONDARY'),
-        new MessageButton()
+            .setStyle('Secondary'),
+        new ButtonBuilder()
             .setCustomId('guess')
             .setLabel('Guess')
-            .setStyle('PRIMARY'),
+            .setStyle('Primary'),
     );
 
-const modal = new Modal()
-    .setCustomId('gtc_modal')
-    .setTitle('Guess the Character')
-    .addComponents([
-        new MessageActionRow().addComponents(
-            new TextInputComponent()
-            .setCustomId('gtc_input')
-            .setLabel("What's the characters name?")
-            .setStyle('SHORT')
-            .setMinLength(1)
-            .setMaxLength(30)
-            .setPlaceholder('type name here...')
-            .setRequired(true),
-        ),
-    ]);
+function getModal(uid) {
+    return new ModalBuilder()
+        .setCustomId('gtc_modal'+uid)
+        .setTitle('Guess the Character')
+        .addComponents([
+            new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                .setCustomId('gtc_input')
+                .setLabel("What's the characters name?")
+                .setStyle('Short')
+                .setMinLength(1)
+                .setMaxLength(30)
+                .setPlaceholder('type name here...')
+                .setRequired(true),
+            ),
+        ]);
+};
 
 function gtcSearch(name) {
     let cArgs = name.split(" ");
@@ -71,7 +71,7 @@ function msgFilter(response, choice) {
 module.exports = {
     name: 'guess',
 	description: 'Guess the character game',
-	execute(interaction, client) {
+	execute(interaction) {
 
         let difficulty = interaction.options.getString('difficulty') || "hard";
 
@@ -91,55 +91,54 @@ module.exports = {
         db.serialize(async () => {
             await interaction.deferReply();
             
-            const Embed = new MessageEmbed()
-            .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, default: 0xbbffff}[pick.rarity])
+            const Embed = new EmbedBuilder()
+            .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[pick.rarity])
             .setImage(pick.image)
             .setTitle("Guess the Character")
             .setDescription(`**Anime**: ${animeTitle}\n${scores}`)
-            .setFooter("Hints: letter (-2 points), anime (-6 points)")
+            .setFooter({text: "Hints: letter (-2 points), anime (-6 points)"})
             interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((emsg) => {
                 
-                const collector = emsg.createMessageComponentCollector({filter: (component) => component.customId === "guess", componentType: 'BUTTON', time: 60000 });
-                const hintLetter = emsg.createMessageComponentCollector({filter: (component) => component.customId === "letter", componentType: 'BUTTON', time: 60000 });
-                const hintAnime = emsg.createMessageComponentCollector({filter: (component) => component.customId === "anime", componentType: 'BUTTON', time: 60000 });
-                
-                const handleSubmit = async modalInteraction => {
-                    if (modalInteraction.isModalSubmit() && modalInteraction.customId === 'gtc_modal') {
-                        client.removeListener('interactionCreate', handleSubmit);
-                        const response = modalInteraction.fields.getTextInputValue('gtc_input');
-                        if (!msgFilter(response, pick.id)) {
-                            modalInteraction.reply(`Wrong guess by **${modalInteraction.user.username}**: ${response}`);
-                        } else {
-                            isPending = false;
-                            collector.stop(), hintAnime.stop(), hintLetter.stop();
-                 
-                            var stats = await query(`SELECT lilies FROM users WHERE id = ${modalInteraction.user.id}`);
-                            if (!stats[0]) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
-                 
-                            const Embed = new MessageEmbed()
-                            .setColor(0xbbffff)
-                            .setThumbnail(pick.image)
-                            .setTitle("You got it! 🎉")
-                            .setDescription(`**Name**: ${pick.name}\n**Anime**: ${pick.anime}\nYou've gained **${points}** <:lilium:974057059618291732>`)
-                            .setFooter(`${modalInteraction.user.tag}`, modalInteraction.user.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                            modalInteraction.reply({ embeds: [Embed] });
-                 
-                            await query(`UPDATE users SET lilies = lilies + ${points} WHERE id = ${modalInteraction.user.id}`);
-
-                            // Daily Quests
-                            dailies[1].update(interaction, points, modalInteraction.user.id);
-                        };
-                    };
-                };
+                const collector = emsg.createMessageComponentCollector({filter: (component) => component.customId === "guess", componentType: ComponentType.Button, time: 60000 });
+                const hintLetter = emsg.createMessageComponentCollector({filter: (component) => component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
+                const hintAnime = emsg.createMessageComponentCollector({filter: (component) => component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
+                const uid = Math.random();
                 
                 collector.on('collect', async component => {
                     if (component.isButton() && isPending) {
-                        await component.showModal(modal);
-                        client.on('interactionCreate', handleSubmit);
+                        await component.showModal(getModal(uid));
+
+                        interaction.awaitModalSubmit({ filter: (r) => r.customId === ('gtc_modal'+uid), time: 60000 }).then(async modalInteraction => {
+                            const response = modalInteraction.fields.getTextInputValue('gtc_input');
+                            if (!msgFilter(response, pick.id)) {
+                                modalInteraction.reply(`Wrong guess by **${modalInteraction.user.username}**: ${response}`);
+                            } else {
+                                isPending = false;
+                                collector.stop(), hintAnime.stop(), hintLetter.stop();
+                     
+                                var stats = await query(`SELECT lilies FROM users WHERE id = ${modalInteraction.user.id}`);
+                                if (!stats[0]) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
+                     
+                                const Embed = new EmbedBuilder()
+                                .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[pick.rarity])
+                                .setThumbnail(pick.image)
+                                .setTitle("You got it! 🎉")
+                                .setDescription(`**Name**: ${pick.name}\n**Anime**: ${pick.anime}\nYou've gained **${points}** <:lilium:974057059618291732>`)
+                                .setFooter({text: `${modalInteraction.user.tag}`, iconURL: modalInteraction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                                modalInteraction.reply({ embeds: [Embed] });
+                     
+                                await query(`UPDATE users SET lilies = lilies + ${points} WHERE id = ${modalInteraction.user.id}`);
+    
+                                // Daily Quests
+                                dailies[1].update(interaction, points, modalInteraction.user);
+                            };
+                        }).catch(() => {
+                            false;
+                        });
                     };
                 });
                 
-                hintAnime.on('collect', async component => {
+                hintAnime.on('collect', () => {
                     if (points < 6) return interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>")
                     points -= 6;
                     animeTitle = splitTitle(pick.anime);
@@ -147,7 +146,7 @@ module.exports = {
                     emsg.edit({ embeds: [Embed] });
                 });
                 
-                hintLetter.on('collect', async component => {
+                hintLetter.on('collect', () => {
                     if (points < 2) return interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>")
                     points -= 2;
                     let reveal = Math.floor(Math.random() * pick.name.split(" ").join("").length);
@@ -167,14 +166,12 @@ module.exports = {
                     emsg.edit({ embeds: [Embed] });
                 });
                  
-                collector.on('end', async (component) => {
-                    client.removeListener('interactionCreate', handleSubmit);
-                    
+                collector.on('end', () => {
                     if (isPending) {
                         hintAnime.stop(), hintLetter.stop(), collector.stop();
                  
-                        const Embed = new MessageEmbed()
-                        .setColor(0xbbffff)
+                        const Embed = new EmbedBuilder()
+                        .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[pick.rarity])
                         .setThumbnail(pick.image)
                         .setTitle("Time's up!")
                         .setDescription(`And no one got it right <:BigSad:928369010217746442>\n**Name**: ||${pick.name}||\n**Anime**: ${hintAnime.received ? pick.anime : `||${pick.anime}||`}\nNo lilies were earned <:lilium:974057059618291732>`)

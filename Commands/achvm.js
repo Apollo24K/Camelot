@@ -1,30 +1,26 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-var fs = require('fs');
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const fs = require('fs');
+const { EmbedBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { achievements } = require("../Modules/achievements.js");
 const { characters, auniq } = require("../Modules/chars.js");
 const { enemies } = require("../Modules/enemies.js");
 const { userLevel } = require("../Modules/functions.js");
+const { PageRow } = require("../Modules/components.js");
 
 module.exports = {
     name: 'achievements',
 	description: 'see your achievements',
 	execute(interaction) {
 
-        var customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         let user = interaction.options.getUser('user') || interaction.user;
         let page = interaction.options.getInteger('page');
         
         db.serialize(async () => {
-            var stats = await query(`SELECT users.favchar, users.dailystreak, users.xp, users.premium, users.arenawins, users.achievements, characters.chars, characters.level AS charlvl, dungeon.floors FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
-            if (!stats[0]) return interaction.reply(`**${user.username}** hasn't started playing yet`);
-            stats = stats[0];
-            stats.floors = JSON.parse(stats.floors);
-            stats.chars = JSON.parse(stats.chars);
-            stats.achievements = JSON.parse(stats.achievements);
+            const { 0: stats } = await query(`SELECT users.favchar, users.dailystreak, users.xp, users.premium, users.arenawins, users.achievements, characters.chars, characters.level AS charlvl, characters.skin, dungeon.floors FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+            if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet`);
+            stats.floors = JSON.parse(stats.floors), stats.chars = JSON.parse(stats.chars), stats.skin = JSON.parse(stats.skin), stats.achievements = JSON.parse(stats.achievements);
             
             let uniq = [...new Set(stats.chars)];
 
@@ -34,6 +30,10 @@ module.exports = {
                 thumbnail = characters[stats.favchar].image;
                 if (stats.premium > 3) if (customSettings[user.id] && customSettings[user.id].cimg[stats.favchar]) thumbnail = customSettings[user.id].cimg[stats.favchar];
             };
+
+            
+            if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], stats.skin[stats.favchar]);
+
 
             let level = userLevel(stats.xp);
 
@@ -199,11 +199,11 @@ module.exports = {
             let left = fields.length % fieldPerPage;
 
             function updatePage() {
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setTitle(`Achievements (${stats.achievements.length}/${achievements.length})`)
                 .setThumbnail(thumbnail)
-                .setFooter(`Page ${currPage}/${pagesTotal}`);
+                .setFooter({text: `Page ${currPage}/${pagesTotal}`});
                 if (currPage < pagesTotal || left === 0) {
                     for (let i=(currPage-1)*fieldPerPage; i < currPage * fieldPerPage; i++) {
                         Embed.addFields(fields[i][0], fields[i][1], fields[i][2]);
@@ -216,37 +216,20 @@ module.exports = {
                 return Embed;
             };
 
-            const row = new MessageActionRow()
-                .addComponents(
-                    new MessageButton()
-                        .setCustomId('prev')
-                        .setEmoji('⏪')
-                        .setStyle('SECONDARY'),
-                    new MessageButton()
-                        .setCustomId('next')
-                        .setEmoji('⏩')
-                        .setStyle('SECONDARY'),
-                );
+            return interaction.reply({ embeds: [updatePage()], components: [PageRow], fetchReply: true }).then(msg => {
+                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            return interaction.reply({ embeds: [updatePage()], components: [row], fetchReply: true }).then(msg => {
+                collector.on('collect', async r => {
+                    if (r.customId === "prev") {
+                        if (currPage > 1) currPage--;
+                        else currPage = pagesTotal;
+                    } else {
+                        if (currPage < pagesTotal) currPage++;
+                        else currPage = 1;
+                    };
 
-                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
-
-                prev.on('collect', async r => {
-                    if (currPage > 1) currPage--;
-                    else currPage = pagesTotal;
-
-                    msg.edit({ embeds: [updatePage()], components: [row] });
+                    msg.edit({ embeds: [updatePage()], components: [PageRow] });
                 });
-
-                next.on('collect', async r => {
-                    if (currPage < pagesTotal) currPage++;
-                    else currPage = 1;
-
-                    msg.edit({ embeds: [updatePage()], components: [row] });
-                });
-
             });
             
         });

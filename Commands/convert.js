@@ -1,9 +1,8 @@
 /* eslint-disable no-unused-vars */
 const { db, query } = require("../db_handler.js");
-const { MessageActionRow, MessageButton } = require("discord.js");
+const { ComponentType } = require("discord.js");
 const { items } = require("../Modules/items.js");
 const { OfferRow } = require("../Modules/components.js");
-
 
 module.exports = {
     name: 'convert',
@@ -45,8 +44,8 @@ module.exports = {
                 // If the player has enough shards:
                 return interaction.reply({content: `Are you sure you want to convert ${Math.pow(4, dif) * arg} ${sEmojis[from]} to ${arg} ${sEmojis[to]}?`, components: [OfferRow], fetchReply: true}).then(msg => {
     
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 30000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 30000 });
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
+                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
     
                     confirm.on('collect', async r => {
                         let stats = await query(`SELECT ssshard, sshard, ashard, bshard, cshard, dshard FROM users WHERE id = ${interaction.user.id}`);
@@ -83,52 +82,59 @@ module.exports = {
             if (to < from) return interaction.reply("You can't convert levelup materials to lower tiers");
 
             db.serialize(async () => {
-                let stats = await query(`SELECT items FROM users WHERE id = ${interaction.user.id}`);
-                if (!stats[0]) return interaction.reply("You don't have any levelup materials");
-                stats = {items: JSON.parse(stats[0].items)};
+                const { 0: stats } = await query(`SELECT items FROM users WHERE id = ${interaction.user.id}`);
+                stats.items = JSON.parse(stats.items);
                 
+                const values = {"50":1,"51":1,"52":2,"53":2,"54":3,"55":3,"56":4,"57":4};
+                let dif = values[to] - values[from];
                 let arg = 1;
-                if (amount) {
-                    if (!isNaN(amount)) arg = parseInt(amount);
-                    else if (amount.toLowerCase() === "max") arg = "max";
-                    else return interaction.reply(`Please input a valid number.`);
+
+                if (from > 1) {
+                    if (amount) {
+                        if (!isNaN(amount)) arg = parseInt(amount);
+                        else if (amount.toLowerCase() === "max") arg = "max";
+                        else return interaction.reply(`Please input a valid number.`);
+                    };
+
+                    if (arg === "max") arg = Math.floor((stats.items[from] || 0) / Math.pow(5, dif));
+                    if (arg < 1) return interaction.reply(`You can't convert ${arg} levelup materials.`);
+                    if (arg > 100000) return interaction.reply(`You can't convert more than 100000 levelup materials at once.`);
+
+                    if ((stats.items[from] || 0) < (Math.pow(5, dif) * arg)) return interaction.reply(`You don't have enough ${items[from].emoji} **__${items[from].name}__** (**${stats.items[from] || 0}**/${Math.pow(5, dif) * arg}${items[from].emoji})`);
                 };
                 
-                let values = {"50":1,"51":1,"52":2,"53":2,"54":3,"55":3,"56":4,"57":4};
-                let dif = values[to] - values[from];
-                if (arg === "max") arg = Math.floor((stats.items[from] || 0) / Math.pow(5, dif));
-                if (arg < 1) return interaction.reply(`You can't convert ${arg} levelup materials.`);
-                if (arg > 100000) return interaction.reply(`You can't convert more than 100000 levelup materials at once.`);
-                
-                if ((stats.items[from] || 0) < (Math.pow(5, dif) * arg)) return interaction.reply(`You don't have enough ${items[from].emoji} **__${items[from].name}__** (**${stats.items[from] || 0}**/${Math.pow(5, dif) * arg}${items[from].emoji})`);
-
                 // If the player has enough levelup materials:
-                return interaction.reply({content: `Are you sure you want to convert ${Math.pow(5, dif) * arg} ${items[from].emoji} to ${arg} ${items[to].emoji}?`, components: [OfferRow], fetchReply: true}).then(msg => {
-    
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 30000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 30000 });
-    
-                    confirm.on('collect', async r => {
-                        confirm.stop(), cancel.stop();
-                        let stats = await query(`SELECT items FROM users WHERE id = ${interaction.user.id}`);
-                        if (!stats[0]) return interaction.reply("You don't have any levelup materials");
-                        stats = {items: JSON.parse(stats[0].items)};
-                        
-                        if ((stats.items[from] || 0) < (Math.pow(5, dif) * arg)) return interaction.channel.send(`You don't have enough ${items[from].emoji} **__${items[from].name}__** (**${stats.items[from] || 0}**/${Math.pow(5, dif) * arg}${items[from].emoji})`);
+                return interaction.reply({content: `Are you sure you want to convert ${from < 2 ? "everything up to" : `${Math.pow(5, dif) * arg} ${items[from].emoji} to ${arg}`} ${items[to].emoji}?`, components: [OfferRow], fetchReply: true}).then(msg => {
+                    
+                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
+                    
+                    collector.on('collect', async r => {
+                        collector.stop();
+                        if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
-                        stats.items[from] -= (Math.pow(5, dif) * arg);
-                        stats.items[to] = (stats.items[to] + arg) || arg;
+                        const { 0: stats } = await query(`SELECT items FROM users WHERE id = ${interaction.user.id}`);
+                        stats.items = JSON.parse(stats.items);
+                        
+                        if (from < 2) {
+                            [50, 52, 54].forEach((e) => {
+                                if (e+type < to) {
+                                    arg = Math.floor((stats.items[e+type] || 0) / 5);
+                                    stats.items[e+type] -= (5*arg);
+                                    stats.items[e+type+2] = (stats.items[e+type+2] + arg) || arg;
+                                };
+                            });
+                        } else {
+                            if ((stats.items[from] || 0) < (Math.pow(5, dif) * arg)) return interaction.channel.send(`You don't have enough ${items[from].emoji} **__${items[from].name}__** (**${stats.items[from] || 0}**/${Math.pow(5, dif) * arg}${items[from].emoji})`);
     
+                            stats.items[from] -= (Math.pow(5, dif) * arg);
+                            stats.items[to] = (stats.items[to] + arg) || arg;
+                        };
+                        
                         await query(`UPDATE users SET items = '${JSON.stringify(stats.items)}' WHERE id = ${interaction.user.id}`);
                         
-                        interaction.channel.send(`Converted ${Math.pow(5, dif) * arg} ${items[from].emoji} to ${arg} ${items[to].emoji}`);
+                        interaction.channel.send(`Converted ${from < 2 ? "everything up to" : `${Math.pow(5, dif) * arg} ${items[from].emoji} to ${arg}`} ${items[to].emoji}`);
                     });
                     
-                    cancel.on('collect', async r => {
-                        confirm.stop(), cancel.stop();
-                        interaction.channel.send("Action cancelled");
-                    });
-    
                 });
 
             });

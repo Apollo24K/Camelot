@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const fs = require('fs');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { abilities } = require("../Modules/abilities.js");
 const { achievements } = require("../Modules/achievements.js");
@@ -14,21 +15,23 @@ const Avalon = require("../Modules/avalon.js");
 const buffInfo = require("../Modules/buffs.js");
 const _ = require('lodash');
 
-const row2 = new MessageActionRow().addComponents(
-    new MessageButton()
+const row2 = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
         .setCustomId('1')
         .setLabel('Accept')
-        .setStyle('SUCCESS'),
-    new MessageButton()
+        .setStyle('Success'),
+    new ButtonBuilder()
         .setCustomId('0')
         .setLabel('Decline')
-        .setStyle('DANGER'),
+        .setStyle('Danger'),
 );
 
 module.exports = {
     name: 'arena',
 	description: 'arena',
 	execute(interaction) {
+
+        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         let user = interaction.options.getUser('user');
         
@@ -37,12 +40,12 @@ module.exports = {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
             
-            let stats = await query(`SELECT users.id, users.arenawins, users.arenalosses, users.coins, users.battlechar, users.animationdelay, users.premium, characters.chars, characters.ref, characters.level, characters.class, characters.equipment, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-            stats = {id: stats[0].id, arenawins: stats[0].arenawins, arenalosses: stats[0].arenalosses, coins: stats[0].coins, battlechar: stats[0].battlechar, animationdelay: stats[0].animationdelay, premium: stats[0].premium, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), class: JSON.parse(stats[0].class), equipment: JSON.parse(stats[0].equipment), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+            let stats = await query(`SELECT users.id, users.class, users.arenawins, users.arenalosses, users.coins, users.battlechar, users.animationdelay, users.premium, characters.chars, characters.ref, characters.level, characters.equipment, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+            stats = {id: stats[0].id, class: stats[0].class, arenawins: stats[0].arenawins, arenalosses: stats[0].arenalosses, coins: stats[0].coins, battlechar: stats[0].battlechar, animationdelay: stats[0].animationdelay, premium: stats[0].premium, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), equipment: JSON.parse(stats[0].equipment), skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
             
-            let stats2 = await query(`SELECT users.id, users.arenawins, users.arenalosses, users.coins, users.battlechar, users.animationdelay, users.premium, characters.chars, characters.ref, characters.level, characters.class, characters.equipment, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+            let stats2 = await query(`SELECT users.id, users.class, users.arenawins, users.arenalosses, users.coins, users.battlechar, users.animationdelay, users.premium, characters.chars, characters.ref, characters.level, characters.equipment, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
             if (!stats2[0]) return interaction.editReply(`**${user.username}** hasn't started playing yet.`);
-            stats2 = {id: stats2[0].id, arenawins: stats2[0].arenawins, arenalosses: stats2[0].arenalosses, coins: stats2[0].coins, battlechar: stats2[0].battlechar, animationdelay: stats2[0].animationdelay, premium: stats2[0].premium, chars: JSON.parse(stats2[0].chars), ref: JSON.parse(stats2[0].ref), level: JSON.parse(stats2[0].level), class: JSON.parse(stats2[0].class), equipment: JSON.parse(stats2[0].equipment), limit: stats2[0].limit, floors: JSON.parse(stats2[0].floors), classes: JSON.parse(stats2[0].classes), classlevels: JSON.parse(stats2[0].classlevels)};
+            stats2 = {id: stats2[0].id, class: stats2[0].class, arenawins: stats2[0].arenawins, arenalosses: stats2[0].arenalosses, coins: stats2[0].coins, battlechar: stats2[0].battlechar, animationdelay: stats2[0].animationdelay, premium: stats2[0].premium, chars: JSON.parse(stats2[0].chars), ref: JSON.parse(stats2[0].ref), level: JSON.parse(stats2[0].level), equipment: JSON.parse(stats2[0].equipment), skin: JSON.parse(stats2[0].skin), limit: stats2[0].limit, floors: JSON.parse(stats2[0].floors), classes: JSON.parse(stats2[0].classes), classlevels: JSON.parse(stats2[0].classlevels)};
 
             if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
             if (stats2.battlechar === null || !stats2.chars.includes(stats2.battlechar)) return interaction.editReply(`**${user.username}** has to choose a battle character first. Use \`/select <char name>\` to choose one.`);
@@ -53,14 +56,18 @@ module.exports = {
             // User stats
             let myChar = characters[stats.battlechar];
             let myStats = await getDetailedStats(myChar.id, stats, stats.classlevels);
+            myStats.image = myChar.image;
             let myStatsC = {...myStats};
             let myClass = myStats.class !== -1 ? classes[myStats.class] : false;
             let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : false;
             let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : false;
 
+            const thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.skin[myChar.id]);
+
             // Enemy Stats
             let enemy = characters[stats2.battlechar];
             let eStats = await getDetailedStats(enemy.id, stats2, stats2.classlevels);
+            eStats.image = enemy.getImage(stats2.premium, customSettings[user.id]?.cimg[enemy.id], stats2.skin[enemy.id]);
             let eStatsC = {...eStats};
             let eClass = eStats.class !== -1 ? classes[eStats.class] : false;
             let eSkill = eStats.class !== -1 ? _.cloneDeep(skills[eStats.class]) : false;
@@ -72,14 +79,14 @@ module.exports = {
             const aDelay = stats.premium ? stats.animationdelay : 1200;
 
             async function matchResult(r) {
-                const EmbedR = new MessageEmbed()
+                const EmbedR = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setTitle(`Battle Arena`)
                 if (r === "w") {
                     await query(`UPDATE users SET arenawins = arenawins + 1 WHERE id = ${interaction.user.id}`);
                     await query(`UPDATE users SET arenalosses = arenalosses + 1 WHERE id = ${user.id}`);
                     
-                    EmbedR.setDescription(`<:stars_v2:917023655840591963> **${interaction.user.username}** won! <:stars_v2:917023655840591963>\nBetter luck next time ${user.username}.`).setThumbnail(myChar.image).setFooter(`Total wins: ${stats.arenawins+1}`, interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048");
+                    EmbedR.setDescription(`<:stars_v2:917023655840591963> **${interaction.user.username}** won! <:stars_v2:917023655840591963>\nBetter luck next time ${user.username}.`).setThumbnail(thumbnail).setFooter({text: `Total wins: ${stats.arenawins+1}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
                     
                     // Achievements
                     achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
@@ -92,7 +99,7 @@ module.exports = {
                     await query(`UPDATE users SET arenalosses = arenalosses + 1 WHERE id = ${interaction.user.id}`);
                     await query(`UPDATE users SET arenawins = arenawins + 1 WHERE id = ${user.id}`);
 
-                    EmbedR.setDescription(`<:stars_v2:917023655840591963> **${user.username}** won! <:stars_v2:917023655840591963>\nBetter luck next time ${interaction.user.username}.`).setThumbnail(enemy.image).setFooter(`Total wins: ${stats2.arenawins+1}`, user.displayAvatarURL({ dynamic: true }) + "?size=2048");
+                    EmbedR.setDescription(`<:stars_v2:917023655840591963> **${user.username}** won! <:stars_v2:917023655840591963>\nBetter luck next time ${interaction.user.username}.`).setThumbnail(eStats.image).setFooter({text: `Total wins: ${stats2.arenawins+1}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
                     
                     // Achievements
                     achievements[39].check(interaction, user, eStatsC.hp), achievements[40].check(interaction, user, eStatsC.hp), achievements[41].check(interaction, user, eStatsC.hp); // Under Pressure
@@ -113,56 +120,56 @@ module.exports = {
             if (new Date().getMonth() === 11) ATK_EMOJI = '<:sw:1030154812496560218>', DEF_EMOJI = '<:sh:1030154814652420127>', ABILITY_EMOJI = '<:sp:1030154816288198768>', SKILL_EMOJI = '<:fl:1030154818746069012>';
 
             // Buttons
-            let atkButton = new MessageButton().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle('SECONDARY');
-            let defButton = new MessageButton().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle('SECONDARY');
-            let abilityButton = new MessageButton().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle('SECONDARY').setDisabled(true);
-            let skillButton = new MessageButton().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle('SECONDARY').setDisabled(true);
+            let atkButton = new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle('Secondary');
+            let defButton = new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle('Secondary');
+            let abilityButton = new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle('Secondary').setDisabled(true);
+            let skillButton = new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle('Secondary').setDisabled(true);
             
-            if (myAbility || eAbility) abilityButton.setDisabled(false);
+            if ((myAbility && "ability" in myAbility) || (eAbility && "ability" in eAbility)) abilityButton.setDisabled(false);
             if (myStats.class !== -1 || eStats.class !== -1) skillButton.setDisabled(false);
 
-            const row = new MessageActionRow()
+            const row = new ActionRowBuilder()
             .addComponents(atkButton, defButton, abilityButton, skillButton);
 
             // Player 1
-            if (skill && myStats.id !== 4767 && enemy.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user, interaction.commandName);
-            if (myAbility?.passive && myStats.id !== 4767 && enemy.id !== 4767) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
-            if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
-            if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
-            if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new MessageEmbed(), interaction.user);
+            if (skill && myChar.id !== 4767 && enemy.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+            if (myAbility?.passive && enemy.id !== 4767) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
             // Player 2
-            if (eSkill && myStats.id !== 4767 && enemy.id !== 4767) eSkill._passive(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new MessageEmbed(), user, interaction.commandName);
-            if (eAbility?.passive && myStats.id !== 4767 && enemy.id !== 4767) eAbility.passive(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new MessageEmbed(), user);
-            if (eStats.weapon !== -1) items[eStats.weapon]._buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new MessageEmbed(), user);
-            if (eStats.shieldid) items[eStats.shieldid]._buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new MessageEmbed(), user);
-            if (eStats.helmet && items?.[eStats.helmet].setname === items?.[eStats.cuirass]?.setname && items?.[eStats.helmet].setname === items?.[eStats.gloves]?.setname && items?.[eStats.helmet].setname === items?.[eStats.boots]?.setname) items[eStats.boots]._buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new MessageEmbed(), user);
+            if (eSkill && myChar.id !== 4767 && enemy.id !== 4767) eSkill._passive(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user, interaction.commandName);
+            if (eAbility?.passive && myChar.id !== 4767) eAbility.passive(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+            if (eStats.weapon !== -1) items[eStats.weapon]._buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+            if (eStats.shieldid) items[eStats.shieldid]._buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+            if (eStats.helmet && items?.[eStats.helmet].setname === items?.[eStats.cuirass]?.setname && items?.[eStats.helmet].setname === items?.[eStats.gloves]?.setname && items?.[eStats.helmet].setname === items?.[eStats.boots]?.setname) items[eStats.boots]._buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
 
             async function newFight() {
                 let timestart = new Date().getTime();
                 let result = await new Promise((resolve, rejects) => {
-                    const Embed = new MessageEmbed()
+                    const Embed = new EmbedBuilder()
                     .setColor(0xbbffff)
-                    .setImage(enemy.image)
-                    .setThumbnail(myChar.image)
+                    .setImage(eStats.image)
+                    .setThumbnail(thumbnail)
                     .setTitle(`Battle Arena`)
                     .setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStats.hp, eStatsC.sm/eStatsC.mana)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStats.hp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
-                    .setFooter(`Turn: ${user.username} | time left: 120s`)
+                    .setFooter({text: `Turn: ${user.username} | time left: 120s`})
                     interaction.channel.send({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
                         
-                        const atk = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: 'BUTTON', time: 120000 });
-                        const def = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: 'BUTTON', time: 120000 });
-                        const ability = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: 'BUTTON', time: 120000 });
-                        const cskill = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: 'BUTTON', time: 120000 });
-                        const atk2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: 'BUTTON', time: 120000 });
-                        const def2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: 'BUTTON', time: 120000 });
-                        const ability2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: 'BUTTON', time: 120000 });
-                        const cskill2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: 'BUTTON', time: 120000 });
+                        const atk = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                        const def = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
+                        const ability = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
+                        const cskill = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
+                        const atk2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                        const def2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
+                        const ability2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
+                        const cskill2 = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
 
 
                         function editEmbed() {
                             Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStats.hp, eStatsC.sm/eStatsC.mana)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStats.hp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
-                            Embed.setFooter(`Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | time left: ${120+Math.floor((timestart-new Date().getTime())/1000)}s`);
+                            Embed.setFooter({text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | time left: ${120+Math.floor((timestart-new Date().getTime())/1000)}s`});
                             msg.edit({ embeds: [Embed] });
                         };
 
@@ -170,12 +177,12 @@ module.exports = {
                             if (side === "my") {
                                 myStatsC = {...matchStats.myStatsCC};
                                 matchStats.currentCharacter = 0;
-                                Embed.setThumbnail(myChar.image);
+                                Embed.setThumbnail(thumbnail);
                                 startNextRound();
                             } else {
                                 eStatsC = {...matchStats.eStatsCC};
                                 matchStats.currentOpponent = 0;
-                                Embed.setImage(enemy.image);
+                                Embed.setImage(eStats.image);
                                 matchStats.turn = 1; 
                             };
                         };
@@ -183,7 +190,7 @@ module.exports = {
                         function endMatch(wORl) {
                             atk.stop(), def.stop(), ability?.stop(), cskill?.stop();
                             atk2.stop(), def2.stop(), ability2?.stop(), cskill2?.stop();
-                            if (wORl === "l") notice.push(`\n🎉 **${enemy.name}** lost`);
+                            if (wORl === "l") notice.push(`\n🎉 **${enemy.name}** won`);
                             else notice.push(`\n🎉 **${myChar.name}** won`);
                             editEmbed();
                             matchStats.turn = 1;
@@ -197,8 +204,8 @@ module.exports = {
                             matchStats2.round = matchStats.round-1;
 
                             // Consume Mana
-                            Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myChar.image);
-                            Avalon.consumeActiveMana(matchStats, eStatsC, eBuffs, enemy, notice, Embed, enemy.image);
+                            Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, thumbnail);
+                            Avalon.consumeActiveMana(matchStats, eStatsC, eBuffs, enemy, notice, Embed, eStats.image);
                             
                             // Reset Buffs
                             if (matchStats.currentCharacter === 0) myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
@@ -237,6 +244,8 @@ module.exports = {
                                     };
                                 };
                             };
+
+                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                         };
 
                         if (notice.length > 4) {
@@ -257,12 +266,12 @@ module.exports = {
 
                                 // Normal attack
                                 else {
-                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, critbleed: true});
+                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
     
                                     if (matchStats.twinshot > Math.random()) setTimeout(() => {
-                                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, critbleed: true});
+                                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         matchStats.round++;
@@ -323,7 +332,7 @@ module.exports = {
                                         matchStats.turn = 1;
                                         matchStats.attackStreak = 0;
                                         myAbility.used++;
-                                        myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
                                         myStatsC.sm -= myAbility.cost;
                                         matchStats.round++;
                                         startNextRound();
@@ -364,12 +373,12 @@ module.exports = {
 
                                 // Normal attack
                                 else {
-                                    dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats2, notice, `⚔️ **${enemy.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, critbleed: true});
+                                    dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats2, notice, `⚔️ **${enemy.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     
                                     if (matchStats2.twinshot > Math.random()) setTimeout(() => {
-                                        dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats2, notice, `⚔️ **${enemy.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, critbleed: true});
+                                        dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats2, notice, `⚔️ **${enemy.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     }, aDelay);
@@ -420,7 +429,7 @@ module.exports = {
                                         matchStats.turn = 0;
                                         matchStats2.attackStreak = 0;
                                         eAbility.used++;
-                                        eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, user);
+                                        await eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, msg);
                                         eStatsC.sm -= eAbility.cost;
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -453,7 +462,7 @@ module.exports = {
             };
 
             interaction.editReply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle. Do you accept?`, components: [row2], fetchReply: true}).then(msg2 => {
-                const collector = msg2.createMessageComponentCollector({filter: (r) => r.user.id === user.id, componentType: 'BUTTON', time: 30000 });
+                const collector = msg2.createMessageComponentCollector({filter: (r) => r.user.id === user.id, componentType: ComponentType.Button, time: 30000 });
                 
                 collector.on('collect', async r => {
                     collector.stop()

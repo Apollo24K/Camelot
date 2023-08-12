@@ -8,13 +8,12 @@ module.exports = {
 	execute(interaction) {
 
         db.serialize(async () => {
-            var stats = await query(`SELECT dailyclaimed, dailystreak, lastdaily, xp, premium FROM users WHERE id = ${interaction.user.id}`);
-            stats = stats[0];
+            const { 0: stats } = await query(`SELECT dailyclaimed, dailystreak, lastdaily, xp, premium FROM users WHERE id = ${interaction.user.id}`);
 
             if (stats.dailyclaimed) return interaction.reply("You have already claimed your daily. Come back in " + `${(23-new Date().getHours()) ? `**${23-new Date().getHours()}**h` : ""} **${60-new Date().getMinutes()}**min`);
 
             if (stats.lastdaily === null) stats.lastdaily = new Date().getTime();
-            let dailyCoins = 200 + (Math.floor(userLevel(stats.xp)/2)*10);
+            let dailyCoins = 600 + (Math.floor(userLevel(stats.xp))*10);
             if (new Date(stats.lastdaily + 86400000).getDate() === new Date().getDate() && stats.lastdaily + (2*24*60*60*1000) > new Date().getTime()) dailyCoins += 10 * stats.dailystreak++;
             else stats.dailystreak = 1;
 
@@ -27,7 +26,7 @@ module.exports = {
                 case 6: dailyCoins = Math.floor(dailyCoins*4); break;
                 case 7: dailyCoins = Math.floor(dailyCoins*6); break;
                 default : false; break;
-            }
+            };
             
             let dailyEmoji = "";
             if (stats.dailystreak > 2 && stats.dailystreak < 7) dailyEmoji = "<a:fire_y:936975489862623253>";

@@ -1,8 +1,10 @@
-var fs = require('fs');
-const { MessageEmbed } = require("discord.js");
+const fs = require('fs');
+const { EmbedBuilder } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { achievements } = require("../Modules/achievements.js");
 const { search } = require("../Modules/functions.js");
+
+const dungeonInProgress = new Set();
 
 module.exports = {
     name: 'select',
@@ -10,15 +12,15 @@ module.exports = {
 	execute(interaction) {
 
         let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+
+        let choice = interaction.options.getString('character');
+        let mode = interaction.options.getString('mode');
         
         db.serialize(async () => {
-            let stats = await query(`SELECT premium FROM users WHERE id = ${interaction.user.id}`);
-            stats = stats[0];
+            const { 0: stats } = await query(`SELECT premium, party FROM users WHERE id = ${interaction.user.id}`);
 
             let inv = await query(`SELECT chars, skin FROM characters WHERE id = ${interaction.user.id}`);
             inv = {chars: JSON.parse(inv[0].chars), skin: JSON.parse(inv[0].skin)};
-            
-            let choice = interaction.options.getString('character');
             
             let char = search(choice, inv.chars, interaction);
             if (!char.name) return;
@@ -27,16 +29,26 @@ module.exports = {
             let thumbnail = char.image;
             if (stats.favchar !== null) thumbnail = char.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[char.id], inv.skin[char.id]);
             
-            const Embed = new MessageEmbed()
-            .setColor(0xbbffff)
-            .setDescription(`Battle character set to \n**${char.name}**`)
+            if (mode && stats.party !== null) {
+                const chars = await query(`SELECT name, stampedechar FROM users WHERE party = '${stats.party}'`);
+                if (chars.map((e) => e.stampedechar).includes(char.id)) return interaction.reply(`Someone in your party (${chars.find((e) => e.stampedechar === char.id).name}) has already selected **${char.name}**, please choose another character.`);
+            };
+
+            // Set up restrictions
+            if (dungeonInProgress.has(interaction.user.id) && mode) return interaction.reply("You need to wait 1h before you can change your character for stampedes again.");
+            if (mode) dungeonInProgress.add(interaction.user.id);
+            if (mode) setTimeout(() => dungeonInProgress.delete(interaction.user.id), 1*60*60*1000);
+
+            const Embed = new EmbedBuilder()
+            .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[char.rarity])
+            .setDescription(`${mode ? "Stampede" : "Battle"} character set to \n**${char.name}**`)
             .setImage(thumbnail)
             interaction.reply({ embeds: [Embed] });
 
             // Achievements
             achievements[46].check(interaction); // First Steps
             
-            await query(`UPDATE users SET battlechar = ${char.id} WHERE id = ${interaction.user.id}`);
+            await query(`UPDATE users SET ${mode ? "stampedechar" : "battlechar"} = ${char.id} WHERE id = ${interaction.user.id}`);
         });
 
     },

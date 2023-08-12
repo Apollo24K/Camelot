@@ -1,4 +1,4 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const math = require('mathjs');
 const { achievements } = require("../Modules/achievements.js");
 
@@ -15,17 +15,15 @@ module.exports = {
             resp = math.evaluate(calculation);
         } catch (e) {
             return interaction.reply("Please input a valid calculation.");
-        }
+        };
 
-        const Embed = new MessageEmbed()
+        const Embed = new EmbedBuilder()
         .setTitle('Camelot Calculator')
         .setColor(0xbbffff)
-        .addField(`${calculation} =`, `\`\`\`js\n${resp}\`\`\``)
+        .addFields({name: `${calculation} =`, value: `\`\`\`js\n${resp}\`\`\``})
         interaction.reply({ embeds: [Embed], ephemeral: ephemeral === "true" });
-
 
         // Achievements
         if (resp == 42) achievements[49].check(interaction);
-
     },
 };

@@ -35,12 +35,12 @@ module.exports = {
                 // Pulls & Dungeon
                 switch (stats.premium) {
                     case 1: pullLimit += 1; pullTimer = 40*60*1000; dunLim = 12; break;
-                    case 2: pullLimit += 2; pullTimer = 40*60*1000; dunLim = 15; break;
-                    case 3: pullLimit += 3; pullTimer = 40*60*1000; dunLim = 20; break;
-                    case 4: pullLimit += 3; pullTimer = 35*60*1000; dunLim = 25; break;
-                    case 5: pullLimit += 3; pullTimer = 30*60*1000; dunLim = 30; break;
-                    case 6: pullLimit += 4; pullTimer = 30*60*1000; dunLim = 30; break;
-                    case 7: pullLimit += 5; pullTimer = 30*60*1000; dunLim = 30; break;
+                    case 2: pullLimit += 2; pullTimer = 40*60*1000; dunLim = 13; break;
+                    case 3: pullLimit += 3; pullTimer = 40*60*1000; dunLim = 15; break;
+                    case 4: pullLimit += 3; pullTimer = 35*60*1000; dunLim = 15; break;
+                    case 5: pullLimit += 3; pullTimer = 30*60*1000; dunLim = 16; break;
+                    case 6: pullLimit += 4; pullTimer = 30*60*1000; dunLim = 18; break;
+                    case 7: pullLimit += 5; pullTimer = 30*60*1000; dunLim = 20; break;
                     default : false; break;
                 }
                 // Weekly

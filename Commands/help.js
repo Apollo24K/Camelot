@@ -1,4 +1,4 @@
-const { MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const package = require('../package.json');
 const { auniq } = require("../Modules/chars.js");
 const { items } = require("../Modules/items.js");
@@ -12,28 +12,30 @@ module.exports = {
         help = help.toLowerCase();
 
         if (!help) {
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setTitle('Command List')
-            .setColor(0xbbffff)
+            .setColor(0x2aad9d) // 0xbbffff
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
             .setDescription("Use `/help <command name>` for more information")
-            // .addField("🎄 Christmas Event", "`/event rewards` `/boss rush`")
-            .addField("<:SSTier:869316489931546644> Card Game", "`/pull` `/info` `/search` `/anime` `/profile` `/shop`\n`/sell` `/buy` `/trade` `/give` `/level` `/daily` `/fav`\n`/inventory` `/balance` `/tickets` `/top` `/stats` `/open`\n`/list` `/pity` `/find` `/use` `/achievements` `/lootbox`\n`/quests`")
-            .addField("<:sword:941687282585468958> Dungeon", "`/dungeon` `/select` `/shards` `/refine` `/convert` `/rank`\n`/levelup` `/reset` `/arena` `/class list` `/class assign`\n`/ability` `/class pick` `/class upgrade` `/class level`\n`/class info` `/class transfer` `/curse list` `/curse info`\n`/item info` `/item list` `/item equip` `/item levelup`\n`/items` `/forge` `/ep`")
-            .addField("🏰 Guilds", "`/guild create` `/guild join` `/guild leave` `/guild view`\n`/guild promote` `/guild demote` `/guild kick` `/guild invite`\n`/guild edit` `/guild donate` `/guild levelup` `/guild top`")
-            .addField("💎 Premium", "`/weekly` `/delay` `/changeimg`")
-            .addField("🎭 Fun", "`/guess character` `/recommend` `/random` `/fish` `/ruin`")
-            .addField("🎐 Other", "`/support` `/premium` `/camelot` `/submit` `/avatar`\n`/ping` `/math` `/reminder`")
-            .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLink`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
+            .addFields(
+                {name: "🎂 Anniversary Event", value: "`/event pass`"},
+                {name: "<:SSTier:869316489931546644> Card Game", value: "`/pull` `/info` `/search` `/anime` `/profile` `/shop`\n`/sell` `/buy` `/trade` `/give` `/level` `/daily` `/fav`\n`/inventory` `/balance` `/tickets` `/top` `/stats` `/open`\n`/list` `/pity` `/find` `/use` `/achievements` `/lootbox`\n`/quests`"},
+                {name: "<:sword:941687282585468958> Dungeon", value: "`/dungeon` `/select` `/shards` `/refine` `/convert` `/rank`\n`/levelup` `/reset` `/arena` `/class list` `/class select`\n`/ability` `/class pick` `/class upgrade` `/class level`\n`/class info` `/class transfer` `/curse list` `/curse info`\n`/item info` `/item list` `/item equip` `/item levelup`\n`/items` `/forge` `/ep`"},
+                {name: "🏰 Guilds", value: "`/guild create` `/guild join` `/guild leave` `/guild view`\n`/guild promote` `/guild demote` `/guild kick` `/guild invite`\n`/guild edit` `/guild donate` `/guild levelup` `/guild top`"},
+                {name: "💎 Premium", value: "`/weekly` `/delay` `/changeimg`"},
+                {name: "🎭 Fun", value: "`/guess character` `/recommend` `/random` `/fish` `/ruin`"},
+                {name: "🎐 Other", value: "`/support` `/premium` `/camelot` `/submit` `/avatar`\n`/ping` `/math` `/reminder`"}
+            )
+            .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
             return interaction.reply({ embeds: [Embed] });
         };
         
-        const Embed = new MessageEmbed()
+        const Embed = new EmbedBuilder()
         .setTitle(`Help ${help?"/"+help:""}`)
         .setColor(0xbbffff)
         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
         .setDescription("Use `/help <command name>` for more information")
-        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLink`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
+        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
 
         const commands = {
             ability: "**Usage**: </ability:1014178280376647721>\n**Options**: `character`, `page`, `user`\n\nLists all characters who have a unique ability\nCharacter abilities can be used through the ⚜️ ABILITY button in the `/dungeon`, `/arena`, `/trial` and more.\n\n**Options**\n`character`: Show details on a specific character's ability\n`page`: Directly jump to the page you want to see\n`user`: See which ability chars someone owns",

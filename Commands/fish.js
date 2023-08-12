@@ -19,14 +19,19 @@ module.exports = {
 
         // Roll a rarit (normal: 0.5, special: 0.33, rare: 0.12, unique: 0.048, legendary: 0.002)
         let ranRar = Math.floor(Math.random() * 1000); // 0-99
-        let rar = "normal";
-        if (ranRar < 2) rar = "legendary";
-        else if (ranRar < 50) rar = "unique";
-        else if (ranRar < 170) rar = "rare";
-        else if (ranRar < 500) rar = "special";
+        let rar = "normal"; //, eventpts = 20;
+        if (ranRar < 2) rar = "legendary"; //, eventpts = 500;
+        else if (ranRar < 50) rar = "unique"; //, eventpts = 160;
+        else if (ranRar < 170) rar = "rare"; //, eventpts = 75;
+        else if (ranRar < 500) rar = "special"; //, eventpts = 40;
 
         let caught = fishing.filter((e) => e.grade === rar);
         caught = caught[Math.floor(caught.length * Math.random())];
+
+        // Event
+        // eventpts = Math.floor(eventpts * (0.9+(0.35*Math.random())))
+        // eventpts = Math.floor(eventpts*2);
+        // interaction.reply(`🎣 | You've caught a __${caught.grade}__ **${caught.name}** ${caught.emoji}\nAdded **${eventpts}**🌻`);
 
         interaction.reply(`🎣 | You've caught a __${caught.grade}__ **${caught.name}** ${caught.emoji}`);
 
@@ -38,11 +43,16 @@ module.exports = {
             else inv[caught.id] = 1;
 
             await query(`UPDATE users SET items = '${JSON.stringify(inv)}' WHERE id = ${interaction.user.id}`);
+            // await query(`UPDATE users SET items = '${JSON.stringify(inv)}', eventpts = eventpts + ${eventpts}, eventpts2 = eventpts2 + ${eventpts} WHERE id = ${interaction.user.id}`);
         });
 
         // Daily Quests
         dailies[7].update(interaction); // A Fishy Task
-        if (caught.grade === "rare" || caught.grade === "unique" || caught.grade === "legendary") dailies[8].update(interaction); // Another Fishy Task
+        if (caught.grade === "rare" || caught.grade === "unique" || caught.grade === "legendary") {
+            setTimeout(() => {
+                 dailies[8].update(interaction); // Another Fishy Task
+            }, 200);
+        };
 
     },
 };

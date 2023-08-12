@@ -1,17 +1,16 @@
-/* eslint-disable no-unused-vars */
 const { db, query } = require("../db_handler.js");
-const { MessageActionRow, MessageButton } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 
-const row = new MessageActionRow()
+const row = new ActionRowBuilder()
     .addComponents(
-        new MessageButton()
+        new ButtonBuilder()
             .setCustomId('open')
             .setLabel('Open!')
-            .setStyle('SUCCESS'),
-        new MessageButton()
+            .setStyle('Success'),
+        new ButtonBuilder()
             .setCustomId('open_all')
             .setLabel('Open All!')
-            .setStyle('PRIMARY'),
+            .setStyle('Primary'),
     );
 
 function rollItems(p,n,c=0) {
@@ -38,7 +37,7 @@ module.exports = {
             // Send message
             interaction.reply({ content: `You have **${stats.lootbox}** ${stats.lootbox === 1 ? "lootbox" : "lootboxes"} left! Open them with \`/open\` or \`/use lb\``, components: [row], fetchReply: true }).then((msg) => {
 
-                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && (r.customId === "open" || r.customId === "open_all"), componentType: 'BUTTON', time: 60000 });
+                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && (r.customId === "open" || r.customId === "open_all"), componentType: ComponentType.Button, time: 60000 });
 
                 collector.on('collect', async r => {
                     let stats = await query(`SELECT lootbox FROM users WHERE id = ${user.id}`);

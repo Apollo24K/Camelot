@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-const { MessageEmbed } = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const { db, query } = require("../db_handler.js");
 const package = require('../package.json');
 
@@ -22,11 +22,11 @@ module.exports = {
                 db.serialize(async () => {
                         var stats = await query(`SELECT COUNT(rowid) AS players FROM users`);
 
-                        const Embed = new MessageEmbed()
+                        const Embed = new EmbedBuilder()
                         .setTitle('Camelot')
                         .setColor(0xbbffff)
                         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLink`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
+                        .setFooter({text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/syj1LqO.jpeg"} )
                         .setDescription("Absent in the early Arthurian material, Camelot came to be described as the fantastic capital of Arthur's realm and a symbol of the Arthurian world.")
                         .addFields(
                                 { name: 'Stats️', value: `Servers: **${client.guilds.cache.size}**\nPlayers: **${stats[0].players}**`, inline: true },

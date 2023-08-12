@@ -4,10 +4,8 @@ module.exports = {
 	name: 'delay',
 	description: 'change animation delay',
 	execute(interaction) {
-
         db.serialize(async () => {
-            var stats = await query(`SELECT premium FROM users WHERE id = ${interaction.user.id}`);
-            stats = stats[0];
+            const { 0: stats } = await query(`SELECT premium FROM users WHERE id = ${interaction.user.id}`);
 
             if (!stats.premium) return interaction.reply("This is a `/premium` feature. It changes the animation delay during a battle. If you're interested in supporting us, please see our patreon! <:RaphiSmile:868998036645380197>")
             
@@ -18,6 +16,5 @@ module.exports = {
             
             await query(`UPDATE users SET animationdelay = ${delay} WHERE id = ${interaction.user.id}`);
         });
-
     },
 };

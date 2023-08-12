@@ -3,18 +3,21 @@ const fs = require('fs');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { abilities } = require("../Modules/abilities.js");
+const { achievements } = require("../Modules/achievements.js");
 const { classes } = require("../Modules/classes.js");
 const { curses } = require("../Modules/curses.js");
-const { enemies } = require("../Modules/enemies.js");
+const { bossMobs } = require("../Modules/enemies.js");
 const { items } = require("../Modules/items.js");
-const { skills, bossAbilities } = require("../Modules/skills.js");
+const { skills, eventBossAbilities } = require("../Modules/skills.js");
 const { characters } = require("../Modules/chars.js");
-const { getDetailedStats, customEmojis, deleteReplyIn, dealDamage } = require("../Modules/functions.js");
+const { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, baseEP } = require("../Modules/functions.js");
 const Avalon = require("../Modules/avalon.js");
 const buffInfo = require("../Modules/buffs.js");
 const _ = require('lodash');
 
 const dungeonInProgress = new Map();
+
+const bossBaseHP = [124080, 160260, 113720, 144640];
 
 function toOrdinal(num) {
     if (num % 100 >= 11 && num % 100 <= 13) return num + "th";
@@ -26,65 +29,202 @@ function toOrdinal(num) {
     };
 };
 
+function bossSelection(interaction, stats, guild) {
+    return new Promise((resolve) => {
+        const row = new ActionRowBuilder()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('0')
+                    .setLabel('Rumbleguard')
+                    .setStyle('Success')
+                    .setDisabled(guild.boss1 < 1),
+                )
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('1')
+                    .setLabel('Sylvanoss')
+                    .setStyle('Success')
+                    .setDisabled(guild.boss2 < 1),
+                )
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('2')
+                    .setLabel('Celestion')
+                    .setStyle('Success')
+                    .setDisabled(guild.boss3 < 1),
+            )
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('3')
+                    .setLabel('Malevokar')
+                    .setStyle('Danger')
+                    .setDisabled(!((guild.boss1 < 1) && (guild.boss2 < 1) && (guild.boss3 < 1))),
+            )
+        
+        const Embed = new EmbedBuilder()
+        .setColor(0xabd41c)
+        .setTitle("Boss Hunt ➜ Stage "+guild.bosshuntstage + `${guild.bosshuntstage === 30 ? " (last stage)" : ""}`)
+        .setThumbnail("https://i.imgur.com/ZUdnLZO.png") // .setThumbnail("https://i.imgur.com/4i61ERG.png")
+        .setDescription(`**Guild**: ${guild.name}\n\nDefeat Rumbleguard, Sylvanoss and Celestion to fight Malevokar. Once Malevokar is defeated, you'll reach the next stage.\n\n<:DEF:1047269141662417037> **Rumbleguard** ➜ **${guild.boss1 < 1 ? 0 : guild.boss1}**/${Math.round(bossBaseHP[0] * (0.8+(guild.bosshuntstage*0.2)))}💖\n<:HP:1062043800979116143> **Sylvanoss** ➜ **${guild.boss2 < 1 ? 0 : guild.boss2}**/${Math.round(bossBaseHP[1] * (0.8+(guild.bosshuntstage*0.2)))}💖\n<:magic_dmg:948568336621527040> **Celestion** ➜ **${guild.boss3 < 1 ? 0 : guild.boss3}**/${Math.round(bossBaseHP[2] * (0.8+(guild.bosshuntstage*0.2)))}💖\n✨ **Malevokar** ➜ **${guild.boss4 < 1 ? 0 : guild.boss4}**/${Math.round(bossBaseHP[3] * (0.8+(guild.bosshuntstage*0.2)))}💖`)
+        .setFooter({text: dungeonInProgress.has(stats.id) ? `You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/60000) > 0 ? ` ${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/60000)}min` : ""} ${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/1000)%60}s` : "You can fight now!", iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+        interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
+            
+            const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
+
+            collector.on('collect', async r => {
+                collector.stop();
+                const enemy = bossMobs[r.customId];
+
+                resolve(enemy);
+            });
+            
+        });
+
+    });
+};
+
 module.exports = {
-    name: 'boss',
-	description: 'boss rush event gamemode',
+    name: 'bosshunt',
+	description: 'boss hunt game mode (event)',
 	execute(interaction) {
 
         return interaction.reply("Hey! We're sorry, but this is an event game mode and there is no ongoing event as of right now.\nPlease see our </support:1011293280702578694> server for more information.");
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+
+        const choice = interaction.options.getInteger('floor');
         
         db.serialize(async () => {
             await interaction.deferReply().catch((err) => {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
 
-            let stats = await query(`SELECT users.id, users.class, users.coins, users.battlechar, users.animationdelay, users.premium, users.skins, users.brbest, users.eventpts, users.eventrewreceived, characters.chars, characters.ref, characters.level, characters.skin, characters.equipment, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-            stats = {id: stats[0].id, class: stats[0].class, coins: stats[0].coins, battlechar: stats[0].battlechar, animationdelay: stats[0].animationdelay, premium: stats[0].premium, skins: JSON.parse(stats[0].skins), brbest: stats[0].brbest, eventpts: stats[0].eventpts, eventrewreceived: stats[0].eventrewreceived, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), equipment: JSON.parse(stats[0].equipment), skin: JSON.parse(stats[0].skin), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+            let stats = await query(`SELECT users.id, users.class, users.coins, users.battlechar, users.eventpts, users.eventrewreceived, users.guild, users.animationdelay, users.premium, users.skins, characters.ref, characters.level, characters.class, characters.equipment, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+            stats = {id: stats[0].id, class: stats[0].class, coins: stats[0].coins, battlechar: stats[0].battlechar, eventpts: stats[0].eventpts, eventrewreceived: stats[0].eventrewreceived, guild: stats[0].guild, animationdelay: stats[0].animationdelay, premium: stats[0].premium, skins: JSON.parse(stats[0].skins), chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), equipment: JSON.parse(stats[0].equipment), skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
 
             if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
             
+            const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
+            if (!guild) return interaction.editReply(`You need to be in a guild to participate in this event!\nYou can find one using \`/guild find\` or create your own using \`/guild create\``);
+            if (guild.bosshuntstage >= 30) guild.bosshuntstage = 30, guild.boss1 = Math.round(bossBaseHP[0] * (1+(guild.bosshuntstage*0.2))), guild.boss2 = Math.round(bossBaseHP[1] * (1+(guild.bosshuntstage*0.2))), guild.boss3 = Math.round(bossBaseHP[2] * (1+(guild.bosshuntstage*0.2))), guild.boss4 = Math.round(bossBaseHP[3] * (1+(guild.bosshuntstage*0.2)));
+
+            // Tutorial
+            const boss = await bossSelection(interaction, stats, guild);
+
             // Set up restrictions
-            if (dungeonInProgress.has(stats.id)) return interaction.editReply(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/1000)%60}**s`);
-            dungeonInProgress.set(stats.id, new Date().getTime()+5*60*1000);
+            if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime())/1000)%60}**s`);
+            dungeonInProgress.set(stats.id, new Date().getTime()+20*60*1000);
             setTimeout(() => {
-                dungeonInProgress.delete(stats.id);
-                interaction.channel.send(`${interaction.user.toString()} is off </boss rush:1056333974814859365> cooldown!`);
-            }, 5*60*1000);
+                dungeonInProgress.delete(stats.id)
+                interaction.channel.send(`${interaction.user.toString()} is off </boss hunt:1056333974814859365> cooldown!`);
+            }, 20*60*1000);
             
             // User stats
             let myChar = characters[stats.battlechar];
             let myStats = await getDetailedStats(myChar.id, stats, stats.classlevels);
-            myStats.sm -= myStats.mg;
             let myStatsC = {...myStats};
             let myClass = myStats.class !== -1 ? classes[myStats.class] : false;
+            let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : false;
+            let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : false;
 
             const thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.skin[myChar.id]);
 
-            let round = 0;
+            // Enemy Stats
+            let enemy = boss;
+            let curseId = 0;
+            if (boss.id === 0) curseId = 4;
+            if (boss.id === 1) curseId = 11;
+            if (boss.id === 2) curseId = 9;
+            if (boss.id === 3) curseId = 9;
+            const curse = curses[curseId];
+            const eAbility = eventBossAbilities[boss.id];
+            let eImage = enemy.image[0];
+            
+            let eStats = {
+                "name": enemy.name,
+                "hp": guild["boss"+(enemy.id+1)],
+                "maxhp": Math.round(bossBaseHP[enemy.id] * (0.8+(guild.bosshuntstage*0.2))),
+                "atk": 400,
+                "def": 20,
+                "ep": 0,
+                "md": 400,
+                "mr": 20,
+                "cr": 0.18,
+                "cd": 1.25,
+                "td": 30,
+                "br": 0.12,
+                "dodge": 0.1,
+                "mana": 120,
+                "mg": 15,
+                "sm": 20,
+                "rev": 0,
+                "revhp": 0.5,
+                "shield": 0,
+                "mdChance": 0,
+            };
+            
+            // Adjust enemy stats
+            if (enemy.id === 0) {
+                eStats.shield = Math.floor(eStats.hp*0.01);
+                eStats.atk = Math.floor(myStatsC.hp*Math.min(0.16+(guild.bosshuntstage*0.02), 0.35));
+                eStats.md = Math.floor(myStatsC.hp*Math.min(0.14+(guild.bosshuntstage*0.017), 0.32));
+                eStats.def = 400 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.mr = 400 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.cr = 0.22;
+                eStats.cd = 1.33;
+            } else if (enemy.id === 1) {
+                eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp*0.004) : 0;
+                eStats.atk = Math.floor(myStatsC.hp*(0.15+Math.min(guild.bosshuntstage*0.018), 0.34));
+                eStats.md = Math.floor(myStatsC.hp*(0.14+Math.min(guild.bosshuntstage*0.016), 0.32));
+                eStats.def = 300 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.mr = 300 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.cr = 0.1;
+                eStats.cd = 1.4;
+                eStats.mana = 160;
+            } else if (enemy.id === 2) {
+                eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp*0.003) : 0;
+                eStats.atk = Math.floor(myStatsC.hp*Math.min(0.17+(guild.bosshuntstage*0.023), 0.36));
+                eStats.md = Math.floor(myStatsC.hp*Math.min(0.18+(guild.bosshuntstage*0.025), 0.4));
+                eStats.def = 250 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.mr = 250 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.cr = 0.33;
+                eStats.cd = 1.6;
+                eStats.mdChance = 1;
+                eStats.mana = 200;
+            } else if (enemy.id === 3) {
+                eStats.shield = (guild.bosshuntstage >= 3) ? Math.floor(eStats.hp*0.003) : 0;
+                eStats.atk = Math.floor(myStatsC.hp*Math.min(0.17+(guild.bosshuntstage*0.024), 0.36));
+                eStats.md = Math.floor(myStatsC.hp*Math.min(0.17+(guild.bosshuntstage*0.024), 0.36));
+                eStats.def = 300 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.mr = 300 * (0.8+(guild.bosshuntstage*0.2));
+                eStats.cr = 0.285;
+                eStats.cd = 1.5;
+                eStats.mdChance = 0.5;
+                eStats.mg = 25;
+                eStats.mana = 300;
+            };
+            eStats.ep = Math.floor(((1/(1-eStats.dodge))*(eStats.hp/Math.pow(0.99895,Math.max(eStats.def, eStats.mr))) / (200/(Math.max(eStats.atk, eStats.md)*(1+((eStats.cr > 1 ? 1 : (eStats.cr < 0) ? 0 : eStats.cr)*(eStats.cd-1))))))*100) / 100;
 
-            let resolved = false;
+            eStats.image = eImage;
+            let eStatsC = {...eStats};
+            
+            // Some match settings
+            const difficulty = Avalon.getDifficulty(myStats.ep/eStats.ep);
+            const aDelay = stats.animationdelay;
+
+            let buffs = Avalon.getBuffs();
+            let eBuffs = Avalon.getBuffs();
+
+            // ATK buffs
+            eBuffs.atk.push(new buffInfo("*", 1, 9999, 1.02, "*"));
+            eBuffs.md.push(new buffInfo("*", 1, 9999, 1.02, "*"));
+            
             async function matchResult(r) {
-                if (resolved) return;
-                resolved = true;
-
-                round++;
-                if (r === "w" && round < 20) return setTimeout(newFight, 1000);
-
-                if (r === "l" || r === "t") round--;
-                
-                // Loot
-                let eventpts = Math.round(round*0.8 * (5-Math.random()) * Math.pow(1.2, round*0.8));
-                if (eventpts > 400) eventpts = 400 + Math.floor(eventpts/10);
-                eventpts = Math.floor(eventpts*2);
-                let loot = Math.round((2 * (10 + round*0.8) * (5-Math.random()) * Math.pow(1.2, round*0.8))/4);
-                if (loot > 400) loot = 400 + Math.floor(loot/10);
                 
                 // Class Level
                 let cxpmsg = "You don't have a class";
                 if (myClass) {
-                    let boost = 1;
+                    let boost = 1 + matchStats.xpboost;
                     stats.classes.map((e) => classes[e].tier).forEach((e) => {
                         switch (e) {
                             case 2: boost += 0.05; break;
@@ -93,94 +233,116 @@ module.exports = {
                             default: false; break;
                         };
                     });
-                    if (stats.premium) {
-                        switch (stats.premium) {
-                            case 3: boost += 0.2; break;
-                            case 4: boost += 0.3; break;
-                            case 5: boost += 0.5; break;
-                            case 6: boost += 0.75; break;
-                            case 7: boost += 1; break;
-                            default : false; break;
-                        };
+
+                    // Premium Buff
+                    switch (stats.premium) {
+                        case 3: boost += 0.2; break;
+                        case 4: boost += 0.3; break;
+                        case 5: boost += 0.5; break;
+                        case 6: boost += 0.75; break;
+                        case 7: boost += 1; break;
+                        default : false; break;
                     };
-                    boost = Math.round(boost*200)/100;
-                    let cxp = Math.floor((1 + round - Math.random()) * boost * 15) + 5; // 7-25 -> 205-223
+                    
+                    // Weekend Buff
+                    if (new Date().getDay() === 6 || new Date().getDay() === 0) boost *= 2;
+
+                    // Guild Buff
+                    if (guild) boost += (0.2*guild.xpbuff);
+
+                    boost = Math.round(boost*100)/100;
+                    let cxp = 100;
+                    if (enemy.boss) cxp = Math.floor(cxp*1.5);
                     cxpmsg = `Class XP: **${cxp}** (Boost: x${boost}${new Date().getDay() === 6 || new Date().getDay() === 0 ? " weekend" : ""})`;
                     if (myClass.id in stats.classlevels) stats.classlevels[myClass.id] += cxp;
                     else stats.classlevels[myClass.id] = cxp;
                 };
+                
+                // Coins
+                let loot = 200;
+                if (guild?.lootbuff) loot *= 1+(0.2*guild.lootbuff);
+                loot *= matchStats.lootm;
+                loot += matchStats.loot;
 
-                // Save changes
-                await query(`UPDATE users SET coins = coins + ${loot}, eventpts = eventpts + ${eventpts}, eventpts2 = eventpts2 + ${eventpts}, brbest = ${Math.max(stats.brbest, round)} WHERE id = ${interaction.user.id}`);
+                // Event Points // Damage dealt: (guild["boss"+(enemy.id+1)] - eStatsC.hp)
+                let eventpts = 200 + Math.round((guild["boss"+(enemy.id+1)] - eStatsC.hp) / 100);
+                if (eventpts > 600) eventpts = 600;
+                eventpts = Math.floor(eventpts*(0.8+(guild.bosshuntstage*0.2)));
+                if (eventpts > 2000) eventpts = 2000;
+
+                await query(`UPDATE users SET coins = coins + ${loot}, eventpts = eventpts + ${eventpts} WHERE id = ${interaction.user.id}`);
                 await query(`UPDATE dungeon SET classlevels = '${JSON.stringify(stats.classlevels)}' WHERE id = ${interaction.user.id}`);
+                await query(`UPDATE guilds SET ${"boss"+(enemy.id+1)} = ${"boss"+(enemy.id+1)} - ${guild["boss"+(enemy.id+1)] - eStatsC.hp} WHERE id = '${guild.id}'`);
 
                 // Event Rewards
                 const milestones = [
                     {
                         id: 0,
                         required: 250,
-                        query: `coins = coins + ${100}, sshard = sshard + ${4}`,
-                        rew: "100<:coins:872926669055356939> and 4<:s_shard:917202925514817566>",
+                        query: `coins = coins + ${300}, sshard = sshard + ${4}`,
+                        rew: "300<:coins:872926669055356939> and 4<:s_shard:917202925514817566>",
                     },
                     {
                         id: 1,
                         required: 500,
-                        query: `coins = coins + ${200}, lootbox = lootbox + ${1}`,
-                        rew: "200<:coins:872926669055356939> and a lootbox",
+                        query: `coins = coins + ${400}, lootbox = lootbox + ${1}`,
+                        rew: "400<:coins:872926669055356939> and a lootbox",
                     },
                     {
                         id: 2,
                         required: 800,
-                        query: `coins = coins + ${300}, sticket = sticket + ${1}`,
-                        rew: "300<:coins:872926669055356939> and 1x <:s_ticket:927642487705722890>",
+                        query: `coins = coins + ${500}, sticket = sticket + ${1}`,
+                        rew: "500<:coins:872926669055356939> and 1x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 3,
                         required: 1250,
-                        query: `coins = coins + ${350}, lootbox = lootbox + ${1}, sticket = sticket + ${2}`,
-                        rew: "350<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890> and a lootbox",
+                        query: `coins = coins + ${550}, lootbox = lootbox + ${1}, sticket = sticket + ${2}`,
+                        rew: "550<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890> and a lootbox",
                     },
                     {
                         id: 4,
                         required: 1800,
-                        query: `coins = coins + ${400}, lootbox = lootbox + ${1}, sshard = sshard + ${8}`,
-                        rew: "400<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
+                        query: `coins = coins + ${600}, lootbox = lootbox + ${1}, sshard = sshard + ${8}`,
+                        rew: "600<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
                     },
                     {
                         id: 5,
                         required: 2500,
-                        query: `coins = coins + ${450}, lootbox = lootbox + ${1}, sshard = sshard + ${8}`,
-                        rew: "450<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
+                        query: `skins = '${JSON.stringify([...stats.skins, 34])}', gems = gems + 10`,
+                        rew: "Cecilia Easter Skin & 10<:genesis_gems:1034179687720681492>",
+                        image: "https://i.imgur.com/1REadqQ.png",
                     },
                     {
                         id: 6,
                         required: 3200,
-                        query: `coins = coins + ${500}, lootbox = lootbox + ${2}, sshard = sshard + ${10}`,
-                        rew: "500<:coins:872926669055356939>, 10x <:s_shard:917202925514817566> and 2 lootboxes",
+                        query: `coins = coins + ${700}, lootbox = lootbox + ${2}, sshard = sshard + ${10}`,
+                        rew: "700<:coins:872926669055356939>, 10x <:s_shard:917202925514817566> and 2 lootboxes",
                     },
                     {
                         id: 7,
                         required: 3800,
-                        query: `coins = coins + ${600}, sticket = sticket + ${2}`,
-                        rew: "600<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890>",
+                        query: `coins = coins + ${750}, sticket = sticket + ${2}`,
+                        rew: "750<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 8,
                         required: 4400,
-                        query: `coins = coins + ${750}, lootbox = lootbox + ${2}, ssshard = ssshard + ${4}`,
-                        rew: "750<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and 2 lootboxes",
+                        query: `coins = coins + ${800}, lootbox = lootbox + ${2}, ssshard = ssshard + ${4}`,
+                        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and 2 lootboxes",
                     },
                     {
                         id: 9,
                         required: 5000,
-                        query: `coins = coins + ${800}, lootbox = lootbox + ${1}, ssshard = ssshard + ${4}`,
-                        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
+                        query: `skins = '${JSON.stringify([...stats.skins, 38])}', sticket = sticket + ${3}`,
+                        rew: "Rosalia Easter Skin and 3x <:s_ticket:927642487705722890>",
+                        image: "https://i.imgur.com/kiJmLLx.png",
                     },
                     {
                         id: 10,
                         required: 6000,
-                        query: `coins = coins + ${800}, lootbox = lootbox + ${1}, ssshard = ssshard + ${4}`,
-                        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
+                        query: `coins = coins + ${900}, lootbox = lootbox + ${1}, ssshard = ssshard + ${4}`,
+                        rew: "900<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
                     },
                     {
                         id: 11,
@@ -197,8 +359,9 @@ module.exports = {
                     {
                         id: 13,
                         required: 10000,
-                        query: `coins = coins + ${1100}, ssticket = ssticket + ${1}`,
-                        rew: "1000<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336>",
+                        query: `skins = '${JSON.stringify([...stats.skins, 30])}', ssticket = ssticket + ${1}`,
+                        rew: "Nami Easter Skin and 1x <:ss_ticket:927503239396622336>",
+                        image: "https://i.imgur.com/e4Bbwyu.png",
                     },
                     {
                         id: 14,
@@ -209,8 +372,9 @@ module.exports = {
                     {
                         id: 15,
                         required: 15000,
-                        query: `coins = coins + ${1250}, lootbox = lootbox + ${2}`,
-                        rew: "1250<:coins:872926669055356939> and 2 lootboxes",
+                        query: `skins = '${JSON.stringify([...stats.skins, 37])}', ssticket = ssticket + ${1}`,
+                        rew: "Fiona Easter Skin and 1x <:ss_ticket:927503239396622336>",
+                        image: "https://i.imgur.com/l57NW9y.png",
                     },
                     {
                         id: 16,
@@ -221,8 +385,9 @@ module.exports = {
                     {
                         id: 17,
                         required: 22500,
-                        query: `coins = coins + ${1500}, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
-                        rew: "1500<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        query: `skins = '${JSON.stringify([...stats.skins, 29])}', ssticket = ssticket + ${1}`,
+                        rew: "Aqua Easter Skin and 1x <:ss_ticket:927503239396622336>",
+                        image: "https://i.imgur.com/gidex1T.png",
                     },
                     {
                         id: 18,
@@ -233,50 +398,55 @@ module.exports = {
                     {
                         id: 19,
                         required: 30000,
-                        query: `coins = coins + ${1750}, lootbox = lootbox + ${3}`,
-                        rew: "1750<:coins:872926669055356939> and 3 lootboxes",
+                        query: `skins = '${JSON.stringify([...stats.skins, 32])}'`,
+                        rew: "Luminous Easter Skin",
+                        image: "https://i.imgur.com/7EK1Aph.png",
                     },
                     {
                         id: 20,
                         required: 36000,
-                        query: `coins = coins + ${2000}, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
-                        rew: "2000<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        query: `coins = coins + ${1250}, gems = gems + 10, lootbox = lootbox + ${2}`,
+                        rew: "1250<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492> and 2 lootboxes",
                     },
                     {
                         id: 21,
                         required: 42000,
-                        query: `coins = coins + ${2000}, gems = gems + ${5}, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
-                        rew: "2000<:coins:872926669055356939>, 5x<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        query: `coins = coins + 3000, skins = '${JSON.stringify([...stats.skins, 35])}'`,
+                        rew: "Luna Easter Skin and 3000<:coins:872926669055356939>",
+                        image: "https://i.imgur.com/YzXpM8n.png",
                     },
                     {
                         id: 22,
                         required: 50000,
-                        query: `coins = coins + ${2250}, gems = gems + ${10}`,
-                        rew: "2250<:coins:872926669055356939> and 10x<:genesis_gems:1034179687720681492>",
+                        query: `gems = gems + 30, skins = '${JSON.stringify([...stats.skins, 39])}', lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
+                        rew: "Nilima Easter Skin, 30<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        image: "https://i.imgur.com/4vTenK5.png",
                     },
                     {
                         id: 23,
                         required: 60000,
-                        query: `coins = coins + ${2500}, lootbox = lootbox + ${4}, ssticket = ssticket + ${1}`,
-                        rew: "2500<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 4 lootboxes",
+                        query: `coins = coins + ${3000}, gems = gems + 10, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
+                        rew: "3000<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
                     },
                     {
                         id: 24,
                         required: 72000,
-                        query: `coins = coins + ${3000}, gems = gems + ${5}, lootbox = lootbox + ${4}`,
-                        rew: "3000<:coins:872926669055356939>, 5x<:genesis_gems:1034179687720681492> and 4 lootboxes",
+                        query: `skins = '${JSON.stringify([...stats.skins, 36])}', lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
+                        rew: "Altair Easter Skin, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        image: "https://i.imgur.com/a1BAeG7.png",
                     },
                     {
                         id: 25,
                         required: 80000,
-                        query: `ssticket = ssticket + ${2}, sticket = sticket + ${5}`,
-                        rew: "2x <:ss_ticket:927503239396622336> and 5x <:s_ticket:927642487705722890>",
+                        query: `ssticket = ssticket + ${2}, sticket = sticket + ${6}`,
+                        rew: "2x <:ss_ticket:927503239396622336> and 6x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 26,
                         required: 100000,
-                        query: `coins = coins + ${5000}, gems = gems + ${25}, lootbox = lootbox + ${5}, ssticket = ssticket + ${2}`,
-                        rew: "5000<:coins:872926669055356939>, 25x<:genesis_gems:1034179687720681492>, 2x <:ss_ticket:927503239396622336> and 5 lootboxes",
+                        query: `gems = gems + 40, skins = '${JSON.stringify([...stats.skins, 33])}'`,
+                        rew: "Senna Easter Skin and 40<:genesis_gems:1034179687720681492>",
+                        image: "https://i.imgur.com/AEfLUKl.png",
                     },
                 ];
                 
@@ -295,106 +465,69 @@ module.exports = {
                     rewMessage = "\nYou have unlocked all rewards!";
                 };
 
-                Embed.setColor(0xa7ffa4)
+                Embed.setColor(0xabd41c)
                 .setThumbnail(thumbnail)
-                .setTitle(`Boss Rush${r==="t"? " (Time's up!)" : ""}`)
-                .setFooter({text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-                .setDescription(`<:stars_v2:917023655840591963> Round: ${round} (best: ${Math.max(stats.brbest, round)}) <:stars_v2:917023655840591963>\n<a:arrow_orange:916716747623641210> Loot: ${loot}<:coins:872926669055356939>\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n<a:arrow_white:916716862962819092> Sunflowers: ${eventpts}🌻\n${rewMessage}`)
+                .setTitle(`Boss Hunt (${enemy.name})`)
                 .setFooter({text: `Balance: ${stats.coins+loot} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${guild["boss"+(enemy.id+1)] - eStatsC.hp}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> Easter Eggs: ${eventpts}🌻\n${rewMessage}\n`)
+
+                // Add Stage rewards
+                if (r === "w" && boss.id === 3) {
+                    const checkGuildStage = await query(`SELECT bosshuntstage FROM guilds WHERE id = '${guild.id}'`);
+                    if (checkGuildStage[0]?.bosshuntstage === guild.bosshuntstage) {
+                        await query(`UPDATE guilds SET boss1 = ${Math.round(bossBaseHP[0] * (1+(guild.bosshuntstage*0.2)))}, boss2 = ${Math.round(bossBaseHP[1] * (1+(guild.bosshuntstage*0.2)))}, boss3 = ${Math.round(bossBaseHP[2] * (1+(guild.bosshuntstage*0.2)))}, boss4 = ${Math.round(bossBaseHP[3] * (1+(guild.bosshuntstage*0.2)))}, bosshuntstage = bosshuntstage + 1 WHERE id = '${guild.id}'`);
+                        await query(`UPDATE users SET coins = coins + 10000, gems = gems + 10 WHERE id IN (${guild.members})`);
+                        
+                        if ([3, 5, 10].includes(guild.bosshuntstage)) {
+                            const skins = await query(`SELECT id, skins FROM users WHERE id IN (${guild.members})`);
+                            for (let i=0; i< skins.length; i++) {
+                                const skin = JSON.parse(skins[i].skins);
+                                skin.push(guild.bosshuntstage === 3 ? 25 : (guild.bosshuntstage === 5 ? 27 : 28));
+                                await query(`UPDATE users SET skins = '${JSON.stringify(skin)}' WHERE id = ${skins[i].id}`);
+                            };
+                        };
+                        
+                        setTimeout(() => {
+                            interaction.channel.send(`You have defeated Malevokar (Stage ${guild.bosshuntstage}) <a:TaigaHappy:1045396982627323975>\nUnlocked Stage ${guild.bosshuntstage+1}\n\nAll members of your guild have received the following rewards:\n> 10000<:coins:872926669055356939>\n> 10<:genesis_gems:1034179687720681492>${[3, 5, 10].includes(guild.bosshuntstage) ? "\n> " + {"3": "Vladilena Milizé Easter Skin", "5": "Albedo Easter Skin", "10": "Shalltear Bloodfallen Easter Skin"}[guild.bosshuntstage] : ""}`);
+                        }, 1000);
+                    };
+                };
+
                 return Embed;
             };
-            
-            let notice = ["", "", "", "\n👑 Let the trial begin!"];
 
-            const aDelay = stats.premium ? stats.animationdelay : 1200;
+            let matchStats = Avalon.getMatchStats(interaction, {allowExecution: false});
+            let notice = ["", "", "", ""];
 
-            // Buttons
+            // Apply passives
+            if (skill && myChar.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+            if (myAbility?.passive) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+
             const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️', 
-                DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
-                ABILITY_EMOJI = myStatsC.replaceButton?.ability?.emoji || '✨',
-                SKILL_EMOJI = myStatsC.replaceButton?.skill?.emoji || '⚜️';
+                  DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
+                  ABILITY_EMOJI = myStatsC.replaceButton?.ability?.emoji || '✨',
+                  SKILL_EMOJI = myStatsC.replaceButton?.skill?.emoji || '⚜️';
 
             const row = new ActionRowBuilder()
             .addComponents(
                 new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle('Secondary'),
                 new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle('Secondary'),
-                new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle('Secondary').setDisabled((myChar.id in abilities && "ability" in abilities[myChar.id]) ? false : true),
+                new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle('Secondary').setDisabled((myAbility && "ability" in myAbility) ? false : true),
                 new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle('Secondary').setDisabled(myStats.class !== -1 ? false : true),
             );
-
-            let timeout;
-
+            
             async function newFight() {
-
-                // My Stats
-                let tempHP = myStatsC.hp, tempMana = myStatsC.sm+myStatsC.mg;
-                myStats = await getDetailedStats(myChar.id, stats, stats.classlevels);
-                myStats.hp = tempHP, myStats.sm = (tempMana > myStats.mana) ? myStats.mana : tempMana;
-                myStatsC = {...myStats};
-                let myClass = myStats.class !== -1 ? classes[myStats.class] : false;
-
-                let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : false;
-                let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : false;
-                
-                // Enemy Stats
-                const enemy = enemies.filter((e) => e.boss)[Math.floor(Math.random() * (enemies.filter((e) => e.boss).length))];
-                const ebStats = [
-                    Math.floor(40 * (8 + Math.random()) * Math.pow(1.37, round)),
-                    Math.floor(9 * (10 + Math.random()) * Math.pow(1.35, round)),
-                    40 + round*30 + (round >= 10 ? 150*(round-9) : 0),
-                ];
-                ebStats[3] = Math.floor(((ebStats[0]/Math.pow(0.99895,ebStats[2])) / (200/ebStats[1]))*100) / 100;
-                const curseRar = curses.filter((e) => e.tier);
-                const curse = curseRar[Math.floor(Math.random() * curseRar.length)];
-                const eAbility = bossAbilities.find((e) => e.list[0] === enemy.floor[0]);
-                let eImage = enemy.image[Math.floor(Math.random()*enemy.image.length)];
-                
-                let eStats = {
-                    "name": enemy.name,
-                    "hp": ebStats[0],
-                    "maxhp": ebStats[0],
-                    "atk": ebStats[1],
-                    "def": ebStats[2],
-                    "ep": ebStats[3],
-                    "md": ebStats[1],
-                    "mr": ebStats[2],
-                    "cr": 0.18,
-                    "cd": 1.25,
-                    "td": ebStats[1],
-                    "br": 0.2,
-                    "agility": 80,
-                    "dodge": 0.1,
-                    "mana": 80,
-                    "mg": 15,
-                    "sm": 20,
-                    "rev": 0,
-                    "revhp": 0.5,
-                };
-                eStats.image = eImage;
-                let eStatsC = {...eStats};
-    
-                const difficulty = Avalon.getDifficulty(myStats.ep/eStats.ep);
-                
-                let buffs = Avalon.getBuffs();
-                let eBuffs = Avalon.getBuffs();
-                
-                let matchStats = Avalon.getMatchStats(interaction);
-
-                // Apply Passives
-                if (skill && myChar.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
-                if (myAbility?.passive) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-                if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-                if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-                if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-
-                let timestart = new Date().getTime();
-                let result = await new Promise((resolve, rejects) => {
+                const timestart = new Date().getTime();
+                const result = await new Promise((resolve, rejects) => {
                     const Embed = new EmbedBuilder()
-                    .setColor(0xa7ffa4)
+                    .setColor(0xabd41c)
                     .setThumbnail(thumbnail)
-                    .setFooter({text: `Enemy EP: ${eStatsC.ep} | Round: ${round+1} | time left: 120s`})
-                    .setTitle(`Boss Rush`)
-                    .setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStatsC.maxhp, eStatsC.sm/eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStatsC.maxhp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`)
+                    .setFooter({text: `Enemy EP: ${eStatsC.ep} | time left: 120s`})
+                    .setTitle(`Boss Hunt (${enemy.name})`)
+                    .setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStats.maxhp, eStatsC.sm/eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStatsC.maxhp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(eImage)
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
     
@@ -404,25 +537,23 @@ module.exports = {
                         const cskill = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
                         matchStats.collector = {"atk": atk, "def": def, "ability": ability, "cskill": cskill};
                         
-    
+                        
                         // Use passives
                         if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-    
+                        
+                        let timeout;
                         async function editEmbed() {
-                            if (myStatsC.hp < 1 || eStatsC.hp < 1) return;
-
                             Embed.setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStatsC.maxhp, eStatsC.sm/eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStatsC.maxhp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
-                            Embed.setFooter({text: `Enemy EP: ${eStatsC.ep} | Round: ${round+1} | time left: ${120+Math.floor((timestart-new Date().getTime())/1000)}s`});
-                            
+                            Embed.setFooter({text: `Enemy EP: ${eStatsC.ep} | time left: ${120+Math.floor((timestart-new Date().getTime())/1000)}s`});
                             // await msg.edit({ embeds: [Embed] });
 
                             // Debounce
                             clearTimeout(timeout);
                             timeout = setTimeout(() => {
                                 msg.edit({ embeds: [Embed] });
-                            }, 1200);
+                            }, 600);
                         };
-    
+                        
                         function minionDefeated(side) {
                             if (side === "my") {
                                 myStatsC = {...matchStats.myStatsCC};
@@ -436,7 +567,7 @@ module.exports = {
                                 attack();
                             };
                         };
-    
+
                         function endMatch(wORl) {
                             atk.stop(), def.stop(), ability?.stop(), cskill?.stop();
                             if (wORl === "l") notice.push(`\n💀 **${myChar.name}** lost`);
@@ -449,7 +580,7 @@ module.exports = {
                         function startNextRound() {
                             if (matchStats.round === matchStats.roundCheck) return;
                             matchStats.roundCheck = matchStats.round;
-                            
+
                             // Consume Mana
                             Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, thumbnail);
                             
@@ -457,7 +588,14 @@ module.exports = {
                             if (matchStats.currentCharacter === 0) myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
                             if (matchStats.currentOpponent === 0) eStatsC.atk = eStats.atk, eStatsC.md = eStats.md, eStatsC.def = eStats.def, eStatsC.mr = eStats.mr, eStatsC.cd = eStats.cd, eStatsC.cr = eStats.cr, eStatsC.dodge = eStats.dodge, eStatsC.br = eStats.br, eStatsC.mg = eStats.mg;
 
-                            // Apply Buffs
+                            // Remove HP debuffs from boss
+                            eBuffs.hp = eBuffs.hp.filter((buff) => (buff.type === "*" && buff.val > 1) || (buff.type === "+" && buff.val > 0) );
+
+                            // Increase ATK
+                            eBuffs.atk.push(new buffInfo("+", Math.floor(eStats.atk*0.03), 9999));
+                            eBuffs.md.push(new buffInfo("+", Math.floor(eStats.md*0.03), 9999));
+
+                            // Apply Buffy
                             if (matchStats.currentCharacter === 0) Avalon.applyBuffs(buffs, myStatsC);
                             if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eBuffs, eStatsC);
 
@@ -480,7 +618,7 @@ module.exports = {
                                     };
                                 };
                             };
-                            
+
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                         };
                         
@@ -509,13 +647,14 @@ module.exports = {
                                 if (matchStats.counter > 0) matchStats.counter--;
                             }, aDelay);
                         };
-                        
+
+                        // Write passive actions if any
                         if (notice.length > 4) {
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             editEmbed();
                         };
 
-                        atk.on('collect', async r => {
+                        atk.on('collect', async r => {                            
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
 
@@ -529,12 +668,12 @@ module.exports = {
 
                                 // Normal attack
                                 else {
-                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {block: true, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
+                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
     
                                     if (matchStats.twinshot > Math.random()) setTimeout(() => {
-                                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {block: true, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
+                                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
@@ -545,7 +684,7 @@ module.exports = {
 
                             } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                         });
-    
+
                         def.on('collect', async r => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
@@ -572,7 +711,7 @@ module.exports = {
                                         myStatsC.def += adddef;
                                         myStatsC.mr += addmr;
                                         notice.push(`\n🛡️ **${myChar.name}** has increased DEF by **${adddef}** and MR by **${addmr}**`);
-                                    }
+                                    };
                                     myStatsC.usedBlockRound = matchStats.round;
                                     attack();
                                     editEmbed();
@@ -597,12 +736,12 @@ module.exports = {
                                         attack();
                                     };
                                 } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage === 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                         });
-    
+                        
                         cskill.on('collect', async r => {
                             if (myChar.id === 4767) return interaction.channel.send("Asta can't use any abilities").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            if (skill._cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${skill._cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            if (skill._cost > myStatsC.sm) return interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${skill._cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             else {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill._cost;
@@ -622,7 +761,7 @@ module.exports = {
                                 resolve(matchResult("t"));
                             };
                         });
-    
+                        
                     });
                     
                 });

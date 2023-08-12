@@ -1,7 +1,7 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, ComponentType } = require("discord.js");
 const { curses } = require("../Modules/curses.js");
+const { PageRow } = require("../Modules/components.js");
+const { showPage } = require("../Modules/functions.js");
 
 module.exports = {
     name: 'curse',
@@ -19,87 +19,41 @@ module.exports = {
 
             let showC = ["**Rare Curses** <:Rare_Curse:952175947409408041>", ...rare, "", "**Common Curses** <:Common_Curse:952175936554557530>", ...common]
 
-            let pagesTotal = Math.ceil(showC.length / 15);
+            const elementsPerPage = 15;
+            const pagesTotal = Math.ceil(showC.length / elementsPerPage);
             let currPage = 1;
             if (page <= pagesTotal && page > 0) {
                 currPage = page;
-            }
-            let left = showC.length % 15;
+            };
 
-            let showF = [];
-            if (currPage < pagesTotal || left === 0) {
-                for (let i=(currPage-1)*15; i < currPage * 15; i++) {
-                    showF.push(showC[i]);
-                }
-            } else {
-                for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
-                    showF.push(showC[i]);
-                }
-            }
+            // Filter items to show on the current page
+            let showF = showPage(currPage, showC, elementsPerPage);
 
-            const row = new MessageActionRow()
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('prev')
-                            .setEmoji('⏪')
-                            .setStyle('SECONDARY'),
-                        new MessageButton()
-                            .setCustomId('next')
-                            .setEmoji('⏩')
-                            .setStyle('SECONDARY'),
-                    );
-
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
             .setTitle(`List of Curses`)
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
             .setDescription(`Use \`/curse info <name>\` for more information\n\n` + showF.join("\n"))
-            .setFooter(`Page ${currPage}/${pagesTotal}`)
-            interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
+            .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+            return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
-
-                prev.on('collect', async r => {
-                    if (currPage > 1) currPage--;
-                    else currPage = pagesTotal;
-
-                    let showF = [];
-                    if (currPage < pagesTotal || left === 0) {
-                        for (let i=(currPage-1)*15; i < currPage * 15; i++) {
-                            showF.push(showC[i]);
-                        };
+                collector.on('collect', r => {
+                    if (r.customId === "prev") {
+                        if (currPage > 1) currPage--;
+                        else currPage = pagesTotal;
                     } else {
-                        for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
-                            showF.push(showC[i]);
-                        };
+                        if (currPage < pagesTotal) currPage++;
+                        else currPage = 1;
                     };
 
-                    Embed.setDescription(`Use \`/curse info <name>\` for more information\n\n` + showF.join("\n")).setFooter(`Page ${currPage}/${pagesTotal}`);
-                    interaction.editReply({ embeds: [Embed], components: [row] });
-                });
+                    showF = showPage(currPage, showC, elementsPerPage);
 
-                next.on('collect', async r => {
-                    if (currPage < pagesTotal) currPage++;
-                    else currPage = 1;
-
-                    let showF = [];
-                    if (currPage < pagesTotal || left === 0) {
-                        for (let i=(currPage-1)*15; i < currPage * 15; i++) {
-                            showF.push(showC[i]);
-                        };
-                    } else {
-                        for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
-                            showF.push(showC[i]);
-                        };
-                    };
-
-                    Embed.setDescription(`Use \`/curse info <name>\` for more information\n\n` + showF.join("\n")).setFooter(`Page ${currPage}/${pagesTotal}`);
-                    interaction.editReply({ embeds: [Embed], components: [row] });
+                    Embed.setDescription(`Use \`/curse info <name>\` for more information\n\n` + showF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                    interaction.editReply({ embeds: [Embed] });
                 });
                 
             });
-            return;
         };
         
         function findCurse(name) {
@@ -143,12 +97,12 @@ module.exports = {
             let curse = findCurse(choice);
             if (!curse.name) return;
 
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
             .setTitle(curse.name)
             .setDescription(`**Cost**: ${curse.cost}\\💧\n**Rarity**: ${curse.tier ? "Rare" : "Common"}\n\n**Active**: ${curse.descA}\n\n**Passive**: ${curse.descP}`)
             .setThumbnail(curse.image)
-            .setFooter(`ID: #${curse.id}`)
+            .setFooter({text: `ID: #${curse.id}`})
             return interaction.reply({ embeds: [Embed] });
         };
         

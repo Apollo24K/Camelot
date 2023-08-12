@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { characters } = require("../Modules/chars.js");
 const { abilities } = require("../Modules/abilities.js");
@@ -14,15 +14,17 @@ module.exports = {
 
         let user = interaction.options.getUser('user') || interaction.user;
         let choice = interaction.options.getString('character');
+        const filter = interaction.options.getString('filter');
         let page = interaction.options.getInteger('page') || 1;
         let selection = choice ? "single" : "list";
         
         db.serialize(async () => {
-            var inv = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
+            let inv = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
             if (!inv[0]) inv[0] = {chars: "[]"};
             inv = {chars: JSON.parse(inv[0].chars)};
 
-            let charsID = Object.keys(abilities);
+
+            let charsID = Object.keys(abilities).filter((e) => filter ? filter in abilities[e] : true);
             let chars = charsID.map((e) => characters[e]);
             let uniq = [...new Set(chars.map((e) => e.anime))].sort();
 
@@ -61,20 +63,20 @@ module.exports = {
             };
 
             function r1() {
-                const row = new MessageActionRow()
+                const row = new ActionRowBuilder()
                 .addComponents(
-                    new MessageButton()
+                    new ButtonBuilder()
                         .setCustomId('prev')
                         .setEmoji('⏪')
-                        .setStyle('SECONDARY'),
-                    new MessageButton()
+                        .setStyle('Secondary'),
+                    new ButtonBuilder()
                         .setCustomId('next')
                         .setEmoji('⏩')
-                        .setStyle('SECONDARY'),
-                    new MessageButton()
+                        .setStyle('Secondary'),
+                    new ButtonBuilder()
                         .setCustomId('view')
                         .setLabel(selection === "single" ? "List View" : "Single View")
-                        .setStyle('PRIMARY'),
+                        .setStyle('Primary'),
                 );
                 return row;
             };
@@ -83,27 +85,27 @@ module.exports = {
             if (choice) {
                 fArray = search(choice, inv.chars, interaction);
                 if (!fArray.name) return;
-                if (!(fArray.id in abilities)) return interaction.reply(`**${fArray.name}** does not have an ability`);
+                if (!(fArray.id in abilities) || (filter && !(filter in abilities[fArray.id]))) return interaction.reply(`**${fArray.name}** does not have ${filter ? (filter === "ability" ? "an active " : `a ${filter} `) : "an "}ability`);
             };
 
             let singlePagesTotal = charsID.length;
             let singleCurrPage = charsID.indexOf(""+fArray?.id)+1;
 
             function changeEmbed() {
-                return new MessageEmbed()
+                return new EmbedBuilder()
                 .setColor(0xbbffff)
-                .setTitle(selection === "single" ? `${fArray.name}'s Ability` : "Characters with Abilities")
+                .setTitle(selection === "single" ? `${fArray.name}'s Ability` : `Characters with ${filter ? (filter === "ability" ? "Active " : `${filter[0].toUpperCase()}${filter.slice(1)} `) : ""}Abilities`)
                 .setThumbnail(selection === "single" ? fArray.image : chars[Math.floor(Math.random() * chars.length)].image)
                 .setDescription(selection === "single" ? abilities[fArray.id].desc : `Use \`/ability <char>\` for more information\n\n${showCharsF.join("\n")}`)
-                .setFooter(selection === "single" ? `Page ${singleCurrPage}/${singlePagesTotal}` : `Page ${currPage}/${pagesTotal}`)
+                .setFooter({text: selection === "single" ? `Page ${singleCurrPage}/${singlePagesTotal}` : `Page ${currPage}/${pagesTotal}`})
             };
 
-            var Embed = changeEmbed();
+            let Embed = changeEmbed();
             interaction.reply({ embeds: [Embed], components: [r1()], fetchReply: true }).then(msg => {
                 
-                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
-                const view = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "view", componentType: 'BUTTON', time: 90000 });
+                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 90000 });
+                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 90000 });
+                const view = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "view", componentType: ComponentType.Button, time: 90000 });
 
                 prev.on('collect', async r => {
                     if (selection === "single") {
@@ -127,7 +129,7 @@ module.exports = {
                             };
                         };
     
-                        Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter(`Page ${currPage}/${pagesTotal}`);    
+                        Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});    
                     };
 
                     interaction.editReply({ embeds: [Embed], components: [r1()] });
@@ -140,7 +142,7 @@ module.exports = {
     
                         fArray = chars[singleCurrPage-1];
     
-                        Embed.setTitle(`${fArray.name}'s Ability`).setThumbnail(fArray.image).setDescription(abilities[fArray.id].desc).setFooter(`Page ${singleCurrPage}/${singlePagesTotal}`);
+                        Embed.setTitle(`${fArray.name}'s Ability`).setThumbnail(fArray.image).setDescription(abilities[fArray.id].desc).setFooter({text: `Page ${singleCurrPage}/${singlePagesTotal}`});
                     } else {
                         if (currPage < pagesTotal) currPage++;
                         else currPage = 1;
@@ -156,7 +158,7 @@ module.exports = {
                             };
                         };
     
-                        Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter(`Page ${currPage}/${pagesTotal}`);    
+                        Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});    
                     }
 
                     interaction.editReply({ embeds: [Embed], components: [r1()] });

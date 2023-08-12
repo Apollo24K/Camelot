@@ -1,4 +1,4 @@
-const { MessageEmbed } = require("discord.js");
+const { EmbedBuilder } = require("discord.js");
 const { characters } = require("../Modules/chars.js");
 const { db, query } = require("../db_handler.js");
 const { splitTitle, rarity, getRefinement, searchItem, generateUniqueItemId, generateSubstats } = require("../Modules/functions.js");
@@ -14,17 +14,17 @@ function displayMy(thisChar, inv, ref, interaction) {
     let img = thisChar.image;
     // if (premium[message.author.id] > 3) if (customSettings[message.author.id + message.guild.id] && customSettings[message.author.id + message.guild.id].cimg[thisChar.id]) img = customSettings[message.author.id + message.guild.id].cimg[thisChar.id];
     
-    const Embed = new MessageEmbed()
-    .setColor(0xbbffff)
+    const Embed = new EmbedBuilder()
+    .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[thisChar.rarity])
     .setImage(img)
     .setThumbnail(rarity(thisChar.rarity))
     .setDescription(`**${thisChar.name}**\n${animeL}\n\n**Ref**. ${refinement}`)
-    .setFooter(`You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of this`, interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048")
+    .setFooter({text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of this`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
     interaction.reply({ embeds: [Embed] });
 };
 
-function getHash(hash) {
-    const key = new Date(new Date().getTime()+(60*60*1000)).toISOString().slice(0, 10) + "camelot24";
+function getHash(hash) { 
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
     for (let i=0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
         hash |= 0;
@@ -42,6 +42,7 @@ function getOffers(offers, quantity) {
     return [...quests].map((e) => offers[e]);
 };
 
+const genesisFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "genesis");
 const mythicalFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "mythical");
 const legendaryFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "legendary");
 
@@ -79,27 +80,27 @@ module.exports = {
                     else if (ranRar < 63) rar = "A";
                     else if (ranRar < 189) rar = "B";
                     else if (ranRar < 442) rar = "C";
-        
+                    
                     let fChars = characters.filter((e) => e.rarity === rar);
                     if (item === "2") fChars = fChars.filter((e) => e.gender === "F");
                     else if (item === "3") fChars = fChars.filter((e) => e.gender === "M");
                     let num = Math.floor(Math.random() * fChars.length);
                     inv.chars.push(fChars[num].id);
                     displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
-    
+                    
                     // Daily Quests
                     dailies[4].update(interaction);
                 } else if (item === "4") {
                     if (stats.coins < 800) return interaction.reply("You don't have enough coins");
                     sub_coins = 800;
-    
+                    
                     let desc3 = [];
-                    const Embed = new MessageEmbed()
+                    const Embed = new EmbedBuilder()
                     .setColor(0xbbffff)
-                    .setAuthor(`${interaction.user.username}`, interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048")
-    
+                    .setAuthor({name: `${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                    
                     let rarEmoji = {"SS":"<:SSTier:869316489931546644>","S":"<:STier:869316518675095552>","A":"<:ATier:869316558013464627>","B":"<:BTier:869316586803179571>","C":"<:CTier:869316602858991657>","D":"<:DTier:869316616071032843>"}
-    
+                    
                     for (let i=1; i < 4; i++) {
                         const ranRar = Math.floor(Math.random() * 1000); // 0-999
                         let rar = "D";
@@ -111,13 +112,15 @@ module.exports = {
     
                         let fChars = characters.filter((e) => e.rarity === rar);
                         let num = Math.floor(Math.random() * fChars.length);
-                        desc3.push(`${i}. ${rarEmoji[rar]}-Tier **${fChars[num].name}**`)
+                        desc3.push({val: fChars[num].rarityValue, rarity: fChars[num].rarity, image: fChars[num].image, text: `${i}. ${rarEmoji[rar]}-Tier **${fChars[num].name}**`})
                         inv.chars.push(fChars[num].id);
-                    }
-    
-                    Embed.setDescription(desc3.join("\n")).setThumbnail(characters[inv.chars[inv.chars.length - 3]].image)
+                    };
+                    
+                    desc3.sort((a, b) => b.val - a.val);
+                    
+                    Embed.setDescription(desc3.map((e) => e.text).join("\n")).setThumbnail(desc3[0].image).setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[desc3[0].rarity])
                     interaction.reply({ embeds: [Embed] });
-    
+                    
                     // Daily Quests
                     dailies[4].update(interaction);
                 } else if (item === "5") {
@@ -140,7 +143,7 @@ module.exports = {
                 } else if (item === "6") {
                     if (stats.coins < 2000) return interaction.reply("You don't have enough coins");
                     let newChars = characters.filter((e) => !inv.chars.includes(e.id) && e.rarity !== "SS");
-                    if (newChars.length < 1) return interaction.reply("You already have every character");
+                    if (newChars.length < 100) return interaction.reply("Morpheus Blessing can't be used once you have less than 100 characters left.");
                     sub_coins = 2000;
                     
                     let rarUp;
@@ -227,20 +230,20 @@ module.exports = {
             });
             
         } else if (subcommand === "exchange") {
-            const todaysOffers = [...getOffers(mythicalFiltered, 3), ...getOffers(legendaryFiltered, 5)];
+            const todaysOffers = [...getOffers(genesisFiltered, 1), ...getOffers(mythicalFiltered, 3), ...getOffers(legendaryFiltered, 5)];
 
             const fItem = searchItem(item, interaction);
             if (!fItem?.name) return;
 
-            if (!todaysOffers.includes(fItem)) return interaction.reply(`${fItem.emoji} **__${fItem.name}__** can't be exchanged today, maybe try another time!`);
+            if (!todaysOffers.includes(fItem) || fItem.grade === "genesis") return interaction.reply(`${fItem.emoji} **__${fItem.name}__** can't be exchanged today, maybe try another time!`);
 
             db.serialize(async () => {
                 let stats = await query(`SELECT items FROM users WHERE id = ${interaction.user.id}`);
                 stats = {items: JSON.parse(stats[0].items)};
 
-                let price = 100, currency = 677;
-                if (todaysOffers[0].id === fItem.id) price = 30;
-                else if (fItem.grade === "mythical") price = 40;
+                let price = 100, currency = 676;
+                if (fItem.grade === "genesis") price = 6;
+                else if (fItem.grade === "mythical") price = 40, currency = 677;
                 else price = 50, currency = 678;
 
                 if (!(stats.items[currency] >= price)) return interaction.reply(`You don't have enough exchange points (**${stats.items[currency] || 0}**/${price}${items[currency].emoji})`);

@@ -1,10 +1,9 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const { MessageEmbed, MessageActionRow, MessageButton, MessageSelectMenu } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { classes } = require("../Modules/classes.js");
 const { skills } = require("../Modules/skills.js");
-const { userLevel, getClassLvl, search, searchClass } = require("../Modules/functions.js");
+const { userLevel, getClassLvl, searchClass } = require("../Modules/functions.js");
+const { PageRow, OfferRow } = require("../Modules/components.js");
 
 module.exports = {
     name: 'class',
@@ -47,31 +46,19 @@ module.exports = {
                         showF.push(showC[i]);
                     };
                 };
-    
-                const row = new MessageActionRow()
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('prev')
-                            .setEmoji('⏪')
-                            .setStyle('SECONDARY'),
-                        new MessageButton()
-                            .setCustomId('next')
-                            .setEmoji('⏩')
-                            .setStyle('SECONDARY'),
-                    );
-    
-                const Embed = new MessageEmbed()
+                
+                const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setTitle(`List of Classes`)
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                 .setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n"))
-                .setFooter(`Page ${currPage}/${pagesTotal}`)
-                interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
+                .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+                return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
     
-                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 90000 });
-                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 90000 });
+                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 90000 });
+                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 90000 });
     
-                    prev.on('collect', async r => {
+                    prev.on('collect', () => {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
     
@@ -86,11 +73,11 @@ module.exports = {
                             };
                         };
     
-                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [row] });
+                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                        interaction.editReply({ embeds: [Embed], components: [PageRow] });
                     });
     
-                    next.on('collect', async r => {
+                    next.on('collect', () => {
                         if (currPage < pagesTotal) currPage++;
                         else currPage = 1;
     
@@ -105,14 +92,13 @@ module.exports = {
                             };
                         };
     
-                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter(`Page ${currPage}/${pagesTotal}`);
-                        interaction.editReply({ embeds: [Embed], components: [row] });
+                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                        interaction.editReply({ embeds: [Embed], components: [PageRow] });
                     });
                     
                 });
 
             });
-            return;
         };
 
         // Class info
@@ -139,7 +125,7 @@ module.exports = {
                 return formatted;
             };
 
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
             .setTitle(fClass.name)
             .setThumbnail(fClass.image)
@@ -149,37 +135,28 @@ module.exports = {
                 { name: '_ _', value: `\\🎯 **Crit Rate**: x${fClass.stats.cr[0]}\n\\💥 **Crit Damage**: x${fClass.stats.cd[0]}\n\\🛡️ **Block Rate**: x${fClass.stats.br[0]}\n\\💨 **Dodge**: x${fClass.stats.dodge[0]}`, inline: true },
                 { name: '_ _', value: `\\💧 **Mana**: ${fClass.stats.mana[1] < 0 ? "" : "+"}${fClass.stats.mana[1]}\n\\💦 **Mana Gen**: ${fClass.stats.mg[1] < 0 ? "" : "+"}${fClass.stats.mg[1]}`, inline: true },
             )
-            .setFooter(`ID: #${fClass.id}`)
+            .setFooter({text: `ID: #${fClass.id}`})
             return interaction.reply({ embeds: [Embed] });
         };
         
-        // Class assign
-        if (subcommand === "assign") {
+        // Class select
+        if (subcommand === "select") {
 
             let classChoice = interaction.options.getString('class');
-            let charChoice = interaction.options.getString('character');
 
             let fClass = searchClass(classChoice, interaction);
             if (!fClass?.name) return;
 
             db.serialize(async () => {
-                let stats = await query(`SELECT characters.chars, characters.class, dungeon.classes FROM characters JOIN dungeon ON characters.id = dungeon.id WHERE characters.id = ${interaction.user.id}`);
-                stats = {chars: JSON.parse(stats[0].chars), class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes)};
+                const { 0: stats } = await query(`SELECT classes FROM dungeon WHERE id = ${interaction.user.id}`);
+                stats.classes = JSON.parse(stats.classes);
                 
                 if (!stats.classes.length) return interaction.reply(`You don't have any classes yet. Get started by picking a beginner class with \`/class pick\``);
                 if (!stats.classes.includes(fClass.id)) return interaction.reply(`You don't have the **${fClass.name}** class`);
                 
-                let char = search(charChoice, stats.chars, interaction);
-                if (!char?.name) return;
-                if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
-                
-                for (let entry of Object.entries(stats.class)) {
-                    if (entry[1] === fClass.id) delete stats.class[entry[0]];
-                };
-                stats.class[char.id] = fClass.id;
-                interaction.reply(`Your **${char.name}**'s class has been changed to **${fClass.name}**`);
+                await query(`UPDATE users SET class = ${fClass.id} WHERE id = ${interaction.user.id}`);
 
-                await query(`UPDATE characters SET class = '${JSON.stringify(stats.class)}' WHERE id = ${interaction.user.id}`);
+                return interaction.reply(`Your class has been changed to **${fClass.name}**`);
             });
         };
 
@@ -202,15 +179,15 @@ module.exports = {
                     });
                 });
     
-                const row = new MessageActionRow()
+                const row = new ActionRowBuilder()
                 .addComponents(
-                    new MessageSelectMenu()
+                    new StringSelectMenuBuilder()
                     .setCustomId('class_selection')
                     .setPlaceholder('Choose a beginner class...')
                     .addOptions(options),
                 );
     
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setTitle(`✧ Select a beginner Class ✧`)
                 .setDescription(`   ➥ Use \`/class pick\` to select one from the list below\n   ➥ See \`/class info <class>\` for more information on a class\n   ➥ You will be able to pick a new class after every 10th user level\n   ➥ The 10 beginner classes are as follows:`)
@@ -225,7 +202,7 @@ module.exports = {
     
                         stats.classes.push(parseInt(r.values[0]));
     
-                        interaction.channel.send(`Unlocked **${classes[r.values[0]].name}** 🎉\nYou can change your characters class with the \`/class assign <character> <class>\` command`);
+                        interaction.channel.send(`Unlocked **${classes[r.values[0]].name}** 🎉\nYou can change your class using \`/class select <class>\``);
                         collector.stop();
 
                         await query(`UPDATE dungeon SET classes = "${JSON.stringify(stats.classes)}" WHERE id = ${interaction.user.id}`);
@@ -234,7 +211,6 @@ module.exports = {
                 });
                 
             });
-            return;
         };
 
         // Class upgrade
@@ -263,42 +239,23 @@ module.exports = {
                         if (stats.classes.includes(e[fClass.tier-1])) return interaction.reply("You have already chosen another upgrade path for this class.");
                     };
                 };
-    
-                const row = new MessageActionRow()
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('confirm')
-                            .setEmoji('☑️')
-                            .setStyle('SECONDARY'),
-                        new MessageButton()
-                            .setCustomId('cancel')
-                            .setEmoji('❎')
-                            .setStyle('SECONDARY'),
-                    );
 
-                interaction.reply({ content: `Are you sure you want to upgrade from your **${cClass.name}** class to **${fClass.name}**?`, components: [row], fetchReply: true }).then(msg => {
-    
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 15000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 15000 });
+                return interaction.reply({ content: `Are you sure you want to upgrade from your **${cClass.name}** class to **${fClass.name}**?`, components: [OfferRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
-                    confirm.on('collect', async r => {
+                    collector.on('collect', async r => {
+                        collector.stop();
+                        if (r.customId === "cancel") interaction.channel.send("Action cancelled");
+
                         stats.classes.push(fClass.id);
 
                         interaction.channel.send(`unlocked **${fClass.name}** 🎉`);
-                        confirm.stop(), cancel.stop();
 
                         await query(`UPDATE dungeon SET classes = "${JSON.stringify(stats.classes)}" WHERE id = ${interaction.user.id}`);
                     });
-
-                    cancel.on('collect', async r => {
-                        confirm.stop(), cancel.stop();
-                        interaction.channel.send("Action cancelled")
-                    });
                     
                 });
-
             });
-            return;
         };
 
         // Class level
@@ -307,18 +264,18 @@ module.exports = {
             let choice = interaction.options.getString('class');
             
             db.serialize(async () => {
-                let stats = await query(`SELECT users.battlechar, characters.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+                let stats = await query(`SELECT users.battlechar, users.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
                 if (!stats[0]) return interaction.reply(`**${user.username}** hasn't started playing yet.`)
-                stats = {battlechar: stats[0].battlechar, class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+                stats = {battlechar: stats[0].battlechar, class: stats[0].class, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
                 
                 if (!choice) {
-                    if (stats.battlechar in stats.class) choice = "" + stats.class[stats.battlechar];
+                    if (stats.class !== null) choice = ""+stats.class;
                     else return interaction.reply(`Plase provide the name of the class.\nUsage: \`/class level <class> <user>\``);
                 };
                 
                 let fClass = searchClass(choice, interaction);
                 if (!fClass?.name) return;
-    
+                
                 if (!stats.classes.length) return interaction.reply(`${user.id === interaction.user.id ? "You don't" : `**${user.username}** doesn't have`} a class yet. Pick a beginner class with \`/class pick\``);
                 if (!stats.classes.includes(fClass.id)) return interaction.reply(`${user.id === interaction.user.id ? "You don't" : `**${user.username}** doesn't`} have the **${fClass.name}** class.`);
 
@@ -337,10 +294,10 @@ module.exports = {
                 else if (percent >= 250) bar = "<:barL:872111285741969438><:barM:872111243429814332><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barRh:872111194188705848>";
                 else if (percent >= 125) bar = "<:barL:872111285741969438><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barRh:872111194188705848>";
     
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
-                .setAuthor(`${user.username}'s Class Level`, user.displayAvatarURL({ dynamic: true }) + "?size=2048")
-                .setDescription(`${fClass.name} level: **${level}**\nXP required to level up: **${xpTotal-myXP}**\n${bar}`)
+                .setAuthor({name: `${user.username}'s Class Level`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                .setDescription(`${fClass.name} level: **${level}**\nXP required to level up: **${(xpTotal-myXP) || 0}**\n${bar}`)
                 .setThumbnail(fClass.image)
                 return interaction.reply({ embeds: [Embed] });
             });
@@ -373,25 +330,12 @@ module.exports = {
                 if (oldClass.id === newClass.id) return interaction.reply(`You can't transfer xp to the same class.`);
                 if (!stats.classlevels[oldClass.id]) return interaction.reply(`Your **${oldClass.name}** class doesn't have any xp.`);
                 
-                const row = new MessageActionRow()
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('confirm')
-                            .setEmoji('☑️')
-                            .setStyle('SECONDARY'),
-                        new MessageButton()
-                            .setCustomId('cancel')
-                            .setEmoji('❎')
-                            .setStyle('SECONDARY'),
-                    );
-                
-                interaction.reply({ content: `Are you sure you want to transfer your xp from **${oldClass.name}** to **${newClass.name}** for **30**<:genesis_gems:1034179687720681492>?`, components: [row], fetchReply: true }).then(msg => {
-    
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 15000 });
-                    const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 15000 });
+                return interaction.reply({ content: `Are you sure you want to transfer your xp from **${oldClass.name}** to **${newClass.name}** for **30**<:genesis_gems:1034179687720681492>?`, components: [OfferRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
-                    confirm.on('collect', async r => {
-                        confirm.stop(), cancel.stop();
+                    collector.on('collect', async r => {
+                        collector.stop();
+                        if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
                         let stats = await query(`SELECT users.xp, users.gems, dungeon.classes, dungeon.classlevels FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
                         stats = {xp: stats[0].xp, gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
@@ -406,44 +350,92 @@ module.exports = {
                         
                         delete stats.classlevels[oldClass.id];
 
-                        interaction.channel.send(`Transferred **${xp}** xp from **${oldClass.name}** to **${newClass.name}** 🎉`);
-                        
                         await query(`UPDATE dungeon SET classlevels = '${JSON.stringify(stats.classlevels)}' WHERE id = ${interaction.user.id}`);
                         await query(`UPDATE users SET gems = gems-30 WHERE id = ${interaction.user.id}`);
-                    });
-
-                    cancel.on('collect', async r => {
-                        confirm.stop(), cancel.stop();
-
-                        interaction.channel.send("Action cancelled");
+                        
+                        interaction.channel.send(`Transferred **${xp}** xp from **${oldClass.name}** to **${newClass.name}** 🎉`);
                     });
                     
                 });
-
             });
-            return;
         };
 
-        // Class upgrade
-        // if (subcommand === "switch") {
-        //     const to = interaction.options.getString('to');
+        // Class switch
+        if (subcommand === "switch") {
+            const to = interaction.options.getString('to');
 
-        //     // Search class
-        //     const fClass = searchClass(to, interaction);
-        //     if (!fClass?.name) return;
+            // Search class
+            const fClass = searchClass(to, interaction);
+            if (!fClass?.name) return;
+            if (fClass.tier === 1) return interaction.reply(`**${fClass.name}** is a beginner class`);
+            if (fClass.path.length === 0) return interaction.reply(`**${fClass.name}** can't be obtained through a class switch. See \`/class info ${fClass.name}\` for more details.`);
 
-        //     db.serialize(async () => {
-        //         let stats = await query(`SELECT users.gems, dungeon.classes, dungeon.classlevels FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-        //         stats = {gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+            // Old class
+            const beginner = classes[fClass.path[0][0]];
+            const oldPath = beginner.path[0].includes(fClass.id)+0;
+            const oldAdvanced = classes[beginner.path[oldPath][1]];
+            const oldMaster = classes[beginner.path[oldPath][2]];
+
+            // New class
+            const newAdvanced = fClass.tier === 2 ? fClass : classes[fClass.path[0][1]];
+            const newMaster = fClass.tier === 2 ? classes[fClass.path[0][2]] : fClass;
+
+            db.serialize(async () => {
+                let stats = await query(`SELECT users.gems, characters.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+                stats = {class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
                 
-        //         if (!stats.classes.length) return interaction.reply(`You don't have a class yet. Choose a beginner class with \`/class pick <class name or ID>\``)
-        //         if (stats.gems < 50) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/50<:genesis_gems:1034179687720681492>)`)
+                if (stats.gems < 100) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/100<:genesis_gems:1034179687720681492>)`);
+                if (stats.classes.includes(fClass.id)) return interaction.reply(`You already have the **${fClass.name}** class`);
+                if (!stats.classes.includes(fClass.tier === 2 ? oldAdvanced.id : oldMaster.id)) return interaction.reply(`You don't have the **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class`);
+                
+                interaction.reply({ content: `Are you sure you want to switch from your current **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class to **${fClass.tier === 2 ? newAdvanced.name : newMaster.name}** for 100<:genesis_gems:1034179687720681492>?`, components: [OfferRow], fetchReply: true }).then(msg => {
+    
+                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, max: 1, time: 15000 });
 
+                    confirm.on('collect', async r => {
+                        if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
+                        let stats = await query(`SELECT users.gems, users.presets, characters.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+                        stats = {gems: stats[0].gems, presets: JSON.parse(stats[0].presets), class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
+                        
+                        if (stats.gems < 100) return interaction.channel.send(`You don't have enough gems. (**${stats.gems}**/100<:genesis_gems:1034179687720681492>)`);
+                        if (stats.classes.includes(fClass.id)) return interaction.channel.send(`You already have the **${fClass.name}** class`);
+                        if (!stats.classes.includes(fClass.tier === 2 ? oldAdvanced.id : oldMaster.id)) return interaction.channel.send(`You don't have the **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class`);
+                        
+                        // Switch Advanced Classes
+                        stats.classes.splice((stats.classes.indexOf(oldAdvanced.id)), 1);
+                        stats.classes.push(newAdvanced.id);
+                        stats.classlevels[newAdvanced.id] = stats.classlevels[oldAdvanced.id] || 0;
+                        delete stats.classlevels[oldAdvanced.id];
+                        
+                        // Switch Master Classes
+                        if (stats.classes.includes(oldMaster.id)) {
+                            stats.classes.splice((stats.classes.indexOf(oldMaster.id)), 1);
+                            stats.classes.push(newMaster.id);
+                            stats.classlevels[newMaster.id] = stats.classlevels[oldMaster.id] || 0;
+                            delete stats.classlevels[oldMaster.id];
+                        };
+                        
+                        Object.entries(stats.class).forEach(([chr, cls]) => {
+                            if (cls === oldAdvanced.id) stats.class[chr] = newAdvanced.id;
+                            if (cls === oldMaster.id) stats.class[chr] = newMaster.id;
+                        });
+                        stats.presets.forEach((preset, i) => {
+                            if (preset.class === oldAdvanced.id) stats.presets[i].class = newAdvanced.id;
+                            if (preset.class === oldMaster.id) stats.presets[i].class = newMaster.id;
+                        });
+                        
+                        await query(`UPDATE users SET gems = gems - 100, presets = '${JSON.stringify(stats.presets)}' WHERE id = ${interaction.user.id}`);
+                        await query(`UPDATE characters SET class = '${JSON.stringify(stats.class)}' WHERE id = ${interaction.user.id}`);
+                        await query(`UPDATE dungeon SET classes = '${JSON.stringify(stats.classes)}', classlevels = '${JSON.stringify(stats.classlevels)}' WHERE id = ${interaction.user.id}`);
 
-        //     });
-        //     return;
-        // };
+                        interaction.channel.send(`unlocked **${fClass.tier === 2 ? newAdvanced.name : newMaster.name}** 🎉`);
+                    });
+
+                });
+
+            });
+        };
 
     },
 };

@@ -1,7 +1,7 @@
-/* eslint-disable no-unused-vars */
-const { MessageActionRow, MessageButton } = require("discord.js");
+const { ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { search } = require("../Modules/functions.js");
+const { OfferRow } = require("../Modules/components.js");
 
 module.exports = {
     name: 'trade',
@@ -11,18 +11,6 @@ module.exports = {
         let user = interaction.options.getUser('user') || interaction.user;
         if (user.bot) return interaction.reply("You can't trade with a bot <:Heh:869656740667469864>");
         if (user.id === interaction.user.id) return interaction.reply("You can't trade with yourself <:Heh:869656740667469864>");
-
-        const row = new MessageActionRow()
-                .addComponents(
-                    new MessageButton()
-                        .setCustomId('confirm')
-                        .setEmoji('☑️')
-                        .setStyle('SECONDARY'),
-                    new MessageButton()
-                        .setCustomId('cancel')
-                        .setEmoji('❎')
-                        .setStyle('SECONDARY'),
-                );
 
         db.serialize(async () => {
             let _stats = await query(`SELECT coins FROM users WHERE id = ${user.id}`);
@@ -48,12 +36,12 @@ module.exports = {
             if (!char2.name) return;
             if (!_inv.chars.includes(char2.id)) return interaction.reply(`${user.username} doesn't have a copy of **${char2.name}**`);
 
-            return interaction.reply({content: `${user.toString()} **${interaction.user.username}** wants to trade **${char1.name}** for your **${char2.name}**. Do you accept?`, components: [row], fetchReply: true}).then(msg => {
+            return interaction.reply({content: `${user.toString()} **${interaction.user.username}** wants to trade **${char1.name}** for your **${char2.name}**. Do you accept?`, components: [OfferRow], fetchReply: true}).then(msg => {
     
-                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: 'BUTTON', time: 30000 });
-                const cancel = msg.createMessageComponentCollector({filter: (r) => (r.user.id === user.id || r.user.id === interaction.user.id) && r.customId === "cancel", componentType: 'BUTTON', time: 30000 });
+                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
+                const cancel = msg.createMessageComponentCollector({filter: (r) => (r.user.id === user.id || r.user.id === interaction.user.id) && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
                 
-                confirm.on('collect', async r => {
+                confirm.on('collect', async () => {
                     let inv = await query(`SELECT chars FROM characters WHERE id = ${interaction.user.id}`);
                     inv = {chars: JSON.parse(inv[0].chars)};
                     
@@ -81,7 +69,7 @@ module.exports = {
                     await query(`UPDATE characters SET chars = '${JSON.stringify(_inv.chars)}' WHERE id = ${user.id}`);
                 });
 
-                cancel.on('collect', async r => {
+                cancel.on('collect', () => {
                     confirm.stop(), cancel.stop();
                     interaction.channel.send("Action cancelled");
                 });

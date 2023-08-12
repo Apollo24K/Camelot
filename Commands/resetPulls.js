@@ -6,8 +6,7 @@ module.exports = {
 	execute(interaction) {
 
         db.serialize(async () => {
-            var stats = await query(`SELECT pullcount, pullresets, premium FROM users WHERE id = ${interaction.user.id}`);
-            stats = stats[0];
+            const { 0: stats } = await query(`SELECT pullcount, pullresets, premium FROM users WHERE id = ${interaction.user.id}`);
             
             let pullLimit = 5;
             switch (stats.premium) {

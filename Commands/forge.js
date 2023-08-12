@@ -1,12 +1,11 @@
-/* eslint-disable no-unused-vars */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { items } = require("../Modules/items.js");
 const { PageRow, OfferRow } = require("../Modules/components.js");
 const { showPage, customEmojis, getAscensionMaterial, searchItem, generateUniqueItemId, generateSubstats } = require("../Modules/functions.js");
 
 function forgeryEmbed(elements) {
-    const Embed = new MessageEmbed()
+    const Embed = new EmbedBuilder()
     .setColor(0xbbffff)
     .setTitle("Gaius' Forgery")
     .setThumbnail("https://i.imgur.com/WbPCBqR.png")
@@ -45,30 +44,24 @@ module.exports = {
             if (page <= pagesTotal && page > 0) {
                 currPage = page;
             };
-            let left = itemsR.length % elementsPerPage;
     
             // Filter items to show on the current page
-            let showItems = showPage(currPage, pagesTotal, left, itemsR, elementsPerPage);
+            let showItems = showPage(currPage, itemsR, elementsPerPage);
     
-            return interaction.reply({ embeds: [forgeryEmbed(showItems).setFooter(`Page ${currPage}/${pagesTotal}`)], components: [PageRow], fetchReply: true }).then(msg => {
+            return interaction.reply({ embeds: [forgeryEmbed(showItems).setFooter({text: `Page ${currPage}/${pagesTotal}`})], components: [PageRow], fetchReply: true }).then(msg => {
+                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
     
-                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 120000 });
-                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 120000 });
+                collector.on('collect', async r => {
+                    if (r.customId === "prev") {
+                        if (currPage > 1) currPage--;
+                        else currPage = pagesTotal;
+                    } else {
+                        if (currPage < pagesTotal) currPage++;
+                        else currPage = 1;
+                    };
     
-                prev.on('collect', async r => {
-                    if (currPage > 1) currPage--;
-                    else currPage = pagesTotal;
-    
-                    showItems = showPage(currPage, pagesTotal, left, itemsR, elementsPerPage);
-                    interaction.editReply({ embeds: [forgeryEmbed(showItems).setFooter(`Page ${currPage}/${pagesTotal}`)], components: [PageRow] });
-                });
-    
-                next.on('collect', async r => {
-                    if (currPage < pagesTotal) currPage++;
-                    else currPage = 1;
-    
-                    showItems = showPage(currPage, pagesTotal, left, itemsR, elementsPerPage);
-                    interaction.editReply({ embeds: [forgeryEmbed(showItems).setFooter(`Page ${currPage}/${pagesTotal}`)], components: [PageRow] });
+                    showItems = showPage(currPage, itemsR, elementsPerPage);
+                    interaction.editReply({ embeds: [forgeryEmbed(showItems).setFooter({text: `Page ${currPage}/${pagesTotal}`})], components: [PageRow] });
                 });
                 
             });
@@ -92,17 +85,17 @@ module.exports = {
             if ((stats.items[ascItem.id] || 0) < 36) return interaction.reply(`You don't have enough of ${ascItem.emoji} **__${ascItem.name}__** (**${stats.items[ascItem.id] || 0}**/${36})`);
             if ((stats.items[craftItem.id] || 0) < 24) return interaction.reply(`You don't have enough of ${craftItem.emoji} **__${craftItem.name}__** (**${stats.items[craftItem.id] || 0}**/${24})`);
             
-            const Embed = new MessageEmbed()
+            const Embed = new EmbedBuilder()
             .setTitle("Gaius' Forgery")
             .setColor(0xbbffff)
             .setDescription(`Let me confirm your order:\n**1x** ${fItem.emoji} **__${fItem.name}__**\nfor ${craftItem.emoji}**x24** & ${ascItem.emoji}**x36**?`)
             .setThumbnail("https://i.imgur.com/WbPCBqR.png")
             interaction.reply({ embeds: [Embed], components: [OfferRow], fetchReply: true }).then(msg => {
                 
-                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: 'BUTTON', time: 30000 });
-                const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: 'BUTTON', time: 30000 });
+                const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
+                const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-                confirm.on('collect', async r => {
+                confirm.on('collect', async () => {
                     confirm.stop(), cancel.stop();
                     stats = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
                     stats = {items: JSON.parse(stats[0].items)};
@@ -128,7 +121,7 @@ module.exports = {
                     interaction.channel.send(`Successfully crafted ${fItem.emoji} **__${fItem.name}__**!`);
                 });
                 
-                cancel.on('collect', async r => {
+                cancel.on('collect', () => {
                     confirm.stop(), cancel.stop();
                     interaction.channel.send("Action cancelled");
                 });

@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-const { MessageEmbed, MessageActionRow, MessageButton } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { items } = require("../Modules/items.js");
 const { generateUniqueItemId, generateSubstats, showPage } = require("../Modules/functions.js");
@@ -106,7 +105,7 @@ module.exports = {
         } else {
             const chest = items[box];
             db.serialize(async () => {
-                await interaction.deferReply().catch((err) => {
+                await interaction.deferReply().catch(() => {
                     return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
                 });
                 
@@ -139,7 +138,7 @@ module.exports = {
                 const drops = [];
                 for (let j=0; j < chest.drops*amount; j++) {
                     let grade = weightedRandom(chest.droprates);
-                    if (chest.id === 458 && j%6 === 0 && ++genesispity === 30) grade = "genesis";
+                    if (chest.id === 458 && j%6 === 0 && ++genesispity >= 24) grade = "genesis";
                     if (chest.id === 458 && grade === "genesis") genesispity = 0;
                     const fItems = items.filter((e) => e.obtain.includes("chest") && e.grade === grade);
                     drops.push(fItems[Math.floor(Math.random() * fItems.length)]);
@@ -155,39 +154,39 @@ module.exports = {
                 // Update genesispity
                 await query(`UPDATE users SET genesispity = ${genesispity} WHERE id = ${interaction.user.id}`);
                 
-                const row = new MessageActionRow()
+                const row = new ActionRowBuilder()
                     .addComponents(
-                        new MessageButton()
+                        new ButtonBuilder()
                             .setCustomId('next')
                             .setLabel('Next')
-                            .setStyle('SUCCESS'),
-                        new MessageButton()
+                            .setStyle('Success'),
+                        new ButtonBuilder()
                             .setCustomId('skip')
                             .setLabel('Skip')
-                            .setStyle('PRIMARY'),
+                            .setStyle('Primary'),
                     );
                 
                 let page = 0;
                 
-                const Embed = new MessageEmbed()
+                const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setTitle(`You've opened a **${chest.name}**!`)
                 .setThumbnail(chest.image2)
                 .setImage(drops[page].image)
                 .setDescription(`You've found **${drops[page].name}**!\n**Grade**: ${drops[page].gradeEmote}\n**Type**: ${drops[page].type[0].toUpperCase() + drops[page].type.slice(1)}\n**ID**: \`${drops[page].uid}\``)
-                .setFooter(`Page ${page+1}/${drops.length}`)
+                .setFooter({text: `Page ${page+1}/${drops.length}`})
                 return interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
         
-                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 60000 });
-                    const skip = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "skip", componentType: 'BUTTON', time: 60000 });
+                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 60000 });
+                    const skip = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "skip", componentType: ComponentType.Button, time: 60000 });
     
-                    next.on('collect', async r => {
+                    next.on('collect', () => {
                         if (page < drops.length-1) {
                             page++;
                             Embed
                             .setImage(drops[page].image)
                             .setDescription(`You've found **${drops[page].name}**!\n**Grade**: ${drops[page].gradeEmote}\n**Type**: ${drops[page].type[0].toUpperCase() + drops[page].type.slice(1)}\n**ID**: \`${drops[page].uid}\``)
-                            .setFooter(`Page ${page+1}/${drops.length}`)
+                            .setFooter({text: `Page ${page+1}/${drops.length}`})
                             interaction.editReply({ embeds: [Embed] });
                         } else {
                             next.stop(), skip.stop();
@@ -200,45 +199,44 @@ module.exports = {
                             if (page <= pagesTotal && page > 0) {
                                 currPage = page;
                             };
-                            let left = drops.length % elementsPerPage;
     
                             // Filter items to show on the current page
-                            let showItems = showPage(currPage, pagesTotal, left, drops, elementsPerPage);
+                            let showItems = showPage(currPage, drops, elementsPerPage);
     
                             // Join elements to string
                             let desc = itemsToShow(showItems);
     
-                            const Embed = new MessageEmbed()
+                            const Embed = new EmbedBuilder()
                             .setColor(0xbbffff)
                             .setTitle(`You've opened a **${chest.name}**!`)
                             .setThumbnail(chest.image2)
                             .setDescription(desc)
-                            .setFooter(`Page ${currPage}/${pagesTotal}`)
+                            .setFooter({text: `Page ${currPage}/${pagesTotal}`})
                             if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed], components: [] });
-                            interaction.editReply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then((ms) => {
+                            interaction.editReply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(() => {
                                 
-                                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 45000 });
-                                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 45000 });
+                                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 45000 });
+                                const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 45000 });
                                 
-                                prev.on('collect', async r => {
+                                prev.on('collect', () => {
                                     if (currPage > 1) currPage--;
                                     else currPage = pagesTotal;
                 
-                                    showItems = showPage(currPage, pagesTotal, left, drops, elementsPerPage);
+                                    showItems = showPage(currPage, drops, elementsPerPage);
                                     desc = itemsToShow(showItems);
                 
-                                    Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
+                                    Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
                                     interaction.editReply({ embeds: [Embed] });
                                 });
                                 
-                                next.on('collect', async r => {
+                                next.on('collect', () => {
                                     if (currPage < pagesTotal) currPage++;
                                     else currPage = 1;
                 
-                                    showItems = showPage(currPage, pagesTotal, left, drops, elementsPerPage);
+                                    showItems = showPage(currPage, drops, elementsPerPage);
                                     desc = itemsToShow(showItems);
                 
-                                    Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
+                                    Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
                                     interaction.editReply({ embeds: [Embed] });
                                 });
                                 
@@ -248,7 +246,7 @@ module.exports = {
     
                     });
     
-                    skip.on('collect', async r => {
+                    skip.on('collect', () => {
                         next.stop(), skip.stop();
                         drops.sort((a, b) => b.gradeValue - a.gradeValue);
                         
@@ -259,45 +257,44 @@ module.exports = {
                         if (page <= pagesTotal && page > 0) {
                             currPage = page;
                         };
-                        let left = drops.length % elementsPerPage;
 
                         // Filter items to show on the current page
-                        let showItems = showPage(currPage, pagesTotal, left, drops, elementsPerPage);
+                        let showItems = showPage(currPage, drops, elementsPerPage);
 
                         // Join elements to string
                         let desc = itemsToShow(showItems);
 
-                        const Embed = new MessageEmbed()
+                        const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
                         .setTitle(`You've opened a **${chest.name}**!`)
                         .setThumbnail(chest.image2)
                         .setDescription(desc)
-                        .setFooter(`Page ${currPage}/${pagesTotal}`)
+                        .setFooter({text: `Page ${currPage}/${pagesTotal}`})
                         if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed], components: [] });
-                        interaction.editReply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then((ms) => {
+                        interaction.editReply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(() => {
                             
-                            const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: 'BUTTON', time: 45000 });
-                            const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: 'BUTTON', time: 45000 });
+                            const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 45000 });
+                            const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 45000 });
                             
-                            prev.on('collect', async r => {
+                            prev.on('collect', () => {
                                 if (currPage > 1) currPage--;
                                 else currPage = pagesTotal;
             
-                                showItems = showPage(currPage, pagesTotal, left, drops, elementsPerPage);
+                                showItems = showPage(currPage, drops, elementsPerPage);
                                 desc = itemsToShow(showItems);
             
-                                Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
+                                Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
                                 interaction.editReply({ embeds: [Embed] });
                             });
                             
-                            next.on('collect', async r => {
+                            next.on('collect', () => {
                                 if (currPage < pagesTotal) currPage++;
                                 else currPage = 1;
             
-                                showItems = showPage(currPage, pagesTotal, left, drops, elementsPerPage);
+                                showItems = showPage(currPage, drops, elementsPerPage);
                                 desc = itemsToShow(showItems);
             
-                                Embed.setDescription(desc).setFooter(`Page ${currPage}/${pagesTotal}`);
+                                Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
                                 interaction.editReply({ embeds: [Embed] });
                             });
                             
