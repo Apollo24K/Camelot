@@ -255,10 +255,10 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 				.setName('curse')
-				.setDescription('Give coins or characters to other players')
+				.setDescription('Curse related commands')
 				.addSubcommand((subcommand) => subcommand.setName('list').setDescription('List all curses')
 					.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
-				.addSubcommand((subcommand) => subcommand.setName('info').setDescription('See detailed info about a class')
+				.addSubcommand((subcommand) => subcommand.setName('info').setDescription('See detailed info about a curse')
 					.addStringOption(option => option.setName('curse').setDescription('Choose a curse for detailed info').setRequired(true)))
 	}.data.toJSON(),
 	{
@@ -370,7 +370,8 @@ const commands = [
 				.setName('event')
 				.setDescription('Event commands')
 				.addSubcommand((subcommand) => subcommand.setName('rewards').setDescription('Event rewards'))
-				.addSubcommand((subcommand) => subcommand.setName('shop').setDescription('Event shop')),
+				.addSubcommand((subcommand) => subcommand.setName('shop').setDescription('Event shop'))
+				.addSubcommand((subcommand) => subcommand.setName('pass').setDescription('Event pass')),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -711,6 +712,7 @@ const commands = [
 						.setDescription('Select a rarity')
 						.setRequired(true)
 						.addChoices(
+							{ name: 'EX', value: 'EX' },
 							{ name: 'SS', value: 'SS' },
 							{ name: 'S', value: 'S' },
 							{ name: 'A', value: 'A' },
@@ -864,16 +866,39 @@ const commands = [
 				.setName('profile')
 				.setDescription('Display User Profiles')
 				.addUserOption(option => option.setName('user').setDescription('Profile of user'))
-				.addStringOption(option => option.setName('bio').setDescription('Change your bio').setRequired(false))
 				.addStringOption(option =>
-					option.setName('ephemeral')
-						.setDescription('Ephemeral?')
+					option.setName('type')
+						.setDescription('Choose between the new profile (image) and old profile (legacy)')
 						.setRequired(false)
 						.addChoices(
-							{ name: 'true', value: 'true' },
-							{ name: 'false', value: 'false' },
+							{ name: 'image', value: 'image' },
+							{ name: 'legacy', value: 'legacy' },
 						)
-				),
+				)
+				.addStringOption(option => option.setName('bio').setDescription('Change your bio').setRequired(false))
+				.addStringOption(option =>
+					option.setName('color')
+						.setDescription('Change your profile color')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'default', value: 'null' },
+							{ name: 'creme', value: 'creme' },
+							{ name: 'red', value: 'red' },
+							{ name: 'orange', value: 'orange' },
+							{ name: 'gold', value: 'gold' },
+							{ name: 'mint', value: 'mint' },
+							{ name: 'green', value: 'green' },
+							{ name: 'emerald', value: 'emerald' },
+							{ name: 'turquoise', value: 'turquoise' },
+							{ name: 'blue', value: 'blue' },
+							{ name: 'sky blue', value: 'sky_blue' },
+							{ name: 'indigo', value: 'indigo' },
+							{ name: 'purple', value: 'purple' },
+							{ name: 'pink', value: 'pink' },
+						)
+				)
+				.addStringOption(option => option.setName('custom-color-1').setDescription('Set a custom color (premium only)').setRequired(false))
+				.addStringOption(option => option.setName('custom-color-2').setDescription('Set a custom color (premium only)').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1055,7 +1080,8 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 				.setName('stats')
-				.setDescription('See some stats of camelot'),
+				.setDescription('See some stats of camelot')
+				.addUserOption(option => option.setName('user').setDescription('Show card game stats of a user')),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1116,6 +1142,7 @@ const commands = [
 							{ name: 'achievements', value: 'achievements' },
 							{ name: 'coins', value: 'coins' },
 							{ name: 'class', value: 'class' },
+							{ name: 'stampede', value: 'stampede' },
 							{ name: 'event', value: 'event' },
 						)
 				)
