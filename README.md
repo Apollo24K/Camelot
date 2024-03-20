@@ -1,2 +1,2 @@
-# Camelot.js
+# Camelot
 
