@@ -50,17 +50,17 @@ class curseInfo {
 
 const curses = [
     new curseInfo("Self Regeneration", 0, "<:Self_Regeneration:958114013244452884>", 0, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const heal = Math.floor((eStats.maxhp-eStats.hp)*0.1);
+        const heal = Math.floor((eStats.maxhp - eStats.hp) * 0.1);
         eStats.hp += heal;
         notice.push(`\n${curses[0].emblem} **${enemy.name}** has recovered **${heal}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        ebuff.hp.push(new buffInfo("+", Math.floor(eStats.maxhp*0.05), 9999));
+        ebuff.hp.push(new buffInfo("+", Math.floor(eStats.maxhp * 0.05), 9999));
     }, "https://i.ibb.co/zQzvw0f/Self-Regeneration.png", "The monster heals itself for 10% of missing HP.", "Heals 5% of max HP after each round."),
     new curseInfo("Poisonous Breath", 1, "<:Poisonous_Breath:958114013542236210>", 0, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let dmg = Math.floor(myStats.maxhp*0.06); // Deals 6% dmg of your max HP
-        if (myStats.hp-dmg < 0) dmg = myStats.hp;
+        let dmg = Math.floor(myStats.maxhp * 0.06); // Deals 6% dmg of your max HP
+        if (myStats.hp - dmg < 0) dmg = myStats.hp;
         myStats.hp -= dmg;
-        notice.push(`\n${curses[1].emblem} **${enemy.name}** has dealt **${dmg}** damage`)
+        notice.push(`\n${curses[1].emblem} **${enemy.name}** has dealt **${dmg}** damage`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.hp.push(new buffInfo("*", 0.97, 9999));
     }, "https://i.ibb.co/5WMwKWN/Poisonous-Breath.png", "The monster deals 6% of your max HP as true damage, ignoring all your defense.", "You lose 3% HP after each round."),
@@ -69,15 +69,15 @@ const curses = [
         ebuff.mr.push(new buffInfo("+", 75, 9999));
         eStats.def += 75;
         eStats.mr += 75;
-        notice.push(`\n${curses[2].emblem} **${enemy.name}** has gained **75** DEF`)
+        notice.push(`\n${curses[2].emblem} **${enemy.name}** has gained **75** DEF`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.def.push(new buffInfo("+", 10, 9999, 10, "+"));
         ebuff.mr.push(new buffInfo("+", 10, 9999, 10, "+"));
     }, "https://i.ibb.co/3f2cwmw/Body-Armor.png", "The monster gains +75 DEF and Magic Resist.", "He gains +10 DEF and Magic Resist after each round."),
     new curseInfo("Earth Manipulation", 3, "<:Earth_Manipulation:958114013223469166>", 0, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let sdmg = Math.floor(myStats.hp*0.2); // Deals 20% of hp as dmg
+        let sdmg = Math.floor(myStats.hp * 0.2); // Deals 20% of hp as dmg
         myStats.hp -= sdmg;
-        notice.push(`\n${curses[3].emblem} **${enemy.name}** has dealt **${sdmg}** damage`)
+        notice.push(`\n${curses[3].emblem} **${enemy.name}** has dealt **${sdmg}** damage`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.dodge.push(new buffInfo("*", 0.95, 9999, -0.05, "+")); // Loose 5% dodge chance after each round
     }, "https://i.ibb.co/PzZp0Cf/Earth-Manipulation.png", "You lose 20% of your current HP.", "Your dodge chance decreases by 5% after each round."),
@@ -96,56 +96,56 @@ const curses = [
         ebuff.dodge.push(new buffInfo("+", 0.01, 9999));
     }, "https://i.ibb.co/X7QMCYd/Wind-Manipulation.png", "The monster gains +5% dodge chance for 4 rounds.", "Gains an additional +1% dodge chance after each round."),
     new curseInfo("Water Manipulation", 6, "<:Water_Manipulation:958118298564853761>", 0, 20, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let hhp = Math.floor(eStats.maxhp*0.08); // Heals 8% of your max HP
-        if (eStats.hp+hhp > eStats.maxhp) hhp = eStats.maxhp - eStats.hp;
-        let hpt = Math.floor(myStats.maxhp*0.03); // Heals you for 3% of your max HP
-        if (myStats.hp+hpt > myStats.maxhp) hpt = myStats.maxhp - myStats.hp;
+        let hhp = Math.floor(eStats.maxhp * 0.08); // Heals 8% of your max HP
+        if (eStats.hp + hhp > eStats.maxhp) hhp = eStats.maxhp - eStats.hp;
+        let hpt = Math.floor(myStats.maxhp * 0.03); // Heals you for 3% of your max HP
+        if (myStats.hp + hpt > myStats.maxhp) hpt = myStats.maxhp - myStats.hp;
         eStats.hp += hhp;
         myStats.hp += hpt;
-        notice.push(`\n${curses[6].emblem} **${enemy.name}** has recovered **${hhp}** HP and healed you for **${hpt}** HP`)
+        notice.push(`\n${curses[6].emblem} **${enemy.name}** has recovered **${hhp}** HP and healed you for **${hpt}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.hp.push(new buffInfo("*", 1.02, 9999));
     }, "https://i.ibb.co/52NZyQ2/Water-Manipulation.png", "The monster heals himself for 8% of his max HP, and heals you for 3% of your max HP as well as a side effect.", "He gains 2% HP after each round."),
     new curseInfo("Shadow Step", 7, "<:Shadow_Step:958127289403600916>", 1, 20, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let satk = Math.floor((eStats.atk * Math.pow(0.99818, myStats.def)) * (1 - (0.2*Math.random())) * (Math.random() < eStats.cr ? eStats.cd : 1)); // Deals a guaranteed hit
+        let satk = Math.floor((eStats.atk * Math.pow(0.99818, myStats.def)) * (1 - (0.2 * Math.random())) * (Math.random() < eStats.cr ? eStats.cd : 1)); // Deals a guaranteed hit
         myStats.hp -= satk;
         if (myStats.hp < 0) myStats.hp = 0;
-        notice.push(`\n${curses[7].emblem} **${enemy.name}** used Shadow Step. Dealt **${satk}** damage`)
+        notice.push(`\n${curses[7].emblem} **${enemy.name}** used Shadow Step. Dealt **${satk}** damage`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.cr.push(new buffInfo("+", 0.05, 9999, 0.05, "+"));
     }, "https://i.ibb.co/pfYZM1H/Shadow-Step.png", "Ignoring your block rate and dodge chance, the monster deals a guaranteed hit.", "He gains +5% crit rate after each round."),
     new curseInfo("Magic Jamming", 8, "<:Magic_Jamming:958298128195416124>", 0, 35, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let satk = Math.floor((eStats.md * Math.pow(0.99818, myStats.mr)) * (1 - (0.2*Math.random())) * (Math.random() < eStats.cr ? eStats.cd : 1)); // Deals magic damage
+        let satk = Math.floor((eStats.md * Math.pow(0.99818, myStats.mr)) * (1 - (0.2 * Math.random())) * (Math.random() < eStats.cr ? eStats.cd : 1)); // Deals magic damage
         myStats.hp -= satk;
         if (myStats.hp < 0) myStats.hp = 0;
-        notice.push(`\n${curses[8].emblem} **${enemy.name}** has dealt **${satk}** magic damage`)
+        notice.push(`\n${curses[8].emblem} **${enemy.name}** has dealt **${satk}** magic damage`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.mr.push(new buffInfo("+", 100, 9999));
     }, "https://i.ibb.co/rkK9tzp/Magic-Jamming.png", "The monster deals magic damage.", "He gains +100 Magic Resist at the start of combat."),
     new curseInfo("Magic Manipulation", 9, "<:Magic_Manipulation:958298062562934814>", 1, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let satk = Math.floor((eStats.md * Math.pow(0.99818, myStats.mr)) * (1 - (0.2*Math.random())) * (Math.random() < eStats.cr ? eStats.cd : 1) * 1.5); // Deals 150% magic damage
+        let satk = Math.floor((eStats.md * Math.pow(0.99818, myStats.mr)) * (1 - (0.2 * Math.random())) * (Math.random() < eStats.cr ? eStats.cd : 1) * 1.5); // Deals 150% magic damage
         myStats.hp -= satk;
         if (myStats.hp < 0) myStats.hp = 0;
-        notice.push(`\n${curses[9].emblem} **${enemy.name}** has dealt **${satk}** magic damage`)
+        notice.push(`\n${curses[9].emblem} **${enemy.name}** has dealt **${satk}** magic damage`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.mr.push(new buffInfo("+", 300, 9999));
     }, "https://i.ibb.co/tC5w90S/Magic-Manipulation.png", "The monster deals 150% Magic Damage.", "He gains +300 Magic Resist at the start of combat."),
     new curseInfo("Ultraspeed Regeneration", 10, "<:Ultraspeed_Regeneration:958298070150443069>", 1, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let hhp = Math.floor(eStats.maxhp*0.16); // Heals 20% of max HP
-        if (eStats.hp+hhp > eStats.maxhp) hhp = eStats.maxhp - eStats.hp;
+        let hhp = Math.floor(eStats.maxhp * 0.16); // Heals 20% of max HP
+        if (eStats.hp + hhp > eStats.maxhp) hhp = eStats.maxhp - eStats.hp;
         eStats.hp += hhp;
         notice.push(`\n${curses[10].emblem} **${enemy.name}** has recovered **${hhp}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.hp.push(new buffInfo("*", 1.06, 9999));
     }, "https://i.ibb.co/k9bKMYr/Ultraspeed-Regeneration.png", "The monster heals 16% of max HP.", "He heals himself for 6% HP after each round."),
     new curseInfo("Gravity Manipulation", 11, "<:Gravity_Manipulation:958314009738764328>", 1, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        ebuff.br.push(new buffInfo("+", 0.05, 6)) // Gains 5% block rate
+        ebuff.br.push(new buffInfo("+", 0.05, 6)); // Gains 5% block rate
         notice.push(`\n${curses[11].emblem} **${enemy.name}** has gained **+5%** block rate for 6 rounds`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.dodge.push(new buffInfo("=", 0, 9999));
     }, "https://i.ibb.co/cvQvBxR/Gravity-Manipulation.png", "The monster gains +5% block rate for 6 rounds.", "You can't dodge any of the monsters attacks."),
     new curseInfo("Black Flame", 12, "<:Black_Flame:958739786686947409>", 0, 25, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let satk = Math.floor(myStats.maxhp*0.1); // Burns 10% of your max HP
+        let satk = Math.floor(myStats.maxhp * 0.1); // Burns 10% of your max HP
         myStats.hp -= satk;
         if (myStats.hp < 0) myStats.hp = 0;
         notice.push(`\n${curses[12].emblem} **${enemy.name}** has burnt you for **${satk}** HP`);
@@ -157,17 +157,17 @@ const curses = [
         if (Math.random() < 0.8) {
             eStats.sm += 60;
         } else {
-            matchStats.eStatsCC = {...eStats}; // Creates a clone of itself
-            matchStats.eStatsCC.sm -= (60 + (2*eStats.mg));
+            matchStats.eStatsCC = { ...eStats }; // Creates a clone of itself
+            matchStats.eStatsCC.sm -= (60 + (2 * eStats.mg));
             matchStats.currentOpponent = 1;
-            eStats.maxhp = Math.floor(eStats.maxhp*0.2);
+            eStats.maxhp = Math.floor(eStats.maxhp * 0.2);
             eStats.hp = eStats.maxhp;
             notice.push(`\n${curses[13].emblem} **${enemy.name}** has created a body double of itself`);
         };
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     }, "https://i.ibb.co/TKX8JQp/Body-Double.png", "The monster creates a body double (clone) of itself. You will have to fight the clone until you beat him to continue fighting the real body of the monster.", "None"),
     new curseInfo("Absorb", 14, "<:Absorb:958774653348880484>", 0, 35, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const steal = Math.floor(myStats.maxhp*0.1); // Steals 10% of your HP
+        const steal = Math.floor(myStats.maxhp * 0.1); // Steals 10% of your HP
         myStats.hp -= steal;
         if (myStats.hp < 0) myStats.hp = 0;
         eStats.hp += steal;

@@ -30,39 +30,39 @@ function getAscension(lvl) {
     return asc;
 };
 
-function list(grade, show, type) {
+function list(grade, show, type, locked) {
     if (type === "loot") {
         const arr = [], t = show.filter((b) => items[b[0]].grade === grade);
-        for (let h=0; h < t.length; h++) {
+        for (let h = 0; h < t.length; h++) {
             arr.push(items[t[h][0]].bar + items[t[h][0]].name + " | " + items[t[h][0]].emoji + " x" + t[h][1]);
         };
         return arr;
     } else if (type === "weapon") {
-        return show.filter((b) => items[b.itemid].grade === grade).map((e) => items[e.itemid].bar + "`" + e.uniqueid.split(":")[0] + "` | " + items[e.itemid].emoji + " __**" + items[e.itemid].name + "**__ Lvl. **" + getItemLevel(e.level) + "**/" + ((e.ascension*10)+20) + " ➜ " + getAscension(e.ascension))
+        return show.filter((b) => items[b.itemid].grade === grade).map((e) => `${items[e.itemid].bar}${locked.includes(e.uniqueid.split(":")[0]) ? "🔒" : ""}\`${e.uniqueid.split(":")[0]}\` | ${items[e.itemid].emoji} __**${items[e.itemid].name}**__ Lvl. **${getItemLevel(e.level)}**/${(e.ascension * 10) + 20} ➜ ${getAscension(e.ascension)}`);
     };
 };
 
-function itemsToShow(show, type="loot") {
+function itemsToShow(show, type = "loot", locked = []) {
     let desc = "";
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "genesis")) desc += "\n\n<:genesis1:1041725784546619502><:genesis2:1041725782176825485><:genesis3:1041725778611675237><:genesis4:1041725780218093629>\n" + list("genesis", show, type).join("\n");
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "mythical")) desc += "\n\n<:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162>\n" + list("mythical", show, type).join("\n");
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "legendary")) desc += "\n\n<:legendary1:1041726519082491964><:legendary2:1041726517153112094><:legendary3:1041726515475382322><:legendary4:1041726512992366605>\n" + list("legendary", show, type).join("\n");
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "unique")) desc += "\n\n<:unique1:1041730066272493578><:unique2:1041730063940468828><:unique3:1041730061163831437><:unique4:1041730057380573386>\n" + list("unique", show, type).join("\n");
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "rare")) desc += "\n\n<:rare1:1041731092031492106><:rare2:1041731088357281802><:rare3:1041731083965825096>\n" + list("rare", show, type).join("\n");
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "special")) desc += "\n\n<:special1:1041731419963150397><:special2:1041731418008600717><:special3:1041731415919833149><:special4:1041731414032392202>\n" + list("special", show, type).join("\n");
-    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "normal")) desc += "\n\n<:normal1:1041732429397889054><:normal2:1041732425379762268><:normal3:1041732422145953892><:normal4:1041732419591622686>\n" + list("normal", show, type).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "genesis")) desc += "\n\n<:genesis1:1041725784546619502><:genesis2:1041725782176825485><:genesis3:1041725778611675237><:genesis4:1041725780218093629>\n" + list("genesis", show, type, locked).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "mythical")) desc += "\n\n<:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162>\n" + list("mythical", show, type, locked).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "legendary")) desc += "\n\n<:legendary1:1041726519082491964><:legendary2:1041726517153112094><:legendary3:1041726515475382322><:legendary4:1041726512992366605>\n" + list("legendary", show, type, locked).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "unique")) desc += "\n\n<:unique1:1041730066272493578><:unique2:1041730063940468828><:unique3:1041730061163831437><:unique4:1041730057380573386>\n" + list("unique", show, type, locked).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "rare")) desc += "\n\n<:rare1:1041731092031492106><:rare2:1041731088357281802><:rare3:1041731083965825096>\n" + list("rare", show, type, locked).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "special")) desc += "\n\n<:special1:1041731419963150397><:special2:1041731418008600717><:special3:1041731415919833149><:special4:1041731414032392202>\n" + list("special", show, type, locked).join("\n");
+    if (show.find((e) => (type === "loot" ? items[e[0]].grade : items[e.itemid].grade) === "normal")) desc += "\n\n<:normal1:1041732429397889054><:normal2:1041732425379762268><:normal3:1041732422145953892><:normal4:1041732419591622686>\n" + list("normal", show, type, locked).join("\n");
     return desc;
 };
 
 function detailedPage(item) {
     // const { 0: item } = await query(`SELECT * FROM weapons WHERE uniqueid = '${uid}'`);
-    item.level = getItemLevel(item.level);
+    let itemLevel = getItemLevel(item.level);
     const fItem = items[item.itemid];
-    
+
     const Embed = new EmbedBuilder()
-    .setColor(0xbbffff)
-    .setTitle(fItem.name)
-    .setThumbnail(fItem.image)
+        .setColor(0xbbffff)
+        .setTitle(fItem.name)
+        .setThumbnail(fItem.image);
 
     if (fItem.category === "weapon") {
         let pstat = 0, sstat = 0;
@@ -70,41 +70,41 @@ function detailedPage(item) {
         // Primary Stat
         if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(fItem.primaryStat)) {
             if (fItem.primaryStat.endsWith("%")) {
-                pstat += (1 + Math.floor(fItem.psmin + ((fItem.psmax - fItem.psmin)/150)*((item.level-1)+(item.ascension*3)))/100);
+                pstat += (1 + Math.floor(fItem.psmin + ((fItem.psmax - fItem.psmin) / 150) * ((itemLevel - 1) + (item.ascension * 3))) / 100);
             } else {
-                pstat += (fItem.psmin + ((fItem.psmax - fItem.psmin)*((item.level-1)+(item.ascension*3))/150))/100;
+                pstat += (fItem.psmin + ((fItem.psmax - fItem.psmin) * ((itemLevel - 1) + (item.ascension * 3)) / 150)) / 100;
             };
         } else {
-            pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin))/150)*((item.level-1)+(item.ascension*3)));
+            pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin)) / 150) * ((itemLevel - 1) + (item.ascension * 3)));
         };
         // Secondary Stat
         if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(fItem.secondaryStat)) {
             if (fItem.secondaryStat.endsWith("%")) {
-                sstat += (Math.floor(parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))/10)*item.ascension)/100);
+                sstat += (Math.floor(parseInt(fItem.ssmin.slice(0, -1)) + ((parseInt(fItem.ssmax.slice(0, -1)) - parseInt(fItem.ssmin.slice(0, -1))) / 10) * item.ascension) / 100);
             } else {
-                sstat += (parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))*item.ascension/10))/100;
+                sstat += (parseInt(fItem.ssmin.slice(0, -1)) + ((parseInt(fItem.ssmax.slice(0, -1)) - parseInt(fItem.ssmin.slice(0, -1))) * item.ascension / 10)) / 100;
             };
         } else {
-            sstat += Math.floor(parseInt(fItem.ssmin) + ((parseInt(fItem.ssmax) - parseInt(fItem.ssmin))/10)*item.ascension);
+            sstat += Math.floor(parseInt(fItem.ssmin) + ((parseInt(fItem.ssmax) - parseInt(fItem.ssmin)) / 10) * item.ascension);
         };
 
-        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension*10)+20) + " ➜ " + getAscension(item.ascension)}\n\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: ${sstat < 1 ? Math.round(sstat*100)+"%" : sstat} ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}`);
+        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + itemLevel + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: ${sstat < 1 ? Math.round(sstat * 100) + "%" : sstat} ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}`);
     } else {
         const set = items.filter((e) => e.setname === fItem.setname);
 
         let pstat = 0;
-        pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin))/150)*((item.level-1)+(item.ascension*3)));
+        pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin)) / 150) * ((itemLevel - 1) + (item.ascension * 3)));
 
-        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension*10)+20) + " ➜ " + getAscension(item.ascension)}\n\n**${fItem.setname}**: ${set[0].emoji+set[1].emoji+set[2].emoji+set[3].emoji}\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
+        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + itemLevel + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**${fItem.setname}**: ${set[0].emoji + set[1].emoji + set[2].emoji + set[3].emoji}\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
     };
-    
+
     return Embed;
 };
 
 module.exports = {
     name: 'items',
-	description: 'item inventory',
-	execute(interaction) {
+    description: 'item inventory',
+    execute(interaction) {
 
         const subcommand = interaction.options.getSubcommand();
         const user = interaction.options.getUser('user') || interaction.user;
@@ -113,31 +113,31 @@ module.exports = {
         const flag = interaction.options.getString('flag');
 
         let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-        
+
         db.serialize(async () => {
             await interaction.deferReply().catch(() => {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
-            
-            let stats = await query(`SELECT users.favchar, users.premium, users.items, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id WHERE users.id = ${user.id}`);
-            if (!stats[0]) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
-            stats = {favchar: stats[0].favchar, premium: stats[0].premium, items: JSON.parse(stats[0].items), chars: JSON.parse(stats[0].chars), skin: JSON.parse(stats[0].skin)};
+
+            const { 0: stats } = await query(`SELECT users.favchar, users.premium, users.items, users.itemlock, characters.chars, characters.skin FROM users JOIN characters ON users.id = characters.id WHERE users.id = ${user.id}`);
+            if (!stats) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
+            stats.items = JSON.parse(stats.items), stats.itemlock = JSON.parse(stats.itemlock), stats.chars = JSON.parse(stats.chars), stats.skin = JSON.parse(stats.skin);
 
             let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
             if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[interaction.user.id]?.cimg[stats.favchar], stats.skin[stats.favchar]);
-            
+
             if (subcommand === "loot") {
                 let itemsR = Object.entries(stats.items);
                 itemsR = itemsR.filter((e) => (items[e[0]].category === "loot" || items[e[0]].type === "fish") && e[1]);
                 if (type === "loot") itemsR = itemsR.filter((e) => items[e[0]].category === type);
                 else if (["chest", "fish"].includes(type)) itemsR = itemsR.filter((e) => items[e[0]].type === type);
-                else if (["ascension", "crafting", "levelup"].includes(type)) itemsR = itemsR.filter((e) => items[e[0]].type === type+" material");
-                
+                else if (["ascension", "crafting", "levelup"].includes(type)) itemsR = itemsR.filter((e) => items[e[0]].type === type + " material");
+
                 // Return if empty
                 if (!itemsR.length) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
 
                 // Sort elements
-                itemsR.sort((a,b) => items[b[0]].gradeValue - items[a[0]].gradeValue);
+                itemsR.sort((a, b) => items[b[0]].gradeValue - items[a[0]].gradeValue);
 
                 // Setup Pages
                 let elementsPerPage = 10;
@@ -154,15 +154,15 @@ module.exports = {
                 let desc = itemsToShow(showItems);
 
                 const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setAuthor({name: `${user.username}'s inventory`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-                .setThumbnail(thumbnail)
-                .setDescription(desc)
-                .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+                    .setColor(0xbbffff)
+                    .setAuthor({ name: `${user.username}'s inventory`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
+                    .setThumbnail(thumbnail)
+                    .setDescription(desc)
+                    .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed] });
                 return interaction.editReply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
 
-                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                     collector.on('collect', async r => {
                         if (r.customId === "prev") {
@@ -176,26 +176,25 @@ module.exports = {
                         showItems = showPage(currPage, itemsR, elementsPerPage);
                         desc = itemsToShow(showItems);
 
-                        Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                        Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [PageRow] });
                     });
-                    
+
                 });
             };
-            
+
             let itemsR = await query(`SELECT * FROM weapons WHERE id = ${user.id}`);
             itemsR = itemsR.filter((e) => items[e.itemid].category === subcommand);
-            
+
             if (type === "sets") itemsR.sort((a, b) => items[a.itemid].setname.localeCompare(items[b.itemid].setname));
             else if (type) itemsR = itemsR.filter((e) => items[e.itemid].type === type);
-            
+
             // Return if empty
             if (!itemsR.length) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
-            
-            // Sort elements
-            if (type === "sets") itemsR.sort((a,b) => (items[b.itemid].gradeValue - items[a.itemid].gradeValue) + (items[b.itemid].grade === items[a.itemid].grade ? (b.level+b.ascension) - (a.level+a.ascension) : 0) );
-            else itemsR.sort((a,b) => (items[b.itemid].gradeValue - items[a.itemid].gradeValue) + (items[b.itemid].grade === items[a.itemid].grade ? (b.level+b.ascension) - (a.level+a.ascension) : 0) + (items[b.itemid].grade === items[a.itemid].grade && (b.level+b.ascension) === (a.level+a.ascension) ? items[a.itemid].name.localeCompare(items[b.itemid].name) : 0) );
 
+            // Sort elements
+            if (type === "sets") itemsR.sort((a, b) => (items[b.itemid].gradeValue - items[a.itemid].gradeValue) + (items[b.itemid].grade === items[a.itemid].grade ? (b.level + b.ascension) - (a.level + a.ascension) : 0));
+            else itemsR.sort((a, b) => (items[b.itemid].gradeValue - items[a.itemid].gradeValue) + (items[b.itemid].grade === items[a.itemid].grade ? (b.level + b.ascension) - (a.level + a.ascension) : 0) + (items[b.itemid].grade === items[a.itemid].grade && (b.level + b.ascension) === (a.level + a.ascension) ? items[a.itemid].name.localeCompare(items[b.itemid].name) : 0));
 
             // Setup Pages
             const elementsPerPage = (flag === "detailed") ? 1 : 10;
@@ -209,18 +208,18 @@ module.exports = {
             let showItems = showPage(currPage, itemsR, elementsPerPage);
 
             // Join elements to string
-            let desc = itemsToShow(showItems, "weapon");
-            
-            const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setAuthor({name: `${user.username}'s inventory`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-            .setThumbnail(thumbnail)
-            .setDescription(desc)
-            .setFooter({text: `Page ${currPage}/${pagesTotal}`})
-            if (pagesTotal === 1) return interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage-1]).setFooter({text: `Page ${currPage}/${pagesTotal}`}) : Embed] });
-            return interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage-1]).setFooter({text: `Page ${currPage}/${pagesTotal}`}) : Embed], components: [PageRow], fetchReply: true }).then(msg => {
+            let desc = itemsToShow(showItems, "weapon", stats.itemlock);
 
-                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+            const Embed = new EmbedBuilder()
+                .setColor(0xbbffff)
+                .setAuthor({ name: `${user.username}'s inventory`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
+                .setThumbnail(thumbnail)
+                .setDescription(desc)
+                .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+            if (pagesTotal === 1) return interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed] });
+            return interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow], fetchReply: true }).then(msg => {
+
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async r => {
                     if (r.customId === "prev") {
@@ -232,14 +231,14 @@ module.exports = {
                     };
 
                     showItems = showPage(currPage, itemsR, elementsPerPage);
-                    desc = itemsToShow(showItems, "weapon");
+                    desc = itemsToShow(showItems, "weapon", stats.itemlock);
 
-                    Embed.setDescription(desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
-                    interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage-1]).setFooter({text: `Page ${currPage}/${pagesTotal}`}) : Embed], components: [PageRow] });
+                    Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] });
                 });
-                
+
             });
-            
+
         });
 
     },

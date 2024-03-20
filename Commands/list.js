@@ -7,17 +7,17 @@ const { abilities } = require("../Modules/abilities.js");
 
 module.exports = {
     name: 'list',
-	description: 'List characters of a rarity',
-	execute(interaction) {
+    description: 'List characters of a rarity',
+    execute(interaction) {
 
         const rarity = interaction.options.getString('rarity');
         const filter = interaction.options.getString('filter');
         const user = interaction.options.getUser('user') || interaction.user;
         const page = interaction.options.getInteger('page');
-        
+
         db.serialize(async () => {
             let { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
-            if (!inv) inv = {chars: "[]"};
+            if (!inv) inv = { chars: "[]" };
             inv.chars = JSON.parse(inv.chars);
 
             let chars = characters.filter((e) => e.rarity === rarity);
@@ -30,7 +30,7 @@ module.exports = {
             let uniq = [...new Set(chars.map((e) => e.anime))].sort();
 
             let showChars = [];
-            for (let i=0; i < uniq.length; i++) {
+            for (let i = 0; i < uniq.length; i++) {
                 let charsInAnime = chars.filter((e) => e.anime === uniq[i]).sort();
                 if (charsInAnime.length < 1) return;
                 showChars.push(`**${uniq[i]}**`);
@@ -39,8 +39,8 @@ module.exports = {
                 });
                 showChars.push("");
             };
-            if (showChars[showChars.length-1] === "") showChars.pop();
-            
+            if (showChars[showChars.length - 1] === "") showChars.pop();
+
             // Setup Pages
             const elementsPerPage = 15;
             const pagesTotal = Math.ceil(showChars.length / elementsPerPage);
@@ -65,13 +65,13 @@ module.exports = {
             };
 
             const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setThumbnail(chars[Math.floor(Math.random() * chars.length)].image)
-            .setDescription(`### ${tier} **Tier Characters** (${filter === "unowned" ? "" : `${userChars.length}/`}${chars.length})\n` + showCharsF.join("\n"))
-            .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+                .setColor(0xbbffff)
+                .setThumbnail(chars[Math.floor(Math.random() * chars.length)].image)
+                .setDescription(`### ${tier} **Tier Characters** (${filter === "unowned" ? "" : `${userChars.length}/`}${chars.length})\n` + showCharsF.join("\n"))
+                .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
-                
-                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', r => {
                     if (r.customId === "prev") {
@@ -84,7 +84,7 @@ module.exports = {
 
                     showCharsF = showPage(currPage, showChars, elementsPerPage);
 
-                    Embed.setDescription(`### ${tier} **Tier Characters** (${filter === "unowned" ? "" : `${userChars.length}/`}${chars.length})\n` + showCharsF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                    Embed.setDescription(`### ${tier} **Tier Characters** (${filter === "unowned" ? "" : `${userChars.length}/`}${chars.length})\n` + showCharsF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed] });
                 });
 

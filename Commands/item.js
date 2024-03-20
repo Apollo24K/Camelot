@@ -1,7 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { items } = require("../Modules/items.js");
-const { searchItem, showPage, customEmojis, search, getAscensionMaterial, getItemLevel } = require("../Modules/functions.js");
+const { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel } = require("../Modules/functions.js");
 const { PageRow, OfferRow } = require("../Modules/components.js");
 const { characters } = require("../Modules/chars.js");
 
@@ -31,8 +31,7 @@ function getAscension(lvl) {
 
 function list(grade, show) {
     const arr = [], t = show.filter((b) => b.grade === grade);
-    for (let h=0; h < t.length; h++) {
-        // arr.push(t[h].bar + t[h].name + " | " + t[h].emoji);
+    for (let h = 0; h < t.length; h++) {
         arr.push(t[h].bar + t[h].emoji + " | " + t[h].name);
     };
     return arr;
@@ -61,115 +60,133 @@ let gradeBar = {
 };
 
 function totalXP(matsToUse) {
-    return Object.entries(matsToUse).reduce((total, e) => total + (e[1].use*parseInt(e[0])), 0);
+    return Object.entries(matsToUse).reduce((total, e) => total + (e[1].use * parseInt(e[0])), 0);
 };
 
 function missingXP(xp, level) {
     let total = 0;
-    for (let i=1; i < level; i++) {
+    for (let i = 1; i < level; i++) {
         total += Math.floor(20 * Math.pow(i, 1.290349));
     };
-    return total-xp;
+    return total - xp;
 };
 
 module.exports = {
     name: 'item',
-	description: 'item related commands',
-	execute(interaction) {
-        
+    description: 'item related commands',
+    execute(interaction) {
+
         let subcommand = interaction.options.getSubcommand();
-        
+
         // Item info
         if (subcommand === "info") {
             const flag = interaction.options.getString('flag');
-            const choice = interaction.options.getString('item');
+            const choices = interaction.options.getString('items');
             const user = interaction.options.getUser('user') || interaction.user;
-            
+
+            const Embeds = [];
+
             db.serialize(async () => {
-                
-                if (flag === "my") {
-                    let item = await query(`SELECT * FROM weapons WHERE uniqueid = '${choice}:${user.id}'`);
-                    if (!item[0]) return interaction.reply({content: `${user.id === interaction.user.id ? "You don't" : user.username + " doesn't"} have an item with the id \`${choice}\``, ephemeral: true});
-                    item = item[0];
-                    item.level = getItemLevel(item.level);
-                    const fItem = items[item.itemid];
-                    
-                    const Embed = new EmbedBuilder()
-                    .setColor(0xbbffff)
-                    .setTitle(fItem.name)
-                    .setThumbnail(fItem.image)
-                    .setFooter({text: `ID: #${fItem.id}`})
+                for (const choice of choices.split(",").filter((s) => s).map((s) => s.trim())) {
+                    if (flag === "my") {
+                        let item = await query(`SELECT * FROM weapons WHERE uniqueid = '${choice}:${user.id}'`);
+                        if (!item[0]) continue;
+                        item = item[0];
+                        item.level = getItemLevel(item.level);
+                        const fItem = items[item.itemid];
 
-                    if (fItem.category === "weapon") {
-                        let pstat = 0, sstat = 0;
+                        const Embed = new EmbedBuilder()
+                            .setColor(0xbbffff)
+                            .setTitle(fItem.name)
+                            .setThumbnail(fItem.image)
+                            .setFooter({ text: `ID: #${fItem.id}` });
 
-                        // Primary Stat
-                        if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(fItem.primaryStat)) {
-                            if (fItem.primaryStat.endsWith("%")) {
-                                pstat += (1 + Math.floor(fItem.psmin + ((fItem.psmax - fItem.psmin)/150)*((item.level-1)+(item.ascension*3)))/100);
+                        if (fItem.category === "weapon") {
+                            let pstat = 0, sstat = 0;
+
+                            // Primary Stat
+                            if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(fItem.primaryStat)) {
+                                if (fItem.primaryStat.endsWith("%")) {
+                                    pstat += (1 + Math.floor(fItem.psmin + ((fItem.psmax - fItem.psmin) / 150) * ((item.level - 1) + (item.ascension * 3))) / 100);
+                                } else {
+                                    pstat += (fItem.psmin + ((fItem.psmax - fItem.psmin) * ((item.level - 1) + (item.ascension * 3)) / 150)) / 100;
+                                };
                             } else {
-                                pstat += (fItem.psmin + ((fItem.psmax - fItem.psmin)*((item.level-1)+(item.ascension*3))/150))/100;
+                                pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin)) / 150) * ((item.level - 1) + (item.ascension * 3)));
                             };
-                        } else {
-                            pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin))/150)*((item.level-1)+(item.ascension*3)));
-                        };
-                        // Secondary Stat
-                        if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(fItem.secondaryStat)) {
-                            if (fItem.secondaryStat.endsWith("%")) {
-                                sstat += (Math.floor(parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))/10)*item.ascension)/100);
+                            // Secondary Stat
+                            if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(fItem.secondaryStat)) {
+                                if (fItem.secondaryStat.endsWith("%")) {
+                                    sstat += (Math.floor(parseInt(fItem.ssmin.slice(0, -1)) + ((parseInt(fItem.ssmax.slice(0, -1)) - parseInt(fItem.ssmin.slice(0, -1))) / 10) * item.ascension) / 100);
+                                } else {
+                                    sstat += (parseInt(fItem.ssmin.slice(0, -1)) + ((parseInt(fItem.ssmax.slice(0, -1)) - parseInt(fItem.ssmin.slice(0, -1))) * item.ascension / 10)) / 100;
+                                };
                             } else {
-                                sstat += (parseInt(fItem.ssmin.slice(0,-1)) + ((parseInt(fItem.ssmax.slice(0,-1)) - parseInt(fItem.ssmin.slice(0,-1)))*item.ascension/10))/100;
+                                sstat += Math.floor(parseInt(fItem.ssmin) + ((parseInt(fItem.ssmax) - parseInt(fItem.ssmin)) / 10) * item.ascension);
                             };
-                        } else {
-                            sstat += Math.floor(parseInt(fItem.ssmin) + ((parseInt(fItem.ssmax) - parseInt(fItem.ssmin))/10)*item.ascension);
-                        };
 
-                        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension*10)+20) + " ➜ " + getAscension(item.ascension)}\n\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: ${sstat < 1 ? Math.round(sstat*100)+"%" : sstat} ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}`);
-                        return interaction.reply({ embeds: [Embed] });
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: ${sstat < 1 ? Math.round(sstat * 100) + "%" : sstat} ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}`);
+                            Embeds.push(Embed);
+                        } else {
+                            const set = items.filter((e) => e.setname === fItem.setname);
+
+                            let pstat = 0;
+                            pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin)) / 150) * ((item.level - 1) + (item.ascension * 3)));
+
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**${fItem.setname}**: ${set[0].emoji + set[1].emoji + set[2].emoji + set[3].emoji}\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
+                            Embeds.push(Embed);
+                        };
                     } else {
-                        const set = items.filter((e) => e.setname === fItem.setname);
+                        const fItem = searchItem(choice, interaction, true, { returnSet: true });
+                        if (!fItem?.name) continue;
 
-                        let pstat = 0;
-                        pstat += Math.floor(parseInt(fItem.psmin) + ((parseInt(fItem.psmax) - parseInt(fItem.psmin))/150)*((item.level-1)+(item.ascension*3)));
+                        const Embed = new EmbedBuilder()
+                            .setColor(0xbbffff)
+                            .setTitle(fItem.name)
+                            .setThumbnail(fItem.image)
+                            .setFooter({ text: `ID: #${fItem.id}` });
 
-                        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension*10)+20) + " ➜ " + getAscension(item.ascension)}\n\n**${fItem.setname}**: ${set[0].emoji+set[1].emoji+set[2].emoji+set[3].emoji}\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
-                        return interaction.reply({ embeds: [Embed] });
+                        if (fItem.category === "weapon") {
+                            const stats = await query(`SELECT COUNT(*) AS count FROM weapons WHERE itemid = ${fItem.id}`);
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**Crafts in existence**: ${stats[0].count}\n\n**Primary Stat**: \`${fItem.psmin}-${fItem.psmax}\` ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: \`${fItem.ssmin.endsWith("%") ? fItem.ssmin.slice(0, -1) : fItem.ssmin}-${fItem.ssmax}\` ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}\n\n>>> ${fItem.flair}`);
+                            Embeds.push(Embed);
+                        } else if (fItem.category === "armor") {
+                            const stats = await query(`SELECT COUNT(*) AS count FROM weapons WHERE itemid = ${fItem.id}`);
+                            const set = items.filter((e) => e.setname === fItem.setname);
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**${fItem.setname}**: ${set[0].emoji + set[1].emoji + set[2].emoji + set[3].emoji}\n**Crafts in existence**: ${stats[0].count}\n\n**Primary Stat**: \`${fItem.psmin}-${fItem.psmax}\` ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
+                            Embeds.push(Embed);
+                        } else if (fItem.category === "fish") {
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}`);
+                            Embeds.push(Embed);
+                        } else if (fItem.type === "chest") {
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**Drops**: ${fItem.drops}\n\n**Drop Rates**:\n${Object.entries(fItem.droprates).map((e) => `${gradeBar[e[0]]} ➜ **${e[1]}**% per drop / **${Math.round((1 - Math.pow((100 - e[1]) / 100, fItem.drops)) * 10000) / 100}**% per chest`).join("\n")}`);
+                            Embeds.push(Embed);
+                        } else if (fItem.category === "loot") {
+                            Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n\n${fItem.desc}`);
+                            Embeds.push(Embed);
+                        };
                     };
                 };
-                
-                const fItem = searchItem(choice, interaction);
-                if (!fItem?.name) return;
-                
-                const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle(fItem.name)
-                .setThumbnail(fItem.image)
-                .setFooter({text: `ID: #${fItem.id}`})
-            
-                if (fItem.category === "weapon") {
-                    const stats = await query(`SELECT COUNT(*) AS count FROM weapons WHERE itemid = ${fItem.id}`);
-                    Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**Crafts in existence**: ${stats[0].count}\n\n**Primary Stat**: \`${fItem.psmin}-${fItem.psmax}\` ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: \`${fItem.ssmin.endsWith("%") ? fItem.ssmin.slice(0,-1) : fItem.ssmin}-${fItem.ssmax}\` ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}\n\n>>> ${fItem.flair}`);
-                    return interaction.reply({ embeds: [Embed] });
-                };
-                if (fItem.category === "armor") {
-                    const stats = await query(`SELECT COUNT(*) AS count FROM weapons WHERE itemid = ${fItem.id}`);
-                    const set = items.filter((e) => e.setname === fItem.setname);
-                    Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**${fItem.setname}**: ${set[0].emoji+set[1].emoji+set[2].emoji+set[3].emoji}\n**Crafts in existence**: ${stats[0].count}\n\n**Primary Stat**: \`${fItem.psmin}-${fItem.psmax}\` ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
-                    return interaction.reply({ embeds: [Embed] });
-                };
-                if (fItem.category === "fish") {
-                    Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}`);
-                    return interaction.reply({ embeds: [Embed] });
-                };
-                if (fItem.type === "chest") {
-                    Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**Drops**: ${fItem.drops}\n\n**Drop Rates**:\n${Object.entries(fItem.droprates).map((e) => `${gradeBar[e[0]]} ➜ **${e[1]}**% per drop / **${Math.round((1 - Math.pow((100-e[1])/100, fItem.drops))*10000)/100}**% per chest`).join("\n")}`);
-                    return interaction.reply({ embeds: [Embed] });
-                };
-                if (fItem.category === "loot") {
-                    Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n\n${fItem.desc}`);
-                    return interaction.reply({ embeds: [Embed] });
-                };
-                return interaction.reply("Seems there has been an error. Please report it to our staff!");
+                if (Embeds.length === 0) return interaction.reply({ content: `No matches found for the ${choices.split(",").length === 1 ? "item" : "items"} ${choices.split(",").filter((s) => s).map((s) => "`" + s.trim() + "`").join(", ")}`, ephemeral: true });
+
+                let currPage = 1;
+                if (Embeds.length === 1) return interaction.reply({ embeds: [Embeds[currPage - 1]] });
+                return interaction.reply({ embeds: [Embeds[currPage - 1]], components: [PageRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                    collector.on('collect', async r => {
+                        if (r.customId === "prev") {
+                            if (currPage > 1) currPage--;
+                            else currPage = Embeds.length;
+                        } else {
+                            if (currPage < Embeds.length) currPage++;
+                            else currPage = 1;
+                        };
+
+                        interaction.editReply({ embeds: [Embeds[currPage - 1]] });
+                    });
+                });
+
             });
         };
 
@@ -183,9 +200,9 @@ module.exports = {
             else if (type === "armor") itemsR = items.filter((e) => e.category === "armor");
             else if (type === "loot") itemsR = items.filter((e) => e.category === "loot");
             else itemsR = items.filter((e) => e.type === type);
-            
+
             // Sort elements
-            itemsR.sort((a,b) => b.gradeValue - a.gradeValue);
+            itemsR.sort((a, b) => b.gradeValue - a.gradeValue);
 
             // Setup Pages
             const elementsPerPage = 10;
@@ -202,17 +219,16 @@ module.exports = {
             let desc = itemsToShow(showItems);
 
             const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setAuthor({name: `List of Items (${type})`})
-            .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-            .setDescription("Use `/item info <name or ID>` for more information" + desc)
-            .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+                .setColor(0xbbffff)
+                .setAuthor({ name: `List of Items (${type})` })
+                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                .setDescription("Use `/item info <name or ID>` for more information" + desc)
+                .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
             return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
-
-                prev.on('collect', async r => {
+                collector.on('collect', async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -224,10 +240,10 @@ module.exports = {
                     showItems = showPage(currPage, itemsR, elementsPerPage);
                     desc = itemsToShow(showItems);
 
-                    Embed.setDescription("Use `/item info <name or ID>` for more information" + desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+                    Embed.setDescription("Use `/item info <name or ID>` for more information" + desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
-                
+
             });
         };
 
@@ -240,11 +256,11 @@ module.exports = {
                 const item = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
                 if (!item[0]) return interaction.reply(`Couldn't find item with id \`${itemChoice}\``);
                 const fItem = items[item[0].itemid];
-                
-                let stats = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
-                stats = {items: JSON.parse(stats[0].items)};
 
-                const limit = (item[0].ascension*10) + 20;
+                let stats = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
+                stats = { items: JSON.parse(stats[0].items) };
+
+                const limit = (item[0].ascension * 10) + 20;
                 let currLevel = getItemLevel(item[0].level);
                 if (currLevel === 170) return interaction.reply(`You have reached the maximum level.`);
 
@@ -254,9 +270,9 @@ module.exports = {
                     const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
                     const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade);
                     const awakenItem = items[683];
-                    const ascMatsNeeded = (item[0].ascension+4) * 12;
-                    const craftMatsNeeded = (item[0].ascension+4) * 8;
-                    const awakenItemNeeded = currLevel < 120 ? 0 : (item[0].ascension-9) * 16;
+                    const ascMatsNeeded = (item[0].ascension + 4) * 12;
+                    const craftMatsNeeded = (item[0].ascension + 4) * 8;
+                    const awakenItemNeeded = currLevel < 120 ? 0 : (item[0].ascension - 9) * 16;
 
                     // Check if the user has the required mats
                     if ((stats.items[ascItem.id] || 0) < ascMatsNeeded) return interaction.reply(`You don't have enough of ${ascItem.emoji} **__${ascItem.name}__** (**${stats.items[ascItem.id] || 0}**/${ascMatsNeeded})`);
@@ -264,68 +280,68 @@ module.exports = {
                     if ((stats.items[awakenItem.id] || 0) < awakenItemNeeded) return interaction.reply(`You don't have enough of ${awakenItem.emoji} **__${awakenItem.name}__** (**${stats.items[awakenItem.id] || 0}**/${awakenItemNeeded})`);
 
                     const Embed = new EmbedBuilder()
-                    .setTitle(fItem.name)
-                    .setColor(0xbbffff)
-                    .setDescription(`Do you want to ascend **__${fItem.name}__** to ${getAscension(item[0].ascension+1)} for ${awakenItemNeeded ? `${awakenItem.emoji}x${awakenItemNeeded}, ` : ""}${craftItem.emoji}x${craftMatsNeeded} and ${ascItem.emoji}x${ascMatsNeeded}?`)
-                    .setThumbnail(fItem.image)
+                        .setTitle(fItem.name)
+                        .setColor(0xbbffff)
+                        .setDescription(`Do you want to ascend **__${fItem.name}__** to ${getAscension(item[0].ascension + 1)} for ${awakenItemNeeded ? `${awakenItem.emoji}x${awakenItemNeeded}, ` : ""}${craftItem.emoji}x${craftMatsNeeded} and ${ascItem.emoji}x${ascMatsNeeded}?`)
+                        .setThumbnail(fItem.image);
                     interaction.reply({ embeds: [Embed], components: [OfferRow], fetchReply: true }).then(msg => {
-                        
-                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
-                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
-        
+
+                        const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                        const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
+
                         confirm.on('collect', async () => {
                             confirm.stop(), cancel.stop();
                             stats = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
-                            stats = {items: JSON.parse(stats[0].items)};
-            
+                            stats = { items: JSON.parse(stats[0].items) };
+
                             // Check if the user has the required mats
                             if ((stats.items[ascItem.id] || 0) < ascMatsNeeded) return interaction.channel.send(`You don't have enough of ${ascItem.emoji} **__${ascItem.name}__** (**${stats.items[ascItem.id] || 0}**/${ascMatsNeeded})`);
                             if ((stats.items[craftItem.id] || 0) < craftMatsNeeded) return interaction.channel.send(`You don't have enough of ${craftItem.emoji} **__${craftItem.name}__** (**${stats.items[craftItem.id] || 0}**/${craftMatsNeeded})`);
                             if ((stats.items[awakenItem.id] || 0) < awakenItemNeeded) return interaction.channel.send(`You don't have enough of ${awakenItem.emoji} **__${awakenItem.name}__** (**${stats.items[awakenItem.id] || 0}**/${awakenItemNeeded})`);
 
                             const item = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
-                            if (currLevel !== ((item[0].ascension*10) + 20)) return interaction.channel.send(`You need to level up your weapon first.`);
+                            if (currLevel !== ((item[0].ascension * 10) + 20)) return interaction.channel.send(`You need to level up your weapon first.`);
 
                             stats.items[ascItem.id] -= ascMatsNeeded;
                             stats.items[craftItem.id] -= craftMatsNeeded;
                             if (awakenItem.id in stats.items) stats.items[awakenItem.id] -= awakenItemNeeded;
 
                             // Evolve Random Substat
-                            if (fItem.category === "armor") item[0].substats[Object.keys(item[0].substats).sort(() => 0.5-Math.random())[0]]++;
+                            if (fItem.category === "armor") item[0].substats[Object.keys(item[0].substats).sort(() => 0.5 - Math.random())[0]]++;
 
                             await query(`UPDATE users SET items = '${JSON.stringify(stats.items)}' WHERE id = ${interaction.user.id}`);
                             await query(`UPDATE weapons SET ascension = ascension + 1${fItem.category === "armor" ? `, substats = '${JSON.stringify(item[0].substats)}'` : ""} WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
 
                             interaction.channel.send(`Successfully ascended ${fItem.emoji} **__${fItem.name}__**!`);
                         });
-                        
+
                         cancel.on('collect', () => {
                             confirm.stop(), cancel.stop();
                             interaction.channel.send("Action cancelled");
                         });
-                        
+
                     });
-                    
+
                 } else {
                     const matsToUse = {
                         "20": {
-                            "id": 50+(fItem.category === "armor" ? 1 : 0),
+                            "id": 50 + (fItem.category === "armor" ? 1 : 0),
                             "use": 0
                         },
                         "100": {
-                            "id": 52+(fItem.category === "armor" ? 1 : 0),
+                            "id": 52 + (fItem.category === "armor" ? 1 : 0),
                             "use": 0
                         },
                         "500": {
-                            "id": 54+(fItem.category === "armor" ? 1 : 0),
+                            "id": 54 + (fItem.category === "armor" ? 1 : 0),
                             "use": 0
                         },
                         "2500": {
-                            "id": 56+(fItem.category === "armor" ? 1 : 0),
+                            "id": 56 + (fItem.category === "armor" ? 1 : 0),
                             "use": 0
                         },
                     };
-                    
+
                     let xpSelected = totalXP(matsToUse);
 
                     if (flag === "max") {
@@ -338,7 +354,7 @@ module.exports = {
                             };
                         });
                     };
-                    
+
                     const rowComponents = [
                         new ButtonBuilder()
                             .setCustomId('20')
@@ -381,18 +397,18 @@ module.exports = {
                                 .setLabel('cancel')
                                 .setStyle('Danger'),
                         );
-                    
+
                     const Embed = new EmbedBuilder()
-                    .setTitle(fItem.name)
-                    .setColor(0xbbffff)
-                    .setDescription(`**Current Level**: **${currLevel}**/${limit} ➜ ${getAscension(item[0].ascension)}\n**XP selected**: ${xpSelected}\n**XP left**: ${currLevel+1 >= limit ? "" : `__${missingXP(parseInt(item[0].level) + xpSelected, currLevel+1)}__ for level ${currLevel+1}, `}__${missingXP(parseInt(item[0].level) + xpSelected, limit)}__ for level ${limit}`)
-                    .setThumbnail(fItem.image)
+                        .setTitle(fItem.name)
+                        .setColor(0xbbffff)
+                        .setDescription(`**Current Level**: **${currLevel}**/${limit} ➜ ${getAscension(item[0].ascension)}\n**XP selected**: ${xpSelected}\n**XP left**: ${currLevel + 1 >= limit ? "" : `__${missingXP(parseInt(item[0].level) + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(parseInt(item[0].level) + xpSelected, limit)}__ for level ${limit}`)
+                        .setThumbnail(fItem.image);
                     interaction.reply({ embeds: [Embed], components: [row, row2], fetchReply: true }).then(msg => {
-                        
-                        const addXP = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && ['20', '100', '500', '2500'].includes(r.customId), componentType: ComponentType.Button, time: 90000 });
-                        const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 90000 });
-                        const cancel = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 90000 });
-                        
+
+                        const addXP = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && ['20', '100', '500', '2500'].includes(r.customId), componentType: ComponentType.Button, time: 90000 });
+                        const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 90000 });
+                        const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 90000 });
+
                         addXP.on('collect', r => {
                             matsToUse[r.customId].use++;
                             xpSelected = totalXP(matsToUse);
@@ -404,19 +420,27 @@ module.exports = {
                             rowComponents[1].setDisabled((!(stats.items[matsToUse['100'].id] > 0 + matsToUse['100'].use)) || missingXP(parseInt(item[0].level) + xpSelected, limit) === 0);
                             rowComponents[2].setDisabled((!(stats.items[matsToUse['500'].id] > 0 + matsToUse['500'].use)) || missingXP(parseInt(item[0].level) + xpSelected, limit) === 0);
                             rowComponents[3].setDisabled((!(stats.items[matsToUse['2500'].id] > 0 + matsToUse['2500'].use)) || missingXP(parseInt(item[0].level) + xpSelected, limit) === 0);
-                            
+
                             const row = new ActionRowBuilder().addComponents(...rowComponents);
-                            
-                            Embed.setDescription(`**Current Level**: **${currLevel}**/${limit} ➜ ${getAscension(item[0].ascension)}\n**XP selected**: ${xpSelected}\n**XP left**: ${currLevel+1 >= limit ? "" : `__${missingXP(parseInt(item[0].level) + xpSelected, currLevel+1)}__ for level ${currLevel+1}, `}__${missingXP(parseInt(item[0].level) + xpSelected, limit)}__ for level ${limit}`)
+
+                            Embed.setDescription(`**Current Level**: **${currLevel}**/${limit} ➜ ${getAscension(item[0].ascension)}\n**XP selected**: ${xpSelected}\n**XP left**: ${currLevel + 1 >= limit ? "" : `__${missingXP(parseInt(item[0].level) + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(parseInt(item[0].level) + xpSelected, limit)}__ for level ${limit}`);
                             interaction.editReply({ embeds: [Embed], components: [row, OfferRow] });
                         });
 
                         confirm.on('collect', async () => {
                             addXP.stop(), confirm.stop(), cancel.stop();
                             stats = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
-                            stats = {items: JSON.parse(stats[0].items)};    
-                            
-                            if (stats.items[matsToUse['20'].id] < matsToUse['20'].use || stats.items[matsToUse['100'].id] < matsToUse['100'].use || stats.items[matsToUse['500'].id] < matsToUse['500'].use || stats.items[matsToUse['2500'].id] < matsToUse['2500'].use) return interaction.channel.send(`You don't have enough levelup materials.`)
+                            stats = { items: JSON.parse(stats[0].items) };
+
+                            if (stats.items[matsToUse['20'].id] < matsToUse['20'].use || stats.items[matsToUse['100'].id] < matsToUse['100'].use || stats.items[matsToUse['500'].id] < matsToUse['500'].use || stats.items[matsToUse['2500'].id] < matsToUse['2500'].use) return interaction.channel.send(`You don't have enough levelup materials.`);
+
+                            const { 0: item } = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                            if (!item) return interaction.channel.send(`Unexpected error (did you disassemble your item?)`);
+
+                            const limit = (item.ascension * 10) + 20;
+                            let newCurrLevel = getItemLevel(item.level);
+                            if (newCurrLevel === 170) return interaction.channel.send(`You have reached the maximum level.`);
+                            if (newCurrLevel >= limit) return interaction.channel.send(`You have reached the current level cap, please ascend your item first if possible.`);
 
                             stats.items[matsToUse['20'].id] -= matsToUse['20'].use;
                             stats.items[matsToUse['100'].id] -= matsToUse['100'].use;
@@ -429,93 +453,74 @@ module.exports = {
                             interaction.editReply({ components: [] });
                             interaction.channel.send(`Leveled ${fItem.emoji} __**${fItem.name}**__ up to level **${currLevel}**!`);
                         });
-                        
+
                         cancel.on('collect', () => {
                             addXP.stop(), confirm.stop(), cancel.stop();
                             interaction.editReply({ components: [] });
                         });
-                        
+
                     });
-                    
+
                 };
             });
         };
 
         // Item Equip
         if (subcommand === "equip") {
-            const charChoice = interaction.options.getString('character');
             const itemChoice = interaction.options.getString('item');
 
             db.serialize(async () => {
-                let stats = await query(`SELECT users.premium, characters.chars, characters.equipment FROM users JOIN characters ON users.id = characters.id WHERE users.id = ${interaction.user.id}`);
-                stats = {premium: stats[0].premium, chars: JSON.parse(stats[0].chars), equipment: JSON.parse(stats[0].equipment)};
-
-                // Search char
-                const char = search(charChoice, stats.chars, interaction);
-                if (!char.name) return;
-                if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
+                const { 0: stats } = await query(`SELECT premium, battlechar, equipment, shield_slot FROM users WHERE id = ${interaction.user.id}`);
+                stats.equipment = JSON.parse(stats.equipment);
 
                 // Search item
                 const item = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+
+                // Lria's Masks
+                if (["remove mask", "verdant mask", "phantasmal mask", "valkyrie mask"].includes(itemChoice.toLowerCase())) {
+                    if (itemChoice.toLowerCase() === "remove mask") delete stats.equipment["mask"];
+                    else stats.equipment["mask"] = itemChoice.toLowerCase().split(" ")[0];
+                    await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
+
+                    return interaction.reply(itemChoice.toLowerCase() === "remove mask" ? "Unequipped **Lria**'s mask" : `Equipped **Lria** <a:EXTRA:1138530846144462968> with the **__${itemChoice.toLowerCase()}__**`);
+                };
 
                 if (item[0]) {
                     const fItem = items[item[0].itemid];
 
                     let type = fItem.category;
                     if (type === "armor" || fItem.type === "shield") type = fItem.type;
-                    if (type === "shield" && stats.premium < 4) type = "weapon";
-
-                    // Unequip if already equipped on another char
-                    if (item[0].character in stats.equipment) delete stats.equipment[item[0].character][type];
+                    if (type === "shield" && (stats.premium < 4 && stats.shield_slot === 0)) type = "weapon";
 
                     // Assign weapon
-                    if (!stats.equipment[char.id]) stats.equipment[char.id] = {};
-                    stats.equipment[char.id][type] = `${itemChoice}:${interaction.user.id}`;
-                    await query(`UPDATE characters SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
-                    await query(`UPDATE weapons SET character = ${char.id} WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                    stats.equipment[type] = `${itemChoice}:${interaction.user.id}`;
+                    await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
 
-                    return interaction.reply(`Equipped **${char.name}** with ${fItem.emoji} **__${fItem.name}__**`);
+                    return interaction.reply(`Equipped **${characters[stats.battlechar].name}** with ${fItem.emoji} **__${fItem.name}__**`);
                 };
 
                 const fItem = searchItem(itemChoice, interaction);
                 if (!fItem?.name) return;
-                
-                return interaction.reply(`Please use the weapons id instead of name. You can find the id with \`/items\``)
-            });
 
+                return interaction.reply(`Please use the weapons id instead of name. You can find the id with \`/items\``);
+            });
         };
 
         // Item Unequip
         if (subcommand === "unequip") {
-            const itemChoice = interaction.options.getString('item');
+            const typeChoice = interaction.options.getString('type');
 
             db.serialize(async () => {
-                let stats = await query(`SELECT users.premium, characters.equipment FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                stats = {premium: stats[0].premium, equipment: JSON.parse(stats[0].equipment)};
+                const { 0: stats } = await query(`SELECT premium, battlechar, equipment FROM users WHERE id = ${interaction.user.id}`);
+                stats.equipment = JSON.parse(stats.equipment);
 
-                // Search item
-                const { 0: item } = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                if (typeChoice === "all") stats.equipment = {};
+                else delete stats.equipment[typeChoice];
 
-                if (!item) return interaction.reply(`You don't have an item with the code \`${itemChoice}\``);
+                await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
 
-                const fItem = items[item.itemid];
-
-                let type = fItem.category;
-                if (type === "armor" || fItem.type === "shield") type = fItem.type;
-                if (type === "shield" && stats.premium < 4) type = "weapon";
-
-                // Unequip if already equipped on another char
-                if (item.character && item.character in stats.equipment) delete stats.equipment[item.character][type];
-                else return interaction.reply(`Your item with the code \`${itemChoice}\` is not equipped.`);
-
-                // Assign weapon
-                await query(`UPDATE characters SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
-                await query(`UPDATE weapons SET character = NULL WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
-
-                return interaction.reply(`Unequipped ${fItem.emoji} **__${fItem.name}__** from **${characters[item.character].name}**`);
-
+                return interaction.reply(`Unequipped ${typeChoice === "all" ? "items" : "item"} from **${characters[stats.battlechar].name}**`);
             });
-
         };
 
         // Item Rename
@@ -530,7 +535,7 @@ module.exports = {
             db.serialize(async () => {
 
                 // Check if premium
-                const { 0: stats } = await query(`SELECT premium, itemlock FROM users WHERE id = ${interaction.user.id}`);
+                const { 0: stats } = await query(`SELECT premium, itemlock, equipment FROM users WHERE id = ${interaction.user.id}`);
                 if (stats.premium < 3) return interaction.reply(`This is a </premium:1011293280702578691> feature (T3+). If you enjoy playing with Camelot we'd really appreciate your support <:RaphiSmile:928370490270183485>`);
 
                 // Check if item exists
@@ -546,8 +551,7 @@ module.exports = {
 
                 // Change item code on equipped characters
                 if (existing.character !== null) {
-                    const { 0: inv } = await query(`SELECT equipment FROM characters WHERE id = ${interaction.user.id}`);
-                    inv.equipment = JSON.parse(inv.equipment);
+                    stats.equipment = JSON.parse(stats.equipment);
 
                     const fItem = items[existing.itemid];
                     let type = fItem.category;
@@ -555,10 +559,10 @@ module.exports = {
                     if (type === "shield" && stats.premium < 4) type = "weapon";
 
                     // Unequip if already equipped on another char
-                    if (!(existing.character in inv.equipment)) inv.equipment[existing.character] = {};
-                    if (inv.equipment[existing.character][type] === `${before}:${interaction.user.id}`) inv.equipment[existing.character][type] = `${after}:${interaction.user.id}`;
+                    // if (!(existing.character in inv.equipment)) inv.equipment[existing.character] = {};
+                    if (stats.equipment[type] === `${before}:${interaction.user.id}`) stats.equipment[type] = `${after}:${interaction.user.id}`;
 
-                    await query(`UPDATE characters SET equipment = '${JSON.stringify(inv.equipment)}' WHERE id = ${interaction.user.id}`);
+                    await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
                 };
 
                 // Change item in lock
@@ -567,21 +571,20 @@ module.exports = {
                     stats.itemlock[stats.itemlock.indexOf(before)] = after;
                     await query(`UPDATE users SET itemlock = '${JSON.stringify(stats.itemlock)}' WHERE id = ${interaction.user.id}`);
                 };
-                
+
                 return interaction.reply(`Changed code of ${items[existing.itemid].emoji} ${items[existing.itemid].name} from \`${before}\` to \`${after}\``);
             });
-
         };
 
         // Item Lock/Unlock
         if (subcommand === "lock" || subcommand === "unlock") {
-            const choice = [...new Set((interaction.options.getString('items') || "").split(",").map((e)=> e.trim()))];
+            const choice = [...new Set((interaction.options.getString('items') || "").split(",").map((e) => e.trim()))];
             if (Math.max(...choice.map((e) => e.length)) > 5) return interaction.reply(`Item codes can't be longer than 5 characters`);
 
             db.serialize(async () => {
                 const { 0: stats } = await query(`SELECT itemlock FROM users WHERE id = ${interaction.user.id}`);
                 stats.itemlock = JSON.parse(stats.itemlock);
-                
+
                 if (!choice[0]) return interaction.reply(`Please select at least 1 item. You can use a comma (,) to (un)lock multiple items at once.${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`);
 
                 if (subcommand === "lock") stats.itemlock = [...new Set([...stats.itemlock, ...choice])];

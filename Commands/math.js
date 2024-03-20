@@ -3,13 +3,13 @@ const math = require('mathjs');
 const { achievements } = require("../Modules/achievements.js");
 
 module.exports = {
-	name: 'math',
-	description: 'see your level',
-	execute(interaction) {
+    name: 'math',
+    description: 'see your level',
+    execute(interaction) {
 
         let resp;
         const calculation = interaction.options.getString('calculation');
-        const ephemeral = interaction.options.getString('ephemeral') || "false";
+        const ephemeral = interaction.options.getString('ephemeral') || "true";
 
         try {
             resp = math.evaluate(calculation);
@@ -18,9 +18,9 @@ module.exports = {
         };
 
         const Embed = new EmbedBuilder()
-        .setTitle('Camelot Calculator')
-        .setColor(0xbbffff)
-        .addFields({name: `${calculation} =`, value: `\`\`\`js\n${resp}\`\`\``})
+            .setTitle('Camelot Calculator')
+            .setColor(0xbbffff)
+            .addFields({ name: `${calculation} =`, value: `\`\`\`js\n${resp}\`\`\`` });
         interaction.reply({ embeds: [Embed], ephemeral: ephemeral === "true" });
 
         // Achievements

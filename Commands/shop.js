@@ -8,7 +8,7 @@ const legendaryFiltered = items.filter((e) => e.obtain.includes("chest") && e.gr
 
 function getHash(hash) {
     const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
-    for (let i=0; i < key.length; i++) {
+    for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
         hash |= 0;
     }
@@ -35,71 +35,73 @@ const row = new ActionRowBuilder()
 
 module.exports = {
     name: 'shop',
-	description: 'Shop',
-	execute(interaction) {
+    description: 'Shop',
+    execute(interaction) {
 
         // Todays Offers
         const todaysOffers = [...getOffers(genesisFiltered, 1), ...getOffers(mythicalFiltered, 3), ...getOffers(legendaryFiltered, 5)];
         const today = new Date();
-        const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate()+1, 0, 0, 0)
+        const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
         const diff = tomorrow - today;
 
         let currentPage = parseInt(interaction.options.getString('option') || 0);
-        
+
         db.serialize(async () => {
             const { 0: stats } = await query(`SELECT coins, gems, genesispity, items FROM users WHERE id = ${interaction.user.id}`);
             stats.items = JSON.parse(stats.items);
 
             const pages = [
                 new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle("Character Shop")
-                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setDescription("Welcome to the character shop to buy character packs!\nUse `/buy character <item>` to buy a pack.")
-                .addFields(
-                    {name: "Character Pack - 300<:coins:872926669055356939>", value: "Get a random character"},
-                    {name: "Waifu Pack - 300<:coins:872926669055356939>", value: "Get a random waifu"},
-                    {name: "Husbando Pack - 300<:coins:872926669055356939>", value: "Get a random husbando"},
-                    {name: "Character Bundle - 800<:coins:872926669055356939>", value: "Get 3 characters for a discount"},
-                    {name: "Rare Pack - 500<:coins:872926669055356939>", value: "Get at least a <:CTier:869316602858991657>-Tier character"},
-                    {name: "Morpheus Blessing - 2000<:coins:872926669055356939>", value: "Get a guaranteed new character\n(_<:SSTier:869316489931546644>-Tier are excluded from this pack_)"},
-                ),
+                    .setColor(0xbbffff)
+                    .setTitle("Character Shop")
+                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                    .setDescription("Welcome to the character shop to buy character packs!\nUse `/buy character <item>` to buy a pack.")
+                    .addFields(
+                        { name: "Character Pack - 300<:coins:872926669055356939>", value: "Get a random character" },
+                        { name: "Waifu Pack - 300<:coins:872926669055356939>", value: "Get a random waifu" },
+                        { name: "Husbando Pack - 300<:coins:872926669055356939>", value: "Get a random husbando" },
+                        { name: "Character Bundle - 800<:coins:872926669055356939>", value: "Get 3 characters for a discount" },
+                        { name: "Rare Pack - 500<:coins:872926669055356939>", value: "Get at least a <:CTier:869316602858991657>-Tier character" },
+                        { name: "Morpheus Blessing - 2000<:coins:872926669055356939>", value: "Get a guaranteed new character\n(_<:SSTier:869316489931546644>-Tier are excluded from this pack_)" },
+                    ),
                 new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle("Chest Shop")
-                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setDescription("Welcome to the chest shop!\nChests contain items such as weapons and armor.\nUse `/buy chest <item>` to buy a chest, and `/open` to open one.\nYou can view drop rates using `/item info`.\n\n<:common_chest:1069067835193688144> `Common Chest    ➜   5`<:genesis_gems:1034179687720681492>\n<:rare_chest:1069286571876040744> `Rare Chest      ➜  20`<:genesis_gems:1034179687720681492>\n<:sublime_chest:1069287046818050158> `Sublime Chest   ➜  40`<:genesis_gems:1034179687720681492>\n<:glorious_chest:1069076067081539726> `Glorious Chest  ➜  80`<:genesis_gems:1034179687720681492>\n<:luxurious_chest:1069300112364404817> `Luxurious Chest ➜ 120`<:genesis_gems:1034179687720681492>\n<:royal_chest:1069301128711376976> `Royal Chest     ➜ 160`<:genesis_gems:1034179687720681492>\n<:deluxe_chest:1069301259603026061> `Deluxe Chest    ➜ 300`<:genesis_gems:1034179687720681492>\n\n<:genesis1:1041725784546619502><:genesis2:1041725782176825485><:genesis3:1041725778611675237><:genesis4:1041725780218093629>\nPity: " + `**${stats.genesispity}**/24 <:deluxe_chest:1069301259603026061>`),
+                    .setColor(0xbbffff)
+                    .setTitle("Chest Shop")
+                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                    .setDescription("Welcome to the chest shop!\nChests contain items such as weapons and armor.\nUse `/buy chest <item>` to buy a chest, and `/open` to open one.\nYou can view drop rates using `/item info`.\n\n<:common_chest:1069067835193688144> `Common Chest    ➜   5`<:genesis_gems:1034179687720681492>\n<:rare_chest:1069286571876040744> `Rare Chest      ➜  20`<:genesis_gems:1034179687720681492>\n<:sublime_chest:1069287046818050158> `Sublime Chest   ➜  40`<:genesis_gems:1034179687720681492>\n<:glorious_chest:1069076067081539726> `Glorious Chest  ➜  80`<:genesis_gems:1034179687720681492>\n<:luxurious_chest:1069300112364404817> `Luxurious Chest ➜ 120`<:genesis_gems:1034179687720681492>\n<:royal_chest:1069301128711376976> `Royal Chest     ➜ 160`<:genesis_gems:1034179687720681492>\n<:deluxe_chest:1069301259603026061> `Deluxe Chest    ➜ 300`<:genesis_gems:1034179687720681492>\n\n<:genesis1:1041725784546619502><:genesis2:1041725782176825485><:genesis3:1041725778611675237><:genesis4:1041725780218093629>\nPity: " + `**${stats.genesispity}**/24 <:deluxe_chest:1069301259603026061>`),
                 new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle("Exchange Shop")
-                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                // .setDescription(`Welcome to the exchange shop! Opening chests will give you exchange points <:exchange_points:1078750240246607984>, which can be redeemed here.\nUse \`/buy exchange <item>\` to buy.\n\n**Time remaining**: ${Math.floor(diff/(60*60*1000)) ? Math.floor(diff/(60*60*1000)) + "h" : ""} ${Math.floor((diff%(60*60*1000))/(60*1000)) ? Math.floor((diff%(60*60*1000))/(60*1000)) + "min" : ""} ${Math.floor((diff%(60*1000))/(1000)) ? Math.floor((diff%(60*1000))/(1000)) + "s" : ""}\n\n${todaysOffers[0].gradeEmote}\n${todaysOffers[0].bar}${todaysOffers[0].emoji} | ${todaysOffers[0].name} ➜ 6 <:divine_exchange_points:1086987912438087691>\n\n${todaysOffers[1].gradeEmote}\n${[1,2,3].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 40 <:mythical_exchange_points:1078804861040210051>`).join("\n")}\n\n${todaysOffers[4].gradeEmote}\n${[4,5,6,7,8].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 50 <:legendary_exchang_points:1078805819820347392>`).join("\n")}`),
-                .setDescription(`Welcome to the exchange shop! Opening chests will give you exchange points <:exchange_points:1078750240246607984>, which can be redeemed here.\nUse \`/buy exchange <item>\` to buy.\n\n**Time remaining**: ${Math.floor(diff/(60*60*1000)) ? Math.floor(diff/(60*60*1000)) + "h" : ""} ${Math.floor((diff%(60*60*1000))/(60*1000)) ? Math.floor((diff%(60*60*1000))/(60*1000)) + "min" : ""} ${Math.floor((diff%(60*1000))/(1000)) ? Math.floor((diff%(60*1000))/(1000)) + "s" : ""}\n\n${todaysOffers[1].gradeEmote}\n${[1,2,3].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 40 <:mythical_exchange_points:1078804861040210051>`).join("\n")}\n\n${todaysOffers[4].gradeEmote}\n${[4,5,6,7,8].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 50 <:legendary_exchang_points:1078805819820347392>`).join("\n")}`),
+                    .setColor(0xbbffff)
+                    .setTitle("Exchange Shop")
+                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                    // .setDescription(`Welcome to the exchange shop! Opening chests will give you exchange points <:exchange_points:1078750240246607984>, which can be redeemed here.\nUse \`/buy exchange <item>\` to buy.\n\n**Time remaining**: ${Math.floor(diff/(60*60*1000)) ? Math.floor(diff/(60*60*1000)) + "h" : ""} ${Math.floor((diff%(60*60*1000))/(60*1000)) ? Math.floor((diff%(60*60*1000))/(60*1000)) + "min" : ""} ${Math.floor((diff%(60*1000))/(1000)) ? Math.floor((diff%(60*1000))/(1000)) + "s" : ""}\n\n${todaysOffers[0].gradeEmote}\n${todaysOffers[0].bar}${todaysOffers[0].emoji} | ${todaysOffers[0].name} ➜ 6 <:divine_exchange_points:1086987912438087691>\n\n${todaysOffers[1].gradeEmote}\n${[1,2,3].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 40 <:mythical_exchange_points:1078804861040210051>`).join("\n")}\n\n${todaysOffers[4].gradeEmote}\n${[4,5,6,7,8].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 50 <:legendary_exchang_points:1078805819820347392>`).join("\n")}`),
+                    .setDescription(`Welcome to the exchange shop! Opening chests will give you exchange points <:exchange_points:1078750240246607984>, which can be redeemed here.\nUse \`/buy exchange <item>\` to buy.\n\n**Time remaining**: ${Math.floor(diff / (60 * 60 * 1000)) ? Math.floor(diff / (60 * 60 * 1000)) + "h" : ""} ${Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000)) ? Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000)) + "min" : ""} ${Math.floor((diff % (60 * 1000)) / (1000)) ? Math.floor((diff % (60 * 1000)) / (1000)) + "s" : ""}\n\n${todaysOffers[1].gradeEmote}\n${[1, 2, 3].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 40 <:mythical_exchange_points:1078804861040210051>`).join("\n")}\n\n${todaysOffers[4].gradeEmote}\n${[4, 5, 6, 7, 8].map((e) => `${todaysOffers[e].bar}${todaysOffers[e].emoji} | ${todaysOffers[e].name} ➜ 50 <:legendary_exchang_points:1078805819820347392>`).join("\n")}`),
                 new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle("Premium Shop")
-                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setDescription("Welcome to the premium shop to buy gems <:FuminoHeart:928369288014884935>\nGems are used all over the bot as a premium currency to speed up your progress.\n\n" +
-                                // "☀️ **Summer Sale**: Get **30%** more gems during the summer event!\n" +
-                                "`  $3 ➜    160`<:genesis_gems:1034179687720681492>`    +60 first time bonus!`\n" +
-                                "`  $5 ➜    300`<:genesis_gems:1034179687720681492>`   +100 first time bonus!`\n" +
-                                "` $10 ➜    680`<:genesis_gems:1034179687720681492>`   +160 first time bonus!`\n" +
-                                "` $15 ➜  1,000`<:genesis_gems:1034179687720681492>`   +240 first time bonus!`\n" +
-                                "` $25 ➜  1,760`<:genesis_gems:1034179687720681492>`   +360 first time bonus!`\n" +
-                                "` $50 ➜  3,680`<:genesis_gems:1034179687720681492>`   +720 first time bonus!`\n" +
-                                "`$100 ➜  7,420`<:genesis_gems:1034179687720681492>` +1,440 first time bonus!`\n" +
-                                "➜ [Here's the link to our shop!](https://donatebot.io/checkout/927257132624130119)"
-                ),
+                    .setColor(0xbbffff)
+                    .setTitle("Premium Shop")
+                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                    .setDescription("Welcome to the premium shop to buy gems <:FuminoHeart:928369288014884935>\nGems are used all over the bot as a premium currency to speed up your progress.\n\n" +
+                        // "☀️ **Summer Sale**: Get **30%** more gems during the summer event!\n" +
+                        "`  $3 ➜    160`<:genesis_gems:1034179687720681492>`    +60 first time bonus!`\n" +
+                        "`  $5 ➜    300`<:genesis_gems:1034179687720681492>`   +100 first time bonus!`\n" +
+                        "` $10 ➜    680`<:genesis_gems:1034179687720681492>`   +160 first time bonus!`\n" +
+                        "` $15 ➜  1,000`<:genesis_gems:1034179687720681492>`   +240 first time bonus!`\n" +
+                        "` $25 ➜  1,760`<:genesis_gems:1034179687720681492>`   +360 first time bonus!`\n" +
+                        "` $50 ➜  3,680`<:genesis_gems:1034179687720681492>`   +720 first time bonus!`\n" +
+                        "`$100 ➜  7,420`<:genesis_gems:1034179687720681492>` +1,440 first time bonus!`\n" +
+                        "➜ [Here's the link to our (old) shop!](https://donatebot.io/checkout/927257132624130119) (will shut down soon)\n" +
+                        "➜ [Here's our new shop!](https://rank.top/bot/camelot?page=shop) (with renewed first time bonuses <:TohruPoint:928370972132782090>)\n\n" +
+                        "*Additional first time bonuses include **Rimuru Tempest** for the $25 pack and **Luminous** <a:EXTRA:1138530846144462968> for the $100 pack <:LuminousPsssh:1071574041116295328>"
+                    ),
             ];
 
             // Set balances
-            pages[0].setFooter({text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
-            pages[1].setFooter({text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
-            pages[2].setFooter({text: `Balance: ${stats.items[677] || 0} mythical, ${stats.items[678] || 0} legendary exchange points`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
-            pages[3].setFooter({text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
+            pages[0].setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+            pages[1].setFooter({ text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+            pages[2].setFooter({ text: `Balance: ${stats.items[677] || 0} mythical, ${stats.items[678] || 0} legendary exchange points`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+            pages[3].setFooter({ text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
 
             return interaction.reply({ embeds: [pages[currentPage]], components: [row], fetchReply: true }).then((msg) => {
-                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
                 collector.on('collect', async r => {
                     if (currentPage == r.customId) return;
@@ -109,6 +111,35 @@ module.exports = {
             });
 
         });
-        
+
     },
 };
+
+
+// function getHash2(hash, date) {
+//     const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(date).split("/").reverse().join("-") + "camelot24";
+//     for (let i = 0; i < key.length; i++) {
+//         hash = ((hash << 5) - hash) + key.charCodeAt(i);
+//         hash |= 0;
+//     }
+//     return hash;
+// };
+
+// function getOffers2(offers, quantity, date) {
+//     const quests = new Set();
+//     let i = 0;
+//     while (quests.size < quantity && i < 100) {
+//         const hash = getHash2(i++, date);
+//         quests.add(Math.abs(hash) % offers.length);
+//     };
+//     return [...quests].map((e) => offers[e]);
+// };
+
+// for (let j = -60; j < 100; j++) {
+//     const date = new Date(Date.now() + (j * 24 * 60 * 60 * 1000));
+//     const shop = getOffers2(mythicalFiltered, 3, date);
+//     // console.log(shop.map((e) => e.name));
+//     if (shop.map((e) => e.id).includes(638)) {
+//         console.log(shop.map((e) => e.name), j);
+//     }
+// };

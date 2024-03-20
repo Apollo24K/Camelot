@@ -15,25 +15,25 @@ const row = new ActionRowBuilder()
             .setLabel('Anime')
             .setStyle('Secondary'),
         new ButtonBuilder()
-            .setCustomId('guess')
+            .setCustomId('ignore_defer-guess')
             .setLabel('Guess')
             .setStyle('Primary'),
     );
 
 function getModal(uid) {
     return new ModalBuilder()
-        .setCustomId('gtc_modal'+uid)
+        .setCustomId('gtc_modal' + uid)
         .setTitle('Guess the Character')
         .addComponents([
             new ActionRowBuilder().addComponents(
                 new TextInputBuilder()
-                .setCustomId('gtc_input')
-                .setLabel("What's the characters name?")
-                .setStyle('Short')
-                .setMinLength(1)
-                .setMaxLength(30)
-                .setPlaceholder('type name here...')
-                .setRequired(true),
+                    .setCustomId('gtc_input')
+                    .setLabel("What's the characters name?")
+                    .setStyle('Short')
+                    .setMinLength(1)
+                    .setMaxLength(30)
+                    .setPlaceholder('type name here...')
+                    .setRequired(true),
             ),
         ]);
 };
@@ -47,11 +47,11 @@ function gtcSearch(name) {
     let fArray = characters.filter((e) => e.name.toLowerCase()[0] === cArgs[0][0] || e.alias.some((a) => a.toLowerCase()[0] === cArgs[0][0]));
 
     let letter = 0;
-    for (let word=0; word < cArgs.length; word++) {
-        let { length:wl } = cArgs[word];
+    for (let word = 0; word < cArgs.length; word++) {
+        let { length: wl } = cArgs[word];
 
         while (wl--) {
-            fArray = fArray.filter((e) => e.name.toLowerCase().split(" ")[word] === undefined ? false :  e.name.toLowerCase().split(" ")[word][letter] === cArgs[word][letter] || e.alias.some((a) => a.toLowerCase()[letter] === cArgs[word][letter]));
+            fArray = fArray.filter((e) => e.name.toLowerCase().split(" ")[word] === undefined ? false : e.name.toLowerCase().split(" ")[word][letter] === cArgs[word][letter] || e.alias.some((a) => a.toLowerCase()[letter] === cArgs[word][letter]));
             letter++;
         };
 
@@ -70,65 +70,67 @@ function msgFilter(response, choice) {
 
 module.exports = {
     name: 'guess',
-	description: 'Guess the character game',
-	execute(interaction) {
+    description: 'Guess the character game',
+    execute(interaction) {
 
-        let difficulty = interaction.options.getString('difficulty') || "hard";
+        let difficulty = interaction.options.getString('difficulty') || "easy";
+        const private = interaction.options.getBoolean('private') || false;
 
         let charArray;
-        if (difficulty === "easy") charArray = charactersSS.concat(charactersS).concat(charactersA);
-        else if (difficulty === "normal") charArray = charactersSS.concat(charactersS).concat(charactersA).concat(charactersB);
-        else if (difficulty === "hard") charArray = charactersSS.concat(charactersS).concat(charactersA).concat(charactersB).concat(charactersC);
+        if (difficulty === "easy") charArray = charactersSS.concat(charactersS);
+        else if (difficulty === "normal") charArray = charactersSS.concat(charactersS).concat(charactersA);
+        else if (difficulty === "hard") charArray = charactersSS.concat(charactersS).concat(charactersA).concat(charactersB);
+        else if (difficulty === "extreme") charArray = charactersSS.concat(charactersS).concat(charactersA).concat(charactersB).concat(charactersC);
         else charArray = charactersSS.concat(charactersS).concat(charactersA).concat(charactersB).concat(charactersC).concat(charactersD);
 
         const pick = charArray[Math.floor(Math.random() * charArray.length)];
         const lettersRevealed = [];
         let points = 10;
-        let animeTitle = "click on `Anime` to reveal"
+        let animeTitle = "click on `Anime` to reveal";
         let scores = pick.name.replace(/[^ ]/g, "_").split(" ").map((e) => "\\" + e.split("").join(" \\")).join("ㅤ");
         let isPending = true;
-        
+
         db.serialize(async () => {
             await interaction.deferReply();
-            
+
             const Embed = new EmbedBuilder()
-            .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[pick.rarity])
-            .setImage(pick.image)
-            .setTitle("Guess the Character")
-            .setDescription(`**Anime**: ${animeTitle}\n${scores}`)
-            .setFooter({text: "Hints: letter (-2 points), anime (-6 points)"})
+                .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
+                .setImage(pick.image)
+                .setTitle("Guess the Character")
+                .setDescription(`**Anime**: ${animeTitle}\n${scores}`)
+                .setFooter({ text: "Hints: letter (-2 points), anime (-6 points)" });
             interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((emsg) => {
-                
-                const collector = emsg.createMessageComponentCollector({filter: (component) => component.customId === "guess", componentType: ComponentType.Button, time: 60000 });
-                const hintLetter = emsg.createMessageComponentCollector({filter: (component) => component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
-                const hintAnime = emsg.createMessageComponentCollector({filter: (component) => component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
+
+                const collector = emsg.createMessageComponentCollector({ filter: (component) => (private ? component.id === interaction.user.id : true) && component.customId === "ignore_defer-guess", componentType: ComponentType.Button, time: 60000 });
+                const hintLetter = emsg.createMessageComponentCollector({ filter: (component) => (private ? component.id === interaction.user.id : true) && component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
+                const hintAnime = emsg.createMessageComponentCollector({ filter: (component) => (private ? component.id === interaction.user.id : true) && component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
                 const uid = Math.random();
-                
+
                 collector.on('collect', async component => {
                     if (component.isButton() && isPending) {
                         await component.showModal(getModal(uid));
 
-                        interaction.awaitModalSubmit({ filter: (r) => r.customId === ('gtc_modal'+uid), time: 60000 }).then(async modalInteraction => {
+                        interaction.awaitModalSubmit({ filter: (r) => r.customId === ('gtc_modal' + uid), time: 60000 }).then(async modalInteraction => {
                             const response = modalInteraction.fields.getTextInputValue('gtc_input');
                             if (!msgFilter(response, pick.id)) {
                                 modalInteraction.reply(`Wrong guess by **${modalInteraction.user.username}**: ${response}`);
                             } else {
                                 isPending = false;
                                 collector.stop(), hintAnime.stop(), hintLetter.stop();
-                     
+
                                 var stats = await query(`SELECT lilies FROM users WHERE id = ${modalInteraction.user.id}`);
                                 if (!stats[0]) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
-                     
+
                                 const Embed = new EmbedBuilder()
-                                .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[pick.rarity])
-                                .setThumbnail(pick.image)
-                                .setTitle("You got it! 🎉")
-                                .setDescription(`**Name**: ${pick.name}\n**Anime**: ${pick.anime}\nYou've gained **${points}** <:lilium:974057059618291732>`)
-                                .setFooter({text: `${modalInteraction.user.tag}`, iconURL: modalInteraction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
+                                    .setThumbnail(pick.image)
+                                    .setTitle("You got it! 🎉")
+                                    .setDescription(`**Name**: ${pick.name}\n**Anime**: ${pick.anime}\nYou've gained **${points}** <:lilium:974057059618291732>`)
+                                    .setFooter({ text: `${modalInteraction.user.tag}`, iconURL: modalInteraction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                                 modalInteraction.reply({ embeds: [Embed] });
-                     
+
                                 await query(`UPDATE users SET lilies = lilies + ${points} WHERE id = ${modalInteraction.user.id}`);
-    
+
                                 // Daily Quests
                                 dailies[1].update(interaction, points, modalInteraction.user);
                             };
@@ -137,17 +139,17 @@ module.exports = {
                         });
                     };
                 });
-                
+
                 hintAnime.on('collect', () => {
-                    if (points < 6) return interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>")
+                    if (points < 6) return interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>");
                     points -= 6;
                     animeTitle = splitTitle(pick.anime);
                     Embed.setDescription(`**Anime**: ${animeTitle}\n${scores}`);
                     emsg.edit({ embeds: [Embed] });
                 });
-                
+
                 hintLetter.on('collect', () => {
-                    if (points < 2) return interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>")
+                    if (points < 2) return interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>");
                     points -= 2;
                     let reveal = Math.floor(Math.random() * pick.name.split(" ").join("").length);
                     let limit = 0;
@@ -157,24 +159,24 @@ module.exports = {
                     };
                     lettersRevealed.push(reveal);
                     let idx = 0;
-                    for (let i=0; i < scores.length; i++) {
+                    for (let i = 0; i < scores.length; i++) {
                         if ((scores[i] === "_" || pick.name.split(" ").join("").includes(scores[i])) && idx++ === reveal) {
-                            scores = scores.substring(0, i-1) + pick.name.split(" ").join("")[reveal] + scores.substring(i+1);
+                            scores = scores.substring(0, i - 1) + pick.name.split(" ").join("")[reveal] + scores.substring(i + 1);
                         };
                     };
                     Embed.setDescription(`**Anime**: ${animeTitle}\n${scores}`);
                     emsg.edit({ embeds: [Embed] });
                 });
-                 
+
                 collector.on('end', () => {
                     if (isPending) {
                         hintAnime.stop(), hintLetter.stop(), collector.stop();
-                 
+
                         const Embed = new EmbedBuilder()
-                        .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[pick.rarity])
-                        .setThumbnail(pick.image)
-                        .setTitle("Time's up!")
-                        .setDescription(`And no one got it right <:BigSad:928369010217746442>\n**Name**: ||${pick.name}||\n**Anime**: ${hintAnime.received ? pick.anime : `||${pick.anime}||`}\nNo lilies were earned <:lilium:974057059618291732>`)
+                            .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
+                            .setThumbnail(pick.image)
+                            .setTitle("Time's up!")
+                            .setDescription(`And no one got it right <:BigSad:928369010217746442>\n**Name**: ||${pick.name}||\n**Anime**: ${hintAnime.received ? pick.anime : `||${pick.anime}||`}\nNo lilies were earned <:lilium:974057059618291732>`);
                         interaction.channel.send({ embeds: [Embed] });
                     };
                 });

@@ -28,7 +28,9 @@ class stampedeInfo {
 };
 
 const stampedes = [
-    new stampedeInfo(0, "Return of the Goblin King", bossMobs[4], bossMobs[5], enemies[3]),
+    new stampedeInfo(0, "Return of the Goblin King", { info: bossMobs[4], left: "Goblin King" }, { info: bossMobs[5], left: "Goblin Generals" }, { info: enemies[3], left: "Goblins defeated" }),
+
+    new stampedeInfo(1, "Curse of the Hollow Fiends", { info: bossMobs[6], left: "Pumpkin Lord" }, { info: bossMobs[7], left: "Pumpkin General" }, { info: bossMobs[8], left: "Pumpkin Imps defeated" }),
 ];
 
 module.exports.stampedes = stampedes;

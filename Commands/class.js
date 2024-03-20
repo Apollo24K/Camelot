@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { classes } = require("../Modules/classes.js");
 const { skills } = require("../Modules/skills.js");
@@ -7,95 +7,95 @@ const { PageRow, OfferRow } = require("../Modules/components.js");
 
 module.exports = {
     name: 'class',
-	description: 'class related commands',
-	execute(interaction) {
-        
+    description: 'class related commands',
+    execute(interaction) {
+
         let subcommand = interaction.options.getSubcommand();
-        
+
         // Class List
         if (subcommand === "list") {
             let user = interaction.options.getUser('user') || interaction.user;
             let page = interaction.options.getInteger('page');
-            
+
             db.serialize(async () => {
                 let stats = await query(`SELECT classes FROM dungeon WHERE id = ${user.id}`);
-                stats = {classes: JSON.parse(stats[0].classes)};
-                if (!stats) stats = {classes: []};
-                
-                let beginner = classes.filter((e) => e.tier === 1).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`) //.sort();
-                let advanced = classes.filter((e) => e.tier === 2).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`) //.sort();
-                let master = classes.filter((e) => e.tier === 3).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`) //.sort();
-                let champion = classes.filter((e) => e.tier === 4).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`) //.sort();
-                
-                let showC = ["**Beginner Classes** <:beginner_template:949462741784096808>", ...beginner, "", "**Advanced Classes** <:advanced_template:949462742153195570>", ...advanced, "", "**Master Classes** <:master_template:966385447880261672>", ...master, "", "**Champion Classes** <:champion_template:949462742128017428>", ...champion]
-    
+                stats = { classes: JSON.parse(stats[0].classes) };
+                if (!stats) stats = { classes: [] };
+
+                let beginner = classes.filter((e) => e.tier === 1).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`); //.sort();
+                let advanced = classes.filter((e) => e.tier === 2).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`); //.sort();
+                let master = classes.filter((e) => e.tier === 3).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`); //.sort();
+                let champion = classes.filter((e) => e.tier === 4).map((c) => `> ${c.emblem} ${c.name}${stats.classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`); //.sort();
+
+                let showC = ["**Beginner Classes** <:beginner_template:949462741784096808>", ...beginner, "", "**Advanced Classes** <:advanced_template:949462742153195570>", ...advanced, "", "**Master Classes** <:master_template:966385447880261672>", ...master, "", "**Champion Classes** <:champion_template:949462742128017428>", ...champion];
+
                 let pagesTotal = Math.ceil(showC.length / 15);
                 let currPage = 1;
                 if (page <= pagesTotal && page > 0) {
                     currPage = page;
                 };
                 let left = showC.length % 15;
-                
+
                 let showF = [];
                 if (currPage < pagesTotal || left === 0) {
-                    for (let i=(currPage-1)*15; i < currPage * 15; i++) {
+                    for (let i = (currPage - 1) * 15; i < currPage * 15; i++) {
                         showF.push(showC[i]);
                     };
                 } else {
-                    for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
+                    for (let i = (currPage - 1) * 15; i < (currPage * 15) - (15 - left); i++) {
                         showF.push(showC[i]);
                     };
                 };
-                
+
                 const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle(`List of Classes`)
-                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n"))
-                .setFooter({text: `Page ${currPage}/${pagesTotal}`})
+                    .setColor(0xbbffff)
+                    .setTitle(`List of Classes`)
+                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                    .setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n"))
+                    .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
-    
-                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 90000 });
-                    const next = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 90000 });
-    
+
+                    const prev = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 90000 });
+                    const next = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 90000 });
+
                     prev.on('collect', () => {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
-    
+
                         let showF = [];
                         if (currPage < pagesTotal || left === 0) {
-                            for (let i=(currPage-1)*15; i < currPage * 15; i++) {
+                            for (let i = (currPage - 1) * 15; i < currPage * 15; i++) {
                                 showF.push(showC[i]);
                             };
                         } else {
-                            for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
+                            for (let i = (currPage - 1) * 15; i < (currPage * 15) - (15 - left); i++) {
                                 showF.push(showC[i]);
                             };
                         };
-    
-                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+
+                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [PageRow] });
                     });
-    
+
                     next.on('collect', () => {
                         if (currPage < pagesTotal) currPage++;
                         else currPage = 1;
-    
+
                         let showF = [];
                         if (currPage < pagesTotal || left === 0) {
-                            for (let i=(currPage-1)*15; i < currPage * 15; i++) {
+                            for (let i = (currPage - 1) * 15; i < currPage * 15; i++) {
                                 showF.push(showC[i]);
                             };
                         } else {
-                            for (let i=(currPage-1)*15; i < (currPage * 15) - (15-left); i++) {
+                            for (let i = (currPage - 1) * 15; i < (currPage * 15) - (15 - left); i++) {
                                 showF.push(showC[i]);
                             };
                         };
-    
-                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal}`});
+
+                        Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [PageRow] });
                     });
-                    
+
                 });
 
             });
@@ -114,9 +114,9 @@ module.exports = {
                 let beginner = classes[fClass.path[0][0]];
                 let formatted = `${fClass.id === beginner.id ? `**${beginner.emblem + beginner.name}**` : beginner.emblem + beginner.name} `;
                 fClass.path.forEach((e, i) => {
-                    if (i) formatted += ["<:blank:917804200363171860><:blank:917804200363171860><:blank:917804200363171860> ", "<:blank:917804200363171860> <:blank:917804200363171860><:blank:917804200363171860> ", "<:blank:917804200363171860> <:blank:917804200363171860> <:blank:917804200363171860> "][beginner.name.length%3]
-                                      + "<:blank:917804200363171860>".repeat(beginner.name.length/3);
-                    for (let j=1; j < e.length; j++) {
+                    if (i) formatted += ["<:blank:917804200363171860><:blank:917804200363171860><:blank:917804200363171860> ", "<:blank:917804200363171860> <:blank:917804200363171860><:blank:917804200363171860> ", "<:blank:917804200363171860> <:blank:917804200363171860> <:blank:917804200363171860> "][beginner.name.length % 3]
+                        + "<:blank:917804200363171860>".repeat(beginner.name.length / 3);
+                    for (let j = 1; j < e.length; j++) {
                         formatted += isNaN(e[j]) ? "➥ undefined" : `➥${classes[e[j]].emblem}${fClass.id === e[j] ? `**${classes[e[j]].name}**` : classes[e[j]].name} `;
                     }
                     formatted += "\n";
@@ -126,19 +126,19 @@ module.exports = {
             };
 
             const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setTitle(fClass.name)
-            .setThumbnail(fClass.image)
-            .setDescription(`**Skill Cost**: ${skills[fClass.id].cost}\\💧\n**Grade**: ${["None", "Beginner", "Advanced", "Master", "Champion"][fClass.tier]}\n**Path**: ${formatPath()}\n**Active**: ${fClass.active}\n\n**Passive**: ${fClass.passive}\n`)
-            .addFields(
-                { name: 'Stats', value: `\\💖 **HP**: ${Math.round(fClass.stats.hp[0]*100)}%\n\\⚔️ **ATK**: ${Math.round(fClass.stats.atk[0]*100)}%\n\\🛡️ **DEF**: ${Math.round(fClass.stats.def[0]*100)}%\n<:magic_dmg:948568336621527040> **Magic Dmg**: ${fClass.stats.md[0]*100}%\n\\🔰 **Magic Resist**: ${Math.floor(fClass.stats.mr[0]*100)}%`, inline: true },
-                { name: '_ _', value: `\\🎯 **Crit Rate**: x${fClass.stats.cr[0]}\n\\💥 **Crit Damage**: x${fClass.stats.cd[0]}\n\\🛡️ **Block Rate**: x${fClass.stats.br[0]}\n\\💨 **Dodge**: x${fClass.stats.dodge[0]}`, inline: true },
-                { name: '_ _', value: `\\💧 **Mana**: ${fClass.stats.mana[1] < 0 ? "" : "+"}${fClass.stats.mana[1]}\n\\💦 **Mana Gen**: ${fClass.stats.mg[1] < 0 ? "" : "+"}${fClass.stats.mg[1]}`, inline: true },
-            )
-            .setFooter({text: `ID: #${fClass.id}`})
+                .setColor(0xbbffff)
+                .setTitle(fClass.name)
+                .setThumbnail(fClass.image)
+                .setDescription(`**Skill Cost**: ${skills[fClass.id].cost}\\💧\n**Grade**: ${["None", "Beginner", "Advanced", "Master", "Champion"][fClass.tier]}\n**Path**: ${formatPath()}\n**Active**: ${fClass.active}\n\n**Passive**: ${fClass.passive}\n`)
+                .addFields(
+                    { name: 'Stats', value: `\\💖 **HP**: ${Math.round(fClass.stats.hp[0] * 100)}%\n\\⚔️ **ATK**: ${Math.round(fClass.stats.atk[0] * 100)}%\n\\🛡️ **DEF**: ${Math.round(fClass.stats.def[0] * 100)}%\n<:magic_dmg:948568336621527040> **Magic Dmg**: ${fClass.stats.md[0] * 100}%\n\\🔰 **Magic Resist**: ${Math.floor(fClass.stats.mr[0] * 100)}%`, inline: true },
+                    { name: '_ _', value: `\\🎯 **Crit Rate**: x${fClass.stats.cr[0]}\n\\💥 **Crit Damage**: x${fClass.stats.cd[0]}\n\\🛡️ **Block Rate**: x${fClass.stats.br[0]}\n\\💨 **Dodge**: x${fClass.stats.dodge[0]}`, inline: true },
+                    { name: '_ _', value: `\\💧 **Mana**: ${fClass.stats.mana[1] < 0 ? "" : "+"}${fClass.stats.mana[1]}\n\\💦 **Mana Gen**: ${fClass.stats.mg[1] < 0 ? "" : "+"}${fClass.stats.mg[1]}`, inline: true },
+                )
+                .setFooter({ text: `ID: #${fClass.id}` });
             return interaction.reply({ embeds: [Embed] });
         };
-        
+
         // Class select
         if (subcommand === "select") {
 
@@ -150,10 +150,10 @@ module.exports = {
             db.serialize(async () => {
                 const { 0: stats } = await query(`SELECT classes FROM dungeon WHERE id = ${interaction.user.id}`);
                 stats.classes = JSON.parse(stats.classes);
-                
+
                 if (!stats.classes.length) return interaction.reply(`You don't have any classes yet. Get started by picking a beginner class with \`/class pick\``);
                 if (!stats.classes.includes(fClass.id)) return interaction.reply(`You don't have the **${fClass.name}** class`);
-                
+
                 await query(`UPDATE users SET class = ${fClass.id} WHERE id = ${interaction.user.id}`);
 
                 return interaction.reply(`Your class has been changed to **${fClass.name}**`);
@@ -164,7 +164,7 @@ module.exports = {
         if (subcommand === "pick") {
             db.serialize(async () => {
                 let stats = await query(`SELECT users.xp, dungeon.classes FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                stats = {xp: stats[0].xp, classes: JSON.parse(stats[0].classes)};
+                stats = { xp: stats[0].xp, classes: JSON.parse(stats[0].classes) };
 
                 // Level
                 let level = userLevel(stats.xp);
@@ -175,41 +175,41 @@ module.exports = {
                         label: e.name,
                         emoji: e.emblem,
                         description: e.active.replace(/\*/g, ''),
-                        value: e.id+"",
+                        value: e.id + "",
                     });
                 });
-    
+
                 const row = new ActionRowBuilder()
-                .addComponents(
-                    new StringSelectMenuBuilder()
-                    .setCustomId('class_selection')
-                    .setPlaceholder('Choose a beginner class...')
-                    .addOptions(options),
-                );
-    
+                    .addComponents(
+                        new StringSelectMenuBuilder()
+                            .setCustomId('class_selection')
+                            .setPlaceholder('Choose a beginner class...')
+                            .addOptions(options),
+                    );
+
                 const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle(`✧ Select a beginner Class ✧`)
-                .setDescription(`   ➥ Use \`/class pick\` to select one from the list below\n   ➥ See \`/class info <class>\` for more information on a class\n   ➥ You will be able to pick a new class after every 10th user level\n   ➥ The 10 beginner classes are as follows:`)
-                .setImage("https://i.ibb.co/NLQ8wDQ/Beginner-Classes.png")
+                    .setColor(0xbbffff)
+                    .setTitle(`✧ Select a beginner Class ✧`)
+                    .setDescription(`   ➥ Use \`/class pick\` to select one from the list below\n   ➥ See \`/class info <class>\` for more information on a class\n   ➥ You will be able to pick a new class after every 10th user level\n   ➥ The 10 beginner classes are as follows:`)
+                    .setImage("https://i.ibb.co/NLQ8wDQ/Beginner-Classes.png");
                 return interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
-    
-                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "class_selection", componentType: 'SELECT_MENU', time: 60000 });
-    
+
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "class_selection", componentType: ComponentType.StringSelect, time: 60000 });
+
                     collector.on('collect', async r => {
-                        if (stats.classes.filter((e) => classes[e].tier === 1).length > Math.floor(level/10)) return interaction.channel.send(`You have already claimed ${Math.floor(level/10) ? `**${Math.floor(level/10)+1}**` : "a"} beginner ${Math.floor(level/10) ? "classes" : "class"}. You can pick another one when you reach level **${10*(Math.floor(level/10)+1)}**`);
+                        if (stats.classes.filter((e) => classes[e].tier === 1).length > Math.floor(level / 10)) return interaction.channel.send(`You have already claimed ${Math.floor(level / 10) ? `**${Math.floor(level / 10) + 1}**` : "a"} beginner ${Math.floor(level / 10) ? "classes" : "class"}. You can pick another one when you reach level **${10 * (Math.floor(level / 10) + 1)}**`);
                         if (stats.classes.includes(parseInt(r.values[0]))) return interaction.channel.send(`You already have the **${classes[r.values[0]].name}** class`);
-    
+
                         stats.classes.push(parseInt(r.values[0]));
-    
+
                         interaction.channel.send(`Unlocked **${classes[r.values[0]].name}** 🎉\nYou can change your class using \`/class select <class>\``);
                         collector.stop();
 
                         await query(`UPDATE dungeon SET classes = "${JSON.stringify(stats.classes)}" WHERE id = ${interaction.user.id}`);
                     });
-    
+
                 });
-                
+
             });
         };
 
@@ -220,40 +220,39 @@ module.exports = {
 
             db.serialize(async () => {
                 let stats = await query(`SELECT users.xp, dungeon.classes, dungeon.classlevels FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                stats = {xp: stats[0].xp, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-                
-                if (!stats.classes.length) return interaction.reply(`You don't have a class yet. Choose a beginner class with \`/class pick <class name or ID>\``)
+                stats = { xp: stats[0].xp, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+
+                if (!stats.classes.length) return interaction.reply(`You don't have a class yet. Choose a beginner class with \`/class pick <class name or ID>\``);
 
                 let fClass = searchClass(choice, interaction);
                 if (!fClass?.name) return;
                 if (fClass.tier === 1) return interaction.reply(`**${fClass.name}** is a beginner class`);
-                if (stats.classes.includes(fClass.id)) return interaction.reply(`You already have the **${fClass.name}** class`)
-                if (fClass.path.length === 0) return interaction.reply(`**${fClass.name}** can't be obtained through a class upgrade. See \`/class info ${fClass.name}\` for more details.`)
-                
-                let cClass = classes[fClass.path[0][fClass.path[0].indexOf(fClass.id)-1]];
+                if (stats.classes.includes(fClass.id)) return interaction.reply(`You already have the **${fClass.name}** class`);
+                if (fClass.path.length === 0) return interaction.reply(`**${fClass.name}** can't be obtained through a class upgrade. See \`/class info ${fClass.name}\` for more details.`);
+
+                let cClass = classes[fClass.path[0][fClass.path[0].indexOf(fClass.id) - 1]];
                 if (!stats.classes.includes(cClass.id)) return interaction.reply(`You don't have the **${cClass.name}** class`);
                 if ((getClassLvl(cClass.id, stats.classlevels) || 0) < [0, 40, 60][cClass.tier]) return interaction.reply(`You'll have to level up your **${cClass.name}** class to level **${[0, 40, 60][cClass.tier]}** before you can upgrade to **${fClass.name}**`);
-    
+
                 if (cClass.path.length > 1) {
                     for (let e of cClass.path) {
-                        if (stats.classes.includes(e[fClass.tier-1])) return interaction.reply("You have already chosen another upgrade path for this class.");
+                        if (stats.classes.includes(e[fClass.tier - 1])) return interaction.reply("You have already chosen another upgrade path for this class.");
                     };
                 };
 
                 return interaction.reply({ content: `Are you sure you want to upgrade from your **${cClass.name}** class to **${fClass.name}**?`, components: [OfferRow], fetchReply: true }).then(msg => {
-                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
                     collector.on('collect', async r => {
                         collector.stop();
-                        if (r.customId === "cancel") interaction.channel.send("Action cancelled");
+                        if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
                         stats.classes.push(fClass.id);
-
-                        interaction.channel.send(`unlocked **${fClass.name}** 🎉`);
-
                         await query(`UPDATE dungeon SET classes = "${JSON.stringify(stats.classes)}" WHERE id = ${interaction.user.id}`);
+                        await query(`UPDATE users SET class = ${parseInt(fClass.id)} WHERE id = ${interaction.user.id}`);
+                        interaction.channel.send(`unlocked **${fClass.name}** 🎉`);
                     });
-                    
+
                 });
             });
         };
@@ -262,29 +261,29 @@ module.exports = {
         if (subcommand === "level") {
             let user = interaction.options.getUser('user') || interaction.user;
             let choice = interaction.options.getString('class');
-            
+
             db.serialize(async () => {
-                let stats = await query(`SELECT users.battlechar, users.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
-                if (!stats[0]) return interaction.reply(`**${user.username}** hasn't started playing yet.`)
-                stats = {battlechar: stats[0].battlechar, class: stats[0].class, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-                
+                const { 0: stats } = await query(`SELECT users.battlechar, users.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+                if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
+                stats.classes = JSON.parse(stats.classes);
+                stats.classlevels = JSON.parse(stats.classlevels);
+
                 if (!choice) {
-                    if (stats.class !== null) choice = ""+stats.class;
+                    if (stats.class !== null) choice = "" + stats.class;
                     else return interaction.reply(`Plase provide the name of the class.\nUsage: \`/class level <class> <user>\``);
                 };
-                
+
                 let fClass = searchClass(choice, interaction);
                 if (!fClass?.name) return;
-                
+
                 if (!stats.classes.length) return interaction.reply(`${user.id === interaction.user.id ? "You don't" : `**${user.username}** doesn't have`} a class yet. Pick a beginner class with \`/class pick\``);
                 if (!stats.classes.includes(fClass.id)) return interaction.reply(`${user.id === interaction.user.id ? "You don't" : `**${user.username}** doesn't`} have the **${fClass.name}** class.`);
 
-                let level = getClassLvl(fClass.id, stats.classlevels) || 0;
-                
-                let xpTotal = level * 50;
-                let myXP = stats.classlevels[fClass.id] - (level * (level-1) * 25);
-                let percent = Math.floor((myXP/xpTotal)*1000);
-    
+                const level = getClassLvl(fClass.id, stats.classlevels) || 0;
+                const xpTotal = level * 50;
+                const myXP = stats.classlevels[fClass.id] - (level * (level - 1) * 25);
+                const percent = Math.floor((myXP / xpTotal) * 1000);
+
                 let bar = "<:barLh:872111263747035177><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barRh:872111194188705848>";
                 if (percent >= 875) bar = "<:barL:872111285741969438><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barRh:872111194188705848>";
                 else if (percent >= 750) bar = "<:barL:872111285741969438><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barM:872111243429814332><:barMh:872111226866520075><:barRh:872111194188705848>";
@@ -293,12 +292,48 @@ module.exports = {
                 else if (percent >= 375) bar = "<:barL:872111285741969438><:barM:872111243429814332><:barM:872111243429814332><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barRh:872111194188705848>";
                 else if (percent >= 250) bar = "<:barL:872111285741969438><:barM:872111243429814332><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barRh:872111194188705848>";
                 else if (percent >= 125) bar = "<:barL:872111285741969438><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barMh:872111226866520075><:barRh:872111194188705848>";
-    
+
                 const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setAuthor({name: `${user.username}'s Class Level`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-                .setDescription(`${fClass.name} level: **${level}**\nXP required to level up: **${(xpTotal-myXP) || 0}**\n${bar}`)
-                .setThumbnail(fClass.image)
+                    .setColor(0xbbffff)
+                    .setAuthor({ name: `${user.username}'s Class Level`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
+                    .setDescription(`${fClass.name} level: **${level}**\nXP required to level up: **${(xpTotal - myXP) || 0}**\n${bar}`)
+                    .setThumbnail(fClass.image);
+
+                if (user.id === interaction.user.id && ((fClass.tier === 1 && level >= 40) || (fClass.tier === 2 && level >= 60))) {
+                    if ((fClass.upgrades.length === 0) || fClass.upgrades.map((e) => e.id).some(id => stats.classes.includes(id))) return interaction.reply({ embeds: [Embed] });
+
+                    const row = new ActionRowBuilder()
+                        .addComponents(
+                            ...fClass.upgrades.map((e) => {
+                                return new ButtonBuilder()
+                                    .setCustomId('' + e.id)
+                                    .setEmoji(e.emblem)
+                                    .setLabel(`Unlock ${e.name}`)
+                                    .setStyle('Secondary');
+                            })
+                        );
+
+                    Embed.setDescription(`${fClass.name} level: **${level}**\nXP required to level up: **${(xpTotal - myXP) || 0}**\n${bar}\n⚜️ You can upgrade your class!`);
+                    return interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
+
+                        const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id, componentType: ComponentType.Button, max: 1, time: 30000 });
+
+                        collector.on('collect', async r => {
+                            collector.stop();
+                            const { 0: stats } = await query(`SELECT users.battlechar, users.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+                            stats.classes = JSON.parse(stats.classes);
+
+                            if (fClass.upgrades.map((e) => e.id).some(id => stats.classes.includes(id))) return interaction.channel.send("You have already upgraded this class");
+
+                            stats.classes.push(parseInt(r.customId));
+                            await query(`UPDATE dungeon SET classes = "${JSON.stringify(stats.classes)}" WHERE id = ${user.id}`);
+                            await query(`UPDATE users SET class = ${parseInt(r.customId)} WHERE id = ${user.id}`);
+                            interaction.channel.send(`unlocked **${classes[parseInt(r.customId)].name}** 🎉`);
+                        });
+
+                    });
+                };
+
                 return interaction.reply({ embeds: [Embed] });
             });
 
@@ -312,10 +347,10 @@ module.exports = {
 
             db.serialize(async () => {
                 let stats = await query(`SELECT users.xp, users.gems, dungeon.classes, dungeon.classlevels FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                stats = {xp: stats[0].xp, gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-                
-                if (!stats.classes.length) return interaction.reply(`You don't have a class yet. Choose a beginner class with \`/class pick <class name or ID>\``)
-                if (stats.gems < 30) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/30<:genesis_gems:1034179687720681492>)`)
+                stats = { xp: stats[0].xp, gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+
+                if (!stats.classes.length) return interaction.reply(`You don't have a class yet. Choose a beginner class with \`/class pick <class name or ID>\``);
+                if (stats.gems < 30) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/30<:genesis_gems:1034179687720681492>)`);
 
                 // Search classes
                 let oldClass = searchClass(oldClassName, interaction);
@@ -329,33 +364,33 @@ module.exports = {
                 if (oldClass.tier < 3 || newClass.tier < 3) return interaction.reply("You can only transfer xp between master and champion classes.");
                 if (oldClass.id === newClass.id) return interaction.reply(`You can't transfer xp to the same class.`);
                 if (!stats.classlevels[oldClass.id]) return interaction.reply(`Your **${oldClass.name}** class doesn't have any xp.`);
-                
+
                 return interaction.reply({ content: `Are you sure you want to transfer your xp from **${oldClass.name}** to **${newClass.name}** for **30**<:genesis_gems:1034179687720681492>?`, components: [OfferRow], fetchReply: true }).then(msg => {
-                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
                     collector.on('collect', async r => {
                         collector.stop();
                         if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
                         let stats = await query(`SELECT users.xp, users.gems, dungeon.classes, dungeon.classlevels FROM users JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                        stats = {xp: stats[0].xp, gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-                        
+                        stats = { xp: stats[0].xp, gems: stats[0].gems, classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+
                         // Check if all conditions are fulfilled
-                        if (stats.gems < 30) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/30<:genesis_gems:1034179687720681492>)`)
+                        if (stats.gems < 30) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/30<:genesis_gems:1034179687720681492>)`);
                         if (!stats.classlevels[oldClass.id]) return interaction.reply(`Your **${oldClass.name}** class doesn't have any xp.`);
 
                         let xp = stats.classlevels[oldClass.id];
                         if (newClass.id in stats.classlevels) stats.classlevels[newClass.id] += xp;
                         else stats.classlevels[newClass.id] = xp;
-                        
+
                         delete stats.classlevels[oldClass.id];
 
                         await query(`UPDATE dungeon SET classlevels = '${JSON.stringify(stats.classlevels)}' WHERE id = ${interaction.user.id}`);
                         await query(`UPDATE users SET gems = gems-30 WHERE id = ${interaction.user.id}`);
-                        
+
                         interaction.channel.send(`Transferred **${xp}** xp from **${oldClass.name}** to **${newClass.name}** 🎉`);
                     });
-                    
+
                 });
             });
         };
@@ -372,7 +407,7 @@ module.exports = {
 
             // Old class
             const beginner = classes[fClass.path[0][0]];
-            const oldPath = beginner.path[0].includes(fClass.id)+0;
+            const oldPath = beginner.path[0].includes(fClass.id) + 0;
             const oldAdvanced = classes[beginner.path[oldPath][1]];
             const oldMaster = classes[beginner.path[oldPath][2]];
 
@@ -382,32 +417,32 @@ module.exports = {
 
             db.serialize(async () => {
                 let stats = await query(`SELECT users.gems, characters.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                stats = {class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-                
+                stats = { class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+
                 if (stats.gems < 100) return interaction.reply(`You don't have enough gems. (**${stats.gems}**/100<:genesis_gems:1034179687720681492>)`);
                 if (stats.classes.includes(fClass.id)) return interaction.reply(`You already have the **${fClass.name}** class`);
                 if (!stats.classes.includes(fClass.tier === 2 ? oldAdvanced.id : oldMaster.id)) return interaction.reply(`You don't have the **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class`);
-                
+
                 interaction.reply({ content: `Are you sure you want to switch from your current **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class to **${fClass.tier === 2 ? newAdvanced.name : newMaster.name}** for 100<:genesis_gems:1034179687720681492>?`, components: [OfferRow], fetchReply: true }).then(msg => {
-    
-                    const confirm = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, max: 1, time: 15000 });
+
+                    const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, max: 1, time: 15000 });
 
                     confirm.on('collect', async r => {
                         if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
                         let stats = await query(`SELECT users.gems, users.presets, characters.class, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-                        stats = {gems: stats[0].gems, presets: JSON.parse(stats[0].presets), class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-                        
+                        stats = { gems: stats[0].gems, presets: JSON.parse(stats[0].presets), class: JSON.parse(stats[0].class), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+
                         if (stats.gems < 100) return interaction.channel.send(`You don't have enough gems. (**${stats.gems}**/100<:genesis_gems:1034179687720681492>)`);
                         if (stats.classes.includes(fClass.id)) return interaction.channel.send(`You already have the **${fClass.name}** class`);
                         if (!stats.classes.includes(fClass.tier === 2 ? oldAdvanced.id : oldMaster.id)) return interaction.channel.send(`You don't have the **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class`);
-                        
+
                         // Switch Advanced Classes
                         stats.classes.splice((stats.classes.indexOf(oldAdvanced.id)), 1);
                         stats.classes.push(newAdvanced.id);
                         stats.classlevels[newAdvanced.id] = stats.classlevels[oldAdvanced.id] || 0;
                         delete stats.classlevels[oldAdvanced.id];
-                        
+
                         // Switch Master Classes
                         if (stats.classes.includes(oldMaster.id)) {
                             stats.classes.splice((stats.classes.indexOf(oldMaster.id)), 1);
@@ -415,7 +450,7 @@ module.exports = {
                             stats.classlevels[newMaster.id] = stats.classlevels[oldMaster.id] || 0;
                             delete stats.classlevels[oldMaster.id];
                         };
-                        
+
                         Object.entries(stats.class).forEach(([chr, cls]) => {
                             if (cls === oldAdvanced.id) stats.class[chr] = newAdvanced.id;
                             if (cls === oldMaster.id) stats.class[chr] = newMaster.id;
@@ -424,7 +459,7 @@ module.exports = {
                             if (preset.class === oldAdvanced.id) stats.presets[i].class = newAdvanced.id;
                             if (preset.class === oldMaster.id) stats.presets[i].class = newMaster.id;
                         });
-                        
+
                         await query(`UPDATE users SET gems = gems - 100, presets = '${JSON.stringify(stats.presets)}' WHERE id = ${interaction.user.id}`);
                         await query(`UPDATE characters SET class = '${JSON.stringify(stats.class)}' WHERE id = ${interaction.user.id}`);
                         await query(`UPDATE dungeon SET classes = '${JSON.stringify(stats.classes)}', classlevels = '${JSON.stringify(stats.classlevels)}' WHERE id = ${interaction.user.id}`);

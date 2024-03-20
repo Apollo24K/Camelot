@@ -31,7 +31,7 @@ function padCollected(chars) {
     return res;
 };
 
-function drawField(ctx, x, y, width, height, radius=height/2) {
+function drawField(ctx, x, y, width, height, radius = height / 2) {
     ctx.beginPath();
     ctx.moveTo(radius + x, 0 + y);
     ctx.lineTo((width - radius) + x, 0 + y);
@@ -51,7 +51,7 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
     const words = text.split(' ');
     let line = '';
 
-    for(let n=0; n < words.length; n++) {
+    for (let n = 0; n < words.length; n++) {
         const testLine = line + words[n] + ' ';
         const metrics = context.measureText(testLine);
         const testWidth = metrics.width;
@@ -98,7 +98,7 @@ async function getProfileImage(user, stats) {
     gradient.addColorStop(1, stats.colorDark); // Dark
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, 1200, 100);
-    
+
     // Draw Character Image
     const charImage = await loadImage(stats.thumbnail || "https://i.ibb.co/wYzd5tz/fav.png");
     ctx.drawImage(charImage, 750, 0, 450, 700);
@@ -119,16 +119,16 @@ async function getProfileImage(user, stats) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const text = stats.aboutme || "About Me";
-    wrapText(ctx, text, 975, 580 - (15*(Math.floor(text.length/20))) + (text.length > 60 ? 20 : 0), 410, 30);
+    wrapText(ctx, text, 975, 580 - (15 * (Math.floor(text.length / 20))) + (text.length > 60 ? 20 : 0), 410, 30);
 
     // Draw Profile Picture
     const profilePicture = await loadImage(user.displayAvatarURL());
     ctx.save();
     ctx.beginPath();
-    ctx.arc(100+10, 100, 90, 0, Math.PI * 2);
+    ctx.arc(100 + 10, 100, 90, 0, Math.PI * 2);
     ctx.clip();
-    
-    ctx.drawImage(profilePicture, 10+10, 10, 180, 180);
+
+    ctx.drawImage(profilePicture, 10 + 10, 10, 180, 180);
     ctx.restore();
 
     // Draw Username
@@ -143,27 +143,27 @@ async function getProfileImage(user, stats) {
         loadedImages.premium ||= await loadImage("https://i.ibb.co/MnhrQ3S/premium.png");
         ctx.drawImage(loadedImages.premium, 20, 140, 50, 50);
     };
-    
+
     // XP Bar
     let xpr = stats.xp, level = 0;
-    for (let i=1; xpr >= 0; i++) {
-        xpr -= Math.floor(5*Math.log(i)**4 + 30);
+    for (let i = 1; xpr >= 0; i++) {
+        xpr -= Math.floor(5 * Math.log(i) ** 4 + 30);
         level++;
     };
-    const xpTotal = Math.floor(5*Math.log(level)*Math.log(level)*Math.log(level)*Math.log(level) + 30);
-    const percent = (xpTotal+xpr)/xpTotal;
+    const xpTotal = Math.floor(5 * Math.log(level) * Math.log(level) * Math.log(level) * Math.log(level) + 30);
+    const percent = (xpTotal + xpr) / xpTotal;
 
     ctx.fillStyle = 'rgb(210, 0, 0)';
     ctx.fillRect(270, 40, 355, 10);
     ctx.fillStyle = 'rgb(0, 240, 0)';
-    ctx.fillRect(270, 40, Math.floor(355*percent), 10);
+    ctx.fillRect(270, 40, Math.floor(355 * percent), 10);
 
     // Draw Level
     const barWidth = 160;
     const barHeight = 40;
     const cornerRadius = barHeight / 2; // Adjust this for more or less rounding
 
-    let movX = 120+10;
+    let movX = 120 + 10;
     let movY = 10;
 
     ctx.beginPath();
@@ -186,14 +186,14 @@ async function getProfileImage(user, stats) {
     ctx.textAlign = 'start';
     ctx.textBaseline = 'middle';
     ctx.fillText(`Level ${userLevel(stats.xp)}`, 145, 30, 130);
-    
+
     // Draw Dungeon Floor
     ctx.beginPath();
     ctx.arc(660, 100, 70, 0, Math.PI * 2);
     ctx.closePath();
     ctx.fillStyle = 'rgba(22,23,25,255)';
     ctx.fill();
-    
+
     // Draw Dungeon Floor Text
     ctx.fillStyle = '#ffffff';
     ctx.font = '30px Arial';
@@ -206,8 +206,8 @@ async function getProfileImage(user, stats) {
 
     // Draw Class
     if (stats.class !== null) {
-        loadedImages["cl"+stats.class] ||= await loadImage(classes[stats.class].image);
-        ctx.drawImage(loadedImages["cl"+stats.class], 600, 540, 150, 150);
+        loadedImages["cl" + stats.class] ||= await loadImage(classes[stats.class].image);
+        ctx.drawImage(loadedImages["cl" + stats.class], 600, 540, 150, 150);
 
         // Draw Class Level Text
         ctx.fillStyle = '#ffffff';
@@ -226,17 +226,17 @@ async function getProfileImage(user, stats) {
         ctx.textBaseline = 'middle';
         ctx.fillText("No Class", 730, 655, 300);
     };
-    
+
     // Draw Refinement
     if (stats.ref) {
         loadedImages.ref ||= await loadImage("https://cdn.discordapp.com/emojis/869132309125824552.png");
-        if (stats.ref === 1 || stats.ref === 3 || stats.ref >= 5) ctx.drawImage(loadedImages.ref, 975-25, 645, 50, 50);
-        if (stats.ref === 2 || stats.ref === 4) ctx.drawImage(loadedImages.ref, 975-50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975, 645, 50, 50);
-        if (stats.ref === 3 || stats.ref >= 5) ctx.drawImage(loadedImages.ref, 975-25-50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975-25+50, 645, 50, 50);
-        if (stats.ref === 4) ctx.drawImage(loadedImages.ref, 975-50-50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975+50, 645, 50, 50);
-        if (stats.ref >= 5) ctx.drawImage(loadedImages.ref, 975-25-50-50, 645, 50, 50),  ctx.drawImage(loadedImages.ref, 975-25+50+50, 645, 50, 50);
+        if (stats.ref === 1 || stats.ref === 3 || stats.ref >= 5) ctx.drawImage(loadedImages.ref, 975 - 25, 645, 50, 50);
+        if (stats.ref === 2 || stats.ref === 4) ctx.drawImage(loadedImages.ref, 975 - 50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975, 645, 50, 50);
+        if (stats.ref === 3 || stats.ref >= 5) ctx.drawImage(loadedImages.ref, 975 - 25 - 50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975 - 25 + 50, 645, 50, 50);
+        if (stats.ref === 4) ctx.drawImage(loadedImages.ref, 975 - 50 - 50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975 + 50, 645, 50, 50);
+        if (stats.ref >= 5) ctx.drawImage(loadedImages.ref, 975 - 25 - 50 - 50, 645, 50, 50), ctx.drawImage(loadedImages.ref, 975 - 25 + 50 + 50, 645, 50, 50);
     };
-        
+
     // Draw Coins & Gems
     loadedImages.coins ||= await loadImage("https://cdn.discordapp.com/emojis/1030580480782893197.png");
     loadedImages.gems ||= await loadImage("https://cdn.discordapp.com/emojis/1034179687720681492.png");
@@ -244,7 +244,7 @@ async function getProfileImage(user, stats) {
     ctx.drawImage(loadedImages.gems, 420, 120, 50, 50);
     drawField(ctx, 270, 125, 145, 40);
     drawField(ctx, 475, 125, 110, 40);
-    
+
     // Draw Coins & Gems Text
     ctx.fillStyle = '#ffffff';
     ctx.font = '30px Arial';
@@ -252,7 +252,7 @@ async function getProfileImage(user, stats) {
     ctx.textBaseline = 'middle';
     ctx.fillText(`${stats.coins}`, 280, 145, 125);
     ctx.fillText(`${stats.gems}`, 485, 145, 90);
-    
+
     // Draw Guild & Party
     drawField(ctx, 20, 200, 112, 40); // Guild
     drawField(ctx, 142, 200, 229, 40); // Guild Name
@@ -320,11 +320,11 @@ async function getProfileImage(user, stats) {
     ctx.fillText(`${stats.stats.md}`, 328, 330 + moveDown, 155);
     ctx.fillText(`${stats.stats.mr}`, 565, 330 + moveDown, 155);
     ctx.fillText(`${stats.stats.mana}`, 91, 380 + moveDown, 155);
-    ctx.fillText(`${Math.floor(100*stats.stats.cr)}%`, 328, 380 + moveDown, 155);
-    ctx.fillText(`${Math.floor(100*stats.stats.dodge)}%`, 565, 380 + moveDown, 155);
+    ctx.fillText(`${Math.floor(100 * stats.stats.cr)}%`, 328, 380 + moveDown, 155);
+    ctx.fillText(`${Math.floor(100 * stats.stats.dodge)}%`, 565, 380 + moveDown, 155);
     ctx.fillText(`${stats.stats.mg}`, 91, 430 + moveDown, 155);
-    ctx.fillText(`${Math.floor(100*stats.stats.cd)}%`, 328, 430 + moveDown, 155);
-    ctx.fillText(`${Math.floor(100*stats.stats.br)}%`, 565, 430 + moveDown, 155);
+    ctx.fillText(`${Math.floor(100 * stats.stats.cd)}%`, 328, 430 + moveDown, 155);
+    ctx.fillText(`${Math.floor(100 * stats.stats.br)}%`, 565, 430 + moveDown, 155);
 
     // Draw Achievements & EP
     loadedImages.achvm ||= await loadImage("https://cdn.discordapp.com/emojis/642715902550212608.png");
@@ -353,24 +353,24 @@ async function getProfileImage(user, stats) {
     // ctx.drawImage(loadedImages["s"+stats.stats.shieldid], 70, 560, 40, 40);
 
     // Gear Test
-    loadedImages["w"+stats.stats.weapon] ||= await loadImage(items[stats.stats.weapon]?.image || "https://cdn.discordapp.com/emojis/1034502134474997790.png");
-    loadedImages["h"+stats.stats.helmet] ||= await loadImage(items[stats.stats.helmet]?.image || "https://cdn.discordapp.com/emojis/1034499888878198885.png");
-    loadedImages["c"+stats.stats.cuirass] ||= await loadImage(items[stats.stats.cuirass]?.image || "https://cdn.discordapp.com/emojis/1034499890165858305.png");
-    loadedImages["g"+stats.stats.gloves] ||= await loadImage(items[stats.stats.gloves]?.image || "https://cdn.discordapp.com/emojis/1034499892409794570.png");
-    loadedImages["b"+stats.stats.boots] ||= await loadImage(items[stats.stats.boots]?.image || "https://cdn.discordapp.com/emojis/1034499893919764480.png");
-    ctx.drawImage(loadedImages["w"+stats.stats.weapon], 30, 560, 40, 40);
+    loadedImages["w" + stats.stats.weapon] ||= await loadImage(items[stats.stats.weapon]?.image || "https://cdn.discordapp.com/emojis/1034502134474997790.png");
+    loadedImages["h" + stats.stats.helmet] ||= await loadImage(items[stats.stats.helmet]?.image || "https://cdn.discordapp.com/emojis/1034499888878198885.png");
+    loadedImages["c" + stats.stats.cuirass] ||= await loadImage(items[stats.stats.cuirass]?.image || "https://cdn.discordapp.com/emojis/1034499890165858305.png");
+    loadedImages["g" + stats.stats.gloves] ||= await loadImage(items[stats.stats.gloves]?.image || "https://cdn.discordapp.com/emojis/1034499892409794570.png");
+    loadedImages["b" + stats.stats.boots] ||= await loadImage(items[stats.stats.boots]?.image || "https://cdn.discordapp.com/emojis/1034499893919764480.png");
+    ctx.drawImage(loadedImages["w" + stats.stats.weapon], 30, 560, 40, 40);
     if ("shieldid" in stats.stats) {
-        loadedImages["s"+stats.stats.shieldid] ||= await loadImage(items[stats.stats.shieldid]?.image || "https://cdn.discordapp.com/emojis/1087089686809415730.png");
-        ctx.drawImage(loadedImages["s"+stats.stats.shieldid], 70, 560, 40, 40);
-        ctx.drawImage(loadedImages["h"+stats.stats.helmet], 120, 560, 40, 40);
-        ctx.drawImage(loadedImages["c"+stats.stats.cuirass], 160, 560, 40, 40);
-        ctx.drawImage(loadedImages["g"+stats.stats.gloves], 200, 560, 40, 40);
-        ctx.drawImage(loadedImages["b"+stats.stats.boots], 240, 560, 40, 40);
+        loadedImages["s" + stats.stats.shieldid] ||= await loadImage(items[stats.stats.shieldid]?.image || "https://cdn.discordapp.com/emojis/1087089686809415730.png");
+        ctx.drawImage(loadedImages["s" + stats.stats.shieldid], 70, 560, 40, 40);
+        ctx.drawImage(loadedImages["h" + stats.stats.helmet], 120, 560, 40, 40);
+        ctx.drawImage(loadedImages["c" + stats.stats.cuirass], 160, 560, 40, 40);
+        ctx.drawImage(loadedImages["g" + stats.stats.gloves], 200, 560, 40, 40);
+        ctx.drawImage(loadedImages["b" + stats.stats.boots], 240, 560, 40, 40);
     } else {
-        ctx.drawImage(loadedImages["h"+stats.stats.helmet], 80, 560, 40, 40);
-        ctx.drawImage(loadedImages["c"+stats.stats.cuirass], 120, 560, 40, 40);
-        ctx.drawImage(loadedImages["g"+stats.stats.gloves], 160, 560, 40, 40);
-        ctx.drawImage(loadedImages["b"+stats.stats.boots], 200, 560, 40, 40);
+        ctx.drawImage(loadedImages["h" + stats.stats.helmet], 80, 560, 40, 40);
+        ctx.drawImage(loadedImages["c" + stats.stats.cuirass], 120, 560, 40, 40);
+        ctx.drawImage(loadedImages["g" + stats.stats.gloves], 160, 560, 40, 40);
+        ctx.drawImage(loadedImages["b" + stats.stats.boots], 200, 560, 40, 40);
     };
 
     // Items
@@ -389,11 +389,11 @@ async function getProfileImage(user, stats) {
 
 module.exports = {
     name: 'profile',
-	description: 'User Profile',
-	execute(interaction) {
-        
+    description: 'User Profile',
+    execute(interaction) {
+
         let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-        
+
         const user = interaction.options.getUser('user') || interaction.user;
         const type = interaction.options.getString('type') || "image";
         const bio = interaction.options.getString('bio');
@@ -407,6 +407,10 @@ module.exports = {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
 
+            // Check if user has a nitro banner
+            // user = await user.fetch();
+            // console.log(!!user.banner);
+
             if (bio && user.id === interaction.user.id) await query(`UPDATE users SET aboutme = '${bio.replace(/'/g, "''")}' WHERE id = ${user.id}`);
             else if (bio) return interaction.editReply("You can only edit your own bio");
 
@@ -414,7 +418,7 @@ module.exports = {
             if (color && user.id === interaction.user.id) await query(`UPDATE users SET profilecolor = ${color === "null" ? "null" : `'${color}'`} WHERE id = ${user.id}`);
             else if (color) return interaction.editReply("You can only edit your own profile color");
 
-            const { 0: stats } = await query(`SELECT favchar, xp, coins, gems, battlechar, class, aboutme, profilecolor, arenawins, arenalosses, lilies, achievements, items, mailbox, premium, guild, party FROM users WHERE id = ${user.id}`);
+            const { 0: stats } = await query(`SELECT favchar, xp, coins, bank, gems, battlechar, class, aboutme, profilecolor, arenawins, arenalosses, lilies, achievements, items, mailbox, premium, guild, party, shield_slot FROM users WHERE id = ${user.id}`);
             if (!stats) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
             stats.achievements = JSON.parse(stats.achievements);
             stats.items = JSON.parse(stats.items);
@@ -424,32 +428,32 @@ module.exports = {
             if (customColor1 || customColor2) {
                 if (user.id !== interaction.user.id) return interaction.editReply("You can only edit your own profile color");
                 if (stats.premium < 2) return interaction.editReply("This is a `/premium` feature. If you like the bot and want to help us out we'd appreciate your support <:RaphiSmile:868998036645380197>");
-                if (customColor1 && !customColor1.match(/^#([0-9a-f]{3}){1,2}$/i)) return interaction.editReply(`Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``)
-                if (customColor2 && !customColor2.match(/^#([0-9a-f]{3}){1,2}$/i)) return interaction.editReply(`Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``)
+                if (customColor1 && !customColor1.match(/^#([0-9a-f]{3}){1,2}$/i)) return interaction.editReply(`Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``);
+                if (customColor2 && !customColor2.match(/^#([0-9a-f]{3}){1,2}$/i)) return interaction.editReply(`Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``);
                 stats.profilecolor = (customColor1 || stats.profilecolor?.split(":")?.[0] || "") + ":" + (customColor2 || stats.profilecolor?.split(":")?.[1] || "");
                 await query(`UPDATE users SET profilecolor = '${stats.profilecolor}' WHERE id = ${user.id}`);
             };
 
-            let inv = await query(`SELECT characters.chars, characters.ref, characters.level, characters.skin, characters.equipment, dungeon.classes, dungeon.classlevels, dungeon.floors FROM characters JOIN dungeon ON characters.id = dungeon.id WHERE characters.id = ${user.id}`);
-            inv = {id: user.id, class: stats.class, premium: stats.premium, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), skin: JSON.parse(inv[0].skin), equipment: JSON.parse(inv[0].equipment), classes: JSON.parse(inv[0].classes), classlevels: JSON.parse(inv[0].classlevels), floors: JSON.parse(inv[0].floors)};
+            const { 0: inv } = await query(`SELECT characters.chars, characters.ref, users.level, users.equipment, characters.skin, dungeon.classes, dungeon.classlevels, dungeon.floors FROM characters JOIN users ON characters.id = users.id JOIN dungeon ON characters.id = dungeon.id WHERE characters.id = ${user.id}`);
+            inv.id = user.id, inv.class = stats.class, inv.premium = stats.premium, inv.bank = stats.bank, inv.shield_slot = stats.shield_slot, inv.chars = JSON.parse(inv.chars), inv.ref = JSON.parse(inv.ref), inv.skin = JSON.parse(inv.skin), inv.equipment = JSON.parse(inv.equipment), inv.classes = JSON.parse(inv.classes), inv.classlevels = JSON.parse(inv.classlevels), inv.floors = JSON.parse(inv.floors);
             if (!inv.chars.length) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
             stats.ref = inv.ref[stats.battlechar];
             stats.classlevels = inv.classlevels;
 
             let chars = [...new Set(inv.chars)].map((e) => characters[e]);
-            
+
             // Anime Completed
             let aniCompleted = 0;
-            for (let i=0; i < auniq.length; i++) {
+            for (let i = 0; i < auniq.length; i++) {
                 let animeCheck = characters.filter((e) => e.anime === auniq[i]).length;
                 let invCheck = chars.filter((e) => e.anime === auniq[i]).length;
                 if (animeCheck === invCheck) aniCompleted++;
             };
 
             // Floor
-            if (inv.floors[Object.keys(inv.floors)[Object.keys(inv.floors).length-1]] >= 20 && Object.keys(inv.floors)[Object.keys(inv.floors).length-1] !== 100) inv.floors[1+parseInt(Object.keys(inv.floors)[Object.keys(inv.floors).length-1])] = 0;
-            if (inv.floors[Object.keys(inv.floors)[Object.keys(inv.floors).length-1]] >= 1 && Object.keys(inv.floors)[Object.keys(inv.floors).length-1] % 5 == 0 && Object.keys(inv.floors)[Object.keys(inv.floors).length-1] !== 100) inv.floors[1+parseInt(Object.keys(inv.floors)[Object.keys(inv.floors).length-1])] = 0;
-            stats.floor = parseInt(Object.keys(inv.floors)[Object.keys(inv.floors).length-1])
+            if (inv.floors[Object.keys(inv.floors)[Object.keys(inv.floors).length - 1]] >= 20 && Object.keys(inv.floors)[Object.keys(inv.floors).length - 1] !== 100) inv.floors[1 + parseInt(Object.keys(inv.floors)[Object.keys(inv.floors).length - 1])] = 0;
+            if (inv.floors[Object.keys(inv.floors)[Object.keys(inv.floors).length - 1]] >= 1 && Object.keys(inv.floors)[Object.keys(inv.floors).length - 1] % 5 == 0 && Object.keys(inv.floors)[Object.keys(inv.floors).length - 1] !== 100) inv.floors[1 + parseInt(Object.keys(inv.floors)[Object.keys(inv.floors).length - 1])] = 0;
+            stats.floor = parseInt(Object.keys(inv.floors)[Object.keys(inv.floors).length - 1]);
 
             // Char Stats
             stats.stats = await getDetailedStats(stats.battlechar, inv, stats.classlevels);
@@ -471,28 +475,28 @@ module.exports = {
                 stats.colorLight = profileColors[stats.profilecolor]?.[0] || (['#ffffff', '#d46600', '#8fd3e2', '#ffe036', '#00546a'][classes[stats.class]?.tier] || '#ffffff');
                 stats.colorDark = profileColors[stats.profilecolor]?.[1] || (['#ddd0c0', '#c63a17', '#4c9fea', '#ffa114', '#1b3d68'][classes[stats.class]?.tier] || '#ddd0c0');
             };
-            
+
             // Create Image or Embed
             let Embed, img;
             if (type === "image") img = await getProfileImage(user, stats);
             else {
                 let padded = padCollected(chars);
                 Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setThumbnail(stats.thumbnail)
-                .setAuthor({name: `${user.username}'s profile${stats.premium ? " 💎" : ""}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-                .setDescription(
-                    `**Level**: \`${userLevel(stats.xp)}\`ㅤ**Coins**: \`${stats.coins}\`<:coins:872926669055356939>ㅤ**Gems**: \`${stats.gems}\`<:genesis_gems:1034179687720681492>\n` +
-                    `**Dungeon**: \`Floor ${Math.min(stats.floor, 100)}/${stats.floor <= 100 ? 0 : Math.min(stats.floor-100, 100)}/${Math.max(stats.floor-200, 0)}\`ㅤ**Arena**: \`${stats.arenawins} wins\`, \`${stats.arenalosses} losses\`\n` +
-                    `**Guild**: \`${guild?.name || "None"}\`ㅤ**Party**: \`${party?.name || "None"}\`\n` +
-                    `**Anime Completed**: \`${aniCompleted}/${auniq.length}\`\n` +
-                    `**Achievements**: \`${stats.achievements.length}/${achievements.length}\`\n` + "\n" +
-                    
-                    `**Characters**: __\`${chars.length}/${characters.length}\`__ (__\`${chars.filter((e) => e.gender === "F").length}/${charactersF.length}\`__<:female:870076411430436914>__\`${chars.filter((e) => e.gender === "M").length}/${charactersM.length}\`__<:male:870076394649047080>)\n` +
-                    `<:SSTier:869316489931546644> **Tier**: ${padded[0]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[3]}\n` +
-                    `<:ATier:869316558013464627> **Tier**: ${padded[1]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[4]}\n` +
-                    `<:CTier:869316602858991657> **Tier**: ${padded[2]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[5]}`
-                );
+                    .setColor(0xbbffff)
+                    .setThumbnail(stats.thumbnail)
+                    .setAuthor({ name: `${user.username}'s profile${stats.premium ? " 💎" : ""}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
+                    .setDescription(
+                        `**Level**: \`${userLevel(stats.xp)}\`ㅤ**Coins**: \`${stats.coins}\`<:coins:872926669055356939>ㅤ**Gems**: \`${stats.gems}\`<:genesis_gems:1034179687720681492>\n` +
+                        `**Dungeon**: \`Floor ${Math.min(stats.floor, 100)}/${stats.floor <= 100 ? 0 : Math.min(stats.floor - 100, 100)}/${Math.max(stats.floor - 200, 0)}\`ㅤ**Arena**: \`${stats.arenawins} wins\`, \`${stats.arenalosses} losses\`\n` +
+                        `**Guild**: \`${guild?.name || "None"}\`ㅤ**Party**: \`${party?.name || "None"}\`\n` +
+                        `**Anime Completed**: \`${aniCompleted}/${auniq.length}\`\n` +
+                        `**Achievements**: \`${stats.achievements.length}/${achievements.length}\`\n` + "\n" +
+
+                        `**Characters**: __\`${chars.length}/${characters.length}\`__ (__\`${chars.filter((e) => e.gender === "F").length}/${charactersF.length}\`__<:female:870076411430436914>__\`${chars.filter((e) => e.gender === "M").length}/${charactersM.length}\`__<:male:870076394649047080>)\n` +
+                        `<:SSTier:869316489931546644> **Tier**: ${padded[0]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[3]}\n` +
+                        `<:ATier:869316558013464627> **Tier**: ${padded[1]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[4]}\n` +
+                        `<:CTier:869316602858991657> **Tier**: ${padded[2]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[5]}`
+                    );
             };
 
             // Check if there's a mail
@@ -507,16 +511,16 @@ module.exports = {
 
                 return interaction.editReply({ embeds: type === "image" ? [] : [Embed], files: type === "image" ? [img] : [], components: [row], fetchReply: true }).then((msg) => {
 
-                    const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "open", componentType: ComponentType.Button, time: 30000 });
-    
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "open", componentType: ComponentType.Button, time: 30000 });
+
                     collector.on('collect', async () => {
                         let stats = await query(`SELECT mailbox FROM users WHERE id = ${user.id}`);
                         stats = JSON.parse(stats[0].mailbox);
                         const mail = stats.shift();
                         if (!mail) return interaction.channel.send("You don't have any notifications");
 
-                        let add_xp = 0, add_coins = 0, add_gems = 0, add_shards = {"ss": 0,"s":0,"a":0,"b":0,"c":0,"d":0}, add_tickets = {"ss": 0,"s":0,"a":0,"b":0,"c":0,"d":0}, add_lb = 0;
-                        
+                        let add_xp = 0, add_coins = 0, add_gems = 0, add_shards = { "ss": 0, "s": 0, "a": 0, "b": 0, "c": 0, "d": 0 }, add_tickets = { "ss": 0, "s": 0, "a": 0, "b": 0, "c": 0, "d": 0 }, add_lb = 0;
+
                         const types = {
                             "1": { // XP
                                 run: () => {
@@ -601,21 +605,21 @@ module.exports = {
                                 },
                             },
                         };
-                
+
                         mail.type.split(",").forEach((type) => {
                             types[type].run();
                         });
-                        
-                        let shardEmojis = {"ss":"<:ss_shard:917203009543503892>","s":"<:s_shard:917202925514817566>","a":"<:a_shard:917202904862052392>","b":"<:b_shard:917202862851899392>","c":"<:c_shard:917202862499582002>","d":"<:d_shard:917202840563363891>"};
-                        let ticketEmojis = {"ss":"<:ss_ticket:927503239396622336>","s":"<:s_ticket:927642487705722890>","a":"<:a_ticket:929420377946472508>","b":"<:b_ticket:929420396535615519>","c":"<:c_ticket:929420424645853214>","d":"<:d_ticket:929420447102152714>"};
-                        
-                        let notification = `${mail.message}\n\n**Rewards**:\n>>> `
+
+                        let shardEmojis = { "ss": "<:ss_shard:917203009543503892>", "s": "<:s_shard:917202925514817566>", "a": "<:a_shard:917202904862052392>", "b": "<:b_shard:917202862851899392>", "c": "<:c_shard:917202862499582002>", "d": "<:d_shard:917202840563363891>" };
+                        let ticketEmojis = { "ss": "<:ss_ticket:927503239396622336>", "s": "<:s_ticket:927642487705722890>", "a": "<:a_ticket:929420377946472508>", "b": "<:b_ticket:929420396535615519>", "c": "<:c_ticket:929420424645853214>", "d": "<:d_ticket:929420447102152714>" };
+
+                        let notification = `${mail.message.replace(/\\n/g, "\n")}\n\n**Rewards**:\n>>> `;
 
                         const Mail = new EmbedBuilder()
-                        .setColor(0xbbffff)
-                        .setAuthor({name: "Mailbox", iconURL: "https://i.ibb.co/HDHFqDB/621813807534309376.gif"})
-                        .setThumbnail("https://i.ibb.co/nLrQFvd/gb.png")
-                        .setFooter({text: `Date issued: ${new Date(parseInt(mail.date)).getUTCDate()}/${new Date(parseInt(mail.date)).getUTCMonth() + 1}/${new Date(parseInt(mail.date)).getUTCFullYear()}`} )
+                            .setColor(0xbbffff)
+                            .setAuthor({ name: "Mailbox", iconURL: "https://i.ibb.co/HDHFqDB/621813807534309376.gif" })
+                            .setThumbnail("https://i.ibb.co/nLrQFvd/gb.png")
+                            .setFooter({ text: `Date issued: ${new Date(parseInt(mail.date)).getUTCDate()}/${new Date(parseInt(mail.date)).getUTCMonth() + 1}/${new Date(parseInt(mail.date)).getUTCFullYear()}` });
 
                         mail.type.split(",").forEach((type) => {
                             switch (type) {
@@ -632,266 +636,16 @@ module.exports = {
                         });
 
                         await query(`UPDATE users SET xp = xp + ${add_xp}, coins = coins + ${add_coins}, gems = gems + ${add_gems}, lootbox = lootbox + ${add_lb}, ssshard = ssshard + ${add_shards["ss"]}, sshard = sshard + ${add_shards["s"]}, ashard = ashard + ${add_shards["a"]}, bshard = bshard + ${add_shards["b"]}, cshard = cshard + ${add_shards["c"]}, dshard = dshard + ${add_shards["d"]}, ssticket = ssticket + ${add_tickets["ss"]}, sticket = sticket + ${add_tickets["s"]}, aticket = aticket + ${add_tickets["a"]}, bticket = bticket + ${add_tickets["b"]}, cticket = cticket + ${add_tickets["c"]}, dticket = dticket + ${add_tickets["d"]}, mailbox = '${JSON.stringify(stats)}', mailreceived = mailreceived - 1 WHERE id = ${user.id}`);
-                        
+
                         Mail.setDescription(notification);
                         return interaction.channel.send({ embeds: [Mail] });
                     });
-    
+
                 });
             };
 
             return interaction.editReply({ embeds: type === "image" ? [] : [Embed], files: type === "image" ? [img] : [] });
         });
-        
-	},
+
+    },
 };
-
-// /* eslint-disable no-unused-vars */
-// const fs = require('fs');
-// const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require("discord.js");
-// const { characters, auniq, charactersF, charactersM, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } = require("../Modules/chars.js");
-// const { skins } = require("../Modules/skins.js");
-// const { userLevel } = require("../Modules/functions.js");
-// const { db, query } = require("../db_handler.js");
-// const { achievements } = require("../Modules/achievements.js");
-// const { items } = require("../Modules/items.js");
-
-// function padCollected(collSS, collS, collA, collB, collC, collD) {
-//     let res = []; // SS, A, C, S, B, D
-//     let len = Math.max(`${collSS}/${charactersSS.length}`.length, `${collA}/${charactersA.length}`.length, `${collC}/${charactersC.length}`.length);
-//     res.push(`\`${collSS}/${charactersSS.length}` + " ".repeat(len - `${collSS}/${charactersSS.length}`.length) + "`");
-//     res.push(`\`${collA}/${charactersA.length}` + " ".repeat(len - `${collA}/${charactersA.length}`.length) + "`");
-//     res.push(`\`${collC}/${charactersC.length}` + " ".repeat(len - `${collC}/${charactersC.length}`.length) + "`");
-//     len = Math.max(`${collS}/${charactersS.length}`.length, `${collB}/${charactersB.length}`.length, `${collD}/${charactersD.length}`.length);
-//     res.push(`\`${collS}/${charactersS.length}` + " ".repeat(len - `${collS}/${charactersS.length}`.length) + "`");
-//     res.push(`\`${collB}/${charactersB.length}` + " ".repeat(len - `${collB}/${charactersB.length}`.length) + "`");
-//     res.push(`\`${collD}/${charactersD.length}` + " ".repeat(len - `${collD}/${charactersD.length}`.length) + "`");
-//     return res;
-// };
-
-// module.exports = {
-//     name: 'profile',
-// 	description: 'User Profile',
-// 	execute(interaction) {
-        
-//         let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-        
-//         let user = interaction.options.getUser('user') || interaction.user;
-//         const ephemeral = interaction.options.getString('ephemeral') || "false";
-        
-//         db.serialize(async () => {
-//             const { 0: stats } = await query(`SELECT favchar, xp, coins, gems, arenawins, arenalosses, lilies, achievements, items, mailbox, premium, guild, party FROM users WHERE id = ${user.id}`);
-//             if (!stats) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
-//             stats.achievements = JSON.parse(stats.achievements);
-//             stats.items = JSON.parse(stats.items);
-//             stats.mailbox = JSON.parse(stats.mailbox);
-
-//             let inv = await query(`SELECT chars, ref, skin FROM characters WHERE id = ${user.id}`);
-//             inv = {chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), skin: JSON.parse(inv[0].skin)};
-//             if (!inv.chars.length) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
-            
-//             let dg = await query(`SELECT floors FROM dungeon WHERE id = ${user.id}`);
-//             dg = {floors: JSON.parse(dg[0].floors)};
-
-//             let chars = [...new Set(inv.chars)].map((e) => characters[e]);
-            
-//             let collected = chars.length;
-//             let collectedF = chars.filter((e) => e.gender === "F").length;
-//             let collectedM = chars.filter((e) => e.gender === "M").length;
-//             let collSS = chars.filter((e) => e.rarity === "SS").length;
-//             let collS = chars.filter((e) => e.rarity === "S").length;
-//             let collA = chars.filter((e) => e.rarity === "A").length;
-//             let collB = chars.filter((e) => e.rarity === "B").length;
-//             let collC = chars.filter((e) => e.rarity === "C").length;
-//             let collD = chars.filter((e) => e.rarity === "D").length;
-            
-//             let padded = padCollected(collSS, collS, collA, collB, collC, collD);
-
-//             // Anime Completed
-//             let aniCompleted = 0;
-//             for (let i=0; i < auniq.length; i++) {
-//                 let animeCheck = characters.filter((e) => e.anime === auniq[i]).length;
-//                 let invCheck = chars.filter((e) => e.anime === auniq[i]).length;
-//                 if (animeCheck === invCheck) aniCompleted++;
-//             };
-
-//             // Floor
-//             let floor = 1;
-//             if (dg.floors[Object.keys(dg.floors)[Object.keys(dg.floors).length-1]] >= 20 && Object.keys(dg.floors)[Object.keys(dg.floors).length-1] !== 100) dg.floors[1+parseInt(Object.keys(dg.floors)[Object.keys(dg.floors).length-1])] = 0;
-//             if (dg.floors[Object.keys(dg.floors)[Object.keys(dg.floors).length-1]] >= 1 && Object.keys(dg.floors)[Object.keys(dg.floors).length-1] % 5 == 0 && Object.keys(dg.floors)[Object.keys(dg.floors).length-1] !== 100) dg.floors[1+parseInt(Object.keys(dg.floors)[Object.keys(dg.floors).length-1])] = 0;
-//             floor = parseInt(Object.keys(dg.floors)[Object.keys(dg.floors).length-1])
-
-//             // Guild & Party
-//             const { 0: guild } = await query(`SELECT name FROM guilds WHERE id = '${stats.guild}'`);
-//             const { 0: party } = await query(`SELECT name FROM parties WHERE id = '${stats.party}'`);
-    
-//             let thumbnail = chars[Math.floor(Math.random() * chars.length)].image;
-//             if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], inv.skin[stats.favchar]);
-            
-//             const Embed = new EmbedBuilder()
-//             .setColor(0xbbffff)
-//             .setThumbnail(thumbnail)
-//             .setAuthor({name: `${user.username}'s profile${stats.premium ? " 💎" : ""}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-//             .setDescription(
-//                 `**Level**: \`${userLevel(stats.xp)}\`ㅤ**Coins**: \`${stats.coins}\`<:coins:872926669055356939>ㅤ**Gems**: \`${stats.gems}\`<:genesis_gems:1034179687720681492>\n` +
-//                 `**Dungeon**: \`Floor ${Math.min(floor, 100)}/${floor <= 100 ? 0 : Math.min(floor-100, 100)}/${Math.max(floor-200, 0)}\`ㅤ**Arena**: \`${stats.arenawins} wins\`, \`${stats.arenalosses} losses\`\n` +
-//                 `**Guild**: \`${guild?.name || "None"}\`ㅤ**Party**: \`${party?.name || "None"}\`\n` +
-//                 `**Anime Completed**: \`${aniCompleted}/${auniq.length}\`\n` +
-//                 `**Achievements**: \`${stats.achievements.length}/${achievements.length}\`\n` + "\n" +
-                
-//                 `**Characters**: __\`${collected}/${characters.length}\`__ (__\`${collectedF}/${charactersF.length}\`__<:female:870076411430436914>__\`${collectedM}/${charactersM.length}\`__<:male:870076394649047080>)\n` +
-//                 `<:SSTier:869316489931546644> **Tier**: ${padded[0]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[3]}\n` +
-//                 `<:ATier:869316558013464627> **Tier**: ${padded[1]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[4]}\n` +
-//                 `<:CTier:869316602858991657> **Tier**: ${padded[2]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[5]}`
-//             );
-
-//             // Check if there's a mail
-//             if (stats.mailbox.length && user.id === interaction.user.id) {
-//                 const row = new ActionRowBuilder()
-//                     .addComponents(
-//                         new ButtonBuilder()
-//                             .setCustomId('open')
-//                             .setLabel(`You've got ${stats.mailbox.length} new ${stats.mailbox.length === 1 ? "mail" : "mails"}!`)
-//                             .setStyle('Primary'),
-//                     );
-
-//                 return interaction.reply({ embeds: [Embed], components: [row], ephemeral: ephemeral === "true", fetchReply: true }).then((msg) => {
-
-//                     const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "open", componentType: ComponentType.Button, time: 30000 });
-    
-//                     collector.on('collect', async r => {
-//                         let stats = await query(`SELECT mailbox FROM users WHERE id = ${user.id}`);
-//                         stats = JSON.parse(stats[0].mailbox);
-//                         const mail = stats.shift();
-//                         if (!mail) return interaction.channel.send("You don't have any notifications");
-
-//                         let add_xp = 0, add_coins = 0, add_gems = 0, add_shards = {"ss": 0,"s":0,"a":0,"b":0,"c":0,"d":0}, add_tickets = {"ss": 0,"s":0,"a":0,"b":0,"c":0,"d":0}, add_lb = 0;
-                        
-//                         const types = {
-//                             "1": { // XP
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach((rew) => {
-//                                         if (rew.match(/xp/gi)) add_xp += parseInt(rew.split("|")[1]);
-//                                     });
-//                                 },
-//                             },
-//                             "2": { // Coins
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach((rew) => {
-//                                         if (rew.match(/coins/gi)) add_coins += parseInt(rew.split("|")[1]);
-//                                     });
-//                                 },
-//                             },
-//                             "3": { // Shards
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach((rew) => {
-//                                         if (rew.match(/shard/gi)) {
-//                                             add_shards[rew.split(" ")[0]] += parseInt(rew.split("|")[1]);
-//                                         };
-//                                     });
-//                                 },
-//                             },
-//                             "4": { // Tickets
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach((rew) => {
-//                                         if (rew.match(/ticket/gi)) {
-//                                             add_tickets[rew.split(" ")[0]] += parseInt(rew.split("|")[1]);
-//                                         };
-//                                     });
-//                                 },
-//                             },
-//                             "5": { // Lootbox
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach((rew) => {
-//                                         if (rew.match(/lb/gi)) add_lb += parseInt(rew.split("|")[1]);
-//                                     });
-//                                 },
-//                             },
-//                             "6": { // Char
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach(async (rew) => {
-//                                         if (rew.match(/char/gi)) {
-//                                             let cinv = await query(`SELECT chars FROM characters WHERE id = ${interaction.user.id}`);
-//                                             cinv = JSON.parse(cinv[0].chars);
-//                                             cinv.push(parseInt(rew.split("|")[1]));
-//                                             await query(`UPDATE characters SET chars = '${JSON.stringify(cinv)}' WHERE id = ${interaction.user.id}`);
-//                                         };
-//                                     });
-//                                 },
-//                             },
-//                             "7": { // Skin
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach(async (rew) => {
-//                                         if (rew.match(/skin/gi)) {
-//                                             let cinv = await query(`SELECT skins FROM users WHERE id = ${interaction.user.id}`);
-//                                             cinv = JSON.parse(cinv[0].skins);
-//                                             cinv.push(parseInt(rew.split("|")[1]));
-//                                             await query(`UPDATE users SET skins = '${JSON.stringify(cinv)}' WHERE id = ${interaction.user.id}`);
-//                                         };
-//                                     });
-//                                 },
-//                             },
-//                             "8": {
-//                                 run: async () => {
-//                                     let cinv = await query(`SELECT items FROM users WHERE id = ${interaction.user.id}`);
-//                                     cinv = JSON.parse(cinv[0].items);
-//                                     for (const rew of mail.rewards.split(",")) {
-//                                         if (rew.match(/item/gi)) {
-//                                             cinv[parseInt(rew.split("|")[1])] = cinv[parseInt(rew.split("|")[1])] + parseInt(rew.split("|")[2]) || parseInt(rew.split("|")[2]);
-//                                         };
-//                                     };
-//                                     await query(`UPDATE users SET items = '${JSON.stringify(cinv)}' WHERE id = ${interaction.user.id}`);
-//                                 },
-//                             },
-//                             "9": { // Gems
-//                                 run: () => {
-//                                     mail.rewards.split(",").forEach((rew) => {
-//                                         if (rew.match(/gems/gi)) add_gems += parseInt(rew.split("|")[1]);
-//                                     });
-//                                 },
-//                             },
-//                         };
-                
-//                         mail.type.split(",").forEach((type) => {
-//                             types[type].run();
-//                         });
-                        
-//                         let shardEmojis = {"ss":"<:ss_shard:917203009543503892>","s":"<:s_shard:917202925514817566>","a":"<:a_shard:917202904862052392>","b":"<:b_shard:917202862851899392>","c":"<:c_shard:917202862499582002>","d":"<:d_shard:917202840563363891>"};
-//                         let ticketEmojis = {"ss":"<:ss_ticket:927503239396622336>","s":"<:s_ticket:927642487705722890>","a":"<:a_ticket:929420377946472508>","b":"<:b_ticket:929420396535615519>","c":"<:c_ticket:929420424645853214>","d":"<:d_ticket:929420447102152714>"};
-                        
-//                         let notification = `${mail.message}\n\n**Rewards**:\n>>> `
-
-//                         const Mail = new EmbedBuilder()
-//                         .setColor(0xbbffff)
-//                         .setAuthor({name: "Mailbox", iconURL: "https://i.ibb.co/HDHFqDB/621813807534309376.gif"})
-//                         .setThumbnail("https://i.ibb.co/nLrQFvd/gb.png")
-//                         .setFooter({text: `Date issued: ${new Date(parseInt(mail.date)).getUTCDate()}/${new Date(parseInt(mail.date)).getUTCMonth() + 1}/${new Date(parseInt(mail.date)).getUTCFullYear()}`} )
-
-//                         mail.type.split(",").forEach((type) => {
-//                             switch (type) {
-//                                 case "1": mail.rewards.split(",").forEach((rew) => { if (rew.match(/xp/gi)) notification += `You received **${rew.split("|")[1]}** XP!\n`; }); break;
-//                                 case "2": mail.rewards.split(",").forEach((rew) => { if (rew.match(/coins/gi)) notification += `Added **${rew.split("|")[1]}** <:coins:872926669055356939>\n`; }); break;
-//                                 case "3": mail.rewards.split(",").forEach((rew) => { if (rew.match(/shard/gi)) notification += `Added **${rew.split("|")[1]}**x ${shardEmojis[rew.split(" ")[0]]}\n`; }); break;
-//                                 case "4": mail.rewards.split(",").forEach((rew) => { if (rew.match(/ticket/gi)) notification += `Added **${rew.split("|")[1]}**x ${ticketEmojis[rew.split(" ")[0]]}\n`; }); break;
-//                                 case "5": mail.rewards.split(",").forEach((rew) => { if (rew.match(/lb/gi)) notification += `Added **${rew.split("|")[1]}** ${rew.split("|")[1] == "1" ? "lootbox" : "lootboxes"}\n`; }); break;
-//                                 case "6": mail.rewards.split(",").forEach((rew) => { if (rew.match(/char/gi)) { notification += `Added ${characters[rew.split("|")[1]].rarity}-Tier **${characters[rew.split("|")[1]].name}**\n`; Mail.setImage(characters[rew.split("|")[1]].image); }; }); break;
-//                                 case "7": mail.rewards.split(",").forEach(async (rew) => { if (rew.match(/skin/gi)) { notification += `Added **${skins[rew.split("|")[1]].name}** skin\n`; Mail.setImage(skins[rew.split("|")[1]].image); }; }); break;
-//                                 case "8": mail.rewards.split(",").forEach((rew) => { if (rew.match(/item/gi)) notification += `Added **${rew.split("|")[2]}**x ${items[rew.split("|")[1]].emoji} **__${items[rew.split("|")[1]].name}__**\n`; }); break;
-//                                 case "9": mail.rewards.split(",").forEach((rew) => { if (rew.match(/gems/gi)) notification += `Added **${rew.split("|")[1]}** <:genesis_gems:1034179687720681492>\n`; }); break;
-//                             };
-//                         });
-
-//                         await query(`UPDATE users SET xp = xp + ${add_xp}, coins = coins + ${add_coins}, gems = gems + ${add_gems}, lootbox = lootbox + ${add_lb}, ssshard = ssshard + ${add_shards["ss"]}, sshard = sshard + ${add_shards["s"]}, ashard = ashard + ${add_shards["a"]}, bshard = bshard + ${add_shards["b"]}, cshard = cshard + ${add_shards["c"]}, dshard = dshard + ${add_shards["d"]}, ssticket = ssticket + ${add_tickets["ss"]}, sticket = sticket + ${add_tickets["s"]}, aticket = aticket + ${add_tickets["a"]}, bticket = bticket + ${add_tickets["b"]}, cticket = cticket + ${add_tickets["c"]}, dticket = dticket + ${add_tickets["d"]}, mailbox = '${JSON.stringify(stats)}', mailreceived = mailreceived - 1 WHERE id = ${user.id}`);
-                        
-//                         Mail.setDescription(notification);
-//                         return interaction.channel.send({ embeds: [Mail] });
-//                     });
-    
-//                 });
-//             };
-
-//             return interaction.reply({ embeds: [Embed], ephemeral: ephemeral === "true" });
-//         });
-        
-// 	},
-// };

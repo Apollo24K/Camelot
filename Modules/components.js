@@ -1,6 +1,4 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder } = require("discord.js");
+const { ActionRowBuilder, ButtonBuilder } = require("discord.js");
 
 const PageRow = new ActionRowBuilder()
     .addComponents(
@@ -33,3 +31,4 @@ const OfferRow = new ActionRowBuilder()
 module.exports.OfferRow = OfferRow;
 
 module.exports.requestVerification = new Map();
+module.exports.dungeonTempBan = new Map();

@@ -11,7 +11,7 @@ class achievInfo {
         this._type = type;
         this._rewards = rewards;
     };
-    
+
     get title() {
         return this._title;
     };
@@ -40,8 +40,8 @@ class achievInfo {
             stats.achievements = JSON.parse(stats.achievements);
             stats.achievements.push(this._id);
 
-            let add_xp = 0, add_coins = 0, add_shards = {"ss": 0,"s":0,"a":0,"b":0,"c":0,"d":0}, add_tickets = {"ss": 0,"s":0,"a":0,"b":0,"c":0,"d":0}, add_lb = 0;
-            
+            let add_xp = 0, add_coins = 0, add_shards = { "ss": 0, "s": 0, "a": 0, "b": 0, "c": 0, "d": 0 }, add_tickets = { "ss": 0, "s": 0, "a": 0, "b": 0, "c": 0, "d": 0 }, add_lb = 0, add_shield = 0;
+
             const types = {
                 "1": { // XP
                     run: () => {
@@ -82,26 +82,31 @@ class achievInfo {
                         });
                     },
                 },
+                "6": { // Shield
+                    run: () => {
+                        add_shield = 1;
+                    },
+                }
             };
-    
+
             this._type.split(",").forEach((type) => {
                 types[type].run();
             });
 
-            await query(`UPDATE users SET xp = xp + ${add_xp}, coins = coins + ${add_coins}, lootbox = lootbox + ${add_lb}, ssshard = ssshard + ${add_shards["ss"]}, sshard = sshard + ${add_shards["s"]}, ashard = ashard + ${add_shards["a"]}, bshard = bshard + ${add_shards["b"]}, cshard = cshard + ${add_shards["c"]}, dshard = dshard + ${add_shards["d"]}, ssticket = ssticket + ${add_tickets["ss"]}, sticket = sticket + ${add_tickets["s"]}, aticket = aticket + ${add_tickets["a"]}, bticket = bticket + ${add_tickets["b"]}, cticket = cticket + ${add_tickets["c"]}, dticket = dticket + ${add_tickets["d"]}, achievements = "${JSON.stringify(stats.achievements)}" WHERE id = ${user.id}`);
-            
+            await query(`UPDATE users SET xp = xp + ${add_xp}, coins = coins + ${add_coins}, lootbox = lootbox + ${add_lb}, ssshard = ssshard + ${add_shards["ss"]}, sshard = sshard + ${add_shards["s"]}, ashard = ashard + ${add_shards["a"]}, bshard = bshard + ${add_shards["b"]}, cshard = cshard + ${add_shards["c"]}, dshard = dshard + ${add_shards["d"]}, ssticket = ssticket + ${add_tickets["ss"]}, sticket = sticket + ${add_tickets["s"]}, aticket = aticket + ${add_tickets["a"]}, bticket = bticket + ${add_tickets["b"]}, cticket = cticket + ${add_tickets["c"]}, dticket = dticket + ${add_tickets["d"]}${add_shield ? `, shield_slot = ${add_shield}` : ""}, achievements = "${JSON.stringify(stats.achievements)}" WHERE id = ${user.id}`);
+
             // Achievements
             achievements[15].check(interaction, user), achievements[16].check(interaction, user), achievements[17].check(interaction, user), achievements[18].check(interaction, user); // Rising
         });
 
     };
-    
+
     notify(interaction) {
-        let shardEmojis = {"ss":"<:ss_shard:917203009543503892>","s":"<:s_shard:917202925514817566>","a":"<:a_shard:917202904862052392>","b":"<:b_shard:917202862851899392>","c":"<:c_shard:917202862499582002>","d":"<:d_shard:917202840563363891>"};
-        let ticketEmojis = {"ss":"<:ss_ticket:927503239396622336>","s":"<:s_ticket:927642487705722890>","a":"<:a_ticket:929420377946472508>","b":"<:b_ticket:929420396535615519>","c":"<:c_ticket:929420424645853214>","d":"<:d_ticket:929420447102152714>"};
-        
-        let notification = `<a:starsL:942573254730715246> Achievement unlocked: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n>>> `
-        
+        let shardEmojis = { "ss": "<:ss_shard:917203009543503892>", "s": "<:s_shard:917202925514817566>", "a": "<:a_shard:917202904862052392>", "b": "<:b_shard:917202862851899392>", "c": "<:c_shard:917202862499582002>", "d": "<:d_shard:917202840563363891>" };
+        let ticketEmojis = { "ss": "<:ss_ticket:927503239396622336>", "s": "<:s_ticket:927642487705722890>", "a": "<:a_ticket:929420377946472508>", "b": "<:b_ticket:929420396535615519>", "c": "<:c_ticket:929420424645853214>", "d": "<:d_ticket:929420447102152714>" };
+
+        let notification = `<a:starsL:942573254730715246> Achievement unlocked: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n>>> `;
+
         this._type.split(",").forEach((type) => {
             switch (type) {
                 case "1": this._rewards.forEach((rew) => { if (rew.match(/xp/gi)) notification += `You were given **${rew.split("|")[1]}** XP\n`; }); break;
@@ -109,24 +114,25 @@ class achievInfo {
                 case "3": this._rewards.forEach((rew) => { if (rew.match(/shard/gi)) notification += `Added **${rew.split("|")[1]}**x ${shardEmojis[rew.split(" ")[0]]}\n`; }); break;
                 case "4": this._rewards.forEach((rew) => { if (rew.match(/ticket/gi)) notification += `Added **${rew.split("|")[1]}**x ${ticketEmojis[rew.split(" ")[0]]}\n`; }); break;
                 case "5": this._rewards.forEach((rew) => { if (rew.match(/lb/gi)) notification += `Added **${rew.split("|")[1]}** ${rew.split("|")[1] == "1" ? "lootbox" : "lootboxes"}\n`; }); break;
+                case "6": notification += `Unlocked <:shield_empty:1087089686809415730> **Shield Slot**\n`;
             };
         });
         interaction.channel.send(notification);
     };
 
-    check(interaction, user=undefined, ...list) {
+    check(interaction, user = undefined, ...list) {
         user ||= interaction.user;
         db.serialize(async () => {
             const { 0: stats } = await query(`SELECT achievements, pullstotal, arenawins, xp FROM users WHERE id = ${user.id}`);
             if (!stats) return;
-            
+
             stats.achievements = JSON.parse(stats.achievements);
             if (stats.achievements.includes(this._id)) return;
 
             let inv = await query(`SELECT chars, ref FROM characters WHERE id = ${user.id}`);
-            inv = {chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref)};
+            inv = { chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref) };
 
-            switch(this._id) {
+            switch (this._id) {
                 case 0: if (stats.pullstotal >= 1) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 1: if (new Set(inv.chars).size >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 2: if (new Set(inv.chars).size >= 2000) this.addRewards(interaction, user), this.notify(interaction); break;
@@ -146,21 +152,21 @@ class achievInfo {
                 case 16: if (stats.xp > 9046) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 17: if (stats.xp > 27863) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 18: if (stats.xp > 115211) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 19: 
-                case 20: 
-                case 21: 
-                case 22: 
+                case 19:
+                case 20:
+                case 21:
+                case 22:
                 case 23: {
-                          let completed = 0;
-                          let chars = [...new Set(inv.chars)].map((e) => characters[e]);
-                          auniq.forEach((a) => { if (characters.filter((e) => e.anime === a).length === chars.filter((e) => e.anime === a).length) completed++ });
-                          if (this._id === 19) if (completed) this.addRewards(interaction, user), this.notify(interaction);
-                          if (this._id === 20) if (completed >= 10) this.addRewards(interaction, user), this.notify(interaction);
-                          if (this._id === 21) if (completed >= 30) this.addRewards(interaction, user), this.notify(interaction);
-                          if (this._id === 22) if (completed >= 100) this.addRewards(interaction, user), this.notify(interaction);
-                          if (this._id === 23) if (completed >= 250) this.addRewards(interaction, user), this.notify(interaction);
-                          break;
-                        }
+                    let completed = 0;
+                    let chars = [...new Set(inv.chars)].map((e) => characters[e]);
+                    auniq.forEach((a) => { if (characters.filter((e) => e.anime === a).length === chars.filter((e) => e.anime === a).length) completed++; });
+                    if (this._id === 19) if (completed) this.addRewards(interaction, user), this.notify(interaction);
+                    if (this._id === 20) if (completed >= 10) this.addRewards(interaction, user), this.notify(interaction);
+                    if (this._id === 21) if (completed >= 30) this.addRewards(interaction, user), this.notify(interaction);
+                    if (this._id === 22) if (completed >= 100) this.addRewards(interaction, user), this.notify(interaction);
+                    if (this._id === 23) if (completed >= 250) this.addRewards(interaction, user), this.notify(interaction);
+                    break;
+                }
                 case 24: if (list[0] === 1) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 25: if (list[0] === 2) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 26: if (list[0] === 3) this.addRewards(interaction, user), this.notify(interaction); break;
@@ -189,6 +195,16 @@ class achievInfo {
                 case 49: this.addRewards(interaction, user), this.notify(interaction); break;
                 case 50: this.addRewards(interaction, user), this.notify(interaction); break;
                 case 51: this.addRewards(interaction, user), this.notify(interaction); break;
+
+                case 52: if (list[0] === "unique") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 53: if (list[0] === "legendary") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 54: if (list[0] === "mythical") this.addRewards(interaction, user), this.notify(interaction); break;
+
+                case 55: if (list[0] === 100 && list[1]) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 56: if (list[0] === 150 && list[1]) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 57: if (list[0] === 200 && list[1]) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 58: if (list[0] === 270 && list[1]) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
 
@@ -203,7 +219,7 @@ const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbo
     new achievInfo("Collector", "Collect 500 characters", 1, 1, "4", "ss ticket|1", "s ticket|3"),
     new achievInfo("Collector", "Collect 2000 characters", 2, 1, "4", "ss ticket|2", "s ticket|5"),
     new achievInfo("Collector", "Collect 5000 characters", 3, 1, "4", "ss ticket|3", "s ticket|10"),
-    
+
     new achievInfo("Something Rare", "Pull an S Tier character", 4, 2, "3", "s shard|4"),
     new achievInfo("Something Rare", "Pull an SS Tier character", 5, 2, "3", "ss shard|4"),
 
@@ -245,10 +261,10 @@ const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbo
     new achievInfo("Golden Sword of the Victorious", "『 ??? 』", 33, 11, "1,2,4", "xp|75", "coins|2000", "s ticket|1"),
 
     new achievInfo("Challenger", "Beat the floor 5 Guardian", 34, 12, "1,2,3", "xp|50", "coins|2000", "ss shard|2"),
-    new achievInfo("Challenger", "Beat the floor 10 Guardian", 35, 12, "1,2,3", "xp|100", "coins|3000", "ss shard|4"),
-    new achievInfo("Challenger", "Beat the floor 25 Guardian", 36, 12, "1,2,3", "xp|200", "coins|5000", "ss shard|8"),
-    new achievInfo("Challenger", "Beat the floor 50 Guardian", 37, 12, "1,2,3", "xp|500", "coins|8000", "ss shard|12"),
-    new achievInfo("Challenger", "Beat the floor 70 Guardian", 38, 12, "1,3,4", "xp|1000", "ss shard|16", "ss ticket|2"),
+    new achievInfo("Challenger", "Beat the floor 10 Guardian", 35, 12, "1,2,3", "xp|75", "coins|3000", "ss shard|4"),
+    new achievInfo("Challenger", "Beat the floor 25 Guardian", 36, 12, "1,2,3", "xp|100", "coins|5000", "ss shard|8"),
+    new achievInfo("Challenger", "Beat the floor 50 Guardian", 37, 12, "1,2,3", "xp|200", "coins|8000", "ss shard|12"),
+    new achievInfo("Challenger", "Beat the floor 70 Guardian", 38, 12, "1,3,4", "xp|250", "ss shard|16", "ss ticket|2"),
 
     new achievInfo("Under Pressure", "Win a battle with 10 or less HP left", 39, 13, "1,2", "xp|20", "coins|500"),
     new achievInfo("Under Pressure", "Win a battle with 3 or less HP left", 40, 13, "1,2", "xp|30", "coins|1000"),
@@ -267,6 +283,18 @@ const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbo
 
     new achievInfo("A New Adventure", "Complete the tutorial", 50, 17, "1,2,4", "xp|30", "coins|300", "a ticket|1"),
     new achievInfo("A New Adventure", "Complete the tutorial", 51, 17, "1,2,4", "xp|30", "coins|500", "a ticket|1"),
+
+    new achievInfo("Angler's Triumph", "Catch a unique fish", 52, 18, "1,2,4", "xp|30", "coins|500", "a ticket|1"),
+    new achievInfo("Angler's Triumph", "Catch a legendary fish", 53, 18, "1,2,4", "xp|75", "coins|2500", "s ticket|1"),
+    new achievInfo("Angler's Triumph", "Catch a mythical fish", 54, 18, "1,2,4", "xp|150", "coins|5000", "ss ticket|1"),
+
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 100 Guardian", 55, 19, "1,2,3", "xp|250", "coins|10000", "ss shard|16"),
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 150 Guardian", 56, 19, "1,2,3", "xp|300", "coins|12500", "ss shard|16"),
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 200 Guardian", 57, 19, "1,2,3", "xp|350", "coins|15000", "ss shard|16"),
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 270 Guardian", 58, 19, "6,1,2,4", "xp|500", "coins|20000", "ss ticket|3"),
+
+
+
 ];
 
 module.exports.achievements = achievements;

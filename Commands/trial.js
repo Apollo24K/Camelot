@@ -19,7 +19,7 @@ const dungeonInProgress = new Set();
 const luminousImages = ["https://i.ibb.co/QpyDLjX/l1.png", "https://i.ibb.co/MfKkZkH/l2.png", "https://i.ibb.co/Hqr6Jgx/l3.png", "https://i.ibb.co/hsbmQRM/l4.png", "https://i.ibb.co/FqmT9vx/l5.png", "https://i.ibb.co/bdjhmCb/l6.png", "https://i.ibb.co/s3fq9Cy/l7.png", "https://i.ibb.co/VTwQTvB/l8.png", "https://i.ibb.co/23xd7cL/l9.png"];
 
 class skillInfo {
-    constructor(id, cost, skill, passive = () => {}, list = []) {
+    constructor(id, cost, skill, passive = () => { }, list = []) {
         this._id = id;
         this._cost = cost;
         this._skill = skill;
@@ -49,8 +49,8 @@ class skillInfo {
 
 module.exports = {
     name: 'trial',
-	description: 'trial',
-	execute(interaction) {
+    description: 'trial',
+    execute(interaction) {
 
         let charChoice = interaction.options.getString('character');
         let classChoice = interaction.options.getString('class');
@@ -59,14 +59,14 @@ module.exports = {
 
         if (classLevel < 1) classLevel = 40;
         if (characterLevel < 1) characterLevel = 80;
-        if (classLevel > 10000) return interaction.reply({content: "Class level can't be set higher than 10000", ephemeral: true});
-        if (characterLevel > 1000) return interaction.reply({content: "Character level can't be set higher than 1000", ephemeral: true});
-        
+        if (classLevel > 10000) return interaction.reply({ content: "Class level can't be set higher than 10000", ephemeral: true });
+        if (characterLevel > 1000) return interaction.reply({ content: "Character level can't be set higher than 1000", ephemeral: true });
+
         db.serialize(async () => {
-            
-            let stats = await query(`SELECT users.id, users.class, users.coins, users.battlechar, users.animationdelay, users.premium, characters.chars, characters.ref, characters.level, characters.equipment, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-            stats = {id: stats[0].id, class: stats[0].class, coins: stats[0].coins, battlechar: stats[0].battlechar, animationdelay: stats[0].animationdelay, premium: stats[0].premium, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: JSON.parse(stats[0].level), equipment: JSON.parse(stats[0].equipment), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels)};
-            
+
+            let stats = await query(`SELECT users.id, users.class, users.coins, users.bank, users.battlechar, users.animationdelay, users.premium, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+            stats = { id: stats[0].id, class: stats[0].class, coins: stats[0].coins, bank: stats[0].bank, battlechar: stats[0].battlechar, animationdelay: stats[0].animationdelay, premium: stats[0].premium, shield_slot: stats[0].shield_slot, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: stats[0].level, equipment: JSON.parse(stats[0].equipment), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+
             if (interaction.commandName === "trial" && charChoice === null && classChoice === null) return interaction.reply("Here you can try out all abilities and classes. Try `/trial <char>`, `/trial <class>` or `/trial <char> <class>`");
             if (!stats.chars.includes(stats.battlechar)) return interaction.reply("You need to choose a battle character first. Use `/select <char>` to choose one.");
 
@@ -77,12 +77,12 @@ module.exports = {
                 cl = classChoice !== null ? searchClass(classChoice, interaction) : false;
                 if (!cl?.id && cl.id !== 0 && classChoice !== null) return;
             };
-            
+
             // Set up restrictions
             if (dungeonInProgress.has(stats.id)) return interaction.reply("You already have a run in progress, please finish it before attempting to start a new round.");
             dungeonInProgress.add(stats.id);
             const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
-            
+
             // User stats
             let myChar, myStats, myStatsC, myClass, skill, myAbility;
             if (interaction.commandName === "trial") {
@@ -91,49 +91,55 @@ module.exports = {
                     stats.class = cl.id;
                     stats.classlevels = Array(classes.length).fill(classLevelToXP(classLevel));
                 };
-                stats.level = Array(characters.length).fill(characterLevel);
+                stats.level = characterLevel;
 
                 myChar = ch || characters[stats.battlechar];
                 myStats = await getDetailedStats(myChar.id, stats, stats.classlevels);
-                myStatsC = {...myStats};
+
+                myStats.thumbnail = myChar.image;
+
+                myStatsC = { ...myStats };
                 myClass = cl || false;
                 skill = myClass ? _.cloneDeep(skills[myClass.id]) : false;
                 myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : false;
             } else {
                 myChar = characters[stats.battlechar];
                 myStats = await getDetailedStats(myChar.id, stats, stats.classlevels);
-                myStatsC = {...myStats};
+
+                myStats.thumbnail = myChar.image;
+
+                myStatsC = { ...myStats };
                 myClass = myStats.class !== -1 ? classes[myStats.class] : false;
                 skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : false;
                 myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : false;
             };
-            
+
             // Enemy Stats
-            let enemy = {"name": "Luminous", "image": luminousImages[Math.floor(Math.random() * luminousImages.length)]};
+            let enemy = { "name": "Luminous", "image": luminousImages[Math.floor(Math.random() * luminousImages.length)] };
             const curseRar = curses.filter((e) => e.tier);
             const curse = curseRar[Math.floor(Math.random() * curseRar.length)];
-            let eAbility = 
-            new skillInfo(0, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user=interaction.user.id, ...list) => {
-                let dmg = Math.floor(((2*eStats.atk) * Math.pow(0.99895, myStats.def)) * (1 - (0.2*Math.random())));
-                myStats.hp -= dmg;
-                if (myStats.hp < 0) myStats.hp = 0;
-                eStats.sm -= 50;
-                matchStats.turn = 0;
-                notice.push(`\n✨ **${enemy.name}** dealt **${dmg}** damage!`);
-            }, () => {}, [5, "Luminous deals 200% damage"]);
+            let eAbility =
+                new skillInfo(0, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user = interaction.user.id, ...list) => {
+                    let dmg = Math.floor(((2 * eStats.atk) * Math.pow(0.99895, myStats.def)) * (1 - (0.2 * Math.random())));
+                    myStats.hp -= dmg;
+                    if (myStats.hp < 0) myStats.hp = 0;
+                    eStats.sm -= 50;
+                    matchStats.turn = 0;
+                    notice.push(`\n✨ **${enemy.name}** dealt **${dmg}** damage!`);
+                }, () => { }, [5, "Luminous deals 200% damage"]);
 
             let eStats = {
                 "name": enemy.name,
-                "hp": Math.floor(myStats.hp*1.16),
-                "maxhp": Math.floor(myStats.hp*1.16),
-                "atk": Math.floor(myStats.atk*1.16),
+                "hp": Math.floor(myStats.hp * 1.16),
+                "maxhp": Math.floor(myStats.hp * 1.16),
+                "atk": Math.floor(myStats.atk * 1.16),
                 "def": Math.floor(myStats.def),
-                "ep": Math.floor(((Math.floor(myStats.hp*1.16)/Math.pow(0.99895,Math.floor(myStats.def))) / (100/Math.floor(myStats.atk*1.16)))*100) / 100,
-                "md": Math.floor(myStats.atk*1.16),
+                "ep": Math.floor(((Math.floor(myStats.hp * 1.16) / Math.pow(0.99895, Math.floor(myStats.def))) / (100 / Math.floor(myStats.atk * 1.16))) * 100) / 100,
+                "md": Math.floor(myStats.atk * 1.16),
                 "mr": Math.floor(myStats.def),
                 "cr": 0.18,
                 "cd": 1.25,
-                "td": Math.floor(myStats.atk*1.16),
+                "td": Math.floor(myStats.atk * 1.16),
                 "br": 0.2,
                 "agility": 80,
                 "dodge": 0.1,
@@ -144,9 +150,9 @@ module.exports = {
                 "revhp": 0.5,
             };
             eStats.image = enemy.image;
-            let eStatsC = {...eStats};
+            let eStatsC = { ...eStats };
 
-            let difficulty = Avalon.getDifficulty(myStats.ep/eStats.ep);
+            let difficulty = Avalon.getDifficulty(myStats.ep / eStats.ep);
 
             const aDelay = stats.premium ? stats.animationdelay : 1200;
 
@@ -165,8 +171,6 @@ module.exports = {
                         desc += "\n*Merlin... Everyone... I'm so...\nsorry...*";
                         // Achievements
                         achievements[33].check(interaction);
-                        // Daily Quests
-                        dailies[5].update(interaction);
                     };
                 };
                 if (r === "l") {
@@ -174,12 +178,15 @@ module.exports = {
                     if (interaction.commandName === "arena") desc += "\n*Until the Selection is made true,\nI shall not fall.*";
                 };
 
+                // Daily Quests
+                dailies[5].update(interaction);
+
                 const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setThumbnail(myChar.image)
-                .setTitle(interaction.commandName === "arena" ? "Battle Arena" : `${ch ? "Character" : "Class"} Trial`)
-                .setDescription(desc)
-                .setFooter({text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                    .setColor(0xbbffff)
+                    .setThumbnail(myStatsC.thumbnail)
+                    .setTitle(interaction.commandName === "arena" ? "Battle Arena" : `${ch ? "Character" : "Class"} Trial`)
+                    .setDescription(desc)
+                    .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                 return Embed;
             };
 
@@ -193,59 +200,59 @@ module.exports = {
             if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-            const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️', 
+            const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
                 DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
                 ABILITY_EMOJI = myStatsC.replaceButton?.ability?.emoji || '✨',
                 SKILL_EMOJI = myStatsC.replaceButton?.skill?.emoji || '⚜️',
                 SKIP_EMOJI = myStatsC.replaceButton?.skip?.emoji || '⏩';
 
             const row = new ActionRowBuilder()
-            .addComponents(
-                new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle('Secondary'),
-                new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle('Secondary'),
-                new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle('Secondary').setDisabled((myAbility && "ability" in myAbility) ? false : true),
-                new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle('Secondary').setDisabled(myStats.class !== -1 ? false : true),
-                new ButtonBuilder().setCustomId('SKIP').setEmoji(SKIP_EMOJI).setStyle('Secondary'),
-            );
+                .addComponents(
+                    new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle('Secondary'),
+                    new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle('Secondary'),
+                    new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle('Secondary').setDisabled((myAbility && "ability" in myAbility) ? false : true),
+                    new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle('Secondary').setDisabled(myStats.class !== -1 ? false : true),
+                    new ButtonBuilder().setCustomId('SKIP').setEmoji(SKIP_EMOJI).setStyle('Secondary'),
+                );
 
             async function newFight() {
                 let timestart = new Date().getTime();
                 let result = await new Promise((resolve, rejects) => {
                     const Embed = new EmbedBuilder()
-                    .setColor(0xbbffff)
-                    .setThumbnail(myChar.image)
-                    .setFooter({text: `Enemy EP: ${eStatsC.ep} | time left: 120s`})
-                    .setTitle(interaction.commandName === "arena" ? "Battle Arena" : `${ch ? "Character" : "Class"} Trial`)
-                    .setDescription(`${interaction.commandName === "arena" ? "I accept your challenge" : `Testing ${ch ? myChar.name : myClass.name}`}\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStats.hp, eStatsC.sm/eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStats.hp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
-                    .setImage(enemy.image)
+                        .setColor(0xbbffff)
+                        .setThumbnail(myStatsC.thumbnail)
+                        .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
+                        .setTitle(interaction.commandName === "arena" ? "Battle Arena" : `${ch ? "Character" : "Class"} Trial`)
+                        .setDescription(`${interaction.commandName === "arena" ? "I accept your challenge" : `Testing ${ch ? myChar.name : myClass.name}`}\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
+                        .setImage(enemy.image);
                     let interactionType = interaction.commandName === "trial" ? interaction : interaction.channel;
                     let replyType = interaction.commandName === "trial" ? "reply" : "send";
                     interactionType[replyType]({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
-                        const atk = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                        const def = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
-                        const ability = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
-                        const cskill = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
-                        const skip = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 120000 });
-                        matchStats.collector = {"atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip};
-                        
+                        const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                        const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
+                        const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
+                        const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
+                        const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 120000 });
+                        matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
+
                         // Use passives
                         if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed);
 
                         async function editEmbed() {
-                            Embed.setDescription(`${interaction.commandName === "arena" ? "I accept your challenge" : `Testing ${ch ? myChar.name : myClass.name}`}\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp/eStatsC.maxhp, eStatsC.sm/eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp/myStatsC.maxhp, myStatsC.sm/myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
-                            Embed.setFooter({text: `Enemy EP: ${eStatsC.ep} | time left: ${120+Math.floor((timestart-new Date().getTime())/1000)}s`});
+                            Embed.setDescription(`${interaction.commandName === "arena" ? "I accept your challenge" : `Testing ${ch ? myChar.name : myClass.name}`}\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
+                            Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                             await msg.edit({ embeds: [Embed] });
                         };
 
                         function minionDefeated(side) {
                             if (side === "my") {
-                                myStatsC = {...matchStats.myStatsCC};
+                                myStatsC = { ...matchStats.myStatsCC };
                                 matchStats.currentCharacter = 0;
-                                Embed.setThumbnail(myChar.image);
+                                Embed.setThumbnail(myStatsC.thumbnail);
                                 startNextRound();
                             } else {
-                                eStatsC = {...matchStats.eStatsCC};
+                                eStatsC = { ...matchStats.eStatsCC };
                                 matchStats.currentOpponent = 0;
                                 Embed.setImage(enemy.image);
                                 attack();
@@ -253,6 +260,9 @@ module.exports = {
                         };
 
                         function endMatch(wORl) {
+                            if (matchStats.ended) return;
+                            else matchStats.ended = true;
+
                             atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
                             if (wORl === "l") notice.push(`\n💀 **${myChar.name}** lost`);
                             else notice.push(`\n🎉 **${myChar.name}** won`);
@@ -260,14 +270,14 @@ module.exports = {
                             matchStats.turn = 1;
                             resolve(matchResult(wORl));
                         };
-                        
+
                         function startNextRound() {
                             if (matchStats.round === matchStats.roundCheck) return;
                             matchStats.roundCheck = matchStats.round;
                             if (matchStats.currentCharacter || matchStats.currentOpponent) return;
 
                             // Consume Mana
-                            Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myChar.image);
+                            Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myStatsC.thumbnail);
 
                             // Reset Buffs
                             if (matchStats.currentCharacter === 0) myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
@@ -286,44 +296,54 @@ module.exports = {
                             else eStatsC.hp = Math.floor(eStatsC.hp);
 
                             // Check and run delayed buffs
-                            for (let i=myStatsC.delayedBuffs.length-1; i >= 0; i--) {
-                                if (myStatsC.delayedBuffs[i].round <= matchStats.round) {
-                                    myStatsC.delayedBuffs[i].run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                                    if (myStatsC.delayedBuffs[i].last <= 1 || myStatsC.delayedBuffs[i].used >= myStatsC.delayedBuffs[i].usage) {
-                                        myStatsC.delayedBuffs.splice(i, 1);
-                                    } else {
-                                        myStatsC.delayedBuffs[i].decrement();
+                            if (matchStats.currentCharacter === 0) {
+                                for (let i = myStatsC.delayedBuffs.length - 1; i >= 0; i--) {
+                                    if (myStatsC.delayedBuffs[i].round <= matchStats.round) {
+                                        myStatsC.delayedBuffs[i].run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                        if (myStatsC.delayedBuffs[i].last <= 1 || myStatsC.delayedBuffs[i].used >= myStatsC.delayedBuffs[i].usage) {
+                                            myStatsC.delayedBuffs.splice(i, 1);
+                                        } else {
+                                            myStatsC.delayedBuffs[i].decrement();
+                                        };
                                     };
                                 };
                             };
 
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                         };
-                        
+
                         function attack() {
                             if (matchStats.turn === 1) return;
-                            setTimeout(() => {
-                                if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
-                                    curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                                    eStatsC.sm -= curse.cost;
-                                    editEmbed();
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    attack();
-                                } else if (matchStats.blockAbilities < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5) {
-                                    eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                                    editEmbed();
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    attack();
-                                } else {
-                                    dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, {magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    matchStats.turn = 1;
-                                    matchStats.round++;
-                                    startNextRound();
-                                    editEmbed();
-                                };
-                                if (matchStats.counter > 0) matchStats.counter--;
-                            }, aDelay);
+                            if (eStatsC.timeFrozen) {
+                                if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                matchStats.turn = 1;
+                                matchStats.round++;
+                                startNextRound();
+                                editEmbed();
+                            } else {
+                                setTimeout(() => {
+                                    if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
+                                        curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                        eStatsC.sm -= curse.cost;
+                                        editEmbed();
+                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        attack();
+                                    } else if (matchStats.blockAbilities < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5) {
+                                        eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                        editEmbed();
+                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        attack();
+                                    } else {
+                                        dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        matchStats.turn = 1;
+                                        matchStats.round++;
+                                        startNextRound();
+                                        editEmbed();
+                                    };
+                                    if (matchStats.counter > 0) matchStats.counter--;
+                                }, aDelay);
+                            };
                         };
 
                         if (notice.length > 4) {
@@ -345,28 +365,28 @@ module.exports = {
 
                                 // Normal attack
                                 else {
-                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {block: true, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
+                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, { block: true, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-    
+
                                     if (matchStats.twinshot > Math.random()) setTimeout(() => {
-                                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, {block: true, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true});
+                                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, { block: true, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     }, aDelay);
-                                    
+
                                     else attack();
                                 }
 
-                            } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                         });
 
                         def.on('collect', async r => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
                                 matchStats.attackStreak = 0;
-                                
+
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
                                     myStatsC.replaceButton.def.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
@@ -374,15 +394,15 @@ module.exports = {
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     if (matchStats.turn === 0) attack();
                                 }
-                                
+
                                 // Use defense
                                 else {
-                                    if (++matchStats.defUsed === 10) interaction.channel.send(`You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                    if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
                                     if (matchStats.defUsed > 10) {
                                         notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
                                     } else {
-                                        let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed-1)*5);
-                                        let addmr = Math.floor((myClass ? 60*myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed-1)*5);
+                                        let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
+                                        let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
                                         buffs.def.push(new buffInfo("+", adddef, 9999));
                                         buffs.mr.push(new buffInfo("+", addmr, 9999));
                                         myStatsC.def += adddef;
@@ -394,14 +414,14 @@ module.exports = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                 }
-                                
-                            } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+
+                            } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                         });
-                        
+
                         ability.on('collect', async r => {
                             if (myAbility.used < myAbility.usage) {
                                 if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
                                     else {
                                         matchStats.turn = 0;
                                         matchStats.attackStreak = 0;
@@ -412,22 +432,36 @@ module.exports = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         });
 
                         cskill.on('collect', async r => {
-                            if (myChar.id === 4767) interaction.channel.send("Asta can't use any abilities").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            if (skill._cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${skill._cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+
+                            // If class active was replaced
+                            if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                matchStats.attackStreak = 0;
+                                myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                if (matchStats.turn === 0) attack();
+                            }
+
+                            // Class active
                             else {
-                                if (matchStats.turn === 1) {
-                                    myStatsC.sm -= skill._cost;
-                                    matchStats.attackStreak = 0;
-                                    skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
-                                    editEmbed();
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    attack();
-                                } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                if (myChar.id === 4767) return interaction.followUp({ content: "Asta can't use any abilities", ephemeral: true });
+                                if (skill._cost > myStatsC.sm) return interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill._cost}${customEmojis.mana})`, ephemeral: true });
+                                else {
+                                    if (matchStats.turn === 1) {
+                                        myStatsC.sm -= skill._cost;
+                                        matchStats.attackStreak = 0;
+                                        skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                        editEmbed();
+                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        attack();
+                                    } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                };
                             };
                         });
 
@@ -437,24 +471,24 @@ module.exports = {
                                 editEmbed();
                                 matchStats.turn = 0;
                                 while (eStatsC.hp > 0 && myStatsC.hp > 0) {
-                                    if (Math.random() > 0.02 + (0.1*(eStatsC.ep/myStatsC.ep))) eStatsC.hp -= Math.floor((myStatsC.atk * Math.pow(0.99895, eStatsC.def)) * (1 - (0.2*Math.random())));
+                                    if (Math.random() > 0.02 + (0.1 * (eStatsC.ep / myStatsC.ep))) eStatsC.hp -= Math.floor((myStatsC.atk * Math.pow(0.99895, eStatsC.def)) * (1 - (0.2 * Math.random())));
                                     if (eStatsC.hp < 0) eStatsC.hp = 0;
-                                    if (eStatsC.hp > 0) myStatsC.hp -= Math.floor((eStatsC.atk * Math.pow(0.99895, myStatsC.def)) * (1 - (0.2*Math.random())));
+                                    if (eStatsC.hp > 0) myStatsC.hp -= Math.floor((eStatsC.atk * Math.pow(0.99895, myStatsC.def)) * (1 - (0.2 * Math.random())));
                                     if (myStatsC.hp < 0) myStatsC.hp = 0;
-                                    
+
                                     // Break if it takes too long
                                     if (matchStats.round++ > 1000) myStatsC.hp = 0;
                                 };
-                                
+
                                 setTimeout(() => {
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                 }, aDelay);
                             } else {
                                 matchStats.turn = 1;
-                                interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                             };
                         });
-  
+
                     });
 
                 });
@@ -465,7 +499,7 @@ module.exports = {
                 newFight();
             } else {
                 interaction.reply("Very well..");
-                setTimeout(() => {interaction.channel.send("I'll give it everything I've got!")}, 1800)
+                setTimeout(() => { interaction.channel.send("I'll give it everything I've got!"); }, 1800);
                 setTimeout(newFight, 3600);
             };
 

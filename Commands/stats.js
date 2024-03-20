@@ -24,14 +24,14 @@ function padCollected(chars) {
 
 module.exports = {
     name: 'stats',
-	description: 'See some stats of camelot',
-	execute(interaction) {
+    description: 'See some stats of camelot',
+    execute(interaction) {
 
         const user = interaction.options.getUser('user') || interaction.user;
 
         db.serialize(async () => {
             let { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
-            if (!inv) inv = {chars: "[]"};
+            if (!inv) inv = { chars: "[]" };
             inv.chars = JSON.parse(inv.chars);
 
             const chars = [...new Set(inv.chars)].map((e) => characters[e]);
@@ -39,26 +39,26 @@ module.exports = {
 
             // Anime Completed
             let aniCompleted = 0;
-            for (let i=0; i < auniq.length; i++) {
+            for (let i = 0; i < auniq.length; i++) {
                 let animeCheck = characters.filter((e) => e.anime === auniq[i]).length;
                 let invCheck = chars.filter((e) => e.anime === auniq[i]).length;
                 if (animeCheck === invCheck) aniCompleted++;
             };
-    
+
             const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-            .setDescription(
-                `### Card Game Stats\n` +
-                `<:Menhera:869913008686649374> **Anime**: \`${aniCompleted}/${auniq.length} ➜ (${Math.floor((aniCompleted/auniq.length)*100)}%)\`\n` + 
-                `<:Rem:869894433385095198> **Waifu**: \`${chars.filter((e) => e.gender === "F").length}/${charactersF.length} ➜ (${Math.floor((chars.filter((e) => e.gender === "F").length/charactersF.length)*100)}%)\`\n` +
-                `<:Yato:869897062672642118> **Husbando**: \`${chars.filter((e) => e.gender === "M").length}/${charactersM.length} ➜ (${Math.floor((chars.filter((e) => e.gender === "M").length/charactersM.length)*100)}%)\`\n` +
-                `<:Gawrgura:869894477752447007> **Characters**: \`${chars.length}/${characters.length} ➜ (${Math.floor((chars.length/characters.length)*100)}%)\`\n\n` +
-                `**Rarity**\n` +
-                `<:SSTier:869316489931546644> **Tier**: ${padded[0]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[3]}\n` +
-                `<:ATier:869316558013464627> **Tier**: ${padded[1]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[4]}\n` +
-                `<:CTier:869316602858991657> **Tier**: ${padded[2]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[5]}`
-            )
+                .setColor(0xbbffff)
+                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                .setDescription(
+                    `### Card Game Stats\n` +
+                    `<:Menhera:869913008686649374> **Anime**: \`${aniCompleted}/${auniq.length} ➜ (${Math.floor((aniCompleted / auniq.length) * 100)}%)\`\n` +
+                    `<:Rem:869894433385095198> **Waifu**: \`${chars.filter((e) => e.gender === "F").length}/${charactersF.length} ➜ (${Math.floor((chars.filter((e) => e.gender === "F").length / charactersF.length) * 100)}%)\`\n` +
+                    `<:Yato:869897062672642118> **Husbando**: \`${chars.filter((e) => e.gender === "M").length}/${charactersM.length} ➜ (${Math.floor((chars.filter((e) => e.gender === "M").length / charactersM.length) * 100)}%)\`\n` +
+                    `<:Gawrgura:869894477752447007> **Characters**: \`${chars.length}/${characters.length} ➜ (${Math.floor((chars.length / characters.length) * 100)}%)\`\n\n` +
+                    `**Rarity**\n` +
+                    `<:SSTier:869316489931546644> **Tier**: ${padded[0]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[3]}\n` +
+                    `<:ATier:869316558013464627> **Tier**: ${padded[1]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[4]}\n` +
+                    `<:CTier:869316602858991657> **Tier**: ${padded[2]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[5]}`
+                );
             return interaction.reply({ embeds: [Embed] });
         });
 

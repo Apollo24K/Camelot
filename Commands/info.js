@@ -8,57 +8,57 @@ const { PageRow } = require("../Modules/components.js");
 
 module.exports = {
     name: 'info',
-	description: 'Character info',
-	execute(interaction) {
+    description: 'Character info',
+    execute(interaction) {
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-        
+
         const user = interaction.options.getUser('user') || interaction.user;
         const flag = interaction.options.getString('flag');
 
         db.serialize(async () => {
-            let stats = await query(`SELECT premium, skins, class FROM users WHERE id = ${user.id}`);
-            if (!stats[0]) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
-            stats = {premium: stats[0].premium, class: stats[0].class, skins: JSON.parse(stats[0].skins)};
+            const { 0: stats } = await query(`SELECT premium, skins, class, level, bank, equipment, shield_slot FROM users WHERE id = ${user.id}`);
+            if (!stats) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
+            stats.skins = JSON.parse(stats.skins);
 
-            let inv = await query(`SELECT characters.id, characters.chars, characters.ref, characters.level, characters.skin, characters.equipment, dungeon.classes, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id WHERE characters.id = ${user.id}`);
-            inv = {id: user.id, class: stats.class, premium: stats.premium, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), skin: JSON.parse(inv[0].skin), equipment: JSON.parse(inv[0].equipment), classes: JSON.parse(inv[0].classes), classlevels: JSON.parse(inv[0].classlevels)};
+            let inv = await query(`SELECT characters.id, characters.chars, characters.ref, characters.skin, dungeon.classes, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id WHERE characters.id = ${user.id}`);
+            inv = { id: user.id, class: stats.class, premium: stats.premium, bank: stats.bank, shield_slot: stats.shield_slot, equipment: JSON.parse(stats.equipment), chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: stats.level, skin: JSON.parse(inv[0].skin), classes: JSON.parse(inv[0].classes), classlevels: JSON.parse(inv[0].classlevels) };
 
             let choice = interaction.options.getString('character');
-            
+
             let char = search(choice, inv.chars, interaction);
             if (!char.name) return;
 
             let img = char.image;
-            
+
             if (flag === "base") {
-                
+
                 let hp = baseHP(char.id);
                 let atk = baseATK(char.id);
                 let def = baseDEF(char.id);
                 let ep = baseEP(char.id);
                 let expertise = baseExpertise(char.id);
-                
+
                 const Embed = new EmbedBuilder()
-                .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[char.rarity])
-                .setImage(img)
-                .setThumbnail(rarity(char.rarity))
-                .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n`)
-                .addFields(
-                    { name: 'HP ️️️💖', value: ""+hp, inline: true },
-                    { name: 'ATK ️️⚔️', value: ""+atk, inline: true },
-                    { name: 'DEF ️️️🛡️', value: ""+def, inline: true },
-                )
-                .setFooter({text: `ID: #${char.id} | EP: ${ep}\nExpertise: ${expertise}`})
+                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                    .setImage(img)
+                    .setThumbnail(rarity(char.rarity))
+                    .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n`)
+                    .addFields(
+                        { name: 'HP ️️️💖', value: "" + hp, inline: true },
+                        { name: 'ATK ️️⚔️', value: "" + atk, inline: true },
+                        { name: 'DEF ️️️🛡️', value: "" + def, inline: true },
+                    )
+                    .setFooter({ text: `ID: #${char.id} | EP: ${ep}\nExpertise: ${expertise}` });
                 if (skins.filter((e) => e.cid == char.id).length === 0) return interaction.reply({ embeds: [Embed] });
-                
-                let fSkins = [{image: img, name: char.name}, ...skins.filter((e) => e.cid == char.id)];
+
+                let fSkins = [{ image: img, name: char.name }, ...skins.filter((e) => e.cid == char.id)];
                 let currentSkin = 1;
                 let pagesTotal = fSkins.length;
 
-                Embed.setFooter({text: `ID: #${char.id} | EP: ${ep}\nSkin: ${currentSkin}/${pagesTotal} | Expertise: ${expertise}`})
+                Embed.setFooter({ text: `ID: #${char.id} | EP: ${ep}\nSkin: ${currentSkin}/${pagesTotal} | Expertise: ${expertise}` });
                 return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
-                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                    const prev = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                     prev.on('collect', r => {
                         if (r.customId === "prev") {
@@ -69,62 +69,63 @@ module.exports = {
                             else currentSkin = 1;
                         };
 
-                        Embed.setDescription(`**${fSkins[currentSkin-1].name}**\n${splitTitle(char.anime)}\n${fSkins[currentSkin-1].obtain ? "Obtain: `"+fSkins[currentSkin-1].obtain+"`" + (stats.skins.includes(fSkins[currentSkin-1].id) ? "<a:check:873196253276700682>" : "") : ""}`).setImage(fSkins[currentSkin-1].image).setFooter({text: `ID: #${char.id} | EP: ${ep}\nSkin: ${currentSkin}/${pagesTotal}`});
+                        Embed.setDescription(`**${fSkins[currentSkin - 1].name}**\n${splitTitle(char.anime)}\n${fSkins[currentSkin - 1].obtain ? "Obtain: `" + fSkins[currentSkin - 1].obtain + "`" + (stats.skins.includes(fSkins[currentSkin - 1].id) ? "<a:check:873196253276700682>" : "") : ""}`).setImage(fSkins[currentSkin - 1].image).setFooter({ text: `ID: #${char.id} | EP: ${ep}\nSkin: ${currentSkin}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed] });
                     });
 
                 });
             };
-            
+
             if (!inv.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
             let charstats = await getDetailedStats(char.id, inv, inv.classlevels);
             let cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
             let dupes = inv.chars.filter((e) => e === char.id).length;
 
+            img = char.getImage(stats.premium, customSettings[user.id]?.cimg[char.id], inv.skin[char.id]);
+            if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo];
+
             if (flag === "my") {
                 let expertise = baseExpertise(char.id);
 
-                img = char.getImage(stats.premium, customSettings[user.id]?.cimg[char.id]);
-
                 const Embed = new EmbedBuilder()
-                .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[char.rarity])
-                .setImage(img)
-                .setThumbnail(rarity(char.rarity))
-                .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : "" } ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`)
-                .addFields(
-                    { name: `HP ${customEmojis.hp}`, value: ""+charstats.hp, inline: true },
-                    { name: `ATK ${customEmojis.atk}`, value: ""+charstats.atk, inline: true },
-                    { name: `DEF ${customEmojis.def}`, value: ""+charstats.def, inline: true },
-                )
-                .setFooter({text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Expertise: ${expertise}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
+                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                    .setImage(img)
+                    .setThumbnail(rarity(char.rarity))
+                    .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`)
+                    .addFields(
+                        { name: `HP ${customEmojis.hp}`, value: "" + charstats.hp, inline: true },
+                        { name: `ATK ${customEmojis.atk}`, value: "" + charstats.atk, inline: true },
+                        { name: `DEF ${customEmojis.def}`, value: "" + charstats.def, inline: true },
+                    )
+                    .setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Expertise: ${expertise}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                 if (skins.filter((e) => e.cid == char.id).length === 0) return interaction.reply({ embeds: [Embed] });
 
-                let fSkins = [{image: img, name: char.name}, ...skins.filter((e) => e.cid == char.id)];
-                let currentSkin = fSkins.indexOf(fSkins.find((e) => e.id === inv.skin[char.id]))+1 || 1;
+                let fSkins = [{ image: img, name: char.name }, ...skins.filter((e) => e.cid == char.id)];
+                let currentSkin = fSkins.indexOf(fSkins.find((e) => e.id === inv.skin[char.id])) + 1 || 1;
                 let pagesTotal = fSkins.length;
 
                 const row = new ActionRowBuilder()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('prev')
-                        .setEmoji('⏪')
-                        .setStyle('Secondary'),
-                    new ButtonBuilder()
-                        .setCustomId('next')
-                        .setEmoji('⏩')
-                        .setStyle('Secondary'),
-                    new ButtonBuilder()
-                        .setCustomId('select')
-                        .setLabel('select')
-                        .setStyle('Primary')
-                        .setDisabled(user.id !== interaction.user.id),
-                );
-                
-                Embed.setDescription(`**${fSkins[currentSkin-1].name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : "" } ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins[currentSkin-1].image).setFooter({text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('prev')
+                            .setEmoji('⏪')
+                            .setStyle('Secondary'),
+                        new ButtonBuilder()
+                            .setCustomId('next')
+                            .setEmoji('⏩')
+                            .setStyle('Secondary'),
+                        new ButtonBuilder()
+                            .setCustomId('select')
+                            .setLabel('select')
+                            .setStyle('Primary')
+                            .setDisabled(user.id !== interaction.user.id),
+                    );
+
+                Embed.setDescription(`**${fSkins[currentSkin - 1].name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins[currentSkin - 1].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                 return interaction.reply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
-                    const prev = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && (r.customId === "prev" || r.customId === "next"), componentType: ComponentType.Button, time: 90000 });
-                    const select = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id && r.customId === "select", componentType: ComponentType.Button, time: 90000 });
+                    const prev = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "prev" || r.customId === "next"), componentType: ComponentType.Button, time: 90000 });
+                    const select = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "select", componentType: ComponentType.Button, time: 90000 });
 
                     prev.on('collect', r => {
                         if (r.customId === "prev") {
@@ -135,24 +136,24 @@ module.exports = {
                             else currentSkin = 1;
                         };
 
-                        Embed.setDescription(`**${fSkins[currentSkin-1].name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : "" } ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins[currentSkin-1].image).setFooter({text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"});
+                        Embed.setDescription(`**${fSkins[currentSkin - 1].name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins[currentSkin - 1].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                         interaction.editReply({ embeds: [Embed], components: [row] });
                     });
 
                     select.on('collect', async () => {
-                        if (currentSkin === 1 || stats.skins.includes(fSkins[currentSkin-1].id)) {
+                        if (currentSkin === 1 || stats.skins.includes(fSkins[currentSkin - 1].id)) {
                             if (currentSkin === 1) {
                                 delete inv.skin[char.id];
                             } else {
-                                inv.skin[char.id] = fSkins[currentSkin-1].id;
+                                inv.skin[char.id] = fSkins[currentSkin - 1].id;
                             };
 
                             await query(`UPDATE characters SET skin = '${JSON.stringify(inv.skin)}' WHERE id = ${user.id}`);
-    
-                            interaction.channel.send(`Set **${char.name}**'s skin to **${fSkins[currentSkin-1].name}**`);
+
+                            interaction.channel.send(`Set **${char.name}**'s skin to **${fSkins[currentSkin - 1].name}**`);
 
                         } else {
-                            interaction.channel.send(`You don't have the skin "${fSkins[currentSkin-1].name}". Obtainable through: \`${fSkins[currentSkin-1].obtain}\``);
+                            interaction.channel.send(`You don't have the skin "${fSkins[currentSkin - 1].name}". Obtainable through: \`${fSkins[currentSkin - 1].obtain}\``);
                         };
                     });
 
@@ -160,19 +161,17 @@ module.exports = {
             };
 
             if (flag === "detailed") {
-                img = char.getImage(stats.premium, customSettings[user.id]?.cimg[char.id], inv.skin[char.id]);
-
                 const Embed = new EmbedBuilder()
-                .setColor({D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff}[char.rarity])
-                .setThumbnail(img)
-                .setDescription(`**${char.name}** - ${char.anime}\n**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : "" } ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>\n\n`)
-                .addFields(
-                    { name: 'Stats', value: `${customEmojis.hp} **HP**: __${charstats.bhp}__ + ${charstats.hp-charstats.bhp}\n${customEmojis.atk} **ATK**: __${charstats.batk}__ + ${charstats.atk - charstats.batk}\n${customEmojis.def} **DEF**: __${charstats.bdef}__ + ${charstats.def - charstats.bdef}\n<:magic_dmg:948568336621527040> **MD**: __${charstats.bmd}__ + ${charstats.md - charstats.bmd}\n${customEmojis.mr} **MR**: __${charstats.bmr}__ + ${charstats.mr - charstats.bmr}`, inline: true },
-                    { name: '_ _', value: `${customEmojis.cr} **Crit Rate**: ${Math.floor(charstats.cr*100)}%\n${customEmojis.cd} **Crit Damage**: ${charstats.cd*100}%\n${customEmojis.br} **Block Rate**: ${Math.floor(charstats.br*100)}%\n${customEmojis.dodge} **Dodge**: ${Math.floor(charstats.dodge*100)}%`, inline: true },
-                    { name: '_ _', value: `${customEmojis.mana} **Mana**: ${charstats.mana}\n${customEmojis.mg} **Mana Gen**: +${charstats.mg}`, inline: true },
-                )
-                .setAuthor({name: user.username, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-                .setFooter({text: `EP: ${charstats.ep}`})
+                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                    .setThumbnail(img)
+                    .setDescription(`**${char.name}** - ${char.anime}\n**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${(stats.premium > 3 || stats.shield_slot) && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>\n\n`)
+                    .addFields(
+                        { name: 'Stats', value: `${customEmojis.hp} **HP**: __${charstats.bhp}__ + ${charstats.hp - charstats.bhp}\n${customEmojis.atk} **ATK**: __${charstats.batk}__ + ${charstats.atk - charstats.batk}\n${customEmojis.def} **DEF**: __${charstats.bdef}__ + ${charstats.def - charstats.bdef}\n<:magic_dmg:948568336621527040> **MD**: __${charstats.bmd}__ + ${charstats.md - charstats.bmd}\n${customEmojis.mr} **MR**: __${charstats.bmr}__ + ${charstats.mr - charstats.bmr}`, inline: true },
+                        { name: '_ _', value: `${customEmojis.cr} **Crit Rate**: ${Math.floor(charstats.cr * 100)}%\n${customEmojis.cd} **Crit Damage**: ${Math.floor(charstats.cd * 100)}%\n${customEmojis.br} **Block Rate**: ${Math.floor(charstats.br * 100)}%\n${customEmojis.dodge} **Dodge**: ${Math.floor(charstats.dodge * 100)}%`, inline: true },
+                        { name: '_ _', value: `${customEmojis.mana} **Mana**: ${charstats.mana}\n${customEmojis.mg} **Mana Gen**: +${charstats.mg}`, inline: true },
+                    )
+                    .setAuthor({ name: user.username, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
+                    .setFooter({ text: `EP: ${charstats.ep} | items: ${charstats.uniqueids.join(",")}` });
                 return interaction.reply({ embeds: [Embed] });
             };
 

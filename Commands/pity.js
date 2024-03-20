@@ -5,20 +5,20 @@ const { characters } = require("../Modules/chars.js");
 
 module.exports = {
     name: 'pity',
-	description: 'See your pity',
-	execute(interaction) {
+    description: 'See your pity',
+    execute(interaction) {
 
         const user = interaction.options.getUser('user') || interaction.user;
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-        
+
         db.serialize(async () => {
             let stats = await query(`SELECT lastss, lasts, pullstotal, favchar, premium FROM users WHERE id = ${user.id}`);
             stats = stats[0];
             if (!stats) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
 
             let inv = await query(`SELECT chars, skin FROM characters WHERE id = ${interaction.user.id}`);
-            inv = {chars: JSON.parse(inv[0].chars), skin: JSON.parse(inv[0].skin)};
+            inv = { chars: JSON.parse(inv[0].chars), skin: JSON.parse(inv[0].skin) };
 
             const chars = [...new Set(inv.chars)].map((e) => characters[e]);
             let thumbnail = chars[Math.floor(Math.random() * chars.length)].image || "https://i.imgur.com/Ta2YDBN.png";
@@ -34,14 +34,14 @@ module.exports = {
                 case 5: sPit = 75, ssPit = 220; break;
                 case 6: sPit = 70, ssPit = 210; break;
                 case 7: sPit = 60, ssPit = 200; break;
-                default : false; break;
+                default: false; break;
             };
 
             const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setAuthor({name: `${user.username}'s profile`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048"})
-            .setDescription(`Since last <:STier:869316518675095552> pull: **${stats.lasts}**/${sPit}\nSince last <:SSTier:869316489931546644> pull: **${stats.lastss}**/${ssPit}\n\nYou have pulled a total of **${stats.pullstotal}** times!`)
-            .setThumbnail(thumbnail)
+                .setColor(0xbbffff)
+                .setAuthor({ name: `${user.username}'s profile`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
+                .setDescription(`Since last <:STier:869316518675095552> pull: **${stats.lasts}**/${sPit}\nSince last <:SSTier:869316489931546644> pull: **${stats.lastss}**/${ssPit}\n\nYou have pulled a total of **${stats.pullstotal}** times!`)
+                .setThumbnail(thumbnail);
             return interaction.reply({ embeds: [Embed] });
 
         });

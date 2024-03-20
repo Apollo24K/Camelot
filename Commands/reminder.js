@@ -2,8 +2,8 @@ const { db, query } = require("../db_handler.js");
 
 module.exports = {
     name: 'reminder',
-	description: 'Setup reminders',
-	execute(interaction) {
+    description: 'Setup reminders',
+    execute(interaction) {
 
         let reminder = interaction.options.getString('select');
 

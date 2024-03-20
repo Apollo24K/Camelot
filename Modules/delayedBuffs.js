@@ -1,8 +1,5 @@
-/* eslint-disable no-extra-semi */
-/* eslint-disable no-unused-vars */
-
 class delayedBuff {
-    constructor(round, func, last=1, usage=9999) {
+    constructor(round, func, last = 1, usage = 9999) {
         this._round = round;
         this._func = func;
         this._last = last;

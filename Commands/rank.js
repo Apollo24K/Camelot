@@ -25,24 +25,26 @@ const { PageRow } = require("../Modules/components.js");
 
 const RoK = new Map();
 async function indexRanking() {
-    const stats = await query(`SELECT users.id, users.battlechar, users.name, users.premium, users.class, characters.chars, characters.ref, characters.level, characters.equipment, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id`);
+    const stats = await query(`SELECT users.id, users.battlechar, users.name, users.premium, users.class, users.bank, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id`);
     for (const account of stats) {
-        account.chars = JSON.parse(account.chars), account.ref = JSON.parse(account.ref), account.level = JSON.parse(account.level), account.classes = JSON.parse(account.classes), account.classlevels = JSON.parse(account.classlevels), account.equipment = JSON.parse(account.equipment);
+        account.chars = JSON.parse(account.chars), account.ref = JSON.parse(account.ref), account.classes = JSON.parse(account.classes), account.classlevels = JSON.parse(account.classlevels), account.equipment = JSON.parse(account.equipment);
         if (account.battlechar) {
             const cstats = await getDetailedStats(account.battlechar, account, account.classlevels);
-            RoK.set(account.id, {name: account.name, id: account.id, char: account.battlechar, ep: cstats.ep});
+            RoK.set(account.id, { name: account.name, id: account.id, char: account.battlechar, ep: cstats.ep });
         };
     };
 };
 indexRanking();
-setInterval(indexRanking, 15*60*1000); // 15 min interval
+setInterval(indexRanking, 15 * 60 * 1000); // 15 min interval
 
-const rarities = {"EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>"};
+const rarities = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
 
 module.exports = {
-	name: 'rank',
-	description: 'rank characters',
-	execute(interaction) {
+    name: 'rank',
+    description: 'rank characters',
+    execute(interaction) {
+
+        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
 
         let scope = interaction.options.getString('scope');
         let page = interaction.options.getInteger('page');
@@ -54,12 +56,12 @@ module.exports = {
             if (scope === "base" || scope === "inventory") {
                 const rok = new Map();
                 if (scope === "base") {
-                    characters.forEach((e) => rok.set(e.id, baseEP(e.id)) );
+                    characters.forEach((e) => rok.set(e.id, baseEP(e.id)));
                     embedTitle = "Top Characters Ranking";
                 } else {
-                    let inv = await query(`SELECT users.class, characters.chars, characters.ref, characters.level, characters.equipment, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
-                    if (!inv[0]) return interaction.reply(`${user.username} hasn't started playing yet.`);
-                    inv = {id: user.id, class: inv[0].class, chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref), level: JSON.parse(inv[0].level), equipment: JSON.parse(inv[0].equipment), classlevels: JSON.parse(inv[0].classlevels)};
+                    const { 0: inv } = await query(`SELECT users.id, users.premium, users.class, users.bank, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+                    if (!inv) return interaction.reply(`${user.username} hasn't started playing yet.`);
+                    inv.chars = JSON.parse(inv.chars), inv.ref = JSON.parse(inv.ref), inv.equipment = JSON.parse(inv.equipment), inv.classlevels = JSON.parse(inv.classlevels);
                     const uniq = [...new Set(inv.chars)];
                     for (const id of uniq) {
                         const bStats = await getDetailedStats(id, inv, inv.classlevels);
@@ -69,26 +71,27 @@ module.exports = {
                 };
 
                 rokS = new Map([...rok.entries()].sort((a, b) => b[1] - a[1]));
-                rokS.forEach((val, key) => sortedArr.push(`${rarities[characters[key].rarity]} ${count++}. ${characters[key].name} - EP: **${val}**`) );
+                rokS.forEach((val, key) => sortedArr.push(`${rarities[characters[key].rarity]} ${count++}. ${characters[key].name} - EP: **${val}**`));
 
                 thumbnail = characters[[...rokS.keys()][0]]?.image || characters[Math.floor(Math.random * characters.length)];
             };
-            
+
             if (scope === "server" || scope === "global") {
                 let sortedRoK = [];
                 if (scope === "server") {
-                    const { 0: usersToRank } = await query(`SELECT user_ids FROM servers WHERE id = ${interaction.guild.id}`)
-                    usersToRank.user_ids.split(",").forEach((uid) => sortedRoK.push(RoK.get(uid)) );
+                    const { 0: usersToRank } = await query(`SELECT user_ids FROM servers WHERE id = ${interaction.guild.id}`);
+                    usersToRank.user_ids.split(",").forEach((uid) => sortedRoK.push(RoK.get(uid)));
                 } else {
                     sortedRoK = [...RoK.values()];
                 };
-                sortedRoK = sortedRoK.filter((e) => e);
+                sortedRoK = sortedRoK.filter((e) => e && !(e.id in blacklist));
                 sortedRoK.sort((a, b) => b.ep - a.ep);
+
                 sortedArr = sortedRoK.map((e) => `${rarities[characters[e.char].rarity]} ${count++}. **${characters[e.char].name}** - EP: ${e.ep} => ${e.name}`);
 
                 embedTitle = `🏆 ${scope === "server" ? interaction.guild.name : "Camelot"} top characters 🏆`;
                 const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-                const { 0: tuser} = await query(`SELECT users.id, users.premium, characters.skin FROM users JOIN characters ON users.id = characters.id WHERE users.name = '${sortedRoK[0].id}'`);
+                const { 0: tuser } = await query(`SELECT users.id, users.premium, characters.skin FROM users JOIN characters ON users.id = characters.id WHERE users.name = '${sortedRoK[0].id}'`);
                 if (tuser) tuser.skin = JSON.parse(tuser.skin);
                 thumbnail = characters[sortedRoK[0].char].getImage((tuser?.premium || 0), (customSettings?.[tuser?.id]?.cimg[sortedRoK[0].char] || ""), tuser?.skin[sortedRoK[0].char] || undefined);
             };
@@ -99,19 +102,19 @@ module.exports = {
             if (page <= pagesTotal && page > 0) {
                 currPage = page;
             };
-            
+
             // Filter items to show on the current page
             let showUsersF = showPage(currPage, sortedArr, elementsPerPage);
-            
+
             const Embed = new EmbedBuilder()
-            .setColor(0xbbffff)
-            .setTitle(embedTitle)
-            .setDescription(showUsersF.join("\n"))
-            .setThumbnail(thumbnail)
-            .setFooter({text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "Ranking updates every 15 minutes" : ""}`});
+                .setColor(0xbbffff)
+                .setTitle(embedTitle)
+                .setDescription(showUsersF.join("\n"))
+                .setThumbnail(thumbnail)
+                .setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 15 minutes" : ""}` });
             if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
             return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
-                const collector = msg.createMessageComponentCollector({filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async r => {
                     if (r.customId === "prev") {
@@ -124,7 +127,7 @@ module.exports = {
 
                     showUsersF = showPage(currPage, sortedArr, elementsPerPage);
 
-                    Embed.setDescription(showUsersF.join("\n")).setFooter({text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "Ranking updates every 15 minutes" : ""}`});
+                    Embed.setDescription(showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 15 minutes" : ""}` });
                     msg.edit({ embeds: [Embed], components: [PageRow] });
                 });
 

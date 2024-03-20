@@ -4,7 +4,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 
 const tokens = ["ddecd222cd3fc3150f6404c0cc85a4e5", "f4f213791cdfb57e8c35a1b1a67edbfd", "89ce34cab24ea806cf774e5b270648fe", "29c12f5e482ecbf9eaa30e86763d11a2", "fdbfcc9e09cee0c5b47d78eaf2da5530"];
-let rot = Math.floor(Math.random()*5);
+let rot = Math.floor(Math.random() * 5);
 
 // Download images
 const downloadImage = async (url) => {
@@ -20,7 +20,7 @@ module.exports.upload = async (char, effect) => {
             downloadImage(char),
             downloadImage(effect)
         ]);
-        
+
         // Get char image dimensions
         const charImage = sharp(charImageBuffer);
         const { width, height } = await charImage.metadata();
@@ -36,7 +36,7 @@ module.exports.upload = async (char, effect) => {
             .toBuffer();
 
         // Save image locally
-        const filename = "o" + Math.floor(Math.random()*100000);
+        const filename = "o" + Math.floor(Math.random() * 100000);
         fs.writeFileSync(`Images/${filename}.png`, outputImage);
 
         // Create form data
@@ -44,11 +44,11 @@ module.exports.upload = async (char, effect) => {
         formData.append('image', fs.createReadStream(`Images/${filename}.png`));
 
         // Upload image to imgbb.com
-        const response = await axios.post(`https://api.imgbb.com/1/upload?key=${tokens[rot%5]}`, formData, {
+        const response = await axios.post(`https://api.imgbb.com/1/upload?key=${tokens[rot % 5]}`, formData, {
             headers: formData.getHeaders(),
             name: filename,
         });
-        
+
         // Delete local file after 20 seconds
         fs.unlink(`Images/${filename}.png`, (err) => {
             if (err) console.error(`Error while deleting file ${`Images/${filename}.png`}`);
