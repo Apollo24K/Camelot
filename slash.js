@@ -614,7 +614,7 @@ const commands = [
 						{ name: 'alphabetical', value: 'alphabetical' },
 						{ name: 'rarity', value: 'rarity' },
 						{ name: 'dupes', value: 'dupes' },
-						// { name: 'skins', value: 'skins' },
+						{ name: 'skins', value: 'skins' },
 						{ name: 'chronological', value: 'chronological' },
 					)
 			)
@@ -1160,6 +1160,22 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('skins')
+			.setDescription('Look up your skins inventory')
+			.addStringOption(option =>
+				option.setName('filter')
+					.setDescription('Select a filter')
+					.setRequired(false)
+					.addChoices(
+						{ name: 'owned', value: 'owned' },
+						{ name: 'unowned', value: 'unowned'},
+					)
+			)
+			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('stampede')
 			.setDescription('A recurring special battle event'),
 	}.data.toJSON(),
@@ -1276,7 +1292,7 @@ const commands = [
 ];
 
 // Place your client and guild ids here
-const clientId = '695286837568340119'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
+const clientId = '691399125517992086'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
 
 // commands = commands.map((e) => e.data.toJSON());
 
