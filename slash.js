@@ -504,6 +504,19 @@ const commands = [
 				.addUserOption(option => option.setName('user').setDescription('Select a user to be promoted').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('demote').setDescription('Demote someone in your guild')
 				.addUserOption(option => option.setName('user').setDescription('Select a user to be demoted').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('donations').setDescription('List all guild donations from your guild')
+				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
+				.addStringOption(option => 
+					option.setName('filter')
+						.setDescription('filter for the type of donations')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'weekly', value: 'weekly' },
+							{ name: 'monthly', value: 'monthly'},
+							{ name: 'total', value: 'total' },
+						)
+					)
+				)
 			.addSubcommand((subcommand) => subcommand.setName('kick').setDescription('Kick someone from your guild')
 				.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('ban').setDescription('Ban someone from your guild')
