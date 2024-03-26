@@ -699,6 +699,10 @@ module.exports.showPage = (currPage, arr, elements = 15) => {
     return arr.slice((currPage - 1) * elements, currPage * elements);
 };
 
+module.exports.showField = (currPage, arr, elements) => {
+    return arr.slice((currPage - 1) * elements, currPage * elements)[0]
+}
+
 module.exports.search = (name, inv, interaction, silent = false) => {
     name = name.toLowerCase().split(" ").filter((e) => e).join(" ");
     if (name === "last" || name === "latest") name = inv[inv.length - 1].toString();
@@ -1044,6 +1048,8 @@ module.exports.generateCaptcha = () => {
         text: captchaText
     };
 };
+
+module.exports.dateString = (date) => { return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }).replace(/\//g, '/'); }
 
 const donationWeekStart = new Date('2024-02-12T00:00:00');
 module.exports.donationWeekStart = donationWeekStart;
