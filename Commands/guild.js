@@ -1,7 +1,7 @@
 const { EmbedBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { dailies } = require("../Modules/dailyQuests.js");
-const { generateUniqueGuildId, showPage, searchGuild, addGuildDonation, donationWeekStart } = require("../Modules/functions.js");
+const { generateUniqueGuildId, showPage, searchGuild, addGuildDonation, donationWeekStart, dateString } = require("../Modules/functions.js");
 const { PageRow, OfferRow } = require("../Modules/components.js");
 
 function lastActiveInDays(timestamp) {
@@ -635,6 +635,103 @@ module.exports = {
 
                 });
             });
+        } else if (subcommand === "donations") {
+            let pagesTotal, donated = 0, donationsTab = [];
+            let page = interaction.options.getInteger('page');
+            let filter = interaction.options.getString('filter') || 'weekly';
+            db.serialize(async () => {
+                let stats = await query(`SELECT coins, guild FROM users WHERE users.id = ${interaction.user.id}`);
+                stats = { coins: stats[0].coins, guild: stats[0].guild };
+                const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
+                const members = await query(`SELECT id, name, lastdaily FROM users WHERE id IN (${guild.members})`);
+
+                members.forEach((e) => {
+                    if (e.id === guild.master) e.status = " (Guild Master)", e.value = 2;
+                    else if (guild?.elders.includes(e.id)) e.status = " (Elder)", e.value = 1;
+                    else e.status = "", e.value = 0;
+                });
+                members.sort((a, b) => b.value - a.value);
+
+                let donations = await query(`SELECT * FROM guild_donations WHERE guildid = '${stats.guild}' AND type = '${"coins"}'`)
+                const weekDay = Math.floor((Date.now() - donationWeekStart.getTime()) / (24 * 60 * 60 * 1000)) % 7;
+                if (filter === 'weekly') { // Weekly Donations
+                    for (let week = Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)); week >= 0; week--) {
+                        const startDate = new Date(Date.now() - (weekDay * 24 * 60 * 60 * 1000) - ((7*Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)) - 7*week) * 24 * 60 * 60 * 1000));
+                        const endDate = new Date(Date.now() + ((6 - weekDay) * 24 * 60 * 60 * 1000) - ((7*Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)) - 7*week) * 24 * 60 * 60 * 1000));
+                        members.forEach((e) => {
+                            const donation = (donations.filter((e) => e.week === week)).find((dono) => dono.userid === e.id);
+                            e.donated = donation?.amount ?? 0;
+                        });
+                        donationsTab.push({ name: `Donations ${dateString(startDate)} - ${dateString(endDate)}`, value: `${members.map((e) => `__${e.donated}__ <:coins:872926669055356939>`).join("\n")}`, inline: true });
+                    }
+                } else if (filter === 'monthly') { // Monthly Donations
+                    for (let month = Math.ceil(Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)) / 4); month > 0; month--) {
+                        const startDate = new Date(Date.now() - (weekDay * 24 * 60 * 60 * 1000) - ((7-(month-1)*4)*Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000))) * 24 * 60 * 60 * 1000);
+                        const endDate = new Date(Date.now() + ((6 - weekDay) * 24 * 60 * 60 * 1000) - (((4-(month-1)*4)*Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)))) * 24 * 60 * 60 * 1000);
+
+                        // member loop => donations only from current month => get set to e.donated
+                        members.forEach((e) => {
+                            const donation = donations.filter((dono) => dono.userid === e.id && Math.ceil(dono.week/4) === month);
+                            for (let i = 0; i < donation.length; i++) donated += donation[i].amount;
+                            e.donated = donated, donated = 0;
+                            if (donation.length === 0) e.donated = 0;
+                        });
+                        donationsTab.push({ name: `Donations ${dateString(startDate)} - ${dateString(endDate)}`, value: `${members.map((e) => `__${e.donated}__ <:coins:872926669055356939>`).join("\n")}`, inline: true });
+                    }
+                } else { // Total Donations
+                    const startDate = new Date(Date.now() - (weekDay * 24 * 60 * 60 * 1000) - ((6*Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000))) * 24 * 60 * 60 * 1000));
+                    const endDate = new Date(Date.now());
+
+                    // member loop => all donations, summed up to e.donated
+                    members.forEach((e) => {
+                        const donation = donations.filter((dono) => dono.userid === e.id);
+                        for (let i = 0; i < donation.length; i++) donated += donation[i].amount;
+                        e.donated = donated;
+                    });
+                    donationsTab.push({ name: `Donations ${dateString(startDate)} - ${dateString(endDate)}`, value: `${members.map((e) => `__${e.donated}__ <:coins:872926669055356939>`).join("\n")}`, inline: true });
+                }
+
+                // Setup pages
+                filter === "weekly" ? pagesTotal = Math.ceil(Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000))) : filter === "monthly" ? pagesTotal = Math.ceil(Math.ceil(Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000)) / 4)) : pagesTotal = 1;
+                let currPage = 1;
+                if (page <= pagesTotal && page > 0) {
+                    currPage = page;
+                };
+
+                const Embed = new EmbedBuilder()
+                    .setTitle(guild.name + (filter === "weekly" ? " Weekly" : filter === "monthly" ? " Monthly" : " Total") + " Donations")
+                    .setColor(guild.color || 0xbbffff)
+                    .setThumbnail(guild.icon)
+                    .setDescription((guild.description?.replace(/\\n/g, "\n") || "_Missing description. Use `/guild edit` to add one._"))
+                    .addFields(
+                        { name: "Members", value: `${members.map((e) => `${e.name}${e.status}`).join("\n")}`, inline: true },
+                        donationsTab[currPage-1]
+                    )
+                    .setFooter({ text: filter !== "total" ? `join code: ${guild.id} | ${guild.canjoin ? "anyone can join" : "invite only"}` + ` | Page ${currPage}/${pagesTotal}` :  `join code: ${guild.id} | ${guild.canjoin ? "anyone can join" : "invite only"}`});
+                if (guild.banner) Embed.setImage(guild.banner);
+                if (filter !== "total") return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                    collector.on('collect', (r) => {
+                        if (r.customId === "prev") {
+                            if (currPage > 1) currPage--;
+                            else currPage = pagesTotal;
+                        } else if (r.customId === "next") {
+                            if (currPage < pagesTotal) currPage++;
+                            else currPage = 1;
+                        };
+
+                        Embed.data.fields = [];
+                        Embed.addFields(
+                            { name: "Members", value: `${members.map((e) => `${e.name}${e.status}`).join("\n")}`, inline: true },
+                            donationsTab[currPage-1])
+                            .setFooter({ text: `join code: ${guild.id} | ${guild.canjoin ? "anyone can join" : "invite only"}` + ` | Page ${currPage}/${pagesTotal}`});
+                        interaction.editReply({ embeds: [Embed] });
+                    });
+                });
+                else return interaction.reply({ embeds: [Embed]}); // Total no Pages
+            })
         } else if (subcommand === "top") {
             let page = interaction.options.getInteger('page');
             let sort = interaction.options.getString('sort') || "level";
