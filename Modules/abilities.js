@@ -2497,7 +2497,7 @@ const abilities = {
         cost: 60,
         weaponType: "none",
         activatedRound: -1,
-        desc: "**Total Usage**: `2`\n**Mana**: `60`\\💧 Ei, `130`\\💧 Puppet Shogun\n**Timeout**: `no`\n**Role**: `DPS`\n\nThe Raiden Shogun is comprised of two beings in one body: Ei, the Electro Archon; and the Shogun, the puppet created by Ei. When she is equipped a __sword__, Ei will take over, otherwise the Shogun has control.\n\nWhen Ei is on the field, her normal attacks deal **12%** more damage, but she loses **3%** of her current HP per round. Once her HP falls below **50%** however, she no longer loses those **3%** current HP per round, and makes an attack dealing **150%** true damage. Instead, for the next 4 rounds, she will heal **10%** of missing HP and regenerate **+5** mana.\nUsing her active, Ei will use Musou no Hitotachi to deal **120%** true damage and decrease enemy DEF and MR by **12%** for the rest of battle (on first usage only).\n\nWhen the puppet Shogun is on stage, she gains **12%** ATK, MD and dodge chance for the rest of battle, and is immune to HP debuffs.\nUsing her active, the Shogun enters the domain of Baleful Shadowlord for the rest of the fight. While in this domain, she has **15%** increased DEF and **+5%** ATK and MD every round (up to a **30%** increase). Additionally, lowers enemy DEF and MR by **2%** every round (up to a **10%** reduction). If her HP drops below **25%** of max, she can recover **30%** of missing HP for **90**\\💧 once.\n\nIn a party, Ei will deal **12%** true damage to the enemy and recover **+3** mana for her allies every round.",
+        desc: "**Total Usage**: `2`\n**Mana**: `60`\\:droplet: Ei, `100`\\:droplet: Puppet Shogun\n**Timeout**: `no`\n**Role**: `DPS`\n\nThe Raiden Shogun is comprised of two beings in one body: Ei, the Electro Archon; and the Shogun, the puppet created by Ei. When she is equipped a __sword__, Ei will take over, otherwise the Shogun has control.\n\nWhen Ei is on the field, her normal attacks deal **20%** more damage, but she loses **3%** of her current HP per round. Once her HP falls below **50%** however, she no longer loses those **3%** current HP per round, and makes an attack dealing **180%** true damage, ignoring 22% defense. Instead, for the next 4 rounds, she will heal **15%** of missing HP and regenerate **+8** mana.\nUsing her active, Ei will use Musou no Hitotachi to deal **200%** true damage and decrease enemy DEF and MR by **20%** for the rest of battle (on first usage only).\n\nWhen the puppet Shogun is on stage, she gains **18%** ATK, CR, CD and dodge chance for the rest of battle, and is immune to HP debuffs.\nUsing her active, the Shogun enters the domain of Baleful Shadowlord for the rest of the fight. While in this domain, she has **18%** increased DEF and **+5%** ATK and MD every round (up to a **30%** increase). Additionally, lowers enemy DEF and MR by **4%** every round (up to a **24%** reduction). If her HP drops below **25%** of max, she can recover **30%** of missing HP automatically.\n\nIn a party, Ei will deal **18%** true damage to the enemy and recover **+10** mana for her allies every round.",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Raiden EX
 
@@ -2505,8 +2505,7 @@ const abilities = {
                 // Ei
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
 
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Musou no Hitotachi! She`, { atkMultiplier: 1.2, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, ignoreShield: true });
-
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Musou no Hitotachi! She`, { atkMultiplier: 2.0, magicDamage: true, combodmg: true, selfdmg: false, selfheal: true, defMultiplier: 0.8, ignoreShield: true });
                 if (this.used === 1) {
                     ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.12), 9999));
                     ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.12), 9999));
@@ -2594,12 +2593,14 @@ const abilities = {
                 };
             } else {
                 // Puppet
-                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.12), 9999));
-                mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.12), 9999));
-                myStats.atk += Math.floor(myStats.atk * 0.12);
-                myStats.md += Math.floor(myStats.md * 0.12);
-                mybuff.dodge.push(new buffInfo("+", 0.12, 9999));
-                myStats.dodge += 0.12;
+                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.18), 9999));
+                mybuff.cr.push(new buffInfo("+", 0.18, 9999));
+                mybuff.cd.push(new buffInfo("+", 0.18, 9999));
+                myStats.atk += Math.floor(myStats.atk * 0.18);
+                myStats.cr += 0.18;
+                myStats.cd += 0.18;
+                mybuff.dodge.push(new buffInfo("+", 0.18, 9999));
+                myStats.dodge += 0.18;
                 if (myStats.dodge > 1) myStats.dodge = 1;
 
                 // Remove HP debuffs on self
@@ -2611,9 +2612,9 @@ const abilities = {
         party: function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if (pStats.weapon !== -1 && items[pStats.weapon].type === "sword") {
                 const name = pStats.name;
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.12, ignoreShield: true, magicDamage: true });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.18, ignoreShield: true, magicDamage: true });
                 myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.12, ignoreShield: true, magicDamage: true });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.18, ignoreShield: true, magicDamage: true });
                 }, 9999));
 
                 myStats.mg += 3;
@@ -2621,6 +2622,7 @@ const abilities = {
             };
         },
     },
+
     "19102": {
         usage: 9999,
         used: 0,
