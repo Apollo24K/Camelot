@@ -12,6 +12,7 @@ const { achievements } = require("./achievements.js");
 const { dailies } = require("../Modules/dailyQuests.js");
 const { classes } = require("./classes.js");
 const buffInfo = require("./buffs.js");
+const delayedBuffs = require("./delayedBuffs.js");
 const { db, query } = require("../db_handler.js");
 const _ = require('lodash');
 
@@ -578,7 +579,23 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
     // Apply damage to target
     if (!options.ignoreShield && target.shield > 0) {
         target.shield = Math.floor(target.shield - damage);
-        if (target.shield < 0 || options.shieldBreak) target.shield = 0;
+
+        // if shield broken
+        if (target.shield < 0 || options.shieldBreak) {
+            target.shield = 0;
+
+            // freeze
+            attacker.timeFrozen = true;
+            attacker.frozenMessage = "was frozen";
+            target.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                eStats.timeFrozen = false;
+            }));
+            if (target.shieldBreakDamageBuff) {
+                targetBuff.atk.push(new buffInfo("+", Math.floor(target.atk * target.shieldBreakDamageBuff), 1));
+                targetBuff.md.push(new buffInfo("+", Math.floor(target.md * target.shieldBreakDamageBuff), 1));
+            };
+        };
+
         notice.push(options.overwriteNotice ? log : `\n${log} has dealt${(options.canCrit && options.critChance < attacker.cr) ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
         target.hp = Math.floor(target.hp - damage);
@@ -1059,6 +1076,19 @@ module.exports.addGuildDonation = async (user, guildid, amount, type = "coins") 
     };
 
     await query(`UPDATE guilds SET ${type === "coins" ? `treasury = treasury + ${amount}` : `treasury_gems = treasury_gems + ${amount}`} WHERE id = '${guildid}'`);
+};
+
+const dateString = (date) => {
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }).replace(/\//g, '/');
+};
+
+module.exports.getDonationsPageWeek = (donations, members, currentWeek, currPage) => {
+    const startDate = new Date(donationWeekStart);
+    startDate.setDate(donationWeekStart.getDate() + (7 * (currentWeek - currPage)));
+    const endDate = new Date(donationWeekStart);
+    endDate.setDate(donationWeekStart.getDate() + (7 * (currentWeek - currPage)) + 6);
+
+    return `### Week ${currentWeek - currPage + 1} ➜ ${dateString(startDate)} - ${dateString(endDate)}\n${members.map((e) => `${e.name}${e.status} ➜ __${donations.filter((e) => e.week === (currentWeek - currPage + 1)).find((dono) => dono.userid === e.id)?.amount ?? 0}__ <:coins:872926669055356939>`).join("\n")}`;
 };
 
 const customEmojis = {
