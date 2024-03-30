@@ -1,7 +1,7 @@
 const { EmbedBuilder, ComponentType } = require("discord.js");
 const { db, query } = require("../db_handler.js");
 const { dailies } = require("../Modules/dailyQuests.js");
-const { generateUniqueGuildId, showPage, searchGuild, addGuildDonation, donationWeekStart } = require("../Modules/functions.js");
+const { generateUniqueGuildId, showPage, searchGuild, addGuildDonation, donationWeekStart, getDonationsPageWeek } = require("../Modules/functions.js");
 const { PageRow, OfferRow } = require("../Modules/components.js");
 
 function lastActiveInDays(timestamp) {
@@ -730,6 +730,53 @@ module.exports = {
                         return interaction.channel.send("Action cancelled");
                     });
 
+                });
+            });
+        } else if (subcommand === "donations") {
+            // const period = interaction.options.getString('period') ?? 'Weekly';
+            db.serialize(async () => {
+                const { 0: stats } = await query(`SELECT coins, guild FROM users WHERE users.id = ${interaction.user.id}`);
+                const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
+
+                const members = await query(`SELECT id, name, lastdaily FROM users WHERE id IN (${guild.members})`);
+                members.forEach((e) => {
+                    if (e.id === guild.master) e.status = " (Guild Master)", e.value = 2;
+                    else if (guild?.elders.includes(e.id)) e.status = " (Elder)", e.value = 1;
+                    else e.status = "", e.value = 0;
+                });
+                members.sort((a, b) => b.value - a.value);
+
+                const donations = await query(`SELECT * FROM guild_donations WHERE guildid = '${guild.id}' AND type = '${"coins"}'`);
+                if (!donations.length) return interaction.reply(`Couldn't find any donation logs for your guild`);
+
+                const currentWeek = Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                const pagesTotal = currentWeek - Math.min(...donations.map((donation) => donation.week)) + 1;
+
+                let currPage = interaction.options.getInteger('page') ?? 1;
+                if (currPage > pagesTotal && currPage < 1) currPage = 1;
+
+                const Embed = new EmbedBuilder()
+                    .setTitle(`${guild.name} Weekly Donations`)
+                    .setColor(guild.color || 0xbbffff)
+                    .setThumbnail(guild.icon)
+                    .setDescription(getDonationsPageWeek(donations, members, currentWeek, currPage))
+                    .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
+                return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                    collector.on('collect', (r) => {
+                        if (r.customId === "prev") {
+                            if (currPage > 1) currPage--;
+                            else currPage = pagesTotal;
+                        } else if (r.customId === "next") {
+                            if (currPage < pagesTotal) currPage++;
+                            else currPage = 1;
+                        };
+
+                        Embed.setDescription(getDonationsPageWeek(donations, members, currentWeek, currPage)).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                        interaction.editReply({ embeds: [Embed] });
+                    });
                 });
             });
         } else if (subcommand === "levelup") {
