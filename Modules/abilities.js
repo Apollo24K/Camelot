@@ -1412,6 +1412,37 @@ const abilities = {
             }, 9999));
         },
     },
+    "13000": {
+        usage: 9999,
+        used: 0,
+        pause: 0,
+        cost: 0,
+        desc: "Nao Tomori",
+        ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            if (this.pause > matchStats.round) {
+                myStats.sm += this.cost;
+                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                return matchStats.interaction.channel.send(`Nao Tomori needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                this.used--;
+                return;
+            };
+            // Tomori Kick
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${myStats.name}**'s Kick`, { atkMultiplier: 1.2 });
+
+            myStats.counter = 1;
+            myStats.damageReduction = 1;
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.counter = 1;
+                myStats.damageReduction = 1;
+            }, 2));
+
+            this.pause = matchStats.round + 5;
+        },
+        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { 
+            myStats.dodge += 0.2;
+            mybuff.dodge.push(new buffInfo("+", 0.2, 5));
+        },
+    },
     "14903": {
         usage: 9999,
         used: 0,
