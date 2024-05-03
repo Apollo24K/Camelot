@@ -1,10 +1,12 @@
-const { EmbedBuilder } = require("discord.js");
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
 const { characters } = require("../Modules/chars.js");
 const { db, query } = require("../db_handler.js");
-const { splitTitle, rarity, getRefinement, searchItem, generateUniqueItemId, generateSubstats } = require("../Modules/functions.js");
+const { splitTitle, rarity, getRefinement, searchItem, generateUniqueItemId, generateSubstats, showPage, userLevel } = require("../Modules/functions.js");
 const { achievements } = require("../Modules/achievements.js");
 const { dailies } = require("../Modules/dailyQuests.js");
 const { items } = require("../Modules/items.js");
+const { PageRow } = require("../Modules/components.js");
+
 
 function displayMy(thisChar, inv, ref, interaction) {
     let animeL = splitTitle(thisChar.anime);
@@ -53,135 +55,207 @@ module.exports = {
 
         let subcommand = interaction.options.getSubcommand();
         let item = interaction.options.getString('item');
+        let amount = interaction.options.getString('amount') || 1;
+        if (!isNaN(amount)) amount = parseInt(amount);
+        else if (amount.toLowerCase() === "max") amount = "max";
+        else return interaction.reply(`Please input a valid number.`);
 
         if (subcommand === "character") {
 
             db.serialize(async () => {
-                let stats = await query(`SELECT coins FROM users WHERE id = ${interaction.user.id}`);
+                let stats = await query(`SELECT xp, coins FROM users WHERE id = ${interaction.user.id}`);
                 stats = stats[0];
                 if (!stats?.coins) return interaction.reply("You don't have enough coins");
 
                 let inv = await query(`SELECT chars, ref FROM characters WHERE id = ${interaction.user.id}`);
                 inv = { chars: JSON.parse(inv[0].chars), ref: JSON.parse(inv[0].ref) };
 
-                let sub_coins = 0;
+                let sub_coins = { 0: 0, 1: 300, 2: 300, 3: 300, 4: 800, 5: 500, 6: 2000};
 
-                const ranRar = Math.floor(Math.random() * 1000); // 0-999
+                if (amount === "max") amount = stats.coins / sub_coins[item];
+                if (amount < 1) return interaction.reply(`You can't open ${amount} packs.`);
+                if (amount > 100) return interaction.reply(`You can't open more than 100 packs at once.`);
 
+                let droprates;
+                if (userLevel(stats.xp) < 10) droprates = { "SS": 1, "S": 4, "A": 34, "B": 130, "C": 388, "D": 1000 }; // {"SS": 1, "S": 4, "A": 29, "B": 96, "C": 258, "D": 612}
+                else if (userLevel(stats.xp) < 20) droprates = { "SS": 1, "S": 9, "A": 42, "B": 142, "C": 394, "D": 1000 }; // {"SS": 1, "S": 8, "A": 33, "B": 100, "C": 252, "D": 606}
+                else droprates = { "SS": 2, "S": 14, "A": 52, "B": 156, "C": 404, "D": 1000 }; // {"SS": 2, "S": 12, "A": 38, "B": 104, "C": 248, "D": 596}
+                
+
+                function displayAmount(pulled) {
+                    let elementsPerPage = 15;
+                    let pagesTotal = Math.ceil(pulled.length / elementsPerPage);
+                    let currPage = 1;
+                
+                    let showItems = showPage(currPage, pulled, elementsPerPage);
+                
+                    const Embed = new EmbedBuilder()
+                        .setColor(0xbbffff)
+                        .setAuthor({ name: `Pulled ${pulled.length} characters!` })
+                        .setThumbnail(characters[pulled[0]].image)
+                        .setDescription(showItems.map((e) => `> ${characters[e].name} (${inv.chars.filter((c) => c === e).length} ${inv.chars.filter((c) => c === e).length === 1 ? "copy" : "copies"})`).join("\n"))
+                        .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
+                    interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+                        const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                        collector.on('collect', r => {
+                            if (r.customId === "prev") {
+                                if (currPage > 1) currPage--;
+                                else currPage = pagesTotal;
+                            } else {
+                                if (currPage < pagesTotal) currPage++;
+                                else currPage = 1;
+                            };
+
+                            showItems = showPage(currPage, pulled, elementsPerPage);
+
+                            Embed.setFooter({ text: `Page ${currPage}/${pagesTotal}` }).setDescription(showItems.map((e) => `> ${characters[e].name} (${inv.chars.filter((c) => c === e).length} ${inv.chars.filter((c) => c === e).length === 1 ? "copy" : "copies"})`).join("\n"));
+                            interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                        });
+                    });
+                }       
+
+                let pulled = [], desc3 = [];
                 if (item === "0") {
                     return;
                 } else if (item === "1" || item === "2" || item === "3") {
-                    if (stats.coins < 300) return interaction.reply("You don't have enough coins");
-                    sub_coins = 300;
+                    if (stats.coins < 300*amount) return interaction.reply("You don't have enough coins");
+                    sub_coins = 300*amount;
 
-                    let rar = "D";
-                    if (ranRar < 3) rar = "SS";
-                    else if (ranRar < 21) rar = "S";
-                    else if (ranRar < 63) rar = "A";
-                    else if (ranRar < 189) rar = "B";
-                    else if (ranRar < 442) rar = "C";
+                    for (let i = 0; i < amount; i++) {
 
-                    let fChars = characters.filter((e) => e.rarity === rar);
-                    if (item === "2") fChars = fChars.filter((e) => e.gender === "F");
-                    else if (item === "3") fChars = fChars.filter((e) => e.gender === "M");
-                    let num = Math.floor(Math.random() * fChars.length);
-                    inv.chars.push(fChars[num].id);
-                    displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
+                        ranRar = Math.floor(Math.random() * 1000); // 0-999
+                        let rar = "D";
+                        if (ranRar < droprates["SS"]) rar = "SS";
+                        else if (ranRar < droprates["S"]) rar = "S";
+                        else if (ranRar < droprates["A"]) rar = "A";
+                        else if (ranRar < droprates["B"]) rar = "B";
+                        else if (ranRar < droprates["C"]) rar = "C";
+
+                        let fChars = characters.filter((e) => e.rarity === rar);
+                        if (item === "2") fChars = fChars.filter((e) => e.gender === "F");
+                        else if (item === "3") fChars = fChars.filter((e) => e.gender === "M");
+
+                        let num = Math.floor(Math.random() * fChars.length);
+
+                        pulled.push(fChars[num].id);
+
+                        if (amount === 1) displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
+                    }
+                    inv.chars = inv.chars.concat(pulled);
+                    if (amount > 1) displayAmount(pulled);
 
                     // Daily Quests
                     dailies[4].update(interaction);
                 } else if (item === "4") {
-                    if (stats.coins < 800) return interaction.reply("You don't have enough coins");
-                    sub_coins = 800;
-
-                    let desc3 = [];
-                    const Embed = new EmbedBuilder()
-                        .setColor(0xbbffff)
-                        .setAuthor({ name: `${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+                    if (stats.coins < 800*amount) return interaction.reply("You don't have enough coins");
+                    sub_coins = 800*amount;
 
                     let rarEmoji = { "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
 
-                    for (let i = 1; i < 4; i++) {
-                        const ranRar = Math.floor(Math.random() * 1000); // 0-999
+                    for (let i = 0; i < amount*3; i++) {
+                        ranRar = Math.floor(Math.random() * 1000); // 0-999
                         let rar = "D";
-                        if (ranRar < 3) rar = "SS";
-                        else if (ranRar < 21) rar = "S";
-                        else if (ranRar < 63) rar = "A";
-                        else if (ranRar < 189) rar = "B";
-                        else if (ranRar < 442) rar = "C";
+                        if (ranRar < droprates["SS"]) rar = "SS";
+                        else if (ranRar < droprates["S"]) rar = "S";
+                        else if (ranRar < droprates["A"]) rar = "A";
+                        else if (ranRar < droprates["B"]) rar = "B";
+                        else if (ranRar < droprates["C"]) rar = "C";
 
                         let fChars = characters.filter((e) => e.rarity === rar);
                         let num = Math.floor(Math.random() * fChars.length);
-                        desc3.push({ val: fChars[num].rarityValue, rarity: fChars[num].rarity, image: fChars[num].image, text: `${i}. ${rarEmoji[rar]}-Tier **${fChars[num].name}**` });
-                        inv.chars.push(fChars[num].id);
+
+                        if (amount === 1) desc3.push({ val: fChars[num].rarityValue, rarity: fChars[num].rarity, image: fChars[num].image, text: `${i}. ${rarEmoji[rar]}-Tier **${fChars[num].name}**` });
+
+                        pulled.push(fChars[num].id);
                     };
+                    inv.chars = inv.chars.concat(pulled);
 
-                    desc3.sort((a, b) => b.val - a.val);
+                    if (amount === 1) {
+                        const Embed = new EmbedBuilder()
+                        .setColor(0xbbffff)
+                        .setAuthor({ name: `${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
 
-                    Embed.setDescription(desc3.map((e) => e.text).join("\n")).setThumbnail(desc3[0].image).setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[desc3[0].rarity]);
-                    interaction.reply({ embeds: [Embed] });
-
+                        desc3.sort((a, b) => b.val - a.val);
+                        Embed.setDescription(desc3.map((e) => e.text).join("\n")).setThumbnail(desc3[0].image).setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[desc3[0].rarity]);
+                        interaction.reply({ embeds: [Embed] });
+                    } else displayAmount(pulled);
+                    
                     // Daily Quests
                     dailies[4].update(interaction);
                 } else if (item === "5") {
-                    if (stats.coins < 500) return interaction.reply("You don't have enough coins");
-                    sub_coins = 500;
+                    if (stats.coins < 500*amount) return interaction.reply("You don't have enough coins");
+                    sub_coins = 500*amount;
 
-                    let rar = "C";
-                    if (ranRar < 4) rar = "SS";
-                    else if (ranRar < 30) rar = "S";
-                    else if (ranRar < 103) rar = "A";
-                    else if (ranRar < 412) rar = "B";
+                    for (let i = 0; i < amount; i++) {
+                        let ranRar = Math.floor(Math.random() * 1000); // 0-999
+                        let rar = "C";
+                        if (ranRar < 4) rar = "SS";
+                        else if (ranRar < 30) rar = "S";
+                        else if (ranRar < 103) rar = "A";
+                        else if (ranRar < 412) rar = "B";
+    
+                        let fChars = characters.filter((e) => e.rarity === rar);
+                        let num = Math.floor(Math.random() * fChars.length);
 
-                    let fChars = characters.filter((e) => e.rarity === rar);
-                    let num = Math.floor(Math.random() * fChars.length);
-                    inv.chars.push(fChars[num].id);
-                    displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
+                        pulled.push(fChars[num].id);
+                        if (amount === 1) displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
+                    }
+                    inv.chars = inv.chars.concat(pulled);
+
+                    if (amount > 1) displayAmount(pulled);
 
                     // Daily Quests
                     dailies[4].update(interaction);
                 } else if (item === "6") {
-                    if (stats.coins < 2000) return interaction.reply("You don't have enough coins");
-                    let newChars = characters.filter((e) => !inv.chars.includes(e.id) && e.rarity !== "SS");
-                    if (newChars.length < 100) return interaction.reply("Morpheus Blessing can't be used once you have less than 100 characters left.");
-                    sub_coins = 2000;
+                    if (stats.coins < 2000*amount) return interaction.reply("You don't have enough coins");
+                    sub_coins = 2000*amount;
 
-                    let rarUp;
-                    if (ranRar < 21) {
-                        rarUp = "S";
-                        if (!newChars.some((e) => e.rarity === "S")) rarUp = "A";
-                        if (!newChars.some((e) => e.rarity === "S" || e.rarity === "A")) rarUp = "B";
-                        if (!newChars.some((e) => e.rarity === "S" || e.rarity === "A" || e.rarity === "B")) rarUp = "C";
-                        if (!newChars.some((e) => e.rarity === "S" || e.rarity === "A" || e.rarity === "B" || e.rarity === "C")) rarUp = "D";
-                    } else if (ranRar < 63) {
-                        rarUp = "A";
-                        if (!newChars.some((e) => e.rarity === "A")) rarUp = "B";
-                        if (!newChars.some((e) => e.rarity === "A" || e.rarity === "B")) rarUp = "C";
-                        if (!newChars.some((e) => e.rarity === "A" || e.rarity === "B" || e.rarity === "C")) rarUp = "D";
-                        if (!newChars.some((e) => e.rarity === "A" || e.rarity === "B" || e.rarity === "C" || e.rarity === "D")) rarUp = "S";
-                    } else if (ranRar < 189) {
-                        rarUp = "B";
-                        if (!newChars.some((e) => e.rarity === "B")) rarUp = "C";
-                        if (!newChars.some((e) => e.rarity === "B" || e.rarity === "C")) rarUp = "D";
-                        if (!newChars.some((e) => e.rarity === "B" || e.rarity === "C" || e.rarity === "D")) rarUp = "A";
-                        if (!newChars.some((e) => e.rarity === "B" || e.rarity === "C" || e.rarity === "D" || e.rarity === "A")) rarUp = "S";
-                    } else if (ranRar < 442) {
-                        rarUp = "C";
-                        if (!newChars.some((e) => e.rarity === "C")) rarUp = "D";
-                        if (!newChars.some((e) => e.rarity === "C" || e.rarity === "D")) rarUp = "B";
-                        if (!newChars.some((e) => e.rarity === "C" || e.rarity === "D" || e.rarity === "B")) rarUp = "A";
-                        if (!newChars.some((e) => e.rarity === "C" || e.rarity === "D" || e.rarity === "B" || e.rarity === "A")) rarUp = "S";
-                    } else if (ranRar < 1000) {
-                        rarUp = "D";
-                        if (!newChars.some((e) => e.rarity === "D")) rarUp = "C";
-                        if (!newChars.some((e) => e.rarity === "D" || e.rarity === "C")) rarUp = "B";
-                        if (!newChars.some((e) => e.rarity === "D" || e.rarity === "C" || e.rarity === "B")) rarUp = "A";
-                        if (!newChars.some((e) => e.rarity === "D" || e.rarity === "C" || e.rarity === "B" || e.rarity === "A")) rarUp = "S";
+                    for (i = 0; i < amount; i++) {
+                        let newChars = characters.filter((e) => !inv.chars.includes(e.id) && e.rarity !== "SS");
+                        if (newChars.length < 100) return interaction.reply("Morpheus Blessing can't be used once you have less than 100 characters left.");
+
+                        let rarUp; let ranRar = Math.floor(Math.random() * 1000); // 0-999
+                        if (ranRar < droprates["S"]) {
+                            rarUp = "S";
+                            if (!newChars.some((e) => e.rarity === "S")) rarUp = "A";
+                            if (!newChars.some((e) => e.rarity === "S" || e.rarity === "A")) rarUp = "B";
+                            if (!newChars.some((e) => e.rarity === "S" || e.rarity === "A" || e.rarity === "B")) rarUp = "C";
+                            if (!newChars.some((e) => e.rarity === "S" || e.rarity === "A" || e.rarity === "B" || e.rarity === "C")) rarUp = "D";
+                        } else if (ranRar < droprates["A"]) {
+                            rarUp = "A";
+                            if (!newChars.some((e) => e.rarity === "A")) rarUp = "B";
+                            if (!newChars.some((e) => e.rarity === "A" || e.rarity === "B")) rarUp = "C";
+                            if (!newChars.some((e) => e.rarity === "A" || e.rarity === "B" || e.rarity === "C")) rarUp = "D";
+                            if (!newChars.some((e) => e.rarity === "A" || e.rarity === "B" || e.rarity === "C" || e.rarity === "D")) rarUp = "S";
+                        } else if (ranRar < droprates["B"]) {
+                            rarUp = "B";
+                            if (!newChars.some((e) => e.rarity === "B")) rarUp = "C";
+                            if (!newChars.some((e) => e.rarity === "B" || e.rarity === "C")) rarUp = "D";
+                            if (!newChars.some((e) => e.rarity === "B" || e.rarity === "C" || e.rarity === "D")) rarUp = "A";
+                            if (!newChars.some((e) => e.rarity === "B" || e.rarity === "C" || e.rarity === "D" || e.rarity === "A")) rarUp = "S";
+                        } else if (ranRar < droprates["C"]) {
+                            rarUp = "C";
+                            if (!newChars.some((e) => e.rarity === "C")) rarUp = "D";
+                            if (!newChars.some((e) => e.rarity === "C" || e.rarity === "D")) rarUp = "B";
+                            if (!newChars.some((e) => e.rarity === "C" || e.rarity === "D" || e.rarity === "B")) rarUp = "A";
+                            if (!newChars.some((e) => e.rarity === "C" || e.rarity === "D" || e.rarity === "B" || e.rarity === "A")) rarUp = "S";
+                        } else if (ranRar < 1000) {
+                            rarUp = "D";
+                            if (!newChars.some((e) => e.rarity === "D")) rarUp = "C";
+                            if (!newChars.some((e) => e.rarity === "D" || e.rarity === "C")) rarUp = "B";
+                            if (!newChars.some((e) => e.rarity === "D" || e.rarity === "C" || e.rarity === "B")) rarUp = "A";
+                            if (!newChars.some((e) => e.rarity === "D" || e.rarity === "C" || e.rarity === "B" || e.rarity === "A")) rarUp = "S";
+                        }
+                        let fChars = newChars.filter((e) => e.rarity === rarUp);
+                        const num = Math.floor(Math.random() * fChars.length);
+
+                        pulled.push(fChars[num].id);
+                        if (amount === 1) displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
                     }
-                    let fChars = newChars.filter((e) => e.rarity === rarUp);
-                    const num = Math.floor(Math.random() * fChars.length);
-                    inv.chars.push(fChars[num].id);
-                    displayMy(fChars[num], inv.chars, inv.ref[fChars[num].id], interaction);
+                    inv.chars = inv.chars.concat(pulled);
+                    if (amount > 1) displayAmount(pulled);
 
                     // Daily Quests
                     dailies[4].update(interaction);
