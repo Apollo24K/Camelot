@@ -57,6 +57,7 @@ const commands = [
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+			.addBooleanOption(option => option.setName('print').setDescription('Print the data as .txt file').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -120,8 +121,8 @@ const commands = [
 							{ name: 'Character Bundle', value: "4" },
 							{ name: 'Rare Pack', value: "5" },
 							{ name: 'Morpheus Blessing', value: "6" },
-						)
-				))
+						))
+				.addStringOption(option => option.setName('amount').setDescription('amount to purchase | Keywords: max').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('chest').setDescription('Buy a chest!')
 				.addStringOption(option =>
 					option.setName('item')
@@ -504,6 +505,19 @@ const commands = [
 				.addUserOption(option => option.setName('user').setDescription('Select a user to be promoted').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('demote').setDescription('Demote someone in your guild')
 				.addUserOption(option => option.setName('user').setDescription('Select a user to be demoted').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('donations').setDescription('List all guild donations from your guild')
+				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
+				.addStringOption(option => 
+					option.setName('filter')
+						.setDescription('filter for the type of donations')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'weekly', value: 'weekly' },
+							{ name: 'monthly', value: 'monthly'},
+							{ name: 'total', value: 'total' },
+						)
+					)
+				)
 			.addSubcommand((subcommand) => subcommand.setName('kick').setDescription('Kick someone from your guild')
 				.addUserOption(option => option.setName('user').setDescription('Select a user to be kicked').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('ban').setDescription('Ban someone from your guild')
@@ -614,7 +628,7 @@ const commands = [
 						{ name: 'alphabetical', value: 'alphabetical' },
 						{ name: 'rarity', value: 'rarity' },
 						{ name: 'dupes', value: 'dupes' },
-						// { name: 'skins', value: 'skins' },
+						{ name: 'skins', value: 'skins' },
 						{ name: 'chronological', value: 'chronological' },
 					)
 			)
@@ -628,7 +642,8 @@ const commands = [
 						{ name: 'true', value: 'true' },
 						{ name: 'false', value: 'false' },
 					)
-			),
+			)
+			.addBooleanOption(option => option.setName('print').setDescription('Print the data as .txt file').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -812,6 +827,7 @@ const commands = [
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+			.addBooleanOption(option => option.setName('print').setDescription('Print the data as .txt file').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1088,6 +1104,7 @@ const commands = [
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+			.addBooleanOption(option => option.setName('print').setDescription('Print the data as .txt file').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1138,6 +1155,22 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('settings')
+			.setDescription('See your settings and change them')
+			.addIntegerOption(option => option.setName('delay').setDescription('Enter an integer to set your delay').setRequired(false))
+			.addStringOption(option =>
+				option.setName('reminder')
+					.setDescription('Select reminder')
+					.setRequired(false)
+					.addChoices(
+						{ name: 'pulls', value: 'pulls' },
+						{ name: 'votes', value: 'votes' },
+					)
+			)
+			.addBooleanOption(option => option.setName('display').setDescription('Select to display the enemy image in battles').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('shards')
 			.setDescription('See your shards')
 			.addUserOption(option => option.setName('user').setDescription('See someone elses shards')),
@@ -1157,6 +1190,22 @@ const commands = [
 						{ name: 'premium', value: "3" },
 					)
 			),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('skins')
+			.setDescription('Look up your skins inventory')
+			.addStringOption(option =>
+				option.setName('filter')
+					.setDescription('Select a filter')
+					.setRequired(false)
+					.addChoices(
+						{ name: 'owned', value: 'owned' },
+						{ name: 'unowned', value: 'unowned'},
+					)
+			)
+			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1276,7 +1325,7 @@ const commands = [
 ];
 
 // Place your client and guild ids here
-const clientId = '695286837568340119'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
+const clientId = '691399125517992086'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
 
 // commands = commands.map((e) => e.data.toJSON());
 
