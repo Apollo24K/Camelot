@@ -103,8 +103,8 @@ module.exports = {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             };
 
-            let stats = await query(`SELECT users.id, users.class, users.coins, users.bank, users.battlechar, users.guild, users.animationdelay, users.premium, users.tutorial, users.level, users.equipment, users.shield_slot, characters.chars, characters.ref, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-            stats = { id: stats[0].id, class: stats[0].class, coins: stats[0].coins, bank: stats[0].bank, battlechar: stats[0].battlechar, guild: stats[0].guild, animationdelay: stats[0].animationdelay, premium: stats[0].premium, tutorial: JSON.parse(stats[0].tutorial), chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: stats[0].level, equipment: JSON.parse(stats[0].equipment), shield_slot: stats[0].shield_slot, skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+            let stats = await query(`SELECT users.id, users.class, users.coins, users.bank, users.battlechar, users.guild, users.animationdelay, users.premium, users.tutorial, users.level, users.equipment, users.shield_slot, users.displayeimage, characters.chars, characters.ref, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+            stats = { id: stats[0].id, class: stats[0].class, coins: stats[0].coins, bank: stats[0].bank, battlechar: stats[0].battlechar, guild: stats[0].guild, animationdelay: stats[0].animationdelay, premium: stats[0].premium, displayeimage: stats[0].displayeimage, tutorial: JSON.parse(stats[0].tutorial), chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: stats[0].level, equipment: JSON.parse(stats[0].equipment), shield_slot: stats[0].shield_slot, skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
 
             if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
 
@@ -289,7 +289,9 @@ module.exports = {
 
                 // Achievements
                 if (floors[floor]?.boss) achievements[27].check(interaction, interaction.user, stats.floors[floor]), achievements[28].check(interaction, interaction.user, stats.floors[floor]), achievements[29].check(interaction, interaction.user, stats.floors[floor]); // Coming Back
-                achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
+                achievements[39].check(interaction, interaction.user, myStatsC.hp);
+                achievements[40].check(interaction, interaction.user, myStatsC.hp);
+                achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
                 achievements[55].check(interaction, interaction.user, floor, stats.floors[floor] >= floors[floor]?.winsNeeded), achievements[56].check(interaction, interaction.user, floor, stats.floors[floor] >= floors[floor]?.winsNeeded), achievements[57].check(interaction, interaction.user, floor, stats.floors[floor] >= floors[floor]?.winsNeeded), achievements[58].check(interaction, interaction.user, floor, stats.floors[floor] >= floors[floor]?.winsNeeded); // Challenger II
 
                 // Coins
@@ -505,7 +507,7 @@ module.exports = {
                         .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
                         .setTitle(`Dungeon Floor ${(floor - 1) % 100 + 1} ${enemy.boss ? "(Boss)" : ""}`)
                         .setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
-                        .setImage(eImage);
+                    if (stats.displayeimage) Embed.setImage(eImage);     
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
                         const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
@@ -541,7 +543,7 @@ module.exports = {
                             } else {
                                 eStatsC = { ...matchStats.eStatsCC };
                                 matchStats.currentOpponent = 0;
-                                Embed.setImage(eImage);
+                                if (stats.displayeimage) Embed.setImage(eImage);
                                 attack();
                             };
                         };

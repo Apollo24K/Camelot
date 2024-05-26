@@ -151,11 +151,11 @@ module.exports = {
                 let result = await new Promise((resolve, rejects) => {
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
-                        .setImage(eStats.image)
                         .setThumbnail(thumbnail)
                         .setTitle(`Battle Arena`)
                         .setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
                         .setFooter({ text: `Turn: ${user.username} | time left: 120s` });
+                    
                     interaction.channel.send({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
                         const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
@@ -183,7 +183,7 @@ module.exports = {
                             } else {
                                 eStatsC = { ...matchStats.eStatsCC };
                                 matchStats.currentOpponent = 0;
-                                Embed.setImage(eStats.image);
+                                if (stats.displayeimage) Embed.setImage(eStats.image);
                                 matchStats.turn = 1;
                             };
                         };

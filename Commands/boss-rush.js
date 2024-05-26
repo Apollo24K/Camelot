@@ -402,7 +402,7 @@ module.exports = {
                         .setFooter({ text: `Enemy EP: ${eStatsC.ep} | Round: ${round + 1} | time left: 120s` })
                         .setTitle(`Boss Rush`)
                         .setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`)
-                        .setImage(eImage);
+                    if (stats.displayeimage) Embed.setImage(eImage);
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
                         const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
@@ -439,7 +439,7 @@ module.exports = {
                             } else {
                                 eStatsC = { ...matchStats.eStatsCC };
                                 matchStats.currentOpponent = 0;
-                                Embed.setImage(eImage);
+                                if (stats.displayeimage) Embed.setImage(eImage);
                                 attack();
                             };
                         };
