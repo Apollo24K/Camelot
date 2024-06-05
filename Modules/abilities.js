@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-const { AttachmentBuilder } = require("discord.js");
+const { AttachmentBuilder, CommandInteractionOptionResolver } = require("discord.js");
 const { getDetailedStats, dealDamage, deleteReplyIn } = require("./functions.js");
 const { db, query } = require("../db_handler.js");
 const { createCanvas, loadImage } = require('@napi-rs/canvas');
@@ -619,6 +619,56 @@ const abilities = {
             // Starts with decreased Stats
             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.2), 9999));
             mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.05), 9999));
+        },
+    },
+    "4330": {
+        usage: 9999,
+        used: 0,
+        cost: 70,
+        pause: 0,
+        desc: "Tetsuya Kuroko, Work Time: 0.75h",
+        ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            if (this.pause > matchStats.round) {
+                this.used--;
+                myStats.sm += this.cost;
+                return matchStats.interaction.channel.send(`Tetsuya Kuroko needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+            };
+            this.pause = matchStats.round + 4;
+            notice.push(`\n✨ **${char.name}** activated his Misdirection Overflow for 3 turns!`);
+            // Atk Buffs during Ability
+            myStats.atk += Math.floor(myStats.atk*0.15);
+            myStats.md += Math.floor(myStats.md*0.15);
+            mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk*0.15), 3));
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md*0.15), 3));
+            // Increased Counter Chance during Ability + Damage Bonus when countering
+            myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+                if (Math.random() < 0.35) myStats.counter = 1; myStats.atk += Math.floor(myStats.atk*0.3); myStats.md += Math.floor(myStats.md*0.3);
+            }, 3));
+        },
+        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Atk Debuffs
+            mybuff.atk.push(new buffInfo("+", -Math.floor(myStats.atk * 0.3), 9999));
+            mybuff.md.push(new buffInfo("+", -Math.floor(myStats.md * 0.3), 9999));
+            mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.3), 9999));
+            mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.3), 9999));
+            // Dodge Buff
+            myStats.dodge += 0.8;
+            mybuff.dodge.push(new buffInfo("+", 0.8, 9999));
+            // Dodge Decrease over Time + Counter Chance
+            myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+                if (myStats.dodge > 0.3) myStats.dodge -= 0.05; mybuff.dodge.push(new buffInfo("+", -0.05, 9999));
+                if (Math.random() < 0.25) myStats.counter = 1; 
+            }, 9999));
+        },
+        party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            const { 0: stampede } = await query(`SELECT participation FROM stampedes ORDER BY rowid DESC LIMIT 1`);
+            stampede.participation = JSON.parse(stampede.participation);
+            if (stampede.participation[interaction.user.id][1] > 125) stampede.participation[interaction.user.id][1] = 125;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+                if (Math.random() < stampede.participation[interaction.user.id][1]/500) dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot. He`, { atkMultiplier: 2});
+            }, 9999));
         },
     },
     "4767": {
@@ -1365,6 +1415,114 @@ const abilities = {
             matchStats.xpboost += 0.25;
         },
     },
+    // Work Time: 1h
+    "12395": {
+        usage: 5,
+        used: 0,
+        cost: 10,
+        desc: "Mari, Timeout: Yes",
+        ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            console.log("Before Remove");
+            console.log(ebuff);
+
+            Object.keys(mybuff).forEach((stat) => 
+                mybuff[stat].forEach((buff) => {
+                    // Adds own buff x1.5 to enemy
+                    if ((buff.type === "*" && buff.val < 1) || (buff.type === "+" && buff.val < 0)) ebuff[stat].push(new buffInfo(buff.type, buff.val*1.5, buff.last));
+                // removes buffs
+                mybuff[stat] = mybuff[stat].filter((buff) => (buff.type === "*" && buff.val > 1) || (buff.type === "+" && buff.val > 0));
+                })
+            );
+            console.log("After Remove");
+            console.log(ebuff);
+        },
+        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+            // Start fight with random amount of debuff for enemy (> 80% = -10%, > 60% = -8%... )
+            let amountVials = Math.random();
+            console.log("Vials Amount: " + amountVials);
+            if (amountVials > 0.8) { ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk*0.1), 9999)); ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md*0.1), 9999)); ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def*0.1), 9999)); ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr*0.1), 9999)); }
+            else if (amountVials > 0.6) { ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk*0.08), 9999)); ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md*0.08), 9999)); ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def*0.08), 9999)); ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr*0.08), 9999)); }
+            else if (amountVials > 0.4) { ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk*0.06), 9999)); ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md*0.06), 9999)); ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def*0.06), 9999)); ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr*0.06), 9999)); }
+            else if (amountVials > 0.2) { ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk*0.04), 9999)); ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md*0.04), 9999)); ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def*0.04), 9999)); ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr*0.04), 9999)); }
+            else ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk*0.02), 9999)); ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md*0.02), 9999)); ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def*0.02), 9999)); ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr*0.02), 9999)); 
+
+            // poisonStack = amount of debuff stack (3% per stack)
+            // poisonMax = maximum amount of possible debuffs (max. 15%)
+            // poisonRound = multiple of round in which poison takes effect (every 3rd round)
+            let newPoisonStack = 1; poisonMax = 5; poisonRound = 3; missingAtk = 0; missingEnemyAtk = 0;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { 
+                if (matchStats.round % poisonRound === 0 && poisonStack <= poisonMax) {
+                    poisonStack++;
+                    missingAtk = (myStats.atk > myStats.md) ? Math.floor(myStats.atk*0.03*poisonStack) : Math.floor(myStats.md*0.03*poisonStack);
+
+                    // Debuffs (3% per Stack)
+                    myStats.atk -= Math.floor(myStats.atk*0.03*poisonStack);
+                    myStats.md -= Math.floor(myStats.mr*0.03*poisonStack);
+                    myStats.def -= Math.floor(myStats.def*0.03*poisonStack);
+                    myStats.mr -= Math.floor(myStats.mr*0.03*poisonStack);
+                    myStats.dodge -= 0.03*poisonStack;
+                    myStats.cr -= 0.03*poisonStack;
+                    myStats.cd -= 0.03*poisonStack;
+
+                    mybuff.atk.push(new buffInfo("+", -Math.floor(myStats.atk*0.03), 9999));
+                    mybuff.md.push(new buffInfo("+", -Math.floor(myStats.md*0.03), 9999));
+                    mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def*0.03), 9999));
+                    mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr*0.03), 9999));
+                    mybuff.dodge.push(new buffInfo("+", -0.03, 9999));
+                    mybuff.cr.push(new buffInfo("+", -0.03, 9999));
+                    mybuff.cd.push(new buffInfo("+", -0.03, 9999));
+
+                    // Enemy Debuffs
+                    missingEnemyAtk = (eStats.atk > eStats.md) ? Math.floor(eStats.atk*0.03*poisonStack) : Math.floor(eStats.md*0.03*poisonStack);
+
+                    eStats.atk -= Math.floor(eStats.atk*0.03*poisonStack);
+                    eStats.md -= Math.floor(eStats.mr*0.03*poisonStack);
+                    eStats.def -= Math.floor(eStats.def*0.03*poisonStack);
+                    eStats.mr -= Math.floor(eStats.mr*0.03*poisonStack);
+                    eStats.dodge -= 0.03*poisonStack;
+                    eStats.cr -= 0.03*poisonStack;
+                    eStats.cd -= 0.03*poisonStack;
+
+                    ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk*0.03), 9999));
+                    ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md*0.03), 9999));
+                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def*0.03), 9999));
+                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr*0.03), 9999));
+                    ebuff.dodge.push(new buffInfo("+", -0.03, 9999));
+                    ebuff.cr.push(new buffInfo("+", -0.03, 9999));
+                    ebuff.cd.push(new buffInfo("+", -0.03, 9999));
+                } 
+                // missing Atk deals equal amount of damage (every round)
+                myStats.hp -= missingAtk;
+                // Enemy
+                eStats.hp -= missingEnemyAtk;
+            }, 9999));
+        },
+        party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+            // 10% Buffs
+            myStats.atk += Math.floor(myStats.atk*0.1);
+            myStats.md += Math.floor(myStats.md*0.1);
+            myStats.def += Math.floor(myStats.def*0.1);
+            myStats.mr += Math.floor(myStats.mr*0.1);
+            myStats.dodge += 0.1;
+            myStats.cr += 0.1;
+            myStats.cd += 0.1;
+            
+            mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk*0.1), 9999));
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md*0.1), 9999));
+            mybuff.def.push(new buffInfo("+", Math.floor(myStats.def*0.1), 9999));
+            mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr*0.1), 9999));
+            mybuff.dodge.push(new buffInfo("+", 0.1, 9999));
+            mybuff.cr.push(new buffInfo("+", 0.1, 9999));
+            mybuff.cd.push(new buffInfo("+", 0.1, 9999));
+
+            // Enemy Damage = missing atk and missing def (atk/ md => higher one)
+            eStats.hp -= (myStats.atk > myStats.md) ? myStats.atk - myStatsFixed.atk : myStats.md - myStatsFixed.md
+            eStats.hp -= (myStats.def > myStats.mr) ? myStats.def - myStatsFixed.def : myStats.mr - myStatsFixed.mr;
+        },
+    },
     "12450": {
         usage: 3,
         used: 0,
@@ -1410,6 +1568,87 @@ const abilities = {
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${name}** attacked **${myStats.name}**! She`, { critMultiplier: 1.33 });
                 };
             }, 9999));
+        },
+    },
+    "13000": {
+        usage: 9999,
+        used: 0,
+        pause: 0,
+        cost: 0,
+        desc: "Nao Tomori",
+        ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            if (this.pause > matchStats.round) {
+                myStats.sm += this.cost;
+                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                return matchStats.interaction.channel.send(`Nao Tomori needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                this.used--;
+                return;
+            };
+            // Tomori Kick
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${myStats.name}**'s Kick`, { atkMultiplier: 1.2 });
+
+            myStats.counter = 1;
+            myStats.damageReduction = 1;
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.counter = 1;
+                myStats.damageReduction = 1;
+            }, 2));
+
+            this.pause = matchStats.round + 5;
+        },
+        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { 
+            myStats.dodge += 0.2;
+            mybuff.dodge.push(new buffInfo("+", 0.2, 5));
+        },
+    },
+    "13285": {
+        usage: 6,
+        used: 0,
+        cost: 60,
+        desc: "Goblin Slayer...",
+        ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            if (matchStats.interaction.commandName === "stampede" && enemy._species === 'Goblin') dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.2+Math.random()*0.6}); // Special Attack Name?
+        },
+        passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            if (matchStats.interaction.commandName === "stampede" && enemy._species === 'Goblin') {
+                const { 0: stampede } = await query(`SELECT participation FROM stampedes ORDER BY rowid DESC LIMIT 1`);
+                stampede.participation = JSON.parse(stampede.participation);
+                if (enemy._name === 'Goblin') {
+                    eStats.hp = 0;
+                    notice.push(`\n✨ **${char.name}** killed the **${enemy.name}** in an instant!`); //Rework the notice
+                } else {
+                    if (stampede.participation[interaction.user.id][1] > 200) stampede.participation[interaction.user.id][1] = 200;
+                    myStats.atk += myStats.atk*(0.0025*stampede.participation[interaction.user.id][1]);
+                    mybuff.atk.push(new buffInfo("+", myStats.atk*(0.0025*stampede.participation[interaction.user.id][1]), 9999));
+                    myStats.md += myStats.md*(0.0025*stampede.participation[interaction.user.id][1]);
+                    mybuff.md.push("+", myStats.md*(0.0025*stampede.participation[interaction.user.id][1]), 9999)
+
+                    myStats.cd += myStats.cd*(0.00125*stampede.participation[interaction.user.id][1]);
+                    mybuff.cd.push("+", myStats.cd*(0.00125*stampede.participation[interaction.user.id][1]), 9999);
+                    myStats.cr += myStats.cr*(0.00125*stampede.participation[interaction.user.id][1])
+                    mybuff.cr.push("+", myStats.cr*(0.00125*stampede.participation[interaction.user.id][1]), 9999);
+                }
+            } else {
+                //! Does not work, need first interaction
+                console.log(matchStats);
+                console.log(myStats);
+                myStats.hp = 0;
+                return matchStats.interaction.channel.send(`**${char.name}** will not fight against other opponents than goblins.`); //Rework the text?
+                notice.push(`\n **${char.name}** will not fight against other opponents than goblins.`); //Rework notice?
+            }
+        },
+        party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (matchStats.interaction.commandName === "stampede" && enemy._species === 'Goblin') {
+                myStats.atk += myStats.atk*0.25
+                myStats.md += myStats.md*0.25
+                myStats.cd += myStats.cd*0.25
+                myStats.cr += myStats.cr*0.25
+
+                mybuff.atk.push("+", myStats.atk*0.25, 9999);
+                mybuff.md.push("+", myStats.md*0.25, 9999);
+                mybuff.cd.push("+", myStats.cd*0.25, 9999);
+                mybuff.cr.push("+", myStats.cr*0.25, 9999);
+            }
         },
     },
     "14903": {
