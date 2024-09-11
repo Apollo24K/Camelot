@@ -172,10 +172,10 @@ const abilities = {
         usage: 1,
         used: 0,
         cost: 80,
-        desc: "**Total Usage**: `1`\n**Mana**: `80`\\💧\n**Timeout**: `no`\n**Role**: `Tank`\n\nMash Kyrielight, the Shield of Chaldea, takes her defensive prowess to new heights in battle, turning her durability into an asset for her and her party. Mash's ability allows her to create a protective shield amounting to **25%** of her max HP. This tactical layer of defense provides a significant cushion against incoming damage, but it can only be utilized once per battle.\n\nHer passive ability, meanwhile, further fortifies her defenses. Mash inherently takes 10% less damage, and as long as she maintains her shield, her attack increases by **15%**, turning defense into offense.\n\nWhen it comes to party support, Mash's protective nature shines through once more. All of her allies begin the fight with a shield equal to **10%** of their max HP, **10%** increased block rate and they take **10%** less damage. Her abilities emphasize a balance of protection and power, making her an indispensable part of any team.",
+        desc: "**Total Usage**: `1`\n**Mana**: `80`\\💧\n**Timeout**: `no`\n**Role**: `Tank`\n\nMash Kyrielight, the Shield of Chaldea, takes her defensive prowess to new heights in battle, turning her durability into an asset for her and her party. Mash's ability allows her to create a protective shield amounting to **80%** of her max HP. This tactical layer of defense provides a significant cushion against incoming damage, but it can only be utilized once per battle.\n\nHer passive ability, meanwhile, further fortifies her defenses. Mash inherently takes 10% less damage, and as long as she maintains her shield, her attack increases by **15%**, turning defense into offense.\n\nWhen it comes to party support, Mash's protective nature shines through once more. All of her allies begin the fight with a shield equal to **80%** of their max HP, **10%** increased block rate and they take **10%** less damage. Her abilities emphasize a balance of protection and power, making her an indispensable part of any team.",
         ability: (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
-            myStats.shield += Math.floor(myStats.maxhp * 0.25);
-            notice.push(`\n✨ **${char.name}** began charging Ea`);
+            myStats.shield += Math.floor(myStats.maxhp * 0.8);
+            notice.push(`\n✨ **${char.name}** casts a protective shield.`);
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.def += 100;
@@ -189,7 +189,7 @@ const abilities = {
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            myStats.shield += Math.floor(myStats.maxhp * 0.1);
+            myStats.shield += Math.floor(myStats.maxhp * 0.8);
             myStats.br += 0.1;
             if (myStats.br > 1) myStats.br = 1;
             myStats.def += 100;
@@ -202,15 +202,19 @@ const abilities = {
         usage: 9999,
         used: 0,
         cost: 0,
-        desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously\n**Timeout**: `no`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing 10 mana each round. If he uses his ability again during this state, he will lunge forward dealing **200%** magic damage by using 50 mana.",
+        desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously\n**Timeout**: `No/Yes`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. \n\n *So... what if I can't keep it up? What if my strength won't last? No... it won't happen... I won't let it happen.* \n If he is below 50% HP during this state, he may use his ability again, consuming **10%** of current HP to lunge forward, dealing **200%** magic damage.",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 200% damage if used again.
-                if (myStats.sm < 50) {
+                if (myStats.hp/myStats.maxhp < 0.5) 
+                    {let sacrifice = Math.floor(myStats.hp * 0.10);
+                    myStats.hp -= sacrifice;
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 })} 
+                    else 
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    return matchStats.interaction.channel.send(`You need at least **50**\\💧 for this attack.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                };
-                myStats.sm -= 40;
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 });
+                    return matchStats.interaction.channel.send(`You need to be below 50% 💖 for this attack.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                ;
+                //myStats.sm -= 40;
+               
             } else {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (myStats.sm < 10) return matchStats.interaction.channel.send(`You need at least **10**\\💧 to sustain this form`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -225,7 +229,7 @@ const abilities = {
                 myStats.mg = 0;
 
                 embed.setThumbnail("https://i.ibb.co/m024R2q/x.png");
-                notice.push(`\n✨ **${char.name}** dons the Yaksha Mask, increasing his magic atk by **30%**`);
+                notice.push(`\n✨ General Alatus, falling in! **${char.name}** dons the Yaksha Mask, increasing his MD by **30%**`);
             };
         },
     },
@@ -243,14 +247,15 @@ const abilities = {
         },
     },
     "735": {
-        usage: 5,
+        usage: 8,
         used: 0,
-        cost: 55,
-        desc: "**Total Usage**: `5`\n**Mana**: `55`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nEach use of Yoimiya's normal attack will grant her a 'flame'. After collecting three 'flames', her normal attack receives a substantial **22.5%** increase in damage. Additionally, if Yoimiya is wielding a bow as her primary weapon, her normal attacks will apply a burn effect dealing **12.5%** true damage for 2 rounds.\n\nHer active ability has her deliver a one-two punch of **50%** physical and magical damage each. The next round after using her active ability, her normal attack will trigger twice.\n\nYoimiya is **not** compatible with other ATK replacing abilities.",
+        cost: 40,
+        desc: "**Total Usage**: `8`\n**Mana**: `40`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nEach use of Yoimiya's normal attack will grant her a 'flame', up to **10**. After collecting three 'flames', her normal attack receives a substantial **22.5%** increase in damage. Additionally, if Yoimiya is wielding a bow as her primary weapon, her normal attacks will apply a burn effect dealing **12.5%** true damage for **2** rounds.\n\nHer active ability has her deliver a one-two punch of **80%** physical and magical damage each, before unleashing a festive reprise, dealing **15%** DMG for every flame collected. The next round after using her active ability, her normal attack will trigger twice.\n\nYoimiya is **not** compatible with other ATK replacing abilities.",
         ability: (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Yoimiya
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.5, magicDamage: false });
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.5, magicDamage: true, mdChance: -1 });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: false });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise!`, { atkMultiplier: 0.15*myStats.yoimiyaFlames, magicDamage: true, mdChance: -1 })
 
             matchStats.twinshot = 1;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -262,13 +267,13 @@ const abilities = {
             myStats.yoimiyaLastTwinshot = matchStats.round;
             myStats.replaceButton.atk = {
                 run: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    myStats.yoimiyaFlames++;
+                    if (myStats.yoimiyaFlames<10) {myStats.yoimiyaFlames++};
                     let atkbuff = 1;
                     if (myStats.yoimiyaFlames >= 3) {
-                        myStats.yoimiyaFlames = 0;
+                        //myStats.yoimiyaFlames = 0;
                         atkbuff = 1.225;
                     };
-                    const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: atkbuff, magicDamage: true });
+                    const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}** with ${myStats.yoimiyaFlames} 🔥`, { atkMultiplier: atkbuff, magicDamage: true });
                     if (items[myStats.weapon]?.type === "bow") ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 2));
 
                     // Twinshot
@@ -800,15 +805,15 @@ const abilities = {
         usage: 0,
         used: 0,
         cost: 100,
-        desc: "**Total Usage**: `0`\n**Role**: `Support`\n\nVladilena Milizé's ability is a Tactical Skill that brings the full force of mechanized artillery to aid her comrades during stampedes. This skill has a strategic nature that embodies her character as a commander. Each round it has a **25%** chance of triggering a devastating artillery bombardment on the enemy ranks, dealing **80%** damage.",
+        desc: "**Total Usage**: `0`\n**Role**: `Support`\n\nVladilena Milizé's ability is a Tactical Skill that brings the full force of mechanized artillery to aid her comrades during stampedes. This skill has a strategic nature that embodies her character as a commander. Each round she has a **33%** chance of comanding a devastating artillery bombardment on the enemy ranks, dealing **200%** damage.",
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const name = pStats.name;
-            if (Math.random() < 0.25) {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.8, ignoreShield: true, magicDamage: true });
+            if (Math.random() < 0.33) {
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 2, ignoreShield: true, magicDamage: true });
             };
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (Math.random() < 0.25) {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.8, ignoreShield: true, magicDamage: true });
+                if (Math.random() < 0.33) {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 2, ignoreShield: true, magicDamage: true });
                 };
             }, 9999));
         },
@@ -1649,12 +1654,12 @@ const abilities = {
                     myStats.sm -= mana_cost;
                     myStats.dodge = dodge_buff;
                     ebuff.dodge.push(new buffInfo("=", 0, 3));
-                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * def_debuff), 1));
-                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * def_debuff), 1));
+                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * def_debuff), 2));
+                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * def_debuff), 2));
                     eStats.dodge = 0;
                     eStats.def -= Math.floor(eStats.def * def_debuff);
                     eStats.mr -= Math.floor(eStats.mr * def_debuff);
-                    notice.push(`\n<:quagmire:1140026835225292841> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%**`);
+                    notice.push(`\n<:quagmire:1140026835225292841> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%** for **2** turns!`);
                 },
             };
 
@@ -2059,10 +2064,10 @@ const abilities = {
     "17742": {
         usage: 9999,
         used: 0,
-        cost: 80,
+        cost: 60,
         stacks: 1,
         pause: -5,
-        desc: "**Total Usage**: `unlimited`\n**Mana**: `80`\\💧\n**Timeout**: `yes`\n**Role**: `DPS/Support`\n\nAh, so you want to know about my abilities, huh? Well, let me tell you, all those formal descriptions are just too dull, aren't they? I mean, who needs all that jargon when you can have a bit of fun, right? So, here's the deal with my kit, straight from the Yorozuya's mouth!\n\nFirst up, we've got my passive. You see, I'm not really into the whole training thing. I prefer just to match the level of the toughest guy around. Makes life easier, you know? Every turn, I get this itch to swing my sword a bit harder and aim a bit sharper. That's me increasing my attack and crit rate by **5%**, stacking up to **5** times. But when I'm really pushed to the edge, like under **30%** HP, I get a surge of \"I-don't-wanna-die\" energy, and suddenly I'm hitting (and getting hit) **20%** harder.\n\nNow, let's talk about my active! When things get too hot, I switch to an endurance mode for **4 rounds**. It's like playing a game of chicken with the enemy. **33%** of the damage coming my way? I just shrug it off and store it as `Injuries`. And while I'm at it, there's a **25%** chance I'll just casually counter an attack. Cool, right? But here's the catch: when my endurance mode times out, those `Injuries` I shrugged off earlier come back to haunt me over the next **10 rounds**.\n\nLastly, my party ability lets me share the endurance, but spare the pain. You see, I'm a team player when I feel like it. Every **5 rounds**, I let my allies experience my Endurance mode for a turn, minus the annoying part where you pay for it later. It's my way of saying, \"Here, have some fun, but don't worry about the consequences.\"\n\nSo, that's me in a nutshell. A lazy samurai who somehow avoids hard work. Remember, it's not about how strong your abilities are, it's about how you use them... or avoid using them, in my case.",
+        desc: "**Total Usage**: `unlimited`\n**Mana**: `60`\\💧\n**Timeout**: `Yes`\n**Role**: `DPS/Support`\n\nAh, so you want to know about my abilities, huh? Well, let me tell you, all those formal descriptions are just too dull, aren't they? I mean, who needs all that jargon when you can have a bit of fun, right? So, here's the deal with my kit, straight from the Yorozuya's mouth!\n\nFirst up, we've got my passive. You see, I'm not really into the whole training thing. I prefer just to match the level of the toughest guy around. Makes life easier, you know? Every turn, I get this itch to swing my sword a bit harder and aim a bit sharper. That's me increasing my attack and crit rate by **5%**, stacking up to **5** times. But when I'm really pushed to the edge, like under **30%** HP, I get a surge of \"I-don't-wanna-die\" energy, and suddenly I'm hitting **50%** harder- Well my carelessness does expose me to receiving **20%** more DMG as well. Oops.\n\nNow, let's talk about my active! When things get too hot, I switch to an endurance mode for **4 rounds**. It's like playing a game of chicken with the enemy. **33%** of the damage coming my way? I just shrug it off and store it as `Injuries`. And while I'm at it, there's a **25%** chance I'll just casually counter an attack. Cool, right? But here's the catch: when my endurance mode times out, those `Injuries` I shrugged off earlier come back to haunt me over the next **10 rounds**.\n\nLastly, my party ability lets me share the endurance, but spare the pain. You see, I'm a team player when I feel like it. Every **3 rounds**, I let my allies experience my Endurance mode for a turn, minus the annoying part where you pay for it later. It's my way of saying, \"Here, have some fun, but don't worry about the consequences.\"\n\nSo, that's me in a nutshell. A lazy samurai who somehow avoids hard work. Remember, it's not about how strong your abilities are, it's about how you use them... or avoid using them, in my case.",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Gintoki EX
             if (this.pause > matchStats.round) {
@@ -2078,10 +2083,10 @@ const abilities = {
 
             // Enter Endurance Mode
             myStats.putDamageOnHold = 0.33; // 33%
-            if (Math.random() < 0.25) myStats.counter = 1;
+            if (Math.random() < 0.25) myStats.counter += 1;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 // Chance to counter
-                if (Math.random() < 0.25) myStats.counter = 1;
+                if (Math.random() < 0.25) myStats.counter += 1;
             }, domainLast - 1));
 
             // When Endurance Mode Ends
@@ -2097,7 +2102,7 @@ const abilities = {
                 myStats.damageOnHold = 0;
             }));
 
-            notice.push(`\n✨ **${char.name}** entered an endurance mode!`);
+            notice.push(`\n✨ **${char.name}** entered endurance mode!`);
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.gintokiStacks = 0;
@@ -2111,7 +2116,7 @@ const abilities = {
                 // Enraged
                 if ((myStats.hp / myStats.maxhp) < 0.3) {
                     myStats.vulnerability = 1.2;
-                    eStats.vulnerability = 1.2;
+                    eStats.vulnerability = 1.5;
                 } else {
                     myStats.vulnerability = 1;
                     eStats.vulnerability = 1;
@@ -2120,11 +2125,11 @@ const abilities = {
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (matchStats.round % 5 === 0) {
+                if (matchStats.round % 3 === 0) {
 
                     // Enter Endurance Mode
                     myStats.putDamageOnHold = 0.33; // 33%
-                    if (Math.random() < 0.25) myStats.counter = 1;
+                    if (Math.random() < 0.25) myStats.counter += 1;
 
                     // When Endurance Mode Ends
                     const domainLast = 1;
@@ -2132,7 +2137,7 @@ const abilities = {
                         myStats.putDamageOnHold = 0;
                     }));
 
-                    notice.push(`\n✨ **${char.name}** entered an endurance mode!`);
+                    notice.push(`\n✨ **${char.name}** entered endurance mode!`);
                 };
             }, 9999));
         },
