@@ -202,17 +202,17 @@ const abilities = {
         usage: 9999,
         used: 0,
         cost: 0,
-        desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously\n**Timeout**: `No/Yes`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. \n\n *So... what if I can't keep it up? What if my strength won't last? No... it won't happen... I won't let it happen.* \n If he is below 50% HP during this state, he may use his ability again, consuming **10%** of current HP to lunge forward, dealing **200%** magic damage.",
+        desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously\n**Timeout**: `No/Yes`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. If he uses his ability again during this state, he will consume **15%** of current HP to lunge forward, dealing **200%** magic damage.",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 200% damage if used again.
                 if (myStats.hp/myStats.maxhp < 0.5) 
-                    {let sacrifice = Math.floor(myStats.hp * 0.10);
+                    {let sacrifice = Math.floor(myStats.hp * 0.15);
                     myStats.hp -= sacrifice;
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 })} 
-                    else 
+                    else {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
                     return matchStats.interaction.channel.send(`You need to be below 50% 💖 for this attack.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                ;
+                    };
                 //myStats.sm -= 40;
                
             } else {
@@ -229,7 +229,7 @@ const abilities = {
                 myStats.mg = 0;
 
                 embed.setThumbnail("https://i.ibb.co/m024R2q/x.png");
-                notice.push(`\n✨ General Alatus, falling in! **${char.name}** dons the Yaksha Mask, increasing his MD by **30%**`);
+                notice.push(`\n✨🎭 **${char.name}** dons the Yaksha Mask, increasing his MD by **30%**`);
             };
         },
     },
@@ -247,15 +247,15 @@ const abilities = {
         },
     },
     "735": {
-        usage: 8,
+        usage: 5,
         used: 0,
         cost: 40,
-        desc: "**Total Usage**: `8`\n**Mana**: `40`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nEach use of Yoimiya's normal attack will grant her a 'flame', up to **10**. After collecting three 'flames', her normal attack receives a substantial **22.5%** increase in damage. Additionally, if Yoimiya is wielding a bow as her primary weapon, her normal attacks will apply a burn effect dealing **12.5%** true damage for **2** rounds.\n\nHer active ability has her deliver a one-two punch of **80%** physical and magical damage each, before unleashing a festive reprise, dealing **15%** DMG for every flame collected. The next round after using her active ability, her normal attack will trigger twice.\n\nYoimiya is **not** compatible with other ATK replacing abilities.",
+        desc: "**Total Usage**: `5`\n**Mana**: `40`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nEach use of Yoimiya's normal attack will grant her a 'flame', up to **20**. After collecting three 'flames', her normal attack receives a substantial **22.5%** increase in damage. Additionally, if Yoimiya is wielding a bow as her primary weapon, her normal attacks will apply a burn effect dealing **12.5%** true damage for **2** rounds.\n\nHer active ability has her deliver a one-two punch of **80%** physical and magical damage each, before unleashing a festive reprise, dealing **10%** DMG for every flame collected. The next round after using her active ability, her normal attack will trigger twice.\n\nYoimiya is **not** compatible with other ATK replacing abilities.",
         ability: (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Yoimiya
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: false });
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise!`, { atkMultiplier: 0.15*myStats.yoimiyaFlames, magicDamage: true, mdChance: -1 })
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise!`, { atkMultiplier: 0.1*myStats.yoimiyaFlames, magicDamage: true, mdChance: -1 })
 
             matchStats.twinshot = 1;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -267,13 +267,13 @@ const abilities = {
             myStats.yoimiyaLastTwinshot = matchStats.round;
             myStats.replaceButton.atk = {
                 run: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    if (myStats.yoimiyaFlames<10) {myStats.yoimiyaFlames++};
+                    if (myStats.yoimiyaFlames<20) {myStats.yoimiyaFlames++};
                     let atkbuff = 1;
                     if (myStats.yoimiyaFlames >= 3) {
                         //myStats.yoimiyaFlames = 0;
                         atkbuff = 1.225;
                     };
-                    const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}** with ${myStats.yoimiyaFlames} 🔥`, { atkMultiplier: atkbuff, magicDamage: true });
+                    const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}** with ${myStats.yoimiyaFlames}x 🔥`, { atkMultiplier: atkbuff, magicDamage: true });
                     if (items[myStats.weapon]?.type === "bow") ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 2));
 
                     // Twinshot
@@ -1080,24 +1080,34 @@ const abilities = {
     "10517": {
         usage: 9999,
         used: 0,
-        cost: 70,
+        cost: 50,
         roundUsed: -5,
-        desc: "**Total Usage**: `unlimited`\n**Mana**: `70`\\💧\n**Timeout**: `no`\n**Role**: `Support/DPS`\n\nLuminous brings a unique blend of healing and damage to the battlefield. Her abilities not only bolster her offensive capabilities but also provide a reliable source of health recovery for herself and her allies.\n\nShe steadily recovers **3%** of her missing health every round. This consistent restoration ensures that she's able to stay in the fight for an extended period.\n\nWhen her active ability is used, Luminous enters a heightened state for **3 rounds**, increasing her magic damage by **25%** and doubling her passive from 3% to **6%**, and during this state she deals magic damage to her opponents. However, it's important to note that this ability can't be stacked, meaning it can't be used again while the effect is still active.\n\nWhen part of a party, Luminous offers her blessings to her friends as well. She increases the party's magic damage by **16%** and ensures they stay in the fight by healing them for **5%** of their missing health every round.",
+        desc: "**Total Usage**: `unlimited`\n**Mana**: `50`\\💧\n**Timeout**: `no`\n**Role**: `Support/DPS`\n\nLuminous brings a unique blend of healing and damage to the battlefield. Her abilities not only bolster her offensive capabilities but also provide a reliable source of health recovery for herself and her allies.\n\nShe steadily recovers **3%** of her missing health every round. As the lightbearer of truth, this consistent restoration always results in a critical recovery, ensuring that the light is always ignited, against all odds of suppression.\n\nWhen her active ability is used, Luminous enters a heightened state for **3 rounds**, increasing her magic damage and critical damage by **33%** and doubling her passive from **3%** to **6%**, and during this state she deals magic damage to her opponents. However, it's important to note that this ability can't be stacked, meaning it can't be used again while the effect is still active. \n\n *The light- I... I see the light.*\n Every third use of her ability prompts the illumination of darkness, allowing Luminous to additionally recover **33%** lost HP.\n\nWhen part of a party, Luminous extends her blessings to her friends as well. She increases the party's magic damage by **20%** and ensures they stay in the fight by healing them for **5%** of their missing health every round. Accompanied by the dazzling glow, this restoration always results in a critical heal.",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            // Luminous increases her magic damage for 3 rounds
+            // Luminous increases her magic damage, critical damage for 3 rounds
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (matchStats.round < this.roundUsed + 3) {
                 myStats.sm += this.cost;
                 return matchStats.interaction.channel.send("You can't stack Luminous' ability").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
             };
-
+            let healedamt = 0
+            this.used++
             myStats.mdChance += 1;
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.25), 2));
-            myStats.md += Math.floor(myStats.md * 0.25);
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.33), 2));
+            myStats.md += Math.floor(myStats.md * 0.33);
 
-            myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.1);
+            mybuff.cd.push(new buffInfo("+",0.33,2));
+            myStats.cd += 0.33;
+
+            // Every 3rd use additionally grants 33% lost HP heal
+            if ((this.used % 3) === 0) {
+                healedamt = Math.floor((myStats.maxhp - myStats.hp) * 0.33);
+                myStats.hp += healedamt;
+                notice.push(`\n👒 **${char.name}** has been graced by the light. Restored **${healedamt}** HP.`);
+                healedamt = 0};
+
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.03);
+            myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd);
             }, 2));
 
             // Change image after 3 rounds
@@ -1107,19 +1117,19 @@ const abilities = {
             }));
 
             embed.setThumbnail("https://i.ibb.co/NKnp3KM/luminous.png");
-            notice.push(`\n✨ **${char.name}** increased her MD by **25%** for 3 rounds!`);
+            notice.push(`\n✨ **${char.name}** increased her MD and critical DMG by **33%** for 3 rounds!`);
             this.roundUsed = matchStats.round;
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.03);
+                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd);
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.16), 9999));
-            myStats.md += Math.floor(myStats.md * 0.16);
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.2), 9999));
+            myStats.md += Math.floor(myStats.md * 0.2);
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.05);
+                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.05 * myStats.cd);
             }, 9999));
         },
     },
@@ -1421,13 +1431,13 @@ const abilities = {
         usage: 9999,
         used: 0,
         pause: 0,
-        cost: 75, // 6.25% Max HP on Passive, 75 Mana on Active
-        desc: "**Total Usage**: `unlimited` (5 rounds cooldown)\n**Cost**: `75`\\💧\n**Timeout**: `yes`\n**Role**: `Support`\n\nMarch 7th is an enthusiastic girl who was saved from eternal ice by the Astral Express Crew. Following the path of Preservation, she's going to make sure that she keeps her allies and herself stay longer in the fight.\n\nEvery **5** rounds, she converts **5%** of her max HP into a shield. While this shield is up, her DEF and MR are increased by **20%** and her ATK and MD gain a **15%** increase.\n\nHer active ability will cast her ultimate, Glacial Cascade, which deals **110%** damage and has a **50%** chance of freezing the enemy for 1 round. The enemy is more vulnerable while the enemy is veiled by her ice, taking **20%** extra damage.\n\nIn a party, she shares her defensive passive to her allies, converting **5%** of their max HP into a shield. While this shield is up, they get a **20%** DEF and MR boost, and a **15%** boost in ATK and MD.",
+        cost: 40, // 5% Max HP on Passive, 40 Mana on Active
+        desc: "**Total Usage**: `unlimited` (5 rounds cooldown)\n**Cost**: `40`\\💧\n**Timeout**: `yes`\n**Role**: `Support`\n\nMarch 7th is an enthusiastic girl who was saved from eternal ice by the Astral Express Crew. Following the path of Preservation, she's going to make sure that she keeps her allies and herself stay longer in the fight.\n\nEvery **4** rounds, she converts **5%** of her current HP into a shield of **5%** max HP. While this shield is up, her DEF and MR are increased by **20%** and her ATK and MD gain a **30%** increase.\n\nHer active ability will cast her ultimate, Glacial Cascade, which deals **110%** damage and has a **50%** chance of freezing the enemy for **1** round. The enemy is more vulnerable while the enemy is veiled by her ice, taking **20%** extra damage.\n\nIn a party, she shares her defensive passive to her allies, converting **5%** of their max HP into a shield every **5** turns. While this shield is up, they get a **20%** DEF and MR boost, and a **30%** boost in ATK and MD.",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
-                myStats.sm += 60;
+                myStats.sm += 40;
                 return matchStats.interaction.followUp({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
             };
             this.pause = matchStats.round + 5;
@@ -1444,29 +1454,29 @@ const abilities = {
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { // Does it need to be a function?
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (matchStats.round % 5 === 0) { // Sacrifice 5% max HP for shield
+                if (matchStats.round % 4 === 0) { // Sacrifice 5% max HP for shield
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
-                    myStats.hp -= Math.floor(myStats.maxhp * 0.05);
+                    myStats.hp -= Math.floor(myStats.hp * 0.05);
                 };
                 if (myStats.shield > 0) {
                     myStats.def += Math.floor(myStats.def * 0.2);
                     myStats.mr += Math.floor(myStats.mr * 0.2);
-                    myStats.atk += Math.floor(myStats.atk * 0.15);
-                    myStats.md += Math.floor(myStats.md * 0.15);
+                    myStats.atk += Math.floor(myStats.atk * 0.3);
+                    myStats.md += Math.floor(myStats.md * 0.3);
                 };
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (matchStats.round % 7 === 0) {
+                if (matchStats.round % 5 === 0) {
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
-                    myStats.hp -= Math.floor(myStats.maxhp * 0.05);
+                    myStats.hp -= Math.floor(myStats.hp * 0.05);
                 };
                 if (myStats.shield > 0) {
                     myStats.def += Math.floor(myStats.def * 0.2);
                     myStats.mr += Math.floor(myStats.mr * 0.2);
-                    myStats.atk += Math.floor(myStats.atk * 0.15);
-                    myStats.md += Math.floor(myStats.md * 0.15);
+                    myStats.atk += Math.floor(myStats.atk * 0.3);
+                    myStats.md += Math.floor(myStats.md * 0.3);
                 };
             }, 9999));
         },
