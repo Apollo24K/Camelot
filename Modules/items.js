@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
-const buffInfo = require("./buffs.js");
-const delayedBuffs = require("./delayedBuffs.js");
-const { dealDamage } = require("./functions.js");
+import buffInfo from "./buffs";
+import delayedBuffs from "./delayedBuffs";
+import { dealDamage } from "./functions";
 
 class itemInfo {
     constructor(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc = "", flair = "") {
@@ -194,7 +194,35 @@ class armorInfo extends itemInfo {
     };
 };
 
-const items = [
+class ringInfo extends itemInfo {
+    constructor(name, category, type, obtain, emoji, image, maxlevel, buffs, buffdescs, flair, grade, id, desc = "", unique = true, tradable = false, sellable = true) {
+        super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
+        this._maxlevel = maxlevel;
+        this._buffs = buffs;
+        this._buffdescs = buffdescs;
+    };
+
+    get maxlevel() {
+        return this._maxlevel;
+    };
+    get buffs() {
+        return this._buffs;
+    };
+    get buffdescs() {
+        return this._buffdescs;
+    };
+
+    getBuff(level) {
+        level = Math.min(Math.max(level, 1), this.maxlevel) || 1;
+        return this.buffs(level);
+    };
+    getBuffDesc(level) {
+        level = Math.min(Math.max(level, 1), this.maxlevel) || 1;
+        return this.buffdescs(level);
+    };
+};
+
+export const items = [
     // Fish
     new fishInfo("Carp", "fish", "fish", ["fishing"], true, "<:carp:1028307600128872468>", "https://i.ibb.co/ZB9chS1/c.png", "normal", 0),
     new fishInfo("Seabass", "fish", "fish", ["fishing"], true, "<:seabass:1028313283259797584>", "https://i.ibb.co/Kby5P5F/s.png", "normal", 1),
@@ -403,7 +431,7 @@ const items = [
         myStats.md += Math.floor(myStats.md * 0.2);
     }, "Increases magic damage by **+20%** at the start of battle, lasting 5 rounds.", "The Sidhe Staff is a mysterious and powerful object, imbued with the ancient magic of the fae. Those who wield it are said to be able to tap into the power of the otherworldly beings who reside in the mystical realm of the Sidhe. The staff is crafted from a single branch of the sacred tree of the fae, and decorated with glowing gemstones, giving off an otherworldly light.", "rare", 113),
     new weaponInfo("The Grim Wand", "weapon", "staff", ["crafting", "chest"], "<:the_grim_wand:1063473354843095122>", "https://i.imgur.com/7RFiT0V.png", "md", 22, 392, "cd", 0.05, 0.22, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        ebuff.hp.push(new buffInfo("+", -Math.floor(eStats.hp / 40), 4));
+        ebuff.hp.push(new buffInfo("+", -Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025), 4));
     }, "This staff will curse the enemy at the start of battle, dealing **10%** damage in total over 4 rounds.", "The Grim Wand was once wielded by a powerful necromancer, its dark power able to raise the dead and bend them to its wielder's will. Those who dare to wield the staff must be cautious, for its power comes with a heavy price. The Grim Wand hungers for death and will stop at nothing to satisfy its thirst for destruction. Use it wisely, lest you become its next victim.", "rare", 114),
     new weaponInfo("Twisted Visions", "weapon", "staff", ["crafting", "chest"], "<:twisted_visions:1063473360010498098>", "https://i.imgur.com/TJlxJqA.png", "md", 21, 371, "cr", 0.06, 0.19, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.dodge += 0.1;
@@ -546,8 +574,7 @@ const items = [
         mybuff.mg.push(new buffInfo("+", 3, 5));
     }, "Increases mana generation by **+3**💧at the start of battle, lasting 5 rounds.", "The Baleful Harvest is a cursed dagger that feeds on the souls of its victims. Those who wield it are consumed by a thirst for power and a hunger for death. It whispers dark promises of strength and riches, tempting its wielder to give in to its evil influence. Those who succumb to its temptations are driven mad and become slaves to its will. It has claimed countless lives over the centuries and its legend continues to grow with each soul it consumes. Wield the Baleful Harvest at your own peril.", "rare", 146),
     new weaponInfo("Blacktalon", "weapon", "dagger", ["crafting", "chest"], "<:blacktalon:1063819887119695983>", "https://i.imgur.com/3IENE8O.png", "atk", 24, 403, "cr", 0.03, 0.12, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const bleed = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.04 : eStats.hp * 0.02);
-        ebuff.hp.push(new buffInfo("+", -bleed, 5));
+        ebuff.hp.push(new buffInfo("+", -Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.02), 5));
     }, "The Blacktalon will cause bleeding to your opponent, dealing **10%** of your enemies HP as damage over 5 rounds. If enemy HP is more than twice of your own HP, it will deal 20% of your own HP as damage instead.", "Forged in the depths of the Shadow Realm, Blacktalon is a weapon of pure darkness. Its razor-sharp blade glints menacingly in the dim light, thirsting for the taste of blood. Those who dare to wield it are granted a deadly precision, striking fear into the hearts of their enemies. But beware, for Blacktalon's power comes at a price, beckoning its wielder to succumb to the shadows.", "rare", 147),
     new weaponInfo("Crescent Blade", "weapon", "dagger", ["crafting", "chest"], "<:crescent_blade:1063819891578257478>", "https://i.imgur.com/50PAWrZ.png", "md", 26, 419, "mr", 8, 78, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mr = Math.floor(myStats.mr * 1.2);
@@ -565,7 +592,7 @@ const items = [
         mybuff.cr.push(new buffInfo("+", 0.15, 4));
     }, "Increases crit rate by **15%** at the start of battle, lasting 4 rounds.", "The Gravekeeper is a deadly weapon wielded by those who tend to the dead. Its blade is sharpened on the bones of fallen warriors, imbuing it with a dark power that can strike fear into the hearts of even the bravest of foes. In the hands of a skilled assassin, the Gravekeeper is a tool of death and destruction, capable of striking down enemies with swift and deadly precision. Those who cross its path do so at their own peril, for the Gravekeeper is a relentless guardian of the dead, and it will not rest until its mission is complete.", "rare", 150),
     new weaponInfo("The Carver", "weapon", "dagger", ["crafting", "chest"], "<:the_carver:1063821284573720667>", "https://i.imgur.com/BfC3Lub.png", "atk", 20, 362, "cd", 0.07, 0.29, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        ebuff.hp.push(new buffInfo("*", 0.98, 4));
+        ebuff.hp.push(new buffInfo("+", Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.02), 4));
     }, "The Carver will cause bleeding to your opponent, dealing **8%** of your enemies HP as damage over 4 rounds.", "The Carver is a small but deadly blade, perfect for precision strikes and carving through monster skin. Its sharp bronze, curved edge glints in the light, beckoning to be used by those with a skilled hand and a thirst for blood. Be careful not to let it slip, for once it finds its mark, there is no going back.", "rare", 151),
     new weaponInfo("The Eviscerator", "weapon", "dagger", ["crafting", "chest"], "<:the_eviscerator:1063821287790755933>", "https://i.imgur.com/qmJTD08.png", "atk", 25, 416, "dodge", 0.03, 0.11, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.dodge -= 0.12;
@@ -659,9 +686,8 @@ const items = [
         myStats.sm += 10;
     }, "Increases the wielders mana cap by **+50**. Start the battle with **+10** mana.", "The legendary sword Dainsleif, passed down through the ages and wielded by only the most worthy warriors, is said to be cursed. Those who draw the blade are doomed to suffer a fate worse than death, as the sword compels its wielder to kill until it is satisfied. Its thirst for blood is insatiable, making it a weapon to be feared by even the bravest of men.", "unique", 170),
     new weaponInfo("Devil's Claw", "weapon", "sword", ["chest"], "<:devils_claw:1066858381933023332>", "https://i.imgur.com/tNok8En.png", "atk", 32, 572, "cd", 0.04, 0.3, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const bleed = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.02 : eStats.hp * 0.01);
-        eStats.hp -= Math.floor(bleed * 10);
-        ebuff.hp.push(new buffInfo("+", -bleed, 10));
+        eStats.hp -= Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.1);
+        ebuff.hp.push(new buffInfo("+", -Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.01), 10));
     }, "The enemy starts with **90%** HP, and loses another **10%** in the following 10 rounds. If the enemy has more than twice of your HP, the enemy starts with **20%** less of your own HP and deals another **20%** of your own HP as damage over 10 rounds.", "The Devil's Claw glows with a sinister light, leaving a trail of death in its wake whenever it slices through the air. Its razor-sharp edge is capable of slicing through the strongest of armor, and its unique looking hilt is said to be made with the remains of the devil himself. It is a weapon feared by all who behold it, for it is the favored weapon of the darkest of fiends.", "unique", 171),
     new weaponInfo("Flamberge", "weapon", "sword", ["crafting", "chest"], "<:flamberge:1066858387922501724>", "https://i.imgur.com/oUbBuvG.png", "atk", 32, 569, "dodge", 0.02, 0.11, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.atk = Math.floor(myStats.atk * 1.5);
@@ -674,13 +700,13 @@ const items = [
         mybuff.mg.push(new buffInfo("+", 5, 4));
     }, "The wielder has **10%** increased magic resistance. Get **+5** mana per round during the first 4 rounds.", "Forged in the fires of the underworld, Fragarach is a sword like no other. Its sharp, deadly blade is imbued with dark magic, capable of cutting through even the strongest armor with ease. Those who wield it are said to be able to strike fear into the hearts of their enemies, instilling a sense of dread with every swing. But be warned, for with great power comes great responsibility - those who misuse Fragarach will be consumed by its dark power.", "unique", 173),
     new weaponInfo("Hyumilis", "weapon", "sword", ["crafting", "chest"], "<:hyumilis:1066859975474942123>", "https://i.imgur.com/h3mPqBr.png", "atk", 36, 573, "mr", 22, 92, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.cr -= 0.1;
+        eStats.cr -= 0.4;
         if (eStats.cr < 0) eStats.cr = 0;
-        ebuff.cr.push(new buffInfo("+", -0.1, 5));
+        ebuff.cr.push(new buffInfo("+", -0.4, 5));
         eStats.cd -= 0.4;
         if (eStats.cd < 0) eStats.cd = 0;
         ebuff.cd.push(new buffInfo("+", -0.4, 5));
-    }, "Decreases enemy crit rate by **10%**, crit damage by **40%** at the start of battle, lasting 5 rounds.", "The Hyumilis glimmers in the sunlight, its finely crafted blade honed to perfection. With its deadly sharp edge and balanced weight, the Hyumilis is a weapon to be feared on the battlefield. Those who have faced it in combat speak of its ability to strike with incredible speed and precision. It is a sword fit for a true warrior, one who values skill and precision above all else.", "unique", 174),
+    }, "Decreases enemy crit rate by **40%**, crit damage by **40%** at the start of battle, lasting 5 rounds.", "The Hyumilis glimmers in the sunlight, its finely crafted blade honed to perfection. With its deadly sharp edge and balanced weight, the Hyumilis is a weapon to be feared on the battlefield. Those who have faced it in combat speak of its ability to strike with incredible speed and precision. It is a sword fit for a true warrior, one who values skill and precision above all else.", "unique", 174),
     new weaponInfo("Joyeuse", "weapon", "sword", ["crafting", "chest"], "<:joyeuse:1066859978712940575>", "https://i.imgur.com/UgMECv5.png", "atk", 30, 722, "cd", 0.09, 0.42, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // NO BUFF
     }, "None", "Joyeuse was the celebrated sword of Charlemagne who ruled in the Middle Ages. Said to have been crafted by the fairy king Wayland, Joyeuse was a weapon of incredible power, imbued with magic and imbued with the light of the sun. In battle, it is said to have glowed with a dazzling radiance, striking fear into the hearts of enemies and inspiring his troops to victory. Those who were struck by Joyeuse were said to have been instantly vanquished, their armor and weapons reduced to dust by the sword's incredible power. It is a weapon of legend, a symbol of Charlemagne's might and the embodiment of his unbreakable spirit.", "unique", 175),
@@ -759,7 +785,7 @@ const items = [
     }, "This staff heals the wielder by **7.5%** of their max HP at the cost of losing 5 mana per round.", "The Crying Crystal is a powerful arcane tool imbued with the tears of ancient wizards. Its clear, crystalline shaft glows with a faint, ethereal light, and the tears of magic that are embedded within it pulse with sorrow. When wielded by a skilled user, the Crying Crystal staff can unleash devastating spells and blasts of pure magical energy. But beware, for the staff's power comes at a price, and those who use it carelessly may find themselves consumed by its eldritch might.", "unique", 188),
     new weaponInfo("Cursed Scepter of Nosferatu", "weapon", "staff", ["chest"], "<:cursed_scepter_of_nosferatu:1066863383917383680>", "https://i.imgur.com/gjPhHKE.png", "md", 32, 566, "hp", 121, 367, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            let drain = Math.floor(myStats.maxhp * 0.01) * (2 + Math.floor(matchStats.round / 4));
+            let drain = Math.floor(myStats.maxhp * 0.01 * (2 + Math.min(8, Math.floor(matchStats.round / 4))));
             myStats.hp += drain;
             eStats.hp -= drain;
             if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
@@ -900,8 +926,8 @@ const items = [
     }, "Decreases enemy defense by **20%** for the first 8 rounds.", "The Rock Renderer is a weapon of pure destruction, capable of splitting even the hardest of rocks with a single swing. Its sharp edges and heavy weight make it a formidable force on the battlefield, tearing through armor and shields with ease. Those who wield it are feared by their enemies, for they know that their fate is sealed once the Rock Renderer is raised high above their heads.", "unique", 214),
     new weaponInfo("Sorrow's Strike", "weapon", "axe", ["chest"], "<:sorrows_strike:1067187171510988811>", "https://i.imgur.com/SIr5Luf.png", "atk", 36, 587, "hp", 20, 134, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.15);
-    }, "Heals the wielder by **15%** of the damage dealt.", "As Sorrow's Strike descends upon its foes, a dark energy radiates from the blade. Its sharp, jagged edges are a reminder of the pain and suffering endured by those who have fallen before it. Those who dare to face its wrath are met with a swift and devastating blow, leaving a trail of despair in its wake. This battle axe has claimed countless lives, earning its name as the harbinger of sorrow.", "unique", 215),
+        myStats.selfheal.push(0.05);
+    }, "Heals the wielder by **5%** of the damage dealt.", "As Sorrow's Strike descends upon its foes, a dark energy radiates from the blade. Its sharp, jagged edges are a reminder of the pain and suffering endured by those who have fallen before it. Those who dare to face its wrath are met with a swift and devastating blow, leaving a trail of despair in its wake. This battle axe has claimed countless lives, earning its name as the harbinger of sorrow.", "unique", 215),
     new weaponInfo("Vindicator's Earthshaker", "weapon", "axe", ["crafting", "chest"], "<:vindicators_earthshaker:1067187177945042974>", "https://i.imgur.com/ZFyDUJn.png", "atk", 35, 580, "mana", 3, 15, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         if (myStats.sm / myStats.mana >= 0.9) myStats.atk += Math.floor(myStats.atk * 0.2);
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1222,8 +1248,7 @@ const items = [
         mybuff.mg.push(new buffInfo("+", 4, 9999));
     }, "This dagger drains **2%** of max HP from the wielder each round to increase mana gain by **+4**.", "The Serenity Thorns dagger is a weapon of deadly beauty. Its sharp blade was forged from a rare metal that glows with a serene light, as if it were imbued with the essence of nature itself. But make no mistake, this dagger is not for the faint of heart. Its thorns are designed to inflict maximum damage, and its wielder must be skilled and precise in their strikes to fully harness its power. Those who master the Serenity Thorns will find their enemies falling before them with ease, as the dagger's light guides their hand to true and swift victory.", "unique", 261),
     new weaponInfo("Silent Hurl", "weapon", "dagger", ["crafting", "chest"], "<:silent_hurl:1067236075833151600>", "https://i.imgur.com/9joiSSF.png", "atk", 31, 567, "dodge", 0.03, 0.11, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const dmg = eStats.hp > 2 * myStats.hp ? myStats.hp * 0.06 : eStats.hp * 0.03;
-        ebuff.hp.push(new buffInfo("+", -dmg, 9999));
+        ebuff.hp.push(new buffInfo("+", -Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03), 9999));
     }, "Poisons the enemy, dealng **3%** HP damage to the enemy every round. If enemy HP is more than twice of the wielders HP, it deals the equivalent of **6%** of the wielders HP instead.", "The Silent Hurl is a cunningly crafted blade that glides through the air with deadly precision. Its razor-sharp edge slices through enemies without a sound, leaving its victims unaware until it's too late. This dagger is the weapon of choice for assassins and thieves who value stealth and efficiency above all else. With the Silent Hurl in hand, no enemy can escape your silent strike.", "unique", 262),
     new weaponInfo("Silver Skewer", "weapon", "dagger", ["crafting", "chest"], "<:silver_skewer:1067236080094564383>", "https://i.imgur.com/UXPh1Fv.png", "atk", 32, 568, "def", 27, 116, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(10, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1261,8 +1286,8 @@ const items = [
     }, "None", "Crafted with precision and deadly intent, the Vicinity Blade is a weapon of stealth and cunning. Its razor-sharp edge glints in the moonlight, ready to strike at any moment and strike fear into the hearts of its foes. In the hands of a skilled assassin, the Vicinity Blade is a tool of death, able to strike from the shadows. Beware all who cross its path, for the Vicinity Blade is a weapon to be feared and respected.", "unique", 268),
     new weaponInfo("Witching Blade", "weapon", "dagger", ["crafting", "chest"], "<:witching_blade:1067236223430688818>", "https://i.imgur.com/Dg7wJCM.png", "atk", 30, 562, "hp", 82, 356, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.1);
-    }, "Heals the wielder by **10%** of the damage dealt.", "Forged in the depths of a cursed forest, the Witching Blade is imbued with dark magic. Its razor-sharp edge is said to whisper the names of its victims as it sinks into their flesh. Those who wield the Witching Blade are feared and revered, their power growing with each soul they claim. Beware those who cross its path, for the Witching Blade hungers for blood.", "unique", 269),
+        myStats.selfheal.push(0.05);
+    }, "Heals the wielder by **5%** of the damage dealt.", "Forged in the depths of a cursed forest, the Witching Blade is imbued with dark magic. Its razor-sharp edge is said to whisper the names of its victims as it sinks into their flesh. Those who wield the Witching Blade are feared and revered, their power growing with each soul they claim. Beware those who cross its path, for the Witching Blade hungers for blood.", "unique", 269),
 
     // Weapons - Unique Shield
     new weaponInfo("Cedar Cover", "weapon", "shield", ["crafting", "chest"], "<:cedar_cover:1067245941473681448>", "https://i.imgur.com/dNg7fv9.png", "shield", 74, 836, "dodge", 0.03, 0.12, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1339,8 +1364,8 @@ const items = [
     }, "Increases the wielders attack by **50%** after 15 rounds.", "The Blade of Carnage is a weapon of pure destruction. Forged from the molten fires of Mount Doom, this sword is imbued with the power to unleash havoc on all who dare to wield it. With a single swing, it can lay waste to entire armies, leaving nothing but a trail of death and devastation in its wake. Those who dare to face it in battle must be prepared to face their own demise, for the Blade of Carnage knows no mercy.", "legendary", 284),
     new weaponInfo("Bloodthirster", "weapon", "sword", ["crafting", "chest"], "<:bloodthirster:1068510737825267772>", "https://i.imgur.com/8kWMLzD.png", "atk", 53, 838, "md", 49, 796, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.15);
-    }, "Heals the wielder by **15%** of the damage dealt.", "The Bloodthirster hungers for the taste of fresh blood, and it will not rest until it has claimed the life of every living creature in its path. Those who dare to wield it will be granted unimaginable power, but at a terrible cost. The sword thirsts for blood, and it will demand a constant sacrifice to be satisfied. The wielder will be consumed by an insatiable desire for blood, and they will be forced to kill in order to quench the sword's thirst. The Bloodthirster is a weapon of pure evil, and it is not to be trifled with.", "legendary", 285),
+        myStats.selfheal.push(0.075);
+    }, "Heals the wielder by **7.5%** of the damage dealt.", "The Bloodthirster hungers for the taste of fresh blood, and it will not rest until it has claimed the life of every living creature in its path. Those who dare to wield it will be granted unimaginable power, but at a terrible cost. The sword thirsts for blood, and it will demand a constant sacrifice to be satisfied. The wielder will be consumed by an insatiable desire for blood, and they will be forced to kill in order to quench the sword's thirst. The Bloodthirster is a weapon of pure evil, and it is not to be trifled with.", "legendary", 285),
     new weaponInfo("Brigantia", "weapon", "sword", ["chest"], "<:brigantia:1068510742929748028>", "https://i.imgur.com/tXYyknA.png", "atk", 64, 1000, "def", 50, 200, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(13, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             mybuff.atk.push(new buffInfo("*", 2, 9999));
@@ -1352,12 +1377,12 @@ const items = [
         eStats.hp -= Math.floor(bleed);
     }, "Executes the enemy when below **20%** HP. The enemy starts with **12.5%** less HP. If the enemy has more than twice as much HP than the wielder, it starts with **25%** less HP of the wielder instead.", "Calcifer's Edge of Annihilation is a legendary sword that was forged by the flames of a thousand suns. It glows with an otherworldly heat and has the power to cut through even the hardest of metals like a hot knife through butter. Those who wield it are said to be unstoppable in battle, their enemies falling before them like wheat before the scythe. The sword is named after the ancient fire demon Calcifer, who is said to have imbued the weapon with its incredible power. Only the bravest of warriors dare to wield Calcifer's Edge of Annihilation, for its flames can burn as hot as the depths of hell itself.", "legendary", 287),
     new weaponInfo("Draiocht", "weapon", "sword", ["crafting", "chest"], "<:draiocht:1068510723136823306>", "https://i.imgur.com/hkO7TM7.png", "atk", 47, 768, "hp", 122, 645, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.05 : eStats.hp * 0.025);
+        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
         ebuff.hp.push(new buffInfo("+", -drain, 9999));
         mybuff.hp.push(new buffInfo("+", drain, 9999));
     }, "Drains **2.5%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **5%** of the wielders HP instead.", "The legendary sword known as the Draiocht is said to have been forged by the ancient vampire lords, imbued with the power to drain the life force of its victims. Its razor-sharp blade, forged from the purest silver, is capable of slicing through flesh and bone with ease. Those who wield it are said to be blessed with the strength and immortality of the vampire race, but beware, for the sword's thirst for blood is insatiable.", "legendary", 288),
     new weaponInfo("Fafnir's Breath", "weapon", "sword", ["chest"], "<:fafnirs_breath:1068510727352111246>", "https://i.imgur.com/33iwj5O.png", "atk", 50, 820, "cd", 0.08, 0.5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const burn = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.08 : eStats.hp * 0.04);
+        const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
     }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Fafnir's Breath was a powerful sword crafted by the dwarves during the height of their civilization. It is a powerful sword imbued with the fiery breath of the great dragon Fafnir. In battle, it is said to emit a fierce heat that can scorch enemies with the mere touch of its blade.", "legendary", 289),
     new weaponInfo("Galatine", "weapon", "sword", ["chest"], "<:galatine:1068514102261055508>", "https://i.imgur.com/h7EPRDr.png", "atk", 48, 800, "md", 48, 800, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1374,9 +1399,11 @@ const items = [
             if (matchStats.round % 4 === 0) {
                 myStats.sm += 10;
                 if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+                eStats.sm -= 4;
+                if (eStats.sm < 0) eStats.sm = 0;
             };
         }, 9999));
-    }, "The wielder gets **10** mana every 4 rounds.", "The Iris Blade is a weapon of legend, forged by the powerful sorceress of Prismia using ancient magic imbued with the seven colors of the rainbow. Its blade is said to radiate with a dazzling light that changes color depending on the wielder's mood and emotions. Those who have faced the Iris Blade in battle speak of its radiant beauty, but also of the fear it instills in the hearts of its foes.", "legendary", 292),
+    }, "The wielder gets **10** mana every 4 rounds while the enemy loses **4** mana.", "The Iris Blade is a weapon of legend, forged by the powerful sorceress of Prismia using ancient magic imbued with the seven colors of the rainbow. Its blade is said to radiate with a dazzling light that changes color depending on the wielder's mood and emotions. Those who have faced the Iris Blade in battle speak of its radiant beauty, but also of the fear it instills in the hearts of its foes.", "legendary", 292),
     new weaponInfo("Laerkinn", "weapon", "sword", ["crafting", "chest"], "<:laerkinn:1068514112788779058>", "https://i.imgur.com/KcogovY.png", "atk", 53, 837, "cd", 0.07, 0.44, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.cr = 1;
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1385,12 +1412,12 @@ const items = [
     }, "The first round and every 4th round following, the wielder has **100%** crit rate.", "Laerkinn was a fearsome sword, crafted by the dwarven smiths of the mountains. Its blade was forged from the finest steel and imbued with ancient runes of power, making it nearly indestructible. In battle, it was said to glow with a fierce, fiery light, able to melt through even the most resistant armor with ease. Many a brave warrior fell before the might of Laerkinn, and it was feared and respected by all who faced it in combat. It is said that the great warrior Thorgrimm the Unstoppable wielded Laerkinn in many of his greatest battles, and that it was instrumental in his eventual victory over the evil dragon Smaug.", "legendary", 293),
     new weaponInfo("Night Rose", "weapon", "sword", ["crafting", "chest"], "<:night_rose:1068514115250831392>", "https://i.imgur.com/d7qR486.png", "atk", 64, 872, "cr", 0.06, 0.22, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.1);
+        myStats.selfheal.push(0.06);
         myStats.mg += 2;
         eStats.mg -= 2;
         mybuff.mg.push(new buffInfo("+", 2, 9999));
         ebuff.mg.push(new buffInfo("+", -2, 9999));
-    }, "Heals the wielder for **10%** of damage dealt and steals **2** mana from the enemy each round.", "The Night Rose was a legendary sword wielded by a powerful vampire known for her incredible skill in combat. Said to be forged from an otherworldly metal, the blade is said to have the ability to absorb the very light around it, creating a darkness so deep that it was said to be able to swallow the soul of anyone foolish enough to cross its path.", "legendary", 294),
+    }, "Heals the wielder for **6%** of damage dealt and steals **2** mana from the enemy each round.", "The Night Rose was a legendary sword wielded by a powerful vampire known for her incredible skill in combat. Said to be forged from an otherworldly metal, the blade is said to have the ability to absorb the very light around it, creating a darkness so deep that it was said to be able to swallow the soul of anyone foolish enough to cross its path.", "legendary", 294),
     new weaponInfo("Sylphid", "weapon", "sword", ["crafting", "chest"], "<:sylphid:1068514098339385424>", "https://i.imgur.com/shli0Xb.png", "atk", 56, 858, "dodge", 0.03, 0.14, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.dodge -= 0.4;
         if (eStats.dodge < 0) eStats.dodge = 0;
@@ -1415,8 +1442,9 @@ const items = [
         ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.2), 9999));
     }, "Decreases enemy magic resistance by **20%** for the rest of battle.", "Tizona was a sword of legend, said to have been crafted by the great elven smith Fëanor himself. Its blade was made from a single piece of the finest elven steel, and was imbued with powerful enchantments that made it incredibly sharp and strong. Tizona was wielded by the greatest warriors of the elven realm, and its power was feared by all who stood against it. It is said that Tizona was instrumental in the victory of the elves over the dark lord Morgoth, and that its power was instrumental in the downfall of the great enemy of the elves.", "legendary", 298),
     new weaponInfo("Verdant Blade", "weapon", "sword", ["chest"], "<:verdant_blade:1068517248823726101>", "https://i.imgur.com/vFOH3PF.png", "atk", 56, 848, "mr", 30, 160, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        ebuff.dodge.push(new buffInfo("+", -0.03, 9999));
-    }, "Slows the enemy down, making them lose **3%** dodge chance after each round.", "Forged in the heart of the deepest jungle, the Verdant Blade's vines are said to have been imbued with the very essence of nature itself. Its sharpened edge is capable of cutting through even the toughest of vines, while the vines that wrap around the blade are said to writhe and move on their own, striking at any who would dare to wield it against its will.", "legendary", 299),
+        ebuff.dodge.push(new buffInfo("+", -0.03, 9999, -0.03, "+", -0.24));
+        mybuff.dodge.push(new buffInfo("+", 0.03, 9999, 0.03, "+", 0.24));
+    }, "Slows the enemy down, making them lose **3%** dodge chance after each round (up to **24%**), which will be added to the wielder.", "Forged in the heart of the deepest jungle, the Verdant Blade's vines are said to have been imbued with the very essence of nature itself. Its sharpened edge is capable of cutting through even the toughest of vines, while the vines that wrap around the blade are said to writhe and move on their own, striking at any who would dare to wield it against its will.", "legendary", 299),
     new weaponInfo("Whistling Thorn", "weapon", "sword", ["crafting", "chest"], "<:whistling_thorn:1068517251784921128>", "https://i.imgur.com/XQmdFr8.png", "atk", 54, 844, "def", 32, 163, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         matchStats.lootm += 0.25;
         myStats.dodge += 0.1;
@@ -1432,7 +1460,7 @@ const items = [
         }, 9999));
     }, "The wielder gains an additional **20%** magic damage buff when their mana bar is at least **80%** full.", "Aetherius is imbued with the very essence of the skies, channeling the boundless power of the heavens into devastating blasts of magical energy. Those who wield it are said to be able to call down the wrath of the gods themselves, smiting their foes with the fury of the storm.", "legendary", 301),
     new weaponInfo("Avalon's Fury", "weapon", "staff", ["chest"], "<:avalons_fury:1068521931063689316>", "https://i.imgur.com/EMNhQn4.png", "md", 54, 847, "md%", 0.06, 0.18, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const burn = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.08 : eStats.hp * 0.04);
+        const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
     }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Avalon's Fury is a staff of ancient power, wielded by the most skilled and powerful of magicians. With a single swing, it can summon forth a storm of lightning and fire, scorching the earth and laying waste to entire armies. Those who dare to wield its power must be prepared to face the fury of the elements, for Avalon's Fury is a weapon not to be trifled with.", "legendary", 302),
     new weaponInfo("Eye of the Leviathan", "weapon", "staff", ["crafting", "chest"], "<:eye_of_the_leviathan:1068521936340140152>", "https://i.imgur.com/PMu7rOE.png", "md", 50, 820, "cd", 0.08, 0.5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1465,13 +1493,13 @@ const items = [
         eStats.mdChance += 1;
     }, "Forces the enemy to deal magic damage.", "The Phantomsong staff vibrates with a haunting melody that echoes through the minds of those who hear it. It is said to be able to summon the spirits of the dead, allowing the wielder to control and manipulate their essence to do their bidding. But be warned, for the spirits are not always willing and may seek revenge on those who dare to enslave them. Use the Phantomsong wisely, for its power comes with a great cost.", "legendary", 308),
     new weaponInfo("Protector of Frost", "weapon", "staff", ["crafting", "chest"], "<:protector_of_frost:1068524269514002493>", "https://i.imgur.com/rxBYFLN.png", "md", 50, 820, "cd", 0.08, 0.5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.dodge -= 0.15;
-        eStats.br -= 0.15;
+        eStats.dodge -= 0.25;
+        eStats.br -= 0.25;
         if (eStats.dodge < 0) eStats.dodge = 0;
         if (eStats.br < 0) eStats.br = 0;
-        ebuff.dodge.push(new buffInfo("+", -0.15, 9999));
-        ebuff.br.push(new buffInfo("+", -0.15, 9999));
-    }, "Slows the enemy down, decreasing both dodge chance and block rate by **15%** permanently.", "Forged from pure glacial ice and imbued with ancient frost magic, the Protector of Frost is a powerful staff in the hands of a skilled mage. Its icy grip chills the air around it, freezing enemies in their tracks and protecting its wielder from harm. With its icy power, the staff can unleash devastating blasts of frost, encasing foes in sheets of ice and leaving them vulnerable to attack. In the hands of a true master, the Protector of Frost is a force to be reckoned with.", "legendary", 309),
+        ebuff.dodge.push(new buffInfo("+", -0.25, 9999));
+        ebuff.br.push(new buffInfo("+", -0.25, 9999));
+    }, "Slows the enemy down, decreasing both dodge chance and block rate by **25%** permanently.", "Forged from pure glacial ice and imbued with ancient frost magic, the Protector of Frost is a powerful staff in the hands of a skilled mage. Its icy grip chills the air around it, freezing enemies in their tracks and protecting its wielder from harm. With its icy power, the staff can unleash devastating blasts of frost, encasing foes in sheets of ice and leaving them vulnerable to attack. In the hands of a true master, the Protector of Frost is a force to be reckoned with.", "legendary", 309),
     new weaponInfo("Runed Spire", "weapon", "staff", ["crafting", "chest"], "<:runed_spire:1068524321460473857>", "https://i.imgur.com/M9PXwBd.png", "md", 52, 841, "cd", 0.07, 0.37, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.cr += 0.16;
         if (myStats.cr > 1) myStats.cr = 1;
@@ -1481,7 +1509,7 @@ const items = [
         ebuff.cr.push(new buffInfo("+", -0.1, 9999));
     }, "Increases the wielders crit rate by **16%** and decreases enemy crit rate by **10%** for the rest of battle.", "The Runed Spire is a powerful magic staff imbued with ancient runes that grant its wielder access to the most potent spells known to man. Those who hold it are said to be able to call upon the elements themselves, summoning forth storms, earthquakes, and even the fire of the sun to smite their enemies. Yet, with great power comes great responsibility, and only those with a pure heart and unwavering conviction can wield the Runed Spire without falling victim to its destructive potential.", "legendary", 310),
     new weaponInfo("Sanguine", "weapon", "staff", ["chest"], "<:sanguine:1068523524299432037>", "https://i.imgur.com/8HwOh3D.png", "md", 52, 849, "hp", 204, 576, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.05 : eStats.hp * 0.025);
+        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
         ebuff.hp.push(new buffInfo("+", -drain, 9999));
         mybuff.hp.push(new buffInfo("+", drain, 9999));
     }, "Drains **2.5%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **5%** of the wielders HP instead.", "The Sanguine staff is said to have been crafted from the bones of fallen warriors, imbued with the power of their spilled blood. Those who wield it are said to be able to channel the strength and determination of the dead, and to harness their fighting spirit to strike down their enemies with ferocity and deadly precision. Some say that the staff itself thirsts for battle, and will only bond with those who are truly dedicated to the art of war. Others whisper that it is cursed, and that those who use it will eventually be consumed by the very power they seek to wield. Whether legend or truth, the Sanguine staff is a weapon to be feared and respected.", "legendary", 311),
@@ -1534,7 +1562,7 @@ const items = [
         mybuff.cr.push(new buffInfo("=", 1, 4));
     }, "The wielder has **100%** crit rate during the first 4 rounds.", "As Death's Bite descends upon its foes, its sharp blade glints in the light, ready to deliver the final blow. With each swing, the axe unleashes a powerful and deadly force, tearing through armor and flesh with ease. Those who dare to face it in combat will feel the cold embrace of death in its devastating strikes.", "legendary", 320),
     new weaponInfo("Death's Fragrance", "weapon", "axe", ["chest"], "<:deaths_fragrance:1068531128065077389>", "https://i.imgur.com/bXI5QCd.png", "atk", 60, 884, "cd", 0.05, 0.37, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const burn = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.06 : eStats.hp * 0.03);
+        const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03);
         ebuff.hp.push(new buffInfo("+", -burn, 5));
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:deaths_fragrance:1068531128065077389> **${char.name}**`, { atkMultiplier: 1.6, magicDamage: true });
     }, "Immediately after the battle begins, deals **160%** damage to the enemy. Then burns **3%** of max HP from the enemy for the next 5 rounds. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **6%** of the wielders HP instead.", "As Death's Fragrance cleaves through the air, the scent of decay and destruction follows in its wake. Those who dare to stand against its wielder are met with a swift and brutal end, their bodies left to rot as a warning to others. In the heat of battle, this fearsome axe is a harbinger of death, bringing forth the end of all who oppose it.", "legendary", 321),
@@ -1717,7 +1745,7 @@ const items = [
         myStats.cd += cdbuff;
     }, "The wielder has twice as much crit damage during the first 5 rounds (max +40%).", "The Life Subtractor is a weapon of death and destruction, crafted with the sole purpose of draining the life force from its victims. With a single strike, this lance can leave even the strongest of warriors on the brink of death, their life essence siphoned away by its dark power. Wield it with caution, for the Life Subtractor has a thirst for blood that can never be quenched.", "legendary", 351),
     new weaponInfo("Ignis Aureus", "weapon", "lance", ["chest"], "<:ignis_aureus:1068648981925728407>", "https://i.imgur.com/KHXDQ6i.png", "atk", 52, 837, "sm", 2, 10, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const burn = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.08 : eStats.hp * 0.04);
+        const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
     }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Forged in the flames of Mount Vesuvius, the Ignis Aureus is a weapon of unmatched power and beauty. Its golden patterns shimmer in the sunlight, striking fear into the hearts of enemies. With a single thrust, this lance can unleash a devastating inferno, incinerating anything in its path. Those who wield the Ignis Aureus are truly masters of fire, commanding its destructive power with precision and grace.", "legendary", 352),
     new weaponInfo("Ildathach", "weapon", "lance", ["crafting", "chest"], "<:ildathach:1068648986405261374>", "https://i.imgur.com/tiqy8WE.png", "atk", 54, 840, "cd", 0.06, 0.4, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1819,7 +1847,7 @@ const items = [
         }, 9999));
     }, "Drains **6%** HP from the enemy and adds it to the wielder every 3rd round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **12%** of the wielders HP instead.", "Forged in the fiery depths of Elysium, Elysium's Edge is a weapon of pure grace and precision. Its sharp, glistening blade is imbued with the power of the gods, capable of slicing through even the toughest armor with ease. In the hands of a skilled warrior, this dagger is a weapon of true destruction, capable of striking fear into the hearts of even the bravest of foes.", "legendary", 369),
     new weaponInfo("Ember's Kiss", "weapon", "dagger", ["chest"], "<:embers_kiss:1068703206391164998>", "https://i.imgur.com/j9ahUSM.png", "atk", 52, 834, "cd", 0.07, 0.48, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const burn = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.08 : eStats.hp * 0.04);
+        const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
     }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Ember's Kiss is a fiery, glowing dagger that burns with the intensity of a thousand suns. Its handle is forged from the finest mithril, and its edge able to cut through fire. Those who wield this weapon feel a burning passion in their hearts, and their strikes are imbued with the power of the flames. In battle, Ember's Kiss leaves a trail of scorched earth and smoldering ashes, marking the path of its wielder's relentless assault.", "legendary", 370),
     new weaponInfo("Fianta", "weapon", "dagger", ["crafting", "chest"], "<:fianta:1068703209557864478>", "https://i.imgur.com/KJtG6Ag.png", "md", 51, 827, "atk", 42, 658, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1889,8 +1917,8 @@ const items = [
     // Weapons - Legendary Shield
     new weaponInfo("Barricade of Eternal Justice", "weapon", "shield", ["crafting", "chest"], "<:barricade_of_eternal_justice:1068706870489002094>", "https://i.imgur.com/WPHSNpo.png", "shield", 158, 1126, "hp", 82, 565, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.15);
-    }, "Heals the wielder by **15%** of the damage dealt.", "The Barricade of Eternal Justice is a shield imbued with the power of righteousness and fairness. It glows with a golden radiance, and its intricate designs depict scenes of justice being served upon the wicked. Those who wield this shield are protected by its divine power, and their enemies will find themselves unable to overcome the righteous might of this formidable barricade.", "legendary", 378),
+        myStats.selfheal.push(0.06);
+    }, "Heals the wielder by **6%** of the damage dealt.", "The Barricade of Eternal Justice is a shield imbued with the power of righteousness and fairness. It glows with a golden radiance, and its intricate designs depict scenes of justice being served upon the wicked. Those who wield this shield are protected by its divine power, and their enemies will find themselves unable to overcome the righteous might of this formidable barricade.", "legendary", 378),
     new weaponInfo("Blazeguard", "weapon", "shield", ["crafting", "chest"], "<:blazeguard:1068706873945116783>", "https://i.imgur.com/3B9RAIj.png", "shield", 147, 1139, "br", 0.05, 0.21, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.def += 1316;
         myStats.mr += 1316;
@@ -1971,7 +1999,7 @@ const items = [
     }, "Every 3rd round, the wielder takes **25%** less damage.\n\n_25% damage reduction = 274 DEF|MR_", "The Zealous Shroud is a protective barrier that surrounds its wielder in a cloak of shadow, shielding them from harm and concealing their movements from their enemies. With its dark and eerie powers, the Zealous Shroud allows its bearer to strike from the shadows and strike fear into the hearts of their foes.", "legendary", 389),
 
     // Weapons - Mythical Sword
-    new weaponInfo("Dreadknight's Demise", "weapon", "sword", ["chest"], "<:dreadknights_demise:1068720496994168852>", "https://i.imgur.com/JWP9KaW.png", "atk", 106, 1132, "cd", 0.12, 0.54, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Dreadknight's Demise", "weapon", "sword", ["chest"], "<:dreadknights_demise:1068720496994168852>", "https://i.imgur.com/JWP9KaW.png", "atk", 106, 1132, "cd", 0.1, 0.46, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:dreadknights_demise:1068720496994168852>",
             "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1980,10 +2008,10 @@ const items = [
         };
     }, "Normal attacks always crit.", "The Dreadknight's Demise, crafted from the rarest of materials - purple obsidian - said to be formed from the molten remains of fallen celestial beings. It's unknown origins shrouded in mystery have lead to many speculations, with some believing it was crafted by a group of powerful wizards who had mastered the art of imbuing objects with magical energy, while others believed it to be forged in the fiery depths of the underworld, by demons eager to see it used for evil.\nLegend has it that the sword was wielded by a fearsome knight known only as the Dreadknight, who could not resist the seductive allure, succumbing to the temptation to use its power for selfish gains. He used it to conquer entire kingdoms and crush all who dared to oppose him. However, at last his reign of terror was brought to an end, by a brave Hero using the very sword the Dreadknight had wielded for so long. Since then the sword has been passed from one hero to the next, each one using it to defend the realm from evil. It is a symbol of both great strength and great caution, a reminder of the dangers of allowing power to consume one's soul.", "mythical", 390),
     new weaponInfo("Dulcet Wave", "weapon", "sword", ["chest"], "<:dulcet_wave:1068720500618055681>", "https://i.imgur.com/kNJzyYU.png", "atk", 91, 989, "mr", 66, 178, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        ebuff.def.push(new buffInfo("+", -Math.min(eStats.def * 0.66, 872), 9999));
-        ebuff.mr.push(new buffInfo("+", -Math.min(eStats.mr * 0.66, 872), 9999));
-        eStats.def -= Math.floor(Math.min(eStats.def * 0.66, 872));
-        eStats.mr -= Math.floor(Math.min(eStats.mr * 0.66, 872));
+        ebuff.def.push(new buffInfo("+", -Math.min(eStats.def * 0.4, 872), 9999));
+        ebuff.mr.push(new buffInfo("+", -Math.min(eStats.mr * 0.4, 872), 9999));
+        eStats.def -= Math.floor(Math.min(eStats.def * 0.4, 872));
+        eStats.mr -= Math.floor(Math.min(eStats.mr * 0.4, 872));
     }, "Reduces enemy defense and magic resistance by **40%** (max 2.5x damage).", "The Dulcet Wave is a sword of myths crafted by the mermaids of the deep sea. Forged from a rare metal found only in the depths of the ocean, its blade is said to sing with the melody of the tides. The sword's enchantments allow the wielder to control water with deadly precision, summoning massive waves to sweep away enemies or creating a deluge to drown them. But be warned, for the power of the sea is fickle and those who wield the Dulcet Wave must be worthy of its might, lest they be swept away themselves.", "mythical", 391),
     new weaponInfo("Excalibur", "weapon", "sword", ["chest"], "<:excalibur:1068720505282121818>", "https://i.imgur.com/xoBMCi4.png", "atk", 100, 1000, "atk%", 0.1, 0.25, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.md += Math.floor(myStats.md * 0.25);
@@ -2006,7 +2034,8 @@ const items = [
         myStats.mr += 274;
         mybuff.def.push(new buffInfo("+", 274, 9999));
         mybuff.mr.push(new buffInfo("+", 274, 9999));
-    }, "The wielder takes **25%** less damage.\n\n_A reduction of 25% = 274 DEF|MR_", "The Moonblade is a sword forged from a rare metal found deep in the lunar mines. Its blade glows with a soft, silver light, casting a serene glow upon the battlefield. Those who wield it are said to be blessed with the power of the moon, granting them increased speed and agility in combat. The sword's enchantments are attuned to the waxing and waning of the moon, granting increased power during a full moon and decreased power during a new moon. It is said that the sword was crafted by a powerful druid, and is a symbol of her favor and protection. Those who possess the Moonblade are said to be blessed with the goddess's favor and will always find themselves victorious in battle.", "mythical", 394),
+        myStats.shield += Math.floor(0.05 * myStats.maxhp);
+    }, "The wielder takes **25%** less damage. Generates a shield of **20%** of max HP at the start of battle.\n\n_A reduction of 25% = 274 DEF|MR_", "The Moonblade is a sword forged from a rare metal found deep in the lunar mines. Its blade glows with a soft, silver light, casting a serene glow upon the battlefield. Those who wield it are said to be blessed with the power of the moon, granting them increased speed and agility in combat. The sword's enchantments are attuned to the waxing and waning of the moon, granting increased power during a full moon and decreased power during a new moon. It is said that the sword was crafted by a powerful druid, and is a symbol of her favor and protection. Those who possess the Moonblade are said to be blessed with the goddess's favor and will always find themselves victorious in battle.", "mythical", 394),
     new weaponInfo("Sirene's Song", "weapon", "sword", ["chest"], "<:sirenes_song:1068720493957497002>", "https://i.imgur.com/o9Ek5oh.png", "atk", 98, 1067, "mana", 15, 50, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm = myStats.mana;
         myStats.mg -= 5;
@@ -2026,7 +2055,7 @@ const items = [
         mybuff.mg.push(new buffInfo("+", 8, 9999));
     }, "The wielder generates **+8**💧 each round. Increases mana cap by **100**.", "The staff of Crescent Skies is a powerful tool in the hands of any spellcaster. Its intricate design features two crescent moons at the top, with swirling blue lights on its surface, and engraved with ancient runes. When the staff is wielded, it seems to amplify the user's magic, allowing them to cast spells with ease and power. Those who face the wielder of Crescent Skies in battle are in for a fierce and formidable opponent.", "mythical", 397),
     new weaponInfo("Death's Denial", "weapon", "staff", ["chest"], "<:deaths_denial:1068912879975268462>", "https://i.imgur.com/22zolt6.png", "md", 102, 1033, "hp", 146, 675, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.06 : eStats.hp * 0.03);
+        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03);
         ebuff.hp.push(new buffInfo("+", -drain, 9999));
         mybuff.hp.push(new buffInfo("+", drain, 9999));
         myStats.maxRevivals = 1;
@@ -2148,7 +2177,7 @@ const items = [
         ebuff.dodge.push(new buffInfo("+", -0.16, 9999));
     }, "Increases mana generation by **+5**💧 for the rest of battle. Decreases enemy dodge chance by **16%**.", "The Mystic Moon bow is said to have been crafted by a reclusive group of elven magic-users, its graceful curves imbued with the power of the lunar cycle. As the full moon rises, the bow's strings hum with otherworldly energy, empowering its arrows to strike with unerring accuracy and devastating force. Those who wield the Mystic Moon bow are said to be guided by the subtle whispers of the moon, imbued with a hunter's instinct and a deadly precision.", "mythical", 412),
     new weaponInfo("Nightwing Myst", "weapon", "bow", ["chest"], "<:nightwing_myst:1069016609013903431>", "https://i.imgur.com/TKs4wkG.png", "atk", 106, 1033, "cr", 0.08, 0.24, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.06 : eStats.hp * 0.03);
+        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03);
         ebuff.hp.push(new buffInfo("+", -drain, 9999));
         mybuff.hp.push(new buffInfo("+", drain, 9999));
     }, "Drains **3%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **6%** of the wielders HP instead.", "The Nightwing Myst bow is a sleek and deadly weapon, perfectly balanced and designed for speed and accuracy. Its dark finish is nearly impossible to see in the shadows, making it the perfect tool for stealthy and deadly archery. The Nightwing Myst is a favorite among assassins and other shadowy figures, who rely on its quick strike and silent power to eliminate their targets without being detected. With the Nightwing Myst in hand, you can strike fear into the hearts of your enemies and leave them trembling in the darkness.", "mythical", 413),
@@ -2222,14 +2251,14 @@ const items = [
     }, "Increases coins earned from the dungeon by **40%**. The wielder has **20%** increased attack and magic damage.", "Forged from the finest emeralds and imbued with the wisdom of Hermes Trismegistos, the Stabulous Smaragdina is a weapon of unparalleled power and elegance. Its sharp, glistening blade is a testament to the ancient philosopher's teachings on the unity of matter and spirit, and its graceful curves speak to the harmony of the divine and the mortal. In the hands of a skilled warrior, the Stabulous Smaragdina is a weapon of unparalleled precision and finesse, able to strike with the speed and force of the gods themselves.", "mythical", 420),
     new weaponInfo("Skyfall Javelin", "weapon", "lance", ["chest"], "<:skyfall_javelin:1069018773803245638>", "https://i.imgur.com/NxK2ftX.png", "atk", 106, 1122, "md", 88, 924, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.15);
+        myStats.selfheal.push(0.06);
         myStats.replaceButton.atk = {
             "emoji": "<:skyfall_javelin:1069018773803245638>",
             "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:skyfall_javelin:1069018773803245638> **${char.name}**`, { atkMultiplier: 1, block: false, dodge: false, magicDamage: true });
             },
         };
-    }, "Normal attacks always hit. Heals the wielder for **15%** of damage dealt.", "As the Skyfall Javelin pierces the sky, it is as if the heavens themselves are falling upon your foes. With its razor-sharp tip and deadly accuracy, this lance strikes fear into the hearts of even the bravest warriors. Whether in the heat of battle or in a duel, the Skyfall Javelin is a weapon to be reckoned with.", "mythical", 421),
+    }, "Normal attacks always hit. Heals the wielder for **6%** of damage dealt.", "As the Skyfall Javelin pierces the sky, it is as if the heavens themselves are falling upon your foes. With its razor-sharp tip and deadly accuracy, this lance strikes fear into the hearts of even the bravest warriors. Whether in the heat of battle or in a duel, the Skyfall Javelin is a weapon to be reckoned with.", "mythical", 421),
 
     // Weapons - Mythical Dagger
     new weaponInfo("Abyssal Shard", "weapon", "dagger", ["chest"], "<:abyssal_shard:1069019809993461872>", "https://i.imgur.com/W6u22OY.png", "md", 99, 999, "mg", 1, 5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2320,29 +2349,53 @@ const items = [
 
     // Weapons - Genesis Sword
     new weaponInfo("Durin's Bane", "weapon", "sword", ["chest"], "<:durins_bane:1069025075036160020>", "https://i.imgur.com/TOWyMFD.png", "atk", 164, 1000, "atk", 92, 645, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.durinsBaneStacks = 0;
+
+        // On hit
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) {
+                caster.durinsBaneStacks++;
+            };
+        });
+
+        // On miss
+        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) {
+                caster.durinsBaneStacks = 0;
+            };
+        });
+
+        // Buff atk and md
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            myStats.atk += Math.floor(myStats.atk * Math.min(0.05 * Math.floor(matchStats.round - 1), 0.5));
-            myStats.md += Math.floor(myStats.md * Math.min(0.05 * Math.floor(matchStats.round - 1), 0.5));
+            myStats.atk += Math.floor(myStats.atk * 0.05 * Math.min(10, myStats.durinsBaneStacks));
+            myStats.md += Math.floor(myStats.md * 0.05 * Math.min(10, myStats.durinsBaneStacks));
         }, 9999));
-    }, "Increases the wielders attack and magic damage by **5%** per round (max 50%).", "The dwarven sword Durin's Bane is a weapon of legendary strength and power, etched with ancient runes that tell the story of the dwarves. Passed down through generations, it was used to defend the dwarves and strike down their enemies. It was eventually lost, but the legend of its power lives on.", "genesis", 434),
+    }, "Increases the wielders attack and magic damage by **5%** after every successful hit (max 50%). Resets when the hit misses.", "The dwarven sword Durin's Bane is a weapon of legendary strength and power, etched with ancient runes that tell the story of the dwarves. Passed down through generations, it was used to defend the dwarves and strike down their enemies. It was eventually lost, but the legend of its power lives on.", "genesis", 434),
     new weaponInfo("Heaven's Edge", "weapon", "sword", ["chest"], "<:heavens_edge:1069025071026409552>", "https://i.imgur.com/k8w3ZFm.png", "atk", 186, 1232, "hp", 300, 874, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        mybuff.hp.push(new buffInfo("+", Math.floor(myStats.maxhp * 0.1), 9999));
-    }, "The wielder heals **10%** of max HP every round.", "The Heaven's Edge is a holy weapon, wielded by the archangels in the wars of the heavens. Its gleaming, silver blade is imbued with the power of the divine, capable of purging evil and striking down foes with holy fire and lightning. In the hands of a righteous warrior, it becomes a symbol of hope and protection against the forces of darkness.", "genesis", 435),
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const heal = Math.min(Math.floor(myStats.maxhp * 0.1), myStats.maxhp - myStats.hp);
+            myStats.hp += heal;
+            eStats.hp -= heal;
+            if (eStats.hp < 0) eStats.hp = 0;
+        }, 9999));
+    }, "The wielder heals **10%** of max HP and deals the equivalent amount as damage to the enemy every round.", "The Heaven's Edge is a holy weapon, wielded by the archangels in the wars of the heavens. Its gleaming, silver blade is imbued with the power of the divine, capable of purging evil and striking down foes with holy fire and lightning. In the hands of a righteous warrior, it becomes a symbol of hope and protection against the forces of darkness.", "genesis", 435),
 
     // Weapons - Genesis Staff
     new weaponInfo("Sacred Lifemender", "weapon", "staff", ["chest"], "<:sacred_lifemender:1069025798440362084>", "https://i.imgur.com/1nemsJt.png", "md", 171, 970, "md", 86, 594, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.25);
-    }, "Heals the wielder by **25%** of the damage dealt.", "The Sacred Lifemender staff is a powerful tool wielded by only the most skilled and compassionate healers. With a single touch, it can mend even the most severe injuries and restore vitality to the wounded. It is said that those who wield the Sacred Lifemender are blessed with the ability to soothe the pain and suffering of others, and bring them back from the brink of death.", "genesis", 436),
+        myStats.selfheal.push(0.08);
+    }, "Heals the wielder by **8%** of the damage dealt.", "The Sacred Lifemender staff is a powerful tool wielded by only the most skilled and compassionate healers. With a single touch, it can mend even the most severe injuries and restore vitality to the wounded. It is said that those who wield the Sacred Lifemender are blessed with the ability to soothe the pain and suffering of others, and bring them back from the brink of death.", "genesis", 436),
     new weaponInfo("Vermillion Vane", "weapon", "staff", ["chest"], "<:vermillion_vane:1069025800965324882>", "https://i.imgur.com/ccvhu0B.png", "md", 227, 1306, "mr", 64, 254, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:vermillion_vane:1069025800965324882>",
             "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vermillion_vane:1069025800965324882> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.25), 2));
+                ebuff.dodge.push(new buffInfo("=", 0, 2));
+                ebuff.br.push(new buffInfo("=", 0, 2));
             },
         };
-    }, "Normal attacks ignite the enemy, dealing **25%** true damage for 2 rounds.\n\n_true damage = ignores shield_", "The Vermillion Vane is a powerful magic staff imbued with the fiery essence of the sun. Its intricate carvings of molten rocks dance and twist along its length, radiating heat and energy. In the hands of a skilled pyromancer, the Vermillion Vane becomes a deadly weapon, capable of unleashing devastating blasts of searing fire, said to burn hotter than the deepest flames of hell.", "genesis", 437),
+    }, "Normal attacks ignite the enemy, dealing **25%** true damage for 2 rounds. While on fire, reduces enemy dodge chance and block rate to 0.\n\n_true damage = ignores shield_", "The Vermillion Vane is a powerful magic staff imbued with the fiery essence of the sun. Its intricate carvings of molten rocks dance and twist along its length, radiating heat and energy. In the hands of a skilled pyromancer, the Vermillion Vane becomes a deadly weapon, capable of unleashing devastating blasts of searing fire, said to burn hotter than the deepest flames of hell.", "genesis", 437),
     new weaponInfo("Vestiges of Brilliant Light", "weapon", "staff", ["chest"], "<:vestiges_of_brilliant_light:1069025804064915486>", "https://i.imgur.com/ltd5Uqs.png", "md", 196, 1204, "md%", 0.12, 0.26, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 3 === 0) {
@@ -2353,16 +2406,27 @@ const items = [
 
     // Weapons - Genesis Axe
     new weaponInfo("Elegy of the Glacial Heart", "weapon", "axe", ["chest"], "<:elegy_of_the_glacial_heart:1069026954671570984>", "https://i.imgur.com/2nHR7qm.png", "atk", 213, 1275, "def", 56, 187, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        myStats.br += 0.4;
+        myStats.br += 0.2;
         if (myStats.br > 1) myStats.br = 1;
-        mybuff.br.push(new buffInfo("+", 0.4, 9999));
-        eStats.br -= 0.2;
-        if (eStats.br < 0) eStats.br = 0;
-        ebuff.br.push(new buffInfo("+", -0.2, 9999));
+        mybuff.br.push(new buffInfo("+", 0.2, 9999));
+        // eStats.br -= 0.2;
+        // if (eStats.br < 0) eStats.br = 0;
+        // ebuff.br.push(new buffInfo("+", -0.2, 9999));
+        // myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        //     if (Math.random() < 0.15) myStats.counter = Math.max(1, myStats.counter ?? 0);
+        // }, 9999));
+        mybuff.dodge.push(new buffInfo("=", 0, 9999));
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (Math.random() < 0.15) myStats.counter = Math.max(1, myStats.counter ?? 0);
+            myStats.dodge = 0;
         }, 9999));
-    }, "The wielder has **40%** increased block rate. Decreases enemy block rate by **20%**. Has a **15%** chance of countering any attack.", "The Elegy of the Glacial Heart, radiating a chill that numbs the soul, is an ancient weapon crafted from the rarest of metals from the frozen depths of a never-melting glacier. It is said to be forged by the dwarves of the Frostfall Mountains in ancient times. Its icy edge slices through armor and flesh with ease, leaving behind a trail of frostbitten corpses. In battle, the axe sings a mournful dirge, reminding all who hear it of the unforgiving power of the elements.", "genesis", 439),
+        myStats.replaceButton.atk = {
+            "emoji": "<:elegy_of_the_glacial_heart:1069026954671570984>",
+            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:elegy_of_the_glacial_heart:1069026954671570984> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
+                myStats.usedBlockRound = matchStats.round;
+            },
+        };
+    }, "Normal attacks have a chance to block (max 66%). The wielder has **20%** increased block rate. The wielder can't dodge.", "The Elegy of the Glacial Heart, radiating a chill that numbs the soul, is an ancient weapon crafted from the rarest of metals from the frozen depths of a never-melting glacier. It is said to be forged by the dwarves of the Frostfall Mountains in ancient times. Its icy edge slices through armor and flesh with ease, leaving behind a trail of frostbitten corpses. In battle, the axe sings a mournful dirge, reminding all who hear it of the unforgiving power of the elements.", "genesis", 439),
     new weaponInfo("Mortal Scarlet of the Timeless", "weapon", "axe", ["chest"], "<:mortal_scarlet_of_the_timeless:1069026748798345328>", "https://i.imgur.com/WvQLVjJ.png", "atk", 440, 1440, "shield", 440, 1440, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.atk += Math.floor(myStats.atk * 0.09); mybuff.atk.push(new buffInfo("*", 1.09, 9999));
         myStats.md += Math.floor(myStats.md * 0.09); mybuff.md.push(new buffInfo("*", 1.09, 9999));
@@ -2393,14 +2457,14 @@ const items = [
             },
         };
     }, "Normal attacks deal **120%** damage and heal **7%** of the wielders max HP.", "The Heartseeker is a bow of immense beauty and power, said to be crafted by the gods of celestia. This bow is said to be imbued with the very essence of the heavens, granting its wielder unparalleled accuracy and power. Its limbs are crafted from the finest celestial gold and the bowstring is woven from the purest of celestial silk. Its arrows fly true and straight, guided by the hands of the gods themselves.", "genesis", 442),
-    new weaponInfo("Moonlit Shadow", "weapon", "bow", ["chest"], "<:moonlit_shadow:1069028628630872125>", "https://i.imgur.com/tZ9pgya.png", "atk", 194, 1136, "dodge", 0.1, 0.2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Moonlit Shadow", "weapon", "bow", ["chest"], "<:moonlit_shadow:1069028628630872125>", "https://i.imgur.com/tZ9pgya.png", "atk", 194, 1136, "dodge", 0.08, 0.16, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.def.push(new buffInfo("+", -Math.min(eStats.def * 0.66, 1055), 9999));
         ebuff.mr.push(new buffInfo("+", -Math.min(eStats.mr * 0.66, 1055), 9999));
         eStats.def -= Math.floor(Math.min(eStats.def * 0.66, 1055));
         eStats.mr -= Math.floor(Math.min(eStats.mr * 0.66, 1055));
         myStats.selfhealChance.push(1);
-        myStats.selfheal.push(0.1);
-    }, "Reduces enemy defense and magic resistance by **66%** for the rest of battle (max 3x damage). Heals the wielder by **10%** of the damage dealt.", "The Moonlit Shadow is a bow of unrivaled grace and elegance shrouded in mystery. Some say it was crafted by a skilled archer who was enamored with the moon, while others believe it was created by a powerful witch to harness the power of the night. Despite its unsettling origins, the bow is highly sought after for its ability to strike fear into the hearts of its enemies. Its sleek black limbs gleam in the moonlight, blending seamlessly into the darkness. Its silvery string seems to shimmer in the moonlight, as if it is alive and hungry for prey. Those who dare to wield the Moonlit Shadow are said to be able to strike with the precision of a predator stalking its prey. With a single shot, it can fell the mightiest of foes, leaving only a shadowy silhouette in its wake.", "genesis", 443),
+        myStats.selfheal.push(0.05);
+    }, "Reduces enemy defense and magic resistance by **66%** for the rest of battle (max 3x damage). Heals the wielder by **5%** of the damage dealt.", "The Moonlit Shadow is a bow of unrivaled grace and elegance shrouded in mystery. Some say it was crafted by a skilled archer who was enamored with the moon, while others believe it was created by a powerful witch to harness the power of the night. Despite its unsettling origins, the bow is highly sought after for its ability to strike fear into the hearts of its enemies. Its sleek black limbs gleam in the moonlight, blending seamlessly into the darkness. Its silvery string seems to shimmer in the moonlight, as if it is alive and hungry for prey. Those who dare to wield the Moonlit Shadow are said to be able to strike with the precision of a predator stalking its prey. With a single shot, it can fell the mightiest of foes, leaving only a shadowy silhouette in its wake.", "genesis", 443),
 
     // Weapons - Genesis Lance
     new weaponInfo("Gae Bolg", "weapon", "lance", ["chest"], "<:gae_bolg:1069032920733466706>", "https://i.imgur.com/1oEA0m0.png", "atk", 212, 1254, "cr", 0.08, 0.4, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2416,21 +2480,25 @@ const items = [
     new weaponInfo("Celestial Wing", "weapon", "lance", ["chest"], "<:celestial_wing:1069032924952940615>", "https://i.imgur.com/LbD1ThM.png", "md", 206, 1227, "cd", 0.18, 0.56, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.cr = 0.5;
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (matchStats.round % 3 === 0) myStats.cr = 1;
+            if (matchStats.round % 2 === 0) myStats.cr = 1;
             else myStats.cr = 0.5;
         }, 9999));
         myStats.mdChance += 1;
-    }, "Every 3rd round the wielder has **100%** crit rate, otherwise has **50%**. The wielder deals magic damage by default.", "The Celestial Wing was crafted by a group of ancient elven smiths who were tasked with creating a weapon fit for the gods. Using only the finest materials and imbuing it with powerful magic, they succeeded in creating a lance that radiated a divine aura.\nThroughout history, the Celestial Wing has been wielded by some of the greatest heroes and champions of justice. It has been used to vanquish countless evil foes and protect the innocent, earning it a reputation as a weapon of light and hope.\nHowever, the lance has also been sought after by those with darker intentions. Many have attempted to steal or claim it for their own, but have been unsuccessful so for. It's almost as if the lance has a will of its own.\nDespite its history and reputation, the Celestial Wing lance remains a rare and highly coveted weapon, sought after by both those who seek to do good in the world and protect the innocent, and those who wish to once again engulf the world in darkness.", "genesis", 445),
+    }, "Every even round the wielder has **100%** crit rate, and **50%** every odd round. The wielder deals magic damage by default.", "The Celestial Wing was crafted by a group of ancient elven smiths who were tasked with creating a weapon fit for the gods. Using only the finest materials and imbuing it with powerful magic, they succeeded in creating a lance that radiated a divine aura.\nThroughout history, the Celestial Wing has been wielded by some of the greatest heroes and champions of justice. It has been used to vanquish countless evil foes and protect the innocent, earning it a reputation as a weapon of light and hope.\nHowever, the lance has also been sought after by those with darker intentions. Many have attempted to steal or claim it for their own, but have been unsuccessful so for. It's almost as if the lance has a will of its own.\nDespite its history and reputation, the Celestial Wing lance remains a rare and highly coveted weapon, sought after by both those who seek to do good in the world and protect the innocent, and those who wish to once again engulf the world in darkness.", "genesis", 445),
 
     // Weapons - Genesis Dagger
-    new weaponInfo("Astral Cutlass", "weapon", "dagger", ["chest"], "<:astral_cutlass:1069033520523137064>", "https://i.imgur.com/LLK5ovB.png", "atk", 196, 1215, "mana", 20, 60, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Astral Cutlass", "weapon", "dagger", ["chest"], "<:astral_cutlass:1069033520523137064>", "https://i.imgur.com/LLK5ovB.png", "atk", 196, 1215, "dodge", 0.07, 0.15, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm += 20;
         if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+
         myStats.mg += 5;
         eStats.mg -= 5;
         mybuff.mg.push(new buffInfo("+", 5, 9999));
         ebuff.mg.push(new buffInfo("+", -5, 9999));
-    }, "The wielder starts with **+20** mana. Steals **5** mana from the enemy each round.", "The Astral Cutlass is a weapon of incredible power, imbued with the very essence of the stars. Those who wield the Astral Cutlass are said to be blessed by the stars, and possess the strength and power to accomplish great feats in battle. Legend has it that only those who are pure of heart and deeply connected to the cosmic forces of the universe can wield the Astral Cutlass. It is a weapon of legend, sought after by many and wielded by only the greatest of warriors. Wield the Astral Cutlass and unlock the power of the stars, striking fear into the hearts of your enemies and becoming a true champion of the cosmos.", "genesis", 446),
+
+        myStats.stealManaOnDodge = 3;
+
+    }, "The wielder starts with **+20** mana. Steals **5** mana from the enemy each round, and **3** more with every dodge.", "The Astral Cutlass is a weapon of incredible power, imbued with the very essence of the stars. Those who wield the Astral Cutlass are said to be blessed by the stars, and possess the strength and power to accomplish great feats in battle. Legend has it that only those who are pure of heart and deeply connected to the cosmic forces of the universe can wield the Astral Cutlass. It is a weapon of legend, sought after by many and wielded by only the greatest of warriors. Wield the Astral Cutlass and unlock the power of the stars, striking fear into the hearts of your enemies and becoming a true champion of the cosmos.", "genesis", 446),
     new weaponInfo("Dream Fragment", "weapon", "dagger", ["chest"], "<:dream_fragment:1069033524398665840>", "https://i.imgur.com/bBY44LQ.png", "atk", 201, 1286, "cd", 0.1, 0.54, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mdChance = 0.5;
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2711,7 +2779,7 @@ const items = [
     new armorInfo("Robe of Divine Aspect", "armor", "cuirass", "Set of Divine Aspect", ["crafting", "chest"], "<:robe_of_divine_aspect:1081546631029211267>", "https://i.imgur.com/LGFZrAs.png", "hp", 51, 1654, "legendary", 564),
     new armorInfo("Gloves of Divine Aspect", "armor", "gloves", "Set of Divine Aspect", ["crafting", "chest"], "<:gloves_of_divine_aspect:1081547383659307078>", "https://i.imgur.com/dNndcaj.png", "hp", 52, 1660, "legendary", 565),
     new armorInfo("Boots of Divine Aspect", "armor", "boots", "Set of Divine Aspect", ["crafting", "chest"], "<:boots_of_divine_aspect:1081548150264844350>", "https://i.imgur.com/nHGVOHF.png", "def", 11, 126, "legendary", 566, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.05 : eStats.hp * 0.025);
+        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
         ebuff.hp.push(new buffInfo("+", -drain, 9999));
         mybuff.hp.push(new buffInfo("+", drain, 9999));
     }, "Drains **2.5%** HP from the enemy and adds it to the wearer every round. If enemy HP is more than twice of the wearers HP, it drains the equivalent of **5%** of the wearers HP instead."),
@@ -3000,12 +3068,63 @@ const items = [
     // Loot - Valentine's
     new lootInfo("Valentine's Chocolate", "loot", "event exclusive item", ["valentine's event"], "<:valentines_chocolate:1207055321839960194>", "https://i.ibb.co/hXP3CkT/Valentine-s-Chocolate.png", "mythical", 686, false, false, false, "Crafted with the finest cocoa and infused with a touch of magic, this Valentine's Chocolate is not only a sweet treat but also a source of strength and affection. It's a coveted item among heroes seeking to strengthen bonds or mend broken hearts."),
 
+    // Additional Weapons
+    new weaponInfo("Sacred Life Salamander", "weapon", "staff", ["chest"], "<:sacred_life_salamander:1274884340840665088>", "https://i.imgur.com/OGnmcD7.png", "md", 173, 976, "mr", 62, 255, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.mdChance += 1;
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const drain = Math.floor(myStats.maxhp * 0.1);
+            myStats.hp += drain;
+            eStats.hp -= drain;
+            if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
+            if (eStats.hp < 0) eStats.hp = 0;
+
+            eStats.mr -= Math.floor(Math.min(eStats.mr * 0.02 * Math.min(9, Math.floor(myStats.mr / 100)), 660));
+            eStats.md -= Math.floor(eStats.md * 0.02 * Math.min(12, Math.floor(myStats.mr / 100)));
+
+        }, 9999));
+    }, "Forces the enemy to deal magic damage. Drains the equivalent of **10%** of the wielders max HP from the enemy and adds it to the wielder after each round. For every **100** MR the wielder has, reduces enemy MD by **2%** (up to **24%**) and MR by **2%** (up to **18%**, max **2x** damage).", "The Sacred Life Salamander is a creature of mystery.  Nobody knows of its intentions, but the fact that its stuck to a twig and invigorated it with life-draining energy. According to a half-torn scripture, the sacred life salamander's existence was of arbitrary happenstance.", "genesis", 687),
+
+
+    // Rings
+    new ringInfo("Seafoam Mist", "ring", "ring", ["chest"], "<:seafoam_mist:1300860503832264754>", "https://i.ibb.co/2NTdKz4/Seafoam-Mist.png", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+        console.log(`Ring of ${char.name} is at level ${level}`);
+
+        // Test attack trigger
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) {
+                console.log("attack! Attacker: " + caster.name + `(${options.damage} damage)`);
+            } else if (caster === eStats) {
+                console.log("enemy attack! Target: " + target.name + `(${options.damage} damage)`);
+            }
+        });
+
+        // Test miss trigger
+        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            console.log("miss! Attacker: " + caster.name);
+        });
+
+        // Test crit trigger
+        matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            console.log("crit! Attacker: " + caster.name + `(${options.damage} damage)`);
+        });
+
+        // Test ability trigger
+        matchStats.on("ability", {
+            maxUsage: 2, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                console.log("ability used by " + caster.name);
+                return true;
+            },
+        });
+
+    }, (level) => `Returns **${[0, 5, 7.5, 10, 12.5, 15][level]}%** of mana spent after every active ability usage.`, "The Sacred Life Salamander is a creature of mystery.", "legendary", 688),
+
+
 
 ];
 
-module.exports.items = items;
-module.exports.fishing = items.filter((e) => e.obtain.includes("fishing"));
-
+export const fishing = items.filter((e) => e.obtain.includes("fishing"));
 
 // DEBUGGING CONTROLS
 // DEBUGGING CONTROLS

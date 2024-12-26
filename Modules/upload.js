@@ -1,7 +1,7 @@
-const axios = require('axios');
-const sharp = require('sharp');
-const FormData = require('form-data');
-const fs = require('fs');
+import axios from 'axios';
+import sharp from 'sharp';
+import FormData from 'form-data';
+import fs from 'fs';
 
 const tokens = ["ddecd222cd3fc3150f6404c0cc85a4e5", "f4f213791cdfb57e8c35a1b1a67edbfd", "89ce34cab24ea806cf774e5b270648fe", "29c12f5e482ecbf9eaa30e86763d11a2", "fdbfcc9e09cee0c5b47d78eaf2da5530"];
 let rot = Math.floor(Math.random() * 5);
@@ -13,7 +13,7 @@ const downloadImage = async (url) => {
     return Buffer.from(response.data, 'binary');
 };
 
-module.exports.upload = async (char, effect) => {
+export const upload = async (char, effect) => {
     try {
         // Download images
         const [charImageBuffer, effectImageBuffer] = await Promise.all([

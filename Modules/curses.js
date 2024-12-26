@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const buffInfo = require("./buffs.js");
+import buffInfo from "./buffs";
 
-class curseInfo {
+export default class curseInfo {
     constructor(name, id, emblem, tier, cost, skill, passive, image, descA, descP) {
         this._name = name;
         this._id = id;
@@ -48,7 +47,7 @@ class curseInfo {
     };
 };
 
-const curses = [
+export const curses = [
     new curseInfo("Self Regeneration", 0, "<:Self_Regeneration:958114013244452884>", 0, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const heal = Math.floor((eStats.maxhp - eStats.hp) * 0.1);
         eStats.hp += heal;
@@ -176,5 +175,3 @@ const curses = [
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     }, "https://i.ibb.co/kHW18jq/Absorb.png", "The monster steals 10% of your max HP and adds it to itself.", "None"),
 ];
-
-module.exports.curses = curses;

@@ -1,31 +1,33 @@
 /* eslint-disable no-unused-vars */
-const fs = require('fs');
-const { EmbedBuilder, AttachmentBuilder } = require("discord.js");
-const imagesize = require('imagesize');
-const axios = require('axios');
-const sharp = require('sharp');
-const https = require("https");
-const { createCanvas } = require('@napi-rs/canvas');
-const crypto = require('crypto');
-const { characters } = require("./chars.js");
-const { achievements } = require("./achievements.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { classes } = require("./classes.js");
-const buffInfo = require("./buffs.js");
-const delayedBuffs = require("./delayedBuffs.js");
-const { db, query } = require("../db_handler.js");
-const _ = require('lodash');
+import fs, { cp } from 'fs';
+import { EmbedBuilder, AttachmentBuilder } from "discord.js";
+import imagesize from 'imagesize';
+import axios from 'axios';
+import sharp from 'sharp';
+import https from "https";
+import { createCanvas } from '@napi-rs/canvas';
+import crypto from 'crypto';
+import { db, query } from "../db_handler";
+import { characters } from "./chars";
+import { anime } from "./anime";
+import { achievements } from "./achievements";
+import { dailies } from "../Modules/dailyQuests";
+import { classes } from "./classes";
+import { rankLowerRanges } from "./components";
+import buffInfo from "./buffs";
+import delayedBuffs from "./delayedBuffs";
+import _ from 'lodash';
 
 const statsOp = {
     "base": {
         "hp": { "238": -20, "405": -6, "460": 54, "512": 60, "2016": -10, "2079": 12, "2360": 12, "2597": 24, "3150": 6, "3307": -20, "3408": -20, "3409": 12, "3886": 20, "4769": -20, "5032": -9, "5341": 20, "5344": 16, "5819": -20, "8188": 30, "8189": 40, "8521": 12, "8582": 20, "9606": -6, "10520": 37, "10521": -14, "10523": 30, "10530": 40, "12000": 16, "12121": 10, "12424": 1, "17583": -11, "17688": -25, "17689": 12, "17871": -13, "18011": -9 },
         "atk": { "238": -11, "405": 12, "460": -12, "512": -10, "2079": 9, "2016": -2, "3150": 4, "3409": 14, "3886": 4, "4250": 10, "4712": -8, "5341": 6, "5344": 10, "6082": -13, "8187": 7, "8189": 10, "8521": 5, "9606": 3, "10517": 10, "10520": 20, "10521": -4, "10523": 5, "10530": 8, "12000": 10, "12121": 7, "12393": -5, "12424": 15, "17583": -10, "17689": -2, "17871": -4, "18011": -6 },
         "def": { "405": 1, "460": 1, "512": 15, "2360": 9, "2597": 5, "3150": 8, "3409": 6, "9606": 19, "10517": 5, "12121": 5, "12393": 10, "12424": 10, "17583": -18, "17871": -5, "18011": -4 },
-        "expertise": { "72": "sword", "73": "sword", "77": "bow", "159": "sword", "405": "sword", "408": "any", "512": "shield", "523": "sword", "577": "staff", "578": "staff", "680": "lance", "688": "sword", "712": "lance", "733": "sword", "735": "bow", "767": "staff", "769": "sword", "844": "dagger", "999": "lance", "1001": "sword", "1550": "sword", "1824": "dagger", "1850": "lance", "1851": "lance", "2078": "staff", "2079": "axe", "2080": "lance", "2291": "staff", "2420": "sword", "2597": "sword", "2814": "bow", "2848": "dagger", "3109": "shield", "3150": "dagger", "3307": "axe", "3308": "lance", "4250": "sword", "4474": "staff", "4767": "sword", "4769": "staff", "5224": "dagger", "5341": "lance", "6029": "bow", "6030": "bow", "8189": "sword", "8521": "dagger", "9000": "sword", "9365": "staff", "9454": "dagger", "9648": "dagger", "9677": "sword", "9824": "axe", "10300": "lance", "10324": "sword", "10517": "sword", "10520": "lance", "10521": "staff", "10522": "dagger", "10523": "bow", "10524": "staff", "10527": "dagger", "10800": "sword", "10958": "sword", "11244": "sword", "11246": "sword", "12345": "staff", "12387": "axe", "12388": "any", "12393": "bow", "12399": "bow", "12450": "lance", "12451": "sword", "12775": "dagger", "12776": "dagger", "12857": "sword", "13186": "bow", "13285": "sword", "13574": "staff", "13780": "sword", "14091": "bow", "14405": "bow", "14903": "bow", "14904": "sword", "15251": "lance", "16107": "bow", "16109": "sword", "16110": "lance", "16119": "bow", "16919": "sword", "17115": "sword", "17116": "sword", "17117": "staff", "17118": "sword", "17583": "any", "17686": "axe", "17687": "bow", "17688": "any", "17689": "any", "19048": "staff", "19050": "sword", "19051": "bow" },
+        "expertise": { "72": "sword", "73": "sword", "77": "bow", "159": "sword", "405": "sword", "408": "any", "460": "sword", "463": "sword", "512": "shield", "523": "sword", "577": "staff", "578": "staff", "680": "lance", "688": "sword", "712": "lance", "733": "sword", "735": "bow", "767": "staff", "769": "sword", "844": "dagger", "999": "lance", "1001": "sword", "1550": "sword", "1824": "dagger", "1850": "lance", "1851": "lance", "2078": "staff", "2079": "axe", "2080": "lance", "2291": "staff", "2420": "sword", "2597": "sword", "2814": "bow", "2848": "dagger", "3109": "shield", "3150": "dagger", "3307": "axe", "3308": "lance", "4250": "sword", "4474": "staff", "4767": "sword", "4769": "staff", "4942": "sword", "5224": "dagger", "5341": "lance", "6029": "bow", "6030": "bow", "8189": "sword", "8521": "dagger", "9000": "sword", "9365": "staff", "9454": "dagger", "9648": "dagger", "9677": "sword", "9824": "axe", "10300": "lance", "10324": "sword", "10517": "sword", "10520": "lance", "10521": "staff", "10522": "dagger", "10523": "bow", "10524": "staff", "10527": "dagger", "10800": "sword", "10958": "sword", "11244": "sword", "11246": "sword", "12345": "staff", "12387": "axe", "12388": "any", "12393": "bow", "12399": "bow", "12450": "lance", "12451": "sword", "12775": "dagger", "12776": "dagger", "12857": "sword", "13186": "bow", "13285": "sword", "13288": "staff", "13574": "staff", "13780": "sword", "14091": "bow", "14405": "bow", "14903": "bow", "14904": "sword", "15251": "lance", "16107": "bow", "16109": "sword", "16110": "lance", "16119": "bow", "16919": "sword", "17115": "sword", "17116": "sword", "17117": "staff", "17118": "sword", "17583": "any", "17686": "axe", "17687": "bow", "17688": "any", "17689": "any", "19048": "staff", "19050": "sword", "19051": "bow", "19277": "dagger", "21928": "bow", "21931": "sword" },
     },
 };
 
-module.exports.getDimensions = (url) => {
+export const getDimensions = (url) => {
     return new Promise((resolve, rejects) => {
         let request = https.get(url, (response) => {
             imagesize(response, (err, result) => {
@@ -36,7 +38,7 @@ module.exports.getDimensions = (url) => {
     });
 };
 
-function strCode(id) {
+export const strCode = (id) => {
     let inp = characters[id].anime + characters[id].gender + characters[id].name;
     let hash = 0;
     if (inp.length < 2) return 111;
@@ -49,7 +51,7 @@ function strCode(id) {
     return hash;
 };
 
-function baseHP(id) {
+export const baseHP = (id) => {
     let hash = strCode(id) % 10;
     switch (characters[id].rarity) {
         case "EX": hash = Math.floor(420 + (20 * (hash / 9))); break; // 420-440
@@ -65,7 +67,7 @@ function baseHP(id) {
     return hash;
 };
 
-function baseATK(id) {
+export const baseATK = (id) => {
     let hash = Math.round(((strCode(id) % 100) / 10) + 0.01);
     switch (characters[id].rarity) {
         case "EX": hash = Math.floor(70 + (1 * hash)); break;  // 70-80
@@ -81,7 +83,7 @@ function baseATK(id) {
     return hash;
 };
 
-function baseDEF(id) {
+export const baseDEF = (id) => {
     let hash = strCode(id);
     let sum = 0;
     while (hash) {
@@ -104,11 +106,11 @@ function baseDEF(id) {
     return hash;
 };
 
-function baseEP(id, hp = baseHP(id), atk = baseATK(id), def = baseDEF(id), md = atk, mr = def, cd = 1.25, cr = 0.18, dodge = 0.1) {
+export const baseEP = (id, hp = baseHP(id), atk = baseATK(id), def = baseDEF(id), md = atk, mr = def, cd = 1.25, cr = 0.18, dodge = 0.1) => {
     return Math.floor(((1 / (1 - dodge)) * (hp / Math.pow(0.99895, Math.max(def, mr))) / (200 / (Math.max(atk, md) * (1 + (cat1(cr) * (cd - 1)))))) * 100) / 100;
 };
 
-function baseExpertise(id) {
+export const baseExpertise = (id) => {
     if (statsOp.base.expertise[id]) return statsOp.base.expertise[id];
     let hash = Math.floor(((strCode(id) % 60) / 10) + 0.01);
 
@@ -123,19 +125,11 @@ function baseExpertise(id) {
     };
 };
 
-module.exports.baseHP = id => baseHP(id);
-module.exports.baseATK = id => baseATK(id);
-module.exports.baseDEF = id => baseDEF(id);
-module.exports.baseEP = id => baseEP(id);
-module.exports.baseExpertise = id => baseExpertise(id);
-
-function cat1(num) {
+export const cat1 = (num) => {
     if (num > 1) return 1;
     if (num < 0) return 0;
     return num;
 };
-
-module.exports.cat1 = id => cat1(id);
 
 const lvlupStats = {
     "EX": { "hp": { "base": 5, "add": 1 }, "atk": { "base": 2.4, "add": 0.35 }, "def": { "base": 1.25, "add": 0.25 } },
@@ -149,7 +143,7 @@ const lvlupStats = {
 
 const retainItemStats = new Map();
 
-module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = false) => {
+export const getDetailedStats = async (id, inv, classLevel, lu = 0, refine = false) => {
 
     let dStats = {
         "name": characters[id].name,
@@ -169,8 +163,10 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
         "cd": 1.25,
         "td": 0,
         "br": 0.2,
+        "brCap": 0.5,
         "agility": 80,
         "dodge": 0.1,
+        "dodgeCap": 0.5,
         "mana": 80,
         "mg": 15,
         "sm": 20,
@@ -180,6 +176,8 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
         "revhp": 0.5,
         "revivedTotal": 0,
         "maxRevivals": 0,
+        "attackStreak": 0,
+        "crittedTotal": 0,
         "selfheal": [],
         "selfhealChance": [],
         "dodgeHeal": 0,
@@ -193,24 +191,38 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
         "executeHP": 0,
         "ignoreShield": false,
         "damageReduction": 0,
+        "damageFormula": "default", // "default": default, "log_scale_<number>": example "log_scale_1.4"
         "delayedBuffs": [],
         "replaceButton": {},
         "lvl": (inv.level ?? 1) + lu,
-        "ref": 0,
+        "ref": Math.min(6, ((inv.ref[id] ?? 0) + refine)),
         "class": -1,
         "clvl": 1,
         "expertise": baseExpertise(id),
         "weapon": -1,
         "weaponinfo": {},
-        "weaponicon": { "sword": "<:sword_empty:1034502134474997790>", "staff": "<:staff_empty:1034502136622485524>", "axe": "<:axe_empty:1034567413527760917>", "bow": "<:bow_empty:1034567415209664672>", "lance": "<:lance_empty:1034567416522473502>", "dagger": "<:dagger_empty:1034567417982091434>", "shield": "<:shield_empty:1087089686809415730>", "any": "<:any_empty:1113010026664169494>" }[baseExpertise(id)],
+        "weaponicon": "<:sword_empty:1034502134474997790>",
         "uniqueids": []
     };
 
+    // Expertise change
+    if (dStats.ref === 6) dStats.expertise = "any";
+    dStats.weaponicon = {
+        "sword": "<:sword_empty:1034502134474997790>",
+        "staff": "<:staff_empty:1034502136622485524>",
+        "axe": "<:axe_empty:1034567413527760917>",
+        "bow": "<:bow_empty:1034567415209664672>",
+        "lance": "<:lance_empty:1034567416522473502>",
+        "dagger": "<:dagger_empty:1034567417982091434>",
+        "shield": "<:shield_empty:1087089686809415730>",
+        "any": "<:any_empty:1113010026664169494>",
+    }[dStats.expertise];
+
     // if (inv.level[id]) dStats.lvl = inv.level[id];
     // dStats.lvl += lu;
-    if (inv.ref[id]) dStats.ref = inv.ref[id];
-    if (refine) dStats.ref++;
-    if (dStats.ref > 5) dStats.ref = 5;
+    // if (inv.ref[id]) dStats.ref = inv.ref[id];
+    // if (refine) dStats.ref++;
+    // if (dStats.ref > 5) dStats.ref = 5;
 
     let clsStats;
     if (inv.class !== null) {
@@ -219,13 +231,15 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
         clsStats = classes[dStats.class].stats;
         Object.keys(clsStats).forEach((s) => dStats[s] = dStats[s] * clsStats[s][0] + clsStats[s][1]);
         ["mana", "mg", "sm"].forEach((stat) => dStats[stat] = Math.floor(dStats[stat]));
+        dStats.brCap = (dStats.brCap * clsStats.br[0] * 100).toFixed(2) / 100;
+        dStats.dodgeCap = (dStats.dodgeCap * clsStats.dodge[0] * 100).toFixed(2) / 100;
     };
 
     // Add level bonus
     const bankup = Math.max(0, Math.floor((Math.sqrt((2 * (inv.bank)) + (100 * (dStats.lvl * dStats.lvl)) + (700 * dStats.lvl) + 1225) / 10) - 3.5 - dStats.lvl));
-    dStats.hp = Math.floor((1 + 0.25 * (dStats.ref - 1)) * dStats.hp) + Math.round((lvlupStats[characters[id].rarity].hp.base + (lvlupStats[characters[id].rarity].hp.add * ((strCode(id) % 10) / 9))) * (dStats.lvl - 1 + bankup));
-    dStats.atk = Math.floor((1 + 0.25 * (dStats.ref - 1)) * dStats.atk) + Math.round((lvlupStats[characters[id].rarity].atk.base + (lvlupStats[characters[id].rarity].atk.add * ((dStats.atk - 50) / 30))) * (dStats.lvl - 1 + bankup));
-    dStats.def = Math.floor((1 + 0.25 * (dStats.ref - 1)) * dStats.def) + Math.round((lvlupStats[characters[id].rarity].def.base + (lvlupStats[characters[id].rarity].def.add * ((dStats.def - 50) / 30))) * (dStats.lvl - 1 + bankup));
+    dStats.hp = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.hp) + Math.round((lvlupStats[characters[id].rarity].hp.base + (lvlupStats[characters[id].rarity].hp.add * ((strCode(id) % 10) / 9))) * (dStats.lvl - 1 + bankup));
+    dStats.atk = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.atk) + Math.round((lvlupStats[characters[id].rarity].atk.base + (lvlupStats[characters[id].rarity].atk.add * ((dStats.atk - 50) / 30))) * (dStats.lvl - 1 + bankup));
+    dStats.def = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.def) + Math.round((lvlupStats[characters[id].rarity].def.base + (lvlupStats[characters[id].rarity].def.add * ((dStats.def - 50) / 30))) * (dStats.lvl - 1 + bankup));
     dStats.bhp = dStats.hp, dStats.td = dStats.atk, dStats.md = dStats.atk, dStats.batk = dStats.atk, dStats.bmd = dStats.atk, dStats.mr = dStats.def, dStats.bdef = dStats.def, dStats.bmr = dStats.def;
 
     if (dStats.class !== -1) {
@@ -261,7 +275,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
             // weapon = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.weapon}'`);
             if (weapon[0]) {
                 dStats.uniqueids.push(weapon[0].uniqueid.split(":")[0]);
-                weapon = { id: weapon[0].itemid, level: getItemLevel(weapon[0].level), ascension: weapon[0].ascension, purity: weapon[0].purity };
+                weapon = { id: weapon[0].itemid, level: getItemLevel(weapon[0].level), ascension: weapon[0].ascension };
                 const item = items[weapon.id];
 
                 // Set item to dStats
@@ -308,7 +322,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
             // shield = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.shield}'`);
             if (shield[0]) {
                 dStats.uniqueids.push(shield[0].uniqueid.split(":")[0]);
-                shield = { id: shield[0].itemid, level: getItemLevel(shield[0].level), ascension: shield[0].ascension, purity: shield[0].purity };
+                shield = { id: shield[0].itemid, level: getItemLevel(shield[0].level), ascension: shield[0].ascension };
                 const item = items[shield.id];
 
                 // Set item to dStats
@@ -349,7 +363,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
             // helmet = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.helmet}'`);
             if (helmet[0]) {
                 dStats.uniqueids.push(helmet[0].uniqueid.split(":")[0]);
-                helmet = { id: helmet[0].itemid, level: getItemLevel(helmet[0].level), ascension: helmet[0].ascension, purity: helmet[0].purity, substats: JSON.parse(helmet[0].substats) };
+                helmet = { id: helmet[0].itemid, level: getItemLevel(helmet[0].level), ascension: helmet[0].ascension };
                 const item = items[helmet.id];
 
                 // Set item to dStats
@@ -370,7 +384,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
             // cuirass = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.cuirass}'`);
             if (cuirass[0]) {
                 dStats.uniqueids.push(cuirass[0].uniqueid.split(":")[0]);
-                cuirass = { id: cuirass[0].itemid, level: getItemLevel(cuirass[0].level), ascension: cuirass[0].ascension, purity: cuirass[0].purity, substats: JSON.parse(cuirass[0].substats) };
+                cuirass = { id: cuirass[0].itemid, level: getItemLevel(cuirass[0].level), ascension: cuirass[0].ascension };
                 const item = items[cuirass.id];
 
                 // Set item to dStats
@@ -391,7 +405,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
             // gloves = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.gloves}'`);
             if (gloves[0]) {
                 dStats.uniqueids.push(gloves[0].uniqueid.split(":")[0]);
-                gloves = { id: gloves[0].itemid, level: getItemLevel(gloves[0].level), ascension: gloves[0].ascension, purity: gloves[0].purity, substats: JSON.parse(gloves[0].substats) };
+                gloves = { id: gloves[0].itemid, level: getItemLevel(gloves[0].level), ascension: gloves[0].ascension };
                 const item = items[gloves.id];
 
                 // Set item to dStats
@@ -412,7 +426,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
             // boots = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.boots}'`);
             if (boots[0]) {
                 dStats.uniqueids.push(boots[0].uniqueid.split(":")[0]);
-                boots = { id: boots[0].itemid, level: getItemLevel(boots[0].level), ascension: boots[0].ascension, purity: boots[0].purity, substats: JSON.parse(boots[0].substats) };
+                boots = { id: boots[0].itemid, level: getItemLevel(boots[0].level), ascension: boots[0].ascension };
                 const item = items[boots.id];
 
                 // Set item to dStats
@@ -443,7 +457,7 @@ module.exports.getDetailedStats = async (id, inv, classLevel, lu = 0, refine = f
     return dStats;
 };
 
-function getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags = {}) {
+export const getDamage = (target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags = {}) => {
     const options = { // true = enabled, false = disabled
         overwriteDamage: 0,
         atkMultiplier: 1,
@@ -461,16 +475,15 @@ function getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notic
     // Calculate damage
     let damage;
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, matchStats.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * ((options.canCrit && options.critChance < (attacker.cr + options.critBuff)) ? (options.critMultiplier * attacker.cd) : 1));
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * ((options.canCrit && options.critChance < (attacker.cr + options.critBuff)) ? (options.critMultiplier * attacker.cd) : 1));
     } else {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, matchStats.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * ((options.canCrit && options.critChance < (attacker.cr + options.critBuff)) ? (options.critMultiplier * attacker.cd) : 1));
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * ((options.canCrit && options.critChance < (attacker.cr + options.critBuff)) ? (options.critMultiplier * attacker.cd) : 1));
     };
 
     return damage;
 };
-module.exports.getDamage = getDamage;
 
-module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags = {}) => {
+export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags = {}) => {
     const options = { // true = enabled, false = disabled
         block: target.usedBlockRound === matchStats.round,
         dodge: true,
@@ -491,17 +504,19 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
         combodmg: false,
         selfdmg: false,
         selfheal: true,
+        selfhealAmount: 0,
         selfhealChance: Math.random(),
         critbleed: matchStats.critbleed,
         execute: matchStats.allowExecution,
+        damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: false,
     };
     Object.keys(flags).forEach((e) => options[e] = flags[e]);
 
     // Try blocking or dodging
-    if (options.block && Math.random() < target.br) {
+    if (options.block && Math.random() < Math.min(target.br, target.brCap ?? target.br)) {
         notice.push(`\n🛡️ **${target.name}** blocked the attack!`);
-        matchStats.attackStreak = 0;
+        attacker.attackStreak = 0;
         target.dodgeStreak = 0;
         target.blockStreak++;
         if (target.blockBuffDef) targetBuff.def.push(new buffInfo("+", target.blockBuffDef, 6)), targetBuff.mr.push(new buffInfo("+", target.blockBuffDef, 6));
@@ -510,35 +525,67 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
         // Diminishing Returns
         // if (target.blockStreak >= 2) targetBuff.br.push(new buffInfo("*", 0.875, 6));
 
+        // Event Triggers
+        matchStats.trigger("block", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+
         // Achievements & Daily Quests
         achievements[13].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak); // Invincible
         if (target.blockStreak === 2) dailies[6].update(matchStats.interaction); // Impenetrable Defense
         return 0;
     }; /* Reset BlockStreak */ target.blockStreak = 0;
-    if (options.dodge && Math.random() < target.dodge) {
+    if (options.dodge && Math.random() < Math.min(target.dodge, target.dodgeCap ?? target.dodge)) {
         notice.push(`\n💨 **${target.name}** dodged the attack!${matchStats.dodgebuff ? ` Gained **+${matchStats.dodgebuff * 100}%** ATK` : ""}`);
-        matchStats.attackStreak = 0;
+        attacker.attackStreak = 0;
         target.dodgeStreak++;
         if (target.dodgeHeal) {
             target.hp += Math.floor(target.maxhp * target.dodgeHeal);
             if (target.hp > target.maxhp) target.hp = target.maxhp;
         };
         if (matchStats.dodgebuff) targetBuff.atk.push(new buffInfo("*", 1 + matchStats.dodgebuff, 5));
+        if (target.sjwUsedActive) {
+            const drain = Math.floor(attacker.sm * 0.12);
+            attacker.sm -= drain;
+            target.sm += drain;
+        };
+        if (target.stealManaOnDodge) {
+            const steal = Math.min(attacker.sm, target.stealManaOnDodge);
+            attacker.sm -= steal;
+            target.sm += steal;
+            if (target.sm > target.mana) target.sm = target.mana;
+        };
 
         // Diminishing Returns
         // if (target.dodgeStreak >= 2) targetBuff.dodge.push(new buffInfo("*", 0.875, 6));
+
+        // Event Triggers
+        matchStats.trigger("dodge", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
 
         return 0;
     }; /* Reset DodgeStreak */ target.dodgeStreak = 0;
 
     // Calculate damage
-    let damage = getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
-    // let damage;
-    // if (options.magicDamage && options.mdChance < attacker.mdChance) {
-    //     damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, matchStats.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * ((options.canCrit && options.critChance < (attacker.cr + options.critBuff)) ? (options.critMultiplier * attacker.cd) : 1));
-    // } else {
-    //     damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, matchStats.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * ((options.canCrit && options.critChance < (attacker.cr + options.critBuff)) ? (options.critMultiplier * attacker.cd) : 1));
-    // };
+    // let damage = getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
+    let damage, isCrit = (options.canCrit && (options.critChance < (attacker.cr + options.critBuff)));
+    if (options.magicDamage && options.mdChance < attacker.mdChance) {
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * (isCrit ? (options.critMultiplier * attacker.cd) : 1));
+    } else {
+        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * (isCrit ? (options.critMultiplier * attacker.cd) : 1));
+    };
+    attacker.crittedTotal ||= 0;
+    attacker.crittedTotal++;
+
+    // Other Damage Formulas
+    if (options.damageFormula.startsWith("log_scale_")) {
+        const base = Math.pow(2, 7);
+        if (damage > base) {
+            const scale = parseFloat(options.damageFormula.split("_")[2]) ?? 2;
+            const power = ((Math.log(damage) / Math.log(2)) - 7);
+
+            damage = Math.floor(base * Math.pow(scale, power));
+        };
+    };
 
     // Damage Reduction
     if (target.damageReduction) {
@@ -551,10 +598,24 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
     };
 
     // Counter the attack
-    if (target.counter > 0) {
+    if (target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
         target.counter--;
         notice.push(`\n✨ **${target.name}** countered the attack!`);
-        return module.exports.dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
+        if (target.soulfistAtkStack !== undefined) {
+            if (target.soulfistAtkStack++ < 5) {
+                targetBuff.atk.push(new buffInfo("*", 1.03, 9999));
+                targetBuff.md.push(new buffInfo("*", 1.03, 9999));
+            } else {
+                target.sm += 10;
+                if (target.sm > target.mana) target.sm = target.mana;
+            };
+        };
+
+        // Event Triggers
+        matchStats.trigger("counter", attacker, target, attackerBuff, targetBuff, { damage });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+
+        return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
     };
 
     // Evade Deadly Attack
@@ -566,6 +627,10 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
     ) {
         target.evadeDeathStrike--;
         notice.push(`\n✨ **${target.name}** has evaded a deadly attack!`);
+
+        // Event Triggers
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+
         return 0;
     };
 
@@ -585,22 +650,30 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
             target.shield = 0;
 
             // freeze
-            attacker.timeFrozen = true;
-            attacker.frozenMessage = "was frozen";
-            target.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                eStats.timeFrozen = false;
-            }));
             if (target.shieldBreakDamageBuff) {
-                targetBuff.atk.push(new buffInfo("+", Math.floor(target.atk * target.shieldBreakDamageBuff), 1));
-                targetBuff.md.push(new buffInfo("+", Math.floor(target.md * target.shieldBreakDamageBuff), 1));
+                attacker.timeFrozen = true;
+                attacker.frozenMessage = "was frozen";
+                (target.delayedBuffs ?? attacker.delayedBuffs).push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.timeFrozen = false;
+                }));
+                if (target.shieldBreakDamageBuff) {
+                    targetBuff.atk.push(new buffInfo("+", Math.floor(target.atk * target.shieldBreakDamageBuff), 1));
+                    targetBuff.md.push(new buffInfo("+", Math.floor(target.md * target.shieldBreakDamageBuff), 1));
+                };
             };
         };
 
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${(options.canCrit && options.critChance < attacker.cr) ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
         target.hp = Math.floor(target.hp - damage);
         if (target.hp < 1) target.hp = 0;
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${(options.canCrit && options.critChance < attacker.cr) ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+    };
+
+    // Reflect damage
+    if (target.reflectDamage) {
+        attacker.hp = Math.floor(attacker.hp - Math.floor(damage * target.reflectDamage));
+        if (attacker.hp < 1) attacker.hp = 0;
     };
 
     // If it executes
@@ -608,44 +681,64 @@ module.exports.dealDamage = (target, attacker, targetBuff, attackerBuff, matchSt
         notice.push(`\n⚔️ **${target.name}** was executed!`);
         damage += target.hp;
         target.hp = 0;
+
+        // Event Triggers
+        matchStats.trigger("execute", attacker, target, attackerBuff, targetBuff, { damage });
+
         return damage;
     };
 
     // Passives
     target.damageTaken += damage;
-    if (options.combodmg && attacker.combodmg) matchStats.attackStreak++;
-    if (options.critbleed && options.canCrit && options.critChance < attacker.cr) targetBuff.hp.push(new buffInfo("+", (target.maxhp > (2 * attacker.maxhp)) ? (-attacker.maxhp * 0.06) : (-target.maxhp * 0.03), matchStats.critbleedlast));
-    if (attacker.critmana && options.canCrit && options.critChance < attacker.cr) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
+    if (options.combodmg && attacker.combodmg) attacker.attackStreak++;
+    if (options.critbleed && isCrit) targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * 0.05), matchStats.critbleedlast));
+    if (attacker.critmana && isCrit) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
     // if (options.selfheal && matchStats.selfhealChance > options.selfhealChance) attacker.hp += Math.floor(damage * matchStats.selfheal);
+    if (options.selfheal && options.selfhealAmount) attacker.hp += Math.floor(damage * options.selfhealAmount);
     if (options.selfheal && attacker.selfheal) {
         for (let i = 0; i < attacker.selfheal.length; i++) {
             if (attacker.selfhealChance[i] > Math.random()) attacker.hp += Math.floor(damage * attacker.selfheal[i]);
         };
     };
     if (options.selfdmg && Math.random() < matchStats.selfdmg) attacker.hp -= damage;
-    if ("gintokiStacks" in attacker && options.canCrit && options.critChance < attacker.cr) attacker.gintokiStacks = 0;
+    if ("gintokiStacks" in attacker && isCrit) attacker.gintokiStacks = 0;
     if (damage && attacker.guinaifenStackRounds?.filter((e) => e >= (matchStats.round - attacker.guinaifenStackLast)).length < attacker.guinaifenStackMax) {
         targetBuff.hp.push(new buffInfo("+", -Math.floor(0.06 * damage), attacker.guinaifenStackLast));
         attacker.guinaifenStackRounds.push(matchStats.round);
     };
+    if (attacker.sjwUsedActive) {
+        if (damage) targetBuff.hp.push(new buffInfo("+", Math.floor(damage * 0.07), 2)); // Beru
+        if (isCrit) { // Igris
+            const drain = Math.floor((target.maxhp > (2 * attacker.maxhp)) ? attacker.maxhp * 0.07 : target.maxhp * 0.035);
+            target.hp -= drain;
+            attacker.hp += drain;
+        };
+
+    };
+    if (target.hp > target.maxhp) target.hp = target.maxhp;
+    if (target.hp < 0) target.hp = 0;
     if (attacker.hp > attacker.maxhp) attacker.hp = attacker.maxhp;
     if (attacker.hp < 0) attacker.hp = 0;
 
     // Twinshot
     if (options.canTwinshot && matchStats.twinshot > Math.random()) {
         flags.canTwinshot = false;
-        return damage + module.exports.dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
+        return damage + dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
     };
+
+    // Event Triggers
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage });
+    if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
 };
 
-module.exports.generateSubstats = (n = 4) => {
+export const generateSubstats = (n = 4) => {
     const stats = ["hp", "atk", "atk%", "def", "md", "md%", "mr", "shield", "cr", "cd", "dodge", "br", "mana", "mg", "sm"];
     return stats.sort((a, b) => 0.5 - Math.random()).slice(0, n).reduce((acc, curr) => (acc[curr] = 1, acc), {});
 };
 
-function getAscensionMaterial(id, ascItems) {
+export const getAscensionMaterial = (id, ascItems) => {
     id += "camelot";
     let hash = 3;
     for (let i = 0; i < id.length; i++) {
@@ -654,9 +747,8 @@ function getAscensionMaterial(id, ascItems) {
     };
     return ascItems[Math.abs(hash) % ascItems.length];
 };
-module.exports.getAscensionMaterial = (id, ascItems) => getAscensionMaterial(id, ascItems);
 
-module.exports.filterItems = (userItems, choice, exclude = [], sellGrade = false, sellType = false, stats = false) => {
+export const filterItems = (userItems, choice, exclude = [], sellGrade = false, sellType = false, stats = false) => {
     const { items } = require("./items.js");
     const itemsToDisassemble = [];
     const itemIdsToDisassemble = [];
@@ -712,11 +804,11 @@ module.exports.filterItems = (userItems, choice, exclude = [], sellGrade = false
     return { itemsToDisassemble, itemIdsToDisassemble, loot };
 };
 
-module.exports.showPage = (currPage, arr, elements = 15) => {
+export const showPage = (currPage, arr, elements = 15) => {
     return arr.slice((currPage - 1) * elements, currPage * elements);
 };
 
-module.exports.search = (name, inv, interaction, silent = false) => {
+export const search = (name, inv, interaction, silent = false) => {
     name = name.toLowerCase().split(" ").filter((e) => e).join(" ");
     if (name === "last" || name === "latest") name = inv[inv.length - 1].toString();
 
@@ -738,7 +830,22 @@ module.exports.search = (name, inv, interaction, silent = false) => {
     return fArray[0];
 };
 
-function rarity(rar) {
+export const searchAnimeTitle = (name, interaction, silent = false) => {
+    name = name.toLowerCase().split(" ").filter((e) => e).join(" ");
+
+    // Full Name Search
+    let fastCheck = anime.filter((e) => e.name.toLowerCase() === name || e.alias.some((a) => a.toLowerCase() === name));
+    if (fastCheck[0] !== undefined) return fastCheck[0];
+
+    // Filter
+    const fArray = anime.filter((e) => e.name.toLowerCase().startsWith(name) || e.alias.some((a) => a.toLowerCase().startsWith(name)));
+
+    if (fArray.length === 0) return silent ? false : interaction.reply("No match found");
+    if (fArray.length > 1) return silent ? false : interaction.reply(`${fArray.length} matches found:\n> ‧ ${fArray.sort((a, b) => b.name.toLowerCase().startsWith(name) - a.name.toLowerCase().startsWith(name)).map((e) => e.name.toLowerCase().startsWith(name) ? e.name : e.name + " (alias: " + e.alias.find((a) => a.toLowerCase().startsWith(name)) + ")").slice(0, 8).join('\n> ‧ ')}${fArray.length > 8 ? `\n+ ${fArray.length - 8} more` : ""}`);
+    return fArray[0];
+};
+
+export const rarity = (rar) => {
     switch (rar) {
         case "EX": return "https://i.ibb.co/1GDqXkg/extra-dark.gif"; // "https://i.ibb.co/0V1bDLm/ex.png";
         case "SS": return "https://i.ibb.co/GdhDTj1/n3qj4i2.png";
@@ -751,13 +858,22 @@ function rarity(rar) {
     };
 };
 
-module.exports.rarity = (rar) => {
-    return rarity(rar);
+export const getSingleRefinement = (cid) => {
+    if (cid > 5) return "<:refinement_gold:1046869941011365899>";
+    switch (cid) {
+        case 5: return "<:refinement:869132309125824552>";
+        case 4: return "<:refinement_4:1295716864567021619>";
+        case 3: return "<:refinement_3:1295716862457544760>";
+        case 2: return "<:refinement_2:1295716856774135901>";
+        case 1: return "<:refinement_1:1295716854538571869>";
+        default: return "<:refinement_hollow:869132322857947136>";
+    };
 };
 
-function getRefinement(cid) {
-    if (cid > 4) return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552>";
+export const getRefinement = (cid) => {
+    if (cid > 5) return "<:refinement_gold:1046869941011365899><:refinement_gold:1046869941011365899><:refinement_gold:1046869941011365899><:refinement_gold:1046869941011365899><:refinement_gold:1046869941011365899>";
     switch (cid) {
+        case 5: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552>";
         case 4: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement_hollow:869132322857947136>";
         case 3: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement:869132309125824552><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136>";
         case 2: return "<:refinement:869132309125824552><:refinement:869132309125824552><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136><:refinement_hollow:869132322857947136>";
@@ -766,11 +882,7 @@ function getRefinement(cid) {
     };
 };
 
-module.exports.getRefinement = (cid) => {
-    return getRefinement(cid);
-};
-
-function splitTitle(title) {
+export const splitTitle = (title) => {
     if (title.length <= 30) return title;
     let add = "";
     while (title.length > 30) {
@@ -782,9 +894,7 @@ function splitTitle(title) {
     return add;
 };
 
-module.exports.splitTitle = title => splitTitle(title);
-
-module.exports.displayPull = (user, thisChar, pCount, dupes, pullsMade, lastVote, refinement) => {
+export const displayPull = (user, thisChar, pCount, dupes, pullsMade, lastVote, refinement) => {
     let animeL = splitTitle(thisChar.anime);
     refinement = getRefinement(refinement);
 
@@ -804,7 +914,7 @@ module.exports.displayPull = (user, thisChar, pCount, dupes, pullsMade, lastVote
     return { embeds: [Embed] };
 };
 
-module.exports.searchAnime = (name, inv, interaction) => {
+export const searchAnime = (name, inv, interaction) => {
     name = name.toLowerCase();
     if (name === "last" || name === "latest") name = characters[inv[inv.length - 1]].anime.toLowerCase();
 
@@ -827,7 +937,7 @@ module.exports.searchAnime = (name, inv, interaction) => {
     return fArray;
 };
 
-module.exports.userLevel = (xpr) => {
+export const userLevel = (xpr) => {
     let level = 0;
     for (let i = 1; xpr >= 0; i++) {
         xpr -= Math.floor(5 * Math.log(i) ** 4 + 30);
@@ -836,7 +946,7 @@ module.exports.userLevel = (xpr) => {
     return level;
 };
 
-function getClassLvl(cls, classLvl) {
+export const getClassLvl = (cls, classLvl) => {
     let clvl = 1, classxp = 0;
     if (cls in classLvl) classxp = classLvl[cls];
     for (let ci = 1; classxp > 0; ci++) {
@@ -853,17 +963,15 @@ function getClassLvl(cls, classLvl) {
 
     return clvl;
 };
-module.exports.getClassLvl = (cls, classLvl) => getClassLvl(cls, classLvl);
 
-function classLevelToXP(clvl) {
+export const classLevelToXP = (clvl) => {
     if (clvl < 1) return 0;
     let classxp = 0;
     while (--clvl) classxp += clvl * 50;
     return classxp;
 };
-module.exports.classLevelToXP = (clvl) => classLevelToXP(clvl);
 
-function getItemLevel(xp) {
+export const getItemLevel = (xp) => {
     let level = 1;
     while (xp >= 0) {
         xp -= Math.floor(20 * Math.pow(level, 1.290349));
@@ -871,9 +979,14 @@ function getItemLevel(xp) {
     };
     return level - 1;
 };
-module.exports.getItemLevel = (xp) => getItemLevel(xp);
 
-module.exports.searchClass = (name, interaction, silent = false) => {
+export const formatNumberWithQuotes = (num) => {
+    const [integerPart, decimalPart] = num.toString().split('.');
+    const formattedIntegerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    return decimalPart ? `${formattedIntegerPart}.${decimalPart}` : formattedIntegerPart;
+};
+
+export const searchClass = (name, interaction, silent = false) => {
     name = name.toLowerCase();
 
     if (!isNaN(name)) {
@@ -907,7 +1020,7 @@ module.exports.searchClass = (name, interaction, silent = false) => {
     return fArray[0];
 };
 
-module.exports.searchItem = (name, interaction, silent = false, options = { returnSet: false }) => {
+export const searchItem = (name, interaction, silent = false, options = { returnSet: false }) => {
     const { items } = require("./items.js");
     name = name.toLowerCase();
 
@@ -945,7 +1058,7 @@ module.exports.searchItem = (name, interaction, silent = false, options = { retu
     return fArray[0];
 };
 
-module.exports.searchGuild = (name, guilds) => {
+export const searchGuild = (name, guilds) => {
     name = name.toLowerCase();
     if (!name) return guilds.sort((a, b) => 0.5 - Math.random());
 
@@ -964,6 +1077,20 @@ module.exports.searchGuild = (name, guilds) => {
 //     return Buffer.from(response.data, 'binary');
 // };
 
+export const daysSince = (lastOnlineDate) => {
+    if (!lastOnlineDate) return 0;
+    if (!isNaN(lastOnlineDate)) lastOnlineDate = new Date(lastOnlineDate);
+    const now = new Date();
+
+    // set to midnight
+    now.setHours(0, 0, 0, 0);
+    lastOnlineDate.setHours(0, 0, 0, 0);
+
+    const diffTime = now.getTime() - lastOnlineDate.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+};
+
 const downloadImage = async (url) => {
     try {
         const response = await axios.get(url, { responseType: 'arraybuffer' });
@@ -980,7 +1107,7 @@ const downloadImage = async (url) => {
     };
 };
 
-module.exports.generateImage = async (base, effect, filename = `${Math.floor(Math.random() * 100000)}.png`) => {
+export const generateImage = async (base, effect, filename = `${Math.floor(Math.random() * 100000)}.png`) => {
     // Download images
     const [charImageBuffer, effectImageBuffer] = await Promise.all([
         downloadImage(base),
@@ -1014,7 +1141,7 @@ module.exports.generateImage = async (base, effect, filename = `${Math.floor(Mat
     return filename;
 };
 
-module.exports.generateCaptcha = () => {
+export const generateCaptcha = () => {
     const canvas = createCanvas(120, 50);
     const ctx = canvas.getContext('2d');
 
@@ -1062,9 +1189,9 @@ module.exports.generateCaptcha = () => {
     };
 };
 
-const donationWeekStart = new Date('2024-02-12T00:00:00');
-module.exports.donationWeekStart = donationWeekStart;
-module.exports.addGuildDonation = async (user, guildid, amount, type = "coins") => {
+export const donationWeekStart = new Date('2024-02-12T00:00:00');
+
+export const addGuildDonation = async (user, guildid, amount, type = "coins") => {
     const week = Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
 
     const { 0: donation } = await query(`SELECT * FROM guild_donations WHERE userid = ${user.id} AND guildid = '${guildid}' AND week = ${week} AND type = '${type}'`);
@@ -1082,7 +1209,7 @@ const dateString = (date) => {
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' }).replace(/\//g, '/');
 };
 
-module.exports.getDonationsPageWeek = (donations, members, currentWeek, currPage) => {
+export const getDonationsPageWeek = (donations, members, currentWeek, currPage) => {
     const startDate = new Date(donationWeekStart);
     startDate.setDate(donationWeekStart.getDate() + (7 * (currentWeek - currPage)));
     const endDate = new Date(donationWeekStart);
@@ -1091,7 +1218,23 @@ module.exports.getDonationsPageWeek = (donations, members, currentWeek, currPage
     return `### Week ${currentWeek - currPage + 1} ➜ ${dateString(startDate)} - ${dateString(endDate)}\n${members.map((e) => `${e.name}${e.status} ➜ __${donations.filter((e) => e.week === (currentWeek - currPage + 1)).find((dono) => dono.userid === e.id)?.amount ?? 0}__ <:coins:872926669055356939>`).join("\n")}`;
 };
 
-const customEmojis = {
+export const lastActive = (timestamp) => {
+    const now = new Date(), date = new Date(timestamp);
+
+    // Check if the date is today
+    if (date.toDateString() === now.toDateString()) return "today";
+
+    // Check if the date is yesterday
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) return "yesterday";
+
+    // Calculate the number of days between the date and today
+    const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    return `${diff === 1 ? diff + " day" : diff + " days"} ago`;
+};
+
+export const customEmojis = {
     "hp": "<:HP:1062043800979116143>",
     "hp%": "<:HP:1062043800979116143>",
     "atk": "<:ATK:1063214925528440832>",
@@ -1112,13 +1255,11 @@ const customEmojis = {
 
     "coins": "<:coins:872926669055356939>",
 };
-module.exports.customEmojis = customEmojis;
 
-const pullsToResetList = new Set();
-module.exports.pullsToResetList = pullsToResetList;
+export const pullsToResetList = new Set();
 
-const deleteReplyIn = 2400;
-module.exports.deleteReplyIn = deleteReplyIn;
+export const deleteReplyIn = 2400;
+
 
 class idInfo {
     constructor(symbols) {
@@ -1143,8 +1284,7 @@ class idInfo {
 };
 const itemIDs = new idInfo("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_");
 
-// module.exports.itemIDs = itemIDs;
-module.exports.generateUniqueItemId = (userid, existing, len = 2) => {
+export const generateUniqueItemId = (userid, existing, len = 2) => {
     let gen = itemIDs.generate();
     while (existing.includes(gen + ":" + userid)) {
         gen = itemIDs.generate(Math.floor(len));
@@ -1153,13 +1293,29 @@ module.exports.generateUniqueItemId = (userid, existing, len = 2) => {
     return gen;
 };
 
-module.exports.generateUniqueGuildId = (existing, len = 5) => {
+export const generateUniqueGuildId = (existing, len = 5) => {
     let gen = itemIDs.generate(len);
     while (existing.includes(gen)) {
         gen = itemIDs.generate(Math.floor(len));
         len += 0.5;
     };
     return gen;
+};
+
+export const getLetterRank = (score) => {
+    const ranks = Object.keys(rankLowerRanges);
+    let highestRank = "F-", highestRankScore = 0;
+    for (const rank of ranks) {
+        if (score >= rankLowerRanges[rank] && rankLowerRanges[rank] > highestRankScore) {
+            highestRank = rank;
+            highestRankScore = rankLowerRanges[rank];
+        };
+    };
+    return highestRank;
+};
+
+export const isStampedeMonth = () => {
+    return (new Date().getMonth() % 2) === 1;
 };
 
 // Export CSV

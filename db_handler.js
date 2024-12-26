@@ -16,37 +16,57 @@ const query = (command, method = 'all') => {
     });
 };
 
-db.serialize(async () => {
-    await query(`CREATE TABLE IF NOT EXISTS users (id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, xp INT DEFAULT 0 NOT NULL, coins INT DEFAULT 0 NOT NULL, lilies INT DEFAULT 0 NOT NULL, favchar INT, battlechar INT, lootbox INT DEFAULT 0 NOT NULL, lastvote INT, weeklyclaimed INT DEFAULT 0 NOT NULL, dailyclaimed INT DEFAULT 0 NOT NULL, dailystreak INT DEFAULT 0 NOT NULL, lastdaily INT, pullcount INT DEFAULT 0 NOT NULL, pullstacks INT DEFAULT 0 NOT NULL, pullstacksinterval INT DEFAULT 0 NOT NULL, pullstotal INT DEFAULT 0 NOT NULL, lastss INT DEFAULT 0 NOT NULL, lasts INT DEFAULT 0 NOT NULL, premium INT DEFAULT 0 NOT NULL, pullresets INT DEFAULT 0 NOT NULL, ssshard INT DEFAULT 0 NOT NULL, sshard INT DEFAULT 0 NOT NULL, ashard INT DEFAULT 0 NOT NULL, bshard INT DEFAULT 0 NOT NULL, cshard INT DEFAULT 0 NOT NULL, dshard INT DEFAULT 0 NOT NULL, ssticket INT DEFAULT 0 NOT NULL, sticket INT DEFAULT 0 NOT NULL, aticket INT DEFAULT 0 NOT NULL, bticket INT DEFAULT 0 NOT NULL, cticket INT DEFAULT 0 NOT NULL, dticket INT DEFAULT 0 NOT NULL, votestotal INT DEFAULT 0 NOT NULL, arenawins INT DEFAULT 0 NOT NULL, arenalosses INT DEFAULT 0 NOT NULL, animationdelay INT DEFAULT 1200 NOT NULL, achievements BLOB DEFAULT "[]" NOT NULL, lastpull INT, pullreminder INT DEFAULT 0 NOT NULL, votereminder INT DEFAULT 0 NOT NULL, items BLOB DEFAULT "{}" NOT NULL, skins BLOB DEFAULT "[]" NOT NULL, eventpts INT DEFAULT 0 NOT NULL, brbest INT DEFAULT 0 NOT NULL, mailbox BLOB DEFAULT "[]" NOT NULL, eventrewreceived INT DEFAULT 0 NOT NULL, gems INT DEFAULT 0 NOT NULL, tutorial BLOB DEFAULT "[]" NOT NULL, transactions BLOB DEFAULT "[]" NOT NULL, dailies BLOB DEFAULT "{}" NOT NULL, guild TEXT, donatedtotal INT DEFAULT 0 NOT NULL, genesispity INT DEFAULT 0 NOT NULL, presets BLOB DEFAULT "[]" NOT NULL, itemlock BLOB DEFAULT "[]" NOT NULL, party TEXT, stampedechar INT, mailreceived INT DEFAULT 0, eventpts2 INT DEFAULT 0, class INT, aboutme TEXT, profilecolor TEXT, voidstones INT DEFAULT 0 NOT NULL, pass INT DEFAULT 0 NOT NULL, passlevel INT DEFAULT 0 NOT NULL, freepassclaimed INT DEFAULT 0 NOT NULL, premiumpassclaimed INT DEFAULT 0 NOT NULL, celebrateclaimed INT DEFAULT 0 NOT NULL, expulls INT DEFAULT 0 NOT NULL, level INT DEFAULT 1 NOT NULL, bank INT DEFAULT -1 NOT NULL, charxp INT DEFAULT 0 NOT NULL, feedlimit INT DEFAULT 0 NOT NULL, findoption INT DEFAULT 1 NOT NULL, referred_gems INT DEFAULT 0 NOT NULL, referrals_claimed INT DEFAULT 0 NOT NULL, passpurchaselimit INT DEFAULT 0 NOT NULL, expity INT DEFAULT 0 NOT NULL, craze_equipment BLOB DEFAULT "{}" NOT NULL, equipment BLOB DEFAULT "{}" NOT NULL, craze_levels BLOB DEFAULT "{}" NOT NULL, shield_slot INT DEFAULT 0 NOT NULL, lastguildjoin INT, valentine TEXT, bosshuntruns INT DEFAULT 0 NOT NULL, bosshuntrevreceived INT DEFAULT 0)`, 'run');
+async function createTables() {
+    await query(`CREATE TABLE IF NOT EXISTS users (id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, xp INT DEFAULT 0 NOT NULL, coins INT DEFAULT 0 NOT NULL, lilies INT DEFAULT 0 NOT NULL, favchar INT, battlechar INT, lootbox INT DEFAULT 0 NOT NULL, lastvote INT, weeklyclaimed INT DEFAULT 0 NOT NULL, dailyclaimed INT DEFAULT 0 NOT NULL, dailystreak INT DEFAULT 0 NOT NULL, lastdaily INT, pullcount INT DEFAULT 0 NOT NULL, pullstacks INT DEFAULT 0 NOT NULL, pullstacksinterval INT DEFAULT 0 NOT NULL, pullstotal INT DEFAULT 0 NOT NULL, lastss INT DEFAULT 0 NOT NULL, lasts INT DEFAULT 0 NOT NULL, premium INT DEFAULT 0 NOT NULL, pullresets INT DEFAULT 0 NOT NULL, ssshard INT DEFAULT 0 NOT NULL, sshard INT DEFAULT 0 NOT NULL, ashard INT DEFAULT 0 NOT NULL, bshard INT DEFAULT 0 NOT NULL, cshard INT DEFAULT 0 NOT NULL, dshard INT DEFAULT 0 NOT NULL, ssticket INT DEFAULT 0 NOT NULL, sticket INT DEFAULT 0 NOT NULL, aticket INT DEFAULT 0 NOT NULL, bticket INT DEFAULT 0 NOT NULL, cticket INT DEFAULT 0 NOT NULL, dticket INT DEFAULT 0 NOT NULL, votestotal INT DEFAULT 0 NOT NULL, arenawins INT DEFAULT 0 NOT NULL, arenalosses INT DEFAULT 0 NOT NULL, animationdelay INT DEFAULT 1200 NOT NULL, achievements BLOB DEFAULT "[]" NOT NULL, lastpull INT, pullreminder INT DEFAULT 0 NOT NULL, votereminder INT DEFAULT 0 NOT NULL, items BLOB DEFAULT "{}" NOT NULL, skins BLOB DEFAULT "[]" NOT NULL, eventpts INT DEFAULT 0 NOT NULL, brbest INT DEFAULT 0 NOT NULL, mailbox BLOB DEFAULT "[]" NOT NULL, eventrewreceived INT DEFAULT 0 NOT NULL, gems INT DEFAULT 0 NOT NULL, tutorial BLOB DEFAULT "[]" NOT NULL, transactions BLOB DEFAULT "[]" NOT NULL, dailies BLOB DEFAULT "{}" NOT NULL, guild TEXT, donatedtotal INT DEFAULT 0 NOT NULL, genesispity INT DEFAULT 0 NOT NULL, presets BLOB DEFAULT "[]" NOT NULL, itemlock BLOB DEFAULT "[]" NOT NULL, party TEXT, stampedechar INT, mailreceived INT DEFAULT 0, eventpts2 INT DEFAULT 0, class INT, aboutme TEXT, profilecolor TEXT, jades INT DEFAULT 0 NOT NULL, pass INT DEFAULT 0 NOT NULL, passlevel INT DEFAULT 0 NOT NULL, freepassclaimed INT DEFAULT 0 NOT NULL, premiumpassclaimed INT DEFAULT 0 NOT NULL, celebrateclaimed INT DEFAULT 0 NOT NULL, expulls INT DEFAULT 0 NOT NULL, level INT DEFAULT 1 NOT NULL, bank INT DEFAULT -1 NOT NULL, charxp INT DEFAULT 0 NOT NULL, feedlimit INT DEFAULT 0 NOT NULL, findoption INT DEFAULT 1 NOT NULL, referred_gems INT DEFAULT 0 NOT NULL, referrals_claimed INT DEFAULT 0 NOT NULL, passpurchaselimit INT DEFAULT 0 NOT NULL, expity INT DEFAULT 0 NOT NULL, craze_equipment BLOB DEFAULT "{}" NOT NULL, equipment BLOB DEFAULT "{}" NOT NULL, trial_equipment BLOB DEFAULT "{}" NOT NULL, craze_levels BLOB DEFAULT "{}" NOT NULL, shield_slot INT DEFAULT 0 NOT NULL, lastguildjoin INT, valentine TEXT, bosshuntruns INT DEFAULT 0 NOT NULL, bosshuntrevreceived INT DEFAULT 0, monthlyshop BLOB DEFAULT "{}" NOT NULL, itemwishlist BLOB DEFAULT "[]" NOT NULL, stampedeenergy INT DEFAULT 0 NOT NULL, background TEXT, backgrounds BLOB DEFAULT "[]" NOT NULL, charlock BLOB DEFAULT "[]" NOT NULL, animelock BLOB DEFAULT "[]" NOT NULL, cow_participation INT, cow_chars TEXT, cow_timer INT, cow_rolled_today INT DEFAULT 0 NOT NULL, rank TEXT DEFAULT "F-" NOT NULL, rankscore INT DEFAULT 0 NOT NULL, raidxp INT DEFAULT 0 NOT NULL, guild_marks INT DEFAULT 0 NOT NULL)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS servers (id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, user_ids BLOB NOT NULL)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS characters (id TEXT UNIQUE NOT NULL, chars BLOB DEFAULT "[]" NOT NULL, ref BLOB DEFAULT "{}" NOT NULL, level BLOB DEFAULT "{}" NOT NULL, class BLOB DEFAULT "{}" NOT NULL, skin BLOB DEFAULT "{}" NOT NULL, equipment BLOB DEFAULT "{}" NOT NULL)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS dungeon (id TEXT UNIQUE NOT NULL, floors BLOB DEFAULT '{"1":0}' NOT NULL, "limit" INT DEFAULT 0 NOT NULL, classes BLOB DEFAULT "[]" NOT NULL, classlevels BLOB DEFAULT "{}" NOT NULL, responsetime BLOB DEFAULT "" NOT NULL, s_responsetime BLOB DEFAULT "" NOT NULL)`, 'run');
-    await query(`CREATE TABLE IF NOT EXISTS weapons (id TEXT NOT NULL, itemid INT NOT NULL, uniqueid TEXT UNIQUE NOT NULL, level INT DEFAULT 0 NOT NULL, ascension INT DEFAULT 0 NOT NULL, purity INT DEFAULT 0 NOT NULL, character INT, substats BLOB)`, 'run');
-    await query(`CREATE TABLE IF NOT EXISTS guilds (id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, description TEXT DEFAULT "" NOT NULL, color TEXT, level INT DEFAULT 1 NOT NULL, icon TEXT DEFAULT "https://i.imgur.com/JEvfGSR.png", banner TEXT DEFAULT "", treasury INT DEFAULT 0, treasury_gems INT DEFAULT 0, tax INT DEFAULT 10 NOT NULL, canjoin INT DEFAULT 1 NOT NULL, tokens INT DEFAULT 1 NOT NULL, membercap INT DEFAULT 0 NOT NULL, xpbuff INT DEFAULT 0 NOT NULL, lootbuff INT DEFAULT 0 NOT NULL, cdreduction INT DEFAULT 0 NOT NULL, master TEXT NOT NULL, elders BLOB DEFAULT "" NOT NULL, members BLOB NOT NULL, banned BLOB DEFAULT "" NOT NULL, chat BLOB DEFAULT "[]" NOT NULL, eventpoints INT DEFAULT 0 NOT NULL, bosshuntstage INT DEFAULT 1 NOT NULL, boss1 INT DEFAULT 124080 NOT NULL, boss2 INT DEFAULT 160260 NOT NULL, boss3 INT DEFAULT 113720 NOT NULL, boss4 INT DEFAULT 144640 NOT NULL)`, 'run');
+    await query(`CREATE TABLE IF NOT EXISTS weapons (id TEXT NOT NULL, itemid INT NOT NULL, uniqueid TEXT UNIQUE NOT NULL, level INT DEFAULT 0 NOT NULL, ascension INT DEFAULT 0 NOT NULL, character INT, item_type TEXT NOT NULL)`, 'run');
+    await query(`CREATE TABLE IF NOT EXISTS guilds (id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, description TEXT DEFAULT "" NOT NULL, color TEXT, level INT DEFAULT 1 NOT NULL, icon TEXT DEFAULT "https://i.imgur.com/JEvfGSR.png", banner TEXT DEFAULT "", treasury INT DEFAULT 0, treasury_gems INT DEFAULT 0, tax INT DEFAULT 10 NOT NULL, canjoin INT DEFAULT 1 NOT NULL, tokens INT DEFAULT 1 NOT NULL, membercap INT DEFAULT 0 NOT NULL, xpbuff INT DEFAULT 0 NOT NULL, lootbuff INT DEFAULT 0 NOT NULL, cdreduction INT DEFAULT 0 NOT NULL, master TEXT NOT NULL, elders BLOB DEFAULT "" NOT NULL, members BLOB NOT NULL, banned BLOB DEFAULT "" NOT NULL, chat BLOB DEFAULT "[]" NOT NULL, eventpoints INT DEFAULT 0 NOT NULL, bosshuntstage INT DEFAULT 1 NOT NULL, boss1 INT DEFAULT 124080 NOT NULL, boss2 INT DEFAULT 160260 NOT NULL, boss3 INT DEFAULT 113720 NOT NULL, boss4 INT DEFAULT 144640 NOT NULL, lastlevelup INT, raidid INT)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS guild_donations (userid TEXT NOT NULL, guildid TEXT NOT NULL, week INT NOT NULL, type TEXT NOT NULL, amount INT DEFAULT 0 NOT NULL)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS stampedes (type INT DEFAULT 0 NOT NULL, bosshp INT NOT NULL, bosshpmax INT NOT NULL, generalhp INT NOT NULL, generalhpmax INT NOT NULL, generalstotal INT NOT NULL, generalsleft INT NOT NULL, monsterstotal INT NOT NULL, monstersleft INT NOT NULL, participation BLOB DEFAULT "{}" NOT NULL)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS parties (id TEXT UNIQUE NOT NULL, name TEXT NOT NULL, description TEXT DEFAULT "" NOT NULL, color TEXT, icon TEXT DEFAULT "https://i.imgur.com/JEvfGSR.png", banner TEXT DEFAULT "", members BLOB NOT NULL, chat BLOB DEFAULT "[]" NOT NULL, created INT)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS trades (id TEXT NOT NULL, receiver TEXT NOT NULL, type TEXT NOT NULL, sent INT NOT NULL, sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`, 'run');
     await query(`CREATE TABLE IF NOT EXISTS faq (id TEXT NOT NULL, name TEXT NOT NULL, body TEXT NOT NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`, 'run');
+    await query(`CREATE TABLE IF NOT EXISTS raids (guildid TEXT NOT NULL, raidid INT NOT NULL, enemy_hp INT NOT NULL, enemy_hpmax INT NOT NULL, participation BLOB DEFAULT "{}" NOT NULL, start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`, 'run');
+};
 
-    // Run these when updating
-    // await query('ALTER TABLE users ADD lastguildjoin INT');
-    // await query('ALTER TABLE users ADD valentine TEXT');
-    // await query('ALTER TABLE users ADD bosshuntruns INT DEFAULT 0 NOT NULL');
-    // await query('ALTER TABLE users ADD bosshuntrevreceived INT DEFAULT 0');
-    // await query('ALTER TABLE guilds ADD banned BLOB DEFAULT "" NOT NULL');
-    // await query('ALTER TABLE guilds ADD tax INT DEFAULT 10 NOT NULL');
+async function alterTables() {
+    // await query('ALTER TABLE users ADD rank TEXT DEFAULT "F-" NOT NULL');
+    // await query('ALTER TABLE users ADD rankscore INT DEFAULT 0 NOT NULL');
+    // await query(`ALTER TABLE users ADD raidxp INT DEFAULT 0 NOT NULL`);
+    // await query('ALTER TABLE weapons ADD item_type TEXT DEFAULT "weapon" NOT NULL');
+    // await query('UPDATE weapons SET item_type = "armor" WHERE substats IS NOT NULL');
+    // await query('ALTER TABLE guilds ADD raidid INT');
+    // await query('ALTER TABLE users ADD guild_marks INT DEFAULT 0 NOT NULL');
+
+    // Drop purity and substats
+    // await query('ALTER TABLE weapons DROP COLUMN purity');
+    // await query('ALTER TABLE weapons DROP COLUMN substats');
+};
+
+db.serialize(async () => {
+    // Create tables
+    await createTables();
+
+    // Run this when updating
+    await alterTables();
+
 
     // Reset event stats
-    // await query(`UPDATE users SET dailies = '{}', feedlimit = 0, pass = 0, expulls = 0, passlevel = 0, freepassclaimed = 0, premiumpassclaimed = 0, passpurchaselimit = 0, expity = 0, eventpts = 0, eventpts2 = 0`);
+    // await query(`UPDATE users SET dailies = '{}', pass = 0, expulls = 0, passlevel = 0, freepassclaimed = 0, premiumpassclaimed = 0, passpurchaselimit = 0, eventpts = 0, eventpts2 = 0, eventrewreceived = 0, bosshuntrevreceived = 0`); // , expity = 0
     // await query(`UPDATE guilds SET eventpoints = 0, bosshuntstage = 1, boss1 = 124080, boss2 = 160260, boss3 = 113720, boss4 = 144640`);
-    // // await query(`UPDATE stampedes SET type = 1 WHERE rowid = 7`);
-    // // await query(`UPDATE dungeon SET 'limit' = 0`);
-    // // await query(`UPDATE dungeon SET responsetime = "" WHERE LENGTH(responsetime)/14 < 200`);
+    // await query(`UPDATE stampedes SET type = 2 WHERE rowid = 12`);
+    // await query(`UPDATE dungeon SET 'limit' = 0`);
+    // await query(`UPDATE users SET dailyclaimed = 0, dailies = '{}', feedlimit = 0`); // Daily Reset
+    // await query(`UPDATE dungeon SET responsetime = "" WHERE LENGTH(responsetime)/14 < 200`);
 
-    // Delete
-    // await query(`UPDATE dungeon SET responsetime = ""`);
+    // Prune DB
+    // await query(`UPDATE users SET mailbox = '[]'`);
+    // await query(`UPDATE dungeon SET responsetime = "", s_responsetime = ""`);
+    // await query(`UPDATE weapons SET substats = "{}" WHERE substats IS NOT NULL`);
     // await query(`VACUUM`, "run");
+    // console.log("Done pruning database");
 
 
     // Add missing trial items to Camelot
@@ -125,7 +145,7 @@ db.serialize(async () => {
 
     // await query(`UPDATE dungeon SET responsetime = ""`);
     // await query(`VACUUM`, "run");
-
+    // console.log("Finished Vacuum");
 
     // TEST \\
     /* TEST */
@@ -220,18 +240,26 @@ async function addMissingTrialItems() {
         const cItems = await query(`SELECT * FROM weapons WHERE id = "706183309943767112"`);
         const weapons = items.filter((item) => item.category === "weapon");
         const armors = items.filter((item) => item.category === "armor");
+        const rings = items.filter((item) => item.category === "ring");
 
         // Add missing weapons
         for (const weapon of weapons) {
             if (!cItems.some((e) => e.itemid === weapon.id)) {
-                await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension) VALUES ("706183309943767112", ${weapon.id}, "${`${weapon.id}:706183309943767112`}", 70, 5)`, 'run');
+                await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension, item_type) VALUES ("706183309943767112", ${weapon.id}, "${`${weapon.id}:706183309943767112`}", 70, 5, "${weapon.category}")`, 'run');
             };
         };
 
         // Add missing armors
         for (const armor of armors) {
             if (!cItems.some((e) => e.itemid === armor.id)) {
-                await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension, substats) VALUES ("706183309943767112", ${armor.id}, "${`${armor.id}:706183309943767112`}", 70, 5, "{}")`, 'run');
+                await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension, item_type) VALUES ("706183309943767112", ${armor.id}, "${`${armor.id}:706183309943767112`}", 70, 5, "${armor.category}")`, 'run');
+            };
+        };
+
+        // Add missing rings
+        for (const ring of rings) {
+            if (!cItems.some((e) => e.itemid === ring.id)) {
+                await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension, item_type) VALUES ("706183309943767112", ${ring.id}, "${`${ring.id}:706183309943767112`}", 70, 5, "${ring.category}")`, 'run');
             };
         };
 

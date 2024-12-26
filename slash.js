@@ -72,6 +72,41 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('background')
+			.setDescription('Profile background related commands')
+			.addSubcommand((subcommand) => subcommand.setName('search').setDescription('View a profile background')
+				.addStringOption(option => option.setName('name').setDescription('search for a background or set').setRequired(true))
+				.addStringOption(option =>
+					option.setName('type')
+						.setDescription('Search for a set or specific background | default is background')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'Set', value: "set" },
+							{ name: 'Background', value: "background" },
+						)
+				))
+			.addSubcommand((subcommand) => subcommand.setName('select').setDescription('Select a background to be used on your profile.')
+				.addStringOption(option => option.setName('name').setDescription('select a background').setRequired(true)))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('backgrounds')
+			.setDescription('See your inventory of profile backgrounds')
+			.addStringOption(option =>
+				option.setName('filter')
+					.setDescription('Select a filter')
+					.setRequired(false)
+					.addChoices(
+						{ name: 'all', value: 'all' },
+						{ name: 'owned', value: 'owned' },
+						{ name: 'missing', value: 'missing' },
+					)
+			)
+			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('balance')
 			.setDescription('Display a players coin balance')
 			.addStringOption(option =>
@@ -81,7 +116,9 @@ const commands = [
 					.addChoices(
 						{ name: 'coins', value: "coins" },
 						{ name: 'genesis gems', value: "gems" },
+						{ name: 'eternal jade', value: "jades" },
 						{ name: 'lilies', value: "lilies" },
+						{ name: 'guild marks', value: "guild_marks" },
 					)
 			)
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
@@ -140,7 +177,15 @@ const commands = [
 				.addIntegerOption(option => option.setName('amount').setDescription('amount to purchase').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('exchange').setDescription('Buy an item!')
 				.addStringOption(option => option.setName('item').setDescription('select an item').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('monthly').setDescription('Buy an item from the monthly shop!')
+				.addStringOption(option => option.setName('item').setDescription('select an item').setRequired(true).setAutocomplete(true))
+				.addStringOption(option => option.setName('amount').setDescription('Amount to purchase | Keywords: max').setRequired(false)))
 	}.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 		.setName('calendar')
+	// 		.setDescription('Monthly log-in rewards'),
+	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('camelot')
@@ -216,6 +261,8 @@ const commands = [
 						)
 				)
 				.addStringOption(option => option.setName('amount').setDescription('Amount of shards to get | Keywords: max').setRequired(false)))
+			.addSubcommand((subcommand) => subcommand.setName('jades').setDescription('convert jades into gems')
+				.addStringOption(option => option.setName('amount').setDescription('Amount of gems to get (1 jade = 1 gem) | Keywords: max').setRequired(false)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -223,15 +270,17 @@ const commands = [
 			.setDescription('See all your timers at once')
 			.addUserOption(option => option.setName('user').setDescription('See someone elses cooldown')),
 	}.data.toJSON(),
-	// { // celebrate: Claim your daily anniversary reward! 🎂 🎉
-	// 	// trick-or-treat: Trick, or treat? 👻 🍬
-	// 	// christmas-present: Unwrap a festive surprise! 🎄 🎁
-	// 	data: new SlashCommandBuilder()
-	// 		.setName('valentines-chocolate')
-	// 		.setDescription('Indulge in a sweet treat! 🍫 🎀')
-	// 		.addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
-	// 		.addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
-	// }.data.toJSON(),
+	{ // celebrate: Claim your daily anniversary reward! 🎂 🎉
+		// trick-or-treat: Trick, or treat? 👻 🍬
+		// christmas-present: Unwrap a festive surprise! 🎄 🎁
+		// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
+		// egg-hunt: See what you find! 🧺 🐰
+		data: new SlashCommandBuilder()
+			.setName('christmas-present')
+			.setDescription('Unwrap a festive surprise! 🎄 🎁')
+		// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
+		// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
+	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('changeimg')
@@ -564,6 +613,20 @@ const commands = [
 						)
 				)
 				.addIntegerOption(option => option.setName('amount').setDescription('choose how much you want to donate').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('donations').setDescription('See all donations to your guild')
+				// .addStringOption(option =>
+				// 	option.setName('period')
+				// 		.setDescription('filter for the type of donations')
+				// 		.setRequired(false)
+				// 		.addChoices(
+				// 			{ name: 'Weekly', value: 'Weekly' },
+				// 			{ name: 'Monthly', value: 'Monthly' },
+				// 			{ name: 'All Time', value: 'All Time' },
+				// 		)
+				// )
+				.addStringOption(option => option.setName('id').setDescription('Look up a guild\'s donation logs using its ID').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
+			)
 			.addSubcommand((subcommand) => subcommand.setName('levelup').setDescription('Level up a guild'))
 			.addSubcommand((subcommand) => subcommand.setName('upgrade').setDescription('upgrade a perk of your guild')
 				.addStringOption(option =>
@@ -589,11 +652,11 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('info')
 			.setDescription('Search for a character in our database')
-			.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(true))
+			.addStringOption(option => option.setName('characters').setDescription('Select characters to view, separated by comma if multiple').setRequired(false))
 			.addStringOption(option =>
 				option.setName('flag')
 					.setDescription('Choose how to display the character')
-					.setRequired(true)
+					.setRequired(false)
 					.addChoices(
 						{ name: 'base', value: 'base' },
 						{ name: 'my', value: 'my' },
@@ -701,6 +764,8 @@ const commands = [
 				.addStringOption(option => option.setName('items').setDescription('Choose the items to be locked').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('unlock').setDescription('Unlock items so you can disassemble locked items again')
 				.addStringOption(option => option.setName('items').setDescription('Choose the items to be locked').setRequired(false)))
+			.addSubcommand((subcommand) => subcommand.setName('wishlist').setDescription('Add items to your wish list')
+				.addStringOption(option => option.setName('add').setDescription('Choose the items to be added onto your wish list').setRequired(false)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -815,6 +880,20 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('lock')
+			.setDescription('Lock characters')
+			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Lock characters')
+				.addStringOption(option => option.setName('characters').setDescription('Choose characters to be locked').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('anime').setDescription('Lock anime')
+				.addStringOption(option => option.setName('anime').setDescription('Choose anime to be locked').setRequired(true)))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('locked')
+			.setDescription('View locked chars and anime')
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('lootbox')
 			.setDescription('See and open your lootboxes')
 			.addUserOption(option => option.setName('user').setDescription('See someone elses lootboxes').setRequired(false)),
@@ -824,15 +903,27 @@ const commands = [
 			.setName('math')
 			.setDescription('Use Camelot\'s built in calculator')
 			.addStringOption(option => option.setName('calculation').setDescription('Provide a calculation').setRequired(true))
-			.addStringOption(option =>
+			.addBooleanOption(option =>
 				option.setName('ephemeral')
-					.setDescription('Ephemeral?')
+					.setDescription('Should the message be private?')
 					.setRequired(false)
+			)
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('merge')
+			.setDescription('Merge exchange points')
+			.addStringOption(option =>
+				option.setName('rarity')
+					.setDescription('Select a rarity')
+					.setRequired(true)
 					.addChoices(
-						{ name: 'true', value: 'true' },
-						{ name: 'false', value: 'false' },
+						{ name: 'Genesis', value: '676' },
+						{ name: 'Mythical', value: '677' },
+						{ name: 'Legendary', value: '678' }
 					)
-			),
+			)
+			.addStringOption(option => option.setName('amount').setDescription('select how many you want to get').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -845,6 +936,12 @@ const commands = [
 					.setDescription('Should the message be private?')
 					.setRequired(false)
 			)
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('monthly')
+			.setDescription('View the monthly shop for limited resources')
+			.addSubcommand((subcommand) => subcommand.setName('shop').setDescription('View the monthly shop for limited resources')),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -947,12 +1044,28 @@ const commands = [
 			.addUserOption(option => option.setName('user').setDescription('Profile of user'))
 			.addStringOption(option =>
 				option.setName('type')
-					.setDescription('Choose between the new profile (image) and old profile (legacy)')
+					.setDescription('Choose between the new profile card (image), old profile card (image (old)) or old profile (legacy)')
 					.setRequired(false)
 					.addChoices(
 						{ name: 'image', value: 'image' },
+						{ name: 'image (old)', value: 'image-old' },
 						{ name: 'legacy', value: 'legacy' },
 					)
+			)
+			.addStringOption(option =>
+				option.setName('quality')
+					.setDescription('Change image resolution')
+					.setRequired(false)
+					.addChoices(
+						{ name: 'high', value: 'high' },
+						{ name: 'medium', value: 'medium' },
+						{ name: 'low', value: 'low' },
+					)
+			)
+			.addBooleanOption(option =>
+				option.setName('force-static')
+					.setDescription('Force the image to be static (not a gif)')
+					.setRequired(false)
 			)
 			.addStringOption(option => option.setName('bio').setDescription('Change your bio').setRequired(false))
 			.addStringOption(option =>
@@ -972,6 +1085,7 @@ const commands = [
 						{ name: 'blue', value: 'blue' },
 						{ name: 'sky blue', value: 'sky_blue' },
 						{ name: 'indigo', value: 'indigo' },
+						{ name: 'violet', value: 'violet' },
 						{ name: 'purple', value: 'purple' },
 						{ name: 'pink', value: 'pink' },
 					)
@@ -1000,6 +1114,11 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('raid')
+			.setDescription('Raid overview'),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('random')
 			.setDescription('Random stuff generator')
 			.addSubcommand((subcommand) => subcommand.setName('coin').setDescription('Flip a coin'))
@@ -1023,6 +1142,12 @@ const commands = [
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('rankup')
+			.setDescription('Take the rank-up exam')
+			.addSubcommand((subcommand) => subcommand.setName('exam').setDescription('Take the rank-up exam'))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1061,6 +1186,12 @@ const commands = [
 	// 			.setDescription('Reset a characters level to get some of your invested ressources back')
 	// 			.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(true))
 	// }.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('rolling')
+			.setDescription('rolling cow')
+			.addSubcommand((subcommand) => subcommand.setName('cow').setDescription(`Do you ever look at this and wonder, who named it? And why? Yeah, me too...`))
+	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('rp')
@@ -1107,7 +1238,7 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('sell')
 			.setDescription('Sell your characters')
-			.addSubcommand((subcommand) => subcommand.setName('character').setDescription('Sell a character').addStringOption(option => option.setName('character').setDescription('Select a character | Possible keywords: last').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Sell a character').addStringOption(option => option.setName('characters').setDescription('Select characters separated by comma (,) | Possible keywords: last').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('dupes').setDescription('Sell multiple characters')
 				.addIntegerOption(option => option.setName('copies').setDescription('How many copies should they have?').setRequired(false))
 				.addStringOption(option =>
@@ -1115,6 +1246,7 @@ const commands = [
 						.setDescription('Select rarity of dupes | all rarities will be sold if left empty')
 						.setRequired(false)
 						.addChoices(
+							{ name: 'SS', value: 'SS' },
 							{ name: 'S', value: 'S' },
 							{ name: 'A', value: 'A' },
 							{ name: 'B', value: 'B' },
@@ -1128,6 +1260,7 @@ const commands = [
 						.setDescription('Select rarity of dupes | all rarities will be sold if left empty')
 						.setRequired(false)
 						.addChoices(
+							{ name: 'SS', value: 'SS' },
 							{ name: 'S', value: 'S' },
 							{ name: 'A', value: 'A' },
 							{ name: 'B', value: 'B' },
@@ -1157,6 +1290,22 @@ const commands = [
 						{ name: 'premium', value: "3" },
 					)
 			),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('skins')
+			.setDescription('Get a list of all skins')
+			.addStringOption(option =>
+				option.setName('filter')
+					.setDescription('Select a filter')
+					.setRequired(false)
+					.addChoices(
+						{ name: 'owned', value: 'owned' },
+						{ name: 'unowned', value: 'unowned' },
+					)
+			)
+			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1262,6 +1411,15 @@ const commands = [
 			.addStringOption(option => option.setName('class').setDescription('Choose a class to try').setRequired(false))
 			.addIntegerOption(option => option.setName('character-level').setDescription('Set the character level').setRequired(false))
 			.addIntegerOption(option => option.setName('class-level').setDescription('Set the class level').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('unlock')
+			.setDescription('Unlock characters')
+			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Unlock characters')
+				.addStringOption(option => option.setName('characters').setDescription('Choose characters to be unlocked').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('anime').setDescription('Unlock anime')
+				.addStringOption(option => option.setName('anime').setDescription('Choose anime to be unlocked').setRequired(true)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
