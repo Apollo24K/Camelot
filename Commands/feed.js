@@ -1,9 +1,9 @@
-const fs = require('fs');
-const { EmbedBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
-const { characters } = require("../Modules/chars.js");
-const { getDetailedStats } = require("../Modules/functions.js");
+import fs from 'fs';
+import { EmbedBuilder } from "discord.js";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
+import { characters } from "../Modules/chars";
+import { getDetailedStats } from "../Modules/functions";
 
 const charxpByRarity = {
     "genesis": 50000,

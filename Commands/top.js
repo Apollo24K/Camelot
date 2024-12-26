@@ -1,11 +1,11 @@
 /* eslint-disable no-case-declarations */
-const fs = require('fs');
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters, auniq } = require("../Modules/chars.js");
-const { userLevel, getClassLvl, showPage } = require("../Modules/functions.js");
-const { classes } = require("../Modules/classes.js");
-const { PageRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler.js";
+import { characters, auniq } from "../Modules/chars.js";
+import { userLevel, getClassLvl, showPage } from "../Modules/functions.js";
+import { classes } from "../Modules/classes.js";
+import { PageRow } from "../Modules/components.js";
 
 module.exports = {
     name: 'top',

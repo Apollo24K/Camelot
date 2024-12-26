@@ -1,7 +1,7 @@
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { userLevel, showPage } = require("../Modules/functions.js");
-const { PageRow, OfferRow } = require("../Modules/components.js");
+import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { userLevel, showPage } from "../Modules/functions";
+import { PageRow, OfferRow } from "../Modules/components";
 
 const enterRow = new ActionRowBuilder()
     .addComponents(

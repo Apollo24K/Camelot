@@ -1,18 +1,18 @@
 /* eslint-disable no-unused-vars */
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { classes } = require("../Modules/classes.js");
-const { curses } = require("../Modules/curses.js");
-const { bossMobs } = require("../Modules/enemies.js");
-const { items } = require("../Modules/items.js");
-const { skills, eventBossAbilities } = require("../Modules/skills.js");
-const { characters } = require("../Modules/chars.js");
-const { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, baseEP } = require("../Modules/functions.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities";
+import { classes } from "../Modules/classes";
+import { curses } from "../Modules/curses";
+import { bossMobs } from "../Modules/enemies";
+import { items } from "../Modules/items";
+import { skills, eventBossAbilities } from "../Modules/skills";
+import { characters } from "../Modules/chars";
+import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, baseEP } from "../Modules/functions";
+import Avalon from "../Modules/avalon";
+import buffInfo from "../Modules/buffs";
+import _ from 'lodash';
 
 const dungeonInProgress = new Set();
 
@@ -83,7 +83,7 @@ function bossSelection(interaction, stats, guild) {
             );
 
         const Embed = new EmbedBuilder()
-            .setColor(0xf8c8dc)
+            .setColor(0x2aad9d)
             .setTitle("Boss Hunt ➜ Stage " + guild.bosshuntstage + `${guild.bosshuntstage === 30 ? " (last stage)" : ""}`)
             .setThumbnail("https://i.imgur.com/ZUdnLZO.png") // .setThumbnail("https://i.imgur.com/4i61ERG.png")
             .setDescription(`**Guild**: ${guild.name}\n\nDefeat Rumbleguard, Sylvanoss and Celestion to fight Malevokar. Once Malevokar is defeated, you'll reach the next stage!\nEvery cleared stage awards all guild members 5000 <:coins:872926669055356939> & 5 <:genesis_gems:1034179687720681492>, and your guild with \`stage * 10000\` <:coins:872926669055356939> (current stage: ${guild.bosshuntstage * 10000} <:coins:872926669055356939>)\n\n<:DEF:1047269141662417037> **Rumbleguard** ➜ **${guild.boss1 < 1 ? 0 : guild.boss1}**/${Math.round(bossBaseHP[0] * (0.8 + (guild.bosshuntstage * 0.2)))}💖\n<:HP:1062043800979116143> **Sylvanoss** ➜ **${guild.boss2 < 1 ? 0 : guild.boss2}**/${Math.round(bossBaseHP[1] * (0.8 + (guild.bosshuntstage * 0.2)))}💖\n<:magic_dmg:948568336621527040> **Celestion** ➜ **${guild.boss3 < 1 ? 0 : guild.boss3}**/${Math.round(bossBaseHP[2] * (0.8 + (guild.bosshuntstage * 0.2)))}💖\n✨ **Malevokar** ➜ **${guild.boss4 < 1 ? 0 : guild.boss4}**/${Math.round(bossBaseHP[3] * (0.8 + (guild.bosshuntstage * 0.2)))}💖`)
@@ -161,7 +161,8 @@ module.exports = {
             const boss = await bossSelection(interaction, stats, guild);
 
             // Set up restrictions
-            if (stats.bosshuntruns === 5) return interaction.channel.send(`You can play again in ${timeLeftToNextEvenHour()}`);
+            let [{ bosshuntruns }] = await query(`SELECT bosshuntruns FROM users WHERE id = ${interaction.user.id}`);
+            if ((bosshuntruns ?? stats.bosshuntruns) === 5) return interaction.channel.send(`You can play again in ${timeLeftToNextEvenHour()}`);
             if (dungeonInProgress.has(stats.id)) return interaction.editReply("You already have a run in progress, please finish it before attempting to start a new round.");
             dungeonInProgress.add(stats.id);
             const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
@@ -511,7 +512,7 @@ module.exports = {
                 if (milestones[stats.eventrewreceived]) {
                     if (milestones[stats.eventrewreceived].required <= (stats.eventpts + eventpts)) {
                         await query("UPDATE users SET eventrewreceived = eventrewreceived + 1, " + milestones[stats.eventrewreceived].query + " WHERE id = " + interaction.user.id);
-                        rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}🍫` : ""}`;
+                        rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}🌙` : ""}`;
                         if (milestones[stats.eventrewreceived]?.image) Embed.setImage(milestones[stats.eventrewreceived].image);
                     } else {
                         rewMessage = `\nNext reward: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived].required}`;
@@ -520,11 +521,11 @@ module.exports = {
                     rewMessage = "\nYou have unlocked all rewards!";
                 };
 
-                Embed.setColor(0xf8c8dc)
+                Embed.setColor(0x2aad9d)
                     .setThumbnail(myStatsC.thumbnail)
                     .setTitle(`Boss Hunt (${enemy.name})`)
                     .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
-                    .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${guild["boss" + (enemy.id + 1)] - eStatsC.hp}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> Valentine's Chocolate: ${eventpts}🍫\n\n<:npbag:929428030554787892> **Loot**: ${loot}<:coins:872926669055356939>\n${rewMessage}`);
+                    .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${guild["boss" + (enemy.id + 1)] - eStatsC.hp}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> Crescent Moon: ${eventpts}🌙\n\n<:npbag:929428030554787892> **Loot**: ${loot}<:coins:872926669055356939>\n${rewMessage}`);
 
                 // Add Stage rewards
                 if (r === "w" && boss.id === 3) {
@@ -627,7 +628,7 @@ module.exports = {
                 const timestart = new Date().getTime();
                 const result = await new Promise((resolve, rejects) => {
                     const Embed = new EmbedBuilder()
-                        .setColor(0xf8c8dc)
+                        .setColor(0x2aad9d)
                         .setThumbnail(myStatsC.thumbnail)
                         .setFooter({ text: `Enemy EP: ${eStatsC.ep} | time left: 120s` })
                         .setTitle(`Boss Hunt (${enemy.name})`)
@@ -744,10 +745,15 @@ module.exports = {
                             if (matchStats.turn === 1) return;
                             if (eStatsC.timeFrozen) {
                                 if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                 matchStats.turn = 1;
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
+                                if (matchStats.playerPausingRounds > 0) {
+                                    matchStats.playerPausingRounds--;
+                                    attack();
+                                };
                             } else {
                                 setTimeout(() => {
                                     if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
@@ -764,10 +770,15 @@ module.exports = {
                                     } else {
                                         dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                         matchStats.turn = 1;
                                         matchStats.round++;
                                         startNextRound();
                                         editEmbed();
+                                        if (matchStats.playerPausingRounds > 0) {
+                                            matchStats.playerPausingRounds--;
+                                            attack();
+                                        };
                                     };
                                     if (matchStats.counter > 0) matchStats.counter--;
                                 }, aDelay);
@@ -814,7 +825,7 @@ module.exports = {
                         def.on('collect', async r => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -848,21 +859,36 @@ module.exports = {
                         });
 
                         ability.on('collect', async r => {
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                                    else {
-                                        matchStats.turn = 0;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                        myStatsC.sm -= myAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                        attack();
-                                    };
-                                } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+
+                            else {
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                        else {
+                                            matchStats.turn = 0;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                            myStatsC.sm -= myAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                            attack();
+                                        };
+                                    } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            };
+
                         });
 
                         cskill.on('collect', async r => {
@@ -870,7 +896,7 @@ module.exports = {
                             // If defense was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -884,7 +910,7 @@ module.exports = {
                                 else {
                                     if (matchStats.turn === 1) {
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

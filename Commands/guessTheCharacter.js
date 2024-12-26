@@ -1,8 +1,8 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ModalBuilder, TextInputBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } = require("../Modules/chars.js");
-const { splitTitle } = require("../Modules/functions.js");
-const { dailies } = require("../Modules/dailyQuests.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ModalBuilder, TextInputBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars";
+import { splitTitle } from "../Modules/functions";
+import { dailies } from "../Modules/dailyQuests";
 
 const row = new ActionRowBuilder()
     .addComponents(
@@ -74,7 +74,7 @@ module.exports = {
     execute(interaction) {
 
         let difficulty = interaction.options.getString('difficulty') || "easy";
-        const private = interaction.options.getBoolean('private') || false;
+        const isPrivate = interaction.options.getBoolean('private') || false;
 
         let charArray;
         if (difficulty === "easy") charArray = charactersSS.concat(charactersS);
@@ -90,6 +90,29 @@ module.exports = {
         let scores = pick.name.replace(/[^ ]/g, "_").split(" ").map((e) => "\\" + e.split("").join(" \\")).join("ㅤ");
         let isPending = true;
 
+        function revealLetter(index = undefined) {
+            if (index !== undefined && lettersRevealed.includes(index)) return;
+
+            let reveal = index ?? Math.floor(Math.random() * pick.name.split(" ").join("").length);
+            let limit = 0;
+            while (lettersRevealed.includes(reveal) && limit < 100) {
+                reveal = Math.floor(Math.random() * pick.name.split(" ").join("").length);
+                limit++;
+            };
+            lettersRevealed.push(reveal);
+            let idx = 0;
+            for (let i = 0; i < scores.length; i++) {
+                if ((scores[i] === "_" || pick.name.split(" ").join("").includes(scores[i])) && idx++ === reveal) {
+                    scores = scores.substring(0, i - 1) + pick.name.split(" ").join("")[reveal] + scores.substring(i + 1);
+                };
+            };
+        };
+
+        // Reveal special symbols
+        for (let i = 0; i < pick.name.split(" ").join("").length; i++) {
+            if (["(", ")", ".", "-", "_", ":", ";", "'", "+", "*"].includes(pick.name.split(" ").join("")[i])) revealLetter(i);
+        };
+
         db.serialize(async () => {
             await interaction.deferReply();
 
@@ -101,11 +124,12 @@ module.exports = {
                 .setFooter({ text: "Hints: letter (-2 points), anime (-6 points)" });
             interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((emsg) => {
 
-                const collector = emsg.createMessageComponentCollector({ filter: (component) => (private ? component.id === interaction.user.id : true) && component.customId === "ignore_defer-guess", componentType: ComponentType.Button, time: 60000 });
-                const hintLetter = emsg.createMessageComponentCollector({ filter: (component) => (private ? component.id === interaction.user.id : true) && component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
-                const hintAnime = emsg.createMessageComponentCollector({ filter: (component) => (private ? component.id === interaction.user.id : true) && component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
+                const collector = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "ignore_defer-guess", componentType: ComponentType.Button, time: 60000 });
+                const hintLetter = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
+                const hintAnime = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
                 const uid = Math.random();
 
+                let dailyPending = true;
                 collector.on('collect', async component => {
                     if (component.isButton() && isPending) {
                         await component.showModal(getModal(uid));
@@ -118,8 +142,8 @@ module.exports = {
                                 isPending = false;
                                 collector.stop(), hintAnime.stop(), hintLetter.stop();
 
-                                var stats = await query(`SELECT lilies FROM users WHERE id = ${modalInteraction.user.id}`);
-                                if (!stats[0]) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
+                                const { 0: stats } = await query(`SELECT lilies FROM users WHERE id = ${modalInteraction.user.id}`);
+                                if (!stats) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
 
                                 const Embed = new EmbedBuilder()
                                     .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
@@ -132,7 +156,8 @@ module.exports = {
                                 await query(`UPDATE users SET lilies = lilies + ${points} WHERE id = ${modalInteraction.user.id}`);
 
                                 // Daily Quests
-                                dailies[1].update(interaction, points, modalInteraction.user);
+                                if (dailyPending) dailies[1].update(interaction, points, modalInteraction.user);
+                                dailyPending = false;
                             };
                         }).catch(() => {
                             false;
@@ -170,6 +195,7 @@ module.exports = {
 
                 collector.on('end', () => {
                     if (isPending) {
+                        isPending = false;
                         hintAnime.stop(), hintLetter.stop(), collector.stop();
 
                         const Embed = new EmbedBuilder()

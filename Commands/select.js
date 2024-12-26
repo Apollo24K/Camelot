@@ -1,8 +1,8 @@
-const fs = require('fs');
-const { EmbedBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { achievements } = require("../Modules/achievements.js");
-const { search } = require("../Modules/functions.js");
+import fs from 'fs';
+import { EmbedBuilder } from "discord.js";
+import { db, query } from "../db_handler";
+import { achievements } from "../Modules/achievements";
+import { search } from "../Modules/functions";
 
 const dungeonInProgress = new Set();
 
@@ -37,9 +37,9 @@ module.exports = {
             // Set up restrictions
             const { 0: stampede } = await query(`SELECT rowid, * FROM stampedes ORDER BY rowid DESC LIMIT 1`);
             if (!(stampede.bosshp < 1 || new Date().getDate() > 7)) {
-                if (dungeonInProgress.has(interaction.user.id) && mode) return interaction.reply("You need to wait 1h before you can change your character for stampedes again.");
+                if (dungeonInProgress.has(interaction.user.id) && mode) return interaction.reply("You need to wait 6h before you can change your character for stampedes again.");
                 if (mode) dungeonInProgress.add(interaction.user.id);
-                if (mode) setTimeout(() => dungeonInProgress.delete(interaction.user.id), 1 * 60 * 60 * 1000);
+                if (mode) setTimeout(() => dungeonInProgress.delete(interaction.user.id), 6 * 60 * 60 * 1000);
             };
 
             const Embed = new EmbedBuilder()

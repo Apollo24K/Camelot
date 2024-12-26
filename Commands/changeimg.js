@@ -1,8 +1,9 @@
 /* eslint-disable no-extra-semi */
-var fs = require('fs');
-const { EmbedBuilder } = require("discord.js");
-const { search, getDimensions } = require("../Modules/functions.js");
-const { db, query } = require("../db_handler.js");
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { search, getDimensions } from "../Modules/functions";
+import { characters } from "../Modules/chars";
+import { db, query } from "../db_handler";
 
 module.exports = {
     name: 'changeimg',
@@ -74,20 +75,47 @@ module.exports = {
                 fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
                     if (err) console.error(err);
                 });
+
+                const row = new ActionRowBuilder()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId(`ref-changeimg-${interaction.user.id}-${char.id}`)
+                            .setLabel(`Remove image`)
+                            .setStyle(ButtonStyle.Secondary)
+                    );
+
                 const channel = client.channels.cache.find(channel => channel.id === "934117922039791627");
                 const Embed = new EmbedBuilder()
                     .setTitle(char.name)
                     .setColor(0xbbffff)
                     .setImage(imgurl)
                     .setThumbnail(char.image)
-                    .setDescription(`Server: ${interaction.guild.name}\nType \`!remove <img link>\` to remove it`)
+                    .setDescription(`Server: ${interaction.guild.name}\nUser: ${interaction.user} | ${interaction.user.id}`)
                     .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
-                channel.send({ embeds: [Embed] });
+                channel.send({ embeds: [Embed], components: [row] });
             };
 
             getImg();
 
         });
 
+    },
+    executeButtonInteraction(interaction) {
+        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+
+        const [, , uid, cid] = interaction.customId.split("-");
+
+        if (customSettings[uid]?.cimg?.[cid]) {
+            delete customSettings[uid].cimg[cid];
+            setTimeout(() => {
+                fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
+                    if (err) console.error(err);
+                });
+            }, 100);
+
+            interaction.followUp({ content: `${interaction.user} has removed <@${uid}>'s ${characters[cid].name} skin` });
+        } else {
+            interaction.followUp({ content: `Failed to remove skin (seems it has been removed already)` });
+        };
     },
 };

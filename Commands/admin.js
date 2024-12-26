@@ -1,18 +1,20 @@
-const fs = require('fs');
-const config = require('../config.json');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { characters } = require("../Modules/chars.js");
-const { db, query } = require("../db_handler.js");
-const { classLevelToXP } = require("../Modules/functions.js");
-const { OfferRow } = require("../Modules/components.js");
-const math = require('mathjs');
+import fs from 'fs';
+import config from '../config.json';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, AttachmentBuilder } from "discord.js";
+import { characters } from "../Modules/chars";
+import { db, query } from "../db_handler";
+import { classLevelToXP, search, generateUniqueItemId, searchItem } from "../Modules/functions";
+import { OfferRow, cowSettings } from "../Modules/components";
+import { requestVerification, dungeonTempBan } from "../Modules/components";
+import { items } from "../Modules/items";
+import math from 'mathjs';
 
-const voice = require('@discordjs/voice');
+import voice from '@discordjs/voice';
 
 module.exports = {
     name: 'admin',
     description: 'take admin actions',
-    execute(interaction, client) {
+    async execute(interaction, client) {
 
         let user = interaction.options.getUser('user') || false;
         let action = interaction.options.getString('action');
@@ -176,26 +178,122 @@ module.exports = {
 
         // Add char
         if (action.startsWith("add char")) {
-            if (!user) return interaction.reply({ content: "missing user object", ephemeral });
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
+
+            args.shift();
+            const char = search(args.join(" "), [0], interaction, true);
+            if (!char.name) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
+
             db.serialize(async () => {
-                let inv = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
-                inv = JSON.parse(inv[0].chars);
-                inv.push(parseInt(action.split(" ")[2]));
-                await query(`UPDATE characters SET chars = '${JSON.stringify(inv)}' WHERE id = ${user.id}`);
+                const { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
+                inv.chars = JSON.parse(inv.chars);
+                inv.chars.push(char.id);
+                await query(`UPDATE characters SET chars = '${JSON.stringify(inv.chars)}' WHERE id = ${user.id}`);
+
+                return interaction.reply({ content: `Action Successful: Added **${char.name}** to ${user.toString()}`, ephemeral });
             });
-            return interaction.reply({ content: "Action Successful", ephemeral });
         };
 
         // Remove char
         if (action.startsWith("remove char")) {
-            if (!user) return interaction.reply({ content: "missing user object", ephemeral });
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
+
+            args.shift();
+            const char = search(args.join(" "), [0], interaction, true);
+            if (!char.name) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
+
             db.serialize(async () => {
-                let inv = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
-                inv = JSON.parse(inv[0].chars);
-                inv.splice(inv.indexOf(parseInt(action.split(" ")[2])), 1);
-                await query(`UPDATE characters SET chars = '${JSON.stringify(inv)}' WHERE id = ${user.id}`);
+                const { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
+                inv.chars = JSON.parse(inv.chars);
+                if (!inv.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
+                inv.chars.splice(inv.chars.indexOf(char.id), 1);
+                await query(`UPDATE characters SET chars = '${JSON.stringify(inv.chars)}' WHERE id = ${user.id}`);
+
+                return interaction.reply({ content: `Action Successful: Removed **${char.name}** from ${user.toString()}`, ephemeral });
             });
-            return interaction.reply({ content: "Action Successful", ephemeral });
+        };
+
+        // Add weapon
+        if (action.startsWith("add weapon")) {
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add weapon <name> user:@user [--id:string] [--level:number]\`\n\n**Options**\n\`name\`: Name or ID of the item to be added\n\`--id\`: Custom ID for the item\n\`--level\`: Starting level for the item`, ephemeral });
+
+            // Extract flags
+            const flags = args.filter(arg => arg.startsWith("--")).map(flag => flag.slice(2));
+            args = args.filter(arg => !arg.startsWith("--"));
+
+            // Remove "char" from args
+            args.shift();
+
+            // Parse flags
+            const customId = flags.find(f => f.startsWith("id:"))?.split(":")[1];
+            const level = Math.max(0, Math.min(170, parseInt(flags.find(f => f.startsWith("level:"))?.split(":")[1])));
+
+            // Validate custom ID if provided
+            if (customId) {
+                if (customId.length > 5) return interaction.reply({ content: `Item codes can't be longer than 5 characters (current length: ${customId.length})`, ephemeral });
+                const allowedChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_".split("");
+                if (!customId.split("").every((e) => allowedChars.includes(e))) return interaction.reply({ content: `You can only use the characters a-z, A-Z, 0-9, - and _ in item codes.`, ephemeral });
+            };
+
+            // Search for item
+            const item = searchItem(args.join(" "), interaction, true);
+            if (!item?.name) return interaction.reply({ content: `Error: Couldn't find item "${args.join(" ")}"\n\nUsage: \`/admin add weapon <name> user:@user [--id:string] [--level:number]\`\n\n**Options**\n\`name\`: Name or ID of the item to be added\n\`--id\`: Custom ID for the item\n\`--level\`: Starting level for the item`, ephemeral });
+
+            if (!(item.category === "weapon" || item.category === "armor")) return interaction.reply({ content: `Error: Item must be a weapon or armor piece`, ephemeral });
+
+            db.serialize(async () => {
+                // Get existing items to avoid UID conflicts
+                let existing = await query(`SELECT uniqueid FROM weapons WHERE id = ${user.id}`);
+                existing = existing.map((e) => e.uniqueid);
+
+                // Generate or use custom ID
+                const uid = customId || generateUniqueItemId(user.id, existing);
+
+                // Validate custom ID if provided
+                if (customId && existing.includes(`${customId}:${user.id}`)) {
+                    return interaction.reply({ content: `Error: Item with ID \`${customId}\` already exists for this user`, ephemeral });
+                }
+
+                // Calculate XP and required ascension if level provided
+                let xp = 0;
+                let ascension = 0;
+                if (level && level > 1) {
+                    ascension = level <= 30 ? 0 : Math.ceil((level - 30) / 10) + 1;
+
+                    // Calculate total XP needed
+                    for (let i = 1; i < level; i++) {
+                        xp += Math.floor(20 * Math.pow(i, 1.290349));
+                    }
+                }
+
+                // Add item to database
+                await query(`INSERT INTO weapons (id, itemid, uniqueid, item_type${level ? ", level, ascension" : ""}) VALUES (${user.id}, ${item.id}, '${uid}:${user.id}', '${item.category}'${level ? `, ${xp}, ${ascension}` : ""})`);
+
+                return interaction.reply({ content: `Action Successful: Added ${item.emoji} **${item.name}** (ID: \`${uid}\`${level ? `, Level: ${level}, Ascension: ${ascension}` : ""}) to ${user.toString()}`, ephemeral });
+            });
+        };
+
+        // Remove weapon
+        if (action.startsWith("remove weapon")) {
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin remove weapon <uniqueid> user:@user\`\n\n**Options**\n\`uniqueid\`: Unique ID of the item to be removed`, ephemeral });
+
+            args.shift(); // Remove "weapon" from args
+            const itemId = args[0];
+
+            if (!itemId) return interaction.reply({ content: `Error: missing item ID\n\nUsage: \`/admin remove weapon <uniqueid> user:@user\`\n\n**Options**\n\`uniqueid\`: Unique ID of the item to be removed`, ephemeral });
+
+            db.serialize(async () => {
+                // Check if item exists and get its info
+                const { 0: stats } = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemId}:${user.id}'`);
+                if (!stats) return interaction.reply({ content: `Error: Item with ID \`${itemId}\` not found for ${user.toString()}`, ephemeral });
+
+                const item = items[stats.itemid];
+
+                // Remove the item
+                await query(`DELETE FROM weapons WHERE uniqueid = '${itemId}:${user.id}'`);
+
+                return interaction.reply({ content: `Action Successful: Removed ${item.emoji} **${item.name}** (ID: \`${itemId}\`) from ${user.toString()}`, ephemeral });
+            });
         };
 
         // Leave Server
@@ -369,6 +467,34 @@ module.exports = {
             return interaction.reply({ content: `${user.username} was unbanned`, ephemeral });
         };
 
+        // Dungeon Ban Players
+        if (cmd === "dban") {
+            if (!user || user.bot) return interaction.reply({ content: `No <:kek:927271748385243206>`, ephemeral });
+
+            let bantime = parseInt(args[0] || "20");
+            if (!bantime || bantime < 1) bantime = 20;
+
+            requestVerification.set(user.id, { repeats: 4, timeout: setTimeout(() => requestVerification.delete(user.id), 60 * 60 * 1000) });
+
+            clearTimeout(dungeonTempBan.get(user.id)?.timeout);
+            dungeonTempBan.set(user.id, { ends: Date.now() + (bantime * 60 * 1000), timeout: setTimeout(() => dungeonTempBan.delete(user.id), bantime * 60 * 1000) });
+
+            return interaction.reply({ content: `${user.username} was banned from using \`/dungeon\` for **${bantime}** min`, ephemeral });
+        };
+
+        // Dungeon Unban Players
+        if (cmd === "dunban") {
+            if (!user || user.bot) return interaction.reply({ content: `No <:kek:927271748385243206>`, ephemeral });
+
+            clearTimeout(requestVerification.get(user.id)?.timeout);
+            requestVerification.delete(user.id);
+
+            clearTimeout(dungeonTempBan.get(user.id)?.timeout);
+            dungeonTempBan.delete(user.id);
+
+            return interaction.reply({ content: `${user.username} was unbanned from using \`/dungeon\``, ephemeral });
+        };
+
         // See transactions
         if (cmd === "transfer") {
             if (!user || user.bot) return interaction.reply({ content: `**Usage**: \`/admin transfer <new_id> user:<old_user>\``, ephemeral });
@@ -402,32 +528,32 @@ module.exports = {
             });
         };
 
-        // Recover Deleted Items
-        if (cmd === "recover") {
-            if (!user || user.bot) return interaction.reply({ content: `**Usage**: \`/admin recover user:<user>\``, ephemeral });
+        // // Recover Deleted Items
+        // if (cmd === "recover") {
+        //     if (!user || user.bot) return interaction.reply({ content: `**Usage**: \`/admin recover user:<user>\``, ephemeral });
 
-            db.serialize(async () => {
-                if (args[0] === "--save") {
-                    // Write to JSON
-                    let recover = await query(`SELECT * FROM weapons WHERE id = '759855947920310393'`);
+        //     db.serialize(async () => {
+        //         if (args[0] === "--save") {
+        //             // Write to JSON
+        //             let recover = await query(`SELECT * FROM weapons WHERE id = '759855947920310393'`);
 
-                    fs.writeFile('Storage/recover.json', JSON.stringify(recover), (err) => {
-                        if (err) console.error(err);
-                    });
-                    return interaction.reply({ content: `Saved **${user.username}**'s items to recover.json`, ephemeral });
-                };
+        //             fs.writeFile('Storage/recover.json', JSON.stringify(recover), (err) => {
+        //                 if (err) console.error(err);
+        //             });
+        //             return interaction.reply({ content: `Saved **${user.username}**'s items to recover.json`, ephemeral });
+        //         };
 
-                let recover = JSON.parse(fs.readFileSync('Storage/recover.json', 'utf8'));
+        //         let recover = JSON.parse(fs.readFileSync('Storage/recover.json', 'utf8'));
 
-                await query(`DELETE FROM weapons WHERE id = ${user.id}`);
+        //         await query(`DELETE FROM weapons WHERE id = ${user.id}`);
 
-                for (const rec of recover) {
-                    await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension, purity, character, substats) values ('${rec.id}', ${rec.itemid}, '${rec.uniqueid}', ${rec.level}, ${rec.ascension}, ${rec.purity}, ${rec.character}, ${rec.substats ? `'${rec.substats}'` : "NULL"})`);
-                };
+        //         for (const rec of recover) {
+        //             await query(`INSERT INTO weapons (id, itemid, uniqueid, level, ascension, purity, character, substats) values ('${rec.id}', ${rec.itemid}, '${rec.uniqueid}', ${rec.level}, ${rec.ascension}, ${rec.purity}, ${rec.character}, ${rec.substats ? `'${rec.substats}'` : "NULL"})`);
+        //         };
 
-                return interaction.reply({ content: `Successfully recovered **${user.username}**'s items`, ephemeral });
-            });
-        };
+        //         return interaction.reply({ content: `Successfully recovered **${user.username}**'s items`, ephemeral });
+        //     });
+        // };
 
         // Give mod perms
         if (cmd === "promote") {
@@ -452,6 +578,47 @@ module.exports = {
                 if (err) console.error(err);
             });
             return interaction.reply({ content: `${user.username} was demoted in mod rank`, ephemeral });
+        };
+
+        // Edit Rolling Cow
+        if (cmd === "cow") {
+            if (!args[0]) return interaction.reply({ content: `Start or edit \`/rolling cow\` settings\n\n**Usage**: \`/cow [start|view|edit] --flags:<param>\`\n\n**Flags**\n\`days\`: number\n\`rollsPerDay\`: number\n\`fightsPerCharacter\`: number\n\`timeInMinutes\`: number\n\`level\`: number\n\`clvl\`: number\n\`goldenCowChance\`: number (0-1)`, ephemeral });
+
+            if (args[0] === "start") {
+                db.serialize(async () => {
+                    await query(`UPDATE users SET cow_participation = NULL, cow_chars = NULL, cow_timer = NULL, cow_rolled_today = 0`);
+                });
+
+                cowSettings.start = Date.now();
+                fs.writeFile('Storage/rolling.json', JSON.stringify(cowSettings), (err) => {
+                    if (err) console.error(err);
+                });
+
+                return interaction.reply({ content: `Reset and started \`/rolling cow\` with settings:\n\n${JSON.stringify(cowSettings)}`, ephemeral });
+            };
+
+            // View raw settings
+            if (args[0] === "view") {
+                return interaction.reply({ content: `Rolling Cow Settings:\n\n${JSON.stringify(cowSettings)}`, ephemeral });
+            };
+
+            // Update flags
+            if (args[0] === "edit") {
+                const flags = args.filter((s) => s.startsWith("--")).map((s) => s.slice(2));
+
+                for (const flag of flags) {
+                    const [key, val] = flag.split(":");
+                    if (key in cowSettings) {
+                        cowSettings[key] = isNaN(parseFloat(val)) ? val : parseFloat(val);
+                    };
+                };
+
+                fs.writeFile('Storage/rolling.json', JSON.stringify(cowSettings), (err) => {
+                    if (err) console.error(err);
+                });
+
+                return interaction.reply({ content: `Edited \`/rolling cow\` settings:\n\n${JSON.stringify(cowSettings)}`, ephemeral });
+            };
         };
 
         // Repeat text
@@ -483,8 +650,24 @@ module.exports = {
         async function response(flags = []) {
             const { 0: res } = await query(`SELECT ${flags.includes("stampede") ? "s_responsetime" : "responsetime"} as rtime FROM dungeon WHERE id = '${user.id}'`);
             const timestamps = res.rtime.split(",").map((e) => parseInt(e));
-            const resp = timestamps.map((e, i) => timestamps[i + 1] - e).slice(0, -2);
-            let cleaned = resp.filter((e) => e < 60 * 1000);
+            let resp = timestamps.map((e, i) => timestamps[i + 1] - e).slice(0, -2);
+            if (flags.some((e) => e.startsWith("range:"))) {
+                const [, start, end] = (flags.find((e) => e.startsWith("range:")) ?? "range:0").split(":");
+                resp = resp.slice(parseInt(start) || 0, parseInt(end) || undefined);
+            };
+            if (flags.some((e) => e.startsWith("interval:"))) {
+                let [, interval, averaged] = (flags.find((e) => e.startsWith("interval:")) ?? "interval:1").split(":");
+                interval = parseInt(interval) || 1;
+                if (interval < 1) interval = 1;
+                const summed = [];
+                for (let i = 0; i < resp.length; i += interval) {
+                    const sum = resp.slice(i, i + interval).reduce((acc, num) => acc + num, 0);
+                    if (averaged) summed.push(Math.round(sum / interval));
+                    else summed.push(sum);
+                };
+                resp = summed;
+            };
+            const cleaned = resp.filter((e) => e < 120 * 1000);
             if (cleaned.length === 0) return "not enough data";
             const rounded = resp.map((e) => Math.round(e / 1000));
             const diff = -(math.mean(...cleaned.slice(-100)));
@@ -529,21 +712,33 @@ module.exports = {
                     else sessions.push(0);
                 };
 
+                // Return txt
+                const txtFlag = flags.find((e) => e.startsWith("txt"));
+                if (txtFlag) {
+                    const param = txtFlag.split(":")[1];
+                    if (!param) return rounded.join(",");
+                    if (param === "raw") return resp.join(",");
+                    if (param === "cleaned") return cleaned.join(",");
+                    if (param === "sessions") return sessions.join(",");
+                    if (param === "timestamps") return res.rtime;
+                };
+
                 const s = `**user**: ${user.username} | ${user.id}\n**sample size**: ${cleaned.length} | ${cleaned.slice(-100).length}\n**mean**: ${Math.round(math.mean(cleaned) / 10) / 100}s | ${Math.round(math.mean(cleaned.slice(-100)) / 10) / 100}s\n**median**: ${Math.round(math.median(cleaned) / 10) / 100}s | ${Math.round(math.median(cleaned.slice(-100)) / 10) / 100}s\n**mode**: ${math.mode(rounded)}s | ${math.mode(rounded.slice(-100))}s\n**std**: ${Math.round(math.std(cleaned) / 10) / 100}s | ${Math.round(math.std(cleaned.slice(-100)) / 10) / 100}s\n**var**: ${Math.round(math.variance(cleaned) / 10000) / 100}s² | ${Math.round(math.variance(cleaned.slice(-100)) / 10000) / 100}s²\n**Longest session**: ${Math.floor((Math.max(...sessions) / (60 * 60)) * 100) / 100}h\n\n**Recent Activity**:\n> `;
                 return s + rounded.join(", ").slice(-(1400 - risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e + diff) / 1000)).join(", ").slice(-(600 - 20 - s.length)) + risky;
                 // return interaction.reply({content: s + rounded.join(", ").slice(-(1400-risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e+diff)/1000)).join(", ").slice(-(600-20-s.length)) + risky, ephemeral});
             };
         };
-        if (cmd === "response" || cmd === "s_response") {
-            if (!user?.id && args[0] !== "rank") return interaction.reply({ content: "Usage: `/mod response [graph|rank] user?:`\n\n**Options**\n`graph`: Draw a graph\n`rank`: Rank users by std", ephemeral });
-
+        if (cmd === "r" || cmd === "response" || cmd === "s_response") {
             const flags = args.filter((s) => s.startsWith("--")).map((s) => s.slice(2));
 
+            if (!user?.id && !flags.includes("rank")) return interaction.reply({ content: "Usage: `/admin response --[flag] user?:`\n\n**Flags**\n`graph`: Draw a graph\n`rank`: Rank users by std\n`range:<num1>:<num2>`: Slice the sample from `num1` to `num2` (optional)\n`interval:<repeat>`: Group repeated runs together to simplify patterns (usage: `interval:2`, `ìnterval:5:averaged`)\n`txt:<param>`: Output a txt file with the specified parameters (usage: `txt`, `txt:raw`, `txt:cleaned`, `txt:sessions`, `txt:timestamps`)", ephemeral });
+
             db.serialize(async () => {
-                if (args[0] === "rank") {
+                if (flags.includes("rank")) {
                     interaction.reply({ content: "loading...", ephemeral });
 
-                    let results = await query(`SELECT id, ${cmd === "response" ? "responsetime" : "s_responsetime"} as rtime FROM dungeon`);
+                    let results = await query(`SELECT id, ${flags.includes("stampede") ? "s_responsetime" : "responsetime"} as rtime FROM dungeon`);
+
                     results = results.filter((e) => e.rtime);
 
                     const final = [];
@@ -567,7 +762,11 @@ module.exports = {
                     }, 5000);
                 } else {
                     const content = await response(flags);
-                    interaction.reply({ content, ephemeral });
+                    if (!flags.find((e) => e.startsWith("txt"))) return interaction.reply({ content, ephemeral });
+
+                    // eslint-disable-next-line no-undef
+                    const attachment = new AttachmentBuilder(Buffer.from(content, 'utf-8'), { name: 'response.txt' });
+                    return interaction.reply({ files: [attachment], ephemeral });
                 };
             });
         };
@@ -619,26 +818,70 @@ module.exports = {
             });
         };
 
-        // Warn
-        if (cmd === "warn") {
-            if (!args[0] || !user) return interaction.reply({ content: "`/admin action:warn <option>`\n\n**Options**\n`botting`\n`alting`", ephemeral });
+        async function sendDmWarning(user, type) {
+            if (type === "botting") {
+                user.send(`Hey ${user.username}, you've been caught botting (using self-bots, macros, scripts or similar to automate your progress) which is strictly against our [Terms of Service](<https://rank.top/bot/camelot?page=terms>). Your account has been penalized accordingly. Please refrain from breaking any more terms in the future. Thank you for your understanding <a:GabrielBow:1045095869306912881>\n\n-# If you want to appeal this decision, please open a ticket on our [Support Server](<https://discord.gg/myy9PBCdEW>). Keep in mind that false appeals can increase your penalty.`);
 
-            if (args[0] === "botting") {
-                user.send(`Hey ${user.username}, you've been caught botting (using self-bots, macros, scripts or similar to automate your progress) which is strictly against our [Terms of Service](<https://github.com/Apollo24K/Camelot-Public-Repo/blob/main/ToS>). Your account has been penalized accordingly. Please refrain from breaking any more terms in the future. Thank you for your understanding <a:GabrielBow:1045095869306912881>\n\nIf you want to appeal this decision, please open a ticket on our [Support Server](<https://discord.gg/myy9PBCdEW>).`);
+                const chnl = user.client.channels.cache.find(channel => channel.id === "1148646565276299405");
 
-                const chnl = client.channels.cache.find(channel => channel.id === "1148646565276299405");
-                db.serialize(async () => {
-                    let content = await response();
-                    chnl.send(content);
-                    content = await response(["graph"]);
-                    chnl.send(content);
-                    return interaction.reply({ content: `Successfully warned ${user.username} for botting`, ephemeral });
-                });
+                let content = await response();
+                chnl.send(content);
+                content = await response(["graph"]);
+                chnl.send(content);
+
+                await query(`UPDATE dungeon SET responsetime = "" WHERE id = ${user.id}`);
             };
 
-            if (args[0] === "alting") {
-                user.send(`Hey ${user.username}, you've been caught alting (using alternative accounts to help your main account progress) which is strictly against our [Terms of Service](<https://github.com/Apollo24K/Camelot-Public-Repo/blob/main/ToS>). Your account has been penalized accordingly. Please refrain from breaking any more terms in the future. Thank you for your understanding <a:GabrielBow:1045095869306912881>\n\nIf you want to appeal this decision, please open a ticket on our [Support Server](<https://discord.gg/myy9PBCdEW>).`);
-                return interaction.reply({ content: `Successfully warned ${user.username} for alting`, ephemeral });
+            if (type === "alting") {
+                user.send(`Hey ${user.username}, you've been caught alting (using alternative accounts to help your main account progress) which is strictly against our [Terms of Service](<https://rank.top/bot/camelot?page=terms>). Your account has been penalized accordingly. Please refrain from breaking any more terms in the future. Thank you for your understanding <a:GabrielBow:1045095869306912881>\n\n-# If you want to appeal this decision, please open a ticket on our [Support Server](<https://discord.gg/myy9PBCdEW>). Keep in mind that false appeals can increase your penalty.`);
+            };
+
+            if (type === "tos") {
+                user.send(`Hey ${user.username}, you've been caught breaking our [Terms of Service](<https://rank.top/bot/camelot?page=terms>). Your account has been penalized accordingly. Please refrain from breaking any more terms in the future. Thank you for your understanding <a:GabrielBow:1045095869306912881>\n\n-# If you want to appeal this decision, please open a ticket on our [Support Server](<https://discord.gg/myy9PBCdEW>). Keep in mind that false appeals can increase your penalty.`);
+            };
+
+            return;
+        };
+
+        // Warn
+        if (cmd === "warn") {
+            if (!args[0] || !user) return interaction.reply({ content: "Usage: `/admin action:warn <option>`\n\n**Options**\n`botting`\n`alting`\n`tos`", ephemeral });
+
+            await sendDmWarning(user, args[0]);
+
+            switch (args[0]) {
+                case "botting": return interaction.reply({ content: `Successfully warned ${user.username} for botting`, ephemeral });
+                case "alting": return interaction.reply({ content: `Successfully warned ${user.username} for alting`, ephemeral });
+                case "tos": return interaction.reply({ content: `Successfully warned ${user.username} for breaking the ToS`, ephemeral });
+            };
+        };
+
+        // Penalize
+        if (cmd === "penalize" || cmd === "punish" || cmd === "penalty") {
+            if (!args[0] || !user) return interaction.reply({ content: "Usage: `/admin action:penalty <option>`\n\n**Options**\n`botting`\n`alting`\n`tos`", ephemeral });
+
+            // Send DM
+            await sendDmWarning(user, args[0]);
+
+            // Apply penalties
+            await query(`UPDATE users SET coins = 0, bank = 0 WHERE id = ${user.id}`);
+
+            if (args[0] === "botting") {
+                const { 0: stats } = await query(`SELECT users.class, dungeon.classlevels FROM users LEFT JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
+                stats.classlevels = JSON.parse(stats.classlevels);
+
+                if (stats.class !== undefined) {
+                    stats.classlevels[stats.class] = Math.floor(stats.classlevels[stats.class] * 0.4); // classLevelToXP(parseInt(args[1]));
+
+                    await query(`UPDATE dungeon SET classlevels = '${JSON.stringify(stats.classlevels)}' WHERE id = ${user.id}`);
+                };
+            };
+
+            // Return
+            switch (args[0]) {
+                case "botting": return interaction.reply({ content: `Successfully penalized ${user.username} for botting`, ephemeral });
+                case "alting": return interaction.reply({ content: `Successfully penalized ${user.username} for alting`, ephemeral });
+                case "tos": return interaction.reply({ content: `Successfully penalized ${user.username} for breaking the ToS`, ephemeral });
             };
         };
 

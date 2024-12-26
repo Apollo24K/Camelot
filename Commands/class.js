@@ -1,9 +1,9 @@
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { classes } = require("../Modules/classes.js");
-const { skills } = require("../Modules/skills.js");
-const { userLevel, getClassLvl, searchClass } = require("../Modules/functions.js");
-const { PageRow, OfferRow } = require("../Modules/components.js");
+import { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder } from "discord.js";
+import { db, query } from "../db_handler";
+import { classes } from "../Modules/classes";
+import { skills } from "../Modules/skills";
+import { userLevel, getClassLvl, searchClass } from "../Modules/functions";
+import { PageRow, OfferRow } from "../Modules/components";
 
 module.exports = {
     name: 'class',

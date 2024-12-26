@@ -1,17 +1,17 @@
 /* eslint-disable no-unused-vars */
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
-const { abilities } = require("../Modules/abilities.js");
-const { achievements } = require("../Modules/achievements.js");
-const { search, showPage } = require("../Modules/functions.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { characters } from "../Modules/chars";
+import { abilities } from "../Modules/abilities";
+import { achievements } from "../Modules/achievements";
+import { search, showPage } from "../Modules/functions";
 
 module.exports = {
     name: 'ability',
     description: 'see chars with abilities',
     execute(interaction) {
 
-        let user = interaction.options.getUser('user') || interaction.user;
+        const user = interaction.options.getUser('user') || interaction.user;
         let choice = interaction.options.getString('character');
         const filter = interaction.options.getString('filter');
         let page = interaction.options.getInteger('page') || 1;
@@ -50,35 +50,43 @@ module.exports = {
             if (page <= pagesTotal && page > 0) {
                 currPage = page;
             };
-            let left = showChars.length % 15;
 
             // Filter items to show on the current page
             let showCharsF = showPage(currPage, showChars, elementsPerPage);
-
-            function r1() {
-                const row = new ActionRowBuilder()
-                    .addComponents(
-                        new ButtonBuilder()
-                            .setCustomId('prev')
-                            .setEmoji('⏪')
-                            .setStyle('Secondary'),
-                        new ButtonBuilder()
-                            .setCustomId('next')
-                            .setEmoji('⏩')
-                            .setStyle('Secondary'),
-                        new ButtonBuilder()
-                            .setCustomId('view')
-                            .setLabel(selection === "single" ? "List View" : "Single View")
-                            .setStyle('Primary'),
-                    );
-                return row;
-            };
 
             let fArray = chars[0];
             if (choice) {
                 fArray = search(choice, inv.chars, interaction);
                 if (!fArray.name) return;
                 if (!(fArray.id in abilities) || (filter && !(filter in abilities[fArray.id]))) return interaction.reply(`**${fArray.name}** does not have ${filter ? (filter === "ability" ? "an active " : `a ${filter} `) : "an "}ability`);
+            };
+
+            function r1() {
+                const components = [
+                    new ButtonBuilder()
+                        .setCustomId('prev')
+                        .setEmoji('⏪')
+                        .setStyle('Secondary'),
+                    new ButtonBuilder()
+                        .setCustomId('next')
+                        .setEmoji('⏩')
+                        .setStyle('Secondary'),
+                    new ButtonBuilder()
+                        .setCustomId('view')
+                        .setLabel(selection === "single" ? "List View" : "Single View")
+                        .setStyle('Primary'),
+                ];
+
+                if (selection === "single") {
+                    components.push(new ButtonBuilder()
+                        .setURL(`https://sites.google.com/view/camelotbuilds/abilities/characters/${fArray.name.toLowerCase().replace(/[.'()]/g, '').replace(/ /g, '-')}`)
+                        .setLabel("Community Builds")
+                        .setStyle('Link'));
+                };
+
+                const row = new ActionRowBuilder()
+                    .addComponents(...components);
+                return row;
             };
 
             let singlePagesTotal = charsID.length;

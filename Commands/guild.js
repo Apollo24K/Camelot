@@ -1,28 +1,12 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { generateUniqueGuildId, showPage, searchGuild, addGuildDonation, donationWeekStart, getDonationsPageWeek } = require("../Modules/functions.js");
-const { PageRow, OfferRow } = require("../Modules/components.js");
+import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { db, query } from "../db_handler";
+import { dailies } from "../Modules/dailyQuests";
+import { generateUniqueGuildId, showPage, searchGuild, addGuildDonation, donationWeekStart, getDonationsPageWeek, lastActive, formatNumberWithQuotes } from "../Modules/functions";
+import { PageRow, OfferRow } from "../Modules/components";
 
 function lastActiveInDays(timestamp) {
     const now = new Date(), date = new Date(timestamp);
     return Math.floor((now - date) / (1000 * 60 * 60 * 24));
-};
-
-function lastActive(timestamp) {
-    const now = new Date(), date = new Date(timestamp);
-
-    // Check if the date is today
-    if (date.toDateString() === now.toDateString()) return "today";
-
-    // Check if the date is yesterday
-    const yesterday = new Date();
-    yesterday.setDate(now.getDate() - 1);
-    if (date.toDateString() === yesterday.toDateString()) return "yesterday";
-
-    // Calculate the number of days between the date and today
-    const diff = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    return `${diff === 1 ? diff + " day" : diff + " days"} ago`;
 };
 
 function upgradePrice(level) {
@@ -119,7 +103,7 @@ module.exports = {
                     .setColor(guild.color || 0xbbffff)
                     .setThumbnail(guild.icon)
                     .setDescription((guild.description?.replace(/\\n/g, "\n") || "_Missing description. Use `/guild edit` to add one._")
-                        + `\n\n**Guild Level**: \`${guild.level}\`\n**Capacity**: \`${members.length}/${10 + Math.min(guild.level - 1, 10)}\`\n**Tax Rate**: \`${guild.tax}%\`\n**Treasury**: \`${guild.treasury}\`<:coins:872926669055356939>, \`${guild.treasury_gems}\`<:genesis_gems:1034179687720681492>`
+                        + `\n\n**Guild Level**: \`${guild.level}\`\n**Capacity**: \`${members.length}/${10 + Math.min(guild.level - 1, 10)}\`\n**Tax Rate**: \`${guild.tax}%\`\n**Treasury**: \`${formatNumberWithQuotes(guild.treasury)}\`<:coins:872926669055356939>, \`${formatNumberWithQuotes(guild.treasury_gems)}\`<:genesis_gems:1034179687720681492>`
                         + `\n\n<:ATK:1063214925528440832> **XP Buffs**: level ${guild.xpbuff}${guild.xpbuff ? `<:blank:917804200363171860>ㅤ(__+${20 * guild.xpbuff}__%)` : ""}\n<:coins:872926669055356939> **Loot Buffs**: level ${guild.lootbuff}${guild.lootbuff ? `<:blank:917804200363171860>(__+${20 * guild.lootbuff}__%)` : ""}\n⏱️ **Timers**: level ${guild.cdreduction}${guild.cdreduction ? `<:blank:917804200363171860> <:blank:917804200363171860>(__-${guild.cdreduction}__ min)` : ""}`
                     )//+ `\n\n**Members**\n${members.sort((a, b) => b.value-a.value).map((e) => `${e.name}${e.status} ➜ last online __${lastActive(e.lastdaily)}__`).join("\n")}`)
                     .addFields(
@@ -169,6 +153,14 @@ module.exports = {
                     interaction.reply(`Changed guild icon to <${input}>`);
 
                     // Image Log
+                    const row = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`ref-guild-icon:${stats.guild}`)
+                                .setLabel(`Remove thumbnail`)
+                                .setStyle(ButtonStyle.Secondary)
+                        );
+
                     const channel = interaction.client.channels.cache.find(channel => channel.id === "934117922039791627");
                     const Embed = new EmbedBuilder()
                         .setColor(guild.color || 0xbbffff)
@@ -177,7 +169,7 @@ module.exports = {
                         .setDescription(`GM: ${guild.master}\nID: \`${guild.id}\`\nLevel: ${guild.level}`)
                         .setFooter({ text: `Changed by ${interaction.user.username} | ${interaction.user.id}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                     if (guild.banner) Embed.setImage(guild.banner);
-                    return channel.send({ embeds: [Embed] });
+                    return channel.send({ embeds: [Embed], components: [row] });
                 };
 
                 if (setting === "banner") {
@@ -193,6 +185,14 @@ module.exports = {
                     interaction.reply(`Changed guild banner to <${input}>`);
 
                     // Image Log
+                    const row = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`ref-guild-banner:${stats.guild}`)
+                                .setLabel(`Remove banner`)
+                                .setStyle(ButtonStyle.Secondary)
+                        );
+
                     const channel = interaction.client.channels.cache.find(channel => channel.id === "934117922039791627");
                     const Embed = new EmbedBuilder()
                         .setColor(guild.color || 0xbbffff)
@@ -201,7 +201,7 @@ module.exports = {
                         .setDescription(`GM: ${guild.master}\nID: \`${guild.id}\`\nLevel: ${guild.level}`)
                         .setFooter({ text: `Changed by ${interaction.user.username} | ${interaction.user.id}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
                         .setImage(input);
-                    return channel.send({ embeds: [Embed] });
+                    return channel.send({ embeds: [Embed], components: [row] });
                 };
 
                 if (setting === "tax") {
@@ -225,6 +225,7 @@ module.exports = {
                     const allCodes = await query(`SELECT id FROM guilds`);
                     if (allCodes.map((e) => e.id).includes(input)) return interaction.reply(`The join code **${input}** already exists, please choose another one.`);
                     if (guild.id === "MmLdY") return interaction.reply("No <a:FubukiSip:1081201294246674442>");
+                    await query(`UPDATE guild_donations SET guildid = '${input}' WHERE guildid = '${guild.id}'`);
                     await query(`UPDATE guilds SET id = '${input}', treasury_gems = treasury_gems - 1000 WHERE id = '${guild.id}'`);
                     await query(`UPDATE users SET guild = '${input}' WHERE guild = '${guild.id}'`);
                     return interaction.reply(`Changed join code to **${input}**`);
@@ -653,7 +654,10 @@ module.exports = {
                 // Sort guilds
                 let listPage;
                 if (sort === "level") {
-                    guilds.sort((a, b) => b.level - a.level);
+                    guilds.sort((a, b) => {
+                        if (b.level !== a.level) return b.level - a.level;
+                        else return a.lastlevelup - b.lastlevelup;
+                    });
                     listPage = (e, i) => `${((currPage - 1) * 15) + i + 1}) **${e.name}** ➜ Level **${e.level}**`;
                 };
                 if (sort === "event") {
@@ -687,7 +691,6 @@ module.exports = {
                         Embed.setDescription(showItems.map(listPage).join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         return interaction.editReply({ embeds: [Embed] });
                     });
-
                 });
             });
         } else if (subcommand === "donate") {
@@ -734,9 +737,12 @@ module.exports = {
             });
         } else if (subcommand === "donations") {
             // const period = interaction.options.getString('period') ?? 'Weekly';
+            const guildid = interaction.options.getString('id');
+
             db.serialize(async () => {
                 const { 0: stats } = await query(`SELECT coins, guild FROM users WHERE users.id = ${interaction.user.id}`);
-                const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${stats.guild}'`);
+                const { 0: guild } = await query(`SELECT * FROM guilds WHERE id = '${guildid || stats.guild}'`);
+                if (!guild) return interaction.reply(`Couldn't find guild with ID \`${guildid || stats.guild}\``);
 
                 const members = await query(`SELECT id, name, lastdaily FROM users WHERE id IN (${guild.members})`);
                 members.forEach((e) => {
@@ -801,7 +807,7 @@ module.exports = {
                         const price = upgradePrice(guild.level);
                         if (price > guild.treasury) return interaction.channel.send(`Your guild does not have enough coins in the treasury to upgrade (**${guild.treasury}**/${price}<:coins:872926669055356939>)`);
 
-                        await query(`UPDATE guilds SET level = level + 1, treasury = treasury - ${price}, tokens = tokens + 1 WHERE id = '${guild.id}'`);
+                        await query(`UPDATE guilds SET level = level + 1, treasury = treasury - ${price}, tokens = tokens + 1, lastlevelup = ${Date.now()} WHERE id = '${guild.id}'`);
                         return interaction.channel.send(`Successfully upgraded **${guild.name}** to level **${guild.level + 1}**!`);
                     });
 
@@ -937,5 +943,13 @@ module.exports = {
             });
         };
 
+    },
+    async executeButtonInteraction(interaction) {
+        const [imageType, id] = interaction.customId.split("-").slice(2).join("-").split(":");
+
+        if (imageType === "icon") await query(`UPDATE guilds SET icon = 'https://i.imgur.com/JEvfGSR.png' WHERE id = '${id}'`);
+        else await query(`UPDATE guilds SET banner = '' WHERE id = '${id}'`);
+
+        interaction.followUp({ content: `${interaction.user} has removed the ${imageType} of the guild with ID \`${id}\`` });
     },
 };

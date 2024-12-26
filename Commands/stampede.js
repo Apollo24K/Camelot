@@ -1,19 +1,19 @@
 /* eslint-disable no-unused-vars */
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { classes } = require("../Modules/classes.js");
-const { curses } = require("../Modules/curses.js");
-const { items } = require("../Modules/items.js");
-const { stampedes } = require("../Modules/stampedes.js");
-const { skills, eventBossAbilities } = require("../Modules/skills.js");
-const { characters } = require("../Modules/chars.js");
-const { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, generateCaptcha } = require("../Modules/functions.js");
-const { requestVerification, dungeonTempBan } = require("../Modules/components.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities.js";
+import { classes } from "../Modules/classes.js";
+import { curses } from "../Modules/curses.js";
+import { items } from "../Modules/items.js";
+import { stampedes } from "../Modules/stampedes.js";
+import { skills, eventBossAbilities } from "../Modules/skills.js";
+import { characters } from "../Modules/chars.js";
+import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, generateCaptcha, isStampedeMonth } from "../Modules/functions.js";
+import { requestVerification, dungeonTempBan } from "../Modules/components.js";
+import Avalon from "../Modules/avalon.js";
+import buffInfo from "../Modules/buffs.js";
+import _ from 'lodash';
 
 const dungeonInProgress = new Map();
 const captchaCooldown = new Map();
@@ -174,8 +174,8 @@ function hoursToNextThird() {
     return `${diffHours}h left`;
 };
 
-function cdLeft(id) {
-    return dungeonInProgress.has(id) ? `\`${Math.floor((dungeonInProgress.get(id) - new Date().getTime()) / 60000) > 0 ? `${Math.floor((dungeonInProgress.get(id) - new Date().getTime()) / 60000)}min ` : ""}${Math.floor((dungeonInProgress.get(id) - new Date().getTime()) / 1000) % 60}s left\`` : "`ready`";
+function cdLeft(id, stamina = 60) {
+    return dungeonInProgress.has(id) ? `\`${Math.floor((dungeonInProgress.get(id) - Date.now()) / 60000) > 0 ? `${Math.floor((dungeonInProgress.get(id) - new Date().getTime()) / 60000)}min ` : ""}${Math.floor((dungeonInProgress.get(id) - Date.now()) / 1000) % 60}s left\`` : `\`ready (${stamina}/60 stamina)\``;
 };
 
 const monsterRow = new ActionRowBuilder()
@@ -194,7 +194,7 @@ const monsterRow = new ActionRowBuilder()
             .setStyle(ButtonStyle.Danger),
     );
 
-function bossSelection(interaction, stampede, myChar, partyQuery) {
+function bossSelection(interaction, stampede, myChar, partyQuery, stats) {
     return new Promise((resolve) => {
         const row = new ActionRowBuilder()
             .addComponents(
@@ -202,7 +202,7 @@ function bossSelection(interaction, stampede, myChar, partyQuery) {
                     .setCustomId('0')
                     .setLabel("I'm ready, let me fight!")
                     .setStyle('Danger')
-                    .setDisabled(stampede.bosshp < 1 || new Date().getDate() > 7),
+                    .setDisabled(stampede.bosshp < 1 || new Date().getDate() > 7 || !isStampedeMonth()),
                 new ButtonBuilder()
                     .setCustomId('test')
                     .setLabel("Let's try a test run first!")
@@ -210,6 +210,11 @@ function bossSelection(interaction, stampede, myChar, partyQuery) {
             );
 
         const paricipationRewards = participationPrize(JSON.parse(stampede.participation)[interaction.user.id]?.[1] ?? 0);
+
+        // Clear cd if bugged
+        if (dungeonInProgress.get(interaction.user.id) < Date.now()) {
+            dungeonInProgress.delete(interaction.user.id);
+        };
 
         const Embed = new EmbedBuilder()
             .setColor(0xff0000)
@@ -222,7 +227,7 @@ function bossSelection(interaction, stampede, myChar, partyQuery) {
                 { name: `**Participation Rewards** (${JSON.parse(stampede.participation)[interaction.user.id]?.[1] ?? 0})`, value: `<:deluxe_chest:1069301259603026061>x${paricipationRewards.deluxe}, <:royal_chest:1069301128711376976>x${paricipationRewards.royal}, <:glorious_chest:1069076067081539726>x${paricipationRewards.glorious}\n<:ss_ticket:927503239396622336>x${paricipationRewards.ssticket}, <:s_ticket:927642487705722890>x${paricipationRewards.sticket}, <:a_ticket:929420377946472508>x${paricipationRewards.aticket}\n<:starlight_kernel:1106121205515288659>x${paricipationRewards.kernel}, <:genesis_gems:1034179687720681492>x${paricipationRewards.gems}, <:coins:1030580480782893197>${paricipationRewards.coins}`, inline: true },
                 { name: "\u200B", value: "_ _", inline: true },
                 { name: "**Party**", value: `${(abilities?.[myChar.id]?.party) ? "✨ " : "<:blank:917804200363171860> "}__${myChar.name}__${partyQuery.map((e) => `\n${(abilities?.[e.stampedechar]?.party) ? "✨ " : "<:blank:917804200363171860> "}${characters[e.stampedechar].name}`).join("")}`, inline: true },
-                { name: "\u200B", value: `${cdLeft(interaction.user.id)}${partyQuery.map((e) => `\n${cdLeft(e.id)}`).join("")}`, inline: true },
+                { name: "\u200B", value: `${cdLeft(interaction.user.id, 60 - stats.stampedeenergy)}${partyQuery.map((e) => `\n${cdLeft(e.id, 60 - e.stampedeenergy)}`).join("")}`, inline: true },
                 { name: "\u200B", value: "_ _", inline: true },
             );
         interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
@@ -277,8 +282,8 @@ module.exports = {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
 
-            let stats = await query(`SELECT users.id, users.class, users.coins, users.bank, users.stampedechar, users.eventpts, users.eventrewreceived, users.guild, users.party, users.animationdelay, users.premium, users.skins, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
-            stats = { id: stats[0].id, class: stats[0].class, coins: stats[0].coins, bank: stats[0].bank, stampedechar: stats[0].stampedechar, eventpts: stats[0].eventpts, eventrewreceived: stats[0].eventrewreceived, guild: stats[0].guild, party: stats[0].party, animationdelay: stats[0].animationdelay, premium: stats[0].premium, skins: JSON.parse(stats[0].skins), shield_slot: stats[0].shield_slot, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: stats[0].level, equipment: JSON.parse(stats[0].equipment), skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
+            let stats = await query(`SELECT users.id, users.class, users.coins, users.bank, users.stampedechar, users.eventpts, users.eventrewreceived, users.guild, users.party, users.animationdelay, users.premium, users.skins, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, users.stampedeenergy, characters.skin, dungeon.floors, dungeon.'limit', dungeon.classes, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${interaction.user.id}`);
+            stats = { id: stats[0].id, class: stats[0].class, coins: stats[0].coins, bank: stats[0].bank, stampedechar: stats[0].stampedechar, eventpts: stats[0].eventpts, eventrewreceived: stats[0].eventrewreceived, guild: stats[0].guild, party: stats[0].party, animationdelay: stats[0].animationdelay, premium: stats[0].premium, skins: JSON.parse(stats[0].skins), shield_slot: stats[0].shield_slot, chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), level: stats[0].level, equipment: JSON.parse(stats[0].equipment), stampedeenergy: stats[0].stampedeenergy, skin: JSON.parse(stats[0].skin), limit: stats[0].limit, floors: JSON.parse(stats[0].floors), classes: JSON.parse(stats[0].classes), classlevels: JSON.parse(stats[0].classlevels) };
 
             if (stats.stampedechar === null || !stats.chars.includes(stats.stampedechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name> mode:stampede` to choose one.");
 
@@ -288,6 +293,7 @@ module.exports = {
             // User stats
             let myChar = characters[stats.stampedechar];
             let myStats = await getDetailedStats(myChar.id, stats, stats.classlevels);
+            // myStats.damageFormula = "log_scale_1.4";
 
             myStats.thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.skin[myChar.id]);
 
@@ -297,11 +303,11 @@ module.exports = {
             let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : false;
 
             // Banned builds
-            if (myStats.class === 31 && stats.stampedechar === 5549) return interaction.editReply("The <:Rogue:964837711468969984> **Rogue** + **Yue** combination was banned from this stampede, please try something else.");
+            // if (myStats.class === 31 && stats.stampedechar === 5549) return interaction.editReply("The <:Rogue:964837711468969984> **Rogue** + **Yue** combination was banned from this stampede, please try something else.");
 
 
             // Party member stats
-            const partyQuery = await query(`SELECT id, stampedechar FROM users WHERE party = '${stats.party}' AND stampedechar IS NOT NULL AND id != ${interaction.user.id}`);
+            const partyQuery = await query(`SELECT id, stampedechar, stampedeenergy FROM users WHERE party = '${stats.party}' AND stampedechar IS NOT NULL AND id != ${interaction.user.id}`);
             let partyChars = partyQuery.map((e) => characters[e.stampedechar]);
             let partyStats = [];
             for (const ps of partyQuery) {
@@ -309,14 +315,14 @@ module.exports = {
                 psStats = { id: psStats[0].id, class: psStats[0].class, coins: psStats[0].coins, bank: psStats[0].bank, stampedechar: psStats[0].stampedechar, eventpts: psStats[0].eventpts, eventrewreceived: psStats[0].eventrewreceived, guild: psStats[0].guild, party: psStats[0].party, animationdelay: psStats[0].animationdelay, premium: psStats[0].premium, skins: JSON.parse(psStats[0].skins), shield_slot: psStats[0].shield_slot, chars: JSON.parse(psStats[0].chars), ref: JSON.parse(psStats[0].ref), level: psStats[0].level, equipment: JSON.parse(psStats[0].equipment), skin: JSON.parse(psStats[0].skin), limit: psStats[0].limit, floors: JSON.parse(psStats[0].floors), classes: JSON.parse(psStats[0].classes), classlevels: JSON.parse(psStats[0].classlevels) };
 
                 partyStats.push(await getDetailedStats(ps.stampedechar, psStats, psStats.classlevels));
-            }
+            };
             let partyStatsC = _.cloneDeep(partyStats);
             // let partyClass = partyStats.map((e) => e.class !== -1 ? classes[e.class] : false);
             // let partySkill = partyStats.map((e) => e.class !== -1 ? _.cloneDeep(skills[e.class]) : false);
             let partyAbility = partyChars.map((e) => e.id in abilities ? _.cloneDeep(abilities[e.id]) : false);
 
             // Menu
-            const boss = await bossSelection(interaction, stampede, myChar, partyQuery);
+            const boss = await bossSelection(interaction, stampede, myChar, partyQuery, stats);
             if (boss === 0) return;
 
             // Enemy Stats
@@ -371,14 +377,26 @@ module.exports = {
 
                 // Set up restrictions
                 if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply(`You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/stampede\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`);
-                const cd = enemyType === "monster" ? 3 * 60 * 1000 : 20 * 60 * 1000;
-                if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
-                dungeonInProgress.set(stats.id, new Date().getTime() + cd);
-                setTimeout(() => {
-                    dungeonInProgress.delete(stats.id);
-                    // if (enemyType !== "monster") 
-                    interaction.channel.send(`${interaction.user.toString()} is off </stampede:1111044852679979019> cooldown!`);
-                }, cd);
+
+                const energyCap = 60;
+                const energyLeft = energyCap - stats.stampedeenergy;
+                const energyCost = enemyType === "monster" ? 1 : 5;
+                if (energyLeft < energyCost) return interaction.channel.send(`You don't have enough stamina, please wait for it to refill.`);
+                if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`Please finish your previous fight first or wait 2 minutes.`);
+                dungeonInProgress.set(stats.id, Date.now() + (2 * 60 * 1000));
+
+                // Save stamina
+                await query(`UPDATE users SET stampedeenergy = stampedeenergy + ${energyCost} WHERE id = ${interaction.user.id}`);
+
+
+                // const cd = enemyType === "monster" ? 3 * 60 * 1000 : 20 * 60 * 1000;
+                // if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
+                // dungeonInProgress.set(stats.id, new Date().getTime() + cd);
+                // setTimeout(() => {
+                //     dungeonInProgress.delete(stats.id);
+                //     // if (enemyType !== "monster") 
+                //     interaction.channel.send(`${interaction.user.toString()} is off </stampede:1111044852679979019> cooldown!`);
+                // }, cd);
 
                 // Log response times
                 await query(`UPDATE dungeon SET s_responsetime = s_responsetime || '${Date.now()},' WHERE id = ${interaction.user.id}`);
@@ -386,8 +404,8 @@ module.exports = {
 
             const enemy = stampedes[stampede.type][enemyType].info;
             const curse = curses[curseId];
-            const eAbility = enemy.boss ? eventBossAbilities[boss.id] : false;
-            let eImage = enemy.image[0];
+            const eAbility = enemy.boss ? eventBossAbilities[enemy.id] : false;
+            // let eImage = enemy.image[0];
 
             let eStats = {
                 "name": enemy.name,
@@ -442,7 +460,7 @@ module.exports = {
             };
             eStats.ep = Math.floor(((1 / (1 - eStats.dodge)) * (eStats.hp / Math.pow(0.99895, Math.max(eStats.def, eStats.mr))) / (200 / (Math.max(eStats.atk, eStats.md) * (1 + ((eStats.cr > 1 ? 1 : (eStats.cr < 0) ? 0 : eStats.cr) * (eStats.cd - 1)))))) * 100) / 100;
 
-            eStats.image = eImage;
+            eStats.image = enemy.image[Math.floor(Math.random() * enemy.image.length)]; // eImage;
             let eStatsC = { ...eStats };
 
             // Some match settings
@@ -460,6 +478,9 @@ module.exports = {
             async function matchResult(r) {
                 if (matchResultsSent) return;
                 matchResultsSent = true;
+
+                // Clear restrictions
+                dungeonInProgress.delete(stats.id);
 
                 // Test Run
                 if (boss > 1) {
@@ -581,8 +602,9 @@ module.exports = {
             eStatsC.mr += adjustDEF(myStatsC);
 
             // Apply passives
+            if (eAbility) eAbility._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
             if (skill && myChar.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
-            if (myAbility?.passive) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
@@ -610,7 +632,7 @@ module.exports = {
                         .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
                         .setTitle(stampedes[stampede.type].title)
                         .setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
-                        .setImage(eImage);
+                        .setImage(eStatsC.image);
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
                         const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
@@ -632,6 +654,7 @@ module.exports = {
                         async function editEmbed() {
                             Embed.setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
                             Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                            if (eStats.image !== eStatsC.image) Embed.setImage(eStatsC.image);
                             // await msg.edit({ embeds: [Embed] });
 
                             // Debounce
@@ -650,7 +673,7 @@ module.exports = {
                             } else {
                                 eStatsC = { ...matchStats.eStatsCC };
                                 matchStats.currentOpponent = 0;
-                                Embed.setImage(eImage);
+                                Embed.setImage(eStatsC.image);
                                 attack();
                             };
                         };
@@ -722,10 +745,15 @@ module.exports = {
                             if (matchStats.turn === 1) return;
                             if (eStatsC.timeFrozen) {
                                 if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                 matchStats.turn = 1;
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
+                                if (matchStats.playerPausingRounds > 0) {
+                                    matchStats.playerPausingRounds--;
+                                    attack();
+                                };
                             } else {
                                 setTimeout(() => {
                                     if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
@@ -742,10 +770,15 @@ module.exports = {
                                     } else {
                                         dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                         matchStats.turn = 1;
                                         matchStats.round++;
                                         startNextRound();
                                         editEmbed();
+                                        if (matchStats.playerPausingRounds > 0) {
+                                            matchStats.playerPausingRounds--;
+                                            attack();
+                                        };
                                     };
                                     if (matchStats.counter > 0) matchStats.counter--;
                                 }, aDelay);
@@ -793,7 +826,7 @@ module.exports = {
                         def.on('collect', async r => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 matchStats.actionSequence.push("🛡️");
 
                                 // If defense was replaced
@@ -828,23 +861,36 @@ module.exports = {
                         });
 
                         ability.on('collect', async r => {
-                            if ((enemyType === "boss" || enemyType === "general") && (myChar.id === 238 || myChar.id === 17583)) return interaction.followUp({ content: "Rimuru can't eat your current opponent", ephemeral: true });
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
-                                    else {
-                                        matchStats.actionSequence.push("✨");
-                                        matchStats.turn = 0;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg, partyChars);
-                                        myStatsC.sm -= myAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                        attack();
-                                    };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+
+                            else {
+                                if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+                                if ((enemyType === "boss" || enemyType === "general") && (myChar.id === 238 || myChar.id === 17583)) return interaction.followUp({ content: "Can't eat your current opponent", ephemeral: true });
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                        else {
+                                            matchStats.actionSequence.push("✨");
+                                            matchStats.turn = 0;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg, partyChars);
+                                            myStatsC.sm -= myAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                            attack();
+                                        };
+                                    } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            };
                         });
 
                         cskill.on('collect', async r => {
@@ -852,12 +898,12 @@ module.exports = {
                             // If class active was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 matchStats.actionSequence.push("⚜️");
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                if (matchStats.turn === 0) attack();
+                                attack();
                             }
 
                             // Class active
@@ -868,7 +914,7 @@ module.exports = {
                                     if (matchStats.turn === 1) {
                                         matchStats.actionSequence.push("⚜️");
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

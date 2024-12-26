@@ -1,8 +1,8 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
-const { PageRow, OfferRow } = require("../Modules/components.js");
-const { showPage, customEmojis, getAscensionMaterial, searchItem, generateUniqueItemId, generateSubstats } = require("../Modules/functions.js");
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
+import { PageRow, OfferRow } from "../Modules/components";
+import { showPage, customEmojis, getAscensionMaterial, searchItem, generateUniqueItemId } from "../Modules/functions";
 
 function forgeryEmbed(elements) {
     const Embed = new EmbedBuilder()
@@ -116,7 +116,7 @@ module.exports = {
 
                     // Write to database
                     let uid = generateUniqueItemId(interaction.user.id, existing);
-                    await query(`INSERT INTO weapons (id, itemid, uniqueid${fItem.category === "armor" ? ", substats" : ""}) VALUES (${interaction.user.id}, ${fItem.id}, '${uid + ":" + interaction.user.id}'${fItem.category === "armor" ? ", '" + JSON.stringify(generateSubstats()) + "'" : ""})`, 'run');
+                    await query(`INSERT INTO weapons (id, itemid, uniqueid, item_type) VALUES (${interaction.user.id}, ${fItem.id}, '${uid + ":" + interaction.user.id}', ${fItem.category})`, 'run');
 
                     interaction.channel.send(`Successfully crafted ${fItem.emoji} **__${fItem.name}__**!`);
                 });

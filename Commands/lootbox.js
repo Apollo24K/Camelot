@@ -1,5 +1,5 @@
-const { db, query } = require("../db_handler.js");
-const { ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
+import { db, query } from "../db_handler";
+import { ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
 
 const row = new ActionRowBuilder()
     .addComponents(

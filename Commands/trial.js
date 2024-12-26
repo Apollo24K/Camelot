@@ -1,19 +1,18 @@
 /* eslint-disable no-unused-vars */
-/* eslint-disable no-extra-semi */
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { achievements } = require("../Modules/achievements.js");
-const { classes } = require("../Modules/classes.js");
-const { curses } = require("../Modules/curses.js");
-const { skills } = require("../Modules/skills.js");
-const { items } = require("../Modules/items.js");
-const { characters } = require("../Modules/chars.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { getDetailedStats, classLevelToXP, search, searchClass, baseHP, baseATK, baseDEF, customEmojis, deleteReplyIn, dealDamage } = require("../Modules/functions.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities";
+import { achievements } from "../Modules/achievements";
+import { classes } from "../Modules/classes";
+import { curses } from "../Modules/curses";
+import { skills } from "../Modules/skills";
+import { items } from "../Modules/items";
+import { characters } from "../Modules/chars";
+import { dailies } from "../Modules/dailyQuests";
+import { getDetailedStats, classLevelToXP, search, searchClass, customEmojis, dealDamage } from "../Modules/functions";
+import Avalon from "../Modules/avalon";
+import buffInfo from "../Modules/buffs";
+import _ from 'lodash';
 
 const dungeonInProgress = new Set();
 const luminousImages = ["https://i.ibb.co/QpyDLjX/l1.png", "https://i.ibb.co/MfKkZkH/l2.png", "https://i.ibb.co/Hqr6Jgx/l3.png", "https://i.ibb.co/hsbmQRM/l4.png", "https://i.ibb.co/FqmT9vx/l5.png", "https://i.ibb.co/bdjhmCb/l6.png", "https://i.ibb.co/s3fq9Cy/l7.png", "https://i.ibb.co/VTwQTvB/l8.png", "https://i.ibb.co/23xd7cL/l9.png"];
@@ -48,7 +47,7 @@ class skillInfo {
 };
 
 module.exports = {
-    name: 'trial',
+    name: 'trial-old',
     description: 'trial',
     execute(interaction) {
 
@@ -316,10 +315,15 @@ module.exports = {
                             if (matchStats.turn === 1) return;
                             if (eStatsC.timeFrozen) {
                                 if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                 matchStats.turn = 1;
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
+                                if (matchStats.playerPausingRounds > 0) {
+                                    matchStats.playerPausingRounds--;
+                                    attack();
+                                };
                             } else {
                                 setTimeout(() => {
                                     if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
@@ -336,10 +340,15 @@ module.exports = {
                                     } else {
                                         dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                         matchStats.turn = 1;
                                         matchStats.round++;
                                         startNextRound();
                                         editEmbed();
+                                        if (matchStats.playerPausingRounds > 0) {
+                                            matchStats.playerPausingRounds--;
+                                            attack();
+                                        };
                                     };
                                     if (matchStats.counter > 0) matchStats.counter--;
                                 }, aDelay);
@@ -385,7 +394,7 @@ module.exports = {
                         def.on('collect', async r => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -419,21 +428,35 @@ module.exports = {
                         });
 
                         ability.on('collect', async r => {
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
-                                    else {
-                                        matchStats.turn = 0;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                        myStatsC.sm -= myAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                        attack();
-                                    };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+
+                            else {
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                        else {
+                                            matchStats.turn = 0;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                            myStatsC.sm -= myAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                            attack();
+                                        };
+                                    } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            };
                         });
 
                         cskill.on('collect', async r => {
@@ -441,7 +464,7 @@ module.exports = {
                             // If class active was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -455,7 +478,7 @@ module.exports = {
                                 else {
                                     if (matchStats.turn === 1) {
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

@@ -1,6 +1,6 @@
-const { db, query } = require("../db_handler.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { dungeonTempBan } = require("../Modules/components.js");
+import { db, query } from "../db_handler";
+import { dailies } from "../Modules/dailyQuests";
+import { dungeonTempBan } from "../Modules/components";
 
 module.exports = {
     name: 'cd',
@@ -25,12 +25,12 @@ module.exports = {
             let dunLim = 10;
 
             // Messages
-            let pull = `Your pulls are ready! => \`/pull\``;
-            let dungeon = `Your runs are ready! => \`/dungeon\``;
-            let dailyquest = `Your quests are ready! => \`/quests\``;
-            let dailymsg = `Your daily is ready! => \`/daily\``;
-            let weeklymsg = `\`locked\` => see \`/premium\``;
-            let vote = `You can vote now! => \`/vote\``;
+            let pull = `Your pulls are ready! => </pull:1011014030103674913>`;
+            let dungeon = `Your runs are ready! => </dungeon:1014616988993204284>`;
+            let dailymsg = `Your daily is ready! => </daily:1011371510759428136>`;
+            let weeklymsg = `\`locked\` => see </premium:1011293280702578691>`;
+            let dailyquest = `Your quests are ready! => </quests:1087099255652622433>`;
+            let vote = `You can [vote](<https://top.gg/bot/706183309943767112/vote>) now! => </vote:1010546185792135198>`;
 
             if (stats.premium) {
                 // Pulls & Dungeon

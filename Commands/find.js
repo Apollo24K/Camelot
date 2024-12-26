@@ -1,7 +1,8 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { search, showPage } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { search, showPage } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
 
 const rarEmoji = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
 
@@ -9,6 +10,8 @@ module.exports = {
     name: 'find',
     description: 'find a character in your server',
     execute(interaction) {
+
+        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
 
         const page = interaction.options.getInteger('page');
         const setting = interaction.options.getString('setting');
@@ -31,7 +34,7 @@ module.exports = {
             stats.forEach((user) => {
                 const copies = JSON.parse(user.chars).filter((e) => e === char.id).length;
                 totalCopies += copies;
-                if ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1)) users.push({ name: user.name, count: copies });
+                if ((!(user.id in blacklist)) && ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1))) users.push({ name: user.name, count: copies });
             });
             users.sort((a, b) => b.count - a.count);
 

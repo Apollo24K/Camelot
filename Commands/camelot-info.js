@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
-const { EmbedBuilder } = require('discord.js');
-const { db, query } = require("../db_handler.js");
-const package = require('../package.json');
+import { EmbedBuilder } from 'discord.js';
+import { db, query } from "../db_handler";
+import Package from '../package.json';
 
 function format(sec) {
     function pad(s) {
@@ -26,7 +26,7 @@ module.exports = {
                 .setTitle('Camelot')
                 .setColor(0xbbffff)
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setFooter({ text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" })
+                .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" })
                 .setDescription("Absent in the early Arthurian material, Camelot came to be described as the fantastic capital of Arthur's realm and a symbol of the Arthurian world.")
                 .addFields(
                     { name: 'Stats️', value: `Servers: **${client.guilds.cache.size}**\nPlayers: **${stats[0].players}**`, inline: true },

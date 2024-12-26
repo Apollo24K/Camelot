@@ -1,9 +1,9 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
-const { skins } = require("../Modules/skins.js");
-const { showPage } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { characters } from "../Modules/chars";
+import { skins } from "../Modules/skins";
+import { showPage } from "../Modules/functions.js";
+import { PageRow } from "../Modules/components.js";
 
 module.exports = {
     name: 'skins',

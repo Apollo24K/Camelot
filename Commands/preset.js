@@ -1,10 +1,10 @@
-const fs = require('fs');
-const { EmbedBuilder } = require("discord.js");
-const { characters } = require("../Modules/chars.js");
-const { classes } = require("../Modules/classes.js");
-const { items } = require("../Modules/items.js");
-const { search, searchClass, filterItems } = require("../Modules/functions.js");
-const { db, query } = require("../db_handler.js");
+import fs from 'fs';
+import { EmbedBuilder } from "discord.js";
+import { characters } from "../Modules/chars";
+import { classes } from "../Modules/classes";
+import { items } from "../Modules/items";
+import { search, searchClass, filterItems } from "../Modules/functions";
+import { db, query } from "../db_handler";
 
 module.exports = {
     name: 'preset',

@@ -1,5 +1,6 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { formatNumberWithQuotes } from "../Modules/functions";
 
 const row = new ActionRowBuilder()
     .addComponents(
@@ -42,7 +43,7 @@ module.exports = {
                     .setColor(0xbbffff)
                     .setAuthor({ name: `${user.username}'s Bank`, iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
                     .setThumbnail("https://i.ibb.co/RzqnB8S/bank.png")
-                    .setDescription(`**Balance**: \`${Math.max(stats.bank, 0)}/${cap}\` <:coins:872926669055356939>\n**Additional Level**: \`${extraLvl}\``);
+                    .setDescription(`**Balance**: \`${formatNumberWithQuotes(Math.max(stats.bank, 0))}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>\n**Additional Level**: \`${extraLvl}\``);
                 return interaction.reply({ embeds: [Embed], fetchReply: true }).then(() => {
                     if (stats.bank === -1 && user.id === interaction.user.id) {
                         const Embed = new EmbedBuilder()
@@ -75,7 +76,7 @@ module.exports = {
 
                 await query(`UPDATE users SET coins = coins - ${amount}, bank = bank + ${amount + (stats.bank === -1 ? 1 : 0)} WHERE id = ${interaction.user.id}`);
 
-                return interaction.reply(`Deposited **${amount}** <:coins:872926669055356939> in your bank!\nBank balance: \`${stats.bank + (amount + (stats.bank === -1 ? 1 : 0))}/${cap}\` <:coins:872926669055356939>`);
+                return interaction.reply(`Deposited **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> in your bank!\nBank balance: \`${formatNumberWithQuotes(stats.bank + (amount + (stats.bank === -1 ? 1 : 0)))}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
             };
 
             if (subcommand === "withdraw") {
@@ -87,7 +88,7 @@ module.exports = {
 
                 await query(`UPDATE users SET coins = coins + ${amount}, bank = bank - ${amount} WHERE id = ${interaction.user.id}`);
 
-                return interaction.reply(`Withdrew **${amount}** <:coins:872926669055356939> from your bank!\nBank balance: \`${stats.bank - amount}/${cap}\` <:coins:872926669055356939>`);
+                return interaction.reply(`Withdrew **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> from your bank!\nBank balance: \`${formatNumberWithQuotes(stats.bank - amount)}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
             };
         });
 

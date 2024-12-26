@@ -1,11 +1,11 @@
-const fs = require('fs');
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { achievements } = require("../Modules/achievements.js");
-const { characters, auniq } = require("../Modules/chars.js");
-const { enemies } = require("../Modules/enemies.js");
-const { userLevel } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { achievements } from "../Modules/achievements";
+import { characters, auniq } from "../Modules/chars";
+import { enemies } from "../Modules/enemies";
+import { userLevel } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
 
 module.exports = {
     name: 'achievements',

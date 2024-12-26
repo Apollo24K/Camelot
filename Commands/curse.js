@@ -1,7 +1,7 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { curses } = require("../Modules/curses.js");
-const { PageRow } = require("../Modules/components.js");
-const { showPage } = require("../Modules/functions.js");
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { curses } from "../Modules/curses";
+import { PageRow } from "../Modules/components";
+import { showPage } from "../Modules/functions";
 
 module.exports = {
     name: 'curse',

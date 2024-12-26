@@ -1,11 +1,13 @@
-const fs = require('fs');
-const config = require('../config.json');
-const { ComponentType, ActionRowBuilder, ButtonBuilder } = require("discord.js");
-const { characters } = require("../Modules/chars.js");
-const { db, query } = require("../db_handler.js");
-const { showPage } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
-const math = require('mathjs');
+import fs from 'fs';
+import csvWriter from 'fast-csv';
+import math from 'mathjs';
+import { ComponentType, ActionRowBuilder, ButtonBuilder, EmbedBuilder, AttachmentBuilder } from "discord.js";
+import config from '../config.json';
+import { characters } from "../Modules/chars";
+import { db, query } from "../db_handler";
+import { showPage, search } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
+import { PassThrough } from 'stream';
 
 const OfferRow = new ActionRowBuilder()
     .addComponents(
@@ -24,7 +26,7 @@ const OfferRow = new ActionRowBuilder()
 module.exports = {
     name: 'mod',
     description: 'take mod actions',
-    execute(interaction) {
+    async execute(interaction) {
 
         const moderators = JSON.parse(fs.readFileSync('Storage/moderators.json', 'utf8'));
 
@@ -39,21 +41,26 @@ module.exports = {
         if (!(interaction.user.id in moderators)) return interaction.reply({ content: "You're not allowed to use this command", ephemeral });
 
         // List all actions
-        if (cmd === "list") {
+        if (cmd === "list" || cmd === "help") {
             return interaction.reply({
-                content: ">>> " +
-                    "`list`\n" +
+                content: "Simply use the below commands without passing any values to view details on how they work\n" +
+                    ">>> " +
+                    "`list` or `help`\n" +
                     "`get`\n" +
                     "`faq`\n" +
                     "`trades`\n" +
-                    "`response`, `response graph`\n" +
-                    "`participation` (stampede)\n"
+                    "`export`\n" +
+                    "`response`\n" +
+                    "`referrals`\n" +
+                    "`participation` (stampede)\n" +
+                    "`add char`\n" +
+                    "`remove char`\n"
                 , ephemeral
             });
         };
 
         if (cmd === "get") {
-            if (!args[0]) return interaction.reply({ content: "Usage: `/mod get <option>`\n\n**Options**\n`/mod get id <name>`: Search for a players ID\n`/mod get name <id>`: Search for a players name", ephemeral });
+            if (!args[0]) return interaction.reply({ content: "Usage: `/mod get <option>`\n\n**Options**\n`/mod get id <name>`: Search for a players ID\n`/mod get name <id>`: Search for a players name\n`/mod get referrer user:<User>`: See who referred a user\n", ephemeral });
 
             db.serialize(async () => {
                 if (args[0] === "id") {
@@ -73,6 +80,13 @@ module.exports = {
                 } else if (args[0] === "name") {
                     const { 0: stats } = await query(`SELECT name FROM users WHERE id = '${args[1]}'`);
                     if (stats?.name) return interaction.reply({ content: stats.name, ephemeral });
+                } else if (args[0] === "referrer") {
+                    // if user is provided, get referrer
+                    if (!user) return interaction.reply({ content: "Usage: `/mod get referrer user:<User>`", ephemeral });
+
+                    const { 0: referrer } = await query(`SELECT referred_by FROM users WHERE id = '${user.id}'`);
+                    if (referrer.referred_by) return interaction.reply({ content: `${user.toString()} was referred by <@${referrer.referred_by}> (id: ${referrer.referred_by})`, ephemeral });
+                    else return interaction.reply({ content: `${user.toString()} was not referred by anyone`, ephemeral });
                 };
 
                 return interaction.reply({ content: "No match found", ephemeral });
@@ -146,7 +160,7 @@ module.exports = {
 
                 if (pagesTotal === 1) return interaction.reply({ content: desc(showUsers), ephemeral });
                 return interaction.reply({ content: desc(showUsers), components: [PageRow], ephemeral, fetchReply: true }).then(msg => {
-                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
 
                     collector.on('collect', async r => {
                         if (r.customId === "prev") {
@@ -167,12 +181,78 @@ module.exports = {
             });
         };
 
+        if (cmd === "export") {
+            if (!args[0]) return interaction.reply({ content: "Usage: `/mod export <option> user?:<User>`\n\n**Options**\n`trades`: Export all trades to CSV. Optionally specify a user to only export their trades\n\n**Example**\n`/mod export trades user:@username`", ephemeral });
+
+            if (args[0] === "trades") {
+                interaction.reply({ content: "Exporting trades...", ephemeral });
+
+                db.serialize(async () => {
+                    // If user is provided, only get trades involving that user
+                    const trades = await query(
+                        user
+                            ? `SELECT * FROM trades WHERE id = ${user.id} OR receiver = ${user.id}`
+                            : `SELECT * FROM trades`
+                    );
+
+                    if (trades.length === 0) return interaction.reply({
+                        content: user
+                            ? `No trades found involving ${user.username}`
+                            : "No trades available to export",
+                        ephemeral
+                    });
+
+                    const data = trades.map(trade => ({
+                        sender: trade.id,
+                        receiver: trade.receiver,
+                        coins: trade.type === "coins" ? trade.sent : 0,
+                        charid: trade.type === "char" ? trade.sent : 0,
+                        char: trade.type === "char" ? characters[trade.sent].name : "",
+                        timestamp: trade.sent_at
+                    }));
+
+                    const csvStream = csvWriter.write(data, { headers: true, delimiter: ';' });
+                    const passThrough = new PassThrough();
+                    csvStream.pipe(passThrough);
+
+                    const attachment = new AttachmentBuilder(passThrough, {
+                        name: user ? `trades_${user.username}.csv` : 'trades.csv'
+                    });
+                    setTimeout(() => {
+                        interaction.editReply({
+                            content: user
+                                ? `Here are the exported trades for ${user.username}:`
+                                : "Here are the exported trades:",
+                            files: [attachment],
+                            ephemeral
+                        });
+                    }, 5000);
+                });
+            }
+        };
+
         // Response Time
         async function response(flags = []) {
             const { 0: res } = await query(`SELECT ${flags.includes("stampede") ? "s_responsetime" : "responsetime"} as rtime FROM dungeon WHERE id = '${user.id}'`);
             const timestamps = res.rtime.split(",").map((e) => parseInt(e));
-            const resp = timestamps.map((e, i) => timestamps[i + 1] - e).slice(0, -2);
-            let cleaned = resp.filter((e) => e < 60 * 1000);
+            let resp = timestamps.map((e, i) => timestamps[i + 1] - e).slice(0, -2);
+            if (flags.some((e) => e.startsWith("range:"))) {
+                const [, start, end] = (flags.find((e) => e.startsWith("range:")) ?? "range:0").split(":");
+                resp = resp.slice(parseInt(start) || 0, parseInt(end) || undefined);
+            };
+            if (flags.some((e) => e.startsWith("interval:"))) {
+                let [, interval, averaged] = (flags.find((e) => e.startsWith("interval:")) ?? "interval:1").split(":");
+                interval = parseInt(interval) || 1;
+                if (interval < 1) interval = 1;
+                const summed = [];
+                for (let i = 0; i < resp.length; i += interval) {
+                    const sum = resp.slice(i, i + interval).reduce((acc, num) => acc + num, 0);
+                    if (averaged) summed.push(Math.round(sum / interval));
+                    else summed.push(sum);
+                };
+                resp = summed;
+            };
+            const cleaned = resp.filter((e) => e < 120 * 1000);
             if (cleaned.length === 0) return "not enough data";
             const rounded = resp.map((e) => Math.round(e / 1000));
             const diff = -(math.mean(...cleaned.slice(-100)));
@@ -217,21 +297,33 @@ module.exports = {
                     else sessions.push(0);
                 };
 
+                // Return txt
+                const txtFlag = flags.find((e) => e.startsWith("txt"));
+                if (txtFlag) {
+                    const param = txtFlag.split(":")[1];
+                    if (!param) return rounded.join(",");
+                    if (param === "raw") return resp.join(",");
+                    if (param === "cleaned") return cleaned.join(",");
+                    if (param === "sessions") return sessions.join(",");
+                    if (param === "timestamps") return res.rtime;
+                };
+
                 const s = `**user**: ${user.username} | ${user.id}\n**sample size**: ${cleaned.length} | ${cleaned.slice(-100).length}\n**mean**: ${Math.round(math.mean(cleaned) / 10) / 100}s | ${Math.round(math.mean(cleaned.slice(-100)) / 10) / 100}s\n**median**: ${Math.round(math.median(cleaned) / 10) / 100}s | ${Math.round(math.median(cleaned.slice(-100)) / 10) / 100}s\n**mode**: ${math.mode(rounded)}s | ${math.mode(rounded.slice(-100))}s\n**std**: ${Math.round(math.std(cleaned) / 10) / 100}s | ${Math.round(math.std(cleaned.slice(-100)) / 10) / 100}s\n**var**: ${Math.round(math.variance(cleaned) / 10000) / 100}s² | ${Math.round(math.variance(cleaned.slice(-100)) / 10000) / 100}s²\n**Longest session**: ${Math.floor((Math.max(...sessions) / (60 * 60)) * 100) / 100}h\n\n**Recent Activity**:\n> `;
                 return s + rounded.join(", ").slice(-(1400 - risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e + diff) / 1000)).join(", ").slice(-(600 - 20 - s.length)) + risky;
                 // return interaction.reply({content: s + rounded.join(", ").slice(-(1400-risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e+diff)/1000)).join(", ").slice(-(600-20-s.length)) + risky, ephemeral});
             };
         };
-        if (cmd === "response" || cmd === "s_response") {
-            if (!user?.id && args[0] !== "rank") return interaction.reply({ content: "Usage: `/mod response [graph|rank] user?:`\n\n**Options**\n`graph`: Draw a graph\n`rank`: Rank users by std", ephemeral });
-
+        if (cmd === "r" || cmd === "response" || cmd === "s_response") {
             const flags = args.filter((s) => s.startsWith("--")).map((s) => s.slice(2));
 
+            if (!user?.id && !flags.includes("rank")) return interaction.reply({ content: "Usage: `/mod response --[flag] user?:`\n\n**Flags**\n`graph`: Draw a graph\n`rank`: Rank users by std\n`range:<num1>:<num2>`: Slice the sample from `num1` to `num2` (optional)\n`interval:<repeat>`: Group repeated runs together to simplify patterns (usage: `interval:2`, `ìnterval:5:averaged`)\n`txt:<param>`: Output a txt file with the specified parameters (usage: `txt`, `txt:raw`, `txt:cleaned`, `txt:sessions`, `txt:timestamps`)", ephemeral });
+
             db.serialize(async () => {
-                if (args[0] === "rank") {
+                if (flags.includes("rank")) {
                     interaction.reply({ content: "loading...", ephemeral });
 
-                    let results = await query(`SELECT id, ${cmd === "response" ? "responsetime" : "s_responsetime"} as rtime FROM dungeon`);
+                    let results = await query(`SELECT id, ${flags.includes("stampede") ? "s_responsetime" : "responsetime"} as rtime FROM dungeon`);
+
                     results = results.filter((e) => e.rtime);
 
                     const final = [];
@@ -255,11 +347,72 @@ module.exports = {
                     }, 5000);
                 } else {
                     const content = await response(flags);
-                    interaction.reply({ content, ephemeral });
+                    if (!flags.find((e) => e.startsWith("txt"))) return interaction.reply({ content, ephemeral });
+
+                    // eslint-disable-next-line no-undef
+                    const attachment = new AttachmentBuilder(Buffer.from(content, 'utf-8'), { name: 'response.txt' });
+                    return interaction.reply({ files: [attachment], ephemeral });
                 };
             });
         };
 
+
+        // Referrals
+        if (cmd === "referrals") {
+            if (!args[0]) return interaction.reply({ content: "Usage: `/mod referrals <option>`\n\n**Options**\n`rank`: Rank users by the number of users they have referred\n\n**Example**\n`/mod referrals rank`", ephemeral });
+
+            if (args[0] === "rank") {
+                db.serialize(async () => {
+                    const results = await query(`SELECT referred_by, COUNT(*) as count
+                        FROM users
+                        WHERE referred_by IS NOT NULL
+                        GROUP BY referred_by
+                        HAVING count > 5
+                        ORDER BY count DESC`
+                    );
+
+                    if (results.length === 0) return interaction.reply({ content: "No referral data available", ephemeral });
+
+                    const elementsPerPage = 15;
+                    const pagesTotal = Math.ceil(results.length / elementsPerPage);
+                    let currPage = 1;
+
+                    const generateEmbed = (page) => {
+                        const start = (page - 1) * elementsPerPage;
+                        const end = start + elementsPerPage;
+                        const leaderboard = results.slice(start, end).map((row, index) => `${start + index + 1}. <@${row.referred_by}>: **${row.count}** referrals`).join("\n");
+
+                        return new EmbedBuilder()
+                            .setColor(0xbbffff)
+                            .setTitle('Top Referrers')
+                            .setDescription(leaderboard)
+                            .setFooter({ text: `Page ${page} of ${pagesTotal}` });
+                    };
+
+                    const Embed = generateEmbed(currPage);
+
+                    interaction.reply({ embeds: [Embed], components: [PageRow], ephemeral, fetchReply: true }).then(msg => {
+                        const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 180000 });
+
+                        collector.on('collect', i => {
+                            if (i.user.id !== interaction.user.id) return;
+
+                            if (i.customId === 'prev') {
+                                currPage = currPage > 1 ? currPage - 1 : pagesTotal;
+                            } else if (i.customId === 'next') {
+                                currPage = currPage < pagesTotal ? currPage + 1 : 1;
+                            };
+
+                            interaction.editReply({ embeds: [generateEmbed(currPage)] });
+                        });
+
+                        collector.on('end', () => {
+                            interaction.editReply({ components: [] });
+                        });
+                    });
+                });
+            }
+        };
 
         // Stampede participation
         if (cmd === "participation") {
@@ -275,6 +428,57 @@ module.exports = {
                 const global = Object.values(participation).reduce((acc, cur) => acc + (Array.isArray(cur) ? cur[0] : cur), 0);
 
                 return interaction.reply({ content: `Stampede #${damages[past - 1].rowid} - Participation of ${user.username}\nDamage: ${damage}\nParticipation: ${participation[user.id]?.[1] ?? 0}\nGlobal share: ${Math.floor(10000 * damage / global) / 100}% (${damage}/${global})`, ephemeral });
+            });
+        };
+
+        // Add char
+        if (action.startsWith("add char")) {
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/mod add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
+
+            args.shift();
+            const char = search(args.join(" "), [0], interaction, true);
+            if (!char.name) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/mod add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
+
+            db.serialize(async () => {
+                const { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
+                inv.chars = JSON.parse(inv.chars);
+                inv.chars.push(char.id);
+                await query(`UPDATE characters SET chars = '${JSON.stringify(inv.chars)}' WHERE id = ${user.id}`);
+
+                // Mod Log
+                const chnl = interaction.client.channels.cache.find(channel => channel.id === "1239976849866752041");
+                const Embed = new EmbedBuilder()
+                    .setColor(0xbbffff)
+                    .setDescription(`${interaction.user.tag} added **${char.rarity}** **${char.name}** to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
+                chnl.send({ embeds: [Embed] });
+
+                return interaction.reply({ content: `Action Successful: Added **${char.name}** to ${user.toString()}`, ephemeral });
+            });
+        };
+
+        // Remove char
+        if (action.startsWith("remove char")) {
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/mod remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
+
+            args.shift();
+            const char = search(args.join(" "), [0], interaction, true);
+            if (!char.name) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/mod remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
+
+            db.serialize(async () => {
+                const { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
+                inv.chars = JSON.parse(inv.chars);
+                if (!inv.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
+                inv.chars.splice(inv.chars.indexOf(char.id), 1);
+                await query(`UPDATE characters SET chars = '${JSON.stringify(inv.chars)}' WHERE id = ${user.id}`);
+
+                // Mod Log
+                const chnl = interaction.client.channels.cache.find(channel => channel.id === "1239976849866752041");
+                const Embed = new EmbedBuilder()
+                    .setColor(0xbbffff)
+                    .setDescription(`${interaction.user.tag} removed **${char.rarity}** **${char.name}** from **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
+                chnl.send({ embeds: [Embed] });
+
+                return interaction.reply({ content: `Action Successful: Removed **${char.name}** from ${user.toString()}`, ephemeral });
             });
         };
 

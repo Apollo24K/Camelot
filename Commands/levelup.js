@@ -1,10 +1,10 @@
-const fs = require('fs');
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
-const { achievements } = require("../Modules/achievements.js");
-const { getDetailedStats } = require("../Modules/functions.js");
-const { OfferRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { characters } from "../Modules/chars";
+import { achievements } from "../Modules/achievements";
+import { getDetailedStats } from "../Modules/functions";
+import { OfferRow } from "../Modules/components";
 
 module.exports = {
     name: 'levelup',

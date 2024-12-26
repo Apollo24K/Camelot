@@ -1,5 +1,5 @@
-const { query } = require("../db_handler.js");
-const { ComponentType, ActionRowBuilder, ButtonBuilder } = require("discord.js");
+import { query } from "../db_handler";
+import { ComponentType, ActionRowBuilder, ButtonBuilder } from "discord.js";
 
 // Get # of days since
 function daysAgo(lastOnlineDate) {
@@ -15,7 +15,7 @@ function daysAgo(lastOnlineDate) {
 };
 
 module.exports = {
-    name: 'valentines-chocolate', // christmas-present
+    name: 'christmas-present', // celebrate, christmas-present, valentines-chocolate, egg-hunt
     description: 'claim daily event reward',
     async execute(interaction) {
 
@@ -81,14 +81,16 @@ module.exports = {
 
         if (stats.celebrateclaimed && daysAgo(new Date(stats.celebrateclaimed)) === 0) return interaction.reply("Come back in " + `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min`);
 
-        const coins = Math.floor(1200 + (Math.random() * 600));
-        const gems = 1 + (Math.random() < 0.33);
-        const expulls = 0 + (Math.random() < 0.3);
-        const ssshard = Math.floor(Math.random() * 2);
-        const sshard = Math.floor(1 + (Math.random() * 3));
-        const ssticket = 0 + (Math.random() < 0.42);
-        const sticket = 1 + (Math.random() < 0.66);
-        const lootbox = 0 + (Math.random() < 0.5);
+        const reward = {
+            coins: Math.floor(1200 + (Math.random() * 600)),
+            gems: 1 + (Math.random() < 0.33),
+            expulls: 0 + (Math.random() < 0.4),
+            ssshard: Math.floor(Math.random() * 2),
+            sshard: Math.floor(1 + (Math.random() * 3)),
+            ssticket: 0 + (Math.random() < 0.42),
+            sticket: 1 + (Math.random() < 0.66),
+            lootbox: 0 + (Math.random() < 0.5)
+        };
 
         // Trick
         // if (Math.random() < 0.08) {
@@ -96,17 +98,23 @@ module.exports = {
         //     return interaction.reply(`🎃 Trick! 🍬\n>>> **-${coins}** <:coins:872926669055356939>`);
         // };
 
-        // EX Pull to add
-        await query(`UPDATE users SET coins = coins + ${coins}, gems = gems + ${gems}, expulls = expulls + ${expulls}, ssshard = ssshard + ${ssshard}, sshard = sshard + ${sshard}, ssticket = ssticket + ${ssticket}, sticket = sticket + ${sticket}, lootbox = lootbox + ${lootbox}, celebrateclaimed = ${Date.now()} WHERE id = ${interaction.user.id}`);
+        await query(`UPDATE users SET coins = coins + ${reward.coins}, gems = gems + ${reward.gems}, expulls = expulls + ${reward.expulls}, ssshard = ssshard + ${reward.ssshard}, sshard = sshard + ${reward.sshard}, ssticket = ssticket + ${reward.ssticket}, sticket = sticket + ${reward.sticket}, lootbox = lootbox + ${reward.lootbox}, celebrateclaimed = ${Date.now()} WHERE id = ${interaction.user.id}`);
 
-        let rewardMessage = `🎀 Happy Valentine's! 🍫\n>>> ${expulls ? `**${expulls}**x <a:EXTRA:1138530846144462968> pull, ` : ""}**${coins}** <:coins:872926669055356939>`;
-        if (gems) rewardMessage += `, **${gems}** <:genesis_gems:1034179687720681492>`;
-        if (ssshard) rewardMessage += `, **${ssshard}**x <:ss_shard:917203009543503892>`;
-        if (sshard) rewardMessage += `, **${sshard}**x <:s_shard:917202925514817566>`;
-        if (ssticket) rewardMessage += `, **${ssticket}**x <:ss_ticket:927503239396622336>`;
-        if (sticket) rewardMessage += `, **${sticket}**x <:s_ticket:927642487705722890>`;
-        if (lootbox) rewardMessage += `, **${lootbox}**x lootbox`;
+        const rewardItems = [
+            { amount: reward.expulls, name: '<a:EXTRA:1138530846144462968> pull' },
+            { amount: reward.coins, name: '<:coins:872926669055356939>' },
+            { amount: reward.gems, name: '<:genesis_gems:1034179687720681492>' },
+            { amount: reward.ssshard, name: '<:ss_shard:917203009543503892>' },
+            { amount: reward.sshard, name: '<:s_shard:917202925514817566>' },
+            { amount: reward.ssticket, name: '<:ss_ticket:927503239396622336>' },
+            { amount: reward.sticket, name: '<:s_ticket:927642487705722890>' },
+            { amount: reward.lootbox, name: 'lootbox' }
+        ];
 
-        return interaction.reply(rewardMessage);
+        // Anniversary
+        // return interaction.reply(`🎂 Happy 3rd Anniversary! 🎉\n>>> ${rewardItems.filter(item => item.amount > 0).map(item => `**${item.amount}**x ${item.name}`).join(', ')}`);
+
+        // Christmas
+        return interaction.reply(`🎄 Merry Christmas! ❄️\n>>> ${rewardItems.filter(item => item.amount > 0).map(item => `**${item.amount}**x ${item.name}`).join(', ')}`);
     },
 };

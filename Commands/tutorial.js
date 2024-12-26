@@ -1,11 +1,11 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { charactersA } = require("../Modules/chars.js");
-const { achievements } = require("../Modules/achievements.js");
-const { classes } = require("../Modules/classes.js");
-const { skills } = require("../Modules/skills.js");
-const { items } = require("../Modules/items.js");
-const { splitTitle, getRefinement, rarity, searchClass, customEmojis, generateUniqueItemId } = require("../Modules/functions.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { charactersA } from "../Modules/chars";
+import { achievements } from "../Modules/achievements";
+import { classes } from "../Modules/classes";
+import { skills } from "../Modules/skills";
+import { items } from "../Modules/items";
+import { splitTitle, getRefinement, rarity, searchClass, customEmojis, generateUniqueItemId } from "../Modules/functions";
 
 module.exports = {
     name: 'tutorial',
@@ -18,8 +18,13 @@ module.exports = {
             });
 
             async function triggerTutorial() {
-                let stats = await query(`SELECT users.tutorial, users.favchar, users.battlechar, users.premium, users.items, characters.chars, characters.ref, characters.class, characters.skin, users.equipment, dungeon.classes FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON dungeon.id = users.id WHERE users.id = ${interaction.user.id}`);
-                stats = { tutorial: JSON.parse(stats[0].tutorial), favchar: stats[0].favchar, battlechar: stats[0].battlechar, premium: stats[0].premium, items: JSON.parse(stats[0].items), chars: JSON.parse(stats[0].chars), ref: JSON.parse(stats[0].ref), class: JSON.parse(stats[0].class), skin: JSON.parse(stats[0].skin), equipment: JSON.parse(stats[0].equipment), classes: JSON.parse(stats[0].classes) };
+                const { 0: stats } = await query(`SELECT users.tutorial, users.favchar, users.battlechar, users.premium, users.items, users.class, characters.chars, characters.skin, users.equipment, dungeon.classes FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON dungeon.id = users.id WHERE users.id = ${interaction.user.id}`);
+                stats.tutorial = JSON.parse(stats.tutorial);
+                stats.items = JSON.parse(stats.items);
+                stats.chars = JSON.parse(stats.chars);
+                stats.skin = JSON.parse(stats.skin);
+                stats.equipment = JSON.parse(stats.equipment);
+                stats.classes = JSON.parse(stats.classes);
 
                 const tutorial = [0, 1, 2, 3, 4, 5, 6, 7].find((e) => !stats.tutorial.includes(e));
 
@@ -34,9 +39,9 @@ module.exports = {
 
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
-                        .setTitle("Welcome, Adventurer!")
+                        .setTitle(`Welcome, ${interaction.user.username}!`)
                         .setImage("https://i.imgur.com/Ta2YDBN.png")
-                        .setDescription("It seems you are new here <:MashaWave:928370055354400799>\nMy name is Luminous, and I will walk you through the games features <:RaphiSmile:868998036645380197>\n\nBut before we can continue,\n➜ Please make sure to read through our [Terms of Service](https://github.com/Apollo24K/Camelot-Public-Repo/blob/main/ToS) and [Privacy Policy](https://github.com/Apollo24K/Camelot-Public-Repo/blob/main/Privacy%20Policy) and accept them.\n➜ This is to make sure players are aware of the bots rules and the associated risks <:ThumbsUp:1020442047712350298>");
+                        .setDescription("It seems you are new here <:MashaWave:928370055354400799>\nMy name is Luminous, and I will walk you through the game's features!\n\nBut before we can continue,\n➜ Please make sure to read through our [Terms of Service](<https://rank.top/bot/camelot?page=terms>) and [Privacy Policy](<https://rank.top/bot/camelot?page=privacy>)\n➜ This is to make sure players are aware of the bot's rules and the associated risks <:KaeriThumbsUp:928369523021742090>\n➜ For further questions, you can join our [Support Server](<https://discord.gg/myy9PBCdEW>) and ask away!");
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
 
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "accept", componentType: ComponentType.Button, time: 120000 });
@@ -57,7 +62,7 @@ module.exports = {
                         .setColor(0xbbffff)
                         .setTitle("Great, looks like you've made it this far!")
                         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                        .setDescription("Then let's start by properly introducing myself again. My name's Luminous, but you can just call me Lumine <:ThumbsUp:1020442047712350298> And of course, my most important job is to introduce you to the world of Camelot!\nCamelot is a dungeon RPG with lots and lots of exciting features, but let's not bore you with a wall of text. Instead, let me show you!\n\n**/pull**\nCamelot lets you collect your favorite characters you're already familiar with from anime, manga, games, and more with the </pull:1011014030103674913> command. Try it out!");
+                        .setDescription("Then let's start by properly introducing myself again. My name's Luminous, and my most important job is to introduce you to Camelot, a massive dungeon RPG with lots and lots of exciting features! Let me show you!\n\n**/pull**\nCamelot lets you collect your favorite characters whom you're already familiar with from anime, manga, games, and more with the </pull:1011014030103674913> command. Try it out!");
                     interaction.editReply({ embeds: [Embed], components: [], fetchReply: false });
 
                     stats.tutorial.push(tutorial);
@@ -68,11 +73,9 @@ module.exports = {
                     let char = charactersA[Math.floor(Math.random() * charactersA.length)];
 
                     stats.chars.push(char.id);
-                    if (char.id in stats.ref) stats.ref[char.id]++;
-                    else stats.ref[char.id] = 1;
                     stats.tutorial.push(tutorial);
 
-                    await query(`UPDATE characters SET chars = '${JSON.stringify(stats.chars)}', ref = '${JSON.stringify(stats.ref)}' WHERE id = ${interaction.user.id}`);
+                    await query(`UPDATE characters SET chars = '${JSON.stringify(stats.chars)}' WHERE id = ${interaction.user.id}`);
                     await query(`UPDATE users SET tutorial = '${JSON.stringify(stats.tutorial)}', battlechar = ${char.id} WHERE id = ${interaction.user.id}`);
 
                     const row = new ActionRowBuilder()
@@ -87,8 +90,8 @@ module.exports = {
                         .setColor(0x2cdfe5)
                         .setImage(char.image)
                         .setThumbnail(rarity(char.rarity))
-                        .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n\n**Ref.** ${getRefinement(stats.ref[char.id])}`);
-                    interaction.editReply({ content: "Hey, look! You got an<:ATier:869316558013464627>-Tier character, they're quite rare!", embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
+                        .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n\n**Ref.** ${getRefinement(0)}`);
+                    interaction.editReply({ content: "Hey, look! You've pulled an<:ATier:869316558013464627>Tier character, they're quite rare!", embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
 
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
 
@@ -112,7 +115,7 @@ module.exports = {
                         .setColor(0xbbffff)
                         .setTitle("Congratulations on getting your first character!")
                         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                        .setDescription(`You will be able to pull **5** characters evey **45** minutes, and there's more ways to get them such as through the \`/shop\`, \`/tickets\` or \`/lootbox\`.\n\nCharacters come in the rarities of\n<:DTier:869316616071032843>➜<:CTier:869316602858991657>➜<:BTier:869316586803179571>➜<:ATier:869316558013464627>➜<:STier:869316518675095552>➜ <:SSTier:869316489931546644> ➜ <a:EXTRA:1138530846144462968>\n\nYou can view your characters with \`/inventory\` or \`/info\` if you wanna see details on a specific character.\n\n**Tip**: I'm also available as a pullable character <:LuminousPsssh:1071574041116295328>`);
+                        .setDescription(`You will be able to pull **5** characters evey **45** minutes, and there's more ways to get them such as through \`/tickets\` or \`/lootbox\`.\n\nCharacters come in the rarities of\n<:DTier:869316616071032843>➜<:CTier:869316602858991657>➜<:BTier:869316586803179571>➜<:ATier:869316558013464627>➜<:STier:869316518675095552>➜ <:SSTier:869316489931546644> ➜ <a:EXTRA:1138530846144462968>\n\nYou can view your collection with \`/inventory\` or use \`/info\` to see details of a specific character.\n\n-# **Tip**: I'm also available as a pullable character <:LuminousPsssh:1071574041116295328>`);
                     interaction.editReply({ content: "_ _", embeds: [Embed], components: [row], fetchReply: false }).then((msg) => {
 
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
@@ -191,8 +194,8 @@ module.exports = {
 
                             const Embed = new EmbedBuilder()
                                 .setColor(0xbbffff)
-                                .setTitle(`Let's Pick a Class!`)
-                                .setDescription(`Camelot offers a variety of classes you can choose from for your character! These classes offer your character unique abilities they can use during a battle <:wow:1020442064409874462>\nBelow you can see our 10 beginner classes, which can further be upgraded to advanced and master classes later on <:TohruPoint:928370972132782090>\n\nYou can use </class info:1013516072126783628> to get more information on a class.`)
+                                .setTitle(`Now Let's Pick a Class!`)
+                                .setDescription(`Camelot offers over **50+** classes you can choose from! These classes offer your characters unique abilities they can use during interactive battles <:wow:1020442064409874462>\n\nBelow you can see the **10** beginner classes, which can then be further upgraded to advanced and master grade classes!\n\n-# **Tip**: Use </class info:1013516072126783628> to learn more about a specific class <:ThumbsUp:1020442047712350298>`)
                                 .setImage("https://i.ibb.co/NLQ8wDQ/Beginner-Classes.png");
                             return interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
 
@@ -263,7 +266,7 @@ module.exports = {
                     };
 
                     let bestChoice = "";
-                    switch (stats.class[stats.battlechar]) {
+                    switch (stats.class) {
                         case 0: bestChoice = `\n\nBased on the class you chose earlier, I'd recommend you to pick **${items[58].name}** for now <:ClaraThumbsUp:1034899843505721514>`; break;
                         case 1: bestChoice = `\n\nBased on the class you chose earlier, I'd recommend you to pick **${items[58].name}** for now <:ClaraThumbsUp:1034899843505721514>`; break;
                         case 2: bestChoice = `\n\nBased on the class you chose earlier, I'd recommend you to pick **${items[61].name}** for now <:ClaraThumbsUp:1034899843505721514>`; break;
@@ -299,7 +302,7 @@ module.exports = {
                         .setColor(0xbbffff)
                         .setTitle("Next, let's pick a weapon to start off your journey!")
                         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                        .setDescription(`A reliable weapon is a must for any aspiring adventurer! Luckily, I'm here to help you find the perfect one for you <:HayasakaSmile:928369469301088326>\n\nThese are the 7 weapons you can choose from: ${listItem(58) + listItem(59) + listItem(60) + listItem(61) + listItem(62) + listItem(63) + listItem(64)}${bestChoice}`);
+                        .setDescription(`A reliable weapon is a must for any aspiring adventurer! Luckily, I'm here to help you find the perfect one for you <:KanaPoint:1298637938107879497>\n\nThese are the 7 weapons you can choose from: ${listItem(58) + listItem(59) + listItem(60) + listItem(61) + listItem(62) + listItem(63) + listItem(64)}${bestChoice}`);
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
 
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "class_selection", componentType: ComponentType.StringSelect, time: 60000 });
@@ -341,7 +344,7 @@ module.exports = {
                         .setColor(0xbbffff)
                         .setTitle("Great choice!")
                         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                        .setDescription(`In the world of Camelot, weapons are equipable items which boost your characters stats and provide passive abilities.\n\nWeapons can be found in the following grades:\n<:normal1:1041732429397889054><:normal2:1041732425379762268><:normal3:1041732422145953892><:normal4:1041732419591622686>➜ <:special1:1041731419963150397><:special2:1041731418008600717><:special3:1041731415919833149><:special4:1041731414032392202>➜ <:rare1:1041731092031492106><:rare2:1041731088357281802><:rare3:1041731083965825096>➜ <:unique1:1041730066272493578><:unique2:1041730063940468828><:unique3:1041730061163831437><:unique4:1041730057380573386>\n➜ <:legendary1:1041726519082491964><:legendary2:1041726517153112094><:legendary3:1041726515475382322><:legendary4:1041726512992366605>➜ <:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162>➜ <:genesis1:1041725784546619502><:genesis2:1041725782176825485><:genesis3:1041725778611675237><:genesis4:1041725780218093629>\n\nSo, are weapons the only type of items in Camelot? **No!** From armor sets to rings and runes, Camelot offers over **600+** unique items <:HowCute:1026605362960408576>`);
+                        .setDescription(`Weapons are crucial equipment which boost your character's stats and provide passive abilities <a:YuiNod:1059435876599484456>\n\nWeapons can be found in the following grades:\n<:normal1:1041732429397889054><:normal2:1041732425379762268><:normal3:1041732422145953892><:normal4:1041732419591622686>➜ <:special1:1041731419963150397><:special2:1041731418008600717><:special3:1041731415919833149><:special4:1041731414032392202>➜ <:rare1:1041731092031492106><:rare2:1041731088357281802><:rare3:1041731083965825096>➜ <:unique1:1041730066272493578><:unique2:1041730063940468828><:unique3:1041730061163831437><:unique4:1041730057380573386>\n➜ <:legendary1:1041726519082491964><:legendary2:1041726517153112094><:legendary3:1041726515475382322><:legendary4:1041726512992366605>➜ <:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162>➜ <:genesis1:1041725784546619502><:genesis2:1041725782176825485><:genesis3:1041725778611675237><:genesis4:1041725780218093629>\n\nSo, are weapons the only type of items in Camelot? **No!**\nFrom armor sets to rings and runes, Camelot offers over **600+** unique items <:HowCute:1026605362960408576>`);
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
 
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
@@ -363,13 +366,17 @@ module.exports = {
                                 .setCustomId('continue')
                                 .setLabel('Finish Tutorial!')
                                 .setStyle('Success'),
+                            new ButtonBuilder()
+                                .setLabel('Join our Support Server')
+                                .setURL('https://discord.gg/myy9PBCdEW')
+                                .setStyle('Link'),
                         );
 
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
-                        .setTitle("That's it!")
+                        .setTitle("That's it for now!")
                         .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                        .setDescription(`This concludes our little tour of the bot!\nI hope you've enjoyed my brief company <:ThumbsUp:1020442047712350298>\nBut I'm sure you can't wait to go out and explore the lands on your own now, I shouldn't hold you back any more <:MashaWave:928370055354400799>\n\n**✧ __What to do next?__ ✧**\n> ‧ You could </pull:1011014030103674913> characters\n> ‧ Claim your </daily:1011371510759428136>\n> ‧ Challenge the \`/dungeon\`\n> ‧ Visit the \`/shop\`\n> ‧ \`/levelup\` your characters\n> ‧ Hunt </achievements:1013464934065131551>\n> ‧ Catch some \`/fish\`\n> ‧ Discover new commands with </help:1010305606516740096>\n\nSee you again soon, in the dungeon <:LuminousPsssh:1071574041116295328>`);
+                        .setDescription(`This concludes our little tour of the bot!\nI hope you've enjoyed my brief company <:ThumbsUp:1020442047712350298>\n\nBut there's **a lot** more to explore, from the dungeon to raids, guilds, parties, stampedes, immortal cows (!?), frequent seasonal events, and so much more! <:HowCute:1026605362960408576>\n\nI'm sure you can't wait to go out and explore the lands on your own now, so I shouldn't hold you back any more. Have fun! <:MashaWave:928370055354400799>\n\n**✧ __So, what to do next?__ ✧**\n> - Explore! </help:1010305606516740096> and </faq:1169048590367334502> are your best friends <:ClaraThumbsUp:1034899843505721514>\n> - You could </pull:1011014030103674913> more characters\n> - Claim your </daily:1011371510759428136>\n> - Challenge the </dungeon:1014616988993204284>\n> - Hunt </achievements:1013464934065131551>\n> - Or take a break to catch some </fish:1087099255652622429> <:MikuHappy:1045096947876368404>\n> - And lastly, Camelot can be a bit overwhelming at first, so don't be afraid of asking for help on our [Support Server](<https://discord.gg/myy9PBCdEW>). After all, a journey is most fun together <:KanaPoint:1298637938107879497>\n\nSee you again soon, in the dungeon <:LuminousAlterPsssh:1124838040406331463>`);
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((msg) => {
 
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });

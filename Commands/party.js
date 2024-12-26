@@ -1,9 +1,9 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { generateUniqueGuildId } = require("../Modules/functions.js");
-const { characters } = require("../Modules/chars.js");
-const { abilities } = require("../Modules/abilities.js");
-const { OfferRow } = require("../Modules/components.js");
+import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { db, query } from "../db_handler";
+import { generateUniqueGuildId } from "../Modules/functions";
+import { characters } from "../Modules/chars";
+import { abilities } from "../Modules/abilities";
+import { OfferRow } from "../Modules/components";
 
 module.exports = {
     name: 'party',
@@ -17,8 +17,9 @@ module.exports = {
             const name = interaction.options.getString('name');
             if (name.length > 20) return interaction.reply(`Party names can't be longer than 20 characters (current length: ${name.length})`);
             db.serialize(async () => {
-                const { 0: stats } = await query(`SELECT party FROM users WHERE users.id = ${interaction.user.id}`);
+                const { 0: stats } = await query(`SELECT party, cow_participation FROM users WHERE users.id = ${interaction.user.id}`);
                 if (stats.party) return interaction.reply(`You are already in a party, please leave your current one if you want to create a new party.`);
+                if (stats.cow_participation !== null) return interaction.reply(`You can't change your party till \`/rolling cow\` is over.`);
 
                 let existingParties = await query(`SELECT id FROM parties`);
                 existingParties = existingParties.map((e) => e.id);
@@ -89,6 +90,14 @@ module.exports = {
                     interaction.reply(`Changed party icon to <${input}>`);
 
                     // Image Log
+                    const row = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`ref-party-icon:${stats.party}`)
+                                .setLabel(`Remove thumbnail`)
+                                .setStyle(ButtonStyle.Secondary)
+                        );
+
                     const channel = interaction.client.channels.cache.find(channel => channel.id === "934117922039791627");
                     const Embed = new EmbedBuilder()
                         .setColor(party.color || 0xbbffff)
@@ -97,7 +106,7 @@ module.exports = {
                         .setDescription(`ID: \`${party.id}\`\nParty: ${party.members.split(",").join(", ")}`)
                         .setFooter({ text: `Changed by ${interaction.user.username} | ${interaction.user.id}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                     if (party.banner) Embed.setImage(party.banner);
-                    return channel.send({ embeds: [Embed] });
+                    return channel.send({ embeds: [Embed], components: [row] });
                 };
 
                 if (setting === "banner") {
@@ -112,6 +121,14 @@ module.exports = {
                     interaction.reply(`Changed party banner to <${input}>`);
 
                     // Image Log
+                    const row = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId(`ref-party-banner:${stats.party}`)
+                                .setLabel(`Remove banner`)
+                                .setStyle(ButtonStyle.Secondary)
+                        );
+
                     const channel = interaction.client.channels.cache.find(channel => channel.id === "934117922039791627");
                     const Embed = new EmbedBuilder()
                         .setColor(party.color || 0xbbffff)
@@ -120,18 +137,20 @@ module.exports = {
                         .setDescription(`ID: \`${party.id}\`\nParty: ${party.members.split(",").join(", ")}`)
                         .setFooter({ text: `Changed by ${interaction.user.username} | ${interaction.user.id}`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
                         .setImage(input);
-                    return channel.send({ embeds: [Embed] });
+                    return channel.send({ embeds: [Embed], components: [row] });
                 };
             });
         } else if (subcommand === "join") {
             const user = interaction.options.getUser('user');
             if (user.id === interaction.user.id) return interaction.reply(`You can't join your own party.`);
             db.serialize(async () => {
-                const { 0: myStats } = await query(`SELECT party, stampedechar FROM users WHERE users.id = ${interaction.user.id}`);
+                const { 0: myStats } = await query(`SELECT party, cow_participation, stampedechar FROM users WHERE users.id = ${interaction.user.id}`);
                 if (myStats?.party !== null) return interaction.reply(`You are already in a party, please leave it first.`);
+                if (myStats.cow_participation !== null) return interaction.reply(`You can't change your party till \`/rolling cow\` is over.`);
 
-                const { 0: stats } = await query(`SELECT party FROM users WHERE users.id = ${user.id}`);
+                const { 0: stats } = await query(`SELECT party, cow_participation FROM users WHERE users.id = ${user.id}`);
                 if (!stats || stats.party === null) return interaction.reply(`${user.username} is not in a party.`);
+                if (stats.cow_participation !== null) return interaction.reply(`You can't join this party till \`/rolling cow\` is over.`);
 
                 const { 0: party } = await query(`SELECT * FROM parties WHERE id = '${stats.party}'`);
                 if (!party) return interaction.reply(`${user.username} is not in a party.`);
@@ -172,11 +191,13 @@ module.exports = {
             const user = interaction.options.getUser('user');
             if (user.id === interaction.user.id) return interaction.reply(`You can't invite yourself`);
             db.serialize(async () => {
-                const { 0: myStats } = await query(`SELECT party FROM users WHERE users.id = ${interaction.user.id}`);
+                const { 0: myStats } = await query(`SELECT party, cow_participation FROM users WHERE users.id = ${interaction.user.id}`);
                 if (myStats?.party === null) return interaction.reply(`You are not in a party. You can create one using \`/party create\``);
+                if (myStats.cow_participation !== null) return interaction.reply(`You can't invite players to your party till \`/rolling cow\` is over.`);
 
-                const { 0: stats } = await query(`SELECT party, stampedechar FROM users WHERE users.id = ${user.id}`);
+                const { 0: stats } = await query(`SELECT party, cow_participation, stampedechar FROM users WHERE users.id = ${user.id}`);
                 if (stats?.party !== null) return interaction.reply(`${user.username} is already in a party.`);
+                if (stats.cow_participation !== null) return interaction.reply(`${user.username} can't join a party till \`/rolling cow\` is over.`);
 
                 const { 0: party } = await query(`SELECT * FROM parties WHERE id = '${myStats.party}'`);
                 if (!party) return interaction.reply(`${user.username} is not in a party.`);
@@ -221,8 +242,9 @@ module.exports = {
             });
         } else if (subcommand === "leave") {
             db.serialize(async () => {
-                const { 0: stats } = await query(`SELECT party FROM users WHERE id = ${interaction.user.id}`);
+                const { 0: stats } = await query(`SELECT party, cow_participation FROM users WHERE id = ${interaction.user.id}`);
                 if (stats.party === null) return interaction.reply(`You are not in a party.`);
+                if (stats.cow_participation !== null) return interaction.reply(`You can't leave your party till \`/rolling cow\` is over.`);
 
                 const { 0: party } = await query(`SELECT * FROM parties WHERE id = '${stats.party}'`);
                 if (!party) return interaction.reply(`Couldn't find party with ID \`${stats.party}\`. If you ever encounter this, please report it to our staff as a bug.`);
@@ -258,11 +280,13 @@ module.exports = {
             const user = interaction.options.getUser('user');
             if (user.id === interaction.user.id) return interaction.reply("You can't kick yourself. Use `/party leave` if you want to leave the party.");
             db.serialize(async () => {
-                const { 0: myStats } = await query(`SELECT party FROM users WHERE id = ${interaction.user.id}`);
+                const { 0: myStats } = await query(`SELECT party, cow_participation FROM users WHERE id = ${interaction.user.id}`);
                 if (myStats.party === null) return interaction.reply(`You are not in a party`);
+                if (myStats.cow_participation !== null) return interaction.reply(`You can't kick players from your party till \`/rolling cow\` is over.`);
 
-                const { 0: stats } = await query(`SELECT party FROM users WHERE id = ${user.id}`);
+                const { 0: stats } = await query(`SELECT party, cow_participation FROM users WHERE id = ${user.id}`);
                 if (!stats || stats.party === null) return interaction.reply(`**${user.username}** is not in a party.`);
+                if (stats.cow_participation !== null) return interaction.reply(`You can't kick players from your party till \`/rolling cow\` is over.`);
 
                 if (stats.party !== myStats.party) return interaction.reply(`**${user.username}** is not in your party.`);
 
@@ -294,8 +318,9 @@ module.exports = {
             });
         } else if (subcommand === "dissolve") {
             db.serialize(async () => {
-                const { 0: stats } = await query(`SELECT party FROM users WHERE id = ${interaction.user.id}`);
+                const { 0: stats } = await query(`SELECT party, cow_participation FROM users WHERE id = ${interaction.user.id}`);
                 if (stats.party === null) return interaction.reply(`You are not in a party.`);
+                if (stats.cow_participation !== null) return interaction.reply(`You can't dissolve your party till \`/rolling cow\` is over.`);
 
                 const { 0: party } = await query(`SELECT * FROM parties WHERE id = '${stats.party}'`);
                 if (!party) return interaction.reply(`Couldn't find party with ID \`${stats.party}\`. If you ever encounter this, please report it to our staff as a bug.`);
@@ -324,5 +349,13 @@ module.exports = {
             });
         };
 
+    },
+    async executeButtonInteraction(interaction) {
+        const [imageType, id] = interaction.customId.split("-").slice(2).join("-").split(":");
+
+        if (imageType === "icon") await query(`UPDATE parties SET icon = 'https://i.imgur.com/JEvfGSR.png' WHERE id = '${id}'`);
+        else await query(`UPDATE parties SET banner = '' WHERE id = '${id}'`);
+
+        interaction.followUp({ content: `${interaction.user} has removed the ${imageType} of the party with ID \`${id}\`` });
     },
 };

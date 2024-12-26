@@ -1,23 +1,23 @@
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { classes } = require("../Modules/classes.js");
-const { curses } = require("../Modules/curses.js");
-const { floors, crazeMobs } = require("../Modules/enemies.js");
-const { items } = require("../Modules/items.js");
-const { skills, crazeBossAbilities } = require("../Modules/skills.js");
-const { characters } = require("../Modules/chars.js");
-const { getDetailedStats, customEmojis, dealDamage, search, searchClass, searchItem, classLevelToXP } = require("../Modules/functions.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities";
+import { classes } from "../Modules/classes";
+import { curses } from "../Modules/curses";
+import { floors, crazeMobs } from "../Modules/enemies";
+import { items } from "../Modules/items";
+import { skills, crazeBossAbilities } from "../Modules/skills";
+import { characters } from "../Modules/chars";
+import { getDetailedStats, customEmojis, dealDamage, search, searchClass, searchItem, classLevelToXP } from "../Modules/functions";
+import Avalon from "../Modules/avalon";
+import buffInfo from "../Modules/buffs";
+import _ from 'lodash';
 
 const dungeonInProgress = new Map();
 const crazeLevelSelected = new Map();
 const embedColor = 0x034f20;
 
-const startDate = new Date('2023-12-25T00:00:00');
+const startDate = new Date('2024-12-22T00:00:00');
 
 const getCrazeMobCurse = {
     0: 8,
@@ -25,33 +25,43 @@ const getCrazeMobCurse = {
     2: 12,
 
     9: 4,
+
+    13: 8,
 };
+
+// const crazeTips2023 = {
+//     0: ["Try dealing magic damage!"], // Infinite DEF
+//     1: ["Try dealing physical damage!"], // Infinite MR
+//     2: ["Come on, it's Sanji. Google his weakness <:Heh:928368727588757504>", "Or use Law <:MikuHappy:1045096947876368404>"], // High DEF against men
+//     3: ["Even one lifetime isn't enough to defeat Qual"], // Own atk increases 4x after revival
+//     4: ["Bojji will dodge/block anything ordinary <:Thonk:794983096377671701>", "Make sure to deal guaranteed hits <:omoshiroi:1029435114637246575>"], // 100% dodge
+//     5: ["Look for something to bypass his shield <:Thonk:794983096377671701>"], // Infinite shield
+//     6: ["Whatever you do, don't let him touch you..!", "...unless"], // Executes at 100%
+//     7: ["If Haki doesn't work...", "...get him wet!"], // Heals everything unless wet
+//     8: ["The weaker you are, the stronger you hit"], // Takes more damage from lower tiers
+//     9: ["Seek a blade capable of harming Durin.", "Only the master of this divine blade can wield it properly."], // Only takes damage from Durin's Bane when wielded by Isolde
+//     10: ["Nice weather today, how about we go fishing?"], // Takes damage from fish
+//     11: ["A single layer of defense is not enough against his explosive attacks."], // Increased DEF by equipping 2x shields
+//     12: ["Quick, don't let it summon the dragon <:Sweatwipe:1020442039411802142>", "Nuke it! And double it!"], // Summons Veldora in R1
+//     13: ["Give up, you can't beat him. He's the strongest <:Heh:928368727588757504>", "<:GojoHeart:1194021178029920266>", "But.. maybe you can seal him, with some help."] // Use Getou, with a party member using Prison Realm, let the fight time out
+// };
 
 const crazeTips = {
     0: ["Try dealing magic damage!"], // Infinite DEF
     1: ["Try dealing physical damage!"], // Infinite MR
-    2: ["Come on, it's Sanji. Google his weakness <:Heh:928368727588757504>", "Or use Law <:MikuHappy:1045096947876368404>"], // High DEF against men
-    3: ["Even one lifetime isn't enough to defeat Qual"], // Own atk increases 4x after revival
-    4: ["Bojji will dodge/block anything ordinary <:Thonk:794983096377671701>", "Make sure to deal guaranteed hits <:omoshiroi:1029435114637246575>"], // 100% dodge
-    5: ["Look for something to bypass his shield <:Thonk:794983096377671701>"], // Infinite shield
-    6: ["Whatever you do, don't let him touch you..!", "...unless"], // Executes at 100%
-    7: ["If Haki doesn't work...", "...get him wet!"], // Heals everything unless wet
-    8: ["The weaker you are, the stronger you hit"], // Takes more damage from lower tiers
-    9: ["Seek a blade capable of harming Durin.", "Only the master of this divine blade can wield it properly."], // Only takes damage from Durin's Bane when wielded by Isolde
-    10: ["Nice weather today, how about we go fishing?"], // Takes damage from fish
-    11: ["A single layer of defense is not enough against his explosive attacks."], // Increased DEF by equipping 2x shields
-    12: ["Quick, don't let it summon the dragon <:Sweatwipe:1020442039411802142>", "Nuke it! And double it!"], // Summons Veldora in R1
-
-    13: ["Give up, you can't beat him. He's the strongest <:Heh:928368727588757504>", "<:GojoHeart:1194021178029920266>", "But.. maybe you can seal him, with some help."] // Use Getou, with a party member using Prison Realm, let the fight time out
-
-
-
+    2: ["I wonder who it could be... <:Heh:928368727588757504>"], // Use luffy
+    3: ["Only those with a higher capacity for magic may stand before her"], // Have a larger mana pool than her
+    4: ["GMT+13"], // Fight him between 08:00-16:00
+    5: ["Don't bring anything with you that might weigh you down"], // Don't use weapons or armor
+    6: ["Now where did this moss head go again?!"], // Zoro got lost
+    7: ["Despite its appearance, even Pandemonium Larvae can have feelings", "Find a way to charm it :)"], // Use rogue dagger to charm
+    8: ["He can see anyone's name, so that can't be the answer...", "He can see his opponents, so that can't be the answer...", "Then what if... what if you're already dead?"], // Use Brook
+    9: ["The geass has a peculiar weakness", "Perhaps someone with a blindfold?"], // Use 2B
+    10: ["Nuke it!", "And double it!"], // Twinshot Megumin
+    11: ["Sometimes, the best way to win is...", "...TO RUN AWAY!", "SMOKEY!!!"], // Run away
+    12: ["Never give up in love!"], // Try a QQ Girl till you win
+    13: ["The greatest strength is peace.", "...and patience. GLHF <:MikuHappy:1045096947876368404>"], // Reach round 100 without dealing damage
 };
-
-// function drops(p, max = 1, n = 0) {
-//     for (let i = 0; i < max; i++) n += p > Math.random();
-//     return n;
-// };
 
 function getModal(uid) {
     return new ModalBuilder()
@@ -154,13 +164,13 @@ function levelSelection(interaction, stats) {
 
         const getDesc = () => {
             return `### 🎄 Christmas Craze\nTry out unconventional builds to defeat crazy enemies by finding their weakness! Get an <a:EXTRA:1138530846144462968> pull for successfully clearing a level! You can use any character, class and items you want! A new level unlocks daily.`
-                + "\n\n⚠️ The event has ended! Only level 14 will stay open for a while longer."
-                + `\n### Level Details\n**Selected Level**: ${level + 1}\n**Enemy**: ${crazeMobs[level].name}\n**Tip**: ${(levelsUnlocked - 2 > level) ? crazeTips[level][0] : `\`Unlocks in ${(level - (levelsUnlocked - 2)) ? `${level - (levelsUnlocked - 2)}d ` : ""}${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\``}${crazeTips[level][1] ? `\n**Tip 2**: ${(levelsUnlocked - 4) > level ? crazeTips[level][1] : `\`Unlocks in ${(level - (levelsUnlocked - 4)) ? `${level - (levelsUnlocked - 4)}d ` : ""}${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\``}` : ""}${crazeTips[level][2] ? `\n**Tip 3**: ${(levelsUnlocked - 8) > level ? crazeTips[level][2] : `\`Unlocks in ${(level - (levelsUnlocked - 8)) ? `${level - (levelsUnlocked - 8)}d ` : ""}${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\``}` : ""}\n### Your Character\n**Name**: ${"char" in stats.craze_equipment ? characters[stats.craze_equipment.char].name + " Lvl. 70" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 120" : "`None`"}\n**Equipment**: ${"weapon" in stats.craze_equipment ? (isNaN(stats.craze_equipment.weapon.split(":")[0]) ? stats.craze_equipment.weapon : items[stats.craze_equipment.weapon.split(":")[0]].emoji) : "<:sword_empty:1034502134474997790>"}${"shield" in stats.craze_equipment ? items[stats.craze_equipment.shield.split(":")[0]].emoji : "<:shield_empty:1087089686809415730>"} ${"helmet" in stats.craze_equipment ? items[stats.craze_equipment.helmet.split(":")[0]].emoji : "<:helmet_empty:1034499888878198885>"}${"cuirass" in stats.craze_equipment ? items[stats.craze_equipment.cuirass.split(":")[0]].emoji : "<:cuirass_empty:1034499890165858305>"}${"gloves" in stats.craze_equipment ? items[stats.craze_equipment.gloves.split(":")[0]].emoji : "<:gloves_empty:1034499892409794570>"}${"boots" in stats.craze_equipment ? items[stats.craze_equipment.boots.split(":")[0]].emoji : "<:boots_empty:1034499893919764480>"}${("weapon" in stats.craze_equipment || "shield" in stats.craze_equipment || "helmet" in stats.craze_equipment) ? " Lvl. 70/70" : ""}`;
+                // + "\n\n⚠️ The event has ended! Only level 14 will stay open for a while longer."
+                + `\n### Level Details\n**Selected Level**: ${level + 1}\n**Enemy**: ${crazeMobs[level].name}\n**Hint**: ${(levelsUnlocked - 2 > level) ? crazeTips[level][0] : `\`Unlocks in ${(level - (levelsUnlocked - 2)) ? `${level - (levelsUnlocked - 2)}d ` : ""}${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\``}${crazeTips[level][1] ? `\n**Hint 2**: ${(levelsUnlocked - 4) > level ? crazeTips[level][1] : `\`Unlocks in ${(level - (levelsUnlocked - 4)) ? `${level - (levelsUnlocked - 4)}d ` : ""}${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\``}` : ""}${crazeTips[level][2] ? `\n**Hint 3**: ${(levelsUnlocked - 8) > level ? crazeTips[level][2] : `\`Unlocks in ${(level - (levelsUnlocked - 8)) ? `${level - (levelsUnlocked - 8)}d ` : ""}${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\``}` : ""}\n### Your Character\n**Name**: ${"char" in stats.craze_equipment ? characters[stats.craze_equipment.char].name + " Lvl. 70" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 120" : "`None`"}\n**Equipment**: ${"weapon" in stats.craze_equipment ? (isNaN(stats.craze_equipment.weapon.split(":")[0]) ? stats.craze_equipment.weapon : items[stats.craze_equipment.weapon.split(":")[0]].emoji) : "<:sword_empty:1034502134474997790>"}${"shield" in stats.craze_equipment ? items[stats.craze_equipment.shield.split(":")[0]].emoji : "<:shield_empty:1087089686809415730>"} ${"helmet" in stats.craze_equipment ? items[stats.craze_equipment.helmet.split(":")[0]].emoji : "<:helmet_empty:1034499888878198885>"}${"cuirass" in stats.craze_equipment ? items[stats.craze_equipment.cuirass.split(":")[0]].emoji : "<:cuirass_empty:1034499890165858305>"}${"gloves" in stats.craze_equipment ? items[stats.craze_equipment.gloves.split(":")[0]].emoji : "<:gloves_empty:1034499892409794570>"}${"boots" in stats.craze_equipment ? items[stats.craze_equipment.boots.split(":")[0]].emoji : "<:boots_empty:1034499893919764480>"}${("weapon" in stats.craze_equipment || "shield" in stats.craze_equipment || "helmet" in stats.craze_equipment) ? " Lvl. 70/70" : ""}`;
         };
 
         const Embed = new EmbedBuilder()
             .setColor(embedColor)
-            .setThumbnail("https://i.imgur.com/4noNwlQ.png")
+            .setThumbnail("https://i.ibb.co/HxQCPq9/image.png")
             .setDescription(getDesc())
             .setFooter({ text: levelsUnlocked > crazeMobs.length - 1 ? `All levels have been unlocked!` : `Next level unlocks in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min` });
         interaction.reply({ embeds: [Embed], components: [selectionRow, getButtonRow()], fetchReply: true }).then((msg) => {
@@ -304,6 +314,7 @@ module.exports = {
 
             // Equip Craze Build
             stats.battlechar = stats.craze_equipment.char;
+            stats.ref[stats.battlechar] = 5;
             stats.shield_slot = 1;
             stats.level = 70;
             if ("class" in stats.craze_equipment) {
@@ -381,78 +392,26 @@ module.exports = {
                 stats.craze_levels[level] ||= 0;
                 stats.craze_levels[level]++;
 
-                // // Coins
-                // let loot = 0;
-                // loot = 40 + Math.floor(Math.random() * 30) + (lootFloor < 100 ? lootFloor * 3 : 300 + (lootFloor * 1.5));
-                // if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
-                // loot *= matchStats.lootm;
-                // loot += matchStats.loot;
-                // loot = Math.floor(loot);
-                // if (loot > 200000) loot = 42187;
+                // Coins
+                let loot = 0;
+                if (stats.craze_levels[level] < 30) {
+                    loot = 40 + Math.floor(Math.random() * 30) + (lootFloor < 100 ? lootFloor * 3 : 300 + (lootFloor * 1.5));
+                    loot *= matchStats.lootm;
+                    loot += matchStats.loot;
+                    loot = Math.floor(loot);
+                    if (loot > 200000) loot = 42187;
+                };
 
-                // // Chests
-                // let chestRarities = [453, 454, 456, 457];
-                // let chestDrops = [0, 0, 0, 0];
+                await query(`UPDATE users SET ${stats.craze_levels[level] === 1 ? "expulls = expulls + 1, " : ""}coins = coins + ${loot}, craze_levels = '${JSON.stringify(stats.craze_levels)}' WHERE id = ${interaction.user.id}`);
 
-                // let ssShards = 0, sShards = 0, aShards = 0, bShards = 0, cShards = 0, dShards = 0;
-
-                // // Shards
-                // ssShards += drops(0.009, 1);
-                // sShards += drops(0.015, 1);
-                // aShards += drops(0.03, 2);
-                // bShards += drops(0.06, 2);
-                // cShards += drops(0.09, 3);
-                // dShards += drops(0.12, 5);
-
-                // // Chests
-                // chestDrops[0] += drops(0.08);
-                // chestDrops[1] += drops(0.05);
-                // chestDrops[2] += drops(0.02);
-                // chestDrops[3] += drops(0.009);
-
-                // // Levelup mats
-                // let levelupMats = {
-                //     "50": lootFloor <= 100 ? drops(0.2, 3) : 0,
-                //     "51": lootFloor <= 100 ? drops(0.2, 6) : 0,
-                //     "52": lootFloor <= 100 ? drops(0.09, 2) : lootFloor <= 200 ? drops(0.2, 3) : 0,
-                //     "53": lootFloor <= 100 ? drops(0.12, 3) : lootFloor <= 200 ? drops(0.2, 6) : 0,
-                //     "54": lootFloor > 200 ? drops(0.2, 3) : lootFloor > 100 ? drops(0.09, 2) : 0,
-                //     "55": lootFloor > 200 ? drops(0.2, 6) : lootFloor > 100 ? drops(0.12, 3) : 0,
-                //     "56": lootFloor > 200 ? drops(0.09, 2) : 0,
-                //     "57": lootFloor > 200 ? drops(0.12, 3) : 0,
-                // };
-
-                // let lootArr = [];
-                // if (ssShards) lootArr.push(`<:ss_shard:917203009543503892>x${ssShards}`);
-                // if (sShards) lootArr.push(`<:s_shard:917202925514817566>x${sShards}`);
-                // if (aShards) lootArr.push(`<:a_shard:917202904862052392>x${aShards}`);
-                // if (bShards) lootArr.push(`<:b_shard:917202862851899392>x${bShards}`);
-                // if (cShards) lootArr.push(`<:c_shard:917202862499582002>x${cShards}`);
-                // if (dShards) lootArr.push(`<:d_shard:917202840563363891>x${dShards}`);
-
-                // let myItems = await query(`SELECT items FROM users WHERE users.id = ${interaction.user.id}`);
-                // myItems = JSON.parse(myItems[0].items);
-
-                // Object.entries(levelupMats).forEach((e) => {
-                //     if (e[0] in myItems) myItems[e[0]] += e[1];
-                //     else myItems[e[0]] = e[1];
-                // });
-                // chestRarities.forEach((e, i) => {
-                //     if (chestDrops[i]) {
-                //         if (e in myItems) myItems[e]++;
-                //         else myItems[e] = 1;
-                //     };
-                // });
-
-                // await query(`UPDATE users SET ${stats.craze_levels[level] === 1 ? "expulls = expulls + 1, " : ""}coins = coins + ${loot}, items = '${JSON.stringify(myItems)}', craze_levels = '${JSON.stringify(stats.craze_levels)}', ssshard = ssshard + ${ssShards}, sshard = sshard + ${sShards}, ashard = ashard + ${aShards}, bshard = bshard + ${bShards}, cshard = cshard + ${cShards}, dshard = dshard + ${dShards} WHERE id = ${interaction.user.id}`);
-
+                // Disable Loot
                 // return Embed
-                //     .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n${stats.craze_levels[level] === 1 ? "1x <a:EXTRA:1138530846144462968>, " : ""}${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x1, ` : "", "")}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0]].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`)
-                //     .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+                //     .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n\`disabled\`: The christmas craze event has long ended. It's been kept open by the request of players to use it as a trial substitude until that gets a better rework <:ThumbsUp:1020442047712350298>`)
+                //     .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
 
                 return Embed
-                    .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n\`disabled\`: The christmas craze event has long ended. It's been kept open by the request of players to use it as a trial substitude until that gets a better rework <:ThumbsUp:1020442047712350298>`)
-                    .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+                    .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n${stats.craze_levels[level] === 1 ? "1x <a:EXTRA:1138530846144462968>, " : ""}${loot ? `${loot}<:coins:872926669055356939>, ` : ""}`)
+                    .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
             };
 
             let matchStats = Avalon.getMatchStats(interaction);
@@ -476,18 +435,18 @@ module.exports = {
                 };
             };
 
-            // Level 11
-            if (level === 10 && items[(stats.equipment.weapon ?? "").split(":")[0]].category === "fish") {
-                eBuffs.def.push(new buffInfo("=", 0, 9999));
-                eStatsC.def = 0;
-                eBuffs.mr.push(new buffInfo("=", 0, 9999));
-                eStatsC.mr = 0;
+            // // Level 11 2023
+            // if (level === 10 && items[(stats.equipment.weapon ?? "").split(":")[0]].category === "fish") {
+            //     eBuffs.def.push(new buffInfo("=", 0, 9999));
+            //     eStatsC.def = 0;
+            //     eBuffs.mr.push(new buffInfo("=", 0, 9999));
+            //     eStatsC.mr = 0;
 
-                buffs.atk.push(new buffInfo("+", Math.floor(myStats.atk * 2), 9999));
-                myStats.atk += Math.floor(myStats.atk * 2);
-                buffs.md.push(new buffInfo("+", Math.floor(myStats.md * 2), 9999));
-                myStats.md += Math.floor(myStats.md * 2);
-            };
+            //     buffs.atk.push(new buffInfo("+", Math.floor(myStats.atk * 2), 9999));
+            //     myStats.atk += Math.floor(myStats.atk * 2);
+            //     buffs.md.push(new buffInfo("+", Math.floor(myStats.md * 2), 9999));
+            //     myStats.md += Math.floor(myStats.md * 2);
+            // };
 
             let ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
                 DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
@@ -512,23 +471,31 @@ module.exports = {
                 return interaction.editReply({ embeds: [result] });;
             };
 
+            // Fight Duration
+            let fightDuration = 120;
+
+            // Level 13 2024
+            if (level === 13) {
+                fightDuration = 300;
+            };
+
             async function newFight() {
                 let timestart = new Date().getTime();
                 let result = await new Promise((resolve) => {
                     const Embed = new EmbedBuilder()
                         .setColor(embedColor)
                         .setThumbnail(myStatsC.thumbnail)
-                        .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
+                        .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${fightDuration}s` })
                         .setTitle(`Christmas Craze (level ${level + 1})`)
-                        .setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
+                        .setDescription(`You encountered ${enemy.title.split(" ")[0]}${enemy.title.split(" ")[1] ? ` **${enemy.title.split(" ").slice(1).join(" ")}**` : ""}!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
                         .setImage(eStatsC.image);
                     interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then(msg => {
 
-                        const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                        const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
-                        const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
-                        const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
-                        const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 120000 });
+                        const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: fightDuration * 1000 });
+                        const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: fightDuration * 1000 });
+                        const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: fightDuration * 1000 });
+                        const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: fightDuration * 1000 });
+                        const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: fightDuration * 1000 });
                         matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
 
                         // Use passives
@@ -537,7 +504,7 @@ module.exports = {
                         let timeout;
                         async function editEmbed() {
                             Embed.setDescription(`You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
-                            Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                            Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${fightDuration + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                             // await msg.edit({ embeds: [Embed] });
 
                             // Debounce
@@ -565,19 +532,25 @@ module.exports = {
                             if (matchStats.ended) return;
                             else matchStats.ended = true;
 
+                            // Level 12 2024
+                            if (level === 12) {
+                                wORl = eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            };
+
                             atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
                             if (wORl === "l") notice.push(`\n💀 **${myChar.name}** lost`);
-                            else notice.push(`\n🎉 **${myChar.name}** won${level === 13 && stats.craze_equipment.weapon === "<:GojoHeart:1194021178029920266>" ? " <:GojoHeart:1194021178029920266>" : ""}`);
+                            else notice.push(`\n🎉 **${myChar.name}** won`);
+                            // else notice.push(`\n🎉 **${myChar.name}** won${level === 13 && stats.craze_equipment.weapon === "<:GojoHeart:1194021178029920266>" ? " <:GojoHeart:1194021178029920266>" : ""}`);
                             editEmbed();
                             matchStats.turn = 1;
                             resolve(matchResult(wORl));
                         };
 
-                        // Level 14
-                        if (level === 13 && stats.craze_equipment.weapon === "<:GojoHeart:1194021178029920266>") {
-                            eStatsC.hp = 0;
-                            endMatch("w");
-                        };
+                        // // Level 14 2023
+                        // if (level === 13 && stats.craze_equipment.weapon === "<:GojoHeart:1194021178029920266>") {
+                        //     eStatsC.hp = 0;
+                        //     endMatch("w");
+                        // };
 
                         function startNextRound() {
                             if (matchStats.round === matchStats.roundCheck) return;
@@ -627,12 +600,31 @@ module.exports = {
                             if (matchStats.turn === 1) return;
                             if (eStatsC.timeFrozen) {
                                 if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                 matchStats.turn = 1;
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
+                                if (matchStats.playerPausingRounds > 0) {
+                                    matchStats.playerPausingRounds--;
+                                    attack();
+                                };
                             } else {
                                 setTimeout(() => {
+
+                                    // Level 13 2024
+                                    if (level === 13) {
+                                        const availableEmojis = ['🌼', '🌻', '🌱', '🐝', '🪲', '🐞', '🦋', '🐛', '🐸', '🍡', '🎐'];
+                                        const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
+                                        if (notice[notice.length - 1].length > 5 && !(eStatsC.hp < eStatsC.maxhp)) notice.push(`\n ${randomEmoji}`);
+
+                                        matchStats.turn = 1;
+                                        matchStats.round++;
+                                        startNextRound();
+                                        editEmbed();
+                                        return;
+                                    };
+
                                     if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
                                         curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                         eStatsC.sm -= curse.cost;
@@ -647,10 +639,15 @@ module.exports = {
                                     } else {
                                         dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                         matchStats.turn = 1;
                                         matchStats.round++;
                                         startNextRound();
                                         editEmbed();
+                                        if (matchStats.playerPausingRounds > 0) {
+                                            matchStats.playerPausingRounds--;
+                                            attack();
+                                        };
                                     };
                                     if (matchStats.counter > 0) matchStats.counter--;
                                 }, aDelay);
@@ -699,7 +696,7 @@ module.exports = {
                         def.on('collect', async () => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -733,21 +730,35 @@ module.exports = {
                         });
 
                         ability.on('collect', async () => {
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
-                                    else {
-                                        matchStats.turn = 0;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                        myStatsC.sm -= myAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                        attack();
-                                    };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+
+                            else {
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                        else {
+                                            matchStats.turn = 0;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                            myStatsC.sm -= myAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                            attack();
+                                        };
+                                    } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            };
                         });
 
                         cskill.on('collect', () => {
@@ -755,7 +766,7 @@ module.exports = {
                             // If class active was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -769,7 +780,7 @@ module.exports = {
                                 else {
                                     if (matchStats.turn === 1) {
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -781,6 +792,14 @@ module.exports = {
 
                         skip.on('collect', () => {
                             if (matchStats.turn == 1) {
+                                // Level 11 2024
+                                if (level === 10 && myChar.id === 14982 && partyChars.some((e) => e.name === "Smokey Brown")) {
+                                    notice.push(`\n<:dodge_chance:1047269150948606063> NIGERUNDAYO, SMOKEY!`);
+                                    endMatch("w");
+                                    editEmbed();
+                                    return;
+                                };
+
                                 notice.push(`\n<:dodge_chance:1047269150948606063> ${myChar.name} fled the fight`);
                                 endMatch("l");
                                 editEmbed();
@@ -791,18 +810,20 @@ module.exports = {
                         });
 
                         atk.on('end', () => {
-                            if (120 + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
+                            if (fightDuration + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
                                 atk.stop(), def.stop(), ability.stop(), cskill.stop();
                                 if (resolved) return;
 
-                                // Level 14
-                                if (level === 13 && myChar.name === "Suguru Getou" && partyChars.some((e) => e.name === "Prison Realm")) {
-                                    notice.push(`\n🎉 **Satoru Gojo** was sealed!`);
-                                    editEmbed();
-                                    resolve(matchResult("w"));
-                                } else {
-                                    resolve(matchResult("l"));
-                                };
+                                // // Level 14 2023
+                                // if (level === 13 && myChar.name === "Suguru Getou" && partyChars.some((e) => e.name === "Prison Realm")) {
+                                //     notice.push(`\n🎉 **Satoru Gojo** was sealed!`);
+                                //     editEmbed();
+                                //     resolve(matchResult("w"));
+                                // } else {
+                                //     resolve(matchResult("l"));
+                                // };
+
+                                resolve(matchResult("l"));
                             };
                         });
 

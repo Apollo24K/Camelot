@@ -1,8 +1,8 @@
-const fs = require('fs');
-const { ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { search, userLevel } = require("../Modules/functions.js");
-const { OfferRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { ComponentType } from "discord.js";
+import { db, query } from "../db_handler.js";
+import { search, userLevel } from "../Modules/functions.js";
+import { OfferRow } from "../Modules/components.js";
 
 module.exports = {
     name: 'trade',
@@ -18,11 +18,15 @@ module.exports = {
         if (user.id in blacklist) return interaction.reply(`**${user.username}** cannot trade.`);
 
         db.serialize(async () => {
-            let _stats = await query(`SELECT xp FROM users WHERE id = ${user.id}`);
-            if (!_stats[0]) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
+            const { 0: _stats } = await query(`SELECT xp, animelock, charlock FROM users WHERE id = ${user.id}`);
+            if (!_stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
+            _stats.animelock = JSON.parse(_stats.animelock);
+            _stats.charlock = JSON.parse(_stats.charlock);
 
-            const { 0: stats } = await query(`SELECT xp FROM users WHERE id = ${interaction.user.id}`);
-            if (userLevel(stats.xp) < 25 || userLevel(_stats[0].xp) < 25) return interaction.reply(`must be level 25 or higher to give characters`);
+            const { 0: stats } = await query(`SELECT xp, animelock, charlock FROM users WHERE id = ${interaction.user.id}`);
+            if (userLevel(stats.xp) < 25 || userLevel(_stats.xp) < 25) return interaction.reply(`must be level 25 or higher to give characters`);
+            stats.animelock = JSON.parse(stats.animelock);
+            stats.charlock = JSON.parse(stats.charlock);
 
             let inv = await query(`SELECT chars FROM characters WHERE id = ${interaction.user.id}`);
             inv = { chars: JSON.parse(inv[0].chars) };
@@ -39,10 +43,12 @@ module.exports = {
             let char1 = search(give, inv.chars, interaction);
             if (!char1.name) return;
             if (!inv.chars.includes(char1.id)) return interaction.reply(`You don't have a copy of **${char1.name}**`);
+            if (stats.charlock.includes(char1.id) || stats.animelock.includes(char1.animeInfo.id)) return interaction.reply(`⚠️ You're trying to trade a locked character, please unlock it first.`);
 
             let char2 = search(receive, inv.chars, interaction);
             if (!char2.name) return;
             if (!_inv.chars.includes(char2.id)) return interaction.reply(`${user.username} doesn't have a copy of **${char2.name}**`);
+            if (_stats.charlock.includes(char2.id) || _stats.animelock.includes(char2.animeInfo.id)) return interaction.reply(`⚠️ You're trying to trade a locked character of **${user.username}**, please unlock it first.`);
 
             return interaction.reply({ content: `${user.toString()} **${interaction.user.username}** wants to trade **${char1.name}** for your **${char2.name}**. Do you accept?`, components: [OfferRow], fetchReply: true }).then(msg => {
 

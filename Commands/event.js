@@ -1,11 +1,10 @@
 /* eslint-disable no-unused-vars */
-const { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType } = require('discord.js');
-const { createCanvas, loadImage } = require('@napi-rs/canvas');
-const { db, query } = require("../db_handler.js");
-const { PageRow, OfferRow } = require("../Modules/components.js");
-const { showPage } = require("../Modules/functions.js");
-const { characters } = require("../Modules/chars.js");
-const { skins } = require("../Modules/skins.js");
+import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType, createCanvas, loadImage } from 'discord.js';
+import { db, query } from "../db_handler";
+import { PageRow, OfferRow } from "../Modules/components";
+import { showPage } from "../Modules/functions";
+import { characters } from "../Modules/chars";
+import { skins } from "../Modules/skins";
 
 const milestones = [
     {
@@ -137,7 +136,7 @@ const milestones = [
     {
         id: 21,
         required: 42000,
-        query: `coins = coins + 3000, expulls = expulls + 1'`,
+        query: `coins = coins + 3000, expulls = expulls + 1`,
         rew: "1x <a:EXTRA:1138530846144462968> and 3000<:coins:872926669055356939>",
     },
     {
@@ -200,12 +199,12 @@ function getShopRow(tab) {
         .addComponents(
             new ButtonBuilder()
                 .setCustomId('current')
-                .setEmoji('🎃')
-                .setLabel('Halloween 2023')
+                .setEmoji('<:easterEgg:1095432499087278142>')
+                .setLabel('Easter 2024')
                 .setStyle(tab === 'current' ? 'Primary' : 'Secondary'),
             new ButtonBuilder()
                 .setCustomId('past')
-                .setEmoji('🍫')
+                .setEmoji('🎃')
                 .setLabel('Past Skins')
                 .setStyle(tab === 'past' ? 'Primary' : 'Secondary'),
             new ButtonBuilder()
@@ -295,21 +294,25 @@ const passRewards = [
         { id: 39, type: "gems", amount: 10 },
         { id: 40, type: "coins", amount: 3300 },
         { id: 41, type: "sticket", amount: 2 },
-        { id: 42, type: "ex", amount: 2 },
-        { id: 43, type: "ssshard", amount: 4 },
-        { id: 44, type: "coins", amount: 3400 },
-        { id: 45, type: "ssticket", amount: 2 },
-        { id: 46, type: "sticket", amount: 2 },
-        { id: 47, type: "ex", amount: 1 },
-        { id: 48, type: "gems", amount: 10 },
+        { id: 42, type: "sshard", amount: 6 },
+        { id: 43, type: "ex", amount: 1 },
+        { id: 44, type: "ssticket", amount: 1 },
+        { id: 45, type: "coins", amount: 3500 },
+        { id: 46, type: "ex", amount: 2 },
+        { id: 47, type: "ssshard", amount: 4 },
+        { id: 48, type: "coins", amount: 3400 },
         { id: 49, type: "ssticket", amount: 2 },
-        { id: 50, type: "ex", amount: 1 },
-        { id: 51, type: "deluxe", amount: 1, itemid: 458 },
+        { id: 50, type: "sticket", amount: 2 },
+        { id: 51, type: "ex", amount: 1 },
+        { id: 52, type: "gems", amount: 10 },
+        { id: 53, type: "ssticket", amount: 2 },
+        { id: 54, type: "ex", amount: 1 },
+        { id: 55, type: "deluxe", amount: 1, itemid: 458 },
     ],
     [ // 1: Premium
         { id: 0, type: "coins", amount: 2000 },
         { id: 1, type: "sshard", amount: 3 },
-        { id: 2, type: "ex", amount: 1 },
+        { id: 2, type: "ex", amount: 2 },
         { id: 3, type: "coins", amount: 2200 },
         { id: 4, type: "ssshard", amount: 1 },
         { id: 7, type: "ssticket", amount: 1 },
@@ -349,16 +352,20 @@ const passRewards = [
         { id: 39, type: "sshard", amount: 8 },
         { id: 40, type: "coins", amount: 3500 },
         { id: 41, type: "ssshard", amount: 5 },
-        { id: 42, type: "ssticket", amount: 2 },
-        { id: 43, type: "ex", amount: 1 },
+        { id: 42, type: "ex", amount: 1 },
+        { id: 43, type: "ssticket", amount: 2 },
         { id: 44, type: "coins", amount: 3600 },
-        { id: 45, type: "sticket", amount: 3 },
-        { id: 46, type: "ex", amount: 1 },
-        { id: 47, type: "ssticket", amount: 2 },
-        { id: 48, type: "coins", amount: 4000 },
-        { id: 49, type: "ssticket", amount: 2 },
-        { id: 50, type: "ex", amount: 2 },
-        { id: 51, type: "deluxe", amount: 1, itemid: 458 },
+        { id: 45, type: "ssshard", amount: 6 },
+        { id: 46, type: "ssticket", amount: 2 },
+        { id: 47, type: "ex", amount: 1 },
+        { id: 48, type: "coins", amount: 3600 },
+        { id: 49, type: "sticket", amount: 3 },
+        { id: 50, type: "ex", amount: 1 },
+        { id: 51, type: "ssticket", amount: 2 },
+        { id: 52, type: "coins", amount: 4000 },
+        { id: 53, type: "ssticket", amount: 2 },
+        { id: 54, type: "ex", amount: 2 },
+        { id: 55, type: "deluxe", amount: 1, itemid: 458 },
     ],
 ];
 
@@ -392,7 +399,7 @@ async function getPassImage(stats, page) {
     const ctx = canvas.getContext('2d');
 
     // Colors
-    const premiumColor = '#f8c8dc'; // Default: '#e7d9b2' (Gold), Halloween: '#ffa53a' (Orange), Christmas: '#c0f7ff' (Light Blue), Valentine's: '#f8c8dc' (pink)
+    const premiumColor = '#c0f7ff'; // Default: '#e7d9b2' (Gold), Halloween: '#ffa53a' (Orange), Christmas: '#c0f7ff' (Light Blue), Valentine's: '#f8c8dc' (pink), Easter: '#69ffb9' (light green)
 
     // Background
     ctx.fillStyle = '#495366'; // Grey
@@ -447,7 +454,7 @@ async function getPassImage(stats, page) {
     ctx.textBaseline = 'middle';
     ctx.fillText(`Event Pass ${Math.min(stats.passlevel, passRewards[0].length)}/${passRewards[0].length}`, 10, 20, 200);
     ctx.fillStyle = premiumColor;
-    ctx.fillText("Valentine's Event", 230, 20, 300);
+    ctx.fillText("Christmas Event", 230, 20, 500);
 
     // Tiles
     for (let i = 0; i < 6; i++) {
@@ -587,8 +594,8 @@ module.exports = {
                 let tab = 'current';
                 let selected = 0;
                 const sales = {
-                    current: Array.from({ length: 17 }, (_, i) => i + 78).sort(() => Math.random() - 0.5),
-                    past: [5, 6, 9, 11, 12, 14, 18, 19, 20, 22, 23, 25, 26, 29, 31, 32, 33, 34, 35, 36, 37, 38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 50, 55, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70].sort(() => Math.random() - 0.5),
+                    current: Array.from({ length: 10 }, (_, i) => i + 95).concat(Array.from({ length: 15 }, (_, i) => i + 25)).sort(() => Math.random() - 0.5),
+                    past: [5, 6, 9, 11, 12, 14, 18, 19, 20, 22, 23, 40, 41, 42, 43, 44, 45, 46, 47, 48, 50, 55, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 75, 76, 77, 78, 81, 82, 83, 84, 85].sort(() => Math.random() - 0.5),
                     other: [24].sort(() => Math.random() - 0.5),
                 };
 
@@ -606,7 +613,7 @@ module.exports = {
                     .setTitle('Event Shop')
                     .setColor(0xff8733)
                     .setImage(`attachment://file.jpg`)
-                    .setDescription(`Your balance: **${stats.eventpts2}**🍫\nPrice of selected skin: **${skins[showSkins[selected]].price}**🍫`)
+                    .setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`)
                     .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 interaction.reply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file], fetchReply: true }).then(msg => {
 
@@ -631,7 +638,7 @@ module.exports = {
 
                         disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
 
-                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🍫\nPrice of selected skin: **${skins[showSkins[selected]].price}**🍫`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                     });
 
@@ -649,7 +656,7 @@ module.exports = {
 
                         disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
 
-                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🍫\nPrice of selected skin: **${skins[showSkins[selected]].price}**🍫`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                     });
 
@@ -661,13 +668,13 @@ module.exports = {
 
                         disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
 
-                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🍫\nPrice of selected skin: **${skins[showSkins[selected]].price}**🍫`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                     });
 
                     buyCollector.on('collect', async () => {
                         if (stats.skins.includes(showSkins[selected])) return interaction.channel.send(`You already own this skin`);
-                        if (skins[showSkins[selected]].price > stats.eventpts2) return interaction.channel.send(`You don't have enough 🍫`);
+                        if (skins[showSkins[selected]].price > stats.eventpts2) return interaction.channel.send(`You don't have enough 🌙`);
 
                         stats.skins.push(showSkins[selected]);
                         stats.eventpts2 -= skins[showSkins[selected]].price;
@@ -678,7 +685,7 @@ module.exports = {
 
                         disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
 
-                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🍫\nPrice of selected skin: **${skins[showSkins[selected]].price}**🍫`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                        Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                     });
 
@@ -698,13 +705,13 @@ module.exports = {
                 const pagesTotal = Math.ceil(milestones.length / elementsPerPage);
                 let currPage = 1;
 
-                let showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**🍫${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
+                let showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**🌙${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
 
                 const Embed = new EmbedBuilder()
-                    .setTitle('Valentine\'s Event Rewards')
-                    .setColor(0xf8c8dc)
+                    .setTitle('Anniversary Event Rewards')
+                    .setColor(0x2aad9d)
                     .setThumbnail("https://i.imgur.com/swyb84q.jpg")
-                    .setDescription(`Your balance: **${stats.eventpts}**🍫\n\n` + showF.join("\n"))
+                    .setDescription(`Your balance: **${stats.eventpts}**🌙\n\n` + showF.join("\n"))
                     .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
@@ -718,9 +725,9 @@ module.exports = {
                             else currPage = 1;
                         };
 
-                        showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**🍫${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
+                        showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**🌙${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
 
-                        Embed.setDescription(`Your balance: **${stats.eventpts}**🍫\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                        Embed.setDescription(`Your balance: **${stats.eventpts}**🌙\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                         interaction.editReply({ embeds: [Embed], components: [PageRow] });
                     });
 
@@ -740,7 +747,7 @@ module.exports = {
                 let file = await getPassImage(stats, currPage - 1);
 
                 const Embed = new EmbedBuilder()
-                    .setColor(0xf8c8dc) // Anniversary: 0x2aad9d, Halloween: 0xff8733, Christmas: 0x94f7ff, Valentine's: 0xf8c8dc
+                    .setColor(0x94f7ff) // Anniversary: 0x2aad9d, Halloween: 0xff8733, Christmas: 0x94f7ff, Valentine's: 0xf8c8dc, Easter: 0x69ffb9
                     .setImage(`attachment://file.jpg`)
                     .setDescription(`Complete daily </quests:1087099255652622433> to unlock rewards!\nWith </give pass:1013437508933128242> you can gift someone a premium pass! (**${Math.max(0, 5 - stats.passpurchaselimit)}**/5 left)`);
                 interaction.reply({ embeds: [Embed], components: [getPassRow(stats)], files: [file], fetchReply: true }).then(msg => {

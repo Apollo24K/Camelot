@@ -1,9 +1,9 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
-const { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel } = require("../Modules/functions.js");
-const { PageRow, OfferRow } = require("../Modules/components.js");
-const { characters } = require("../Modules/chars.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
+import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel } from "../Modules/functions";
+import { PageRow, OfferRow } from "../Modules/components";
+import { characters } from "../Modules/chars";
 
 function getAscension(lvl) {
     let asc = "";
@@ -76,7 +76,7 @@ module.exports = {
     description: 'item related commands',
     execute(interaction) {
 
-        let subcommand = interaction.options.getSubcommand();
+        const subcommand = interaction.options.getSubcommand();
 
         // Item info
         if (subcommand === "info") {
@@ -89,7 +89,7 @@ module.exports = {
             db.serialize(async () => {
                 for (const choice of choices.split(",").filter((s) => s).map((s) => s.trim())) {
                     if (flag === "my") {
-                        let item = await query(`SELECT * FROM weapons WHERE uniqueid = '${choice}:${user.id}'`);
+                        let item = await query(`SELECT * FROM weapons WHERE uniqueid = "${choice}:${user.id}"`);
                         if (!item[0]) continue;
                         item = item[0];
                         item.level = getItemLevel(item.level);
@@ -253,7 +253,7 @@ module.exports = {
             const flag = interaction.options.getString('flag');
 
             db.serialize(async () => {
-                const item = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                const item = await query(`SELECT * FROM weapons WHERE uniqueid = "${itemChoice}:${interaction.user.id}"`);
                 if (!item[0]) return interaction.reply(`Couldn't find item with id \`${itemChoice}\``);
                 const fItem = items[item[0].itemid];
 
@@ -299,18 +299,15 @@ module.exports = {
                             if ((stats.items[craftItem.id] || 0) < craftMatsNeeded) return interaction.channel.send(`You don't have enough of ${craftItem.emoji} **__${craftItem.name}__** (**${stats.items[craftItem.id] || 0}**/${craftMatsNeeded})`);
                             if ((stats.items[awakenItem.id] || 0) < awakenItemNeeded) return interaction.channel.send(`You don't have enough of ${awakenItem.emoji} **__${awakenItem.name}__** (**${stats.items[awakenItem.id] || 0}**/${awakenItemNeeded})`);
 
-                            const item = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                            const item = await query(`SELECT * FROM weapons WHERE uniqueid = "${itemChoice}:${interaction.user.id}"`);
                             if (currLevel !== ((item[0].ascension * 10) + 20)) return interaction.channel.send(`You need to level up your weapon first.`);
 
                             stats.items[ascItem.id] -= ascMatsNeeded;
                             stats.items[craftItem.id] -= craftMatsNeeded;
                             if (awakenItem.id in stats.items) stats.items[awakenItem.id] -= awakenItemNeeded;
 
-                            // Evolve Random Substat
-                            if (fItem.category === "armor") item[0].substats[Object.keys(item[0].substats).sort(() => 0.5 - Math.random())[0]]++;
-
                             await query(`UPDATE users SET items = '${JSON.stringify(stats.items)}' WHERE id = ${interaction.user.id}`);
-                            await query(`UPDATE weapons SET ascension = ascension + 1${fItem.category === "armor" ? `, substats = '${JSON.stringify(item[0].substats)}'` : ""} WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                            await query(`UPDATE weapons SET ascension = ascension + 1 WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
 
                             interaction.channel.send(`Successfully ascended ${fItem.emoji} **__${fItem.name}__**!`);
                         });
@@ -434,7 +431,7 @@ module.exports = {
 
                             if (stats.items[matsToUse['20'].id] < matsToUse['20'].use || stats.items[matsToUse['100'].id] < matsToUse['100'].use || stats.items[matsToUse['500'].id] < matsToUse['500'].use || stats.items[matsToUse['2500'].id] < matsToUse['2500'].use) return interaction.channel.send(`You don't have enough levelup materials.`);
 
-                            const { 0: item } = await query(`SELECT * FROM weapons WHERE uniqueid = '${itemChoice}:${interaction.user.id}'`);
+                            const { 0: item } = await query(`SELECT * FROM weapons WHERE uniqueid = "${itemChoice}:${interaction.user.id}"`);
                             if (!item) return interaction.channel.send(`Unexpected error (did you disassemble your item?)`);
 
                             const limit = (item.ascension * 10) + 20;
@@ -550,27 +547,24 @@ module.exports = {
                 await query(`UPDATE weapons SET uniqueid = '${after}:${interaction.user.id}' WHERE uniqueid = '${before}:${interaction.user.id}'`);
 
                 // Change item code on equipped characters
-                if (existing.character !== null) {
-                    stats.equipment = JSON.parse(stats.equipment);
+                stats.equipment = JSON.parse(stats.equipment);
 
-                    const fItem = items[existing.itemid];
-                    let type = fItem.category;
-                    if (type === "armor" || fItem.type === "shield") type = fItem.type;
-                    if (type === "shield" && stats.premium < 4) type = "weapon";
+                const fItem = items[existing.itemid];
+                let type = fItem.category;
+                if (type === "armor" || fItem.type === "shield") type = fItem.type;
+                if (type === "shield" && stats.premium < 4) type = "weapon";
 
-                    // Unequip if already equipped on another char
-                    // if (!(existing.character in inv.equipment)) inv.equipment[existing.character] = {};
-                    if (stats.equipment[type] === `${before}:${interaction.user.id}`) stats.equipment[type] = `${after}:${interaction.user.id}`;
-
-                    await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
-                };
+                // Unequip if already equipped on another char
+                if (stats.equipment[type] === `${before}:${interaction.user.id}`) stats.equipment[type] = `${after}:${interaction.user.id}`;
 
                 // Change item in lock
                 stats.itemlock = JSON.parse(stats.itemlock);
                 if (stats.itemlock.includes(before)) {
                     stats.itemlock[stats.itemlock.indexOf(before)] = after;
-                    await query(`UPDATE users SET itemlock = '${JSON.stringify(stats.itemlock)}' WHERE id = ${interaction.user.id}`);
                 };
+
+                // Combine both update statements
+                await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}', itemlock = '${JSON.stringify(stats.itemlock)}' WHERE id = ${interaction.user.id}`);
 
                 return interaction.reply(`Changed code of ${items[existing.itemid].emoji} ${items[existing.itemid].name} from \`${before}\` to \`${after}\``);
             });
@@ -597,6 +591,38 @@ module.exports = {
                 return interaction.reply(`${subcommand === "lock" ? "Locked" : "Unlocked"} ${choice.length === 1 ? "item" : "items"} ${choice.map((e) => `\`${e}\``).join(", ")}${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`);
             });
 
+        };
+
+        // Item Wishlist
+        if (subcommand === "wishlist") {
+            const choice = interaction.options.getString('add');
+
+            db.serialize(async () => {
+                const { 0: stats } = await query(`SELECT itemwishlist FROM users WHERE id = ${interaction.user.id}`);
+                stats.itemwishlist = JSON.parse(stats.itemwishlist);
+
+                const wished = stats.itemwishlist.map((e) => items[e]);
+
+                if (!choice) {
+                    if (!stats.itemwishlist.length) return interaction.reply(`You don't have anything on your item wish list`);
+
+                    const Embed = new EmbedBuilder()
+                        .setColor(0xbbffff)
+                        .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                        .setDescription("### Item Wish List\nItems on your wish list are twice as likely to be pulled!\nCan only have 1 item per rarity.\n\n" + wished.sort((a, b) => b.gradeValue - a.gradeValue).map((item) => `${item.gradeEmote}\n${item.emoji} **${item.name}**`).join("\n\n"));
+                    return interaction.reply({ embeds: [Embed] });
+                };
+
+                const fItem = searchItem(choice, interaction);
+                if (!fItem?.name) return;
+                if (!(fItem.category === "armor" || fItem.category === "weapon")) return interaction.reply(`You can only wish for weapons or armor pieces`);
+
+                const newWishList = [fItem.id, ...wished.filter((item) => (item.grade !== fItem.grade) && (item.id !== fItem.id)).map((item) => item.id)];
+
+                await query(`UPDATE users SET itemwishlist = '${JSON.stringify(newWishList)}' WHERE id = ${interaction.user.id}`);
+
+                return interaction.reply(`Added ${fItem.emoji} __${fItem.name}__ to your wish list!`);
+            });
         };
 
     },

@@ -1,4 +1,4 @@
-const { auniq } = require("../Modules/chars.js");
+import { auniq } from "../Modules/chars";
 
 module.exports = {
 	name: 'recommend',

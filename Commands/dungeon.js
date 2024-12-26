@@ -1,20 +1,20 @@
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { achievements } = require("../Modules/achievements.js");
-const { classes } = require("../Modules/classes.js");
-const { curses } = require("../Modules/curses.js");
-const { floors } = require("../Modules/enemies.js");
-const { items } = require("../Modules/items.js");
-const { skills, bossAbilities } = require("../Modules/skills.js");
-const { characters } = require("../Modules/chars.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { getDetailedStats, customEmojis, dealDamage, generateCaptcha, addGuildDonation } = require("../Modules/functions.js");
-const { requestVerification, dungeonTempBan } = require("../Modules/components.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities";
+import { achievements } from "../Modules/achievements";
+import { classes } from "../Modules/classes";
+import { curses } from "../Modules/curses";
+import { floors } from "../Modules/enemies";
+import { items } from "../Modules/items";
+import { skills, bossAbilities } from "../Modules/skills";
+import { characters } from "../Modules/chars";
+import { dailies } from "../Modules/dailyQuests";
+import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, addGuildDonation, formatNumberWithQuotes } from "../Modules/functions";
+import { requestVerification, dungeonTempBan } from "../Modules/components";
+import Avalon from "../Modules/avalon";
+import buffInfo from "../Modules/buffs";
+import _ from 'lodash';
 
 const dungeonInProgress = new Set();
 const captchaCooldown = new Map();
@@ -42,9 +42,9 @@ function waitForTutorial(interaction, stats) {
 
         let page = 0;
         const pages = [
-            ["Welcome to the dungeon!", "The dungeon is a dangerous place filled with ferocious monsters only for the bravest of adventurers to enter. It contains various items of value, promising its challengers all the riches and prestige there is to obtain in this world.\n\nBut don't let that scare you, I'm here to help and I'm certainly rooting for you <:TohruPoint:928370972132782090>"],
+            ["Welcome to the dungeon!", "The dungeon is a dangerous place filled with ferocious monsters only for the bravest of adventurers to enter! It contains various items of value, promising its challengers all the riches and prestige there is to obtain in this world!\n\nBut don't let that scare you, I'm here to help and I'm certainly rooting for you <:TohruPoint:928370972132782090>"],
             ["Dungeon Monsters", "The dungeon is a massive construct reaching deep under the ground. There are various monsters roaming in the dungeon, the stronger ones deeper in there than the others.\n\nThe trickiest part will be the **boss floors** on every `5th` floor where you will encounter floor guardians stronger than anything you've seen up to that point.\n\nMonsters can have a set of abilities called **curses** <:Common_Curse:952175936554557530> which can affect the way they fight. Be especially careful around boss monsters, not only do they have curses <:Rare_Curse:952175947409408041> stronger than those of average monsters, but each one of them also has a unique ability, making their movements difficut to predict."],
-            ["Stats", "Both monsters and characters have the following stats:\n\n❤️`Health Points`⚔️`Attack      `🛡️`Defense        `\n💠`Shield       `🪄`Magic Damage`🔰`Magic Resist   `\n🎯`Crit Rate    `💥`Crit Damage `🛡️`Block Rate     `\n💨`Dodge Chance `💧`Mana        `💦`Mana Generation`\n\nYou can increase your stats by leveling your character, class and items. Oh and there's a more detailed guide on this in our </support:1011293280702578694> server <:ThumbsUp:1020442047712350298>"],
+            ["Stats", "Both monsters and characters have the following stats:\n\n❤️`Health Points`⚔️`Attack      `🛡️`Defense        `\n💠`Shield       `🪄`Magic Damage`🔰`Magic Resist   `\n🎯`Crit Rate    `💥`Crit Damage `🛡️`Block Rate     `\n💨`Dodge Chance `💧`Mana        `💦`Mana Generation`\n\nYou can increase your stats by leveling your character, class and items. You can find a more detailed guide on this in our </support:1011293280702578694> server <:ThumbsUp:1020442047712350298>"],
             ["Player Actions", `There are 5 possible actions you can decide on taking during a battle, which are as follows:\n\n⚔️ **ATK** ➜ A simple attack to deal damage to your enemy.\n🛡️ **DEF** ➜ Increases your characters defense and magic resistance. You'll have a chance of blocking the next attack.\n✨ **ABILITY** ➜ Some characters have unique abilities you can use during the battle. ${stats.battlechar in abilities ? "You can read about your characters ability with `/ability`!" : "Unfortunately your current character does't seem to have an ability."} Abilities consume mana💧\n⚜️ **SKILL** ➜ Class skills are abilities obtained from your class.${stats.class ? ` Your current class ${classes[stats.class].active.toLowerCase()}` : ""} Skills consume mana💧\n⏩ **SKIP** ➜ Skip to the results of the battle.`],
             ["You're finally ready!", "That's all I can teach you for now. The rest is up to you! <:ThumbsUp:1020442047712350298>\n\nSee you soon, I'll be watching you <:MashaWave:928370055354400799> Good Luck!"],
         ];
@@ -126,16 +126,16 @@ module.exports = {
             if (floor > 300) floor = 300;
 
             // Increase limit
-            let dunLim = [10, 40, 1000]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
+            let dunLim = [10, 20, 800]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
             if (stats.premium) {
                 switch (stats.premium) {
-                    case 1: dunLim = [12, 45, 1000]; break;
-                    case 2: dunLim = [13, 50, 1000]; break;
-                    case 3: dunLim = [15, 60, 1000]; break;
-                    case 4: dunLim = [15, 60, 1000]; break;
-                    case 5: dunLim = [16, 60, 1000]; break;
-                    case 6: dunLim = [18, 70, 1000]; break;
-                    case 7: dunLim = [20, 80, 1000]; break;
+                    case 1: dunLim = [12, 23, 800]; break;
+                    case 2: dunLim = [13, 25, 800]; break;
+                    case 3: dunLim = [15, 30, 800]; break;
+                    case 4: dunLim = [15, 32, 800]; break;
+                    case 5: dunLim = [16, 35, 800]; break;
+                    case 6: dunLim = [18, 36, 800]; break;
+                    case 7: dunLim = [20, 40, 800]; break;
                     default: false; break;
                 };
             };
@@ -240,9 +240,11 @@ module.exports = {
                 if (dunLim[1] - stats.limit >= 0 || stats.floors[floor] >= floors[floor]?.winsNeeded) stats.floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
 
                 let unlocked = `<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.floors[floor]}**/${floors[floor]?.winsNeeded}`;
-                if (stats.floors[floor] === floors[floor]?.winsNeeded && floor !== 300) {
-                    unlocked = `🔑 Floor **${floor + 1}** has been unlocked`;
-                    stats.floors[floor + 1] = 0;
+                if (stats.floors[floor] >= floors[floor]?.winsNeeded && floor !== 300) {
+                    if (stats.floors[floor] === floors[floor]?.winsNeeded) {
+                        unlocked = `🔑 Floor **${floor + 1}** has been unlocked`;
+                        stats.floors[floor + 1] = 0;
+                    };
 
                     // Achievements
                     achievements[34].check(interaction, interaction.user, floor + 1), achievements[35].check(interaction, interaction.user, floor + 1), achievements[36].check(interaction, interaction.user, floor + 1), achievements[37].check(interaction, interaction.user, floor + 1), achievements[38].check(interaction, interaction.user, floor + 1); // Challenger
@@ -294,7 +296,7 @@ module.exports = {
 
                 // Coins
                 let loot = 0;
-                if (dunLim[0] >= stats.limit) loot = 60 + Math.floor(Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor * 2));
+                if (dunLim[0] >= stats.limit) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
                 if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
                 loot *= matchStats.lootm;
                 loot += matchStats.loot;
@@ -341,7 +343,7 @@ module.exports = {
                     cShards += drops(0.1, 12 * skipRounds);
                     dShards += drops(0.14, 15 * skipRounds);
 
-                    // Crafting Materials
+                    // Crafting Resources
                     craftCount += drops(0.4, 7 * skipRounds);
 
                     // Ascension Materials
@@ -355,16 +357,16 @@ module.exports = {
                 } // Second Loot Cap
                 else if (dunLim[2] >= stats.limit) {
                     // Crafting Resources
-                    craftCount += drops(0.07, 4 * skipRounds);
+                    craftCount += drops(0.08, 4 * skipRounds);
 
                     // Ascension Materials
-                    ascCount += drops(0.1, 4 * skipRounds);
+                    ascCount += drops(0.11, 4 * skipRounds);
 
                     // Chests
-                    chestDrops[0] += drops(0.05, skipRounds);
-                    chestDrops[1] += drops(0.027, skipRounds);
-                    chestDrops[2] += drops(0.014, skipRounds);
-                    chestDrops[3] += drops(0.005, skipRounds);
+                    chestDrops[0] += drops(0.055, skipRounds);
+                    chestDrops[1] += drops(0.03, skipRounds);
+                    chestDrops[2] += drops(0.016, skipRounds);
+                    chestDrops[3] += drops(0.0055, skipRounds);
                 };
 
                 // Levelup mats
@@ -404,8 +406,8 @@ module.exports = {
                 });
                 chestRarities.forEach((e, i) => {
                     if (chestDrops[i]) {
-                        if (e in myItems) myItems[e]++;
-                        else myItems[e] = 1;
+                        if (e in myItems) myItems[e] += chestDrops[i];
+                        else myItems[e] = chestDrops[i];
                     };
                 });
 
@@ -414,7 +416,17 @@ module.exports = {
 
                 // Tutorial
                 if (!stats.tutorial.includes(9)) {
-                    const row = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('continue').setLabel('Finish Tutorial!').setStyle('Success'));
+                    const row = new ActionRowBuilder()
+                        .addComponents(
+                            new ButtonBuilder()
+                                .setCustomId('continue')
+                                .setLabel('Finish Tutorial!')
+                                .setStyle('Success'),
+                            new ButtonBuilder()
+                                .setLabel('Any Questions? Join our Support Server!')
+                                .setStyle('Link')
+                                .setURL('https://discord.gg/myy9PBCdEW')
+                        );
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
                         .setTitle("Congratulations!")
@@ -450,8 +462,8 @@ module.exports = {
 
                 let xpleft = (myStats.clvl * 50) - (stats.classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25));
 
-                Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n<a:arrow_orange:916716747623641210> Runs left: **${stats.limit < dunLim[0] ? dunLim[0] - stats.limit : 0}** loot **${stats.limit < dunLim[1] ? dunLim[1] - stats.limit : 0}** progress\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x1, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0]].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
-                if (dunLim[0] - stats.limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+                Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n<a:arrow_orange:916716747623641210> Runs left: **${stats.limit < dunLim[0] ? dunLim[0] - stats.limit : 0}** loot **${stats.limit < dunLim[1] ? dunLim[1] - stats.limit : 0}** progress\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0]].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
+                if (dunLim[0] - stats.limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins + loot)} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                 else Embed.setFooter({ text: `${myClass.name} level: ${xpleft < 1 ? myStats.clvl + 1 : myStats.clvl} | XP left: ${xpleft < 1 ? (((myStats.clvl + 1) * 50) - (stats.classlevels[myClass.id] - (myStats.clvl * (myStats.clvl + 1) * 25))) : xpleft}`, iconURL: xpleft < 1 ? "https://i.ibb.co/Y8k36J1/Nks94u8.gif" : myClass.image });
                 return Embed;
             };
@@ -461,10 +473,13 @@ module.exports = {
 
             // Apply passives
             if (skill && myChar.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
-            if (myAbility?.passive) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.shieldid) items[myStats.shieldid]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.helmet && items?.[myStats.helmet].setname === items?.[myStats.cuirass]?.setname && items?.[myStats.helmet].setname === items?.[myStats.gloves]?.setname && items?.[myStats.helmet].setname === items?.[myStats.boots]?.setname) items[myStats.boots]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+
+            // Test abilities
+            items[688].getBuff(1)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
             const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
                 DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
@@ -602,10 +617,15 @@ module.exports = {
                             if (matchStats.turn === 1) return;
                             if (eStatsC.timeFrozen) {
                                 if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                 matchStats.turn = 1;
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
+                                if (matchStats.playerPausingRounds > 0) {
+                                    matchStats.playerPausingRounds--;
+                                    attack();
+                                };
                             } else {
                                 setTimeout(() => {
                                     if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
@@ -622,10 +642,15 @@ module.exports = {
                                     } else {
                                         dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                         matchStats.turn = 1;
                                         matchStats.round++;
                                         startNextRound();
                                         editEmbed();
+                                        if (matchStats.playerPausingRounds > 0) {
+                                            matchStats.playerPausingRounds--;
+                                            attack();
+                                        };
                                     };
                                     if (matchStats.counter > 0) matchStats.counter--;
                                 }, aDelay);
@@ -672,7 +697,7 @@ module.exports = {
                         def.on('collect', async () => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -706,21 +731,38 @@ module.exports = {
                         });
 
                         ability.on('collect', async () => {
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
-                                    else {
-                                        matchStats.turn = 0;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                        myStatsC.sm -= myAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                        attack();
-                                    };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+
+                            else {
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                        else {
+                                            matchStats.turn = 0;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                            myStatsC.sm -= myAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                            attack();
+                                        };
+                                    } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            };
+
+                            // Trigger ability
+                            matchStats.trigger("ability", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         cskill.on('collect', () => {
@@ -728,7 +770,7 @@ module.exports = {
                             // If class active was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -742,7 +784,7 @@ module.exports = {
                                 else {
                                     if (matchStats.turn === 1) {
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

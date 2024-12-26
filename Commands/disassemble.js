@@ -1,9 +1,9 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
-const { filterItems } = require("../Modules/functions.js");
-const { OfferRow } = require("../Modules/components.js");
-const { dailies } = require("../Modules/dailyQuests.js");
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
+import { filterItems } from "../Modules/functions";
+import { OfferRow } from "../Modules/components";
+import { dailies } from "../Modules/dailyQuests";
 
 module.exports = {
     name: 'disassemble',

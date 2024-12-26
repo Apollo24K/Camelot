@@ -1,4 +1,4 @@
-const { db, query } = require("../db_handler.js");
+import { db, query } from "../db_handler";
 
 module.exports = {
     name: 'delay',

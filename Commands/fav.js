@@ -1,8 +1,8 @@
-const fs = require('fs');
-const { EmbedBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { achievements } = require("../Modules/achievements.js");
-const { search } = require("../Modules/functions.js");
+import fs from 'fs';
+import { EmbedBuilder } from "discord.js";
+import { db, query } from "../db_handler";
+import { achievements } from "../Modules/achievements";
+import { search } from "../Modules/functions";
 
 module.exports = {
     name: 'fav',

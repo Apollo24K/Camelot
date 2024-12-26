@@ -1,9 +1,9 @@
-const fs = require('fs');
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
-const { getDetailedStats, showPage, baseEP } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { characters } from "../Modules/chars";
+import { getDetailedStats, showPage, baseEP } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
 
 /*
     Formula                         | P0 100  1  0  EP:   1.00
@@ -42,7 +42,7 @@ const rarities = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316
 module.exports = {
     name: 'rank',
     description: 'rank characters',
-    execute(interaction) {
+    async execute(interaction) {
 
         const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
 
@@ -52,6 +52,14 @@ module.exports = {
 
         let sortedArr = [], count = 1, rokS, embedTitle, thumbnail;
 
+        if (scope === "inventory") {
+            try {
+                await interaction.deferReply();
+            } catch (err) {
+                return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
+            };
+        };
+
         db.serialize(async () => {
             if (scope === "base" || scope === "inventory") {
                 const rok = new Map();
@@ -60,7 +68,7 @@ module.exports = {
                     embedTitle = "Top Characters Ranking";
                 } else {
                     const { 0: inv } = await query(`SELECT users.id, users.premium, users.class, users.bank, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, dungeon.classlevels FROM users JOIN characters ON users.id = characters.id JOIN dungeon ON users.id = dungeon.id WHERE users.id = ${user.id}`);
-                    if (!inv) return interaction.reply(`${user.username} hasn't started playing yet.`);
+                    if (!inv) return interaction.editReply(`${user.username} hasn't started playing yet.`);
                     inv.chars = JSON.parse(inv.chars), inv.ref = JSON.parse(inv.ref), inv.equipment = JSON.parse(inv.equipment), inv.classlevels = JSON.parse(inv.classlevels);
                     const uniq = [...new Set(inv.chars)];
                     for (const id of uniq) {
@@ -112,8 +120,8 @@ module.exports = {
                 .setDescription(showUsersF.join("\n"))
                 .setThumbnail(thumbnail)
                 .setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 15 minutes" : ""}` });
-            if (pagesTotal === 1) return interaction.reply({ embeds: [Embed] });
-            return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
+            if (pagesTotal === 1) return interaction[interaction.deferred ? "editReply" : "reply"]({ embeds: [Embed] });
+            return interaction[interaction.deferred ? "editReply" : "reply"]({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async r => {

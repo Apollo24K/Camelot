@@ -1,9 +1,9 @@
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
-const { splitTitle, rarity, getRefinement, showPage } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler.js";
+import { characters } from "../Modules/chars.js";
+import { splitTitle, rarity, getRefinement, showPage } from "../Modules/functions.js";
+import { PageRow } from "../Modules/components.js";
 
 function displayMy(thisChar, inv, ref, interaction) {
     let animeL = splitTitle(thisChar.anime);

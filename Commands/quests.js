@@ -1,8 +1,8 @@
-const fs = require('fs');
-const { db, query } = require("../db_handler.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { characters } = require("../Modules/chars.js");
-const { EmbedBuilder } = require("discord.js");
+import fs from 'fs';
+import { db, query } from "../db_handler";
+import { dailies } from "../Modules/dailyQuests";
+import { characters } from "../Modules/chars";
+import { EmbedBuilder } from "discord.js";
 
 function getHash(key, hash) {
     for (let i = 0; i < key.length; i++) {

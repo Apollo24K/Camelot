@@ -1,5 +1,5 @@
-const { generateCaptcha } = require("../Modules/functions.js");
-const { requestVerification } = require("../Modules/components.js");
+import { generateCaptcha } from "../Modules/functions";
+import { requestVerification } from "../Modules/components";
 
 module.exports = {
     name: 'captcha',

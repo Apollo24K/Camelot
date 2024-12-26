@@ -1,4 +1,4 @@
-const { cat1 } = require("../Modules/functions.js");
+import { cat1 } from "../Modules/functions";
 
 module.exports = {
     name: 'ep',

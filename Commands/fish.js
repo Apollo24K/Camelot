@@ -1,7 +1,7 @@
-const { db, query } = require("../db_handler.js");
-const { fishing } = require("../Modules/items.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { achievements } = require("../Modules/achievements.js");
+import { db, query } from "../db_handler";
+import { fishing } from "../Modules/items";
+import { dailies } from "../Modules/dailyQuests";
+import { achievements } from "../Modules/achievements";
 
 const fishingCooldown = new Map();
 

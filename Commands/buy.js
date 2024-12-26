@@ -1,10 +1,13 @@
-const { EmbedBuilder } = require("discord.js");
-const { characters } = require("../Modules/chars.js");
-const { db, query } = require("../db_handler.js");
-const { splitTitle, rarity, getRefinement, searchItem, generateUniqueItemId, generateSubstats } = require("../Modules/functions.js");
-const { achievements } = require("../Modules/achievements.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { items } = require("../Modules/items.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { characters } from "../Modules/chars";
+import { db, query } from "../db_handler";
+import { splitTitle, rarity, getRefinement, searchItem, generateUniqueItemId } from "../Modules/functions";
+import { monthlyShopItems } from "../Modules/monthlyShopItems";
+import { achievements } from "../Modules/achievements";
+import { dailies } from "../Modules/dailyQuests";
+import { items } from "../Modules/items";
+import { OfferRow } from "../Modules/components";
 
 function displayMy(thisChar, inv, ref, interaction) {
     let animeL = splitTitle(thisChar.anime);
@@ -51,7 +54,7 @@ module.exports = {
     description: 'buy from the shop',
     execute(interaction) {
 
-        let subcommand = interaction.options.getSubcommand();
+        const subcommand = interaction.options.getSubcommand();
         let item = interaction.options.getString('item');
 
         if (subcommand === "character") {
@@ -258,11 +261,116 @@ module.exports = {
 
                 // Write to database
                 let uid = generateUniqueItemId(interaction.user.id, existing);
-                await query(`INSERT INTO weapons (id, itemid, uniqueid${fItem.category === "armor" ? ", substats" : ""}) VALUES (${interaction.user.id}, ${fItem.id}, '${uid + ":" + interaction.user.id}'${fItem.category === "armor" ? ", '" + JSON.stringify(generateSubstats()) + "'" : ""})`, 'run');
+                await query(`INSERT INTO weapons (id, itemid, uniqueid, item_type) VALUES (${interaction.user.id}, ${fItem.id}, '${uid + ":" + interaction.user.id}', ${fItem.category})`, 'run');
 
                 return interaction.reply(`You have successfully bought ${fItem.emoji} **__${fItem.name}__**!`);
             });
+        } else if (subcommand === "monthly") {
+
+            // If value failed
+            const shopItem = monthlyShopItems.find((e) => item === `${e.name} (${e.displayPriceText})`);
+
+            const fItem = shopItem ?? monthlyShopItems[parseInt(item)];
+            if (!fItem?.name) return;
+
+            let amount = interaction.options.getString('amount');
+
+            db.serialize(async () => {
+                const { 0: stats } = await query(`SELECT coins, gems, jades, lilies, monthlyshop FROM users WHERE id = ${interaction.user.id}`);
+                if (!stats) return interaction.reply(`You haven't started playing yet.`);
+                stats.monthlyshop = JSON.parse(stats.monthlyshop);
+
+                const bought = stats.monthlyshop[fItem.id] ?? 0;
+                if (bought >= fItem.amount) return interaction.reply(`You have already bought every **${fItem.name}** from this month's shop!`);
+
+                amount = (amount === "max") ? (fItem.amount - bought) : (parseInt(amount) || 1);
+                if (amount < 1) amount = 1;
+                if (amount + bought > fItem.amount) amount = fItem.amount - bought;
+                const max = Math.floor(stats[fItem.currency] / fItem.price);
+                if (amount > max) amount = max;
+
+                const cost = Math.round(fItem.price * amount);
+                if (amount < 1 || stats[fItem.currency] < cost) return interaction.reply(`You don't have enough ${fItem.currency} (${fItem.displayPrice})`);
+
+                return interaction.reply({ content: `Would you like to buy ${amount}x ${fItem.displayName} for **${cost}** ${fItem.emojiIcon}?`, components: [OfferRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
+
+                    collector.on('collect', async r => {
+                        collector.stop();
+                        if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
+
+                        const { 0: stats } = await query(`SELECT coins, gems, jades, lilies, premium, monthlyshop, items FROM users WHERE id = ${interaction.user.id}`);
+                        if (!stats) return interaction.channel.send(`You haven't started playing yet.`);
+                        stats.monthlyshop = JSON.parse(stats.monthlyshop);
+                        stats.items = JSON.parse(stats.items);
+
+                        const bought = stats.monthlyshop[fItem.id] ?? 0;
+                        if (bought >= fItem.amount) return interaction.channel.send(`You have already bought every **${fItem.name}** from this month's shop!`);
+
+                        amount = (amount === "max") ? (fItem.amount - bought) : (parseInt(amount) || 1);
+                        if (amount < 1) amount = 1;
+                        if (amount + bought > fItem.amount) amount = fItem.amount - bought;
+                        const max = Math.floor(stats[fItem.currency] / fItem.price);
+                        if (amount > max) amount = max;
+
+                        const cost = Math.round(fItem.price * amount);
+                        if (amount < 1 || stats[fItem.currency] < cost) return interaction.channel.send(`You don't have enough ${fItem.currency} (${fItem.displayPrice})`);
+
+                        if ((fItem.section === "Premium" || fItem.section === "Freemium") && stats.premium >= fItem.custom.tier) return interaction.channel.send(`You already have premium!`);
+
+                        // Remove price and track purchase
+                        stats.monthlyshop[fItem.id] = stats.monthlyshop[fItem.id] + amount || amount;
+                        await query(`UPDATE users SET monthlyshop = '${JSON.stringify(stats.monthlyshop)}', ${fItem.currency} = ${fItem.currency} - ${cost} WHERE id = ${interaction.user.id}`);
+
+                        // Add item
+                        if (fItem.section === "Premium" || fItem.section === "Freemium") {
+                            const premiumGift = JSON.parse(fs.readFileSync('Storage/premiumGift.json', 'utf8'));
+                            premiumGift[interaction.user.id] = { "method": "shop", "date": Date.now() };
+
+                            fs.writeFile('Storage/premiumGift.json', JSON.stringify(premiumGift), (err) => {
+                                if (err) console.error(err);
+                            });
+
+                            await query(`UPDATE users SET premium = ${fItem.custom.tier} WHERE id = ${interaction.user.id}`);
+
+                            return interaction.channel.send(`You have received 1 month of premium!`);
+                        } else if (fItem.section === "EX Pulls") {
+                            await query(`UPDATE users SET expulls = expulls + ${amount} WHERE id = ${interaction.user.id}`);
+                        } else if (fItem.section === "Kernel") {
+                            stats.items[683] = stats.items[683] + amount || amount;
+                            await query(`UPDATE users SET items = '${JSON.stringify(stats.items)}' WHERE id = ${interaction.user.id}`);
+                        } else if (fItem.section === "Ascension Materials") {
+                            stats.items[fItem.custom.itemid] = stats.items[fItem.custom.itemid] + amount || amount;
+                            await query(`UPDATE users SET items = '${JSON.stringify(stats.items)}' WHERE id = ${interaction.user.id}`);
+                        } else if (fItem.section === "Shards") {
+                            await query(`UPDATE users SET ${fItem.custom.column} = ${fItem.custom.column} + ${amount} WHERE id = ${interaction.user.id}`);
+                        } else if (fItem.section === "Tickets") {
+                            await query(`UPDATE users SET ${fItem.custom.column} = ${fItem.custom.column} + ${amount} WHERE id = ${interaction.user.id}`);
+                        } else if (fItem.section === "Chests") {
+                            stats.items[fItem.custom.itemid] = stats.items[fItem.custom.itemid] + amount || amount;
+                            await query(`UPDATE users SET items = '${JSON.stringify(stats.items)}' WHERE id = ${interaction.user.id}`);
+                        };
+
+                        return interaction.channel.send(`You have bought ${amount}x ${fItem.displayName}!`);
+                    });
+
+                    collector.on('end', () => {
+                        interaction.editReply({ components: [] });
+                    });
+                });
+            });
         };
 
+    },
+    async autocomplete({ interaction }) {
+        const subcommand = interaction.options.getSubcommand();
+        const focus = interaction.options.getFocused()?.toLowerCase();
+
+        if (subcommand === "monthly") {
+            const shopItems = monthlyShopItems.filter((e) => e.name.toLowerCase().includes(focus)).sort((a, b) => a.name.localeCompare(b.name));
+            return shopItems.map((e) => ({ name: `${e.name} (${e.displayPriceText})`, value: `${e.id}` }));
+        };
+
+        return [];
     },
 };

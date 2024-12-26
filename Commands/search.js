@@ -1,8 +1,8 @@
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { characters, uniqueAnimeCharacters } = require("../Modules/chars.js");
-const { db, query } = require("../db_handler.js");
-const { searchAnime, showPage, splitTitle, rarity } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { characters, uniqueAnimeCharacters } from "../Modules/chars";
+import { db, query } from "../db_handler";
+import { searchAnime, showPage, splitTitle, rarity } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
 
 module.exports = {
     name: 'search',

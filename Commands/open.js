@@ -1,8 +1,8 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
-const { generateUniqueItemId, generateSubstats, showPage } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
+import { generateUniqueItemId, showPage } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
 
 const row = new ActionRowBuilder()
     .addComponents(
@@ -159,7 +159,7 @@ module.exports = {
                     let uid = generateUniqueItemId(interaction.user.id, existing);
                     existing.push(uid + ":" + interaction.user.id);
                     drops[j].uid = uid;
-                    await query(`INSERT INTO weapons (id, itemid, uniqueid${drops[j].category === "armor" ? ", substats" : ""}) VALUES (${interaction.user.id}, ${drops[j].id}, '${uid + ":" + interaction.user.id}'${drops[j].category === "armor" ? ", '" + JSON.stringify(generateSubstats()) + "'" : ""})`, 'run');
+                    await query(`INSERT INTO weapons (id, itemid, uniqueid, item_type) VALUES (${interaction.user.id}, ${drops[j].id}, '${uid + ":" + interaction.user.id}', ${drops[j].category})`, 'run');
                 };
                 drops.sort((a, b) => a.gradeValue - b.gradeValue);
 

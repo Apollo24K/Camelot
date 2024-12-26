@@ -1,7 +1,7 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
-const { splitTitle, rarity, getRefinement } = require("../Modules/functions.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { query } from "../db_handler";
+import { characters } from "../Modules/chars";
+import { splitTitle, rarity, getRefinement } from "../Modules/functions";
 
 function displayMy(thisChar, inv, ref, interaction) {
     const dupes = inv.filter((e) => e === thisChar.id).length;
@@ -26,21 +26,53 @@ function r1(stats) {
     );
 };
 
-const thumbnail = "https://i.ibb.co/tLRsrcH/prev.gif";
+const thumbnail = "https://i.ibb.co/z4DcLzS/preview.gif";
 const expity = 24;
 
-function getChar(pity = false) {
-    let char, ranum = Math.floor(Math.random() * 1000); // 0-999
-    if (ranum < 11) char = characters[19048]; // Gojo EX
-    else if (ranum < (11 + 19)) char = characters[19049]; // Ruminas EX
-    else if (ranum < (11 + 19 + 15)) char = characters[19050]; // Raiden EX
-    else if (ranum < (11 + 19 + 15 + 23)) char = characters[19051]; // Sara EX
-    // else if (ranum < (11 + 19 + 15 + 23 + 17)) char = characters[18010]; // Hori EX
-    else if (ranum < (11 + 19 + 15 + 23 + 400)) char = characters.filter((e) => e.rarity === "SS").sort(() => 0.5 - Math.random())[0]; // SS char
-    else char = characters.filter((e) => e.rarity === "S").sort(() => 0.5 - Math.random())[0]; // S char
+const newex = {
+    "22610": 0.016, // Mari EX
+    "22611": 0.013, // Frieren EX
+    "22612": 0.011, // Itachi EX
+}; // sum = 0.04
 
-    if (pity) {
-        let exSet = [17871, 18011, 17742, 17743, 18010];
+const oldex = {
+    "17116": 0.004, // Isolde EX
+    "17686": 0.005, // Escanor EX
+    "17871": 0.006, // Padoru EX
+    "18011": 0.005, // Lria EX
+}; // sum = 0.02
+
+const expool = {
+    ...newex,
+    ...oldex,
+};
+
+const exDropRate = Math.floor(10000 * Object.values(expool).reduce((acc, rate) => acc + rate, 0)) / 100;
+
+function getChar(pity = false, forcePity = false) {
+    let char, weightSum = 0, ranum = Math.random(); // ranum = Math.floor(Math.random() * 1000); // 0-999
+
+    const usePool = pity ? newex : expool;
+
+    // Roll weighted EX
+    for (const cid in usePool) {
+        const weight = usePool[cid];
+        weightSum += weight;
+        if (ranum < weightSum) {
+            char = characters[cid];
+            break;
+        };
+    };
+
+    // if no EX
+    if (!char) {
+        if (Math.random() < (0.5 - (exDropRate / 100))) char = characters.filter((e) => e.rarity === "SS").sort(() => 0.5 - Math.random())[0]; // SS char
+        else char = characters.filter((e) => e.rarity === "S").sort(() => 0.5 - Math.random())[0]; // S char
+    };
+
+    // Pity
+    if (forcePity) {
+        const exSet = Object.keys(usePool);
         char = characters[exSet[Math.floor(Math.random() * exSet.length)]];
     };
 
@@ -48,28 +80,22 @@ function getChar(pity = false) {
 };
 
 // Expected drops
-// let count = [0, 0, 0, 0, 0];
+// let count = Object.entries(expool).reduce((acc, [cid]) => { acc[cid] = 0; return acc; }, {});
 // let stats = { expity: 0 };
-// for (let i = 0; i < 100000; i++) {
+// for (let i = 0; i < 10000; i++) {
 //     let char = getChar();
 
 //     if (++stats.expity >= expity) {
 //         let failSafe = 0;
-//         while (char.rarity !== "EX" && failSafe++ < 100) {
-//             char = getChar();
+//         while (char.rarity !== "EX" && failSafe++ < 101) {
+//             char = getChar(true, failSafe === 100);
 //         };
 //     };
 //     if (char.rarity === "EX") stats.expity = 0;
 
-//     count[0] += char.id === 17871;
-//     count[1] += char.id === 18011;
-//     count[2] += char.id === 17742;
-//     count[3] += char.id === 17743;
-//     count[4] += char.id === 18010;
+//     if (char.id in count) count[char.id]++;
 // };
-// console.log(count.map((e) => e / 1000));
-
-const desc = "Pull for a chance of getting an EX character!\nIncludes the following characters: **Gojou Satoru EX**, **Raiden Shogun EX**, **Ruminas Valentine EX**, **Rudeus' EX**";
+// console.log(count);
 
 module.exports = {
     name: 'ex',
@@ -81,11 +107,17 @@ module.exports = {
         const { 0: inv } = await query(`SELECT chars, ref FROM characters WHERE id = ${interaction.user.id}`);
         inv.chars = JSON.parse(inv.chars), inv.ref = JSON.parse(inv.ref);
 
+        function getDesc() {
+            return `Pull for a chance of getting an EX character!\nIncludes the following characters:\n**NEW** (67%): ${Object.keys(newex).map((e) => `**${characters[e].name}**`).join(", ")}\n**RERUN** (33%): ${Object.keys(oldex).map((e) => `**${characters[e].name}**`).join(", ")}\n\n` +
+                `**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **${exDropRate}**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **${50 - exDropRate}**%\n<:STier:869316518675095552> Tier ➜ **50**%\n\n` +
+                `-# Tip: Pity only includes new EX characters!`;
+        };
+
         const Embed = new EmbedBuilder()
             .setColor(0x2aad9d)
             .setThumbnail(thumbnail)
             .setAuthor({ name: `${interaction.user.username}'s inventory`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
-            .setDescription(`${desc}\n\n**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **8**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **42**%\n<:STier:869316518675095552> Tier ➜ **50**%`);
+            .setDescription(getDesc());
         interaction.reply({ embeds: [Embed], components: [r1(stats)], fetchReply: true }).then((msg) => {
 
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
@@ -105,8 +137,8 @@ module.exports = {
                 // Check Pity
                 if (++stats.expity >= expity) {
                     let failSafe = 0;
-                    while (char.rarity !== "EX" && failSafe++ < 100) {
-                        char = getChar(failSafe === 100);
+                    while (char.rarity !== "EX" && failSafe++ < 101) {
+                        char = getChar(true, failSafe === 100);
                     };
                 };
                 if (char.rarity === "EX") stats.expity = 0;
@@ -115,10 +147,10 @@ module.exports = {
                 await query(`UPDATE users SET expulls = expulls - 1, expity = ${stats.expity} WHERE id = ${interaction.user.id}`);
                 await query(`UPDATE characters SET chars = '${JSON.stringify(inv.chars)}' WHERE id = ${interaction.user.id}`);
 
-                Embed.setDescription(`${desc}\n\n**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **8**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **42**%\n<:STier:869316518675095552> Tier ➜ **50**%`);
+                Embed.setDescription(getDesc());
                 interaction.editReply({ embeds: [Embed], components: [r1(stats)] });
 
-                if (char.id === 17871) {
+                if (char.name === "Padoru EX") {
                     interaction.channel.send("Hashire sori yo");
                     setTimeout(() => {
                         interaction.channel.send("Kaze no you ni");
@@ -132,6 +164,11 @@ module.exports = {
                     setTimeout(() => {
                         displayMy(char, inv.chars, inv.ref[char.id], interaction);
                     }, 6000);
+                } else if (char.name === "Urashima EX") {
+                    interaction.channel.send("✨ The stars are calling...");
+                    setTimeout(() => {
+                        displayMy(char, inv.chars, inv.ref[char.id], interaction);
+                    }, 2000);
                 } else {
                     displayMy(char, inv.chars, inv.ref[char.id], interaction);
                 };
@@ -141,3 +178,21 @@ module.exports = {
 
     },
 };
+
+// Expected drops
+// let count = Object.entries(expool).reduce((acc, [cid]) => { acc[cid] = 0; return acc; }, {});
+// let stats = { expity: 0 };
+// for (let i = 0; i < 10000; i++) {
+//     let char = getChar();
+
+//     if (++stats.expity >= expity) {
+//         let failSafe = 0;
+//         while (char.rarity !== "EX" && failSafe++ < 101) {
+//             char = getChar(true, failSafe === 100);
+//         };
+//     };
+//     if (char.rarity === "EX") stats.expity = 0;
+
+//     if (char.id in count) count[char.id]++;
+// };
+// console.log(count);

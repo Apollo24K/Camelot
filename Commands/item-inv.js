@@ -1,10 +1,10 @@
-const fs = require('fs');
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { characters } = require("../Modules/chars.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
-const { showPage, getItemLevel, customEmojis } = require("../Modules/functions.js");
-const { PageRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { characters } from "../Modules/chars";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
+import { showPage, getItemLevel, customEmojis } from "../Modules/functions";
+import { PageRow } from "../Modules/components";
 
 function getAscension(lvl) {
     let asc = "";

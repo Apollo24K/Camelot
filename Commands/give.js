@@ -1,10 +1,10 @@
-const fs = require('fs');
-const { EmbedBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { achievements } = require("../Modules/achievements.js");
-const { characters } = require("../Modules/chars.js");
-const { userLevel, search } = require("../Modules/functions.js");
-const { OfferRow } = require("../Modules/components.js");
+import fs from 'fs';
+import { EmbedBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { achievements } from "../Modules/achievements";
+import { characters } from "../Modules/chars";
+import { userLevel, search } from "../Modules/functions";
+import { OfferRow } from "../Modules/components";
 
 module.exports = {
     name: 'give',
@@ -17,8 +17,8 @@ module.exports = {
         if (user.id === interaction.user.id) return interaction.reply("no <:yogurtKek:794982064553328660>");
 
         db.serialize(async () => {
-            let _stats = await query(`SELECT coins FROM users WHERE id = ${user.id}`);
-            if (!_stats[0]) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
+            const { 0: _stats } = await query(`SELECT coins, xp FROM users WHERE id = ${user.id}`);
+            if (!_stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
 
             // Give coins
             if (subcommand === "coins") {
@@ -31,7 +31,7 @@ module.exports = {
                 if (amount < 1) return interaction.reply(`${amount} coins? <:ConfusedSmug:868988282250346558>`);
                 if (amount > 10000000) return interaction.reply(`You can't send more than 10'000'000<:coins:872926669055356939> at once.`);
 
-                return interaction.reply({ content: `Are you sure you want to give **${user.username}** **${amount}**<:coins:872926669055356939>?`, components: [OfferRow], fetchReply: true }).then(msg => {
+                return interaction.reply({ content: `Are you sure you want to give **${user.username}** **${amount}**<:coins:872926669055356939>?${userLevel(_stats.xp) < 25 ? `\n⚠️ **${user.username}** is below level 25 and won't be able to use \`/give\` commands until then.` : ""}`, components: [OfferRow], fetchReply: true }).then(msg => {
 
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
@@ -66,24 +66,28 @@ module.exports = {
 
             // Give characters
             if (subcommand === "characters") {
-                const { 0: stats } = await query(`SELECT xp FROM users WHERE id = ${interaction.user.id}`);
+                const { 0: stats } = await query(`SELECT xp, animelock, charlock FROM users WHERE id = ${interaction.user.id}`);
                 if (userLevel(stats.xp) < 25) return interaction.reply(`You must be level 25 or higher to give characters`);
+                stats.animelock = JSON.parse(stats.animelock);
+                stats.charlock = JSON.parse(stats.charlock);
 
                 const { 0: inv } = await query(`SELECT chars FROM characters WHERE id = ${interaction.user.id}`);
                 inv.chars = JSON.parse(inv.chars);
 
                 const choice = [...new Set((interaction.options.getString('characters') || "").split(",").map((e) => e.trim()))];
 
+                let hasLockedCharacters = false;
                 const chars = [];
                 choice.forEach((c) => {
                     const char = search(c, inv.chars, interaction, true);
-                    if (char?.name && inv.chars.includes(char.id)) chars.push(char);
+                    if (stats.charlock.includes(char?.id) || stats.animelock.includes(char?.animeInfo?.id)) hasLockedCharacters = true;
+                    if (char?.name && inv.chars.includes(char.id) && !chars.includes(char) && !stats.charlock.includes(char.id) && !stats.animelock.includes(char.animeInfo.id)) chars.push(char);
                 });
 
-                if (chars.length === 0) return interaction.reply(`No match found`);
-                if (chars.length > 20) return interaction.reply(`You can't give more than 20 chars at once`);
+                if (chars.length === 0) return interaction.reply(hasLockedCharacters ? "⚠️ You're trying to give locked characters, please unlock them first." : `No match found`);
+                if (chars.length > 200) return interaction.reply(`You can't give more than 200 chars at once`);
 
-                return interaction.reply({ content: `Are you sure you want to give **${chars.map((c) => c.name.slice(0, 20)).join(", ")}** to **${user.username}**?`, components: [OfferRow], fetchReply: true }).then(msg => {
+                return interaction.reply({ content: `Are you sure you want to give **${chars.map((c) => c.name.slice(0, 20)).join(", ").length > 1800 ? (chars.map((c) => c.name.slice(0, 20)).join(", ") + " __+ more__") : chars.map((c) => c.name.slice(0, 20)).join(", ")}** to **${user.username}**?${hasLockedCharacters ? "\n⚠️ You're trying to give locked characters, please unlock them first." : ""}${userLevel(_stats.xp) < 25 ? `\n⚠️ **${user.username}** is below level 25 and won't be able to use \`/give\` commands until then.` : ""}`, components: [OfferRow], fetchReply: true }).then(msg => {
 
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
@@ -97,11 +101,11 @@ module.exports = {
                         const chars = [];
                         choice.forEach((c) => {
                             const char = search(c, inv.chars, interaction, true);
-                            if (char?.name && inv.chars.includes(char.id)) chars.push(char);
+                            if (char?.name && inv.chars.includes(char.id) && !chars.includes(char) && !stats.charlock.includes(char.id) && !stats.animelock.includes(char.animeInfo.id)) chars.push(char);
                         });
 
-                        if (chars.length === 0) return interaction.reply(`No match found`);
-                        if (chars.length > 20) return interaction.reply(`You can't give more than 20 chars at once`);
+                        if (chars.length === 0) return interaction.reply(hasLockedCharacters ? "⚠️ You've tried giving locked characters, please unlock them first." : `No match found`);
+                        if (chars.length > 200) return interaction.reply(`You can't give more than 200 chars at once`);
 
                         const { 0: _inv } = await query(`SELECT chars FROM characters WHERE id = ${user.id}`);
                         _inv.chars = JSON.parse(_inv.chars);
@@ -137,7 +141,7 @@ module.exports = {
                             return interaction.channel.send('An error occurred while processing your request.');
                         };
 
-                        interaction.channel.send(`**${chars.map((c) => c.name.slice(0, 20)).join(", ")}** ${chars.length === 1 ? "was" : "were"} gifted to **${user.toString()}**`);
+                        interaction.channel.send(`**${chars.map((c) => c.name.slice(0, 20)).join(", ").length > 1800 ? (chars.map((c) => c.name.slice(0, 20)).join(", ") + " __+ more__") : chars.map((c) => c.name.slice(0, 20)).join(", ")}** ${chars.length === 1 ? "was" : "were"} gifted to **${user.toString()}**`);
 
                         // Achievements
                         achievements[1].check(interaction, user), achievements[2].check(interaction, user), achievements[3].check(interaction, user); // Collector
@@ -147,7 +151,7 @@ module.exports = {
                         const chnl = client.channels.cache.find(channel => channel.id === "1042922243933622362");
                         const Embed = new EmbedBuilder()
                             .setColor(0xbbffff)
-                            .setDescription(`${interaction.user.tag} sent ${chars.map((char) => `**${characters[char.id].rarity}**-Tier **${characters[char.id].name}**`).join(", ")} to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
+                            .setDescription(`${interaction.user.tag} sent ${chars.map((char) => `**${characters[char.id].rarity}** **${characters[char.id].name.slice(0, 18)}**`).join(", ")} to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
                         chnl.send({ embeds: [Embed] });
                     });
 
@@ -192,13 +196,29 @@ module.exports = {
 
                 if (premiumGifted[interaction.user.id] >= giftLimit) return interaction.reply(`You can only give ${giftLimit} premium away. Premium gifts are resetted on every 1st of the month.${giftLimit === 5 ? "" : ` You can look up our \`/patreon\` if you need more.`}`);
 
-                if (stats[1].premium >= tier) return interaction.reply(`**${user.username}** already has premium.`);
                 if (user.bot) return interaction.reply("You can't give premium to bots.");
                 if (tier < 1 || tier > 7) return interaction.reply("Invalid tier");
 
-                premiumGift[user.id] = { "method": "gift", "date": new Date().getTime() };
+                if (stats[1].premium > tier) return interaction.reply(`**${user.username}** already has premium.`);
+                if (stats[1].premium >= tier && interaction.user.id !== "489490486734880774") return interaction.reply(`**${user.username}** already has premium.`);
+
+                // Stack if Apollo is gifting
+                let isStack = false;
+                if (stats[1].premium === tier && interaction.user.id === "489490486734880774") {
+                    if (premiumGift[user.id]?.date && ((new Date().getTime() - premiumGift[user.id].date) < 1000 * 60 * 60 * 24 * 30)) {
+                        premiumGift[user.id] = { "method": "gift", "date": (premiumGift[user.id].date + 1000 * 60 * 60 * 24 * 30) };
+                        isStack = true;
+                    } else {
+                        premiumGift[user.id] = { "method": "gift", "date": new Date().getTime() };
+                    };
+                } else {
+                    premiumGift[user.id] = { "method": "gift", "date": new Date().getTime() };
+                };
+
+                // Increment gift count
                 premiumGifted[interaction.user.id]++;
 
+                // Write to files
                 fs.writeFile('Storage/premiumGift.json', JSON.stringify(premiumGift), (err) => {
                     if (err) console.error(err);
                 });
@@ -208,19 +228,19 @@ module.exports = {
 
                 await query(`UPDATE users SET premium = ${tier} WHERE id = ${user.id}`);
 
-                return interaction.reply(`${user.toString()} has received 1 month of premium!`);
+                return interaction.reply(`${user.toString()} has received ${isStack ? "an additional month of premium!" : "1 month of premium!"}`);
             };
 
             // Give pass
             if (subcommand === "pass") {
-                const { 0: stats } = await query(`SELECT gems, passpurchaselimit FROM users WHERE id = ${interaction.user.id}`);
+                const { 0: stats } = await query(`SELECT jades, passpurchaselimit FROM users WHERE id = ${interaction.user.id}`);
                 const { 0: stats2 } = await query(`SELECT pass FROM users WHERE id = ${user.id}`);
 
-                if (stats.gems < 1000) return interaction.reply(`You dont have enough gems (**${stats.gems}**/1000<:genesis_gems:1034179687720681492>)`);
+                if (stats.jades < 1000) return interaction.reply(`You dont have enough jades (**${stats.jades}**/1000<:eternal_jade:1256124504141201428>)`);
                 if (stats.passpurchaselimit >= 5) return interaction.reply(`You can only gift up to 5 passes`);
                 if (stats2.pass) return interaction.reply(`**${user.username}** already has a premium pass!`);
 
-                return interaction.reply({ content: `Do you want to give **${user.username}** a premium pass for **1000**<:genesis_gems:1034179687720681492>?`, components: [OfferRow], fetchReply: true }).then(msg => {
+                return interaction.reply({ content: `Do you want to give **${user.username}** a premium pass for **1000**<:eternal_jade:1256124504141201428>?`, components: [OfferRow], fetchReply: true }).then(msg => {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
@@ -228,13 +248,13 @@ module.exports = {
                         collector.stop();
                         if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
 
-                        const { 0: stats } = await query(`SELECT gems FROM users WHERE id = ${interaction.user.id}`);
+                        const { 0: stats } = await query(`SELECT jades FROM users WHERE id = ${interaction.user.id}`);
                         const { 0: stats2 } = await query(`SELECT pass FROM users WHERE id = ${user.id}`);
 
-                        if (stats.gems < 1000) return interaction.reply(`You dont have enough gems (**${stats.gems}**/1000<:genesis_gems:1034179687720681492>)`);
+                        if (stats.jades < 1000) return interaction.reply(`You dont have enough jades (**${stats.jades}**/1000<:eternal_jade:1256124504141201428>)`);
                         if (stats2.pass) return interaction.reply(`**${user.username}** already has a premium pass!`);
 
-                        await query(`UPDATE users SET gems = gems - 1000, passpurchaselimit = passpurchaselimit + 1 WHERE id = ${interaction.user.id}`);
+                        await query(`UPDATE users SET jades = jades - 1000, passpurchaselimit = passpurchaselimit + 1 WHERE id = ${interaction.user.id}`);
                         await query(`UPDATE users SET pass = 1 WHERE id = ${user.id}`);
 
                         interaction.channel.send(`${user.toString()} has received a premium pass from ${interaction.user.toString()}!`);

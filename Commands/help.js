@@ -1,7 +1,7 @@
-const { EmbedBuilder } = require('discord.js');
-const package = require('../package.json');
-const { auniq } = require("../Modules/chars.js");
-const { items } = require("../Modules/items.js");
+import { EmbedBuilder } from 'discord.js';
+import Package from '../package.json';
+import { auniq } from "../Modules/chars";
+import { items } from "../Modules/items";
 
 module.exports = {
     name: 'help',
@@ -14,11 +14,11 @@ module.exports = {
         if (!help) {
             const Embed = new EmbedBuilder()
                 .setTitle('Command List')
-                .setColor(0xbbffff) // Default: 0xbbffff, Anniversary: 0x2aad9d, Halloween: 0xff8733, Christmas: 0x034f20, Valentine's: 0xf8c8dc
+                .setColor(0xbbffff) // Default: 0xbbffff, Anniversary: 0x2aad9d, Halloween: 0xff8733, Christmas: 0x034f20, Valentine's: 0xf8c8dc, Easter: 0x69ffb9
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                 .setDescription("Use `/help <command name>` for more information")
                 .addFields(
-                    // { name: "💗 Valentine's Event", value: "`/valentines-chocolate` `/boss hunt` `/event pass`\n`/ex pull` `/event rewards`" },
+                    // { name: "🌙 Anniversary Event", value: "`/celebrate` `/boss hunt` `/event pass` `/ex pull`\n`/event rewards`" },
                     { name: "<:SSTier:869316489931546644> Card Game", value: "`/pull` `/info` `/search` `/anime` `/profile` `/shop`\n`/sell` `/buy` `/trade` `/give` `/level` `/daily` `/fav`\n`/inventory` `/balance` `/tickets` `/top` `/stats` `/open`\n`/list` `/pity` `/find` `/use` `/achievements` `/lootbox`\n`/quests` `/bank`" },
                     { name: "<:sword:941687282585468958> Dungeon", value: "`/dungeon` `/select` `/shards` `/refine` `/convert` `/rank`\n`/levelup` `/feed` `/arena` `/class list` `/class select`\n`/ability` `/class pick` `/class upgrade` `/class level`\n`/class info` `/class transfer` `/curse list` `/curse info`\n`/item info` `/item list` `/item equip` `/item levelup`\n`/items` `/forge` `/ep`" },
                     { name: "🏰 Guilds", value: "`/guild create` `/guild join` `/guild leave` `/guild view`\n`/guild promote` `/guild demote` `/guild kick` `/guild invite`\n`/guild edit` `/guild donate` `/guild levelup` `/guild top`" },
@@ -26,7 +26,7 @@ module.exports = {
                     { name: "🎭 Fun", value: "`/guess character` `/recommend` `/random` `/fish` `/ruin`" },
                     { name: "🎐 Other", value: "`/support` `/premium` `/camelot` `/submit` `/avatar`\n`/ping` `/math` `/reminder` `/referral`" }
                 )
-                .setFooter({ text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
+                .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
             return interaction.reply({ embeds: [Embed] });
         };
 
@@ -35,7 +35,7 @@ module.exports = {
             .setColor(0xbbffff)
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
             .setDescription("Use `/help <command name>` for more information")
-            .setFooter({ text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
+            .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
 
         const commands = {
             ability: "**Usage**: </ability:1014178280376647721>\n**Options**: `character`, `page`, `user`\n\nLists all characters who have a unique ability\nCharacter abilities can be used through the ⚜️ ABILITY button in the `/dungeon`, `/arena`, `/trial` and more.\n\n**Options**\n`character`: Show details on a specific character's ability\n`page`: Directly jump to the page you want to see\n`user`: See which ability chars someone owns",

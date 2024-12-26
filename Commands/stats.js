@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters, auniq, charactersF, charactersM, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } = require("../Modules/chars.js");
+import { EmbedBuilder } from "discord.js";
+import { db, query } from "../db_handler.js";
+import { characters, auniq, charactersF, charactersM, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars.js";
 
 function padCollected(chars) {
     let collSS = chars.filter((e) => e.rarity === "SS").length;

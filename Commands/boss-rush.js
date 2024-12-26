@@ -1,18 +1,18 @@
 /* eslint-disable no-unused-vars */
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { classes } = require("../Modules/classes.js");
-const { curses } = require("../Modules/curses.js");
-const { enemies } = require("../Modules/enemies.js");
-const { items } = require("../Modules/items.js");
-const { skills, bossAbilities } = require("../Modules/skills.js");
-const { characters } = require("../Modules/chars.js");
-const { getDetailedStats, customEmojis, deleteReplyIn, dealDamage } = require("../Modules/functions.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities";
+import { classes } from "../Modules/classes";
+import { curses } from "../Modules/curses";
+import { enemies } from "../Modules/enemies";
+import { items } from "../Modules/items";
+import { skills, bossAbilities } from "../Modules/skills";
+import { characters } from "../Modules/chars";
+import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage } from "../Modules/functions";
+import Avalon from "../Modules/avalon";
+import buffInfo from "../Modules/buffs";
+import _ from 'lodash';
 
 const dungeonInProgress = new Map();
 
@@ -31,9 +31,9 @@ module.exports = {
     description: 'boss rush event gamemode',
     execute(interaction) {
 
-        // return interaction.reply("Boss Rush will start soon after `/stampede`!");
+        // return interaction.reply("After feedback about having 2 event modes at the same time causing slow downs and being stressful, we'll be pausing `/boss rush` for now till the `/stampede` is over <a:YuiNod:1059435876599484456>\n`/boss rush` will be extended accordingly <:ThumbsUp:1020442047712350298>");
 
-        return interaction.reply("Hey there! This is an event game mode and it looks like there is no ongoing event as of right now.\nYou can see our </support:1011293280702578694> server for more information.");
+        return interaction.reply("This is an event game mode, but there is currently no ongoing event.\nPlease see our </support:1011293280702578694> server for more information.");
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
@@ -48,7 +48,7 @@ module.exports = {
             if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
 
             // Set up restrictions
-            const cooldown = 8 * 60 * 1000;
+            const cooldown = 15 * 60 * 1000;
             if (dungeonInProgress.has(stats.id)) return interaction.editReply(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
             dungeonInProgress.set(stats.id, new Date().getTime() + cooldown);
             setTimeout(() => {
@@ -72,7 +72,7 @@ module.exports = {
             let resolved = false;
             async function matchResult(r) {
                 round++;
-                if (r === "w" && round < 20) return setTimeout(newFight, 1000);
+                if (r === "w" && round < 20) return newFight(); // return setTimeout(newFight, 1000);
                 if (r === "l" || r === "t") round--;
 
                 if (resolved) return;
@@ -80,8 +80,8 @@ module.exports = {
 
                 // Loot
                 let eventpts = Math.round(round * 0.8 * (5 - Math.random()) * Math.pow(1.2, round * 0.8));
-                if (eventpts > 400) eventpts = 400 + Math.floor(eventpts / 10);
-                eventpts = Math.floor(eventpts * 2);
+                if (eventpts > 500) eventpts = 500 + Math.floor(eventpts / 10);
+                // eventpts = Math.floor(eventpts * 2);
                 let loot = Math.round((2 * (10 + round * 0.8) * (5 - Math.random()) * Math.pow(1.2, round * 0.8)) / 4);
                 if (loot > 400) loot = 400 + Math.floor(loot / 10);
 
@@ -126,68 +126,68 @@ module.exports = {
                     {
                         id: 0,
                         required: 250,
-                        query: `coins = coins + ${100}, sshard = sshard + ${4}`,
-                        rew: "100<:coins:872926669055356939> and 4<:s_shard:917202925514817566>",
+                        query: `coins = coins + ${300}, sshard = sshard + ${4}`,
+                        rew: "300<:coins:872926669055356939> and 4<:s_shard:917202925514817566>",
                     },
                     {
                         id: 1,
                         required: 500,
-                        query: `coins = coins + ${200}, lootbox = lootbox + ${1}`,
-                        rew: "200<:coins:872926669055356939> and a lootbox",
+                        query: `coins = coins + ${400}, lootbox = lootbox + ${1}`,
+                        rew: "400<:coins:872926669055356939> and a lootbox",
                     },
                     {
                         id: 2,
                         required: 800,
-                        query: `coins = coins + ${300}, sticket = sticket + ${1}`,
-                        rew: "300<:coins:872926669055356939> and 1x <:s_ticket:927642487705722890>",
+                        query: `coins = coins + ${500}, sticket = sticket + ${1}`,
+                        rew: "500<:coins:872926669055356939> and 1x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 3,
                         required: 1250,
-                        query: `coins = coins + ${350}, lootbox = lootbox + ${1}, sticket = sticket + ${2}`,
-                        rew: "350<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890> and a lootbox",
+                        query: `coins = coins + ${550}, lootbox = lootbox + ${1}, sticket = sticket + ${2}`,
+                        rew: "550<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890> and a lootbox",
                     },
                     {
                         id: 4,
                         required: 1800,
-                        query: `coins = coins + ${400}, lootbox = lootbox + ${1}, sshard = sshard + ${8}`,
-                        rew: "400<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
+                        query: `coins = coins + ${600}, lootbox = lootbox + ${1}, sshard = sshard + ${8}`,
+                        rew: "600<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
                     },
                     {
                         id: 5,
                         required: 2500,
-                        query: `coins = coins + ${450}, lootbox = lootbox + ${1}, sshard = sshard + ${8}`,
-                        rew: "450<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
+                        query: `expulls = expulls + 1, gems = gems + 10`,
+                        rew: "1x <a:EXTRA:1138530846144462968> & 10<:genesis_gems:1034179687720681492>",
                     },
                     {
                         id: 6,
                         required: 3200,
-                        query: `coins = coins + ${500}, lootbox = lootbox + ${2}, sshard = sshard + ${10}`,
-                        rew: "500<:coins:872926669055356939>, 10x <:s_shard:917202925514817566> and 2 lootboxes",
+                        query: `coins = coins + ${700}, lootbox = lootbox + ${2}, sshard = sshard + ${10}`,
+                        rew: "700<:coins:872926669055356939>, 10x <:s_shard:917202925514817566> and 2 lootboxes",
                     },
                     {
                         id: 7,
                         required: 3800,
-                        query: `coins = coins + ${600}, sticket = sticket + ${2}`,
-                        rew: "600<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890>",
+                        query: `coins = coins + ${750}, sticket = sticket + ${2}`,
+                        rew: "750<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 8,
                         required: 4400,
-                        query: `coins = coins + ${750}, lootbox = lootbox + ${2}, ssshard = ssshard + ${4}`,
-                        rew: "750<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and 2 lootboxes",
+                        query: `coins = coins + ${800}, lootbox = lootbox + ${2}, ssshard = ssshard + ${4}`,
+                        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and 2 lootboxes",
                     },
                     {
                         id: 9,
                         required: 5000,
-                        query: `coins = coins + ${800}, lootbox = lootbox + ${1}, ssshard = ssshard + ${4}`,
-                        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
+                        query: `expulls = expulls + 1, sticket = sticket + ${3}`,
+                        rew: "1x <a:EXTRA:1138530846144462968> and 3x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 10,
                         required: 6000,
-                        query: `coins = coins + ${800}, lootbox = lootbox + ${1}, ssshard = ssshard + ${4}`,
-                        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
+                        query: `coins = coins + ${900}, lootbox = lootbox + ${1}, ssshard = ssshard + ${4}`,
+                        rew: "900<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
                     },
                     {
                         id: 11,
@@ -204,8 +204,8 @@ module.exports = {
                     {
                         id: 13,
                         required: 10000,
-                        query: `coins = coins + ${1100}, ssticket = ssticket + ${1}`,
-                        rew: "1000<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336>",
+                        query: `expulls = expulls + 1, ssticket = ssticket + ${1}`,
+                        rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
                     },
                     {
                         id: 14,
@@ -216,8 +216,8 @@ module.exports = {
                     {
                         id: 15,
                         required: 15000,
-                        query: `coins = coins + ${1250}, lootbox = lootbox + ${2}`,
-                        rew: "1250<:coins:872926669055356939> and 2 lootboxes",
+                        query: `expulls = expulls + 1, ssticket = ssticket + ${1}`,
+                        rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
                     },
                     {
                         id: 16,
@@ -228,8 +228,8 @@ module.exports = {
                     {
                         id: 17,
                         required: 22500,
-                        query: `coins = coins + ${1500}, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
-                        rew: "1500<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        query: `expulls = expulls + 1, ssticket = ssticket + ${1}`,
+                        rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
                     },
                     {
                         id: 18,
@@ -240,50 +240,50 @@ module.exports = {
                     {
                         id: 19,
                         required: 30000,
-                        query: `coins = coins + ${1750}, lootbox = lootbox + ${3}`,
-                        rew: "1750<:coins:872926669055356939> and 3 lootboxes",
+                        query: `expulls = expulls + 2`,
+                        rew: "2x <a:EXTRA:1138530846144462968>",
                     },
                     {
                         id: 20,
                         required: 36000,
-                        query: `coins = coins + ${2000}, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
-                        rew: "2000<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        query: `coins = coins + ${1250}, gems = gems + 10, lootbox = lootbox + ${2}`,
+                        rew: "1250<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492> and 2 lootboxes",
                     },
                     {
                         id: 21,
                         required: 42000,
-                        query: `coins = coins + ${2000}, gems = gems + ${5}, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
-                        rew: "2000<:coins:872926669055356939>, 5x<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+                        query: `coins = coins + 3000, expulls = expulls + 1`,
+                        rew: "1x <a:EXTRA:1138530846144462968> and 3000<:coins:872926669055356939>",
                     },
                     {
                         id: 22,
                         required: 50000,
-                        query: `coins = coins + ${2250}, gems = gems + ${10}`,
-                        rew: "2250<:coins:872926669055356939> and 10x<:genesis_gems:1034179687720681492>",
+                        query: `gems = gems + 20, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
+                        rew: "20<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
                     },
                     {
                         id: 23,
                         required: 60000,
-                        query: `coins = coins + ${2500}, lootbox = lootbox + ${4}, ssticket = ssticket + ${1}`,
-                        rew: "2500<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 4 lootboxes",
+                        query: `coins = coins + ${3000}, gems = gems + 10, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
+                        rew: "3000<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
                     },
                     {
                         id: 24,
                         required: 72000,
-                        query: `coins = coins + ${3000}, gems = gems + ${5}, lootbox = lootbox + ${4}`,
-                        rew: "3000<:coins:872926669055356939>, 5x<:genesis_gems:1034179687720681492> and 4 lootboxes",
+                        query: `expulls = expulls + 1, lootbox = lootbox + ${3}, ssticket = ssticket + ${1}`,
+                        rew: "1x <a:EXTRA:1138530846144462968>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
                     },
                     {
                         id: 25,
                         required: 80000,
-                        query: `ssticket = ssticket + ${2}, sticket = sticket + ${5}`,
-                        rew: "2x <:ss_ticket:927503239396622336> and 5x <:s_ticket:927642487705722890>",
+                        query: `ssticket = ssticket + ${2}, sticket = sticket + ${6}`,
+                        rew: "2x <:ss_ticket:927503239396622336> and 6x <:s_ticket:927642487705722890>",
                     },
                     {
                         id: 26,
                         required: 100000,
-                        query: `coins = coins + ${5000}, gems = gems + ${25}, lootbox = lootbox + ${5}, ssticket = ssticket + ${2}`,
-                        rew: "5000<:coins:872926669055356939>, 25x<:genesis_gems:1034179687720681492>, 2x <:ss_ticket:927503239396622336> and 5 lootboxes",
+                        query: `gems = gems + 20, expulls = expulls + 1`,
+                        rew: "1x <a:EXTRA:1138530846144462968> and 20<:genesis_gems:1034179687720681492>",
                     },
                 ];
 
@@ -293,7 +293,7 @@ module.exports = {
                 if (milestones[stats.eventrewreceived]) {
                     if (milestones[stats.eventrewreceived].required <= (stats.eventpts + eventpts)) {
                         await query("UPDATE users SET eventrewreceived = eventrewreceived + 1, " + milestones[stats.eventrewreceived].query + " WHERE id = " + interaction.user.id);
-                        rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}🍫` : ""}`;
+                        rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}<:easterEgg:1095432499087278142>` : ""}`;
                         if (milestones[stats.eventrewreceived]?.image) Embed.setImage(milestones[stats.eventrewreceived].image);
                     } else {
                         rewMessage = `\nNext reward: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived].required}`;
@@ -302,11 +302,11 @@ module.exports = {
                     rewMessage = "\nYou have unlocked all rewards!";
                 };
 
-                Embed.setColor(0xff8733)
+                Embed.setColor(0x69ffb9)
                     .setThumbnail(myStatsC.thumbnail)
                     .setTitle(`Boss Rush${r === "t" ? " (Time's up!)" : ""}`)
                     .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
-                    .setDescription(`<:stars_v2:917023655840591963> Round: ${round} (best: ${Math.max(stats.brbest, round)}) <:stars_v2:917023655840591963>\n<a:arrow_orange:916716747623641210> Loot: ${loot}<:coins:872926669055356939>\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n<a:arrow_white:916716862962819092> Treats: ${eventpts}🍫\n${rewMessage}`)
+                    .setDescription(`<:stars_v2:917023655840591963> Round: ${round} (best: ${Math.max(stats.brbest, round)}) <:stars_v2:917023655840591963>\n<a:arrow_orange:916716747623641210> Loot: ${loot}<:coins:872926669055356939>\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n<a:arrow_white:916716862962819092> Treats: ${eventpts}<:easterEgg:1095432499087278142>\n${rewMessage}`)
                     .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
                 return Embed;
             };
@@ -397,7 +397,7 @@ module.exports = {
                 let timestart = new Date().getTime();
                 let result = await new Promise((resolve, rejects) => {
                     const Embed = new EmbedBuilder()
-                        .setColor(0xff8733)
+                        .setColor(0x69ffb9)
                         .setThumbnail(myStatsC.thumbnail)
                         .setFooter({ text: `Enemy EP: ${eStatsC.ep} | Round: ${round + 1} | time left: 120s` })
                         .setTitle(`Boss Rush`)
@@ -453,7 +453,10 @@ module.exports = {
                             else notice.push(`\n🎉 **${myChar.name}** won`);
                             editEmbed();
                             matchStats.turn = 1;
-                            resolve(matchResult(wORl));
+                            setTimeout(() => {
+                                resolve(matchResult(wORl));
+                            }, 1000);
+                            // resolve(matchResult(wORl));
                         };
 
                         function startNextRound() {
@@ -500,10 +503,15 @@ module.exports = {
                             if (matchStats.turn === 1) return;
                             if (eStatsC.timeFrozen) {
                                 if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                                if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                 matchStats.turn = 1;
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
+                                if (matchStats.playerPausingRounds > 0) {
+                                    matchStats.playerPausingRounds--;
+                                    attack();
+                                };
                             } else {
                                 setTimeout(() => {
                                     if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
@@ -520,10 +528,15 @@ module.exports = {
                                     } else {
                                         dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                         matchStats.turn = 1;
                                         matchStats.round++;
                                         startNextRound();
                                         editEmbed();
+                                        if (matchStats.playerPausingRounds > 0) {
+                                            matchStats.playerPausingRounds--;
+                                            attack();
+                                        };
                                     };
                                     if (matchStats.counter > 0) matchStats.counter--;
                                 }, aDelay);
@@ -569,7 +582,7 @@ module.exports = {
                         def.on('collect', async r => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -603,21 +616,35 @@ module.exports = {
                         });
 
                         ability.on('collect', async r => {
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
-                                    else {
-                                        matchStats.turn = 0;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                        myStatsC.sm -= myAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                        attack();
-                                    };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage === 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+
+                            else {
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                        else {
+                                            matchStats.turn = 0;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                            myStatsC.sm -= myAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                            attack();
+                                        };
+                                    } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage === 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                            };
                         });
 
                         cskill.on('collect', async r => {
@@ -625,7 +652,7 @@ module.exports = {
                             // If class active was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -639,7 +666,7 @@ module.exports = {
                                 else {
                                     if (matchStats.turn === 1) {
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

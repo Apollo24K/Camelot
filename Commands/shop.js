@@ -1,6 +1,6 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { items } = require("../Modules/items.js");
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { items } from "../Modules/items";
 
 const genesisFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "genesis");
 const mythicalFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "mythical");
@@ -47,7 +47,7 @@ module.exports = {
         let currentPage = parseInt(interaction.options.getString('option') || 0);
 
         db.serialize(async () => {
-            const { 0: stats } = await query(`SELECT coins, gems, genesispity, items FROM users WHERE id = ${interaction.user.id}`);
+            const { 0: stats } = await query(`SELECT coins, gems, jades, genesispity, items FROM users WHERE id = ${interaction.user.id}`);
             stats.items = JSON.parse(stats.items);
 
             const pages = [
@@ -79,17 +79,16 @@ module.exports = {
                     .setColor(0xbbffff)
                     .setTitle("Premium Shop")
                     .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                    .setDescription("Welcome to the premium shop to buy gems <:FuminoHeart:928369288014884935>\nGems are used all over the bot as a premium currency to speed up your progress.\n\n" +
+                    .setDescription("Welcome to the premium shop to buy jades <:FuminoHeart:928369288014884935>\nUse `/convert jades` to convert them into gems <:genesis_gems:1034179687720681492>\n\n" +
                         // "☀️ **Summer Sale**: Get **30%** more gems during the summer event!\n" +
-                        "`  $3 ➜    160`<:genesis_gems:1034179687720681492>`    +60 first time bonus!`\n" +
-                        "`  $5 ➜    300`<:genesis_gems:1034179687720681492>`   +100 first time bonus!`\n" +
-                        "` $10 ➜    680`<:genesis_gems:1034179687720681492>`   +160 first time bonus!`\n" +
-                        "` $15 ➜  1,000`<:genesis_gems:1034179687720681492>`   +240 first time bonus!`\n" +
-                        "` $25 ➜  1,760`<:genesis_gems:1034179687720681492>`   +360 first time bonus!`\n" +
-                        "` $50 ➜  3,680`<:genesis_gems:1034179687720681492>`   +720 first time bonus!`\n" +
-                        "`$100 ➜  7,420`<:genesis_gems:1034179687720681492>` +1,440 first time bonus!`\n" +
-                        "➜ [Here's the link to our (old) shop!](https://donatebot.io/checkout/927257132624130119) (will shut down soon)\n" +
-                        "➜ [Here's our new shop!](https://rank.top/bot/camelot?page=shop) (with renewed first time bonuses <:TohruPoint:928370972132782090>)\n\n" +
+                        "`  $3 ➜    160`<:eternal_jade:1256124504141201428>`    +60 first time bonus!`\n" +
+                        "`  $5 ➜    300`<:eternal_jade:1256124504141201428>`   +100 first time bonus!`\n" +
+                        "` $10 ➜    680`<:eternal_jade:1256124504141201428>`   +160 first time bonus!`\n" +
+                        "` $15 ➜  1,000`<:eternal_jade:1256124504141201428>`   +240 first time bonus!`\n" +
+                        "` $25 ➜  1,760`<:eternal_jade:1256124504141201428>`   +360 first time bonus!`\n" +
+                        "` $50 ➜  3,680`<:eternal_jade:1256124504141201428>`   +720 first time bonus!`\n" +
+                        "`$100 ➜  7,420`<:eternal_jade:1256124504141201428>` +1,440 first time bonus!`\n" +
+                        "➜ [Here's the link to our shop!](https://rank.top/bot/camelot?page=shop)\n\n" +
                         "*Additional first time bonuses include **Rimuru Tempest** for the $25 pack and **Luminous** <a:EXTRA:1138530846144462968> for the $100 pack <:LuminousPsssh:1071574041116295328>"
                     ),
             ];
@@ -98,7 +97,7 @@ module.exports = {
             pages[0].setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
             pages[1].setFooter({ text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
             pages[2].setFooter({ text: `Balance: ${stats.items[677] || 0} mythical, ${stats.items[678] || 0} legendary exchange points`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
-            pages[3].setFooter({ text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+            pages[3].setFooter({ text: `Balance: ${stats.jades} jades, ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
 
             return interaction.reply({ embeds: [pages[currentPage]], components: [row], fetchReply: true }).then((msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });

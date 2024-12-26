@@ -1,7 +1,7 @@
-const fs = require('fs');
-const { EmbedBuilder } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { characters } = require("../Modules/chars.js");
+import fs from 'fs';
+import { EmbedBuilder } from "discord.js";
+import { db, query } from "../db_handler";
+import { characters } from "../Modules/chars";
 
 module.exports = {
     name: 'pity',

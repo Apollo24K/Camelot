@@ -1,3 +1,4 @@
+
 function weightedRandom(options) {
    options = Object.entries(options);
 

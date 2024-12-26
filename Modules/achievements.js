@@ -1,6 +1,6 @@
 /* eslint-disable no-extra-semi */
-const { characters, auniq } = require("./chars.js");
-const { db, query } = require("../db_handler.js");
+import { characters, auniq } from "./chars.js";
+import { db, query } from "../db_handler.js";
 
 class achievInfo {
     constructor(title, description, id, group, type, ...rewards) {
@@ -213,7 +213,7 @@ class achievInfo {
 
 };
 
-const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbox
+export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbox
     new achievInfo("First Character", "Pull your first character", 0, 0, "1,2", "xp|10", "coins|100"),
 
     new achievInfo("Collector", "Collect 500 characters", 1, 1, "4", "ss ticket|1", "s ticket|3"),
@@ -296,5 +296,3 @@ const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbo
 
 
 ];
-
-module.exports.achievements = achievements;

@@ -1,15 +1,15 @@
 /* eslint-disable no-unused-vars */
-const { db, query } = require("../db_handler.js");
-const { ComponentType } = require("discord.js");
-const { items } = require("../Modules/items.js");
-const { OfferRow } = require("../Modules/components.js");
+import { db, query } from "../db_handler";
+import { ComponentType } from "discord.js";
+import { items } from "../Modules/items";
+import { OfferRow } from "../Modules/components";
 
 module.exports = {
     name: 'convert',
     description: 'Convert shards',
     execute(interaction) {
 
-        let subcommand = interaction.options.getSubcommand();
+        const subcommand = interaction.options.getSubcommand();
 
         // Item info
         if (subcommand === "shards") {
@@ -138,8 +138,41 @@ module.exports = {
                 });
 
             });
-        };
+        } else if (subcommand === "jades") {
+            let amount = interaction.options.getString('amount') ?? "max";
 
+            db.serialize(async () => {
+                const { 0: stats } = await query(`SELECT jades FROM users WHERE id = ${interaction.user.id}`);
+
+                if (amount.toLowerCase() === "max") amount = stats.jades;
+                else if (!isNaN(amount)) amount = parseInt(amount);
+                else amount = 1;
+
+                if (isNaN(amount)) interaction.reply(`Please input a valid number`);
+                if (amount === 0) return interaction.reply(`You don't have any jades <:eternal_jade:1256124504141201428>`);
+                if (amount < 1) return interaction.reply(`You can't convert **${amount}**<:eternal_jade:1256124504141201428>`);
+                if (amount > 100000) return interaction.reply(`You can't convert more than **100000**<:eternal_jade:1256124504141201428> at once`);
+                if (amount > stats.jades) return interaction.reply(`You don't have enough jades (**${stats.jades}**/${amount}<:eternal_jade:1256124504141201428>)`);
+
+                return interaction.reply({ content: `Are you sure you want to convert **${amount}**<:eternal_jade:1256124504141201428> to **${amount}**<:genesis_gems:1034179687720681492>`, components: [OfferRow], fetchReply: true }).then(msg => {
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
+
+                    collector.on('collect', async r => {
+                        collector.stop();
+                        if (r.customId === "cancel") return interaction.channel.send("Action cancelled");
+
+                        const { 0: stats } = await query(`SELECT jades FROM users WHERE id = ${interaction.user.id}`);
+                        if (amount > stats.jades) return interaction.channel.send(`You don't have enough jades (**${stats.jades}**/${amount}<:eternal_jade:1256124504141201428>)`);
+
+                        await query(`UPDATE users SET jades = jades - ${amount}, gems = gems + ${amount} WHERE id = ${interaction.user.id}`);
+
+                        interaction.channel.send(`Converted **${amount}**<:eternal_jade:1256124504141201428> to **${amount}**<:genesis_gems:1034179687720681492>`);
+                    });
+
+                });
+
+            });
+        };
 
     },
 };

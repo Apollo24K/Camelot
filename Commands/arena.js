@@ -1,18 +1,18 @@
 /* eslint-disable no-unused-vars */
-const fs = require('fs');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } = require("discord.js");
-const { db, query } = require("../db_handler.js");
-const { abilities } = require("../Modules/abilities.js");
-const { achievements } = require("../Modules/achievements.js");
-const { classes } = require("../Modules/classes.js");
-const { skills } = require("../Modules/skills.js");
-const { items } = require("../Modules/items.js");
-const { characters } = require("../Modules/chars.js");
-const { dailies } = require("../Modules/dailyQuests.js");
-const { getDetailedStats, customEmojis, deleteReplyIn, dealDamage } = require("../Modules/functions.js");
-const Avalon = require("../Modules/avalon.js");
-const buffInfo = require("../Modules/buffs.js");
-const _ = require('lodash');
+import fs from 'fs';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { db, query } from "../db_handler";
+import { abilities } from "../Modules/abilities";
+import { achievements } from "../Modules/achievements";
+import { classes } from "../Modules/classes";
+import { skills } from "../Modules/skills";
+import { items } from "../Modules/items";
+import { characters } from "../Modules/chars";
+import { dailies } from "../Modules/dailyQuests";
+import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage } from "../Modules/functions";
+import Avalon from "../Modules/avalon";
+import buffInfo from "../Modules/buffs";
+import _ from 'lodash';
 
 const row2 = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
@@ -299,7 +299,7 @@ module.exports = {
                         def.on('collect', async r => {
                             if (matchStats.turn === 0) {
                                 matchStats.turn = 1;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -332,23 +332,36 @@ module.exports = {
                         });
 
                         ability.on('collect', async r => {
-                            if (!myAbility) return interaction.channel.send(`**${myChar.name}** does not have an ability.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 0) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                                    else {
-                                        matchStats.turn = 1;
-                                        matchStats.attackStreak = 0;
-                                        myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                        myStatsC.sm -= myAbility.cost;
-                                        matchStats.round++;
-                                        startNextRound();
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    };
-                                } else interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            if (myStatsC.isAbilityBlocked) return interaction.channel.send(`You currently can't use your character ability`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+
+                            // If ability was replaced
+                            if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 0) {
+                                matchStats.turn = 1;
+                                myStatsC.attackStreak = 0;
+                                myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                            }
+
+                            else {
+                                if (!myAbility) return interaction.channel.send(`**${myChar.name}** does not have an ability.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                if (myAbility.used < myAbility.usage) {
+                                    if (matchStats.turn === 0) {
+                                        if (myAbility.cost > myStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                        else {
+                                            matchStats.turn = 1;
+                                            myStatsC.attackStreak = 0;
+                                            myAbility.used++;
+                                            await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                            myStatsC.sm -= myAbility.cost;
+                                            matchStats.round++;
+                                            startNextRound();
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        };
+                                    } else interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            };
                         });
 
                         cskill.on('collect', async r => {
@@ -356,7 +369,7 @@ module.exports = {
                             // If class active was replaced
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 0) {
                                 matchStats.turn = 1;
-                                matchStats.attackStreak = 0;
+                                myStatsC.attackStreak = 0;
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -370,7 +383,7 @@ module.exports = {
                                 else {
                                     if (matchStats.turn === 0) {
                                         myStatsC.sm -= skill._cost;
-                                        matchStats.attackStreak = 0;
+                                        myStatsC.attackStreak = 0;
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         matchStats.round++;
                                         startNextRound();
@@ -442,21 +455,35 @@ module.exports = {
                         });
 
                         ability2.on('collect', async r => {
-                            if (!eAbility) return interaction.channel.send(`**${enemy.name}** does not have an ability.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            if (eAbility.used < eAbility.usage) {
-                                if (matchStats.turn === 1) {
-                                    if (eAbility.cost > eStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${eStatsC.sm}**/${eAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                                    else {
-                                        matchStats.turn = 0;
-                                        matchStats2.attackStreak = 0;
-                                        eAbility.used++;
-                                        await eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, msg);
-                                        eStatsC.sm -= eAbility.cost;
-                                        editEmbed();
-                                        Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    };
-                                } else interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                            } else interaction.channel.send(`You can use **${enemy.name}**'s ability only ${eAbility.usage == 1 ? "once" : `${eAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            if (eStatsC.isAbilityBlocked) return interaction.channel.send(`You currently can't use your character ability`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+
+                            // If ability was replaced
+                            if ("ability" in eStatsC.replaceButton && "run" in eStatsC.replaceButton.ability && matchStats.turn === 1) {
+                                matchStats.turn = 0;
+                                eStatsC.attackStreak = 0;
+                                eStatsC.replaceButton.ability.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, interaction.user);
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                            }
+
+                            else {
+                                if (!eAbility) return interaction.channel.send(`**${enemy.name}** does not have an ability.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                if (eAbility.used < eAbility.usage) {
+                                    if (matchStats.turn === 1) {
+                                        if (eAbility.cost > eStatsC.sm) interaction.channel.send(`You don't have enough mana! (**${eStatsC.sm}**/${eAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                        else {
+                                            matchStats.turn = 0;
+                                            matchStats2.attackStreak = 0;
+                                            eAbility.used++;
+                                            await eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, msg);
+                                            eStatsC.sm -= eAbility.cost;
+                                            editEmbed();
+                                            Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        };
+                                    } else interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                } else interaction.channel.send(`You can use **${enemy.name}**'s ability only ${eAbility.usage == 1 ? "once" : `${eAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            };
+
                         });
 
                         cskill2.on('collect', async r => {

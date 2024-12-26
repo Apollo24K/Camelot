@@ -1,7 +1,7 @@
-const fs = require('fs');
-const package = require('../package.json');
-const { EmbedBuilder } = require('discord.js');
-const { db, query } = require("../db_handler.js");
+import fs from 'fs';
+import Package from '../package.json';
+import { EmbedBuilder } from 'discord.js';
+import { db, query } from "../db_handler";
 
 module.exports = {
     name: 'premium',
@@ -21,19 +21,8 @@ module.exports = {
         db.serialize(async () => {
             const { 0: stats } = await query(`SELECT premium FROM users WHERE id = ${user.id}`);
 
-            // If the user does not have premium:
-            if (!stats?.premium) {
-                const Embed = new EmbedBuilder()
-                    .setTitle("Camelot Premium")
-                    .setColor(0xbbffff)
-                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                    .setDescription("Camelot Premium offers a lot of features to improve your playing experience. If you enjoy playing with Camelot, we would really appreciate your support! <:fumino_heart:794983494534955038>\nYou can find out more about the features and benefits of premium on our patreon.\n\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees")
-                    .setFooter({ text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
-                return interaction.reply({ embeds: [Embed] });
-            };
-
-            // If the user has premium gifts
-            if (stats.premium > 2) {
+            // If the user has premium
+            if (stats?.premium > 0) {
                 const premiumGifted = JSON.parse(fs.readFileSync('Storage/premiumGifted.json', 'utf8'))[user.id] ?? 0;
 
                 let giftLimit = 0, giftTier = 1;
@@ -50,8 +39,8 @@ module.exports = {
                     .setAuthor({ name: "Camelot Premium", iconURL: user.displayAvatarURL({ dynamic: true }) + "?size=2048" })
                     .setColor(0xbbffff)
                     .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                    .setDescription(`Your current tier: **${stats.premium}** 💎\nGifts left this month: **${Math.max(0, giftLimit - premiumGifted)}**/${giftLimit} T${giftTier}\n\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees`)
-                    .setFooter({ text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
+                    .setDescription(`Your current tier: **${stats.premium}** 💎\n${giftLimit === 0 ? "" : `Gifts left this month: **${Math.max(0, giftLimit - premiumGifted)}**/${giftLimit} T${giftTier}\n`}\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees`)
+                    .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
                 return interaction.reply({ embeds: [Embed] });
             };
 
@@ -60,7 +49,7 @@ module.exports = {
                 .setColor(0xbbffff)
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                 .setDescription("Camelot Premium offers a lot of features to improve your playing experience. If you enjoy playing with Camelot, we would really appreciate your support! <:fumino_heart:794983494534955038>\nYou can find out more about the features and benefits of premium on our patreon.\n\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees")
-                .setFooter({ text: `Camelot ${package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
+                .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
             return interaction.reply({ embeds: [Embed] });
         });
 
