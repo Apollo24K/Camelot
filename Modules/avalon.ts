@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { ChatInputCommandInteraction } from "discord.js";
 import { achievements } from "./achievements";
-import { customEmojis } from "./functions";
+import { customEmojis, addHeal } from "./functions";
 import Trigger from "./trigger";
 import { Buffs, MatchStats, TriggerEvents, TriggerOptions } from "../types";
 import buffInfo from "./buffs";
@@ -191,9 +191,10 @@ export default class Avalon {
         };
     };
 
-    static applyBuffs(obj: any, stats: any) {
-        Object.keys(obj).forEach((stat) => {
+    static applyBuffs(stats: any, eStats: any, obj: any, ebuff: any, matchstats: any, notice: any) {
+        Object.keys(obj).forEach((stat) => { 
             if (obj[stat].length) obj[stat].forEach((buff: buffInfo) => {
+                if (stat === "hp" && buff.type === "+") addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val, { });
                 switch (buff.type) {
                     case "*": stats[stat] = (buff.cap !== undefined && buff.val > buff.cap) ? Math.floor(stats[stat] * buff.cap) : Math.floor(stats[stat] * buff.val); break;
                     case "+": stats[stat] += (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val; break;
