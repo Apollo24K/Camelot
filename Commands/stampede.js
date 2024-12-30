@@ -709,8 +709,8 @@ module.exports = {
                             eBuffs.md.push(new buffInfo("+", Math.floor(eStats.md * matchStats.round * 0.01), 9999));
 
                             // Apply Buffs
-                            if (matchStats.currentCharacter === 0) Avalon.applyBuffs(buffs, myStatsC);
-                            if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eBuffs, eStatsC);
+                            if (matchStats.currentCharacter === 0) Avalon.applyBuffs(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice);
+                            if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eStatsC, eStatsC, eBuffs, buffs, matchStats, notice);
 
                             // Adjust Boss DEF
                             eStatsC.def += adjustDEF(myStatsC);

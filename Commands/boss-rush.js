@@ -471,8 +471,8 @@ module.exports = {
                             if (matchStats.currentOpponent === 0) eStatsC.atk = eStats.atk, eStatsC.md = eStats.md, eStatsC.def = eStats.def, eStatsC.mr = eStats.mr, eStatsC.cd = eStats.cd, eStatsC.cr = eStats.cr, eStatsC.dodge = eStats.dodge, eStatsC.br = eStats.br, eStatsC.mg = eStats.mg;
 
                             // Apply Buffs
-                            if (matchStats.currentCharacter === 0) Avalon.applyBuffs(buffs, myStatsC);
-                            if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eBuffs, eStatsC);
+                            if (matchStats.currentCharacter === 0) Avalon.applyBuffs(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice);
+                            if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eStatsC, eStatsC, eBuffs, buffs, matchStats, notice);
 
                             // Fix Stats
                             if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
