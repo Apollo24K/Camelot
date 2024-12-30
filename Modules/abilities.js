@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { AttachmentBuilder } from "discord.js";
-import { getDetailedStats, dealDamage, deleteReplyIn } from "./functions";
+import { getDetailedStats, dealDamage, deleteReplyIn, addHeal } from "./functions";
 import { db, query } from "../db_handler";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { characters } from "./chars";
