@@ -7,7 +7,6 @@ import { characters } from "./chars";
 import { items } from "./items";
 import delayedBuffs from "./delayedBuffs";
 import buffInfo from "./buffs";
-import { log } from "mathjs";
 
 export const abilities = {
     "64": {
