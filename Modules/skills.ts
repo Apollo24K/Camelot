@@ -89,7 +89,7 @@ export const skills: skillInfo[] = [
         // Thief deals 80% ATK and heals himself for 30% of the damage dealt
         let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 0.8 });
         let sheal = Math.floor(dmg * 0.3);
-        myStats.hp += sheal;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, sheal, { });
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
         matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** restored **${sheal}** HP`);
@@ -103,7 +103,7 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(9, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Priest heals 20% of max HP
-        myStats.hp += Math.floor(myStats.maxhp / 5);
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp / 5), { });
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
         notice.push(`\n⚜️ **${char.name}** has restored **${Math.floor(myStats.maxhp / 5)}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -339,7 +339,7 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(26, 45, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Bishop heals 20% of max HP
-        myStats.hp += Math.floor(myStats.maxhp / 5);
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp / 5), { });
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
         notice.push(`\n⚜️ **${char.name}** has restored **${Math.floor(myStats.maxhp / 5)}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -352,7 +352,7 @@ export const skills: skillInfo[] = [
             notice.push(`\n⚜️ **${char.name}** has reached ${char.gender === "F" ? "her" : "his"} limit`);
             return myStats.sm += 40;
         };
-        myStats.hp += hhp;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, { });
         mybuff.mg.push(new buffInfo("+", -2, 9999));
         myStats.mg -= 2;
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
@@ -394,7 +394,7 @@ export const skills: skillInfo[] = [
 
         const heal = myStats.asuraMaxHp * 0.1;
         myStats.maxhp = Math.floor(myStats.maxhp + heal);
-        myStats.hp = Math.floor(myStats.hp + heal);
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, { });
 
         notice.push(`\n⚜️ **${char.name}** recovered and increased max HP by **${heal}**`);
         myStats.classUsed = myStats.classUsed + 1 || 1;
@@ -642,7 +642,7 @@ export const skills: skillInfo[] = [
         // Retaliate when HP < 0.3
         myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if (myStats.hp / myStats.maxhp <= 0.3) {
-                myStats.hp += Math.floor(myStats.maxhp * 0.2);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.2), { });
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**'s HP fell below **30%**! ${char.gender === "F" ? "She" : "He"}`, { atkMultiplier: 1.2, ignoreShield: true });
                 //@ts-expect-error
                 this.used++;
@@ -837,7 +837,7 @@ export const bossAbilities: skillInfo[] = [
         notice.push(`\n✨ **${enemy.name}** has increased his ATK by **20%** for 3 rounds`);
     }, () => { }, [10, "Illfang increases his ATK by 20% over 3 rounds"]),
     new skillInfo(1, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.hp += 100;
+        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, 100, { });
         if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
         eStats.sm -= 50;
         matchStats.turn = 0;
@@ -880,7 +880,7 @@ export const bossAbilities: skillInfo[] = [
     }, () => { }, [45, "CZ2128 Delta decreases your DEF by 80% for the next 3 rounds"]),
     new skillInfo(1, 30, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2 * Math.random()))) * 1.2);
-        myStats.hp -= satk;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
         if (myStats.hp < 0) myStats.hp = 0;
         eStats.sm -= 30;
         notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** magic damage`);
@@ -911,7 +911,7 @@ export const bossAbilities: skillInfo[] = [
     }, () => { }, [70, "Albert increases his ATK by 25 permanently and DEF by 50% for the next 3 rounds"]),
     new skillInfo(1, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let shp = Math.floor((eStats.maxhp - eStats.hp) * 0.4);
-        eStats.hp += shp;
+        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, shp, { });
         eStats.sm -= 60;
         notice.push(`\n✨ **${enemy.name}** healed **${shp}** HP`);
     }, () => { }, [75, "Adalman heals 40% of his missing HP"]),
@@ -942,7 +942,7 @@ export const bossAbilities: skillInfo[] = [
     }, () => { }, [91, "Gilgamesh increases CR to 100% and CD by +25% for the next 3 rounds"]),
     new skillInfo(1, 35, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let satk = Math.floor((eStats.atk * (1 - (0.2 * Math.random()))));
-        myStats.hp -= satk;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
         if (myStats.hp < 0) myStats.hp = 0;
         eStats.sm -= 35;
         notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** true damage`);
@@ -950,7 +950,7 @@ export const bossAbilities: skillInfo[] = [
     new skillInfo(1, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.def.push(new buffInfo("*", 0.2, 3));
         mybuff.mr.push(new buffInfo("*", 0.2, 3));
-        eStats.hp += Math.floor(eStats.hp * 0.1);
+        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.hp * 0.1), { });
         if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
         eStats.sm -= 40;
         matchStats.turn = 0;
@@ -971,7 +971,7 @@ export const bossAbilities: skillInfo[] = [
     }, () => { }, [95, "Guy Crimson permanently decreases your ATK by 20%"]),
     new skillInfo(1, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.dodge.push(new buffInfo("*", 0.8, 2));
-        myStats.hp -= Math.floor(myStats.maxhp * 0.2);
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.2), { });
         if (myStats.hp < 0) myStats.hp = 0;
         eStats.sm -= 50;
         matchStats.turn = 0;
@@ -986,22 +986,22 @@ export const bossAbilities: skillInfo[] = [
     }, () => { }, [97, "Acnologia permanently increases his DEF by 100 and magic resist by 150"]),
     new skillInfo(1, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let shp = Math.floor((eStats.maxhp - eStats.hp) * 0.7);
-        eStats.hp += shp;
+        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, shp, { });
         eStats.sm -= 60;
         notice.push(`\n✨ **${enemy.name}** healed **${shp}** HP`);
     }, () => { }, [98, "Vaision heals 70% of his missing HP"]),
     new skillInfo(1, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2 * Math.random()))) * 1.2);
-        myStats.hp -= satk;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
         if (myStats.hp < 0) myStats.hp = 0;
         let shp = Math.floor((eStats.maxhp - eStats.hp) * 0.2);
-        eStats.hp += shp;
+        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, shp, { });
         eStats.sm -= 40;
         notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** magic damage. Recovered **${shp}** HP`);
     }, () => { }, [99, "Ainz Ooal Gown deals 300% magic damage, heals himself for 20% missing health"]),
     new skillInfo(1, 20, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let shp = Math.floor((eStats.maxhp - eStats.hp) * 0.2);
-        eStats.hp += shp;
+        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, shp, { });
         eStats.sm -= 20;
         matchStats.turn = 0;
         notice.push(`\n✨ **${enemy.name}** has recovered **${shp}** HP`);
@@ -1020,7 +1020,7 @@ export const eventBossAbilities: skillInfo[] = [
     }, () => { }, [99, "Sylvanoss deals 300% magic damage, heals himself for 20% missing health"]),
     new skillInfo(2, 60, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2 * Math.random()))) * 1.5);
-        myStats.hp -= satk;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
         if (myStats.hp < 0) myStats.hp = 0;
         eStats.sm -= 40;
         notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** magic damage`);
@@ -1029,7 +1029,7 @@ export const eventBossAbilities: skillInfo[] = [
         if (Math.random() < 0.32) {
             const md = Math.random() < 0.5;
             let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2 * Math.random()))) * 1.25);
-            myStats.hp -= satk;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
             if (myStats.hp < 0) myStats.hp = 0;
             notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
         } else if (Math.random() < 0.33) {
@@ -1038,7 +1038,7 @@ export const eventBossAbilities: skillInfo[] = [
             else eStats.atk += Math.floor(eStats.atk * 0.1);
             notice.push(`\n✨ **${enemy.name}** has increased ${md ? "MD" : "ATK"} by **10%**`);
         } else {
-            myStats.hp -= Math.floor(myStats.maxhp * 0.1);
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.1), { });
             if (myStats.hp < 0) myStats.hp = 0;
             notice.push(`\n✨ **${enemy.name}** has burned **${10}%** of your HP`);
         };
@@ -1059,7 +1059,7 @@ export const eventBossAbilities: skillInfo[] = [
         if (Math.random() < 0.4) {
             const md = Math.random() < 0.5;
             let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2 * Math.random()))) * 1.25);
-            myStats.hp -= satk;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
             if (myStats.hp < 0) myStats.hp = 0;
             notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
         } else if (Math.random() < 0.38) {
@@ -1089,7 +1089,7 @@ export const eventBossAbilities: skillInfo[] = [
         if (Math.random() < 0.4) {
             const md = Math.random() < 0.5;
             let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2 * Math.random()))) * 1.25);
-            myStats.hp -= satk;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
             if (myStats.hp < 0) myStats.hp = 0;
             notice.push(`\n🎃 **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
         } else if (Math.random() < 0.38) {
@@ -1117,7 +1117,7 @@ export const eventBossAbilities: skillInfo[] = [
         if (Math.random() < 0.4) {
             const md = Math.random() < 0.5;
             let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2 * Math.random()))) * 1.25);
-            myStats.hp -= satk;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, { });
             if (myStats.hp < 0) myStats.hp = 0;
             notice.push(`\n🥚 **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
         } else if (Math.random() < 0.38) {
@@ -1197,7 +1197,7 @@ export const crazeBossAbilities2023: skillInfo[] = [
         if (char.id === 919) {
             eStats.image = "https://i.imgur.com/0eUOI2g.jpg";
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                eStats.hp += Math.floor(eStats.maxhp * 0.15);
+                addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.maxhp * 0.15), { });
                 if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
             }, 9999));
         } else {

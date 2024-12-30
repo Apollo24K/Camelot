@@ -7,6 +7,7 @@ import { characters } from "./chars";
 import { items } from "./items";
 import delayedBuffs from "./delayedBuffs";
 import buffInfo from "./buffs";
+import { log } from "mathjs";
 
 export const abilities = {
     "64": {
@@ -115,7 +116,7 @@ export const abilities = {
         ability: (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Eren increases his stats by 20% of his max HP, current DEF and current ATK
             matchStats.turn = 1;
-            myStats.hp += Math.floor(myStats.maxhp * 0.2);
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.2), { });
             myStats.maxhp += Math.floor(myStats.maxhp * 0.2);
             ["atk", "def", "md", "mr"].forEach((e) => mybuff[e].push(new buffInfo("*", 1.2, 9999)));
             notice.push(`\n✨ **${char.name}** has transformed into a Titan! Raised HP, ATK, MD, DEF and MR by **20%**`);
@@ -429,7 +430,7 @@ export const abilities = {
         ability: (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Ryuuko sacrifices 30% of her current HP for a 90% ATK increase of lost HP
             let sacrifice = Math.floor(myStats.hp * 0.3);
-            myStats.hp -= sacrifice;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -sacrifice, { });
             myStats.atk += Math.floor(sacrifice * 0.9);
             mybuff.atk.push(new buffInfo("+", Math.floor(sacrifice * 0.9), 9999));
             myStats.md += Math.floor(sacrifice * 0.9);
@@ -464,7 +465,7 @@ export const abilities = {
             // Shalltear drains the equivalent of 20% of her max HP from the enemy and adds it to herself.
             const drain = Math.floor(myStats.maxhp * 0.2);
             eStats.hp -= drain;
-            myStats.hp += drain;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
             if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             if (eStats.hp < 0) eStats.hp = 0;
             notice.push(`\n✨ **${char.name}** has drained **${drain}**HP from **${enemy.name}**`);
@@ -475,7 +476,7 @@ export const abilities = {
                 if (matchStats.round % 4 === 0) {
                     const drain = Math.floor(myStats.maxhp * 0.08);
                     eStats.hp -= drain;
-                    myStats.hp += drain;
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                     if (eStats.hp < 0) eStats.hp = 0;
                     notice.push(`\n✨ **${name}** drained **${drain}**HP from **${enemy.name}**`);
@@ -541,7 +542,7 @@ export const abilities = {
             mybuff.mr.push(new buffInfo("+", -incmr, 3));
             myStats.mr -= incmr;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.15);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.15), { });
             }, 3));
             notice.push(`\n✨ **${char.name}** turned **75%** of her DEF and MR into ATK and MD respectively`);
         },
@@ -777,7 +778,7 @@ export const abilities = {
             // Delayed Buff
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.5) {
-                    myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.3);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.3), { });
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.25), 9999));
                     myStats.atk += Math.floor(myStats.atk * 0.25);
@@ -853,7 +854,7 @@ export const abilities = {
             mybuff.mr.push(new buffInfo("+", hmr, 9999));
             myStats.mr += hmr;
             let hHp = Math.floor(myStats.atk * 0.3);
-            myStats.hp += hHp;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hHp, { });
             if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             notice.push(`\n✨ **${char.name}** recovered **${hHp}** HP. Gained **${hmr}** Magic Resist`);
         },
@@ -910,7 +911,7 @@ export const abilities = {
                 case 1: embed.setThumbnail("https://i.ibb.co/HG4tHWt/a.png"); armorName = "Adamantine Armor. She gained **60%** DEF, decreased ATK by **20%**"; atkbuff = new buffInfo("+", -Math.floor(myStats.atk * 0.2), "9999"); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.6), "9999"); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: -Math.floor(myStats.atk * 0.2) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.6) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += -Math.floor(myStats.atk * 0.2); myStats.def += Math.floor(myStats.def * 0.6); myStats.mg = 0; break;
                 case 2: embed.setThumbnail("https://i.ibb.co/VDPkR10/w.png"); armorName = "Heaven's Wheel Armor. She gained **25%** ATK and DEF"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.25), "9999"); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.25), "9999"); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.25) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.25) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.25); myStats.def += Math.floor(myStats.def * 0.25); myStats.mg = 0; break;
                 case 3: embed.setThumbnail("https://i.ibb.co/TH4gNq5/c.png"); armorName = "Clear Heart Clothing. She gained **10%** ATK, **+20%** crit rate, **+50%** crit damage, and **+10%** dodge chance"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.1), "9999"); crbuff = new buffInfo("+", 0.2, "9999"); cdbuff = new buffInfo("+", 0.5, "9999"); dodgebuff = new buffInfo("+", 0.1, "9999"); mybuff.atk.push(atkbuff); mybuff.cr.push(crbuff); mybuff.cd.push(cdbuff); mybuff.dodge.push(dodgebuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.1) }, { type: "cr", id: crbuff.id, buff: 0.2 }, { type: "cd", id: cdbuff.id, buff: 0.5 }, { type: "dodge", id: dodgebuff.id, buff: 0.1 }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.1); myStats.cr += 0.2; myStats.cd += 0.5; myStats.dodge += 0.1; myStats.mg = 0; break;
-                case 4: embed.setThumbnail("https://i.imgur.com/TDbvwEX.png"); armorName = "Armadura Fairy. She will gain **10%** HP every round"; hpbuff = new buffInfo("+", Math.floor(myStats.maxhp * 0.1), "9999"); mybuff.hp.push(hpbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "hp", id: hpbuff.id, buff: Math.floor(myStats.maxhp * 0.1) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; /* myStats.hp += Math.floor(myStats.maxhp*0.1); myStats.hp > myStats.maxhp ? myStats.hp = myStats.maxhp : false; */ myStats.mg = 0; break;
+                case 4: embed.setThumbnail("https://i.imgur.com/TDbvwEX.png"); armorName = "Armadura Fairy. She will gain **10%** HP every round"; hpbuff = new buffInfo("+", Math.floor(myStats.maxhp * 0.1), "9999"); mybuff.hp.push(hpbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "hp", id: hpbuff.id, buff: Math.floor(myStats.maxhp * 0.1) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; /* addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp*0.1), { }); myStats.hp > myStats.maxhp ? myStats.hp = myStats.maxhp : false; */ myStats.mg = 0; break;
                 default: false; break;
             };
             notice.push(`\n✨ **${char.name}** changed to ${armorName}`);
@@ -960,7 +961,7 @@ export const abilities = {
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.mdChance = 1;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.05);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), { });
 
                 if ((eStats.hp / eStats.maxhp) > 0.33) {
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.15 + (0.1 * Math.random()), magicDamage: true, mdChance: -1, combodmg: true, selfdmg: true, selfheal: true });
@@ -1164,7 +1165,7 @@ export const abilities = {
             this.pause = matchStats.round + 2;
 
             // HP sacrifice
-            myStats.hp -= Math.floor(myStats.maxhp * 0.1);
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.1), { });
             if (myStats.hp < 0) myStats.hp = 0;
 
             // Buffs
@@ -1179,7 +1180,7 @@ export const abilities = {
                 if (damage) ebuff.hp.push(new buffInfo("+", -Math.floor(damage * 0.5), 3));
 
                 // Heal 30% of missing HP
-                myStats.hp += Math.floor(0.3 * (myStats.maxhp - myStats.hp));
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(0.3 * (myStats.maxhp - myStats.hp)), { });
 
                 // Single use
                 if (this.used === 3) {
@@ -1233,9 +1234,9 @@ export const abilities = {
             mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.25), 2));
             myStats.md += Math.floor(myStats.md * 0.25);
 
-            myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.1);
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.1), { });
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.03);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03), { });
             }, 2));
 
             // Change image after 3 rounds
@@ -1250,14 +1251,14 @@ export const abilities = {
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.03);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03), { });
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.16), 9999));
             myStats.md += Math.floor(myStats.md * 0.16);
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.05);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), { });
             }, 9999));
         },
     },
@@ -1283,7 +1284,7 @@ export const abilities = {
 
             // Consume HP & ATK Buff
             const sacrifice = Math.floor(myStats.maxhp * 0.05);
-            myStats.hp -= sacrifice;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -sacrifice, { });
             if (myStats.hp < 0) myStats.hp = 0;
             const atkbuff = Math.floor(myStatsFixed.atk * 0.25);
             myStats.atk += atkbuff;
@@ -1300,7 +1301,7 @@ export const abilities = {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.sm > 25) {
                     myStats.sm -= 25;
-                    myStats.hp += Math.floor(myStats.maxhp * 0.06);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.06), { });
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 };
             }, 9999));
@@ -1351,7 +1352,7 @@ export const abilities = {
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** uses One for All at **${this.used === 1 ? 5 : (this.used === 1 ? 8 : 15)}%**! He`, { atkMultiplier, magicDamage: true, block: false });
 
             // Sacrifice
-            myStats.hp -= myStats.hp * (0.05 + (0.05 * (this.used - 1)));
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -(myStats.hp * (0.05 + (0.05 * (this.used - 1)))), { });
             if (myStats.hp < 0) myStats.hp = 0;
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1375,7 +1376,7 @@ export const abilities = {
             };
             if (Math.random() < 0.1) {
                 let dmg = Math.floor(myStats.hp * 0.05);
-                myStats.hp -= dmg;
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -dmg, { });
                 return notice.push(`\n✨ **${char.name}** damaged himself by **${dmg}**!`);
             };
             myStats.atk *= 2;
@@ -1586,7 +1587,7 @@ export const abilities = {
             myStatsFixed.maxhp += increaseHp;
             myStatsFixed.hp += increaseHp;
             myStats.maxhp += increaseHp;
-            myStats.hp += increaseHp;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, increaseHp, { });
 
             // DEF buff
             mybuff.def.push(new buffInfo("+", Math.floor(totalFish / 2), 9999));
@@ -1622,7 +1623,7 @@ export const abilities = {
 
             const sacrifice = Math.ceil(myStats.maxhp * 0.33);
             if (myStats.hp <= sacrifice) return matchStats.interaction.channel.send("You don't have enough HP left").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-            myStats.hp -= sacrifice;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -sacrifice, { });
 
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.4, selfheal: false });
         },
@@ -1764,7 +1765,7 @@ export const abilities = {
     //         notice.push("\n`👋🏻`The honor was mine, Nines.");
 
     //         myStats.hp = 1;
-    //         eStats.hp -= myStats.maxhp;
+    //         eStats.hp -= myStats.maxhp; 
     //         if (eStats.hp < 0) eStats.hp = 0;
 
     //         if (eStats.hp > 0) {
@@ -1835,7 +1836,7 @@ export const abilities = {
     //                         notice.push(`\n⚙️ Pod initiated **Repair**!`);
     //                         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                             let heal = Math.floor(myStats.maxhp * 0.05);
-    //                             myStats.hp += heal;
+    //                             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, { }); 
     //                             if (myStats.hp / myStats.maxhp > 1) { myStats.hp = myStats.maxhp; }
     //                             notice.push(`\n⚙️ **Repair** in effect! ${char.name} recovered **${heal}** HP!`);
     //                         }, 2));
@@ -1992,7 +1993,7 @@ export const abilities = {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.round % 5 === 0) { // Sacrifice 5% max HP for shield
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
-                    myStats.hp -= Math.floor(myStats.maxhp * 0.05);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.05), { });
                 };
                 if (myStats.shield > 0) {
                     myStats.def += Math.floor(myStats.def * 0.2);
@@ -2006,7 +2007,7 @@ export const abilities = {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.round % 7 === 0) {
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
-                    myStats.hp -= Math.floor(myStats.maxhp * 0.05);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.05), { });
                 };
                 if (myStats.shield > 0) {
                     myStats.def += Math.floor(myStats.def * 0.2);
@@ -2185,7 +2186,7 @@ export const abilities = {
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             const dmg = (eStats.def + eStats.mr < 100000) ? Math.floor((myStats.maxhp - myStats.hp) * 0.6) : 0;
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ ${char.name}`, { overwriteDamage: dmg, magicDamage: true, dodge: false });
-            myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.33);
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.33), { });
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             matchStats.xpboost += 0.25;
@@ -2359,7 +2360,7 @@ export const abilities = {
                     myStats.md += Math.floor(myStats.md * 0.2);
                     myStats.def += Math.floor(myStats.def * 0.2);
                     myStats.mr += Math.floor(myStats.mr * 0.2);
-                    myStats.hp -= Math.floor(myStats.maxhp * 0.04);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.04), { });
                     if (myStats.hp < 0) myStats.hp = 0;
                 } else {
                     myStats.atk -= Math.floor(myStats.atk * 0.2);
@@ -2704,7 +2705,7 @@ export const abilities = {
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.damageOnHold) {
                     const dmg = Math.floor(myStats.damageOnHold / 10);
-                    myStats.hp -= dmg;
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -dmg, { });
                     if (myStats.hp < 0) myStats.hp = 0;
                     mybuff.hp.push(new buffInfo("+", -dmg, 9));
                 };
@@ -3016,7 +3017,7 @@ export const abilities = {
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.sm > 15) {
-                    myStats.hp += Math.floor(0.04 * myStats.maxhp);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(0.04 * myStats.maxhp), { });
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 };
 
@@ -3174,7 +3175,7 @@ export const abilities = {
                     myStats.sm -= 30;
 
                     const heal = Math.floor((myStats.maxhp - myStats.hp) * 0.3);
-                    myStats.hp += heal;
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, { });
 
                     notice.push(`\n✨ **${char.name}** healed **${heal}** HP!`);
                 };
@@ -3187,7 +3188,7 @@ export const abilities = {
                 // Ei
                 myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                     if (myStats.hp / myStats.maxhp > 0.5) {
-                        myStats.hp -= Math.floor(0.03 * myStats.hp);
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(0.03 * myStats.hp), { });
                     } else {
                         if (!myStats.raidenHpDownRound) {
                             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** fell below 50% HP! She`, { atkMultiplier: 1.8, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, ignoreShield: true });
@@ -3197,7 +3198,7 @@ export const abilities = {
                     };
 
                     if (matchStats.round < myStats.raidenHpDownRound + 4) {
-                        myStats.hp += Math.floor((myStats.maxhp - myStats.hp) * 0.1);
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.1), { });
                     };
                 }, 9999));
 
@@ -3317,7 +3318,7 @@ export const abilities = {
                 myStatsFixed.maxhp += increaseHp;
                 myStatsFixed.hp += increaseHp;
                 myStats.maxhp += increaseHp;
-                myStats.hp += increaseHp;
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, increaseHp, { });
             };
 
             const { 0: stats } = await query(`SELECT items FROM users WHERE id = ${matchStats.interaction.user.id}`);
@@ -3559,7 +3560,7 @@ export const abilities = {
             myStatsFixed.maxhp += increaseHp;
             myStatsFixed.hp += increaseHp;
             myStats.maxhp += increaseHp;
-            myStats.hp += increaseHp;
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, increaseHp, { });
 
             // ATK & MD buffs
             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.06 * shardStacks)), 9999));
@@ -3794,7 +3795,7 @@ export const abilities = {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.3) {
                     const hp = Math.floor(myStats.maxhp * 0.2);
-                    myStats.hp += hp;
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hp, { });
                     const mana = Math.min(50, myStats.mana - myStats.sm);
                     myStats.sm += mana;
                     notice.push(`\n🍑 **${char.name}** has rejuvenated **${hp}** HP and **${mana}** mana!`);
@@ -3993,7 +3994,7 @@ export const abilities = {
 
                 // Cost
                 myStats.sm = 0;
-                myStats.hp -= Math.floor(myStats.maxhp * 0.4);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.4), { });
 
                 const stunDuration = 3;
 

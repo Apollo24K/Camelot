@@ -744,6 +744,8 @@ export const addHeal = (target, attacker, caster, targetBuff, attackerBuff, matc
 
     if (attacker.negateHeal && options.amount > 0 && target === caster) notice.push(`\n💖 **${attacker.name}** has negated the heal!`);
     else target.hp += amount;
+
+    if (log) notice.push(`\n💖 **${target.name}** has healed **${amount}** HP`);
 };
 
 export const generateSubstats = (n = 4) => {
