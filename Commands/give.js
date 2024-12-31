@@ -9,7 +9,7 @@ import { OfferRow } from "../Modules/components";
 module.exports = {
     name: 'give',
     description: 'Give coins or characters to other players',
-    execute(interaction, client) {
+    execute(interaction) {
 
         let subcommand = interaction.options.getSubcommand();
         let user = interaction.options.getUser('user');
@@ -49,7 +49,7 @@ module.exports = {
 
                         // Trade Log
                         await query(`INSERT INTO trades (id, receiver, type, sent) VALUES (${interaction.user.id}, ${user.id}, "coins", ${amount})`, 'run');
-                        const chnl = client.channels.cache.find(channel => channel.id === "1042922243933622362");
+                        const chnl = interaction.client.channels.cache.find(channel => channel.id === "1042922243933622362");
                         const Embed = new EmbedBuilder()
                             .setColor(0xbbffff)
                             .setDescription(`${interaction.user.tag} sent **${amount}**<:coins:872926669055356939> to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
@@ -148,7 +148,7 @@ module.exports = {
                         achievements[19].check(interaction, user), achievements[20].check(interaction, user), achievements[21].check(interaction, user), achievements[22].check(interaction, user), achievements[23].check(interaction, user); // Diligent
 
                         // Trade Log
-                        const chnl = client.channels.cache.find(channel => channel.id === "1042922243933622362");
+                        const chnl = interaction.client.channels.cache.find(channel => channel.id === "1042922243933622362");
                         const Embed = new EmbedBuilder()
                             .setColor(0xbbffff)
                             .setDescription(`${interaction.user.tag} sent ${chars.map((char) => `**${characters[char.id].rarity}** **${characters[char.id].name.slice(0, 18)}**`).join(", ")} to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);

@@ -998,12 +998,6 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
-			.setName('patreon')
-			.setDescription('See our Patreon')
-			.addUserOption(option => option.setName('user').setDescription('Profile of user')),
-	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
 			.setName('premium')
 			.setDescription('See our Patreon')
 			.addUserOption(option => option.setName('user').setDescription('Profile of user')),
@@ -1317,12 +1311,6 @@ const commands = [
 			.setName('stats')
 			.setDescription('See some stats of camelot')
 			.addUserOption(option => option.setName('user').setDescription('Show card game stats of a user')),
-	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
-			.setName('submit')
-			.setDescription('Send us your ideas and suggestions!')
-			.addStringOption(option => option.setName('msg').setDescription('Write us a message').setRequired(true)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

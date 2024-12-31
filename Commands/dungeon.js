@@ -10,7 +10,7 @@ import { items } from "../Modules/items";
 import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
-import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, addGuildDonation, formatNumberWithQuotes, addHeal } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, addGuildDonation, formatNumberWithQuotes } from "../Modules/functions";
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";

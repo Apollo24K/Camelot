@@ -1,7 +1,5 @@
 
 
-
-
 export type Gender = 'M' | 'F' | 'NB';
 
 export type CharacterRarity = 'EX' | 'SS' | 'S' | 'A' | 'B' | 'C' | 'D';
@@ -9,6 +7,37 @@ export type CharacterRarity = 'EX' | 'SS' | 'S' | 'A' | 'B' | 'C' | 'D';
 export type RaidRank = 'F-' | 'F' | 'F+' | 'E-' | 'E' | 'E+' | 'D-' | 'D' | 'D+' | 'C-' | 'C' | 'C+' | 'B-' | 'B' | 'B+' | 'A-' | 'A' | 'A+' | 'S-' | 'S' | 'S+' | 'SS-' | 'SS' | 'SS+' | 'SSS-' | 'SSS' | 'SSS+' | 'EX-' | 'EX' | 'EX+';
 
 export type BuffType = "*" | "+" | "=";
+
+
+export interface BotEvent {
+    name: string,
+    once?: boolean,
+    disabled?: boolean,
+    execute: (...args?) => void;
+}
+
+export interface BotHandler {
+    name: string,
+    once?: boolean,
+    disabled?: boolean,
+    execute: (...args?) => void;
+}
+
+
+export type RankShopTransaction = {
+    authorization?: string;
+    txn_id: string;
+    status: string;
+    buyer_email: string;
+    buyer_id?: string;
+    product_id: string;
+    recurring: boolean;
+    price: string;
+    price_in_cents: number;
+    currency: string;
+    first_purchase: boolean;
+    timestamp: number;
+};
 
 export type IbuffInfo = {
     type: BuffType;
@@ -101,3 +130,10 @@ export type MatchStats = {
 
     [key: string]: any;
 };
+
+
+declare module "discord.js" {
+    export interface Client {
+        commands: Collection<string, any>;
+    }
+}

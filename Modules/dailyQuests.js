@@ -75,7 +75,7 @@ class dailyQuestInfo {
 
 };
 
-const dailies = [
+export const dailies = [
     new dailyQuestInfo("Gacha Grind", "Pull 20 characters", 0, (stat) => { return stat >= 20; }),
     new dailyQuestInfo("Harvest", "Earn 50 Lilium", 1, (stat) => { return stat >= 50; }),
     new dailyQuestInfo("Increasing Danger", "Defeat 20 monsters in the dungeon", 2, (stat) => { return stat >= 20; }),
@@ -89,5 +89,3 @@ const dailies = [
     new dailyQuestInfo("Knight's Ballot", "[Vote for Camelot](https://top.gg/bot/706183309943767112/vote)", 10, (stat) => { return stat >= 1; }),
     new dailyQuestInfo("Parting Pieces", "Disassemble 3 items", 11, (stat) => { return stat >= 3; }),
 ];
-
-module.exports.dailies = dailies;

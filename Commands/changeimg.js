@@ -8,7 +8,7 @@ import { db, query } from "../db_handler";
 module.exports = {
     name: 'changeimg',
     description: 'Change a characters image',
-    execute(interaction, client) {
+    execute(interaction) {
 
         db.serialize(async () => {
             let stats = await query(`SELECT premium FROM users WHERE id = ${interaction.user.id}`);
@@ -84,7 +84,7 @@ module.exports = {
                             .setStyle(ButtonStyle.Secondary)
                     );
 
-                const channel = client.channels.cache.find(channel => channel.id === "934117922039791627");
+                const channel = interaction.client.channels.cache.find(channel => channel.id === "934117922039791627");
                 const Embed = new EmbedBuilder()
                     .setTitle(char.name)
                     .setColor(0xbbffff)
