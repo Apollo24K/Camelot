@@ -159,7 +159,7 @@ module.exports = {
                     let uid = generateUniqueItemId(interaction.user.id, existing);
                     existing.push(uid + ":" + interaction.user.id);
                     drops[j].uid = uid;
-                    await query(`INSERT INTO weapons (id, itemid, uniqueid, item_type) VALUES (${interaction.user.id}, ${drops[j].id}, '${uid + ":" + interaction.user.id}', ${drops[j].category})`, 'run');
+                    await query(`INSERT INTO weapons (id, itemid, uniqueid, item_type) VALUES (${interaction.user.id}, ${drops[j].id}, '${uid + ":" + interaction.user.id}', '${drops[j].category}')`, 'run');
                 };
                 drops.sort((a, b) => a.gradeValue - b.gradeValue);
 
