@@ -1422,7 +1422,7 @@ const commands = [
 ];
 
 // Place your client and guild ids here
-const clientId = '695286837568340119'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
+const clientId = '691399125517992086'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
 
 // commands = commands.map((e) => e.data.toJSON());
 
