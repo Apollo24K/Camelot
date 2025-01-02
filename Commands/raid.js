@@ -248,10 +248,10 @@ module.exports = {
 
             let eStats = {
                 "name": enemy.name,
-                "hp": 1000000000,
-                "maxhp": 1000000000,
-                "atk": enemyAtk,
-                "md": enemyAtk,
+                "hp": 1000000,
+                "maxhp": 1000000,
+                "atk": enemyAtk * 0.2,
+                "md": enemyAtk * 0.2,
                 "def": 660,
                 "mr": 660,
                 "ep": Infinity,
@@ -270,6 +270,11 @@ module.exports = {
                 "removeDefCap": true,
                 "image": eImage,
             };
+            // Monster Stat Adjustments
+            if (enemy.setStats) Object.entries(enemy.setStats).forEach((e) => eStats[e[0]] = e[1]);
+            if (enemy.multStats) Object.entries(enemy.multStats).forEach((e) => eStats[e[0]] = Math.floor(eStats[e[0]] * e[1]));
+            if (enemy.addStats) Object.entries(enemy.addStats).forEach((e) => eStats[e[0]] += e[1]);
+
             let eStatsC = { ...eStats };
 
             // Some match settings
@@ -465,8 +470,8 @@ module.exports = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     } else if (matchStats.blockAbilities-- < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.66) {
-                                        eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                         eStatsC.sm -= eAbility.cost;
+                                        eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
@@ -559,6 +564,7 @@ module.exports = {
                                 }
 
                             } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            matchStats.trigger("defend", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         ability.on('collect', async () => {
@@ -591,6 +597,8 @@ module.exports = {
                                     } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                                 } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                             };
+                            // Trigger ability
+                            matchStats.trigger("ability", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         cskill.on('collect', () => {
@@ -620,6 +628,8 @@ module.exports = {
                                     } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                                 };
                             };
+                            // Trigger class active
+                            matchStats.trigger("cskill", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         skip.on('collect', () => {

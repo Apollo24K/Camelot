@@ -650,6 +650,7 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
 
         // if shield broken
         if (target.shield < 0 || options.shieldBreak) {
+            matchStats.trigger("shieldBreak", attacker, target, attackerBuff, targetBuff);
             target.shield = 0;
 
             // freeze
@@ -743,7 +744,10 @@ export const addHeal = (target, attacker, caster, targetBuff, attackerBuff, matc
     Object.keys(flags).forEach((e) => options[e] = flags[e]);
 
     if (attacker.negateHeal && options.amount > 0 && target === caster) notice.push(`\n💖 **${attacker.name}** has negated the heal!`);
-    else target.hp += amount;
+    else { 
+        target.hp += amount;
+        matchStats.trigger("heal", attacker, target, attackerBuff, targetBuff, { amount, caster });
+    }
 
     if (log) notice.push(`\n💖 **${target.name}** has healed **${amount}** HP`);
 };

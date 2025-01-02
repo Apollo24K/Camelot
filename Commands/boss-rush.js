@@ -613,6 +613,7 @@ module.exports = {
                                 }
 
                             } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            matchStats.trigger("defend", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         ability.on('collect', async r => {
@@ -645,6 +646,8 @@ module.exports = {
                                     } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                                 } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage === 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                             };
+                            // Trigger ability
+                            matchStats.trigger("ability", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         cskill.on('collect', async r => {
@@ -674,6 +677,8 @@ module.exports = {
                                     } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                                 };
                             };
+                            // Trigger class active
+                            matchStats.trigger("cskill", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         atk.on('end', async component => {

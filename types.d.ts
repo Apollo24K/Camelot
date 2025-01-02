@@ -71,7 +71,7 @@ export type Buffs = {
 };
 
 
-export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute";
+export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "defend" | "cskill";
 
 export type TriggerOptions = {
     event: TriggerEvents;

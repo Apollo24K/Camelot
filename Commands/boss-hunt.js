@@ -856,6 +856,7 @@ module.exports = {
                                 }
 
                             } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            matchStats.trigger("defend", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         ability.on('collect', async r => {
@@ -888,7 +889,8 @@ module.exports = {
                                     } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                 } else interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             };
-
+                            // Trigger ability
+                            matchStats.trigger("ability", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         cskill.on('collect', async r => {
@@ -918,6 +920,8 @@ module.exports = {
                                     } else interaction.channel.send("Please wait a moment").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                 };
                             }
+                            // Trigger class active
+                            matchStats.trigger("cskill", myStatsC, eStatsC, buffs, eBuffs);
                         });
 
                         atk.on('end', async component => {
