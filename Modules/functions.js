@@ -494,7 +494,6 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
         atkMultiplier: 1,
         magicDamage: false,
         mdChance: Math.random(),
-        trueDamage: false,
         tdPercentage: 0,
         canCrit: true,
         critChance: Math.random(),

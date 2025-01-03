@@ -1558,7 +1558,7 @@ export const characters: charInfo[] = [
     new charInfo("Patty (OP)", [], anime[0], "M", "https://i.ibb.co/rvNZQ5Y/c.png", 1466, "D"),
     new charInfo("Paulie", [], anime[0], "M", "https://i.ibb.co/rtLXFYG/c.png", 1467, "D"),
     new charInfo("Peachbeard", [], anime[0], "M", "https://i.ibb.co/s6PZBYP/c.png", 1468, "D"),
-    new charInfo("Perona", ["Ghost Princess"], anime[0], "F", "https://i.ibb.co/hRCxC7x/c.png", 1469, "A"),
+    new charInfo("Perona", ["Ghost Princess"], anime[0], "F", "https://i.ibb.co/7459TSP/c.png", 1469, "S"),
     new charInfo("Pearl (OP)", [], anime[0], "M", "https://i.ibb.co/HNY6xd2/c.png", 1470, "D"),
     new charInfo("Drug Peclo", [], anime[0], "M", "https://i.ibb.co/7NkcVbB/c.png", 1471, "D"),
     new charInfo("Pedro (OP)", [], anime[0], "M", "https://i.ibb.co/gdJLpyZ/c.png", 1472, "B"),

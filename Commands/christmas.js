@@ -27,6 +27,8 @@ const getCrazeMobCurse = {
     9: 4,
 
     13: 8,
+
+    16: 11,
 };
 
 // const crazeTips2023 = {
@@ -59,8 +61,10 @@ const crazeTips = {
     9: ["The geass has a peculiar weakness", "Perhaps someone with a blindfold?"], // Use 2B
     10: ["Nuke it!", "And double it!"], // Twinshot Megumin
     11: ["Sometimes, the best way to win is...", "...TO RUN AWAY!", "SMOKEY!!!"], // Run away
-    12: ["Never give up in love!"], // Try a QQ Girl till you win
-    13: ["The greatest strength is peace.", "...and patience. GLHF <:MikuHappy:1045096947876368404>"], // Reach round 100 without dealing damage
+    12: ["Maybe clean it up a bit?"], // Use Arima Kana
+    13: ["Never give up in love!"], // Try a QQ Girl till you win
+    14: ["The greatest strength is peace.", "...and patience. GLHF <:MikuHappy:1045096947876368404>"], // Reach round 100 without dealing damage
+    15: ["First, send the moss head back", "Next, give up. He beat the strongest <:Heh:928368727588757504>", "Or at the very least, you mustn't do any unnecessary moves"], // Sukuna
 };
 
 function getModal(uid) {
@@ -317,6 +321,7 @@ module.exports = {
             stats.ref[stats.battlechar] = 5;
             stats.shield_slot = 1;
             stats.level = 70;
+            stats.bank = 1000000;
             if ("class" in stats.craze_equipment) {
                 stats.class = stats.craze_equipment.class;
                 stats.classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, classLevelToXP(120)]));
@@ -396,10 +401,6 @@ module.exports = {
                 let loot = 0;
                 if (stats.craze_levels[level] < 30) {
                     loot = 40 + Math.floor(Math.random() * 30) + (lootFloor < 100 ? lootFloor * 3 : 300 + (lootFloor * 1.5));
-                    loot *= matchStats.lootm;
-                    loot += matchStats.loot;
-                    loot = Math.floor(loot);
-                    if (loot > 200000) loot = 42187;
                 };
 
                 await query(`UPDATE users SET ${stats.craze_levels[level] === 1 ? "expulls = expulls + 1, " : ""}coins = coins + ${loot}, craze_levels = '${JSON.stringify(stats.craze_levels)}' WHERE id = ${interaction.user.id}`);
@@ -415,10 +416,11 @@ module.exports = {
             };
 
             let matchStats = Avalon.getMatchStats(interaction);
+            matchStats.actionSequence = [];
             let notice = ["", "", "", ""];
 
             // Apply passives
-            eAbility._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+            await eAbility._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
             if (skill && myChar.id !== 4767) skill._passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
             if (myAbility?.passive) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             if (myStats.weapon !== -1) items[myStats.weapon]._buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
@@ -474,8 +476,8 @@ module.exports = {
             // Fight Duration
             let fightDuration = 120;
 
-            // Level 13 2024
-            if (level === 13) {
+            // Level 14 2024
+            if (level === 14) {
                 fightDuration = 300;
             };
 
@@ -532,8 +534,8 @@ module.exports = {
                             if (matchStats.ended) return;
                             else matchStats.ended = true;
 
-                            // Level 12 2024
-                            if (level === 12) {
+                            // Level 13 2024
+                            if (level === 13) {
                                 wORl = eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                             };
 
@@ -612,8 +614,8 @@ module.exports = {
                             } else {
                                 setTimeout(() => {
 
-                                    // Level 13 2024
-                                    if (level === 13) {
+                                    // Level 14 2024
+                                    if (level === 14) {
                                         const availableEmojis = ['🌼', '🌻', '🌱', '🐝', '🪲', '🐞', '🦋', '🐛', '🐸', '🍡', '🎐'];
                                         const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
                                         if (notice[notice.length - 1].length > 5 && !(eStatsC.hp < eStatsC.maxhp)) notice.push(`\n ${randomEmoji}`);
@@ -663,6 +665,7 @@ module.exports = {
                         atk.on('collect', async () => {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
+                                matchStats.actionSequence.push("ATK");
 
                                 // If attack was replaced
                                 if ("atk" in myStatsC.replaceButton) {
@@ -697,6 +700,7 @@ module.exports = {
                             if (matchStats.turn === 1) {
                                 matchStats.turn = 0;
                                 myStatsC.attackStreak = 0;
+                                matchStats.actionSequence.push("DEF");
 
                                 // If defense was replaced
                                 if ("def" in myStatsC.replaceButton) {
@@ -736,6 +740,8 @@ module.exports = {
                             if ("ability" in myStatsC.replaceButton && "run" in myStatsC.replaceButton.ability && matchStats.turn === 1) {
                                 matchStats.turn = 0;
                                 myStatsC.attackStreak = 0;
+                                matchStats.actionSequence.push("ABILITY");
+
                                 myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -749,7 +755,9 @@ module.exports = {
                                         else {
                                             matchStats.turn = 0;
                                             myStatsC.attackStreak = 0;
+                                            matchStats.actionSequence.push("ABILITY");
                                             myAbility.used++;
+
                                             await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
                                             myStatsC.sm -= myAbility.cost;
                                             editEmbed();
@@ -767,6 +775,7 @@ module.exports = {
                             if ("cskill" in myStatsC.replaceButton && matchStats.turn === 1) {
                                 matchStats.turn = 0;
                                 myStatsC.attackStreak = 0;
+                                matchStats.actionSequence.push("SKILL");
                                 myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -781,6 +790,7 @@ module.exports = {
                                     if (matchStats.turn === 1) {
                                         myStatsC.sm -= skill._cost;
                                         myStatsC.attackStreak = 0;
+                                        matchStats.actionSequence.push("SKILL");
                                         skill._skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -792,8 +802,10 @@ module.exports = {
 
                         skip.on('collect', () => {
                             if (matchStats.turn == 1) {
+                                matchStats.actionSequence.push("SKIP");
+
                                 // Level 11 2024
-                                if (level === 10 && myChar.id === 14982 && partyChars.some((e) => e.name === "Smokey Brown")) {
+                                if (level === 11 && myChar.id === 14982 && partyChars.some((e) => e.name === "Smokey Brown")) {
                                     notice.push(`\n<:dodge_chance:1047269150948606063> NIGERUNDAYO, SMOKEY!`);
                                     endMatch("w");
                                     editEmbed();
@@ -804,7 +816,6 @@ module.exports = {
                                 endMatch("l");
                                 editEmbed();
                             } else {
-                                matchStats.turn = 1;
                                 interaction.followUp({ content: "Please wait a moment", ephemeral: true });
                             };
                         });

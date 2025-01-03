@@ -1,7 +1,7 @@
 import fs from 'fs';
+import { join } from "path";
 import config from './config';
 import { Client, GatewayIntentBits, Partials, Options, Collection } from 'discord.js';
-import { join } from "path";
 
 // Create Client
 const client = new Client({
