@@ -15,9 +15,9 @@ export default class Avalon {
 
     static checkIfEnded(myStatsC: any, eStatsC: any, matchStats: any, notice: any, interaction: any, minionDefeated: any, editEmbed: any, endMatch: any) {
         if (myStatsC.hp < 1) {
-            if (matchStats.currentCharacter) { 
-                matchStats.trigger("minionDeath", myStatsC, eStatsC, myStatsC.buffs, eStatsC.buffs, {}); 
-                return minionDefeated("my"); 
+            if (matchStats.currentCharacter) {
+                matchStats.trigger("minionDeath", myStatsC, eStatsC, myStatsC.buffs, eStatsC.buffs, {});
+                return minionDefeated("my");
             };
             if (!eStatsC.blockRevival && myStatsC.revivedTotal < myStatsC.maxRevivals && myStatsC.rev > Math.random()) {
                 myStatsC.revivedTotal++;
@@ -33,7 +33,7 @@ export default class Avalon {
             };
         } else if (eStatsC.hp < 1) {
             if (matchStats.currentOpponent) {
-                matchStats.trigger("minionDeath", eStatsC, myStatsC, eStatsC.buffs, myStatsC.buffs, {}); 
+                matchStats.trigger("minionDeath", eStatsC, myStatsC, eStatsC.buffs, myStatsC.buffs, {});
                 return minionDefeated("e");
             };
             if (!myStatsC.blockRevival && eStatsC.revivedTotal < eStatsC.maxRevivals && eStatsC.rev > Math.random()) {
@@ -164,14 +164,18 @@ export default class Avalon {
                 this.listeners[event]?.forEach(trigger => {
                     const used = trigger.callback({ trigger, caster, target, casterBuff, targetBuff, matchStats: this, options });
                     if (used) trigger.used++;
+                    trigger.duration--;
 
                     if (trigger.used >= trigger.maxUsage) {
                         this.off(event, trigger);
                     };
-                    if (trigger.maxRound > this.round && trigger.maxRound !== Infinity) this.off(event, trigger);
-                    if (trigger.duration !== Infinity && trigger.duration > 0) {
-                        if (trigger.duration === 1) this.off(event, trigger);
-                        else trigger.duration--;
+
+                    if (trigger.duration < 1) {
+                        this.off(event, trigger);
+                    };
+
+                    if (trigger.maxRound < this.round) {
+                        this.off(event, trigger);
                     };
                 });
             },
@@ -203,9 +207,9 @@ export default class Avalon {
     };
 
     static applyBuffs(stats: any, eStats: any, obj: any, ebuff: any, matchstats: any, notice: any) {
-        Object.keys(obj).forEach((stat) => { 
+        Object.keys(obj).forEach((stat) => {
             if (obj[stat].length) obj[stat].forEach((buff: buffInfo) => {
-                if (stat === "hp" && buff.type === "+") addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val, { });
+                if (stat === "hp" && buff.type === "+") addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val, {});
                 switch (buff.type) {
                     case "*": stats[stat] = (buff.cap !== undefined && buff.val > buff.cap) ? Math.floor(stats[stat] * buff.cap) : Math.floor(stats[stat] * buff.val); break;
                     case "+": stats[stat] += (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val; break;

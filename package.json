@@ -1,7 +1,7 @@
 {
-  "name": "balance_a_lot",
-  "version": "1.0.0",
-  "description": "Balance a lot of things",
+  "name": "camelot",
+  "version": "2.5.5",
+  "description": "Absent in the early Arthurian material, Camelot came to be described as the fantastic capital of Arthur's realm and a symbol of the Arthurian world.",
   "main": "build/camelot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -44,8 +44,8 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
-    "eslint": "^8.38.0",
-    "eslint-config-neon": "^0.1.25",
+    "eslint": "^8.30.0",
+    "eslint-config-neon": "^0.1.40",
     "prettier": "^2.8.1"
   }
 }
