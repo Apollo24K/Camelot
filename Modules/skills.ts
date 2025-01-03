@@ -92,7 +92,7 @@ export const skills: skillInfo[] = [
         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, sheal, { });
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
         matchStats.turn = matchStats.turnSkill;
-        notice.push(`\n⚜️ **${char.name}** restored **${sheal}** HP`);
+        if (!eStats.negateHeal) notice.push(`\n⚜️ **${char.name}** restored **${sheal}** HP`);
     }),
     new skillInfo(8, 25, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Mage deals 115% Magic Damage
@@ -105,7 +105,7 @@ export const skills: skillInfo[] = [
         // Priest heals 20% of max HP
         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp / 5), { });
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-        notice.push(`\n⚜️ **${char.name}** has restored **${Math.floor(myStats.maxhp / 5)}** HP`);
+        if (!eStats.negateHeal) notice.push(`\n⚜️ **${char.name}** has restored **${Math.floor(myStats.maxhp / 5)}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mdChance = 1;
     }),
@@ -341,7 +341,7 @@ export const skills: skillInfo[] = [
         // Bishop heals 20% of max HP
         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp / 5), { });
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-        notice.push(`\n⚜️ **${char.name}** has restored **${Math.floor(myStats.maxhp / 5)}** HP`);
+        if (!eStats.negateHeal) notice.push(`\n⚜️ **${char.name}** has restored **${Math.floor(myStats.maxhp / 5)}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.hp.push(new buffInfo("*", 1.03, 9999));
     }),
@@ -356,7 +356,7 @@ export const skills: skillInfo[] = [
         mybuff.mg.push(new buffInfo("+", -2, 9999));
         myStats.mg -= 2;
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-        notice.push(`\n⚜️ **${char.name}** has restored **${hhp}** HP`);
+        if (!eStats.negateHeal)notice.push(`\n⚜️ **${char.name}** has restored **${hhp}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.hp.push(new buffInfo("*", 1.05, 9999));
         myStats.rev = 1;
