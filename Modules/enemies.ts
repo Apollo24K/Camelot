@@ -280,9 +280,8 @@ export const raidBosses: enemyInfo[] = [
  
             eStats.retaliationDamage = 0.35;
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                console.log(eStats.retaliationDamage);
                 if (caster === myStats && Math.random() < 0.4) {
-                    eStats.sm += 40
+                    eStats.sm += 40;
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
@@ -311,7 +310,6 @@ export const raidBosses: enemyInfo[] = [
             });
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                console.log("Debuff: " + Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01)));
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01));
             }, 9999));
         }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **33%** damage", "**Active**: Increases her retaliation damage (**100** <:mana:1047269152957661255>)"]])
@@ -397,7 +395,6 @@ export const raidBosses: enemyInfo[] = [
             ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.075), Math.floor(eStats.sm / eStats.roundCost)));
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                console.log("Active First: " + Math.floor(eStats.damageTakenBuff * 0.5))
                 eStats.sm += -eStats.roundCost;
                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s absorb damage`, { overwriteDamage: eStats.damageTakenBuff * 0.6, dodge: false });
                 eStats.damageTakenBuff += -Math.floor(eStats.damageTakenBuff * 0.5);
@@ -467,7 +464,7 @@ export const raidBosses: enemyInfo[] = [
                     notice.push(`\n⚜️ **${enemy.name}** has eaten the minion`);
                     eStats.hp = 0;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.hp * 0.1), { });
+                        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.hp * 0.1), {});
                         if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
                         eStats.atk += eStats.atk * 0.2;
                         eStats.md += eStats.md * 0.2;
@@ -520,9 +517,8 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const drain = myStats.hp > myStats.maxhp * 0.5 ? Math.floor(myStats.hp * 0.05) : Math.floor(myStats.hp * 0.1) //? maxhp or current hp
-                console.log(drain)
-                myStats.hp += -drain
-                addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
+                myStats.hp += -drain;
+                addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 if (eStats.hp < 0) eStats.hp = 0;
             }, 9999));
@@ -542,7 +538,7 @@ export const raidBosses: enemyInfo[] = [
 
             eStats.negateHeal = 1;
             matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                if (target === myStats) console.log("miss"); eStats.hp += -Math.floor(eStats.hp * 0.03);
+                if (target === myStats) eStats.hp += -Math.floor(eStats.hp * 0.03);
             });
 
         }, [["Negates healing", "gets 3% of its own hp as damage from dodged or blocked attacks", "**Active**: Has a 60% chance to deal 150% damage for 2 rounds and disables dodges and blocks (**70** <:mana:1047269152957661255>)"]])
@@ -563,7 +559,7 @@ export const raidBosses: enemyInfo[] = [
                 if (target === myStats) {
                     eStats.hp += -Math.floor(eStats.hp * 0.035);
                     if (myStats.dodgeStreak >= 3 || myStats.brStreak >= 3) {
-                        addHeal(myStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.03), { });
+                        addHeal(myStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.03), {});
                         myStats.atk += Math.floor(myStats.atk * 0.05);
                         myStats.md += Math.floor(myStats.md * 0.05);
                         mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.05), 9999));
@@ -596,10 +592,9 @@ export const raidBosses: enemyInfo[] = [
             eStats.negateHeal = 1;
             matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
                 if (target === myStats) {
-                    console.log("miss", matchStats.round)
                     eStats.hp += -Math.floor(eStats.hp * 0.045);
                     if (myStats.dodgeStreak >= 4 || myStats.brStreak >= 4) {
-                        addHeal(myStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), { });
+                        addHeal(myStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), {});
                         myStats.atk += Math.floor(myStats.atk * 0.15);
                         myStats.md += Math.floor(myStats.md * 0.15);
                         mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999));
@@ -632,7 +627,7 @@ export const raidBosses: enemyInfo[] = [
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** took your shield and threw it back and`, { overwriteDamage: Math.floor(myStats.shield * 0.7), ignoreShield: true, dodge: false, block: false }); //? How much damage is that?
             notice.push(`\n✨ YOUR SHIELD IS MINE!`);
             eStats.shield += Math.floor(myStats.shield * 0.5); 
-            myStats.shield = Math.floor(myStats.shield * 0.3)
+            myStats.shield = Math.floor(myStats.shield * 0.3);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -711,9 +706,8 @@ export const raidBosses: enemyInfo[] = [
                 }));
                 // Velkris stays in, Kyntheris is defeated
             } else if (matchStats.currentOpponent === 0 && eStats.minionHealth === 0) {
-                console.log("Velkris stays in, Kyntheris is defeated", eStats.minionHealth);
                 notice.push(`\n✨ **Velkris** is defeated! They can't switch back!`);
-                addHeal(myStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), { });
+                addHeal(myStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), {});
                 eStats.dodge += 0.1; ebuff.dodge.push(new buffInfo("+", 0.1, 5));
                 eStats.atk += Math.floor(eStats.atk * 0.075); ebuff.atk.push(new buffInfo("+", Math.floor(eStats.atk * 0.075), 5));
             }
@@ -807,7 +801,6 @@ export const raidBosses: enemyInfo[] = [
             mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * (0.05 + eStats.buffScale * 0.0625)), 9999)); // gets increased by 2.5% every 8 rounds
 
             const randomBuff = Math.floor(Math.random() * 3);
-            console.log("Random Buff: ", randomBuff);
             if (randomBuff === 0) { // Burn: 7.5% of your attack stats
                 myStats.atk += -Math.floor(myStats.atk * 0.075);
                 mybuff.atk.push(new buffInfo("+", -Math.floor(myStats.atk * 0.075), 9999));
@@ -968,7 +961,6 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                console.log("Domain: ", eStats.domain);
             }, 5));
             eStats.cr = 0.5;
             eStats.cd = 1.5;
@@ -1075,8 +1067,6 @@ export const raidBosses: enemyInfo[] = [
                     eStats.shieldOrb += eStats.shield * 0.15; // Orb saves 15% of your shield every round
                     eStats.shield += -eStats.shield * 0.1;
                 }
-                console.log("ShieldOrb: ", eStats.shieldOrb);
-                console.log("Shield: ", eStats.shield);
                 if (matchStats.round % 2 === 0 || eStats.domain) eStats.mdChance = 1;
                 else eStats.mdChance = 0;
 
