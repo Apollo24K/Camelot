@@ -184,9 +184,10 @@ export const crazeMobs: enemyInfo[] = [
     /* 9 - Lelouch: Use 2B to prevent eye contact */ new enemyInfo("Lelouch vi Britannia", "Human", "the Demon Emperor", "M", false, {}, { hp: 6.283 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/0jWj3bn/c.png"], [], 9),
     /* 10 - Larry: Twinshot Megumin */ new enemyInfo("Larry", "Cockroach", "Larry", "M", false, {}, { hp: 3.42, atk: 12.8, md: 12.8 }, { dodge: 1, br: 1, def: 1200, mr: 1200 }, [], ["https://i.ibb.co/YXSRsCL/larry.png"], [], 10),
     /* 11 - Wamuu: Run away */ new enemyInfo("Wamuu", "Human", "the Warrior of Wind", "M", false, {}, { atk: 1.8, md: 1.8, hp: 69.69 }, { def: 5000, mr: 5000 }, [], ["https://i.ibb.co/PzR845y/wamuu.png"], [], 11),
-    /* 12 - Fuutarou Uesugi: Try QQ Girls, only one is correct */ new enemyInfo("Fuutarou Uesugi", "Human", "Mr. Honor-Roll", "M", false, {}, {}, {}, [], ["https://i.ibb.co/GT9fLQ8/c.png"], [], 12),
-    /* 13 - Mob: Reach round 100 without dealing damage */ new enemyInfo("Mob", "Human", "the Psycho Helmet", "M", false, {}, { atk: 42, md: 42, hp: 99.99 }, { dodge: 0, br: 0 }, [], ["https://i.ibb.co/f8HX8Y9/c.png"], [], 13),
-    /* 14 - Sukuna */
+    /* 12 - Floor: Use Arima Kana */ new enemyInfo("Floor", "Floor", "the Floor", "M", true, {}, { hp: 3.42, atk: 12.8, md: 12.8 }, { dodge: 1, br: 1, def: 1200, mr: 1200 }, [], ["https://i.ibb.co/YtXbDwp/floor.png"], [], 12),
+    /* 13 - Fuutarou Uesugi: Try QQ Girls, only one is correct */ new enemyInfo("Fuutarou Uesugi", "Human", "Mr. Honor-Roll", "M", false, {}, {}, {}, [], ["https://i.ibb.co/GT9fLQ8/c.png"], [], 13),
+    /* 14 - Mob: Reach round 100 without dealing damage */ new enemyInfo("Mob", "Human", "the Psycho Helmet", "M", false, {}, { atk: 42, md: 42, hp: 99.99 }, { dodge: 0, br: 0 }, [], ["https://i.ibb.co/f8HX8Y9/c.png"], [], 14),
+    /* 15 - Sukuna */ new enemyInfo("Sukuna", "Cursed Spirit", "the King of Curses", "M", true, {}, { hp: 333.33, atk: 5, md: 5 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/9p7zvsV/c.png"], [], 15),
 
 ];
 
@@ -252,9 +253,8 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(2, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.retaliationDamage += 0.1;
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **10%**`);
-            
+
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    
             eStats.lightningImmunity = true;
             eStats.retaliationDamage = 0.2;
 
@@ -271,10 +271,11 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(3, 70, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             
             eStats.retaliationDamage += 0.2;
+
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **15%**`);
-            
+
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            
+
             eStats.lightningImmunity = true;
  
             eStats.retaliationDamage = 0.35;
@@ -283,20 +284,20 @@ export const raidBosses: enemyInfo[] = [
                 if (caster === myStats && Math.random() < 0.4) {
                     eStats.sm += 40
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+
                 }
             });
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01));
             }, 9999));
-            
         }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **30%** damage", "**Active**: Increases her retaliation damage by 15% (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Velia", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 0 }, {}, { mana: 120 }, [], ["https://i.ibb.co/Js46cdL/l.png"], [], 4,
-        new skillInfo(4, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            
+        new skillInfo(4, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {            
             eStats.retaliationDamage += 0.25;
+
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **15%**`);
-            
+
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.lightningImmunity = true;
@@ -423,7 +424,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.md = Math.floor(eStats.md * statScale);
             eStats.mr = Math.floor(eStats.mr * statScale);
             eStats.mg = 0;
-            
+
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
                 if (caster === myStats) {
@@ -494,6 +495,7 @@ export const raidBosses: enemyInfo[] = [
             const sdef = Math.floor(myStats.def * 0.2); eStats.def += sdef * 2; myStats.def -= sdef;
             const smd = Math.floor(myStats.md * 0.2); eStats.md += smd * 4; myStats.md -= smd;
             const smr = Math.floor(myStats.mr * 0.2); eStats.mr += smr * 2; myStats.mr -= smr;
+
             const sdodge = Math.floor(myStats.dodge * 20) / 100; eStats.dodge += sdodge; myStats.dodge -= sdodge;
             const scr = Math.floor(myStats.cr * 20) / 100; eStats.cr += scr; myStats.cr -= scr;
             const scd = Math.floor(myStats.cd * 20) / 100; eStats.cd += scd; myStats.cd -= scd;
@@ -514,6 +516,7 @@ export const raidBosses: enemyInfo[] = [
                 console.log(drain)
                 myStats.hp += -drain
                 addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
+
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 if (eStats.hp < 0) eStats.hp = 0;
             }, 9999));

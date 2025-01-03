@@ -1,0 +1,286 @@
+import { Pool } from 'pg';
+import dotenv from 'dotenv';
+dotenv.config();
+
+const pool = new Pool({
+    user: process.env.PG_USER,
+    host: 'localhost',
+    database: process.env.PG_DATABASE,
+    password: process.env.PG_PASSWORD,
+    port: parseInt(process.env.PG_PORT || '5432'),
+});
+
+export const query = async (text: string, params?: any[]) => {
+    try {
+        const res = await pool.query(text, params);
+        if (text.toUpperCase().startsWith("SELECT")) return res.rows;
+        return res;
+    } catch (error) {
+        console.error(error);
+        throw error;
+    };
+};
+
+async function createTables() {
+    // Users table (combined with characters and dungeon)
+    // Create sequences for auto-incrementing IDs
+    await query(`CREATE SEQUENCE IF NOT EXISTS users_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS users (
+        rowid BIGINT NOT NULL DEFAULT nextval('users_rowid_seq'::regclass),
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        xp INT DEFAULT 0 NOT NULL,
+        coins BIGINT DEFAULT 0 NOT NULL,
+        lilies INT DEFAULT 0 NOT NULL,
+        favchar INT,
+        battlechar INT,
+        lootbox INT DEFAULT 0 NOT NULL,
+        lastvote TIMESTAMP,
+        weeklyclaimed INT DEFAULT 0 NOT NULL,
+        dailyclaimed INT DEFAULT 0 NOT NULL,
+        dailystreak INT DEFAULT 0 NOT NULL,
+        lastdaily TIMESTAMP,
+        pullcount INT DEFAULT 0 NOT NULL,
+        pullstacks INT DEFAULT 0 NOT NULL,
+        pullstacksinterval INT DEFAULT 0 NOT NULL,
+        pullstotal INT DEFAULT 0 NOT NULL,
+        lastss INT DEFAULT 0 NOT NULL,
+        lasts INT DEFAULT 0 NOT NULL,
+        premium INT DEFAULT 0 NOT NULL,
+        pullresets INT DEFAULT 0 NOT NULL,
+        ssshard INT DEFAULT 0 NOT NULL,
+        sshard INT DEFAULT 0 NOT NULL,
+        ashard INT DEFAULT 0 NOT NULL,
+        bshard INT DEFAULT 0 NOT NULL,
+        cshard INT DEFAULT 0 NOT NULL,
+        dshard INT DEFAULT 0 NOT NULL,
+        ssticket INT DEFAULT 0 NOT NULL,
+        sticket INT DEFAULT 0 NOT NULL,
+        aticket INT DEFAULT 0 NOT NULL,
+        bticket INT DEFAULT 0 NOT NULL,
+        cticket INT DEFAULT 0 NOT NULL,
+        dticket INT DEFAULT 0 NOT NULL,
+        votestotal INT DEFAULT 0 NOT NULL,
+        arenawins INT DEFAULT 0 NOT NULL,
+        arenalosses INT DEFAULT 0 NOT NULL,
+        animationdelay INT DEFAULT 1200 NOT NULL,
+        achievements JSONB DEFAULT '[]' NOT NULL,
+        lastpull TIMESTAMP,
+        pullreminder INT DEFAULT 0 NOT NULL,
+        votereminder INT DEFAULT 0 NOT NULL,
+        items JSONB DEFAULT '{}' NOT NULL,
+        skins JSONB DEFAULT '[]' NOT NULL,
+        eventpts INT DEFAULT 0 NOT NULL,
+        eventpts2 INT DEFAULT 0 NOT NULL,
+        brbest INT DEFAULT 0 NOT NULL,
+        mailbox JSONB DEFAULT '[]' NOT NULL,
+        eventrewreceived INT DEFAULT 0 NOT NULL,
+        gems BIGINT DEFAULT 0 NOT NULL,
+        tutorial JSONB DEFAULT '[]' NOT NULL,
+        transactions JSONB DEFAULT '[]' NOT NULL,
+        dailies JSONB DEFAULT '{}' NOT NULL,
+        guild TEXT,
+        donatedtotal BIGINT DEFAULT 0 NOT NULL,
+        genesispity INT DEFAULT 0 NOT NULL,
+        presets JSONB DEFAULT '[]' NOT NULL,
+        itemlock JSONB DEFAULT '[]' NOT NULL,
+        party TEXT,
+        stampedechar INT,
+        mailreceived INT DEFAULT 0,
+        class INT,
+        aboutme TEXT,
+        profilecolor TEXT,
+        rank TEXT DEFAULT 'F-' NOT NULL,
+        rankscore BIGINT DEFAULT 0 NOT NULL,
+        raidxp INT DEFAULT 0 NOT NULL,
+        guild_marks BIGINT DEFAULT 0 NOT NULL,
+        created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+
+        -- Characters table columns
+        chars JSONB DEFAULT '[]' NOT NULL,
+        char_ref JSONB DEFAULT '{}' NOT NULL,          -- renamed from 'ref' to avoid conflicts
+        char_level JSONB DEFAULT '{}' NOT NULL,        -- renamed from 'level' to avoid conflicts
+        char_class JSONB DEFAULT '{}' NOT NULL,        -- renamed from 'class' to avoid conflicts
+        char_skin JSONB DEFAULT '{}' NOT NULL,         -- renamed from 'skin' to avoid conflicts
+        char_equipment JSONB DEFAULT '{}' NOT NULL,    -- renamed from 'equipment' to avoid conflicts
+
+        -- Dungeon table columns
+        dungeon_floors JSONB DEFAULT '{"1":0}' NOT NULL,  -- renamed from 'floors' to avoid conflicts
+        dungeon_limit INT DEFAULT 0 NOT NULL,             -- renamed from 'limit' to avoid conflicts
+        dungeon_classes JSONB DEFAULT '[]' NOT NULL,      -- renamed from 'classes' to avoid conflicts
+        dungeon_classlevels JSONB DEFAULT '{}' NOT NULL, -- renamed from 'classlevels' to avoid conflicts
+        dungeon_responsetime TEXT DEFAULT '' NOT NULL,    -- renamed from 'responsetime' to avoid conflicts
+        stampede_responsetime TEXT DEFAULT '' NOT NULL   -- renamed from 's_responsetime' to avoid conflicts
+    )`);
+
+    // Servers table
+    await query(`CREATE SEQUENCE IF NOT EXISTS servers_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS servers (
+        rowid BIGINT NOT NULL DEFAULT nextval('servers_rowid_seq'::regclass),
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        user_ids TEXT[] NOT NULL
+    )`);
+
+    // Weapons table
+    await query(`CREATE SEQUENCE IF NOT EXISTS weapons_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS weapons (
+        rowid BIGINT NOT NULL DEFAULT nextval('weapons_rowid_seq'::regclass),
+        id TEXT NOT NULL,
+        itemid INT NOT NULL,
+        uniqueid TEXT PRIMARY KEY NOT NULL,
+        level INT DEFAULT 0 NOT NULL,
+        ascension INT DEFAULT 0 NOT NULL,
+        character INT,
+        item_type TEXT NOT NULL
+    )`);
+
+    // Guilds table
+    await query(`CREATE SEQUENCE IF NOT EXISTS guilds_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS guilds (
+        rowid BIGINT NOT NULL DEFAULT nextval('guilds_rowid_seq'::regclass),
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '' NOT NULL,
+        color TEXT,
+        level INT DEFAULT 1 NOT NULL,
+        icon TEXT,
+        banner TEXT DEFAULT '',
+        treasury BIGINT DEFAULT 0,
+        treasury_gems BIGINT DEFAULT 0,
+        tax INT DEFAULT 10 NOT NULL,
+        canjoin INT DEFAULT 1 NOT NULL,
+        tokens INT DEFAULT 1 NOT NULL,
+        membercap INT DEFAULT 0 NOT NULL,
+        xpbuff INT DEFAULT 0 NOT NULL,
+        lootbuff INT DEFAULT 0 NOT NULL,
+        cdreduction INT DEFAULT 0 NOT NULL,
+        master TEXT NOT NULL,
+        elders JSONB DEFAULT '[]' NOT NULL,
+        members JSONB DEFAULT '[]' NOT NULL,
+        banned JSONB DEFAULT '[]' NOT NULL,
+        eventpoints INT DEFAULT 0 NOT NULL,
+        bosshuntstage INT DEFAULT 1 NOT NULL,
+        boss1 BIGINT DEFAULT 124080 NOT NULL,
+        boss2 BIGINT DEFAULT 160260 NOT NULL,
+        boss3 BIGINT DEFAULT 113720 NOT NULL,
+        boss4 BIGINT DEFAULT 144640 NOT NULL,
+        lastlevelup TIMESTAMP,
+        raidid INT
+    )`);
+
+    // Guild donations table
+    await query(`CREATE SEQUENCE IF NOT EXISTS guild_donations_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS guild_donations (
+        rowid BIGINT NOT NULL DEFAULT nextval('guild_donations_rowid_seq'::regclass),
+        userid TEXT NOT NULL,
+        guildid TEXT NOT NULL,
+        week INT NOT NULL,
+        type TEXT NOT NULL,
+        amount BIGINT DEFAULT 0 NOT NULL
+    )`);
+
+    // Stampedes table
+    await query(`CREATE SEQUENCE IF NOT EXISTS stampedes_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS stampedes (
+        rowid BIGINT NOT NULL DEFAULT nextval('stampedes_rowid_seq'::regclass),
+        type INT DEFAULT 0 NOT NULL,
+        bosshp BIGINT NOT NULL,
+        bosshpmax BIGINT NOT NULL,
+        generalhp BIGINT NOT NULL,
+        generalhpmax BIGINT NOT NULL,
+        generalstotal INT NOT NULL,
+        generalsleft INT NOT NULL,
+        monsterstotal INT NOT NULL,
+        monstersleft INT NOT NULL,
+        participation JSONB DEFAULT '{}' NOT NULL
+    )`);
+
+    // Parties table
+    await query(`CREATE SEQUENCE IF NOT EXISTS parties_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS parties (
+        rowid BIGINT NOT NULL DEFAULT nextval('parties_rowid_seq'::regclass),
+        id TEXT PRIMARY KEY NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT DEFAULT '' NOT NULL,
+        color TEXT,
+        icon TEXT,
+        banner TEXT DEFAULT '',
+        members JSONB DEFAULT '[]' NOT NULL,
+        created TIMESTAMP
+    )`);
+
+    // Trades table
+    await query(`CREATE SEQUENCE IF NOT EXISTS trades_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS trades (
+        rowid BIGINT NOT NULL DEFAULT nextval('trades_rowid_seq'::regclass),
+        id TEXT NOT NULL,
+        receiver TEXT NOT NULL,
+        type TEXT NOT NULL,
+        sent BIGINT NOT NULL,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // FAQ table
+    await query(`CREATE SEQUENCE IF NOT EXISTS faq_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS faq (
+        rowid BIGINT NOT NULL DEFAULT nextval('faq_rowid_seq'::regclass),
+        id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        body TEXT NOT NULL,
+        created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Raids table
+    await query(`CREATE SEQUENCE IF NOT EXISTS raids_rowid_seq`);
+    await query(`CREATE TABLE IF NOT EXISTS raids (
+        rowid BIGINT NOT NULL DEFAULT nextval('raids_rowid_seq'::regclass),
+        guildid TEXT NOT NULL,
+        raidid INT NOT NULL,
+        enemy_hp BIGINT NOT NULL,
+        enemy_hpmax BIGINT NOT NULL,
+        participation JSONB DEFAULT '{}' NOT NULL,
+        start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Create indexes for frequently accessed columns
+    // await query(`CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)`);
+    // await query(`CREATE INDEX IF NOT EXISTS idx_users_rowid ON users(rowid)`);
+    // await query(`CREATE INDEX IF NOT EXISTS idx_weapons_id ON weapons(id)`);
+    // await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
+    // await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
+    // await query(`CREATE INDEX IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
+};
+
+async function alterTables() {
+    // This function can be used for migrations
+    // Example:
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS new_column TEXT');
+};
+
+async function dropTables() {
+    // await query('DROP TABLE IF EXISTS users CASCADE');
+    // await query('DROP TABLE IF EXISTS servers CASCADE');
+    // await query('DROP TABLE IF EXISTS characters CASCADE');
+    // await query('DROP TABLE IF EXISTS dungeon CASCADE');
+    // await query('DROP TABLE IF EXISTS weapons CASCADE');
+    // await query('DROP TABLE IF EXISTS guilds CASCADE');
+    // await query('DROP TABLE IF EXISTS guild_donations CASCADE');
+    // await query('DROP TABLE IF EXISTS stampedes CASCADE');
+    // await query('DROP TABLE IF EXISTS parties CASCADE');
+    // await query('DROP TABLE IF EXISTS trades CASCADE');
+    // await query('DROP TABLE IF EXISTS faq CASCADE');
+    // await query('DROP TABLE IF EXISTS raids CASCADE');
+};
+
+// Self-executing async function to initialize database
+(async () => {
+    try {
+        await createTables();
+        await alterTables();
+
+        console.log('Database initialization complete');
+    } catch (error) {
+        console.error('Database initialization failed:', error);
+    };
+})();

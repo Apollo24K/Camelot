@@ -18,6 +18,10 @@ const row = new ActionRowBuilder()
             .setCustomId('ignore_defer-guess')
             .setLabel('Guess')
             .setStyle('Primary'),
+        new ButtonBuilder()
+            .setCustomId('skip')
+            .setLabel('Skip')
+            .setStyle('Secondary'),
     );
 
 function getModal(uid) {
@@ -114,7 +118,7 @@ module.exports = {
         };
 
         db.serialize(async () => {
-            await interaction.deferReply();
+            // await interaction.deferReply();
 
             const Embed = new EmbedBuilder()
                 .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
@@ -122,11 +126,12 @@ module.exports = {
                 .setTitle("Guess the Character")
                 .setDescription(`**Anime**: ${animeTitle}\n${scores}`)
                 .setFooter({ text: "Hints: letter (-2 points), anime (-6 points)" });
-            interaction.editReply({ embeds: [Embed], components: [row], fetchReply: true }).then((emsg) => {
+            interaction[interaction.replied ? "followUp" : "reply"]({ embeds: [Embed], components: [row], fetchReply: true }).then((emsg) => {
 
                 const collector = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "ignore_defer-guess", componentType: ComponentType.Button, time: 60000 });
                 const hintLetter = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
                 const hintAnime = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
+                const skip = emsg.createMessageComponentCollector({ filter: (component) => (component.user.id === interaction.user.id) && component.customId === "skip", componentType: ComponentType.Button, time: 60000 });
                 const uid = Math.random();
 
                 let dailyPending = true;
@@ -191,6 +196,13 @@ module.exports = {
                     };
                     Embed.setDescription(`**Anime**: ${animeTitle}\n${scores}`);
                     emsg.edit({ embeds: [Embed] });
+                });
+
+                skip.on('collect', async () => {
+                    hintAnime.stop(), hintLetter.stop();
+                    await collector.stop();
+
+                    module.exports.execute(interaction);
                 });
 
                 collector.on('end', () => {

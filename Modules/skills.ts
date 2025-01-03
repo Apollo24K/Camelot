@@ -6,6 +6,7 @@ import { items } from "./items";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { CharacterRarity } from "../types";
+import { query } from "../db_handler";
 
 export default class skillInfo {
     private _id: number;
@@ -1381,15 +1382,25 @@ export const crazeBossAbilities: skillInfo[] = [
         };
     }, [6, "Izuru Kira"]),
     new skillInfo(6, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
 
-        notice.push(`\n🥦 You can't find Zoro, you return`);
+        const { 0: stats } = await query(`SELECT craze_levels FROM users WHERE users.id = ${matchStats.interaction.user.id}`);
+        if (stats) stats.craze_levels = JSON.parse(stats.craze_levels);
 
-        myStats.hp = 0;
-        myStats.rev = 0;
-        myStats.revhp = 0;
+        if (stats?.craze_levels?.['15']) {
+            eStats.image = "https://i.ibb.co/9p7zvsV/c.png";
+            mybuff.atk.push(new buffInfo("*", 30, 9999));
+            mybuff.md.push(new buffInfo("*", 30, 9999));
+            myStats.atk *= 30;
+            myStats.md *= 30;
+        } else {
+            notice.push(`\n🥦 You can't find Zoro, you return`);
 
+            myStats.hp = 0;
+            myStats.rev = 0;
+            myStats.revhp = 0;
+        };
     }, [7, "Zoro"]),
     new skillInfo(7, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1480,7 +1491,26 @@ export const crazeBossAbilities: skillInfo[] = [
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
     }, [12, "Wamuu"]),
+
     new skillInfo(12, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+        if (char.id === 4932) {
+            eStats.image = "https://i.ibb.co/wBK7QFW/floor.gif";
+            eStats.hp = 1;
+            eStats.dodge = 0;
+            eStats.br = 0;
+            notice.push(`\n🧹 The floor is now clean!`);
+        } else {
+            notice.push(`\n🧹 It looks menacing, but nothing happens. You leave.`);
+            myStats.hp = 0;
+            myStats.rev = 0;
+            myStats.revhp = 0;
+        };
+
+    }, [13, "Floor"]),
+
+    new skillInfo(13, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         const quintuplets = [2, 3, 4, 5, 6];
         const choice = quintuplets[Math.floor(Math.random() * quintuplets.length)];
@@ -1496,8 +1526,8 @@ export const crazeBossAbilities: skillInfo[] = [
 
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
-    }, [13, "Fuutarou Uesugi"]),
-    new skillInfo(13, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    }, [14, "Fuutarou Uesugi"]),
+    new skillInfo(14, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
 
@@ -1512,11 +1542,73 @@ export const crazeBossAbilities: skillInfo[] = [
                 notice.push(`\n😐`);
             };
         }, 9999));
-    }, [14, "Mob"]),
+    }, [15, "Mob"]),
+    new skillInfo(15, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.removeDefCap = true;
 
+        notice.push(`\n🥦 what's this moss head doing here?!`);
+
+        if ([999, 1003, 1469].includes(char.id)) { // ["nami", "sanji", "perona"]
+            notice.push(`\n🥦 You guide him back to his level.`);
+
+            // Sukuna
+            eStats.image = "https://i.ibb.co/QF3c2zV/r.png";
+
+            if (char.id === 1469) {
+                // scale atk down to 1% of original
+                ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.95), 9999));
+                ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md * 0.95), 9999));
+                eStats.atk -= Math.floor(eStats.atk * 0.95);
+                eStats.md -= Math.floor(eStats.md * 0.95);
+            };
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+                if (char.id === 1469) {
+                    // Sukuna is depressed
+                    const sentences = [
+                        "I'm so sorry for being alive...",
+                        "Even if I were born again, nobody would love me...",
+                        "In my next life, I want to be reborn as a sea cucumber...",
+                        "My existence is a burden to the universe...",
+                        "Why did I think I could ever accomplish anything...",
+                        "Even my reflection is embarrassed by me...",
+                        "The ground is too good for me to walk on...",
+                        "Breathing is too ambitious for me...",
+                        "I'm the last person anyone would call for help...",
+                        "I should apologize to oxygen for existing...",
+                        "Every step I take is a mistake...",
+                        "If failure had a mascot, it would be me...",
+                        "Even dust is more accomplished than I am...",
+                        "The universe must cringe every time I breathe...",
+                        "I should hand over my throne to Larry...",
+                        "Forget the heavens, I can't even rule over dirt...",
+                        "The 'King of Curses'? More like the 'Clown of Curses'...",
+                    ];
+                    notice.push(`\n👻 ${sentences[Math.floor(Math.random() * sentences.length)]}`);
+                };
+
+                const correctSequence = [
+                    "ATK", "ATK", "DEF", "DEF", "SKILL",
+                    "ATK", "DEF", "DEF", "ATK", "ATK",
+                    "ATK", "DEF", "SKILL", "DEF", "ATK",
+                    "ATK", "DEF", "ATK", "DEF", "SKILL",
+                ];
+
+                if ([5, 10, 15, 20].includes(matchStats.actionSequence.length)) {
+                    if (matchStats.actionSequence.every((e: string, i: number) => e === correctSequence[i])) {
+                        // deal 30% of max hp each time
+                        eStats.hp -= Math.floor(eStats.maxhp * 0.3);
+                        if (eStats.hp < 0) eStats.hp = 0;
+                    };
+                };
+            }, 9999));
+        };
+
+    }, [16, "Sukuna"]),
 
 ];
-
 
 export const rollingCowAbilities: skillInfo[] = [
     new skillInfo(0, 500, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

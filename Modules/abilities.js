@@ -2141,7 +2141,7 @@ export const abilities = {
             myStats.selfheal[this.selfhealidx] += 0.02; // Increase to max 16% selfheal
             let dungeonBoost = 1.4;
             if (matchStats.interaction.commandName === "arena") dungeonBoost = 1.15;
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: dungeonBoost, magicDamage: true, trueDamage: true, selfHeal: true });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: dungeonBoost, magicDamage: true, ignoreShield: true, selfHeal: true });
 
             mybuff.atk.push(new buffInfo("*", 1.1, 9999));
             mybuff.md.push(new buffInfo("*", 1.1, 9999));
@@ -2222,7 +2222,7 @@ export const abilities = {
             };
             myStats.sm -= mana_cost;
 
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stormbolt:1068649152898154546> **${char.name}**`, { atkMultiplier: atkbuff, mdChance: -1, magicDamage: true, dodge: false, trueDamage: true });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stormbolt:1068649152898154546> **${char.name}**`, { atkMultiplier: atkbuff, mdChance: -1, magicDamage: true, dodge: false, ignoreShield: true });
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -2343,7 +2343,7 @@ export const abilities = {
                 atkbuff += ((myStats.hp / myStats.maxhp) / 2);
             };
 
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used ${this.used === 3 ? "Final Prominence" : "Crazy Prominence"}! He`, { atkMultiplier: atkbuff, mdChance: -1, magicDamage: true, dodge: false, trueDamage: true });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used ${this.used === 3 ? "Final Prominence" : "Crazy Prominence"}! He`, { atkMultiplier: atkbuff, mdChance: -1, magicDamage: true, dodge: false, ignoreShield: true });
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // day time buff
@@ -2443,8 +2443,8 @@ export const abilities = {
                 // Replace ATK
                 myStats.replaceButton.atk = {
                     "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.6, critChance: -1, combodmg: true, selfdmg: true, selfheal: true, trueDamage: true });
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.6, critChance: -1, magicDamage: true, mdChance: -1, combodmg: true, selfdmg: true, selfheal: true, trueDamage: true });
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.6, critChance: -1, combodmg: true, selfdmg: true, selfheal: true, ignoreShield: true });
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.6, critChance: -1, magicDamage: true, mdChance: -1, combodmg: true, selfdmg: true, selfheal: true, ignoreShield: true });
 
                         // Cause Bleed
                         if (0.2 > Math.random()) {
