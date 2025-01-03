@@ -1,8 +1,8 @@
 import fs from "fs";
 import Package from '../package.json';
 import { Interaction, EmbedBuilder, PermissionsBitField } from "discord.js";
-import { BotEvent } from "../types";
-import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUserMailReceived } from "../Modules/queries";
+import { BotEvent, SlashCommand } from "../types";
+import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUsers } from "../Modules/queries";
 
 const userCooldown = new Map();
 const channelCooldown = new Set();
@@ -125,11 +125,17 @@ const event: BotEvent = {
 
             // Check new mails
             if (author.schema.mailbox.length > author.schema.mailreceived) {
-                await updateUserMailReceived(interaction.user.id, author.schema.mailbox.length);
+                await updateUsers(interaction.user.id, {
+                    mailreceived: { type: 'set', value: author.schema.mailbox.length }
+                });
                 setTimeout(() => {
                     interaction.channel?.send(interaction.user.toString() + " you have received a **new mail**! Open it using </profile:1010583712527810641>");
                 }, 1000);
             };
+
+            // Slash Commands
+            const command = interaction.client.slashCommands.get(interaction.commandName) as SlashCommand | undefined;
+            if (command) return command.execute({ interaction, author, locale: 'en_US' });
 
             // Execute command
             if (interaction.commandName === "arena" && interaction.options.getUser('user')?.id === "706183309943767112") return interaction.client.commands.get('trial').execute(interaction);

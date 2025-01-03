@@ -1,7 +1,8 @@
 import fs from 'fs';
 import { join } from "path";
-import config from './config';
 import { Client, GatewayIntentBits, Partials, Options, Collection } from 'discord.js';
+import config from './config.json';
+import { SlashCommand } from './types';
 
 // Create Client
 const client = new Client({
@@ -16,6 +17,9 @@ const client = new Client({
     shards: "auto",
 });
 client.login(config.token);
+
+// Collections
+client.slashCommands = new Collection<string, SlashCommand>();
 
 // Add Commands
 client.commands = new Collection();

@@ -1,8 +1,13 @@
+import { ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
 
 export type Gender = 'M' | 'F' | 'NB';
 
 export type CharacterRarity = 'EX' | 'SS' | 'S' | 'A' | 'B' | 'C' | 'D';
+
+export type ItemRarity = 'genesis' | 'mythical' | 'legendary' | 'unique' | 'rare' | 'special' | 'normal';
+
+export type PrimaryStat = 'hp' | 'hp%' | 'atk' | 'atk%' | 'def' | 'def%' | 'md' | 'md%' | 'mr' | 'cr' | 'cd' | 'dodge' | 'br' | 'mana' | 'sm' | 'mg' | 'shield';
 
 export type RaidRank = 'F-' | 'F' | 'F+' | 'E-' | 'E' | 'E+' | 'D-' | 'D' | 'D+' | 'C-' | 'C' | 'C+' | 'B-' | 'B' | 'B+' | 'A-' | 'A' | 'A+' | 'S-' | 'S' | 'S+' | 'SS-' | 'SS' | 'SS+' | 'SSS-' | 'SSS' | 'SSS+' | 'EX-' | 'EX' | 'EX+';
 
@@ -21,6 +26,23 @@ export interface BotHandler {
     once?: boolean,
     disabled?: boolean,
     execute: (...args?) => void;
+}
+
+interface executeSlashCommand {
+    interaction: ChatInputCommandInteraction,
+    locale: Locale,
+    author: { schema: CompactUserSchema; },
+    // server: { schema?: ServerSchema; },
+    reply?: any,
+    warn?: any,
+    customFlag?: any,
+}
+
+export interface SlashCommand {
+    name: string,
+    execute: ({ }: executeSlashCommand) => void,
+    autocomplete?: ({ }: { interaction: AutocompleteInteraction; }) => Promise<Array<{ name: string, value: string; }>>,
+    cooldown?: number, // in seconds
 }
 
 export interface UserSchema {
@@ -67,7 +89,7 @@ export interface UserSchema {
     pullreminder: number;
     votereminder: number;
     items: Record<string, any>;
-    skins: any[];
+    skins: number[];
     eventpts: number;
     brbest: number;
     mailbox: any[];
@@ -88,14 +110,51 @@ export interface UserSchema {
     class: number | null;
     aboutme: string | null;
     profilecolor: string | null;
+    jades: number;
+    pass: number;
+    passlevel: number;
+    freepassclaimed: number;
+    premiumpassclaimed: number;
+    celebrateclaimed: number;
+    expulls: number;
+    level: number;
+    bank: number;
+    charxp: number;
+    feedlimit: number;
+    findoption: number;
+    referred_by: string | null;
+    referred_gems: number;
+    referrals_claimed: number;
+    passpurchaselimit: number;
+    expity: number;
+    craze_equipment: Record<string, any>;
+    equipment: Record<string, any>;
+    trial_equipment: Record<string, any>;
+    craze_levels: Record<string, any>;
+    shield_slot: number;
+    lastguildjoin: Date | null;
+    valentine: string | null;
+    bosshuntruns: number;
+    bosshuntrevreceived: number | null;
+    monthlyshop: Record<string, any>;
+    itemwishlist: any[];
+    stampedeenergy: number;
+    background: string | null;
+    backgrounds: string[];
+    charlock: number[];
+    animelock: number[];
+    cow_participation: number | null;
+    cow_chars: string | null;
+    cow_timer: number | null;
+    cow_rolled_today: number;
     rank: string;
     rankscore: number;
     raidxp: number;
     guild_marks: number;
     created: Date;
 
-    chars: any[];
-    char_ref: Record<string, any>;
+    chars: number[];
+    char_ref: Record<string, number>;
     char_level: Record<string, any>;
     char_class: Record<string, any>;
     char_skin: Record<string, any>;
@@ -109,7 +168,7 @@ export interface UserSchema {
     stampede_responsetime: string;
 }
 
-export type CompactUserSchema = Omit<UserSchema, "transactions" | "chars" | "char_ref" | "char_level" | "char_class" | "char_skin" | "char_equipment" | "dungeon_responsetime" | "stampede_responsetime">;
+export type CompactUserSchema = Omit<UserSchema, "transactions" | "char_level" | "char_class" | "char_equipment" | "dungeon_responsetime" | "stampede_responsetime">;
 
 export interface ServerSchema {
     rowid: number;
@@ -363,5 +422,6 @@ declare global {
 declare module "discord.js" {
     export interface Client {
         commands: Collection<string, any>;
+        slashCommands: Collection<string, SlashCommand>;
     }
 }

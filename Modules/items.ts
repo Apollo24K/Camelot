@@ -1,10 +1,25 @@
 /* eslint-disable no-unused-vars */
+import { ItemRarity, PrimaryStat } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
 
-class itemInfo {
-    constructor(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc = "", flair = "") {
+export class itemInfo {
+    private _name: string;
+    private _category: string;
+    private _type: string;
+    private _obtain: string[];
+    private _emoji: string;
+    private _image: string;
+    private _grade: ItemRarity;
+    private _id: number;
+    private _unique: boolean;
+    private _tradable: boolean;
+    private _sellable: boolean;
+    private _desc: string;
+    private _flair: string;
+
+    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean, tradable: boolean, sellable: boolean, desc: string = "", flair: string = "") {
         this._name = name;
         this._category = category; // ["weapon", "armor", "fish"]
         this._type = type; // ["sword", ..., "helmet", ..., "fish"]
@@ -88,8 +103,10 @@ class itemInfo {
     };
 };
 
-class fishInfo extends itemInfo {
-    constructor(name, category, type, obtain, consumable, emoji, image, grade, id, unique = false, tradable = true, sellable = true) {
+export class fishInfo extends itemInfo {
+    private _consumable: boolean;
+
+    constructor(name: string, category: string, type: string, obtain: string[], consumable: boolean, emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable);
         this._consumable = consumable;
     };
@@ -99,14 +116,23 @@ class fishInfo extends itemInfo {
     };
 };
 
-class lootInfo extends itemInfo {
-    constructor(name, category, type, obtain, emoji, image, grade, id, unique = false, tradable = true, sellable = false, desc, flair) {
+export class lootInfo extends itemInfo {
+    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = false, desc: string = "", flair: string = "") {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
     };
 };
 
-class weaponInfo extends itemInfo {
-    constructor(name, category, type, obtain, emoji, image, primaryStat, psmin, psmax, secondaryStat, ssmin, ssmax, buff, buffdesc, flair, grade, id, desc, unique = true, tradable = false, sellable = true) {
+export class weaponInfo extends itemInfo {
+    private _primaryStat: PrimaryStat;
+    private _psmin: number;
+    private _psmax: number;
+    private _secondaryStat: PrimaryStat;
+    private _ssmin: number;
+    private _ssmax: number;
+    private _buff: (...args: any[]) => void;
+    private _buffdesc: string;
+
+    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, primaryStat: PrimaryStat, psmin: number, psmax: number, secondaryStat: PrimaryStat, ssmin: number, ssmax: number, buff: (...args: any[]) => void, buffdesc: string, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
         this._primaryStat = primaryStat;
         this._psmin = psmin;
@@ -143,8 +169,13 @@ class weaponInfo extends itemInfo {
     };
 };
 
-class chestInfo extends itemInfo {
-    constructor(name, category, type, obtain, emoji, emoji2, image, image2, drops, droprates, grade, id, unique = false, tradable = false, sellable = false, desc, flair) {
+export class chestInfo extends itemInfo {
+    private _emoji2: string;
+    private _image2: string;
+    private _drops: number;
+    private _droprates: { [key in ItemRarity]?: number };
+
+    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, emoji2: string, image: string, image2: string, drops: number, droprates: { [key in ItemRarity]?: number; }, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = false, sellable: boolean = false, desc: string = "", flair: string = "") {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
         this._emoji2 = emoji2;
         this._image2 = image2;
@@ -166,8 +197,15 @@ class chestInfo extends itemInfo {
     };
 };
 
-class armorInfo extends itemInfo {
-    constructor(name, category, type, setname, obtain, emoji, image, primaryStat, psmin, psmax, grade, id, buff = undefined, buffdesc = undefined, desc, unique = true, tradable = false, sellable = true) {
+export class armorInfo extends itemInfo {
+    private _setname: string;
+    private _primaryStat: string;
+    private _psmin: number;
+    private _psmax: number;
+    private _buff: ((...args: any[]) => void) | undefined;
+    private _buffdesc: string | undefined;
+
+    constructor(name: string, category: string, type: string, setname: string, obtain: string[], emoji: string, image: string, primaryStat: string, psmin: number, psmax: number, grade: ItemRarity, id: number, buff: ((...args: any[]) => void) | undefined = undefined, buffdesc: string | undefined = undefined, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc);
         this._setname = setname;
         this._primaryStat = primaryStat;
@@ -194,8 +232,12 @@ class armorInfo extends itemInfo {
     };
 };
 
-class ringInfo extends itemInfo {
-    constructor(name, category, type, obtain, emoji, image, maxlevel, buffs, buffdescs, flair, grade, id, desc = "", unique = true, tradable = false, sellable = true) {
+export class ringInfo extends itemInfo {
+    private _maxlevel: number;
+    private _buffs: (level: number) => (...args: any[]) => void;
+    private _buffdescs: (level: number) => string;
+
+    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, maxlevel: number, buffs: (level: number) => (...args: any[]) => void, buffdescs: (level: number) => string, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
         this._maxlevel = maxlevel;
         this._buffs = buffs;
@@ -212,11 +254,11 @@ class ringInfo extends itemInfo {
         return this._buffdescs;
     };
 
-    getBuff(level) {
+    getBuff(level: number) {
         level = Math.min(Math.max(level, 1), this.maxlevel) || 1;
         return this.buffs(level);
     };
-    getBuffDesc(level) {
+    getBuffDesc(level: number) {
         level = Math.min(Math.max(level, 1), this.maxlevel) || 1;
         return this.buffdescs(level);
     };
@@ -764,7 +806,7 @@ export const items = [
     new weaponInfo("Bloodheart", "weapon", "staff", ["crafting", "chest"], "<:bloodheart:1066863272336310332>", "https://i.imgur.com/4w1EMB0.png", "md", 34, 580, "cd", 0.05, 0.33, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 5 === 0) {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), { });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             };
         }, 9999));
@@ -786,7 +828,7 @@ export const items = [
     new weaponInfo("Cursed Scepter of Nosferatu", "weapon", "staff", ["chest"], "<:cursed_scepter_of_nosferatu:1066863383917383680>", "https://i.imgur.com/gjPhHKE.png", "md", 32, 566, "hp", 121, 367, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             let drain = Math.floor(myStats.maxhp * 0.01 * (2 + Math.min(8, Math.floor(matchStats.round / 4))));
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
             eStats.hp -= drain;
             if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             if (eStats.hp < 0) eStats.hp = 0;
@@ -801,7 +843,7 @@ export const items = [
     }, "Decreases the enemies max mana cap by **-20** mana and their mana generation by **-2**.", "The Deflector of Hope is a powerful weapon wielded by those who stand against the forces of despair. Its enchanted crystal core glows with a brilliant light, sending waves of positive energy outward to repel the darkness. In the hands of a skilled wielder, the staff can deflect even the strongest negative emotions, leaving hope and determination in its wake.", "unique", 190),
     new weaponInfo("Dreambinder", "weapon", "staff", ["chest"], "<:dreambinder:1066863395602710602>", "https://i.imgur.com/ZLx2lmP.png", "md", 38, 594, "sm", 1, 5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp - myStats.hp), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp - myStats.hp), {});
         }, 3));
     }, "Heals the wielder back to 100% HP after each round for the first 3 rounds.", "With the Dreambinder staff in hand, the wielder has the power to manipulate the dreams of others. Those who sleep within the staff's reach are at the mercy of the Dreambinder's will, their dreams bending to serve their master's desires. But be warned, for those who defy the Dreambinder's control may find their own nightmares turning against them.", "unique", 191),
     new weaponInfo("Enchanted Wand of Eldrida", "weapon", "staff", ["crafting", "chest"], "<:enchanted_wand_of_eldrida:1066864139345072218>", "https://i.imgur.com/6XtJXRQ.png", "md", 35, 577, "md", 12, 134, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -843,7 +885,7 @@ export const items = [
     }, "The wielder has **10%** increased magic damage. This increases to **20%** after 10 rounds.", "The Scepter of the Arcane is an ancient scepter told to be once wielded by the greatest sorcerer in all the land, and is said to hold immense magical power. With the Scepter of the Arcane, the wielder can cast powerful spells and harness the energy of the arcane to their will.", "unique", 199),
     new weaponInfo("Soulkeeper", "weapon", "staff", ["crafting", "chest"], "<:soulkeeper:1066864557198413935>", "https://i.imgur.com/W69VM7Y.png", "md", 35, 575, "mr", 28, 122, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (matchStats.round % 3 === 0) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), { });
+            if (matchStats.round % 3 === 0) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), {});
         }, 9999));
     }, "Every 3 rounds the wielder is healed by **20%** of their missing HP.", "The Soulkeeper staff is a powerful and ancient relic, imbued with the essence of the great spirits of the land. Its shimmering crystal handle holds the very essence of life, and its glowing tip can harness the power of the soul itself. With this staff in hand, the wielder has the ability to both protect and manipulate the very essence of life itself. But be warned, for the power of the Soulkeeper comes at a great cost, and those who wield it must be cautious not to lose themselves to its dark temptations.", "unique", 200),
     new weaponInfo("Tribute of Illumination", "weapon", "staff", ["crafting", "chest"], "<:tribute_of_illumination:1066864560423850034>", "https://i.imgur.com/HnUdOz6.png", "md", 32, 568, "mana", 5, 25, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -898,7 +940,7 @@ export const items = [
             myStats.mr += Math.floor(myStats.mr * 0.15);
             mybuff.def.push(new buffInfo("+", myStats.def * 0.15, 9999));
             mybuff.mr.push(new buffInfo("+", myStats.mr * 0.15, 9999));
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), {});
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.4) {
@@ -906,7 +948,8 @@ export const items = [
                     myStats.mr += Math.floor(myStats.atk * 0.15);
                     mybuff.def.push(new buffInfo("+", myStats.def * 0.15, 9999));
                     mybuff.mr.push(new buffInfo("+", myStats.mr * 0.15, 9999));
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), {});
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -972,6 +1015,7 @@ export const items = [
                     if (myStats.cr > 1) myStats.cr = 1;
                     mybuff.cr.push(new buffInfo("+", 0.12, 9999));
                     mybuff.cd.push(new buffInfo("+", 0.2, 9999));
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1071,6 +1115,7 @@ export const items = [
                     myStats.md += Math.floor(myStats.md * 0.25);
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999));
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1083,7 +1128,7 @@ export const items = [
     new weaponInfo("Glas Ghaibhleann", "weapon", "lance", ["crafting", "chest"], "<:glas_ghaibhleann:1067200684048531486>", "https://i.imgur.com/K9ZAgan.png", "atk", 31, 562, "hp", 58, 362, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 3 === 0) {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), { });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), {});
                 myStats.atk += Math.floor(myStats.atk / 3);
                 myStats.md += Math.floor(myStats.md / 3);
             };
@@ -1257,13 +1302,14 @@ export const items = [
     }, "Block rate increases by **+20%** if the wielder survives for 10 rounds.", "Crafted from the finest silver and honed to a sharp edge, the Silver Skewer pierces through armor and flesh with ease. Its delicate handle provides a comfortable grip, allowing for precise and deadly strikes. Beware those who wield this deadly weapon, for their skill and cunning make them a formidable foe.", "unique", 263),
     new weaponInfo("Sinister Quickblade", "weapon", "dagger", ["crafting", "chest"], "<:sinister_quickblade:1067236085563936778>", "https://i.imgur.com/wjm5McE.png", "atk", 33, 570, "cd", 0.05, 0.33, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         if (myStats.hp / myStats.maxhp < 0.25) {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), {});
             mybuff.hp.push(new buffInfo("+", myStats.maxhp * 0.05, 9999));
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.25) {
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), {});
                     mybuff.hp.push(new buffInfo("+", myStats.maxhp * 0.05, 9999));
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1352,7 +1398,7 @@ export const items = [
     }, "Executes the enemy when below **10%** HP.", "The Tormented Buckler was once a simple shield, used by a valiant knight in countless battles. But its steel has been twisted and corrupted by dark magic, imbuing it with a malevolent power. Those who wield it in battle find themselves consumed by an unquenchable bloodlust, driving them to ever greater acts of violence and destruction. Beware the Tormented Buckler, for it will lead you down a path of ruin.", "unique", 282),
     new weaponInfo("Warden of Anguish", "weapon", "shield", ["chest"], "<:warden_of_anguish:1067246418630291496>", "https://i.imgur.com/qyZetfz.png", "shield", 78, 880, "hp", 144, 386, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(10, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.4), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.4), {});
         }));
     }, "After 10 rounds, the wielder heals **40%** of missing HP.", "Forged in the depths of despair and tempered in the fires of torment, the Warden of Anguish is a shield imbued with the pain and suffering of those who have come before it. Its piercing gaze and imposing presence strike fear into the hearts of all who dare to challenge its wielder. Those who stand against the Warden of Anguish face not only a formidable barrier, but also the weight of countless souls bearing down upon them.", "unique", 283),
 
@@ -1515,7 +1561,7 @@ export const items = [
     }, "Drains **2.5%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **5%** of the wielders HP instead.", "The Sanguine staff is said to have been crafted from the bones of fallen warriors, imbued with the power of their spilled blood. Those who wield it are said to be able to channel the strength and determination of the dead, and to harness their fighting spirit to strike down their enemies with ferocity and deadly precision. Some say that the staff itself thirsts for battle, and will only bond with those who are truly dedicated to the art of war. Others whisper that it is cursed, and that those who use it will eventually be consumed by the very power they seek to wield. Whether legend or truth, the Sanguine staff is a weapon to be feared and respected.", "legendary", 311),
     new weaponInfo("The Conch's Calling", "weapon", "staff", ["crafting", "chest"], "<:the_conchs_calling:1068523528015593542>", "https://i.imgur.com/rowNtXF.png", "md", 52, 836, "hp", 202, 524, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(12, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.6), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.6), {});
         }));
     }, "After 12 rounds, the wielder heals **60%** of missing HP.", "The Conch's Calling is a magical staff that has the power to call upon the might of the ocean. Those who wield it are able to summon the power of the waves, summoning huge tidal waves and powerful currents to crash down upon their enemies. With the staff in hand, you will be able to control the very tides and unleash their fury upon all those who stand in your way.", "legendary", 312),
     new weaponInfo("The Staff of Asclepius", "weapon", "staff", ["crafting", "chest"], "<:the_staff_of_asclepius:1068528525461696622>", "https://i.imgur.com/vd4PoRV.png", "md", 54, 844, "hp", 233, 607, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1643,13 +1689,14 @@ export const items = [
     }, "The wielder has **20%** increased magic damage for the rest of battle.", "The Brisingamen is a bow crafted from the finest yew wood and imbued with the power of the sun. Its golden string sings with the light of a thousand dawns, sending arrows flying true and swift to pierce the hearts of foes. Those who wield the Brisingamen are said to be blessed with the speed and grace of the goddess Freya, making them a force to be reckoned with on the battlefield.", "legendary", 335),
     new weaponInfo("Crossbow of Zeal", "weapon", "bow", ["crafting", "chest"], "<:crossbow_of_zeal:1068643237750911156>", "https://i.imgur.com/9X8qyI3.png", "atk", 52, 812, "hp", 216, 828, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         if (myStats.hp / myStats.maxhp < 0.5) {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, {});
             notice.push(`\n<:crossbow_of_zeal:1068643237750911156> ${char.name} made a complete recovery!`);
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.5) {
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, {});
                     notice.push(`\n<:crossbow_of_zeal:1068643237750911156> ${char.name} made a complete recovery!`);
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1670,6 +1717,7 @@ export const items = [
                     mybuff.def.push(new buffInfo("+", Math.floor(myStats.def * 0.2), 12));
                     mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr * 0.2), 12));
                     notice.push(`\n<:draupnirs_mist:1068643241467068486> ${char.name} increased DEF and MR by **20%**!`);
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1841,7 +1889,7 @@ export const items = [
                 const drain = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.12 : eStats.hp * 0.06);
                 eStats.hp -= drain;
                 if (eStats.hp < 0) eStats.hp = 0;
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             };
         }, 9999));
@@ -1901,13 +1949,14 @@ export const items = [
         if (myStats.hp / myStats.maxhp < 0.5) {
             myStats.cd += 0.3;
             mybuff.cd.push(new buffInfo("+", 0.3, 9999));
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), {});
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.5) {
                     myStats.cd += 0.3;
                     mybuff.cd.push(new buffInfo("+", 0.3, 9999));
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.2), {});
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1931,7 +1980,7 @@ export const items = [
             myStats.mr += Math.floor(myStats.mr * 0.15);
             mybuff.def.push(new buffInfo("+", myStats.def * 0.15, 9999));
             mybuff.mr.push(new buffInfo("+", myStats.mr * 0.15, 9999));
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.3), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.3), {});
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.4) {
@@ -1939,7 +1988,8 @@ export const items = [
                     myStats.mr += Math.floor(myStats.atk * 0.15);
                     mybuff.def.push(new buffInfo("+", myStats.def * 0.15, 9999));
                     mybuff.mr.push(new buffInfo("+", myStats.mr * 0.15, 9999));
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.3), { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.3), {});
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -1970,7 +2020,7 @@ export const items = [
     new weaponInfo("Moatwall", "weapon", "shield", ["crafting", "chest"], "<:moatwall:1068707073585582160>", "https://i.imgur.com/3xnG7rM.png", "shield", 139, 1071, "hp", 68, 426, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 4 === 0) {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) / 3), { });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) / 3), {});
             };
         }, 9999));
     }, "The wielder heals **33%** of missing HP every 4th round.", "The Moatwall is made of solid, unbreakable steel. Its surface is emblazoned with the crest of the castle, and it is said to have been crafted by the greatest smiths in the land. It is the ultimate defense for the warrior who defends the castle's moat.", "legendary", 385),
@@ -2002,7 +2052,7 @@ export const items = [
     new weaponInfo("Dreadknight's Demise", "weapon", "sword", ["chest"], "<:dreadknights_demise:1068720496994168852>", "https://i.imgur.com/JWP9KaW.png", "atk", 106, 1132, "cd", 0.1, 0.46, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:dreadknights_demise:1068720496994168852>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:dreadknights_demise:1068720496994168852> **${char.name}**`, { critChance: 0, magicDamage: true });
             },
         };
@@ -2088,13 +2138,14 @@ export const items = [
         if (myStats.hp / myStats.maxhp < 0.3) {
             myStats.cd += 0.3;
             mybuff.cd.push(new buffInfo("+", 0.3, 9999));
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.4), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.4), {});
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.3) {
                     myStats.cd += 0.3;
                     mybuff.cd.push(new buffInfo("+", 0.3, 9999));
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.4), { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.4), {});
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -2134,7 +2185,8 @@ export const items = [
                 mybuff.atk.push(new buffInfo("+", -myStats.atk * 0.2, 9999));
                 myStats.md -= Math.floor(myStats.md * 0.2);
                 mybuff.md.push(new buffInfo("+", -myStats.md * 0.2, 9999));
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, { });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, {});
+                //@ts-ignore
                 this._used++;
             };
         }, 9999, 3));
@@ -2184,7 +2236,7 @@ export const items = [
     new weaponInfo("Sagitta Solis", "weapon", "bow", ["chest"], "<:sagitta_solis:1069016593356566528>", "https://i.imgur.com/xZmQlxx.png", "atk", 104, 1052, "md", 86, 857, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:sagitta_solis:1069016593356566528>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:sagitta_solis:1069016593356566528> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 3));
             },
@@ -2216,13 +2268,14 @@ export const items = [
         if (myStats.hp / myStats.maxhp < 0.5) {
             myStats.cd += 0.4;
             mybuff.cd.push(new buffInfo("+", 0.4, 9999));
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, {});
         } else {
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.hp / myStats.maxhp < 0.5) {
                     myStats.cd += 0.4;
                     mybuff.cd.push(new buffInfo("+", 0.4, 9999));
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, { });
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, myStats.maxhp - myStats.hp, {});
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -2254,7 +2307,7 @@ export const items = [
         myStats.selfheal.push(0.06);
         myStats.replaceButton.atk = {
             "emoji": "<:skyfall_javelin:1069018773803245638>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:skyfall_javelin:1069018773803245638> **${char.name}**`, { atkMultiplier: 1, block: false, dodge: false, magicDamage: true });
             },
         };
@@ -2272,7 +2325,7 @@ export const items = [
     new weaponInfo("Flaming Fomor", "weapon", "dagger", ["chest"], "<:flaming_fomor:1069020248398897202>", "https://i.imgur.com/7sryILJ.png", "atk", 108, 1137, "cd", 0.12, 0.54, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:flaming_fomor:1069020248398897202>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:flaming_fomor:1069020248398897202> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.16), 2));
             },
@@ -2282,6 +2335,7 @@ export const items = [
         myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if (matchStats.round % 7 === 0) {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:jade_spine:1069020251775303680> **${char.name}**`, { atkMultiplier: 1.8, magicDamage: true });
+                //@ts-ignore
                 this._used++;
             };
         }, 9999, 3));
@@ -2289,7 +2343,7 @@ export const items = [
     new weaponInfo("Oath of Shifting Worlds", "weapon", "dagger", ["chest"], "<:oath_of_shifting_worlds:1069020253893443605>", "https://i.imgur.com/Ksli1ns.png", "atk", 123, 1234, "br", 0.01, 0.23, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:oath_of_shifting_worlds:1069020253893443605>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:oath_of_shifting_worlds:1069020253893443605> **${char.name}**`, { atkMultiplier: 1.23, ignoreShield: true, magicDamage: true });
             },
         };
@@ -2308,6 +2362,7 @@ export const items = [
                 eStats.def = 0;
                 eStats.mr = 0;
                 eStats.br = 0;
+                //@ts-ignore
                 this._used++;
             };
         }, 9999, 1));
@@ -2352,14 +2407,14 @@ export const items = [
         myStats.durinsBaneStacks = 0;
 
         // On hit
-        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
             if (caster === myStats) {
                 caster.durinsBaneStacks++;
             };
         });
 
         // On miss
-        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
             if (caster === myStats) {
                 caster.durinsBaneStacks = 0;
             };
@@ -2374,7 +2429,7 @@ export const items = [
     new weaponInfo("Heaven's Edge", "weapon", "sword", ["chest"], "<:heavens_edge:1069025071026409552>", "https://i.imgur.com/k8w3ZFm.png", "atk", 186, 1232, "hp", 300, 874, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const heal = Math.min(Math.floor(myStats.maxhp * 0.1), myStats.maxhp - myStats.hp);
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
             eStats.hp -= heal;
             if (eStats.hp < 0) eStats.hp = 0;
         }, 9999));
@@ -2388,7 +2443,7 @@ export const items = [
     new weaponInfo("Vermillion Vane", "weapon", "staff", ["chest"], "<:vermillion_vane:1069025800965324882>", "https://i.imgur.com/ccvhu0B.png", "md", 227, 1306, "mr", 64, 254, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:vermillion_vane:1069025800965324882>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vermillion_vane:1069025800965324882> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.25), 2));
                 ebuff.dodge.push(new buffInfo("=", 0, 2));
@@ -2421,7 +2476,7 @@ export const items = [
         }, 9999));
         myStats.replaceButton.atk = {
             "emoji": "<:elegy_of_the_glacial_heart:1069026954671570984>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:elegy_of_the_glacial_heart:1069026954671570984> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 myStats.usedBlockRound = matchStats.round;
             },
@@ -2450,8 +2505,8 @@ export const items = [
     new weaponInfo("Heartseeker", "weapon", "bow", ["chest"], "<:heartseeker:1069028625019576320>", "https://i.imgur.com/UoZXFTQ.png", "atk", 777, 1333, "hp", 77, 777, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:heartseeker:1069028625019576320>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.07), { });
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.07), {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:heartseeker:1069028625019576320> **${char.name}**`, { atkMultiplier: 1.2, magicDamage: true });
             },
@@ -2472,7 +2527,7 @@ export const items = [
         mybuff.cd.push(new buffInfo("+", 0.4, 9999));
         myStats.replaceButton.atk = {
             "emoji": "<:gae_bolg:1069032920733466706>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:gae_bolg:1069032920733466706> **${char.name}**`, { atkMultiplier: 1.2, ignoreShield: true, magicDamage: true });
             },
         };
@@ -2521,7 +2576,7 @@ export const items = [
     new weaponInfo("Celestial Barrier", "weapon", "shield", ["chest"], "<:celestial_barrier:1069033755676778536>", "https://i.imgur.com/k12xxmX.png", "shield", 255, 1598, "mr", 96, 246, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:celestial_barrier:1069033755676778536>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 matchStats.loot += 5;
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:celestial_barrier:1069033755676778536> **${char.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
             },
@@ -2669,6 +2724,7 @@ export const items = [
                     myStats.md += Math.floor(myStats.md * 0.2);
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.2), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.atk * 0.2), 9999));
+                    //@ts-ignore
                     this._used++;
                 };
             }, 9999, 1));
@@ -2736,7 +2792,7 @@ export const items = [
     new armorInfo("Vindicator Boots", "armor", "boots", "Vindicator Set", ["chest"], "<:vindicator_boots:1081367351062175875>", "https://i.imgur.com/l4i0H4s.png", "hp", 34, 1209, "unique", 546, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 4 === 0) {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.12), { });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.12), {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             };
         }, 9999));
@@ -2796,7 +2852,7 @@ export const items = [
         mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr * 0.1), 9999));
         myStats.mr += Math.floor(myStats.mr * 0.1);
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            mybuff.hp = mybuff.hp.filter((buff) => (buff.type === "*" && buff.val > 1) || (buff.type === "+" && buff.val > 0));
+            mybuff.hp = mybuff.hp.filter((buff: buffInfo) => (buff.type === "*" && buff.val > 1) || (buff.type === "+" && buff.val > 0));
         }, 9999));
     }, "The wearer has **10%** increased magic resistance and is immune against DoT type of damage.\n\n_DoT = Damage over Time_"),
     new armorInfo("Bloodforged Helmet", "armor", "helmet", "Bloodforged Set", ["crafting", "chest"], "<:bloodforged_helmet:1081545922317664396>", "https://i.imgur.com/lw8o5Le.png", "hp", 48, 1647, "legendary", 575),
@@ -2905,7 +2961,7 @@ export const items = [
         myStats.replaceButton.def = {
             "emoji": "<:deepsea_guardian_helmet:1081561801042444328>",
             "used": 0,
-            "run": function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            "run": function (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) {
                 if (this.used++ < 6) {
                     myStats.shield += 250;
                     myStats.usedBlockRound = matchStats.round;
@@ -2967,7 +3023,7 @@ export const items = [
         myStats.md += Math.floor(myStats.md * 0.2);
         myStats.replaceButton.def = {
             "emoji": "<:shadow_weaver_hat:1081561956114235445>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ATK:1063214925528440832> **${char.name}**`, { magicDamage: myStats.mdChance < 0.5, mdChance: -1 });
             },
         };
@@ -2999,7 +3055,7 @@ export const items = [
     new armorInfo("Dragon's Bane Boots", "armor", "boots", "Dragon's Bane Set", ["chest"], "<:dragons_bane_boots:1081566270467604620>", "https://i.imgur.com/277hrFr.png", "hp", 212, 2379, "genesis", 654, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.def = {
             "emoji": "<:dragons_bane_gloves:1081565845643333732>",
-            "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            "run": (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) => {
                 if (myStats.damageTaken > 5 * Math.max(myStats.atk, myStats.md)) myStats.damageTaken = 5 * Math.max(myStats.atk, myStats.md);
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:dragons_bane_gloves:1081565845643333732> **${char.name}**`, { atkMultiplier: myStats.damageTaken / Math.max(myStats.atk, myStats.md), magicDamage: true });
                 myStats.damageTaken = 0;
@@ -3011,7 +3067,7 @@ export const items = [
     new armorInfo("Jade Long Vambrace", "armor", "gloves", "Jade Long Set", ["chest"], "<:jade_long_vambrace:1081565735639339129>", "https://i.imgur.com/vjqtUCE.png", "hp", 329, 3322, "genesis", 657),
     new armorInfo("Jade Long Boots", "armor", "boots", "Jade Long Set", ["chest"], "<:jade_long_boots:1081566342932602990>", "https://i.imgur.com/2Kx4wqU.png", "mr", 47, 184, "genesis", 658, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.0725), { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.0725), {});
         }, 9999));
     }, "Every round the wearer heals **7.25%** of missing HP."),
     new armorInfo("Scorching Helmet of Ira", "armor", "helmet", "Scorching Set of Ira", ["chest"], "<:scorching_helmet_of_ira:1081565052487880754>", "https://i.imgur.com/TkDgyOF.png", "hp", 218, 2470, "genesis", 659),
@@ -3074,7 +3130,7 @@ export const items = [
 
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const drain = Math.floor(myStats.maxhp * 0.1);
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, { });
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
             eStats.hp -= drain;
             if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
             if (eStats.hp < 0) eStats.hp = 0;
@@ -3092,7 +3148,7 @@ export const items = [
         console.log(`Ring of ${char.name} is at level ${level}`);
 
         // Test attack trigger
-        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
             if (caster === myStats) {
                 console.log("attack! Attacker: " + caster.name + `(${options.damage} damage)`);
             } else if (caster === eStats) {
@@ -3101,18 +3157,18 @@ export const items = [
         });
 
         // Test miss trigger
-        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
             console.log("miss! Attacker: " + caster.name);
         });
 
         // Test crit trigger
-        matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+        matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
             console.log("crit! Attacker: " + caster.name + `(${options.damage} damage)`);
         });
 
         // Test ability trigger
         matchStats.on("ability", {
-            maxUsage: 2, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+            maxUsage: 2, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: any) => {
                 console.log("ability used by " + caster.name);
                 return true;
             },

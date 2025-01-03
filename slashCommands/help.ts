@@ -2,11 +2,11 @@ import { EmbedBuilder } from 'discord.js';
 import Package from '../package.json';
 import { auniq } from "../Modules/chars";
 import { items } from "../Modules/items";
+import { SlashCommand } from '../types';
 
-module.exports = {
+const exportCommand: SlashCommand = {
     name: 'help',
-    description: 'command list',
-    execute(interaction) {
+    async execute({ interaction }) {
 
         let help = interaction.options.getString('command') || "";
         help = help.toLowerCase();
@@ -37,7 +37,7 @@ module.exports = {
             .setDescription("Use `/help <command name>` for more information")
             .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
 
-        const commands = {
+        const commands: { [key: string]: string | { desc: string, fields?: { name: string, value: string, inline?: boolean; }[]; }; } = {
             ability: "**Usage**: </ability:1014178280376647721>\n**Options**: `character`, `page`, `user`\n\nLists all characters who have a unique ability\nCharacter abilities can be used through the ⚜️ ABILITY button in the `/dungeon`, `/arena`, `/trial` and more.\n\n**Options**\n`character`: Show details on a specific character's ability\n`page`: Directly jump to the page you want to see\n`user`: See which ability chars someone owns",
             achievements: "**Usage**: </achievements:1013464934065131551>\n**Options**: `page`, `user`\n\nShows your progress for each achievement along with the completion rewards.\n\n**Options**\n`page`: Directly jump to the page you want to see\n`user`: See another players progress",
             anime: "**Usage**: </anime:1012334279117766726>\n**Options**: `page`, `user`\n\nThis command will list all **" + auniq.length + "** anime (and non anime actually) included in our database in alphabetical order, together with your completion progress next to the title. Completed ones will have a check mark instead <a:check:873196253276700682>\n\n**Options**\n`page`: Directly jump to the page you want to see\n`user`: See another players progress",
@@ -47,7 +47,7 @@ module.exports = {
             daily: "**Usage**: </daily:1011371510759428136>\n\nUsed to claim daily coins. The amount of <:coins:872926669055356939> is proportional to your account level and daily streak. Starting with **600** <:coins:872926669055356939>, each level and streak add **+10** <:coins:872926669055356939> to it. Premium users additionally have a multiplier between **120**-**600**%.",
             delay: "**Usage**: </delay:1011390481848082442>\n**Options**: `int`\n\nThis command allows you to change the animation delay in the `/dungeon` and similar commands to fit your preferences. It can be anything between 200-1200ms. Note that this is a </premium:1011293280702578691> feature only.\n\n**Options**\n`int`: Number of millisecond between 200-1200",
             feed: "**Usage**: </feed:1157778598447558728>\n**Options**: `use`, `amount`\n\nFeed your character with fish, which can be earned through </fish:1087099255652622429>. This will earn your character \"xp\" which is essentially coins invested into character levels. In other words, \"{character} received 200 xp!\" would mean you'll have to spend 200 <:coins:872926669055356939> less the next time you use </levelup:1014310261223592047>.\n\n**Options**\n`use`: The type of fish you want to use\n`amount`: Amount of fish to use | Keywords: `max`",
-            fish: "**Usage**: </fish:1087099255652622429>\n\nThis command can be used once every **30** seconds to catch one of **" + items.reduce((count, e) => count += (e.category === "fish"), 0) + "** different fish.\nYou can't do anything in particular with fish, however there are 2 daily quests (`\"A Fishy Task\"` and `\"Another Fishy Task\"`) where you must fish.\n\n**Drop Rates**\n<:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162> ➜ 0.03%\n<:legendary1:1041726519082491964><:legendary2:1041726517153112094><:legendary3:1041726515475382322><:legendary4:1041726512992366605> ➜ 0.47%\n<:unique1:1041730066272493578><:unique2:1041730063940468828><:unique3:1041730061163831437><:unique4:1041730057380573386> ➜ 4.5%\n<:rare1:1041731092031492106><:rare2:1041731088357281802><:rare3:1041731083965825096><:blank:917804200363171860> ➜ 18%\n<:special1:1041731419963150397><:special2:1041731418008600717><:special3:1041731415919833149><:special4:1041731414032392202> ➜ 30%\n<:normal1:1041732429397889054><:normal2:1041732425379762268><:normal3:1041732422145953892><:normal4:1041732419591622686> ➜ 47%",
+            fish: "**Usage**: </fish:1087099255652622429>\n\nThis command can be used once every **30** seconds to catch one of **" + items.reduce((count, e) => count += (e.category === "fish" ? 1 : 0), 0) + "** different fish.\nYou can't do anything in particular with fish, however there are 2 daily quests (`\"A Fishy Task\"` and `\"Another Fishy Task\"`) where you must fish.\n\n**Drop Rates**\n<:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162> ➜ 0.03%\n<:legendary1:1041726519082491964><:legendary2:1041726517153112094><:legendary3:1041726515475382322><:legendary4:1041726512992366605> ➜ 0.47%\n<:unique1:1041730066272493578><:unique2:1041730063940468828><:unique3:1041730061163831437><:unique4:1041730057380573386> ➜ 4.5%\n<:rare1:1041731092031492106><:rare2:1041731088357281802><:rare3:1041731083965825096><:blank:917804200363171860> ➜ 18%\n<:special1:1041731419963150397><:special2:1041731418008600717><:special3:1041731415919833149><:special4:1041731414032392202> ➜ 30%\n<:normal1:1041732429397889054><:normal2:1041732425379762268><:normal3:1041732422145953892><:normal4:1041732419591622686> ➜ 47%",
             help: "**Usage**: </help:1010305606516740096>\n**Options**: `command`\n\nThe help command can be used to quickly see all available commands on a single glance if no value is passed to the `command` option. Otherwise, you can use it to see see instructions on how to use a given command and useful details on some of them.\n\n**Options**\n`command`: Shows detailed info on a given command",
             info: "**Usage**: </info:1011767316272402542>\n**Options**: `character`, `flag`, `user`\n\nSearch a character in our database. You don't have to use the character's full name as long as there's no other match fitting your search.\n\n**Options**\n`character`: The name or ID of the character you want to search\n`flag`: How you want the result to be returned\n`user`: See another users character\n\n**Flags**\n`base`: Returns the base values for the character\n`my`: Returns your own character\n`detailed`: Returns your own character with more details on stats",
             inventory: "**Usage**: </inventory:1012393731695050852>\n**Options**: `sort`, `page`, `user`\n\nSee your character inventory. Characters will be sorted by rarity by default.\n\n**Options**\n`sort`: Choose in what order your characters should be listed\n`page`: Directly jump to the page you want to see\n`user`: See another players characters\n\n**Sorting Options**\n`alphabetical`: Sort by name\n`chronological`: Sort by the time acquired\n`rarity`: Sort by rarity\n`dupes`: Sort by rarity & number of duplicates",
@@ -62,9 +62,11 @@ module.exports = {
             weekly: "**Usage**: </weekly:1011386049412476969>\n\nA premium command used to collect weekly rewards. You can find more details on the rewards on our </patreon:1011293280702578690>.",
         };
 
+
         if (help in commands) {
-            Embed.setDescription(commands[help]?.desc || commands[help]);
-            if (commands[help]?.fields) Embed.addFields(commands[help].fields);
+            const command = commands[help as keyof typeof commands];
+            Embed.setDescription(typeof command === 'object' ? command.desc : command);
+            if (typeof command === 'object' && command.fields) Embed.addFields(command.fields);
             return interaction.reply({ embeds: [Embed] });
         };
 
@@ -92,7 +94,6 @@ module.exports = {
             case "favourite":
             case "favorite":
             case "fav": Embed.setDescription("**Usage**: `!favourite <character name or ID>`\n**Alias**: `!favourite`, `!favorite`, `!fav`\n\nSelect your favourite character. You have to own it to be able to select it. The image of that character will then be displayed as a thumbnail on various commands of yours like on your `!profile` or `!level`.").setTitle("Help !favourite"); break;
-            case "fib": Embed.setDescription("There hasn't been added any information to this command yet. So if you wanna learn more about it, try it out!").setTitle(`Help /${help}`); break;
             case "find": Embed.setDescription("**Usage**: `!find <character name or ID>`\n**Alias**: `!find`\n\nFind users who own a character on your server. If there are multiple users owning that character, it will be sorted according to the amount of copies they have.").setTitle("Help !find"); break;
             case "flip": Embed.setDescription("There hasn't been added any information to this command yet. So if you wanna learn more about it, try it out!").setTitle(`Help /${help}`); break;
             case "flipping": Embed.setDescription("There hasn't been added any information to this command yet. So if you wanna learn more about it, try it out!").setTitle(`Help /${help}`); break;
@@ -141,3 +142,5 @@ module.exports = {
 
     },
 };
+
+export default exportCommand;

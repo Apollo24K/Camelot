@@ -1,5 +1,23 @@
-class MonthlyShopItemInfos {
-    constructor(name, displayName, section, amount, price, currency, id, custom = {}) {
+
+type Currency = "coins" | "gems" | "jades" | "lilies" | "guild_marks";
+
+type MonthlyShopItemCustomOptions = {
+    tier?: number;
+    itemid?: number;
+    column?: string;
+};
+
+export default class MonthlyShopItemInfos {
+    private _name: string;
+    private _displayName: string;
+    private _section: string;
+    private _amount: number;
+    private _price: number;
+    private _currency: Currency;
+    private _id: number;
+    private _custom: MonthlyShopItemCustomOptions;
+
+    constructor(name: string, displayName: string, section: string, amount: number, price: number, currency: Currency, id: number, custom: MonthlyShopItemCustomOptions = {}) {
         this._name = name;
         this._displayName = displayName;
         this._section = section;
@@ -20,11 +38,12 @@ class MonthlyShopItemInfos {
     get custom() { return this._custom; };
 
     get emojiIcon() {
-        const emojis = {
+        const emojis: Record<Currency, string> = {
             coins: "<:coins:872926669055356939>",
             gems: "<:genesis_gems:1034179687720681492>",
             jades: "<:eternal_jade:1256124504141201428>",
-            lilies: "<:lilium:974057059618291732>"
+            lilies: "<:lilium:974057059618291732>",
+            guild_marks: "<:guild_mark:1317944450814840923>"
         };
 
         return emojis[this.currency];

@@ -4,7 +4,7 @@ import { RaidRank } from '../types';
 
 export const cowSettings = JSON.parse(fs.readFileSync('Storage/rolling.json', 'utf8'));
 
-export const PageRow = new ActionRowBuilder()
+export const PageRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
         new ButtonBuilder()
             .setCustomId('prev')
@@ -16,7 +16,7 @@ export const PageRow = new ActionRowBuilder()
             .setStyle(ButtonStyle.Secondary),
     );
 
-export const OfferRow = new ActionRowBuilder()
+export const OfferRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
         new ButtonBuilder()
             .setCustomId('confirm')

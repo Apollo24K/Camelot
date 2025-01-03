@@ -1,5 +1,6 @@
 // import { migrateData } from './migration';
-import { query as postgresQuery } from './postgres';
+// import { query as postgresQuery } from './postgres';
+// console.log(postgresQuery);
 
 const sqlite3 = require('sqlite3').verbose();
 export const db = new sqlite3.Database('./sqliteDB.db', sqlite3.OPEN_READWRITE, (err) => {
@@ -57,56 +58,56 @@ db.serialize(async () => {
 
 
 
-    // Compare Speed of SQLite and Postgres
-    await new Promise((resolve) => setTimeout(resolve, 10000));
+    // // // // Compare Speed of SQLite and Postgres
+    // // // await new Promise((resolve) => setTimeout(resolve, 10000));
 
-    { // GET Every User
-        const sqliteStart = new Date().getTime();
-        await query(`SELECT * FROM users`);
-        const sqliteEnd = new Date().getTime();
-        console.log(`SQLite: ${sqliteEnd - sqliteStart}ms`);
+    // // // { // GET Every User
+    // // //     const sqliteStart = new Date().getTime();
+    // // //     await query(`SELECT * FROM users`);
+    // // //     const sqliteEnd = new Date().getTime();
+    // // //     console.log(`SQLite: ${sqliteEnd - sqliteStart}ms`);
 
-        const postgresStart = new Date().getTime();
-        await postgresQuery(`SELECT * FROM users`);
-        const postgresEnd = new Date().getTime();
-        console.log(`Postgres: ${postgresEnd - postgresStart}ms`);
-    };
+    // // //     const postgresStart = new Date().getTime();
+    // // //     await postgresQuery(`SELECT * FROM users`);
+    // // //     const postgresEnd = new Date().getTime();
+    // // //     console.log(`Postgres: ${postgresEnd - postgresStart}ms`);
+    // // // };
 
-    { // Loop 1000 times, get a random user with rowid between 1 and 30000
-        const sqliteStart = new Date().getTime();
-        for (let i = 0; i < 1000; i++) {
-            const randomRowid = Math.floor(Math.random() * 30000) + 1;
-            await query(`SELECT * FROM users WHERE rowid = ${randomRowid}`);
-        };
-        const sqliteEnd = new Date().getTime();
-        console.log(`SQLite: ${sqliteEnd - sqliteStart}ms`);
+    // // // { // Loop 1000 times, get a random user with rowid between 1 and 30000
+    // // //     const sqliteStart = new Date().getTime();
+    // // //     for (let i = 0; i < 1000; i++) {
+    // // //         const randomRowid = Math.floor(Math.random() * 30000) + 1;
+    // // //         await query(`SELECT * FROM users WHERE rowid = ${randomRowid}`);
+    // // //     };
+    // // //     const sqliteEnd = new Date().getTime();
+    // // //     console.log(`SQLite: ${sqliteEnd - sqliteStart}ms`);
 
-        const postgresStart = new Date().getTime();
-        for (let i = 0; i < 1000; i++) {
-            const randomRowid = Math.floor(Math.random() * 30000) + 1;
-            await postgresQuery(`SELECT * FROM users WHERE rowid = ${randomRowid}`);
-        };
-        const postgresEnd = new Date().getTime();
-        console.log(`Postgres: ${postgresEnd - postgresStart}ms`);
-    };
+    // // //     const postgresStart = new Date().getTime();
+    // // //     for (let i = 0; i < 1000; i++) {
+    // // //         const randomRowid = Math.floor(Math.random() * 30000) + 1;
+    // // //         await postgresQuery(`SELECT * FROM users WHERE rowid = ${randomRowid}`);
+    // // //     };
+    // // //     const postgresEnd = new Date().getTime();
+    // // //     console.log(`Postgres: ${postgresEnd - postgresStart}ms`);
+    // // // };
 
-    { // Write 1000 times a random number between 1 and 1m to users.coins where id = "386942536314519552"
-        const sqliteStart = new Date().getTime();
-        for (let i = 0; i < 1000; i++) {
-            const randomNumber = Math.floor(Math.random() * 1000000) + 1;
-            await query(`UPDATE users SET coins = ${randomNumber} WHERE id = "386942536314519552"`);
-        };
-        const sqliteEnd = new Date().getTime();
-        console.log(`SQLite: ${sqliteEnd - sqliteStart}ms`);
+    // // // { // Write 1000 times a random number between 1 and 1m to users.coins where id = "386942536314519552"
+    // // //     const sqliteStart = new Date().getTime();
+    // // //     for (let i = 0; i < 1000; i++) {
+    // // //         const randomNumber = Math.floor(Math.random() * 1000000) + 1;
+    // // //         await query(`UPDATE users SET coins = ${randomNumber} WHERE id = "386942536314519552"`);
+    // // //     };
+    // // //     const sqliteEnd = new Date().getTime();
+    // // //     console.log(`SQLite: ${sqliteEnd - sqliteStart}ms`);
 
-        const postgresStart = new Date().getTime();
-        for (let i = 0; i < 1000; i++) {
-            const randomNumber = Math.floor(Math.random() * 1000000) + 1;
-            await postgresQuery(`UPDATE users SET coins = $1 WHERE id = $2`, [randomNumber, "386942536314519552"]);
-        };
-        const postgresEnd = new Date().getTime();
-        console.log(`Postgres: ${postgresEnd - postgresStart}ms`);
-    };
+    // // //     const postgresStart = new Date().getTime();
+    // // //     for (let i = 0; i < 1000; i++) {
+    // // //         const randomNumber = Math.floor(Math.random() * 1000000) + 1;
+    // // //         await postgresQuery(`UPDATE users SET coins = $1 WHERE id = $2`, [randomNumber, "386942536314519552"]);
+    // // //     };
+    // // //     const postgresEnd = new Date().getTime();
+    // // //     console.log(`Postgres: ${postgresEnd - postgresStart}ms`);
+    // // // };
 
 
 
@@ -335,5 +336,5 @@ async function addMissingTrialItems() {
 
 
 
-// Start migration
+// // Start migration
 // migrateData().catch(console.error);

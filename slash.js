@@ -1,7 +1,7 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { token } = require('./config.json');
+const { token, clientId } = require('./config.json');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 const commands = [
@@ -1421,11 +1421,6 @@ const commands = [
 	}.data.toJSON(),
 ];
 
-// Place your client and guild ids here
-const clientId = '691399125517992086'; // Elder: "695286837568340119" Camelot: "706183309943767112" Avalon: "958674969645187132"
-
-// commands = commands.map((e) => e.data.toJSON());
-
 const rest = new REST({ version: '9' }).setToken(token);
 
 (async () => {
@@ -1433,7 +1428,7 @@ const rest = new REST({ version: '9' }).setToken(token);
 		console.log('Started refreshing application (/) commands.');
 
 		await rest.put(
-			Routes.applicationCommands(clientId),
+			Routes.applicationCommands(clientId.active),
 			{ body: commands },
 		);
 

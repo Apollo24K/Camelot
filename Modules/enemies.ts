@@ -265,12 +265,12 @@ export const raidBosses: enemyInfo[] = [
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
-            
+
         }, [["Immune to lightning damage", "Possibly retaliates every 2nd hit on herself, dealing **20%** damage", "**Active**: Increases her retaliation damage by 10% (**60** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Veloura", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 0 }, {}, { mana: 120 }, [], ["https://i.ibb.co/DCDzxsp/n.png"], [], 3,
         new skillInfo(3, 70, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            
+
             eStats.retaliationDamage += 0.2;
 
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **15%**`);
@@ -278,7 +278,7 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.lightningImmunity = true;
- 
+
             eStats.retaliationDamage = 0.35;
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
                 if (caster === myStats && Math.random() < 0.4) {
@@ -293,7 +293,7 @@ export const raidBosses: enemyInfo[] = [
         }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **30%** damage", "**Active**: Increases her retaliation damage by 15% (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Velia", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 0 }, {}, { mana: 120 }, [], ["https://i.ibb.co/Js46cdL/l.png"], [], 4,
-        new skillInfo(4, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {            
+        new skillInfo(4, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.retaliationDamage += 0.25;
 
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **15%**`);
@@ -311,6 +311,7 @@ export const raidBosses: enemyInfo[] = [
             });
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                console.log("Debuff: " + Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01)));
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01));
             }, 9999));
         }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **33%** damage", "**Active**: Increases her retaliation damage (**100** <:mana:1047269152957661255>)"]])
@@ -495,7 +496,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(11, 125, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** plants its roots and`, { dodge: false, atkMultiplier: 1.2 });
-            
+
             //! Scaling Issue
             const satk = Math.floor(myStats.atk * 0.2); eStats.atk += satk * 4; myStats.atk -= satk;
             const sdef = Math.floor(myStats.def * 0.2); eStats.def += sdef * 2; myStats.def -= sdef;

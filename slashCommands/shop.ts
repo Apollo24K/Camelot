@@ -1,12 +1,13 @@
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonInteraction, Message, ButtonStyle } from "discord.js";
 import { db, query } from "../db_handler";
 import { items } from "../Modules/items";
+import { SlashCommand } from '../types';
 
 const genesisFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "genesis");
 const mythicalFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "mythical");
 const legendaryFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "legendary");
 
-function getHash(hash) {
+function getHash(hash: number) {
     const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
@@ -15,36 +16,34 @@ function getHash(hash) {
     return hash;
 };
 
-function getOffers(offers, quantity) {
+function getOffers(offers: any[], quantity: number) {
     const quests = new Set();
     let i = 0;
     while (quests.size < quantity && i < 100) {
         const hash = getHash(i++);
         quests.add(Math.abs(hash) % offers.length);
     };
-    return [...quests].map((e) => offers[e]);
+    return [...quests].map((e) => offers[e as number]);
 };
 
-const row = new ActionRowBuilder()
+const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
-        new ButtonBuilder().setCustomId('0').setEmoji("<:SSTier:869316489931546644>").setLabel("Packs").setStyle('Secondary'),
-        new ButtonBuilder().setCustomId('1').setEmoji("<:sublime_chest_open:1069287041843593266>").setLabel("Chests").setStyle('Secondary'),
-        new ButtonBuilder().setCustomId('2').setEmoji("<:exchange_points:1078750240246607984>").setLabel("Exchange").setStyle('Secondary'),
-        new ButtonBuilder().setCustomId('3').setEmoji("<:genesis_gems:1034179687720681492>").setLabel("Gems").setStyle('Primary'),
+        new ButtonBuilder().setCustomId('0').setEmoji("<:SSTier:869316489931546644>").setLabel("Packs").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('1').setEmoji("<:sublime_chest_open:1069287041843593266>").setLabel("Chests").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('2').setEmoji("<:exchange_points:1078750240246607984>").setLabel("Exchange").setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder().setCustomId('3').setEmoji("<:genesis_gems:1034179687720681492>").setLabel("Gems").setStyle(ButtonStyle.Primary),
     );
 
-module.exports = {
+const exportCommand: SlashCommand = {
     name: 'shop',
-    description: 'Shop',
-    execute(interaction) {
-
+    async execute({ interaction }) {
         // Todays Offers
         const todaysOffers = [...getOffers(genesisFiltered, 1), ...getOffers(mythicalFiltered, 3), ...getOffers(legendaryFiltered, 5)];
         const today = new Date();
         const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 0, 0, 0);
-        const diff = tomorrow - today;
+        const diff = tomorrow.getTime() - today.getTime();
 
-        let currentPage = parseInt(interaction.options.getString('option') || 0);
+        let currentPage = parseInt(interaction.options.getString('option') || '0');
 
         db.serialize(async () => {
             const { 0: stats } = await query(`SELECT coins, gems, jades, genesispity, items FROM users WHERE id = ${interaction.user.id}`);
@@ -94,51 +93,22 @@ module.exports = {
             ];
 
             // Set balances
-            pages[0].setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
-            pages[1].setFooter({ text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
-            pages[2].setFooter({ text: `Balance: ${stats.items[677] || 0} mythical, ${stats.items[678] || 0} legendary exchange points`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
-            pages[3].setFooter({ text: `Balance: ${stats.jades} jades, ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
+            pages[0].setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 1024 }) });
+            pages[1].setFooter({ text: `Balance: ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ size: 1024 }) });
+            pages[2].setFooter({ text: `Balance: ${stats.items[677] || 0} mythical, ${stats.items[678] || 0} legendary exchange points`, iconURL: interaction.user.displayAvatarURL({ size: 1024 }) });
+            pages[3].setFooter({ text: `Balance: ${stats.jades} jades, ${stats.gems} gems`, iconURL: interaction.user.displayAvatarURL({ size: 1024 }) });
 
-            return interaction.reply({ embeds: [pages[currentPage]], components: [row], fetchReply: true }).then((msg) => {
+            return interaction.reply({ embeds: [pages[currentPage]], components: [row], fetchReply: true }).then((msg: Message) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                collector.on('collect', async r => {
-                    if (currentPage == r.customId) return;
+                collector.on('collect', async (r) => {
+                    if (`${currentPage}` == r.customId) return;
                     currentPage = parseInt(r.customId);
                     interaction.editReply({ embeds: [pages[currentPage]] });
                 });
             });
-
         });
-
     },
 };
 
-
-// function getHash2(hash, date) {
-//     const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(date).split("/").reverse().join("-") + "camelot24";
-//     for (let i = 0; i < key.length; i++) {
-//         hash = ((hash << 5) - hash) + key.charCodeAt(i);
-//         hash |= 0;
-//     }
-//     return hash;
-// };
-
-// function getOffers2(offers, quantity, date) {
-//     const quests = new Set();
-//     let i = 0;
-//     while (quests.size < quantity && i < 100) {
-//         const hash = getHash2(i++, date);
-//         quests.add(Math.abs(hash) % offers.length);
-//     };
-//     return [...quests].map((e) => offers[e]);
-// };
-
-// for (let j = -60; j < 100; j++) {
-//     const date = new Date(Date.now() + (j * 24 * 60 * 60 * 1000));
-//     const shop = getOffers2(mythicalFiltered, 3, date);
-//     // console.log(shop.map((e) => e.name));
-//     if (shop.map((e) => e.id).includes(638)) {
-//         console.log(shop.map((e) => e.name), j);
-//     }
-// };
+export default exportCommand;
