@@ -15,7 +15,10 @@ export default class Avalon {
 
     static checkIfEnded(myStatsC: any, eStatsC: any, matchStats: any, notice: any, interaction: any, minionDefeated: any, editEmbed: any, endMatch: any) {
         if (myStatsC.hp < 1) {
-            if (matchStats.currentCharacter) return minionDefeated("my");
+            if (matchStats.currentCharacter) { 
+                matchStats.trigger("minionDeath", myStatsC, eStatsC, myStatsC.buffs, eStatsC.buffs, {}); 
+                return minionDefeated("my"); 
+            };
             if (!eStatsC.blockRevival && myStatsC.revivedTotal < myStatsC.maxRevivals && myStatsC.rev > Math.random()) {
                 myStatsC.revivedTotal++;
                 myStatsC.hp = Math.floor(myStatsC.maxhp * myStatsC.revhp);
@@ -29,7 +32,10 @@ export default class Avalon {
                 endMatch("l");
             };
         } else if (eStatsC.hp < 1) {
-            if (matchStats.currentOpponent) return minionDefeated("e");
+            if (matchStats.currentOpponent) {
+                matchStats.trigger("minionDeath", eStatsC, myStatsC, eStatsC.buffs, myStatsC.buffs, {}); 
+                return minionDefeated("e");
+            };
             if (!myStatsC.blockRevival && eStatsC.revivedTotal < eStatsC.maxRevivals && eStatsC.rev > Math.random()) {
                 eStatsC.revivedTotal++;
                 eStatsC.hp = Math.floor(eStatsC.maxhp * eStatsC.revhp);
@@ -161,6 +167,11 @@ export default class Avalon {
 
                     if (trigger.used >= trigger.maxUsage) {
                         this.off(event, trigger);
+                    };
+                    if (trigger.maxRound > this.round && trigger.maxRound !== Infinity) this.off(event, trigger);
+                    if (trigger.duration !== Infinity && trigger.duration > 0) {
+                        if (trigger.duration === 1) this.off(event, trigger);
+                        else trigger.duration--;
                     };
                 });
             },

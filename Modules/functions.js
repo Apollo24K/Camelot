@@ -731,7 +731,7 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance) });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
@@ -743,12 +743,11 @@ export const addHeal = (target, attacker, caster, targetBuff, attackerBuff, matc
     };
     Object.keys(flags).forEach((e) => options[e] = flags[e]);
 
-    if (attacker.negateHeal && options.amount > 0 && target === caster) notice.push(`\n💖 **${attacker.name}** has negated the heal!`);
-    else { 
+    if (attacker.negateHeal && amount > 0 && target === caster && attacker !== caster) notice.push(`\n💖 **${attacker.name}** has negated the heal!`);
+    else {
         target.hp += amount;
-        matchStats.trigger("heal", attacker, target, attackerBuff, targetBuff, { amount, caster });
-    }
-
+        if (target.hp > target.maxhp) target.hp = target.maxhp;
+    };
     if (log) notice.push(`\n💖 **${target.name}** has healed **${amount}** HP`);
 };
 
