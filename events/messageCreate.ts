@@ -11,12 +11,15 @@ const event: BotEvent = {
         if (message.guild) {
             if (message.mentions.users.first()?.id !== message.client.user.id) return;
             if (message.guild.id === "927257132624130119") return;
-            if (message.type === MessageType.Default) {
-                message.channel.send(
-                    `Welcome, Adventurer ${emojis[Math.floor(Math.random() * emojis.length)]}\n` +
-                    `Please use slash commands (i.e. </pull:1011014030103674913>) to interact with the bot.\n` +
-                    `If it doesn't work it's probably because of some missing permissions, make sure that Camelot has all required permissions to function! Feel free to reach out to us if you need help at any step: https://discord.gg/myy9PBCdEW`
-                );
+            if (message.type === MessageType.Default && message.channel.isTextBased()) {
+                const channel = message.channel;
+                if ('send' in channel) {
+                    channel.send(
+                        `Welcome, Adventurer ${emojis[Math.floor(Math.random() * emojis.length)]}\n` +
+                        `Please use slash commands (i.e. </pull:1011014030103674913>) to interact with the bot.\n` +
+                        `If it doesn't work it's probably because of some missing permissions, make sure that Camelot has all required permissions to function! Feel free to reach out to us if you need help at any step: https://discord.gg/myy9PBCdEW`
+                    );
+                }
             };
             return;
         };
@@ -27,7 +30,7 @@ const event: BotEvent = {
             .setColor(0xbbffff)
             .setDescription(message.content)
             .setAuthor({ name: message.author.tag, url: "https://" + message.author.id + ".com", iconURL: message.author.displayAvatarURL({ size: 1024 }) });
-        if (channel?.isTextBased()) channel.send({ embeds: [Embed] });
+        if (channel?.isTextBased() && 'send' in channel) channel.send({ embeds: [Embed] });
     },
 };
 
