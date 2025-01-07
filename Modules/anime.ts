@@ -611,7 +611,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Shin Chan", ['Crayon Shin-chan', 'Crayon Shinchan', 'Shinchan', 'Shin-chan'], 576),
     new animeInfo("The Helpful Fox Senko-san", ['Sewayaki Kitsune no Senko-san', 'Meddlesome Kitsune Senko-san', 'THFS', 'SKnS'], 577),
     new animeInfo("The Great Jahy Will Not Be Defeated!", ['Jahy-sama wa Kujikenai!', 'Niepokonana Jahy', "Jahy'sama won't be discouraged!", 'JwK'], 578),
-
+    new animeInfo("Place to Place", ['Acchi Kocchi'], 579),
+    new animeInfo("Gabriel DropOut", ['GabDro', 'GDO', 'GabDrop'], 580),
+    new animeInfo("Idaten Jump", [], 581),
+    new animeInfo("Ryuuou no Oshigoto!", ['RnO!', "The Ryuo's Work is Never Done!"], 582),
 
 
 ];
