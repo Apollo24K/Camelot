@@ -23,7 +23,7 @@ export class itemInfo {
         this._name = name;
         this._category = category; // ["weapon", "armor", "fish"]
         this._type = type; // ["sword", ..., "helmet", ..., "fish"]
-        this._obtain = obtain; // ["fishing", "trading", "shop", "dungeon", "tutorial", "crafting", "chest"]
+        this._obtain = obtain; // ["fishing", "trading", "shop", "dungeon", "tutorial", "crafting", "chest", "raid"]
         this._emoji = emoji;
         this._image = image;
         this._grade = grade;
@@ -44,7 +44,7 @@ export class itemInfo {
     get type() { // sword, bow, staff...
         return this._type;
     };
-    get obtain() { // fishing, alchemy, shop
+    get obtain() { // fishing, alchemy, shop...
         return this._obtain;
     };
     get emoji() {
@@ -3173,9 +3173,158 @@ export const items = [
                 return true;
             },
         });
+    }, (level) => `Returns **${[0, 5, 7.5, 10, 12.5, 15][level-1]}%** of mana spent after every active ability usage.`, "The Sacred Life Salamander is a creature of mystery.", "legendary", 688),
+    new ringInfo("Hope's End Signet", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Magma
 
-    }, (level) => `Returns **${[0, 5, 7.5, 10, 12.5, 15][level]}%** of mana spent after every active ability usage.`, "The Sacred Life Salamander is a creature of mystery.", "legendary", 688),
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (myStats.hp < myStats.maxhp * (0.1 + 0.025 * (level - 1))) {
+                eStats.def = 0; eStats.mr = 0;
+                ebuff.def.push(new buffInfo("=", 0, 1)); ebuff.mr.push(new buffInfo("=", 0, 1));
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:hope_s_end_signet:1300860503832264754> **${char.name}**`, { atkMultiplier: 1.5 + 0.025 * (level - 1), magicDamage: true });
+                // @ts-ignore
+                this._used++;
+            }
+        }, 9999, 1));
 
+    }, (level) => `triggers Hope's End, when your health reaches below **${[10,12.5,15][level-1]}%** of your max HP, reducing your opponent's DEF and MR to 0 for the rest of the turn and launching a calamitous strike equal to **${[150, 175, 200][level-1]}%** of your normal damage.`, "Hope's End Signet Description", "mythical", 689),
+    new ringInfo("Trusilver Loop", "ring", "ring", ["chest"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        
+        myStats.abilityCount = 0;
+        matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats) {
+                myStats.abilityCount++;
+                if (myStats.abilityCount === [16, 13, 10][level]) {
+                    myStats.atk *= 2; myStats.md *= 2;
+                    mybuff.atk.push(new buffInfo("*", 2, 9999)); mybuff.md.push(new buffInfo("*", 2, 9999));
+                }
+            }
+        });
+
+    }, (level) => `Doubles your ATK and MD for the rest of the battle if you use your abilities **${[16,13,10][level-1]}** times in one fight.`, "Trusilver Loop Description", "legendary", 690),
+    new ringInfo("Oath of Love", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan\
+
+        myStats.hp -= Math.floor(myStats.maxhp * (0.2 + 0.025 * (level - 1)));
+        myStats.shield += Math.floor(myStats.maxhp * (0.7 + 0.1 * (level - 1)));
+
+    }, (level) => `Loses **${[20, 22.5, 25, 27.5, 30][level - 1]}%** of your current HP and gains a shield equal to **${[70, 80, 90, 100, 110][level - 1]}%** of your max HP.`, "Oath of Love Description", "mythical", 691),
+    new ringInfo("Braveness", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan
+        
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.atk += Math.floor(Math.min(myStats.shield, myStats.atk * 0.4 + (level - 1) * 0.2)); //! Shield Amount Scaling
+            myStats.md += Math.floor(Math.min(myStats.shield, myStats.md * 0.4 + (level - 1) * 0.2)); //! Shield Amount Scaling
+        }, 9999));
+
+    }, (level) => `Increases own ATK and MD based on your shield amount.`, "Braveness Description", "legendary", 692),
+    new ringInfo("Ring of Haunting", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* DoT
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.hp -= Math.floor(myStats.maxhp * (0.03 + 0.015 * (level - 1)));
+            eStats.hp -= Math.floor(eStats.maxhp * (0.06 + 0.015 * (level - 1)));
+        }, 9999));
+        
+    }, (level) => `lose **${[3, 4.5, 6][level-1]}%** of your max HP and deal **${[6, 7.5, 9][level-1]}%** max HP to the enemy.`, "Ring of Haunting Description", "mythical", 693),
+    new ringInfo("Ring of Dauntless", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
+        
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.sm += Math.floor(2 + 2 * (level - 1));
+            eStats.sm -= Math.floor(2 + 2 * (level - 1));
+        }, 9999));
+
+    }, (level) => `steal **${[2,4,6,8,10][level-1]}** mana from the enemy every turn.`, "Ring of Dauntless Description", "legendary", 694),
+    new ringInfo("Ring of Sacrifice", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.hp -= Math.floor(myStats.maxhp * [0.025, 0.05, 0.07][level-1]);
+            if (Math.random() < 0.1 + 0.05 * (level - 1)) myStats.counter += 1;
+        }, 9999));
+
+    }, (level) => `lose **${[2.5, 5, 7][level-1]}%**of your max HP every turn but you have **+${[10, 15, 20][level-1]}%** counter chance.`, "Ring of Sacrifice Description", "mythical", 695),
+    new ringInfo("Ring of Anti-Heroism", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+        
+        myStats.counterCount = 0;
+        matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && myStats.counterCount < 8 + 2 * (level - 1)) {
+                myStats.cd += 0.05;
+                mybuff.cd.push(new buffInfo("+", 0.05, 9999));
+                myStats.counterCount++;
+            }
+        });
+
+    }, (level) => `gain **5%** CD every time you counter, up to **${[40, 50, 60][level-1]}%**`, "Ring of Anti-Heroism Description", "unique", 696),
+    new ringInfo("Ring of the Mass", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+
+        matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.hp * 0.075 + 0.025 * (level - 1)));
+        });
+
+    }, (level) => `gain **${[7.5, 10, 12.5][level-1]}%** of your current HP every time you counter.`, "Ring of the Mass Description", "rare", 697),
+    new ringInfo("Ring of the Rebels", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+
+        myStats.ringOfTheRebels = true
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (myStats.hp < myStats.maxhp * 0.7 && myStats.ringOfTheRebels) {
+                myStats.counter += [3,4,5][level-1]
+                myStats.ringOfTheRebels = false
+            }
+        }, 9999));
+
+    }, (level) => `gain **${[3,4,5][level-1]}** counter stacks, when your HP falls below **70%** of your max HP the first time.`, "Ring of the Rebels Description", "legendary", 698),
+    new ringInfo("Ring of Victory Rush", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
+
+        myStats.ringOfVictoryRush = 0;
+        matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats) {
+                myStats.ringOfVictoryRush++;
+                if (myStats.ringOfVictoryRush % 3 === 0) {
+                    myStats.sm += eStats.sm;
+                    if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+                    eStats.sm = 0;
+                }
+            }
+        });
+
+    }, (level) => `steals all enemy mana for every 3rd ability usage.`, "Ring of Victory Rush Description", "mythical", 699),
+    new ringInfo("Ring of Calculation", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan
+
+        myStats.ringOfCalculation = 0;
+        matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats) {
+                myStats.ringOfCalculation++;
+                if (myStats.ringOfCalculation % [5,4][level-1] === 0) {
+                    myStats.shield += Math.floor(myStats.maxhp * 0.3);
+                }
+            }
+        });
+
+    }, (level) => `gain **30%** of your max HP as shield for every **${[5,4][level-1]}th** ability usage.`, "Ring of Calculation Description", "legendary", 700),
+    new ringInfo("Nimble Guardian", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo, maybe even merge Dusty, Duo?
+
+        myStats.nimbleGuardian = myStats.dodge;
+        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + [10,7][level-1], (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.damageReduction += Math.abs(myStats.dodge - myStats.nimbleGuardian);
+        }));
+
+    }, (level) => `Records dodge rate upon entering battle. By turn 10, gains 1% damage reduction per dodge rate difference.`, "Nimble Guardian Description", "genesis", 701),
+    new ringInfo("Pain's Awakening", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Dusty
+
+        myStats.painAwakening = 0;
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                myStats.painAwakening++;
+                if (myStats.painAwakening % [5,4,3][level-1] === 0) {
+                    const minBoost = [1,1,2][level-1];
+                    const maxBoost = [6,7,8][level-1];
+                    const boost = Math.floor(Math.random() * (maxBoost - minBoost + 1)) + minBoost;
+
+                    myStats.atk += Math.floor(myStats.atk * (boost / 100));
+                    myStats.md += Math.floor(myStats.md * (boost / 100));
+                    mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (boost / 100)), 9999));
+                    mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (boost / 100)), 9999));
+                }
+            }
+        });
+
+    }, (level) => `For every **${[5,4,3][level-1]}** attacks received, gain **${[1-6,1-7,2-8][level-1]}%** of ATK and MD permanently.`, "Pain's Awakening Description", "mythical", 702),
 
 
 ];
