@@ -280,13 +280,22 @@ const exportCommand: SlashCommand = {
 
                 collector.on('collect', async r => {
                     collector.stop();
-                    if (r.customId === "cancel") return interaction.channel?.send("Action cancelled");
+                    if (r.customId === "cancel") {
+                        if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
+                        return;
+                    };
 
                     const stats = await getUserSchema(interaction.user.id);
-                    if (!stats) return interaction.channel?.send(`You haven't started playing yet.`);
+                    if (!stats) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You haven't started playing yet.`);
+                        return;
+                    };
 
                     const bought = stats.monthlyshop[fItem.id] ?? 0;
-                    if (bought >= fItem.amount) return interaction.channel?.send(`You have already bought every **${fItem.name}** from this month's shop!`);
+                    if (bought >= fItem.amount) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You have already bought every **${fItem.name}** from this month's shop!`);
+                        return;
+                    };
 
                     amount = (amountFlag === "max") ? (fItem.amount - bought) : (parseInt(amountFlag ?? "1") || 1);
                     if (amount < 1) amount = 1;
@@ -295,9 +304,15 @@ const exportCommand: SlashCommand = {
                     if (amount > max) amount = max;
 
                     const cost = Math.round(fItem.price * amount);
-                    if (amount < 1 || stats[fItem.currency] < cost) return interaction.channel?.send(`You don't have enough ${fItem.currency} (${fItem.displayPrice})`);
+                    if (amount < 1 || stats[fItem.currency] < cost) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${fItem.currency} (${fItem.displayPrice})`);
+                        return;
+                    };
 
-                    if ((fItem.section === "Premium" || fItem.section === "Freemium") && stats.premium >= (fItem.custom?.tier ?? 0)) return interaction.channel?.send(`You already have premium!`);
+                    if ((fItem.section === "Premium" || fItem.section === "Freemium") && stats.premium >= (fItem.custom?.tier ?? 0)) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You already have premium!`);
+                        return;
+                    };
 
                     // Remove price and track purchase
                     let replyMessage = "";
@@ -334,7 +349,7 @@ const exportCommand: SlashCommand = {
 
                     await updateUsers(interaction.user.id, updateOptions);
 
-                    return interaction.channel?.send(replyMessage || `You have bought ${amount}x ${fItem.displayName}!`);
+                    if (interaction.channel?.isSendable()) interaction.channel.send(replyMessage || `You have bought ${amount}x ${fItem.displayName}!`);
                 });
 
                 collector.on('end', () => {

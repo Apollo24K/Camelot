@@ -386,7 +386,9 @@ async function dropTables() {
         await alterTables();
         // await createTriggers();
 
-        console.log('Database initialization complete');
+        const [{ size }] = await query(`SELECT pg_size_pretty(pg_database_size('${process.env.PG_DATABASE}')) AS size;`) as [{ size: string; }];
+
+        console.log(`Database initialization complete\nDatabase size: ${size}`);
     } catch (error) {
         console.error('Database initialization failed:', error);
     };

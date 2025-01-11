@@ -1,9 +1,8 @@
-/* eslint-disable no-extra-semi */
 import { characters, auniq } from "./chars.js";
 import { ChatInputCommandInteraction, User } from "discord.js";
 import { getUserSchema, updateUsers } from "./queries.js";
 
-class achievInfo {
+export default class achievInfo {
     private _title: string;
     private _description: string;
     private _id: number;
@@ -133,7 +132,7 @@ class achievInfo {
                 case "6": notification += `Unlocked <:shield_empty:1087089686809415730> **Shield Slot**\n`;
             };
         });
-        interaction.channel?.send(notification);
+        if (interaction.channel?.isSendable()) interaction.channel.send(notification);
     };
 
     async check(interaction: ChatInputCommandInteraction, user: User | undefined = undefined, ...list: any[]) {

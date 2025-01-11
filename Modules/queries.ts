@@ -1,5 +1,5 @@
 import { query } from "../postgres";
-import { CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateUserOptions, UserSchema, WeaponSchema } from "../types";
+import { CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateUserOptions, UserSchema, UserSchemaForStats, WeaponSchema } from "../types";
 
 //---------------------------------//
 //           GET SCHEMAS           //
@@ -20,8 +20,8 @@ export const getUserSchema = async (id: string): Promise<CompactUserSchema | und
     return user;
 };
 
-export const getUserSchemas = async (ids: string[] | "*"): Promise<CompactUserSchema[]> => {
-    const query_str = `SELECT rowid, id, name, xp, coins, lilies, favchar, battlechar, lootbox, lastvote, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rank, rankscore, raidxp, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels FROM users`;
+export const getUserSchemas = async (ids: string[] | "*", whereClause?: string): Promise<CompactUserSchema[]> => {
+    const query_str = `SELECT rowid, id, name, xp, coins, lilies, favchar, battlechar, lootbox, lastvote, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rank, rankscore, raidxp, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels FROM users ${whereClause ? whereClause : ""}`;
 
     if (ids === "*") {
         const users = await query(query_str, []) as CompactUserSchema[];
@@ -109,6 +109,47 @@ export const getUserRanking = async (scope: "server" | "global", user_ids: strin
     ) as Pick<UserSchema, "name" | "id" | "xp" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin">[];
     return result ?? [];
 };
+
+//-------------------------------------------//
+//              LOAD STATEMENTS              //
+//-------------------------------------------//
+
+export const loadPullResets = async (): Promise<Pick<UserSchema, "id" | "premium" | "lastpull">[]> => {
+    // Step 1: Reset completed users
+    await query(`
+        UPDATE users 
+        SET pullcount = 0
+        WHERE pullcount > 0
+        AND lastpull < CASE premium
+            WHEN 0 THEN $1::timestamp
+            WHEN 1 THEN $2::timestamp
+            WHEN 2 THEN $2::timestamp  
+            WHEN 3 THEN $2::timestamp
+            WHEN 4 THEN $3::timestamp
+            WHEN 5 THEN $4::timestamp
+            WHEN 6 THEN $4::timestamp
+            WHEN 7 THEN $4::timestamp
+            ELSE $1::timestamp
+        END`,
+        [
+            new Date(new Date().getTime() - (45 * 60 * 1000)),
+            new Date(new Date().getTime() - (40 * 60 * 1000)),
+            new Date(new Date().getTime() - (35 * 60 * 1000)),
+            new Date(new Date().getTime() - (30 * 60 * 1000))
+        ]
+    );
+
+    // Step 2: Return pending users
+    const users = await query(`SELECT id, premium, lastpull FROM users WHERE pullcount > 0`, []) as Pick<UserSchema, "id" | "premium" | "lastpull">[];
+    return users;
+};
+
+export const loadRanking = async (pass: number, batchSize: number): Promise<UserSchemaForStats[]> => {
+    const users = await query(`SELECT id, name, premium, battlechar, level, bank, char_ref, equipment, shield_slot, class, dungeon_classlevels FROM users WHERE battlechar IS NOT NULL ORDER BY rowid LIMIT $1 OFFSET $2`, [batchSize, pass * batchSize]) as UserSchemaForStats[];
+    return users;
+};
+
+
 
 
 //-------------------------------------------//

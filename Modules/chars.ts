@@ -22934,7 +22934,7 @@ export const charactersD = characters.filter((e) => e.rarity === "D");
 
 // Warn if ',' in name (would mess with some commands because , is being used to separate strings)
 characters.forEach((e) => {
-    if (e.name.includes(",") || e.alias.some((a) => a.includes(","))) console.log("WARNING! Character with symbol ',' in name or alias: " + e.name);
+    if (e.name.includes(",") || e.alias.some((a) => a.includes(","))) throw new Error("WARNING! Character with symbol ',' in name or alias: " + e.name);
 });
 
 // Check if duplicate names
@@ -22943,14 +22943,14 @@ characters.forEach((e) => {
     let names = characters.reduce<string[]>((acc, char) => [...acc, char.name, ...char.alias], []).sort();
     let len = names.length - 1, res = "";
     while (len--) if (names[len - 1] === names[len]) res += names[len--] + "\n";
-    if (res) console.log("WARNING! Duplicate names: " + res);
+    if (res) throw new Error("Duplicate names found: " + res);
 }
 
 // Check gender, rarity and ID
 characters.forEach((e, i) => {
-    if (!["M", "F"].includes(e.gender)) console.log("WARNING! Missing gender " + e.gender + ": " + e.name);
-    if (!["EX", "SS", "S", "A", "B", "C", "D"].includes(e.rarity)) console.log("WARNING! Missing rarity " + e.rarity + ": " + e.name);
-    if (e.id !== i) console.log("WARNING! Wrong ID " + e.id + " in: " + e.name);
+    if (!["M", "F"].includes(e.gender)) throw new Error("WARNING! Missing gender " + e.gender + ": " + e.name);
+    if (!["EX", "SS", "S", "A", "B", "C", "D"].includes(e.rarity)) throw new Error("WARNING! Missing rarity " + e.rarity + ": " + e.name);
+    if (e.id !== i) throw new Error("WARNING! Wrong ID " + e.id + " in: " + e.name);
 });
 
 // Check if duplicate links
@@ -22958,5 +22958,5 @@ characters.forEach((e, i) => {
     let links = characters.map((e) => e.image).sort();
     let len = links.length - 1, res = "";
     while (len--) if (links[len - 1] === links[len]) res += links[len--] + "\n";
-    if (res) console.log("WARNING! Duplicate links: " + res);
+    if (res) throw new Error("WARNING! Duplicate links: " + res);
 }

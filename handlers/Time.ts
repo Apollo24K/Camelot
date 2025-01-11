@@ -27,7 +27,7 @@ const handler: BotHandler = {
                 // Daily Stats
                 const stats = await query(`SELECT lastpull FROM users`) as { lastpull: number; }[];
                 const chnl = client.channels.cache.find(channel => channel.id === "1029507771567190017");
-                if (chnl?.isTextBased()) chnl.send(`Servers: **${client.guilds.cache.size}**\nPlayers: **${stats.length}**\nActive: **${stats.filter((e) => now.getTime() - e.lastpull < 7 * 24 * 60 * 60 * 1000).length}**\nDaily: **${stats.filter((e) => now.getTime() - e.lastpull < 24 * 60 * 60 * 1000).length}**`);
+                if (chnl?.isSendable()) chnl.send(`Servers: **${client.guilds.cache.size}**\nPlayers: **${stats.length}**\nActive: **${stats.filter((e) => now.getTime() - e.lastpull < 7 * 24 * 60 * 60 * 1000).length}**\nDaily: **${stats.filter((e) => now.getTime() - e.lastpull < 24 * 60 * 60 * 1000).length}**`);
             };
 
             // Weekly Reset

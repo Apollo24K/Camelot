@@ -708,6 +708,12 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(45, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Summoner summons spirits
+
+        myStats.sm += 50;
+        return matchStats.interaction.followUp({ content: `Summoner skill has been disabled for the time being.`, ephemeral: true });
+
+
+
         matchStats.myStatsCC = { ...myStats };
         matchStats.currentCharacter = 1;
 

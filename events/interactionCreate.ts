@@ -57,7 +57,7 @@ const event: BotEvent = {
             if (!interaction.guild) return interaction.reply({ content: `Please use the bot on a server.`, ephemeral: true });
             if (interaction.guild.members.me?.isCommunicationDisabled()) return;
             if (!interaction.guild.members.me?.permissions.has([PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.UseExternalEmojis, PermissionsBitField.Flags.EmbedLinks, PermissionsBitField.Flags.AttachFiles])) {
-                if (interaction.guild.members.me?.permissions.has([PermissionsBitField.Flags.SendMessages])) interaction.channel?.send("Camelot needs the following permissions to work\n- Send Messages\n- View Channel\n- Use External Emojis\n- Embed Links\n- Attach Files");
+                if (interaction.guild.members.me?.permissions.has([PermissionsBitField.Flags.SendMessages]) && interaction.channel?.isSendable()) interaction.channel.send("Camelot needs the following permissions to work\n- Send Messages\n- View Channel\n- Use External Emojis\n- Embed Links\n- Attach Files");
                 return;
             };
 
@@ -134,7 +134,7 @@ const event: BotEvent = {
                     mailreceived: { type: 'set', value: author.schema.mailbox.length }
                 });
                 setTimeout(() => {
-                    interaction.channel?.send(interaction.user.toString() + " you have received a **new mail**! Open it using </profile:1010583712527810641>");
+                    if (interaction.channel?.isSendable()) interaction.channel.send(interaction.user.toString() + " you have received a **new mail**! Open it using </profile:1010583712527810641>");
                 }, 1000);
             };
 

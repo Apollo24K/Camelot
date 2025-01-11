@@ -75,7 +75,7 @@ class dailyQuestInfo {
                     dailies: { type: "set_json", value: stats.dailies }
                 });
 
-                interaction?.channel?.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
+                if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
             } else {
 
                 await updateUsers(user.id, {
@@ -85,7 +85,7 @@ class dailyQuestInfo {
                     dailies: { type: "set_json", value: stats.dailies }
                 });
 
-                interaction?.channel?.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
+                if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
             };
         } else {
             await updateUsers(user.id, {

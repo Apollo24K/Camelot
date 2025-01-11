@@ -80,10 +80,17 @@ const exportCommand: SlashCommand = {
                 const now = new Date();
                 const daysPassed = daysSince(stats.lastdaily ?? now);
 
-                if (daysPassed === 0 && stats.lastdaily !== null) return interaction.channel?.send(`You have already claimed your daily. Come back in ${(23 - now.getHours()) ? `**${23 - now.getHours()}**h ` : ""}**${60 - now.getMinutes()}**min`);
+                if (daysPassed === 0 && stats.lastdaily !== null) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`You have already claimed your daily. Come back in ${(23 - now.getHours()) ? `**${23 - now.getHours()}**h ` : ""}**${60 - now.getMinutes()}**min`);
+                    return;
+                }
 
                 if (r.customId === "confirm") {
-                    if (stats.gems < cost) return interaction.channel?.send(`You don't have enough gems (**${stats.gems}**/${cost}<:genesis_gems:1034179687720681492>)`);
+                    if (stats.gems < cost) {
+
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough gems (**${stats.gems}**/${cost}<:genesis_gems:1034179687720681492>)`);
+                        return;
+                    }
                     stats.dailystreak++;
                 } else {
                     stats.dailystreak = 1;
@@ -102,7 +109,7 @@ const exportCommand: SlashCommand = {
                 // Achievements
                 achievements[9].check(interaction, interaction.user, stats.dailystreak), achievements[10].check(interaction, interaction.user, stats.dailystreak), achievements[11].check(interaction, interaction.user, stats.dailystreak), achievements[12].check(interaction, interaction.user, stats.dailystreak); // Don't Stop Me Now
 
-                return interaction.channel?.send(`Added **${dailyCoins}** <:coins:872926669055356939> to your balance \n<:stars_v2:917023655840591963> Daily Streak: ${stats.dailystreak} ${streakEmoji(stats.dailystreak)}`);
+                if (interaction.channel?.isSendable()) return interaction.channel.send(`Added **${dailyCoins}** <:coins:872926669055356939> to your balance \n<:stars_v2:917023655840591963> Daily Streak: ${stats.dailystreak} ${streakEmoji(stats.dailystreak)}`);
             });
         });
 

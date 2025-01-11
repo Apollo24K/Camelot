@@ -3180,7 +3180,7 @@ export const items = [
             },
         });
 
-    }, (level) => `Returns **${[0, 5, 7.5, 10, 12.5, 15][level]}%** of mana spent after every active ability usage.`, "The Sacred Life Salamander is a creature of mystery.", "legendary", 688),
+    }, (level) => `Returns **${[0, 5, 7.5, 10, 12.5, 15][level - 1]}%** of mana spent after every active ability usage.`, "The Sacred Life Salamander is a creature of mystery.", "legendary", 688),
 
 
 

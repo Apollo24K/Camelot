@@ -2,9 +2,9 @@ import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { db, query } from "../db_handler";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, showPage, baseEP } from "../Modules/functions";
+import { getDetailedStats, showPage, baseEP, RoK } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
-import { SlashCommand } from '../types';
+import { IRoK, SlashCommand } from '../types';
 import { getUserSchema, getUserSchemas } from '../Modules/queries';
 
 /*
@@ -24,21 +24,6 @@ import { getUserSchema, getUserSchemas } from '../Modules/queries';
 
     EP = d(HP₁)/dt / d(HP)/dt = (HP₁/(0.99895)^DEF₁)/(100/ATK₁) -> (HP*ATK)/c^DEF
 */
-
-type IRoK = { name: string, id: string, char: number, ep: number; };
-
-const RoK = new Map<string, IRoK>();
-async function indexRanking() {
-    const stats = await getUserSchemas("*");
-    for (const account of stats) {
-        if (account.battlechar) {
-            const cstats = await getDetailedStats(account.battlechar, account, account.dungeon_classlevels);
-            RoK.set(account.id, { name: account.name, id: account.id, char: account.battlechar, ep: cstats.ep });
-        };
-    };
-};
-indexRanking();
-setInterval(indexRanking, 15 * 60 * 1000); // 15 min interval
 
 const rarities = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
 

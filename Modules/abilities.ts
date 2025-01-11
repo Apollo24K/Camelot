@@ -575,54 +575,54 @@ export const abilities: Record<number, Ability> = {
             mybuff.mr.push(new buffInfo("+", 155, 9999));
         },
     },
-    "3150": {
-        usage: 9999,
-        used: 0,
-        cost: 60,
-        summoned: [],
-        desc: "**Total Usage**: `max 3`\n**Mana**: `60`\\💧\n**Timeout**: `no`\n**Role**: `DPS`\n\nThanks to his ability to level up by fighting monsters, Sung Jin-Woo raises his level by 1 after every round for the duration of the fight. As the Shadow Monarch, he can summon one of his 3 loyal servants **Igris**, **Beru** or **Iron (SL)**. The user needs to have them in their inventory, and they take on their own stats (except ATK and MD, which is **60%** of Sung Jin Woo's ATK|MD). Once they're defeated, Sung Jin-Woo can no longer summon them.",
-        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    // "3150": {
+    //     usage: 9999,
+    //     used: 0,
+    //     cost: 60,
+    //     summoned: [],
+    //     desc: "**Total Usage**: `max 3`\n**Mana**: `60`\\💧\n**Timeout**: `no`\n**Role**: `DPS`\n\nThanks to his ability to level up by fighting monsters, Sung Jin-Woo raises his level by 1 after every round for the duration of the fight. As the Shadow Monarch, he can summon one of his 3 loyal servants **Igris**, **Beru** or **Iron (SL)**. The user needs to have them in their inventory, and they take on their own stats (except ATK and MD, which is **60%** of Sung Jin Woo's ATK|MD). Once they're defeated, Sung Jin-Woo can no longer summon them.",
+    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+    //         matchStats.turn = matchStats.turnSkill ? 0 : 1;
 
-            // Active: Sung Jin Woo summons either Igris, Beru or Iron (SL) from the users inventory. Passive:
-            const inv = await getUserSchema(matchStats.interaction.user.id);
-            if (!inv || !inv.chars.filter((e) => e === 3156 || e === 3159 || e === 3174).length) return matchStats.interaction.followUp({ content: "You don't have any of the characters **Igris**, **Beru** or **Iron (SL)** to summon.", ephemeral: true });
+    //         // Active: Sung Jin Woo summons either Igris, Beru or Iron (SL) from the users inventory. Passive:
+    //         const inv = await getUserSchema(matchStats.interaction.user.id);
+    //         if (!inv || !inv.chars.filter((e) => e === 3156 || e === 3159 || e === 3174).length) return matchStats.interaction.followUp({ content: "You don't have any of the characters **Igris**, **Beru** or **Iron (SL)** to summon.", ephemeral: true });
 
-            myStats.sm -= this.cost;
-            matchStats.myStatsCC = { ...myStats };
-            matchStats.currentCharacter = 1;
+    //         myStats.sm -= this.cost;
+    //         matchStats.myStatsCC = { ...myStats };
+    //         matchStats.currentCharacter = 1;
 
-            let obtained = [];
-            if (inv.chars.includes(3156) && !this.summoned.includes(3156)) obtained.push(3156);
-            if (inv.chars.includes(3159) && !this.summoned.includes(3159)) obtained.push(3159);
-            if (inv.chars.includes(3174) && !this.summoned.includes(3174)) obtained.push(3174);
-            if (!obtained.length) return matchStats.interaction.followUp({ content: "All your shadow soldiers have been defeated.", ephemeral: true });
+    //         let obtained = [];
+    //         if (inv.chars.includes(3156) && !this.summoned.includes(3156)) obtained.push(3156);
+    //         if (inv.chars.includes(3159) && !this.summoned.includes(3159)) obtained.push(3159);
+    //         if (inv.chars.includes(3174) && !this.summoned.includes(3174)) obtained.push(3174);
+    //         if (!obtained.length) return matchStats.interaction.followUp({ content: "All your shadow soldiers have been defeated.", ephemeral: true });
 
-            let pick = obtained[Math.floor(Math.random() * obtained.length)];
-            this.summoned.push(pick);
+    //         let pick = obtained[Math.floor(Math.random() * obtained.length)];
+    //         this.summoned.push(pick);
 
-            embed.setThumbnail(characters[pick].image);
+    //         embed.setThumbnail(characters[pick].image);
 
-            let newStats = await getDetailedStats(pick, inv, inv.dungeon_classlevels);
-            ["hp", "maxhp", "def", "mr", "cr", "cd", "td", "br", "dodge"].forEach((e) => {
-                myStats[e] = newStats[e];
-            });
+    //         let newStats = await getDetailedStats(pick, inv, inv.dungeon_classlevels);
+    //         ["hp", "maxhp", "def", "mr", "cr", "cd", "td", "br", "dodge"].forEach((e) => {
+    //             myStats[e] = newStats[e];
+    //         });
 
-            myStats.atk = Math.floor(myStats.atk * 0.6);
-            myStats.md = Math.floor(myStats.md * 0.6);
-            myStats.mana = 30;
-            myStats.sm = Math.min(30, myStats.sm) + this.cost;
-            myStats.mg = 0;
+    //         myStats.atk = Math.floor(myStats.atk * 0.6);
+    //         myStats.md = Math.floor(myStats.md * 0.6);
+    //         myStats.mana = 30;
+    //         myStats.sm = Math.min(30, myStats.sm) + this.cost;
+    //         myStats.mg = 0;
 
-            notice.push(`\n✨ **${char.name}** has summoned **${characters[pick].name}**`);
-        },
-        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            // mybuff.maxhp.push(new buffInfo("+", 6.5, 9999));
-            mybuff.hp.push(new buffInfo("+", 6, 9999));
-            mybuff.atk.push(new buffInfo("+", 3, 9999, 3, "+"));
-            mybuff.def.push(new buffInfo("+", 2, 9999, 2, "+"));
-        },
-    },
+    //         notice.push(`\n✨ **${char.name}** has summoned **${characters[pick].name}**`);
+    //     },
+    //     passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //         // mybuff.maxhp.push(new buffInfo("+", 6.5, 9999));
+    //         mybuff.hp.push(new buffInfo("+", 6, 9999));
+    //         mybuff.atk.push(new buffInfo("+", 3, 9999, 3, "+"));
+    //         mybuff.def.push(new buffInfo("+", 2, 9999, 2, "+"));
+    //     },
+    // },
     "4250": {
         usage: 9999,
         used: 0,

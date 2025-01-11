@@ -34,7 +34,7 @@ const exportCommand: SlashCommand = {
         let currPage = 1;
 
         // Filter chars to show on the current page
-        let showChars = showPage(currPage, [...stats.animelock, ":", ...stats.charlock], elementsPerPage);
+        let showChars = showPage(currPage, [...stats.animelock, ":", ...stats.charlock] as (number | ":")[], elementsPerPage);
 
         const Embed = new EmbedBuilder()
             .setColor(0xbbffff)

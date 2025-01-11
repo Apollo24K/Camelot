@@ -62,13 +62,28 @@ const exportCommand: SlashCommand = {
                 if (!char) return;
 
                 const invCheck = await getUserSchema(interaction.user.id);
-                if (!invCheck) return interaction.channel?.send("An error occurred, please try again");
+                if (!invCheck) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send("An error occurred, please try again");
+                    return;
+                };
 
                 let tempStats = await getDetailedStats(char.id, invCheck, invCheck.dungeon_classlevels);
-                if (tempStats.ref !== stats.ref) return interaction.channel?.send(`An error occurred, please try again`);
-                if (tempStats.ref > 5) return interaction.channel?.send(`**${char.name}** has already reached the max refinement level`);
-                if (invCheck[shardType] < shardAmount) return interaction.channel?.send(`You don't have enough shards (**${invCheck[shardType]}**/${shardAmount}${shardStr})`);
-                if (invCheck.coins < price) return interaction.channel?.send(`You don't have enough coins (**${invCheck.coins}**/${price})`);
+                if (tempStats.ref !== stats.ref) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`An error occurred, please try again`);
+                    return;
+                };
+                if (tempStats.ref > 5) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`**${char.name}** has already reached the max refinement level`);
+                    return;
+                };
+                if (invCheck[shardType] < shardAmount) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough shards (**${invCheck[shardType]}**/${shardAmount}${shardStr})`);
+                    return;
+                };
+                if (invCheck.coins < price) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough coins (**${invCheck.coins}**/${price})`);
+                    return;
+                };
 
                 if (!invCheck.char_ref[char.id]) invCheck.char_ref[char.id] = 0;
                 invCheck.char_ref[char.id]++;
@@ -79,12 +94,12 @@ const exportCommand: SlashCommand = {
                     char_ref: { type: 'merge_json', value: { [char.id]: 1 } },
                 });
 
-                interaction.channel?.send(`Raised **${char.name}**'s refinement level successfully!`);
+                if (interaction.channel?.isSendable()) interaction.channel.send(`Raised **${char.name}**'s refinement level successfully!`);
             });
 
             cancel.on('collect', () => {
                 confirm.stop(), cancel.stop();
-                interaction.channel?.send("Action cancelled");
+                if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
             });
 
             confirm.on('end', () => {

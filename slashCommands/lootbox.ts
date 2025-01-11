@@ -38,7 +38,10 @@ const exportCommand: SlashCommand = {
 
             collector.on('collect', async r => {
                 const stats = await getUserSchema(user.id);
-                if (!stats?.lootbox) return interaction.channel?.send("You don't have any lootboxes left");
+                if (!stats?.lootbox) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send("You don't have any lootboxes left");
+                    return;
+                };
 
                 const openAmount = r.customId === "open_all" ? stats.lootbox : 1;
 
@@ -89,7 +92,7 @@ const exportCommand: SlashCommand = {
                     dticket: { type: "increment", value: addTickets["d"] },
                 });
 
-                interaction.channel?.send(`You've opened a lootbox! <a:MikuGold:942200295855890483>\n**Coins**: ${addCoins}<:coins:872926669055356939>\n**Shards**: ${shardmsg}\n**Tickets**: ${ticketmsg}`);
+                if (interaction.channel?.isSendable()) interaction.channel.send(`You've opened a lootbox! <a:MikuGold:942200295855890483>\n**Coins**: ${addCoins}<:coins:872926669055356939>\n**Shards**: ${shardmsg}\n**Tickets**: ${ticketmsg}`);
                 if (stats.lootbox) interaction.editReply({ content: `You have **${stats.lootbox}** ${stats.lootbox === 1 ? "lootbox" : "lootboxes"} left! Open them with \`/open\` or \`/use lb\`` });
                 else interaction.editReply({ content: "You don't have any lootboxes left", components: [] });
             });

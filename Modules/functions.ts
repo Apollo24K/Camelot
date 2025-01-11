@@ -18,7 +18,7 @@ import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { armorInfo, itemInfo, items, lootInfo, weaponInfo } from "./items";
 import _ from 'lodash';
-import { Buffs, CharacterRarity, ClassStats, CompactUserSchema, DetailedStats, Expertise, GuildDonationSchema, GuildSchema, MatchStats, PrimaryStat, WeaponSchema } from '../types';
+import { Buffs, CharacterRarity, ClassStats, CompactUserSchema, DetailedStats, Expertise, GuildDonationSchema, GuildSchema, IRoK, MatchStats, PrimaryStat, UserSchemaForStats, WeaponSchema } from '../types';
 import { curses } from './curses';
 
 const statsOp: { base: { hp: Record<number, number>; atk: Record<number, number>; def: Record<number, number>; expertise: Record<number, string>; }; } = {
@@ -146,7 +146,7 @@ const lvlupStats = {
 
 const retainItemStats = new Map();
 
-export const getDetailedStats = async (id: number, inv: CompactUserSchema, classLevels: Record<string, number>, lu: number = 0, refine: boolean = false) => {
+export const getDetailedStats = async (id: number, inv: UserSchemaForStats, classLevels: Record<string, number>, lu: number = 0, refine: boolean = false) => {
 
     let dStats: DetailedStats = {
         "name": characters[id].name,
@@ -825,7 +825,7 @@ export const filterItems = (userItems: WeaponSchema[], choice: string[], exclude
     return { itemsToDisassemble, itemIdsToDisassemble, loot };
 };
 
-export const showPage = (currPage: number, arr: any[], elements = 15) => {
+export const showPage = <T>(currPage: number, arr: T[], elements = 15): T[] => {
     return arr.slice((currPage - 1) * elements, currPage * elements);
 };
 
@@ -933,7 +933,7 @@ export const splitTitle = (title: string) => {
     return add;
 };
 
-export const displayPull = (user: User, thisChar: charInfo, pCount: number, dupes: number, pullsMade: number, lastVote: Date, refNumber: number) => {
+export const displayPull = (user: User, thisChar: charInfo, pCount: number, dupes: number, pullsMade: number, lastVote: Date | null, refNumber: number) => {
     let animeL = splitTitle(thisChar.anime);
     let refinement = getRefinement(refNumber);
 
@@ -971,8 +971,14 @@ export const searchAnime = (name: string, inv: number[], interaction: ChatInputC
     // Filter
     const fArray = characters.filter((e) => e.anime.toLowerCase().startsWith(name) || e.anialias.some((a) => a.toLowerCase().startsWith(name)));
 
-    if (fArray.length === 0) return interaction.reply("No match found");
-    if ([...new Set(fArray.map((e) => e.anime))].length > 1) return interaction.reply(`${[...new Set(fArray.map((e) => e.anime))].length} matches found:\n> ‧ ${[...new Set(fArray.sort((a, b) => (b.anime.toLowerCase().startsWith(name) ? 1 : 0) - (a.anime.toLowerCase().startsWith(name) ? 1 : 0)).map((e) => e.anime.toLowerCase().startsWith(name) ? e.anime : e.anime + " (alias: " + e.anialias.find((a) => a.toLowerCase().startsWith(name)) + ")"))].slice(0, 8).join('\n> ‧ ')}${[...new Set(fArray.map((e) => e.anime))].length > 8 ? `\n+ ${[...new Set(fArray.map((e) => e.anime))].length - 8} more` : ""}`);
+    if (fArray.length === 0) {
+        interaction.reply("No match found");
+        return;
+    };
+    if ([...new Set(fArray.map((e) => e.anime))].length > 1) {
+        interaction.reply(`${[...new Set(fArray.map((e) => e.anime))].length} matches found:\n> ‧ ${[...new Set(fArray.sort((a, b) => (b.anime.toLowerCase().startsWith(name) ? 1 : 0) - (a.anime.toLowerCase().startsWith(name) ? 1 : 0)).map((e) => e.anime.toLowerCase().startsWith(name) ? e.anime : e.anime + " (alias: " + e.anialias.find((a) => a.toLowerCase().startsWith(name)) + ")"))].slice(0, 8).join('\n> ‧ ')}${[...new Set(fArray.map((e) => e.anime))].length > 8 ? `\n+ ${[...new Set(fArray.map((e) => e.anime))].length - 8} more` : ""}`);
+        return;
+    };
     return fArray;
 };
 
@@ -1362,10 +1368,13 @@ export const customEmojis = {
     "coins": "<:coins:872926669055356939>",
 };
 
+export const RoK = new Map<string, IRoK>();
+
 export const pullsToResetList = new Set();
 
 export const deleteReplyIn = 2400;
 
+export const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 class idInfo {
     private _symbols: string[];
