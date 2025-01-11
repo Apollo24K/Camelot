@@ -23,9 +23,8 @@ const handler: BotHandler = {
         const app = express();
         app.use(express.json());
         app.listen(3010);
-
         // Rank.top Webhook
-        app.post('/rankshop', async (req, res) => {
+        app.post('/rankshop', async (req, res): Promise<any> => {
             const donation = req.body as RankShopTransaction;
 
             // Check if authorization is valid
@@ -65,9 +64,8 @@ const handler: BotHandler = {
                     .setDescription(`We have received and processed your order! <:ClaraThumbsUp:1034899843505721514>\nPlease [contact](https://discord.gg/myy9PBCdEW) us if you encounter any issues. You can see the transaction details below.\n\n\`\`\`yaml\nOrder: ${product.jades} eternal jades\nPrice: ${donation.price} ${donation.currency}\nProduct ID: ${donation.product_id}\nTransaction ID: ${donation.txn_id}\nStatus: ${donation.status}\nBuyer ID: ${donation.buyer_id}\nDate: ${new Date(donation.timestamp * 1000).toISOString()}\`\`\``);
                 dmUser.send({ embeds: [Embed] });
             };
-
             // Log confirmation message
-            if (chnl?.isSendable()) chnl.send(`Successfully processed transaction ${donation.txn_id}\nBuyer: <@${donation.buyer_id}> | ${donation.buyer_id}\nBalance: **${stats.jades + jades}**<:eternal_jade:1256124504141201428>\nPrice: **${donation.price} ${donation.currency}**${stats.referred_by ? `\nReferred by: <@${stats.referred_by}> | ${stats.referred_by} (+**${Math.floor(0.2 * jades)}**<:genesis_gems:1034179687720681492>)` : ""}`);
+            if (chnl?.isTextBased() && 'send' in chnl) chnl.send(`Successfully processed transaction ${donation.txn_id}\nBuyer: <@${donation.buyer_id}> | ${donation.buyer_id}\nBalance: **${stats.jades + jades}**<:eternal_jade:1256124504141201428>\nPrice: **${donation.price} ${donation.currency}**${stats.referred_by ? `\nReferred by: <@${stats.referred_by}> | ${stats.referred_by} (+**${Math.floor(0.2 * jades)}**<:genesis_gems:1034179687720681492>)` : ""}`);
 
             // Send referral reward if any
             if (stats.referred_by && (stats.transactions.reduce((acc: number, transaction: RankShopTransaction) => acc + parseInt(transaction.price), 0) + parseInt(donation.price)) <= 500) {
