@@ -3325,6 +3325,31 @@ export const items = [
         });
 
     }, (level) => `For every **${[5,4,3][level-1]}** attacks received, gain **${[1-6,1-7,2-8][level-1]}%** of ATK and MD permanently.`, "Pain's Awakening Description", "mythical", 702),
+    new ringInfo("Ring of the Lone Passerby", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
+       
+        matchStats.on("block", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            myStats.ringOfTheLonePasserby = 0;
+            if (target === myStats) {
+                myStats.hp += Math.floor(myStats.maxhp * (0.03 + 0.01 * (level - 1)));
+                if (myStats.ringOfTheLonePasserby < 5) {
+                    myStats.ringOfTheLonePasserby++;
+                    myStats.cr += 0.05; // 25% Cap
+                    mybuff.cr.push(new buffInfo("+", 0.05, 9999));
+                } 
+            }
+        });
+
+    }, (level) => `A successful block heals you for **${[3,4,5,6,7][level-1]}%** of your max HP and increases your Crit Rate by **5%** (max. **25%**).`, "Ring of the Lone Passerby Description", "legendary", 703),
+    new ringInfo("Ring of the Lone Singer", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
+
+        matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats) {
+                myStats.br += 0.10 + 0.05 * (level - 1);
+                mybuff.br.push(new buffInfo("+", 0.10 + 0.05 * (level - 1), 3));
+            }
+        });
+        
+    }, (level) => `A successful critical hit gives you **${[10,15,20][level-1]}%** increased block rate for 3 turns.`, "Ring of the Lone Singer Description", "rare", 704),
 
 
 ];
