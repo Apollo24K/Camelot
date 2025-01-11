@@ -615,8 +615,11 @@ export const anime: animeInfo[] = [
     new animeInfo("Gabriel DropOut", ['GabDro', 'GDO', 'GabDrop'], 580),
     new animeInfo("Idaten Jump", [], 581),
     new animeInfo("Ryuuou no Oshigoto!", ['RnO!', "The Ryuo's Work is Never Done!"], 582),
-
-
+    new animeInfo("Bobobo-bo Bo-bobo", ['Boboboobo Boobobo', 'Boboboubo Boubobo', 'Bobobo'], 583),
+    new animeInfo("Migi and Dali", ['Migi to Dali', 'Migi & Dali'], 584),
+    new animeInfo("Kindergarten WARS", ['Kindergarten Wars', 'Youchien WARS'], 585),
+    new animeInfo("Bokura wa Minna Kawai-sou", ['Bokura wa Minna Kawaisou', 'The Kawai Complex Guide to Manors and Hostel Behavior', 'BMK'], 586),
+    new animeInfo("Psychic Squad", ['Absolutely Lovely Children', 'Unlimited Psychic Squad', 'ZKC', 'Zettai Karen Children', 'The Unlimited: Hyoubu Kyousuke'], 587),
 ];
 
 
