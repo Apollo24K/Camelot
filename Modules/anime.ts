@@ -620,6 +620,9 @@ export const anime: animeInfo[] = [
     new animeInfo("Kindergarten WARS", ['Kindergarten Wars', 'Youchien WARS'], 585),
     new animeInfo("Bokura wa Minna Kawai-sou", ['Bokura wa Minna Kawaisou', 'The Kawai Complex Guide to Manors and Hostel Behavior', 'BMK'], 586),
     new animeInfo("Psychic Squad", ['Absolutely Lovely Children', 'Unlimited Psychic Squad', 'ZKC', 'Zettai Karen Children', 'The Unlimited: Hyoubu Kyousuke'], 587),
+
+    new animeInfo("CODE-E", [], 588),
+    new animeInfo("The Book of Bantorra", ['Armed Librarians: The Book of Bantorra', 'Fighting Librarians', 'Tatakau Shisho', 'Tatakau Shisho to Koisuru Bakudan', 'Tatakau Shisho: The Book of Bantorra'], 589),
 ];
 
 
