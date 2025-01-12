@@ -256,7 +256,7 @@ export const raidBosses: enemyInfo[] = [
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **10%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.lightningImmunity = true;
+            eStats.lightningResistance = 1;
             eStats.retaliationDamage = 0.2;
 
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
@@ -277,7 +277,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.lightningImmunity = true;
+            eStats.lightningResistance = 1;
 
             eStats.retaliationDamage = 0.35;
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
@@ -300,7 +300,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.lightningImmunity = true;
+            eStats.lightningResistance = 1;
 
             eStats.retaliationDamage = 0.4;
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
@@ -964,12 +964,13 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚡ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.4, mdChance: 0.5 });
             }, 5));
             eStats.cr = 0.5;
             eStats.cd = 1.5;
             ebuff.cr.push(new buffInfo("=", 0.5, 5));
             ebuff.cd.push(new buffInfo("=", 1.5, 5));
-            //! Give Boss Lightning Damage for 5 rounds
+            
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -993,21 +994,20 @@ export const raidBosses: enemyInfo[] = [
                 eStats.domain = false;
             }, 9999));
 
-        }, [["Gains 40% of your max HP as a shield", "Gains 2.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 3 rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 50% and sets his crit damage to 150%, has lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains 40% of your max HP as a shield", "Gains 2.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 3 rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 50% and sets his crit damage to 150%, and deals 40% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Vortharion, the Warden of Shadows", "Dark Paladin", "the Warden of Shadows", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 23, //needs Image
         new skillInfo(23, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** is too fast for you and`, { atkMultiplier: 0.4, mdChance: 0.5 });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.45, mdChance: 0.5 });
             }, 5));
 
             eStats.cr = 0.6;
             eStats.cd = 1.75;
             ebuff.cr.push(new buffInfo("=", 0.6, 5));
             ebuff.cd.push(new buffInfo("=", 1.75, 5));
-            //! Give Boss Lightning Damage for 5 rounds
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -1033,20 +1033,19 @@ export const raidBosses: enemyInfo[] = [
                 eStats.domain = false;
             }, 9999));
 
-        }, [["Gains 50% of your max HP as a shield", "Gains 17.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 4 rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, has lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains 50% of your max HP as a shield", "Gains 17.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 4 rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, and deals 45% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Duskraze, the Umbra Emperor", "Dark Paladin", "the Umbra Emperor", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 24, //needs Image
         new skillInfo(24, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** is too fast for you and`, { atkMultiplier: 0.4, mdChance: 0.5 });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.5, mdChance: 0.5 });
             }, 5));
             eStats.cr = 0.6;
             eStats.cd = 1.75;
             ebuff.cr.push(new buffInfo("=", 0.6, 5));
             ebuff.cd.push(new buffInfo("=", 1.75, 5));
-            //! Give Boss Lightning Damage for 5 rounds
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -1081,7 +1080,7 @@ export const raidBosses: enemyInfo[] = [
                 }
                 eStats.domain = false;
             }, 9999));
-        }, [["Gains 75% of your max HP as a shield", "His Void Orb gains 15% of its shield orb every round, his shield decreases by 10% every round", "On Shield Break, Reverses your Type of Damage for 5 rounds", "Attacks each rounds with either physical damage or magical damage", "Every 6 rounds, he activates his Void Orb, dealing his saved amount of Shield as damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, has lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains 75% of your max HP as a shield", "His Void Orb gains 15% of its shield orb every round, his shield decreases by 10% every round", "On Shield Break, Reverses your Type of Damage for 5 rounds", "Attacks each rounds with either physical damage or magical damage", "Every 6 rounds, he activates his Void Orb, dealing his saved amount of Shield as damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, and deals 50% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
 ];
 
