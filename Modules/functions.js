@@ -203,7 +203,9 @@ export const getDetailedStats = async (id, inv, classLevel, lu = 0, refine = fal
         "weapon": -1,
         "weaponinfo": {},
         "weaponicon": "<:sword_empty:1034502134474997790>",
-        "uniqueids": []
+        "uniqueids": [],
+        "lightningResistance": 0,
+        "lightningMultiplier": 1
     };
 
     // Expertise change
@@ -512,6 +514,7 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
         execute: matchStats.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: false,
+        isLightning: false,
     };
     Object.keys(flags).forEach((e) => options[e] = flags[e]);
 
@@ -597,6 +600,16 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
     // Vulnerability
     if (target.vulnerability) {
         damage = Math.floor(damage * target.vulnerability);
+    };
+
+    // Lightning Resistance
+    if (options.isLightning && target.lightningResistance > 0) {
+        damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.lightningResistance))));
+    };
+    
+    // Lightning Multiplier
+    if (options.isLightning && attacker.lightningMultiplier !== 1) {
+        damage = Math.floor(damage * target.lightningMultiplier);
     };
 
     // Counter the attack
@@ -730,7 +743,7 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance) });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
