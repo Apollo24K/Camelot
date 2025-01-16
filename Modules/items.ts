@@ -3560,6 +3560,15 @@ export const items = [
         }, 9999));
     }, (level) => `Upon entering battle, the user loses **10%** of their max HP and heals for **10%** of their max HP.`, "Ring of the Desperate Necromancer Description", "legendary", 726), 
 
+    new ringInfo("Ring of Conservation", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (myStats.hp <= myStats.maxhp * 0.5) {
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.hp * (0.05 + 0.0125 * (level - 1))));
+            } else {
+                myStats.cr += Math.max(0.3, Math.floor(myStats.hp / 100000)); // 0.03% crit rate per 3000 HP (max 30%) 
+            }
+        }, 9999));
+    }, (level) => `Deal **${[75,80,85][level-1]}%** lightning damage every **3** rounds.`, "Ring of Conservation Description", "unique", 727),
 ];
 
 export const fishing = items.filter((e) => e.obtain.includes("fishing"));
