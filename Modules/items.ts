@@ -3533,16 +3533,33 @@ export const items = [
         }, 30));
     }, (level) => `For the first 10 turns, the wielder has -30% attack and magic damage and +30% block rate. For the next 30 turns, the wielder gains +2% attack and magic damage and -1% block rate each round.`, "Ring of the Listener Description", "legendary", 722),
     new ringInfo("Ring of Provocation", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        
         myStats.critChance += 0.5; eStats.cr += 0.5;
         mybuff.cr.push(new buffInfo("+", 0.5, 9999)); ebuff.cr.push(new buffInfo("+", 0.5, 9999));
         myStats.counterchance = 0.25;
         myStats.counter = 1;
+
     }, (level) => `Increases your and your enemy's critical chance by **50%** and your counter chance by **25%**.`, "Ring of Provocation Description", "mythical", 723),
     new ringInfo("Ring of Apricot", "ring", "ring", ["guild"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        
         myStats.maxhp += Math.floor(myStats.maxhp * (0.2 + 0.05 * (level - 1)));
         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * (0.2 + 0.05 * (level - 1))));
         myStats.dodge = 0; mybuff.dodge.push(new buffInfo("=", 0, 9999));
+
     }, (level) => `Upon entering battle, increases your max HP by **${[20,25,30][level-1]}%** but reduces your dodge rate to **0%**.`, "Ring of Apricot Description", "rare", 724),
+    new ringInfo("Ring of Retribution", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Dusty
+        
+        myStats.damageReduction += 0.05 + 0.025 * (level - 1);
+        eStats.hp -= Math.floor(eStats.damageTaken * (0.05 + 0.025 * (level - 1)));
+
+    }, (level) => `Reduces incoming damage by **${[5,7.5,10][level-1]}%** and deals **${[5,7.5,10][level-1]}%** of the damage taken back to the enemy.`, "Ring of Retribution Description", "mythical", 725),
+    new ringInfo("Ring of the Desperate Necromancer", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const missingHpPercent = (myStats.maxhp - myStats.hp) / myStats.maxhp;
+            myStats.atk += Math.floor(myStats.atk * missingHpPercent); myStats.md += Math.floor(myStats.md * missingHpPercent);
+        }, 9999));
+    }, (level) => `Upon entering battle, the user loses **10%** of their max HP and heals for **10%** of their max HP.`, "Ring of the Desperate Necromancer Description", "legendary", 726), 
+
 ];
 
 export const fishing = items.filter((e) => e.obtain.includes("fishing"));
