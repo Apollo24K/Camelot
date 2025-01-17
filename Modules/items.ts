@@ -3569,6 +3569,44 @@ export const items = [
             }
         }, 9999));
     }, (level) => `Deal **${[75,80,85][level-1]}%** lightning damage every **3** rounds.`, "Ring of Conservation Description", "unique", 727),
+    new ringInfo("Ring of Painful Momentum", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* noHeal
+
+        matchStats.on("miss", { maxUsage: 5, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (target === myStats) {
+                myStats.hp -= Math.floor(myStats.maxhp * (0.02 + 0.01 * (level - 1)));
+                myStats.dodge += 0.04 + 0.01 * (level - 1); myStats.br += 0.04 + 0.01 * (level - 1);
+                mybuff.dodge.push(new buffInfo("+", 0.04 + 0.01 * (level - 1), 9999)); mybuff.br.push(new buffInfo("+", 0.04 + 0.01 * (level - 1), 9999));
+                return true;
+            }
+        } });
+
+    }, (level) => `Each dodge or block deals **${[2,3,4][level-1]}%** of your max HP as damage but also increases your dodge and block rate by **${[4,5,6][level-1]}%** at most for **${[20,25,30][level-1]}%**`, "Ring of Painful Momentum Description", "unique", 728),
+    new ringInfo("Ring of the Cursed Healer", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* noHeal
+        
+        matchStats.on("heal", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && options.caster === myStats) {
+                myStats.negateHeal = 1;
+                matchStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    myStats.negateHeal = 0;
+                }, 9999));
+            }
+        });
+    }, (level) => `If you recover HP, negates the healing of the enemy that turn.`, "Ring of the Cursed Healer Description", "legendary", 729),
+    new ringInfo("Ring of Fatal Agility", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* noHeal
+        
+        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (target === myStats) {
+                myStats.atk += Math.floor(myStats.atk * (0.075 + 0.0125 * (level - 1))); myStats.md += Math.floor(myStats.md * (0.075 + 0.0125 * (level - 1)));
+                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.075 + 0.0125 * (level - 1))), 2)); mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.075 + 0.0125 * (level - 1))), 2));
+                myStats.hp -= Math.floor(myStats.hp * 0.03);
+
+                if (myStats.dodgeStreak >= 3 || myStats.blockStreak >= 3) {
+                    myStats.atk += Math.floor(myStats.atk * 0.25); myStats.md += Math.floor(myStats.md * 0.25);
+                }
+            }
+        });
+
+    }, (level) => `You increase your damage by **${[7.5, 8.75, 10][level-1]}%** if you dodge or block but you also deal **3%** of your HP as damage. After 3 consecutive dodges or blocks, you increase your damage by **25%** for 1 turn.`, "Ring of Fatal Agility Description", "legendary", 730),
 ];
 
 export const fishing = items.filter((e) => e.obtain.includes("fishing"));

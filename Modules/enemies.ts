@@ -311,7 +311,6 @@ export const raidBosses: enemyInfo[] = [
             });
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                console.log("Debuff: " + Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01)));
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01));
             }, 9999));
         }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **33%** damage", "**Active**: Increases her retaliation damage (**100** <:mana:1047269152957661255>)"]])
