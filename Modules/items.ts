@@ -1,4 +1,5 @@
 /* eslint-disable no-unused-vars */
+import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import { ItemRarity, PrimaryStat } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
@@ -3519,7 +3520,7 @@ export const items = [
     }, (level) => `Deals **${[15,20,25][level-1]}%** additional lightning damage every round and heals you for **50%** of the damage dealt.`, "Ring of Storm's Eye Description", "genesis", 720),
     new ringInfo("Sneak Attack", "ring", "ring", ["chest"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         matchStats.twinshot = 1;
-        myStats.delayedBuffs.push(new delayedBuffs(1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             matchStats.twinshot = 0;
         }));
     }, (level) => `The user's first attack hits twice.`, "Sneak Attack Description", "unique", 721),
@@ -3588,7 +3589,7 @@ export const items = [
                 myStats.negateHeal = 1;
                 matchStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                     myStats.negateHeal = 0;
-                }, 9999));
+                }));
             }
         });
     }, (level) => `If you recover HP, negates the healing of the enemy that turn.`, "Ring of the Cursed Healer Description", "legendary", 729),
@@ -3607,6 +3608,176 @@ export const items = [
         });
 
     }, (level) => `You increase your damage by **${[7.5, 8.75, 10][level-1]}%** if you dodge or block but you also deal **3%** of your HP as damage. After 3 consecutive dodges or blocks, you increase your damage by **25%** for 1 turn.`, "Ring of Fatal Agility Description", "legendary", 730),
+    new ringInfo("Ring of Critical Supremacy", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Magma
+
+        myStats.cd += 0.5; 
+        if (myStats.cd > 2) { // CD > 200%: Decreases enemy CD by 50%
+            eStats.cd -= 0.5; 
+            mybuff.cd.push(new buffInfo("+", -0.5, 9999))
+        } else { // CD <= 200%: Increases enemy CD by 50%
+            eStats.cd += 0.5;
+            mybuff.cd.push(new buffInfo("+", 0.5, 9999));
+        }
+
+    }, (level) => `Increases your critical damage by **50%** and your enemy's critical damage by **50%** for the rest of battle. When your own critical damage is higher than **200%**, your enemy's critical damage is decreased by **50%** instead.`, "Ring of Critical Supremacy Description", "unique", 731),
+    new ringInfo("Defender's Signet", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Magma
+
+        // Alter Defense
+        myStats.replaceButton.def = {
+            "emoji": "", // TODO Emoji for Defender's Signet
+            "run": function (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) {
+                myStats.usedBlockRound = matchStats.round; //* Still able to block
+                myStats.damageReduction += 0.4 + 0.05 * (level - 1); // Reduces DMG by 40/45/50% for 1 turn
+
+                // Remove Damage Reduction after 1 turn
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    myStats.damageReduction -= 0.4 + 0.05 * (level - 1);
+                }));
+            },
+        };
+
+    }, (level) => `Alters Defense: Reduces incoming damage by **${[40,45,50][level-1]}%** for **1** turn but you are still able to block.`, "Defender's Signet Description", "mythical", 732),
+    new ringInfo("Ring of Defiant Survival", "ring", "ring", ["guild"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { 
+
+        // Revive with 1% HP
+        myStats.rev += 1;
+        myStats.revhp = 0.01;
+
+        // On Revival gains 5x counter; dealing 40% damage
+        matchStats.on("revival", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (target === myStats) {
+                myStats.atk -= Math.floor(myStats.atk * 0.6);
+                myStats.md -= Math.floor(myStats.md * 0.6);
+                mybuff.atk.push(new buffInfo("+", -Math.floor(myStats.atk * 0.6), 5)); mybuff.md.push(new buffInfo("+", -Math.floor(myStats.md * 0.6), 5));
+                myStats.counter = 5;
+            }
+        });
+        
+    }, (level) => `Upon entering battle, the user loses **10%** of their max HP and heals for **10%** of their max HP.`, "Ring of Defiant Survival Description", "legendary", 733),
+    new ringInfo("Ring of Mana Confluence", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
+
+        // Increases Damage by mg%
+        myStats.atk += Math.floor(myStats.atk * myStats.mg / 100); myStats.md += Math.floor(myStats.md * myStats.mg / 100);
+        mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * myStats.mg / 100), 9999)); mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * myStats.mg / 100), 9999));
+
+    }, (level) => `Increases your attack and magic damage by **1%** for every 1 mana generation for the rest of battle.`, "Ring of Mana Confluence Description", "legendary", 734),
+    //! TESTING
+    new ringInfo("Ring of Festive Blessings", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
+
+        const buttonConfigs = [
+            { id: 'ATK', trigger: 'attack', emoji: myStats.replaceButton?.atk?.emoji || '⚔️'},
+            { id: 'DEF', trigger: 'defend', emoji: myStats.replaceButton?.def?.emoji || '🛡️'},
+        ];
+
+        let buttons = [
+            new ButtonBuilder().setCustomId('ATK').setEmoji(buttonConfigs[0].emoji).setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('DEF').setEmoji(buttonConfigs[1].emoji).setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('ABILITY').setEmoji(myStats.replaceButton?.ability?.emoji || '✨').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.skill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+            new ButtonBuilder().setCustomId('SKIP').setEmoji(myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>').setStyle(ButtonStyle.Secondary)
+        ];
+        let availableButtons = [0, 1, 2, 3];
+
+        function updateButtons(buttons: ButtonBuilder[]) {
+        
+            buttons[0].setEmoji('✉️').setStyle(ButtonStyle.Success);
+            buttons[1].setEmoji('✉️').setStyle(ButtonStyle.Danger);
+
+            const row = new ActionRowBuilder().addComponents(...buttons); 
+            return new ActionRowBuilder().addComponents(...buttons);
+        }
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (matchStats.round % 6 === 0) {
+                // every 6th turn: Update ATK/ DEF to green/ red envelopes
+                matchStats.interaction.editReply({ components: [updateButtons(buttons)] });
+
+                // Increases CD by 50% on ATK
+                matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                    if (caster === myStats) myStats.cd += 0.5;
+                });
+                // Gain 100 shield on DEF
+                matchStats.on("defend", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                    if (caster === myStats) myStats.shield += 100;
+                });
+
+                // Recover normal settings
+                availableButtons = [0, 1, 2, 3];
+                buttons[0].setEmoji(buttonConfigs[0].emoji).setStyle(ButtonStyle.Secondary);
+                buttons[1].setEmoji(buttonConfigs[1].emoji).setStyle(ButtonStyle.Secondary);
+
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    const row = new ActionRowBuilder().addComponents(...buttons);
+                    matchStats.interaction.editReply({ components: [row] });
+                }));
+            }
+        }, 9999));
+
+    }, (level) => `Every 6 rounds, replaces ATK/ DEF to green/ red envelopes. ATK increases crit damage by **50%** for 1 turn. DEF gains **100** shield.`, "Ring of Festive Blessings Description", "unique", 735),
+    new ringInfo("Ring of Martial Momentum", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
+        myStats.MartialMomentum = [10,9,8,7,6][level-1];
+
+        // On Ability/ Skill: increases damage by [5,6,7,8,9]%, cap: [50,54,56,56,54]%, turns: [10,9,8,7,6]
+        matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && myStats.MartialMomentum > 0) {
+                myStats.MartialMomentum--;
+                myStats.atk += Math.floor(myStats.atk * (0.05 + 0.01 * (level - 1))); myStats.md += Math.floor(myStats.md * (0.05 + 0.01 * (level - 1)));
+                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.05 + 0.01 * (level - 1))), 9999)); mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.05 + 0.01 * (level - 1))), 9999));
+            }
+        });
+        matchStats.on("cskill", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && myStats.MartialMomentum > 0) {
+                myStats.MartialMomentum--;
+                myStats.atk += Math.floor(myStats.atk * (0.05 + 0.01 * (level - 1))); myStats.md += Math.floor(myStats.md * (0.05 + 0.01 * (level - 1)));
+                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.05 + 0.01 * (level - 1))), 9999)); mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.05 + 0.01 * (level - 1))), 9999));
+            }
+        });
+        
+    }, (level) => `After every ability/ skill used, increases damage by **${[5,6,7,8,9][level-1]}%** **${[10,9,8,7,6][level-1]}** times.`, "Ring of Martial Momentum Description", "legendary", 736),
+    new ringInfo("Ring of Written Fate", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // 40% chance to send a letter
+            if (Math.random() < 0.4) {
+                let rand = Math.random();
+                if (rand < 0.33) { // Love Letter: Decreases enemy DEF and MR by 30%
+                    notice.push(`\n💌 **${char.name}** sent a love letter to **${enemy.name}**!`);
+                    eStats.def -= Math.floor(eStats.def * 0.3); eStats.mr -= Math.floor(eStats.mr * 0.3);
+                } else if (rand < 0.66) { // Complaint Letter: Increases damage by 30%
+                    notice.push(`\n📨 **${char.name}** sent a complaint letter to **${enemy.name}**!`);
+                    myStats.atk += Math.floor(myStats.atk * 0.3); myStats.md += Math.floor(myStats.md * 0.3);
+                } else { // Bomb: Stuns enemy for 1 turn
+                    notice.push(`\n📦️ **${char.name}** sent a bomb to **${enemy.name}**!`);
+                    matchStats.twinshot = 1;
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        matchStats.twinshot = 0;
+                    }));
+                }
+            }
+        }, 9999));
+
+    }, (level) => `Every turn there is a 40% chance to send a letter. Love Letter: decreases enemy DEF and MR by 30%. Complaint Letter: increases damage by 30%. Bomb: stuns enemy for 1 turn.`, "Ring of Written Fate Description", "mythical", 737),
+    new ringInfo("Ring of Battle Cadence", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (matchStats.round % [4,3][level-1] === 0) { // Every [4,3] turns
+                matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => { //* ATK: Increase ATK/ MD by 15% for 2 turns
+                    if (caster === myStats) myStats.atk += Math.floor(myStats.atk * 0.15); myStats.md += Math.floor(myStats.md * 0.15); mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 2)); mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.15), 2));
+                });
+                matchStats.on("defend", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => { //* DEF: Increase BR by 15% for 2 turns
+                    if (caster === myStats) myStats.br += 0.15; mybuff.br.push(new buffInfo("+", 0.15, 2));
+                });
+                matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => { //* ABILITY: deal 15% damage
+                    if (caster === myStats) dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.15 });
+                });
+                matchStats.on("cskill", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => { //* SKILL: heal 5% of max HP
+                    if (caster === myStats) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05));
+                });
+            }
+        }, 9999));
+        
+    }, (level) => `Actions every **${[4,3][level-1]}** turns grant additional effects. ATK: Increase ATK/ MD by 15% for 2 turns, DEF: Increase Block Rate by 15% for 2 turns, ABILITY: deal 15% damage, SKILL: heal 5% of max HP.`, "Ring of Battle Cadence Description", "legendary", 738),
+
 ];
 
 export const fishing = items.filter((e) => e.obtain.includes("fishing"));
