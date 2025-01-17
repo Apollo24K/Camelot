@@ -329,7 +329,7 @@ export type Buffs = {
 };
 
 
-export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "defend" | "cskill" | "minionDeath" | "revival";
+export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "defend" | "cskill" | "minionDeath" | "revival" | "heal";
 
 export type TriggerOptions = {
     event: TriggerEvents;

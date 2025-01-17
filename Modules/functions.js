@@ -760,6 +760,7 @@ export const addHeal = (target, attacker, caster, targetBuff, attackerBuff, matc
         target.hp += amount;
         if (target.hp > target.maxhp) target.hp = target.maxhp;
     };
+    matchStats.trigger("heal", attacker, target, attackerBuff, targetBuff, { amount, caster });
     if (log) notice.push(`\n💖 **${target.name}** has healed **${amount}** HP`);
 };
 
