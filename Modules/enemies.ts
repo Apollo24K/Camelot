@@ -656,7 +656,7 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                if (caster === myStats && !options.magicDamage) {
+                if (caster === myStats && !options.isMagicDamage) {
                     myStats.maxhp -= Math.floor(myStats.maxhp * 0.03);
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 }

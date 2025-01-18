@@ -188,6 +188,7 @@ export const getDetailedStats = async (id, inv, classLevel, lu = 0, refine = fal
         "blockStreak": 0,
         "dodgeStreak": 0,
         "damageTaken": 0,
+        "damageTakenRound": 0,
         "executeHP": 0,
         "negateHeal": 0, // 1: negates heal
         "ignoreShield": false,
@@ -706,6 +707,7 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
 
     // Passives
     target.damageTaken += damage;
+    target.damageTakenRound = damage;
     if (options.combodmg && attacker.combodmg) attacker.attackStreak++;
     if (options.critbleed && isCrit) targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * 0.05), matchStats.critbleedlast));
     if (attacker.critmana && isCrit) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
@@ -743,8 +745,7 @@ export const dealDamage = (target, attacker, targetBuff, attackerBuff, matchStat
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
-    if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isMagicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning, isCrit });
 
     return damage;
 };
