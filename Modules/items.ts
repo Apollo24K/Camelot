@@ -3295,7 +3295,7 @@ export const items = [
         });
 
     }, (level) => `gain **30%** of your max HP as shield for every **${[5,4][level-1]}th** ability usage.`, "Ring of Calculation Description", "legendary", 700),
-    new ringInfo("Nimble Guardian", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo, maybe even merge Dusty, Duo?
+    new ringInfo("Nimble Guardian", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //! Duo, maybe even merge Dusty, Duo?
 
         myStats.nimbleGuardian = myStats.dodge;
         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + [10,7][level-1], (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3410,11 +3410,11 @@ export const items = [
         myStats.ringOfRebound = myStats.shield;
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (myStats.shield > 0 && myStats.ringOfRebound === 0) { // When he gains a shield
-                myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { myStats.counter = 1; }, 2));
+                myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { myStats.counter = 1; }, 1));
             }
             myStats.ringOfRebound = myStats.shield;
         }, 9999));
-    }, (level) => `Upon gaining a shield, enters the state of "Rebounce" for 2 turns, countering any damage taken.`, "Ring of Rebound Description", "unique", 710),
+    }, (level) => `Upon gaining a shield, enters the state of "Rebounce" for 1 turn, countering any damage taken.`, "Ring of Rebound Description", "unique", 710),
     new ringInfo("Cowboy Ring", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
             if (target === eStats) {
@@ -3422,7 +3422,7 @@ export const items = [
             }
         });
     }, (level) => `Every time the enemy dodges or blocks, you attack twice the next turn.`, "Cowboy Ring Description", "mythical", 711),
-    new ringInfo("Eye of Avarice", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana/ Cakey
+    new ringInfo("Eye of Avarice", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Cakey
         
         eStats.mg -= [1,2,4,6,8][level-1];
         ebuff.mg.push(new buffInfo("+", -[1,2,4,6,8][level-1], 9999));
@@ -3777,6 +3777,145 @@ export const items = [
         }, 9999));
         
     }, (level) => `Actions every **${[4,3][level-1]}** turns grant additional effects. ATK: Increase ATK/ MD by 15% for 2 turns, DEF: Increase Block Rate by 15% for 2 turns, ABILITY: deal 15% damage, SKILL: heal 5% of max HP.`, "Ring of Battle Cadence Description", "legendary", 738),
+    new ringInfo("Ring of Corrupted Defense", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
+
+        // 6th round: Decrease DEF/ MR by 30%; Increase ATK/ MD by Lost DEF/ MR
+        myStats.delayedBuffs.push(new delayedBuffs(6, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.atk += Math.floor(Math.max(myStats.def * (0.25 + 0.025 * (level-1)), myStats.mr * (0.25 + 0.025 * (level-1)))); myStats.md += Math.floor(Math.max(myStats.def * (0.25 + 0.025 * (level-1)), myStats.mr * (0.25 + 0.025 * (level-1))));
+            mybuff.atk.push(new buffInfo("+", Math.floor(Math.max(myStats.def * (0.25 + 0.025 * (level-1)), myStats.mr * (0.25 + 0.025 * (level-1)))), 9999)); mybuff.md.push(new buffInfo("+", Math.floor(Math.max(myStats.def * (0.25 + 0.025 * (level-1)), myStats.mr * (0.25 + 0.025 * (level-1)))), 9999));
+
+            myStats.def -= Math.floor(myStats.def * (0.25 + 0.025 * (level-1))); myStats.mr -= Math.floor(myStats.mr * (0.25 + 0.025 * (level-1)));
+            mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * (0.25 + 0.025 * (level-1))), 9999)); mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * (0.25 + 0.025 * (level-1))), 9999));
+        }, 9999));
+        
+    }, (level) => `After 6 rounds, leeches on you, decreasing your defense and magic resistance by **${[25,27.5,30][level-1]}%** and increasing your attack and magic damage by the lost amount of defense or magic resistance.`, "Ring of Corrupted Defense Description", "mythical", 739),
+    new ringInfo("Ring of Blood Frenzy", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            
+            let buttons = [
+                new ButtonBuilder().setCustomId('ATK').setEmoji(myStats.replaceButton?.atk?.emoji || '⚔️').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('DEF').setEmoji(myStats.replaceButton?.def?.emoji || '🛡️').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('ABILITY').setEmoji(myStats.replaceButton?.ability?.emoji || '✨').setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.skill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+                new ButtonBuilder().setCustomId('SKIP').setEmoji(myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>').setStyle(ButtonStyle.Secondary)
+            ];
+            
+            // Every 4 rounds: Only ATK, 20% more damage
+            if (matchStats.round % 4 === 0) {  //? atk buff in corrrect round?
+                buttons[1].setDisabled(true); buttons[2].setDisabled(true); buttons[3].setDisabled(true);
+                const row = new ActionRowBuilder().addComponents(...buttons);
+                myStats.atk += Math.floor(myStats.atk * 0.2); myStats.md += Math.floor(myStats.md * 0.2);
+            } else if (matchStats.round % 4 === 1) { // Recover buttons
+                buttons[1].setDisabled(false); buttons[2].setDisabled(true); buttons[3].setDisabled(myStats.class !== -1 ? false : true);
+                const row = new ActionRowBuilder().addComponents(...buttons);
+            }
+        }, 9999));
+
+    }, (level) => `Every 4th round, you become bloodthirsty, forced to attack, but you deal 20% more damage.`, "Ring of Blood Frenzy Description", "unique", 740),
+    new ringInfo("Ring of the Revenant", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
+
+        let buttons = [
+            new ButtonBuilder().setCustomId('ATK').setEmoji(myStats.replaceButton?.atk?.emoji || '⚔️').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('DEF').setEmoji(myStats.replaceButton?.def?.emoji || '🛡️').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('ABILITY').setEmoji(myStats.replaceButton?.ability?.emoji || '✨').setStyle(ButtonStyle.Secondary),
+            new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.skill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+            new ButtonBuilder().setCustomId('SKIP').setEmoji(myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>').setStyle(ButtonStyle.Secondary)
+        ];
+
+        myStats.rev = 1;
+        myStats.revhp = 0.01;
+        // On Revival: immortal for [3,4,5] rounds, +100% cr, cd
+        matchStats.on("revival", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (target === myStats) {
+                // Only ATK
+                buttons[1].setDisabled(true); buttons[2].setDisabled(true); buttons[3].setDisabled(true);
+                const row = new ActionRowBuilder().addComponents(...buttons);
+
+                myStats.damageReduction = 1;
+                myStats.cr = 1; myStats.cd += 1;
+                mybuff.cr.push(new buffInfo("=", 1, [3,4,5][level-1])); mybuff.cd.push(new buffInfo("+", 1, [3,4,5][level-1]));
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + [3,4,5][level-1], (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    myStats.damageReduction = 0;
+                }));
+            }
+        });
+
+    }, (level) => `After dying, your undying corpse seeks for revenge, letting you live for **${[3,4,5][level-1]}** rounds. You gain 100% crit chance and 100% crit damage but you can only attack.`, "Ring of the Revenant Description", "legendary", 741),
+    new ringInfo("Ring of Arcane Theft", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Cakey
+
+        myStats.arcaneTheft = false;
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // 1st: Below 50% HP: Heal 40% max HP
+            if (myStats.hp < myStats.maxhp * 0.5 && !myStats.arcaneTheft) {
+                myStats.arcaneTheft = true;
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.4));
+
+                // 15 rounds: Steals [1,1.5,2,2.5,3]% char MD from enemy + gain, cap: [15,22.5,30,37.5,45]%
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.md -= Math.floor(myStats.md * (0.01 + 0.005 * (level-1))); mybuff.md.push(new buffInfo("+", -Math.floor(myStats.md * (0.01 + 0.005 * (level-1))), 9999));
+                    myStats.md += Math.floor(myStats.md * (0.01 + 0.005 * (level-1))); mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.01 + 0.005 * (level-1))), 9999));
+                }, 15));
+            }
+        }, 9999));
+
+    }, (level) => `When below 50% HP the first time, restores 40% max HP, before stealing **${[1,1.5,2,2.5,3][level-1]}%** of your magic damage from the enemy for 15 rounds.`, "Ring of Arcane Theft Description", "mythical", 742),
+    new ringInfo("Ring of Toxic Resonance", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Cakey
+
+
+        myStats.hp -= Math.floor(myStats.maxhp * 0.2);
+        myStats.maxhp -= Math.floor(myStats.maxhp * 0.2);
+        // magical hits: additional 30% MD hit
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && options.isMagicDamage) {
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.3, magicDamage: true, mdChance: 1 });
+            }
+        });
+
+    }, (level) => `Reduces max HP by **20%**, but follows up any magical hits with a poisonous treat, dealing **30%** MD.`, "Ring of Toxic Resonance Description", "legendary", 743),
+    new ringInfo("Ring of Critical Denial", "ring", "ring", ["raid"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Dusty
+
+        // damageReduction = enemy cr, max: 40%
+        myStats.damageReduction = Math.min(0.4, eStats.cr);
+        eStats.cr = 0; ebuff.cr.push(new buffInfo("=", 0, 9999));
+
+    }, (level) => `Lowers enemy's critical rate to 0%. For every 1% lost this way, increases the wielder's damage mitgation by 1%, up to 40%.`, "Ring of Critical Denial Description", "mythical", 744),
+    new ringInfo("Ring of Echoes", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Dusty
+
+        myStats.echoes = 0;
+        
+        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Record 50% of damage taken / round
+            myStats.echoes += Math.floor(myStats.damageTakenRound * (0.4 + 0.05 * (level-1)));
+
+            // When recorded damage >= ATK/MD, counterattack with accumulated damage
+            if (myStats.echoes >= myStats.atk || myStats.echoes >= myStats.md) {
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { overwriteDamage: myStats.echoes });
+                myStats.echoes = 0;
+            }
+        }, 9999));
+
+    }, (level) => `Records **${[40,45,50][level-1]}%** of damage taken per round. When the recorded damage reaches your attack or magic damage, counterattacks with the accumulated damage.`, "Ring of Echoes Description", "legendary", 745),
+    new ringInfo("Ring of Mischief", "ring", "ring", ["guild"], "", "", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+        // On Crit: Steal 5% CR
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && options.isCrit && eStats.cr > 0.05) {
+                myStats.cr += 0.05; eStats.cr -= 0.05;
+                mybuff.cr.push(new buffInfo("+", 0.05, 9999)); ebuff.cr.push(new buffInfo("+", -0.05, 9999));
+            }
+        });
+        // On Non-Crit: Steal 5% (own) ATK, cap: 20%
+        matchStats.on("attack", { maxUsage: 4, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === myStats && !options.isCrit) {
+                myStats.atk += Math.floor(myStats.atk * 0.05); eStats.atk -= Math.floor(myStats.atk * 0.05);
+                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.05), 9999)); ebuff.atk.push(new buffInfo("+", -Math.floor(myStats.atk * 0.05), 9999));
+
+                return true;
+            }
+    } });
+
+    }, (level) => `Upon receiving damage from a critical attack, steals 5% critical rate from the enemy. Upon receiving a non-critical attack, steals 5% of your attack from the enemy, up to 20%.`, "Ring of Mischief Description", "legendary", 746),
 
 ];
 
