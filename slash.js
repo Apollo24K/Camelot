@@ -1174,6 +1174,15 @@ const commands = [
 					)
 			)
 	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('rings')
+			.setDescription('See your rings')
+			.addStringOption(option => option.setName('userprompt').setDescription('Set your prompt input').setRequired(false))
+			.addStringOption(option => option.setName('assistantprompt').setDescription('Set your assistant prompt input').setRequired(false))
+			.addStringOption(option => option.setName('devprompt').setDescription('Set your developer prompt input').setRequired(false))
+
+	}.data.toJSON(),
 	// {
 	// 	data: new SlashCommandBuilder()
 	// 			.setName('reset')
