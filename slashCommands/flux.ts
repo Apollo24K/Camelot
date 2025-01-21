@@ -2,6 +2,7 @@ const { OpenAI } = require('openai');
 const { Runware } = require('@runware/sdk-js');
 import { SlashCommand } from '../types';
 import config from '../config.json';
+import { AttachmentBuilder } from 'discord.js';
 
 
 const exportCommand: SlashCommand = {
@@ -35,15 +36,13 @@ const exportCommand: SlashCommand = {
                     vambrace: armorJson.vambrace,
                     boots: armorJson.boots
                 };
+
             } catch (error) {
                 console.error('Error parsing armor JSON:', error);
                 throw error;
             }
         }
         
-
-
-
         // Defer the reply immediately to prevent timeout
         await interaction.deferReply();
         
@@ -182,10 +181,11 @@ const exportCommand: SlashCommand = {
                             { "role": "user", "content": "Create a set of armor, including a helmet/ hat/ hood, a chestplate/ robe/ vest/ cuirass, a vambrace/ gloves/ gauntlet and boots. It should be usable for emoji/ icon, icon illustrated, the background transparent, fantasy style, illustration, non-realistic art style, not realistic."},
                             { "role": "user", "content": userPrompt },
                             { "role": "assistant", "content": assistantPrompt },
-                            { "role": "user", "content": "Gloves/ Vambraces should not have fingers visible, only armor. Helmets should also just have the armor helmet and no kind of face."},
                             { "role": "user", "content": "Create one detailed prompt for each armor piece for an illustrated fantasy rpg armor set and format it to JSON format, with the key being the armor piece, each named 'helmet', 'chestplate', 'vambrace', 'boots', and the value being the prompt. The armor set should be named earlier. Exclude the '```json' and '```' from the response."},
                             { "role": "user", "content": "All armor pieces's prompts should be very detailed and should be usable for emoji/ icon, icon illustrated, the background transparent, fantasy style, illustration, non-realistic art style, not realistic."},
                             { "role": "user", "content": "All prompts need to have a transparent background and non realistic illustration style"},
+                            { "role": "user", "content": "Gloves/ Vambraces should not have fingers visible, only armor. Helmets should also just have the armor helmet and no kind of face."},
+
                         ],
                         temperature: 0.4,
                         max_tokens: tokens
@@ -352,72 +352,28 @@ const exportCommand: SlashCommand = {
                 images.push(...armorImagesChestplate);
                 images.push(...armorImagesVambrace);
                 images.push(...armorImagesBoots);
-
-
-                /*
-                console.log(prompt["helmet"]);
-                let armorImagesHelmet = await runware.requestImages({
-                    positivePrompt: prompt["helmet"],
-                    model: "runware:101@1",
-                    numberResults: 1,
-                    negativePrompt: "",
-                    height: 512,
-                    width: 512,
-                });
-                let armorImagesChestplate = await runware.requestImages({
-                    positivePrompt: prompt["chestplate"],
-                    model: "runware:101@1",
-                    numberResults: 1,
-                    negativePrompt: "",
-                    height: 512,
-                    width: 512,
-                });
-                let armorImagesVambrace = await runware.requestImages({
-                    positivePrompt: prompt["vambrace"],
-                    model: "runware:101@1",
-                    numberResults: 1,
-                    negativePrompt: "",
-                    height: 512,
-                    width: 512,
-                });
-                let armorImagesBoots = await runware.requestImages({
-                    positivePrompt: prompt["boots"],
-                    model: "runware:101@1",
-                    numberResults: 1,
-                    negativePrompt: "",
-                    height: 512,
-                    width: 512,
-                });
-                images.push(...armorImagesHelmet);
-                images.push(...armorImagesChestplate);
-                images.push(...armorImagesVambrace);
-                images.push(...armorImagesBoots);
-                */
             }
 
-            //console.log(images);
-            //console.log(typeof images);
-            
-            // const images = await runware.imageInference(requestImage);
+            for (const image of images) console.log(image.imageURL);
 
-            for (const image of images) {
-                console.log(image.imageURL);
-            }
+            if (item === "armor") {
+                
+                // Create armor prompts text content
+                const armorText = `🪖 HELMET\n${armorPrompts.helmet}\n\n🛡️ CHESTPLATE\n${armorPrompts.chestplate}\n\n🧤 VAMBRACE\n${armorPrompts.vambrace}\n\n👢 BOOTS\n${armorPrompts.boots}`;
+                // Create a Buffer from the text content
+                const textBuffer = Buffer.from(armorText, 'utf-8');
+                // Create the attachment
+                const attachment = new AttachmentBuilder(textBuffer, { name: 'armor_prompts.txt' });
 
-            if (interaction.channel?.isTextBased() && 'send' in interaction.channel && item === "armor") {
-                await interaction.channel.send({
-                    content: `**Helmet:** ${armorPrompts.helmet + "\n**Chestplate:** " + armorPrompts.chestplate}`,
+                await interaction.editReply({
+                    files: [attachment, ...images.map((img: { imageURL: any; }) => img.imageURL)]
                 });
-                await interaction.channel.send({
-                    content: `**Vambrace:** ${armorPrompts.vambrace + "\n**Boots:** " + armorPrompts.boots}`,
+            } else {
+                await interaction.editReply({
+                    content: `**Prompt:** ${(item !== "armor") ? prompt : null}`,
+                    files: images.map((img: { imageURL: any; }) => img.imageURL)
                 });
             }
-
-            await interaction.editReply({
-                content: `**Prompt:** ${(item !== "armor") ? prompt : null }`,
-                files: images.map((img: { imageURL: any; }) => img.imageURL)
-            });
-
             return images;
         }
         main().catch(console.error);
