@@ -182,12 +182,13 @@ const exportCommand: SlashCommand = {
                             { "role": "user", "content": "Create a set of armor, including a helmet/ hat/ hood, a chestplate/ robe/ vest/ cuirass, a vambrace/ gloves/ gauntlet and boots. It should be usable for emoji/ icon, icon illustrated, the background transparent, fantasy style, illustration, non-realistic art style, not realistic."},
                             { "role": "user", "content": userPrompt },
                             { "role": "assistant", "content": assistantPrompt },
+                            { "role": "user", "content": "Gloves/ Vambraces should not have fingers visible, only armor. Helmets should also just have the armor helmet and no kind of face."},
                             { "role": "user", "content": "Create one detailed prompt for each armor piece for an illustrated fantasy rpg armor set and format it to JSON format, with the key being the armor piece, each named 'helmet', 'chestplate', 'vambrace', 'boots', and the value being the prompt. The armor set should be named earlier. Exclude the '```json' and '```' from the response."},
                             { "role": "user", "content": "All armor pieces's prompts should be very detailed and should be usable for emoji/ icon, icon illustrated, the background transparent, fantasy style, illustration, non-realistic art style, not realistic."},
                             { "role": "user", "content": "All prompts need to have a transparent background and non realistic illustration style"},
                         ],
                         temperature: 0.4,
-                        max_tokens: 1024
+                        max_tokens: tokens
                     });                    
                     return completion.choices[0].message.content
                 case 'runes':
