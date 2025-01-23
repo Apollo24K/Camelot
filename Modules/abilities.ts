@@ -4322,6 +4322,7 @@ export const abilities: Record<number, Ability> = {
         usage: 9999,
         used: 0,
         cost: 0,
+        burst: true,
         desc: "**Total Usage**: `unlimited`\n**Mana**: `80`\\💧\n**Timeout**: `yes`\n**Role**: `DPS/Support`\n\nAh, so you want to know about my abilities, huh? Well, let me tell you, all those formal descriptions are just too dull, aren't they? I mean, who needs all that jargon when you can have a bit of fun, right? So, here's the deal with my kit, straight from the Yorozuya's mouth!\n\nFirst up, we've got my passive. You see, I'm not really into the whole training thing. I prefer just to match the level of the toughest guy around. Makes life easier, you know? Every turn, I get this itch to swing my sword a bit harder and aim a bit sharper. That's me increasing my attack and crit rate by **5%**, stacking up to **5** times. But when I'm really pushed to the edge, like under **30%** HP, I get a surge of \"I-don't-wanna-die\" energy, and suddenly I'm hitting (and getting hit) **20%** harder.\n\nNow, let's talk about my active! When things get too hot, I switch to an endurance mode for **4 rounds**. It's like playing a game of chicken with the enemy. **33%** of the damage coming my way? I just shrug it off and store it as `Injuries`. And while I'm at it, there's a **25%** chance I'll just casually counter an attack. Cool, right? But here's the catch: when my endurance mode times out, those `Injuries` I shrugged off earlier come back to haunt me over the next **10 rounds**.\n\nLastly, my party ability lets me share the endurance, but spare the pain. You see, I'm a team player when I feel like it. Every **5 rounds**, I let my allies experience my Endurance mode for a turn, minus the annoying part where you pay for it later. It's my way of saying, \"Here, have some fun, but don't worry about the consequences.\"\n\nSo, that's me in a nutshell. A lazy samurai who somehow avoids hard work. Remember, it's not about how strong your abilities are, it's about how you use them... or avoid using them, in my case.",
         shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 turns`\n**Cost**: `60 💧`\n**Timeout**: `No`\n**Role**: `DPS/Tank (DMG-boost, Mitigation, Counter)`\n\n__**Passive**__\n- Attacks increase his ATK, MD & critical rate by **5%** (Up to **25%**)\nWhen below **30%** HP:\n- Takes **+20%** DMG\n- Deals **+20%** DMG\n\n__**Active**__ (✨)\nEnters Endurance Mode for **4** turns\n- Absorbs **33%** of DMG taken as `Injuries`\n- **+25%** counter chance\n- By the end of the domain: Reinflicts `Injuries` as DoT on Gintoki over **10** turns\n\n__**Party**__ (👥)\nEvery **5** turns:\n- Allies enter Endurance Mode (**33%** DMG mitigation + **25%** counter chance) with no side effects (injuries)",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
@@ -4337,7 +4338,7 @@ export const abilities: Record<number, Ability> = {
             }
             
             // Condition: When not in temple state but still can mark enemy
-            else if (myStats.sm >= 40 && myStats.sm <= 80) {
+            else if (myStats.sm >= 40 && myStats.sm < 80) {
                 // Mark enemy
                 myStats.sm -= 40;
                 eStats.marked += 2;
@@ -4346,33 +4347,34 @@ export const abilities: Record<number, Ability> = {
             
             // Condition: Not in temple state but can summon temple
             else if (myStats.sm >= 80) {
-                // Returns if already has temple
-                /*if (myStats.temple > 0) {
-                    matchStats.interaction.followUp({ content: `Nahida's temple is still active for ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
-                    this.used--;
-                    return;
-                }*/
-
-                // Else: summons temple for 4 turns
+                // Summons temple for 4 turns
                 myStats.sm -= 80;
                 myStats.temple = 4;
-                notice.push(`\n Summoned the temple of wisdom for **4** turns!`);
+                notice.push(`\n✨ Summoned the temple of wisdom for **4** turns!`);
 
             } else {matchStats.interaction.followUp({ content: `${myStats.name} does not have sufficient mana to use any of her active abilities`, ephemeral: true })};
         },
-        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        passive: function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            // SETUP VARS
+            myStats.temple = 0;
+            eStats.marked = 0;
+            
             // Gains shield equal to DMG taken (Up to 100% of own max HP) + Stun for 2 turn when below 35% HP at the start of the turn
-            myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                if (myStats.hp / myStats.maxhp <= 0.33) {
-                    myStats.shield += Math.min(myStats.damageTaken, myStats.maxhp)
+            myStats.delayedBuffs.push(new delayedBuffs(0,  (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if ((myStats.hp / myStats.maxhp <= 0.33) && this.burst) {
+                    const shgain = Math.min(myStats.damageTaken, myStats.maxhp);
+                    notice.push(`\n✧ Data collection is complete! ${myStats.name} gained **${shgain}** shield ✧`);
+                    myStats.shield += shgain;
+                    eStats.timeFrozen = true;
                     eStats.frozenMessage = "was overwhelmed ⋆.ೃ࿔*:･";
+                    this.burst = false;
 
                     // When stun is over
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         eStats.timeFrozen = false;
                     }));
                 };
-            }, 9999, 1));
+            }, 9999));
             
             // Loses 1 round of temple + enemy mark every turn
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
@@ -4387,31 +4389,39 @@ export const abilities: Record<number, Ability> = {
                     eStats.marked--;
                     if (eStats.marked == 0) {
                         notice.push(`\n𓇬 The enemy lost the mark of Skandha...`);
+                        };
                     };
-                };
-            }, 9999, 1));
-
+                }, 9999, 1));
+            
             // Gain +10 mana when critting a marked enemy
             matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
                 if (eStats.marked > 0) {
                     myStats.sm += 10;
                     if (myStats.temple > 0) {
                         myStats.sm += 5;
-                    }
-                };
-            });
+                        };
+                if (myStats.sm > myStats.mana) {myStats.sm = myStats.mana};
+                    };
+                });
         },
-        party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {           
             // Marks enemy every 3 turns
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.round % 3 === 0) {
-                    eStats.marked = 1;
+                    eStats.marked??= 1;
                     
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         eStats.marked--;
                     }));
-                }
+                };
             }, 9999));
+
+            // Gain +10 mana when critting a marked enemy
+            matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (eStats.marked > 0) {
+                    myStats.sm += 10;
+                    };
+            });
         },
     },
 };
