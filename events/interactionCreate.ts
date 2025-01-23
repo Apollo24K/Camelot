@@ -12,7 +12,7 @@ const event: BotEvent = {
     execute: async (interaction: Interaction) => {
 
         // if (interaction.user.id === "489490486734880774") {
-        //     interaction.user.id = "489490486734880782";
+        //     interaction.user.id = "489490486734880784";
         // };
 
         // Defer Buttons
@@ -127,7 +127,10 @@ const event: BotEvent = {
             if (!server.schema.user_ids.includes(interaction.user.id)) await addUserToServer(interaction.guild.id, interaction.user.id);
 
             // TUTORIAL
-            if (!([0, 1, 2, 3, 4, 5, 6, 7].every((e) => author.schema.tutorial.includes(e)))) return interaction.client.commands.get('tutorial').execute(interaction);
+            if (!([0, 1, 2, 3, 4, 5, 6, 7].every((e) => author.schema.tutorial.includes(e)))) {
+                const command = interaction.client.slashCommands.get('tutorial') as SlashCommand | undefined;
+                if (command) return command.execute({ interaction, author, server, locale: 'en_US' });
+            };
 
             // Check new mails
             if (author.schema.mailbox.length > author.schema.mailreceived) {

@@ -735,7 +735,6 @@ const exportCommand: SlashCommand = {
                     });
 
                     ability.on('collect', async () => {
-                        if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
                         if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
 
                         // If ability was replaced
@@ -749,6 +748,7 @@ const exportCommand: SlashCommand = {
                         }
 
                         else {
+                            if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
                             if (myAbility.used < myAbility.usage) {
                                 if (matchStats.turn === 1) {
                                     if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
@@ -770,8 +770,6 @@ const exportCommand: SlashCommand = {
                     });
 
                     cskill.on('collect', () => {
-                        if (!skill) return interaction.followUp({ content: `You don't have a class skill`, ephemeral: true });
-
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
@@ -784,6 +782,7 @@ const exportCommand: SlashCommand = {
 
                         // Class active
                         else {
+                            if (!skill) return interaction.followUp({ content: `You don't have a class skill`, ephemeral: true });
                             if (myChar.id === 4767) return interaction.followUp({ content: "Asta can't use any abilities", ephemeral: true });
                             if (skill.cost > myStatsC.sm) return interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
                             else {

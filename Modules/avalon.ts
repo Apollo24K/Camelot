@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import { ChatInputCommandInteraction } from "discord.js";
 import { achievements } from "./achievements";
 import { customEmojis, addHeal } from "./functions";

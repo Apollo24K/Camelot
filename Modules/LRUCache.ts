@@ -10,7 +10,7 @@ class LRUCache<K, V> {
     constructor(capacity: number) {
         this._capacity = capacity;
         this._cache = new Map<K, V>();
-    }
+    };
 
     /**
      * Get the capacity of the cache
@@ -18,7 +18,7 @@ class LRUCache<K, V> {
      */
     get capacity(): number {
         return this._capacity;
-    }
+    };
 
     /**
      * Get the cache object
@@ -26,7 +26,7 @@ class LRUCache<K, V> {
      */
     get cache(): Map<K, V> {
         return this._cache;
-    }
+    };
 
     /**
      * Checks if the key exists in the cache
@@ -35,7 +35,7 @@ class LRUCache<K, V> {
      */
     has(key: K): boolean {
         return this._cache.has(key);
-    }
+    };
 
     /**
      * Gets the value associated with the key and moves it to the end (most recently used)
@@ -48,7 +48,7 @@ class LRUCache<K, V> {
         this._cache.delete(key);
         this._cache.set(key, value!);
         return value;
-    }
+    };
 
     /**
      * Sets a key-value pair in the cache
@@ -59,11 +59,14 @@ class LRUCache<K, V> {
     set(key: K, value: V): this {
         if (this.has(key)) this._cache.delete(key);
         else if (this._cache.size >= this._capacity) {
-            this._cache.delete(this._cache.keys().next().value);
-        }
+            const firstKey = this._cache.keys().next().value;
+            if (firstKey !== undefined) {
+                this._cache.delete(firstKey);
+            };
+        };
         this._cache.set(key, value);
         return this;
-    }
+    };
 
     /**
      * Get the size of the cache
@@ -71,14 +74,14 @@ class LRUCache<K, V> {
      */
     size(): number {
         return this._cache.size;
-    }
+    };
 
     /**
      * Clear the cache
      */
     clear(): void {
         this._cache.clear();
-    }
-}
+    };
+};
 
 export default LRUCache;

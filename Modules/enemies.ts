@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonStyle, ButtonBuilder } from "discord.js";
-import { Buffs, Gender, IenemyInfo, IskillInfo, MatchStats } from "../types";
+import { Buffs, CharacterRarity, Gender, IenemyInfo, IskillInfo, MatchStats } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
@@ -79,6 +79,20 @@ export class enemyInfo implements IenemyInfo {
 
     get url() {
         return this.image[Math.floor(Math.random() * this.image.length)];
+    };
+
+    // Entity info
+    get alias(): string[] {
+        return [];
+    };
+    get rarity(): CharacterRarity {
+        return "D";
+    };
+    get rarityEmoji(): string {
+        return "<:DTier:869316616071032843>";
+    };
+    get rarityValue(): number {
+        return 0;
     };
 };
 
