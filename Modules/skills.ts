@@ -1,5 +1,4 @@
 
-/* eslint-disable no-unused-vars */
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { dealDamage, addHeal } from "./functions";
 import { items } from "./items";

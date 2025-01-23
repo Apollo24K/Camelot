@@ -1,7 +1,6 @@
-/* eslint-disable no-unused-vars */
 import { ClassAbility } from "../types";
 import buffInfo from "./buffs";
-import { dealDamage, addHeal } from "./functions";
+import { addHeal } from "./functions";
 
 export default class curseInfo {
     private _name: string;

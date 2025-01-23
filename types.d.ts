@@ -23,6 +23,38 @@ export type BuffType = "*" | "+" | "=";
 
 export type IRoK = { name: string, id: string, char: number, ep: number; };
 
+export type ProfileImageArguments = {
+    profilecolor: string | null;
+    quality: string | null;
+    forceStatic: boolean;
+    thumbnail: string | undefined;
+
+    stats: DetailedStats;
+    ref: number;
+    classlevels: Record<string, number>;
+    floor: number;
+
+    guild: string | undefined;
+    party: string | undefined;
+
+    colorLight: string;
+    colorDark: string;
+
+    profilePicture: string;
+    classImage: string | undefined;
+    className: string | undefined;
+    classLevel: number | undefined;
+    userLvl: number;
+    lastActive: string;
+
+    weaponImage: string | undefined;
+    shieldImage: string | undefined;
+    helmetImage: string | undefined;
+    cuirassImage: string | undefined;
+    glovesImage: string | undefined;
+    bootsImage: string | undefined;
+};
+
 export type ClassStats = {
     hp: [number, number];
     atk: [number, number];
@@ -52,30 +84,6 @@ export interface IanimeInfo {
     thumbnailCharId?: number;
 };
 
-export type CharInfoOptions = {
-    staticImage?: string;
-};
-
-export interface IcharInfo {
-    name: string;
-    alias: string[];
-    animeInfo: IanimeInfo;
-    gender: Gender;
-    image: string;
-    id: number;
-    rarity: CharacterRarity;
-    options: CharInfoOptions;
-
-    anime: string;
-    anialias: string[];
-    staticImage?: string;
-    tryStaticImage: string;
-    rarityValue: number;
-    rarityEmoji: string;
-
-    getImage(premium: number, url: string, skin?: number, isStatic?: boolean);
-};
-
 export interface IskillInfo {
     id: number;
     cost: number;
@@ -86,22 +94,53 @@ export interface IskillInfo {
     set list(lis: any[]);
 };
 
-export interface IenemyInfo {
+export interface IentityInfo {
+    // Shared info
     name: string;
-    species: string;
-    title: string;
-    gender: Gender;
-    boss: boolean;
-    setStats: object;
-    multStats: object;
-    addStats: object;
-    loot: number[];
-    image: string[];
-    floor: number[];
     id: number;
-    ability?: IskillInfo;
+    gender: Gender;
+    image: string | string[];
 
+    // Character info
+    alias: string[];
+    animeInfo?: IanimeInfo;
+    rarity: CharacterRarity;
+    anime?: string;
+    anialias?: string[];
+    staticImage?: string;
+    rarityValue: number;
+    rarityEmoji: string;
+
+    // Enemy info
+    species: string;
+    boss: boolean;
+    setStats?: object;
+    multStats?: object;
+    addStats?: object;
+    loot: number[];
+    floor: number[];
+    ability?: IskillInfo;
     url: string;
+};
+
+export type CharInfoOptions = {
+    staticImage?: string;
+};
+
+export interface IcharInfo extends IentityInfo {
+    animeInfo: IanimeInfo;
+    image: string;
+    options: CharInfoOptions;
+    anime: string;
+    anialias: string[];
+    tryStaticImage: string;
+
+    getImage(premium: number, url: string, skin?: number, isStatic?: boolean);
+};
+
+export interface IenemyInfo extends IentityInfo {
+    title: string;
+    image: string[];
 };
 
 export interface IdelayedBuff {
@@ -114,11 +153,11 @@ export interface IdelayedBuff {
     set used(used: number);
 
     decrement(): void;
-}
+};
 
-export type ClassAbility = (myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IenemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+export type ClassAbility = (myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
 
-export type ItemAbility = (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IenemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+export type ItemAbility = (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
 
 type ReplaceButtonAction = {
     emoji?: string;
@@ -276,7 +315,7 @@ export interface UserSchema {
     skins: number[];
     eventpts: number;
     brbest: number;
-    mailbox: any[];
+    mailbox: { type: string, rewards: string, message: string, date: number; }[];
     eventrewreceived: number;
     gems: number;
     tutorial: number[];

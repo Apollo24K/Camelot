@@ -1,14 +1,12 @@
-/* eslint-disable no-unused-vars */
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
-import { getDetailedStats, dealDamage, deleteReplyIn, addHeal } from "./functions";
+import { getDetailedStats, dealDamage, addHeal } from "./functions";
 import { db, query } from "../db_handler";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
 import delayedBuffs from "./delayedBuffs";
 import buffInfo from "./buffs";
-import { Buffs, DetailedStats, IbuffInfo, IcharInfo, MatchStats } from "../types";
-import { enemyInfo } from "./enemies";
+import { Buffs, DetailedStats, IbuffInfo, IcharInfo, IentityInfo, MatchStats } from "../types";
 import { getUserSchema } from "./queries";
 
 type Ability = {
@@ -17,9 +15,9 @@ type Ability = {
     cost: number;
     desc: string;
     [key: string]: any;
-    ability?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, eStatsFixed: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: enemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, message: Message, ...list: any[]) => void;
-    passive?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: enemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
-    party?: (pStats: DetailedStats, myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: enemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+    ability?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, eStatsFixed: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, message: Message, ...list: any[]) => void;
+    passive?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+    party?: (pStats: DetailedStats, myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
 };
 
 export const abilities: Record<number, Ability> = {

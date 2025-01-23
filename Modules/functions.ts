@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import fs from 'fs';
 import { EmbedBuilder, AttachmentBuilder, ChatInputCommandInteraction, User } from "discord.js";
 import imagesize from 'imagesize';

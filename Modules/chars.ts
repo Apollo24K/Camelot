@@ -82,6 +82,23 @@ export default class charInfo implements IcharInfo {
         if (skin === undefined) return isStatic ? this.tryStaticImage : this.image;
         return skins[skin].image;
     };
+
+    // Entity info
+    get species() {
+        return "charInfo";
+    };
+    get boss() {
+        return false;
+    };
+    get loot(): number[] {
+        return [];
+    };
+    get floor(): number[] {
+        return [];
+    };
+    get url() {
+        return this.image;
+    };
 };
 
 export const characters: charInfo[] = [

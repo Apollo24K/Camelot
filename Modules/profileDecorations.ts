@@ -1,6 +1,6 @@
 import { Asset } from "./assets";
 
-type CostTypes = { gems?: number, coins?: number, lilies?: number, jades?: number; };
+export type CostTypes = { gems?: number, coins?: number, lilies?: number, jades?: number; };
 
 export class ProfileSet {
     private _name: string;
@@ -92,11 +92,22 @@ export class ProfileDecorations {
         return this._options;
     };
 
+    get delay() {
+        return this.options.delay ?? 70;
+    };
+    get credits() {
+        return this.options.credits ?? [];
+    };
+
     set set(obj) {
         this._set = obj;
     };
     set id(id) {
         this._id = id;
+    };
+
+    async loadImageArray(forceStatic: boolean = false) {
+        return await this.asset.loadImageArray(forceStatic);
     };
 };
 

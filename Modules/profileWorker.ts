@@ -4,6 +4,8 @@ import GIFEncoder from 'gifencoder';
 import { Asset } from "./assets";
 import { profileSets } from "./profileDecorations";
 import { setImmediate } from 'timers/promises';
+import { CompactUserSchema, ProfileImageArguments } from '../types';
+import { User } from 'discord.js';
 
 const newProfileColors = {
     creme: { text: '#FDE8FF', floor: '#a89aa8', gradStart: '#FDE8FF', gradEnd: '#000000' },
@@ -13,7 +15,7 @@ const newProfileColors = {
     mint: { text: '#C4FF03', floor: '#729201', gradStart: '#C4FF03', gradEnd: '#000000' },
     green: { text: '#82FF03', floor: '#509e00', gradStart: '#82FF03', gradEnd: '#000000' },
     emerald: { text: '#0DDF09', floor: '#068103', gradStart: '#0DDF09', gradEnd: '#000000' },
-    turquoise: { text: '#49DAE6', floor: '#006e6d', gradStart: '#3CCEDA', gradEnd: '#000000' }, // '#1CB1BE' },
+    turquoise: { text: '#49DAE6', floor: '#006e6d', gradStart: '#3CCEDA', gradEnd: '#000000' },
     blue: { text: '#09B8DF', floor: '#066e86', gradStart: '#09B8DF', gradEnd: '#000000' },
     sky_blue: { text: '#17E6FB', floor: '#0e8c98', gradStart: '#17E6FB', gradEnd: '#000000' },
     indigo: { text: '#1A70FF', floor: '#10469f', gradStart: '#1A70FF', gradEnd: '#000000' },
@@ -23,49 +25,49 @@ const newProfileColors = {
 };
 
 parentPort?.on('message', async (data) => {
-    const { user, stats } = data;
+    const { user, stats, profileArguments } = data;
     try {
-        const { buffer, format } = await getProfileImage(user, stats);
+        const { buffer, format } = await getProfileImage(user, stats, profileArguments);
         parentPort?.postMessage({ status: 'success', image: buffer.toString('base64'), format });
-    } catch (error) {
+    } catch (error: any) {
         parentPort?.postMessage({ status: 'error', error: error.message });
     }
 });
 
-async function getProfileImage(user, stats) {
+async function getProfileImage(user: User, stats: CompactUserSchema, profileArguments: ProfileImageArguments) {
     // Get background
     const [setid, bgid] = (stats.background ?? "").split(".");
-    const bg = setid ? profileSets[setid].assets[bgid] : profileSets[0].assets[0];
+    const bg = setid ? profileSets[parseInt(setid)].assets[parseInt(bgid)] : profileSets[0].assets[0];
 
     // Canvas properties
     const width = 800;
     const height = 460;
-    const res = { "high": 1, "medium": 0.75, "low": 0.6, "thumbnail": 0.4 }[stats.quality || ((bg.asset.fileType === "gif" && !stats.forceStatic) ? "medium" : "high")];
-    const profileColor = ['creme', 'red', 'orange', 'gold', 'mint', 'green', 'emerald', 'turquoise', 'blue', 'sky_blue', 'indigo', 'violet', 'purple', 'pink'].includes(stats.profilecolor) ? stats.profilecolor : 'turquoise';
+    const res = { "high": 1, "medium": 0.75, "low": 0.6, "thumbnail": 0.4 }[profileArguments.quality || ((bg.asset.fileType === "gif" && !profileArguments.forceStatic) ? "medium" : "high")] || 0.75;
+    const profileColor = ['creme', 'red', 'orange', 'gold', 'mint', 'green', 'emerald', 'turquoise', 'blue', 'sky_blue', 'indigo', 'violet', 'purple', 'pink'].includes(profileArguments.profilecolor || "") ? (profileArguments.profilecolor ?? 'turquoise') : 'turquoise';
 
     // Create a canvas
     const canvas = createCanvas(width * res, height * res);
     const ctx = canvas.getContext('2d');
 
     // Load images
-    const charImage = await new Asset({ path: stats.thumbnail || "Images/error/missing-char.png", url: stats.thumbnail || "https://i.ibb.co/284MfK6/missing-char.png", fallback: new Asset({ path: "Images/error/loading.png", url: "https://i.ibb.co/fG5ghJx/loading.png" }) }).loadImage();
-    const pfpImage = await new Asset({ url: user.profilePicture }).loadImage();
-    const coinsImage = await new Asset({ path: "Images/emojis/coins.png" }).loadImage();
-    const gemsImage = await new Asset({ path: "Images/emojis/gems.png" }).loadImage();
-    const liliumImage = await new Asset({ path: "Images/emojis/lilium.png" }).loadImage();
-    const jadeImage = await new Asset({ path: "Images/emojis/jade.png" }).loadImage();
-    // const achvmImage = await new Asset({ path: "Images/emojis/trophy.png" }).loadImage();
+    const charImage = await new Asset({ path: profileArguments.thumbnail || "Images/error/missing-char.png", url: profileArguments.thumbnail || "https://i.ibb.co/284MfK6/missing-char.png", fallback: new Asset({ path: "Images/error/loading.png", url: "https://i.ibb.co/fG5ghJx/loading.png" }) }).loadImage();
+    const pfpImage = await new Asset({ path: "", url: profileArguments.profilePicture }).loadImage();
+    const coinsImage = await new Asset({ path: "Images/emojis/coins.png", url: "https://i.ibb.co/sqLg2gc/coins.png" }).loadImage();
+    const gemsImage = await new Asset({ path: "Images/emojis/gems.png", url: "https://i.ibb.co/30CVNbR/gems.png" }).loadImage();
+    const jadeImage = await new Asset({ path: "Images/emojis/jade.png", url: "https://i.ibb.co/QPCrsCV/jade.png" }).loadImage();
+    const liliumImage = await new Asset({ path: "Images/emojis/lilium.png", url: "https://i.ibb.co/Cv1jd40/lilium.png" }).loadImage();
+    // const achvmImage = await new Asset({ path: "Images/emojis/trophy.png", url: "https://i.ibb.co/DpngcCT/trophy.png" }).loadImage();
 
     let classImage;
-    if (stats.class !== null) classImage = await new Asset({ url: stats.classImage }).loadImage();
+    if (profileArguments.classImage) classImage = await new Asset({ path: "", url: profileArguments.classImage }).loadImage();
 
     let weaponImage, shieldImage, helmetImage, cuirassImage, glovesImage, bootsImage;
-    if (stats.weaponImage) weaponImage = await new Asset({ url: stats.weaponImage }).loadImage();
-    if (stats.shieldImage) shieldImage = await new Asset({ url: stats.shieldImage }).loadImage();
-    if (stats.helmetImage) helmetImage = await new Asset({ url: stats.helmetImage }).loadImage();
-    if (stats.cuirassImage) cuirassImage = await new Asset({ url: stats.cuirassImage }).loadImage();
-    if (stats.glovesImage) glovesImage = await new Asset({ url: stats.glovesImage }).loadImage();
-    if (stats.bootsImage) bootsImage = await new Asset({ url: stats.bootsImage }).loadImage();
+    if (profileArguments.weaponImage) weaponImage = await new Asset({ path: "", url: profileArguments.weaponImage }).loadImage();
+    if (profileArguments.shieldImage) shieldImage = await new Asset({ path: "", url: profileArguments.shieldImage }).loadImage();
+    if (profileArguments.helmetImage) helmetImage = await new Asset({ path: "", url: profileArguments.helmetImage }).loadImage();
+    if (profileArguments.cuirassImage) cuirassImage = await new Asset({ path: "", url: profileArguments.cuirassImage }).loadImage();
+    if (profileArguments.glovesImage) glovesImage = await new Asset({ path: "", url: profileArguments.glovesImage }).loadImage();
+    if (profileArguments.bootsImage) bootsImage = await new Asset({ path: "", url: profileArguments.bootsImage }).loadImage();
 
     // Create canvas of static parts to avoid redraving them each frame
     const staticCanvas = createCanvas(width, height);
@@ -101,7 +103,7 @@ async function getProfileImage(user, stats) {
         sctx.save();
         // sctx.translate(670, 430);
         sctx.rotate(rotationAngle);
-        sctx.fillText(`EP ${stats.stats.ep}`, 680, 496, 120);
+        sctx.fillText(`EP ${profileArguments.stats.ep}`, 680, 496, 120);
         sctx.restore();
 
         // Card Shadow Test
@@ -141,11 +143,11 @@ async function getProfileImage(user, stats) {
         sctx.font = '24px Arial';
         sctx.textAlign = 'center';
         sctx.textBaseline = 'middle';
-        if (classImage) {
+        if (classImage && profileArguments.className) {
             sctx.drawImage(classImage, 678, 10, 58, 58);
-            sctx.fillText(stats.className, 707, 84, 166);
+            sctx.fillText(profileArguments.className, 707, 84, 166);
             sctx.font = 'bold 30px Arial';
-            const clvlStr = `${stats.classLevel}`;
+            const clvlStr = `${profileArguments.classLevel}`;
             const clvlStrWidth = sctx.measureText(clvlStr).width;
             sctx.fillText(clvlStr, 707, 112, 166);
             sctx.textAlign = 'end';
@@ -157,7 +159,7 @@ async function getProfileImage(user, stats) {
 
         // Gear
         const gearOffsetX = 615, gearOffsetY = 141;
-        if ("shieldid" in stats.stats) {
+        if ("shieldid" in profileArguments.stats) {
             if (weaponImage) sctx.drawImage(weaponImage, -15 + gearOffsetX, gearOffsetY, 30, 30);
             if (shieldImage) sctx.drawImage(shieldImage, 15 + gearOffsetX, gearOffsetY, 30, 30);
             if (helmetImage) sctx.drawImage(helmetImage, 55 + gearOffsetX, gearOffsetY, 30, 30);
@@ -205,8 +207,8 @@ async function getProfileImage(user, stats) {
             sctx.closePath();
             // Draw Profile Section
             const gradient = sctx.createLinearGradient(offsetX + xpBarOffsetX, offsetY + xpBarOffsetY, xpBarWidth, xpBarHeight);
-            gradient.addColorStop(0, newProfileColors[profileColor].gradStart); // Light
-            gradient.addColorStop(1, newProfileColors[profileColor].gradEnd); // Dark
+            gradient.addColorStop(0, newProfileColors[profileColor as keyof typeof newProfileColors].gradStart); // Light
+            gradient.addColorStop(1, newProfileColors[profileColor as keyof typeof newProfileColors].gradEnd); // Dark
             sctx.fillStyle = gradient;
             sctx.fill();
 
@@ -231,17 +233,17 @@ async function getProfileImage(user, stats) {
             sctx.lineTo(offsetX + floorOffsetX + 126, offsetY + floorOffsetY + 15);
             sctx.lineTo(offsetX + floorOffsetX + 6, offsetY + floorOffsetY + 13);
             sctx.closePath();
-            sctx.fillStyle = newProfileColors[profileColor].floor;
+            sctx.fillStyle = newProfileColors[profileColor as keyof typeof newProfileColors].floor;
             sctx.fill();
             // Text
-            sctx.fillStyle = newProfileColors[profileColor].text;
+            sctx.fillStyle = newProfileColors[profileColor as keyof typeof newProfileColors].text;
             sctx.font = 'bold 15px Arial';
             sctx.textAlign = 'start';
             sctx.textBaseline = 'middle';
             sctx.fillText("Floor", offsetX + floorOffsetX + 15, offsetY + floorOffsetY + 5, 80);
             sctx.font = 'bold 30px Arial';
             sctx.textAlign = 'center';
-            sctx.fillText(`${stats.floor}`, offsetX + floorOffsetX + 94, offsetY + floorOffsetY - 1, 60);
+            sctx.fillText(`${profileArguments.floor}`, offsetX + floorOffsetX + 94, offsetY + floorOffsetY - 1, 60);
 
             // Username
             sctx.font = '30px Arial';
@@ -250,7 +252,7 @@ async function getProfileImage(user, stats) {
             sctx.fillText(`${user.username} [${stats.rank}]`, offsetX + 135, offsetY + 59, 280);
 
             // Level
-            const levelStr = `${stats.userLvl}`;
+            const levelStr = `${profileArguments.userLvl}`;
             sctx.font = '30px Arial';
             sctx.textAlign = 'end';
             sctx.textBaseline = 'middle';
@@ -265,7 +267,7 @@ async function getProfileImage(user, stats) {
             sctx.font = '18px Arial';
             sctx.textAlign = 'start';
             sctx.textBaseline = 'middle';
-            sctx.fillText(`Last active:- ${stats.lastActive}`, offsetX + 132, offsetY + 117, 200);
+            sctx.fillText(`Last active:- ${profileArguments.lastActive}`, offsetX + 132, offsetY + 117, 200);
 
             // Guild
             sctx.font = 'bold 18px Arial';
@@ -273,7 +275,7 @@ async function getProfileImage(user, stats) {
             sctx.textBaseline = 'middle';
             sctx.fillText("Guild", offsetX + 75, offsetY + 150, 100);
             sctx.font = '18px Arial';
-            sctx.fillText(stats.guild?.name || "None", offsetX + 135, offsetY + 150, 160);
+            sctx.fillText(profileArguments.guild || "None", offsetX + 135, offsetY + 150, 160);
 
             // Party
             sctx.font = 'bold 18px Arial';
@@ -281,7 +283,7 @@ async function getProfileImage(user, stats) {
             sctx.textBaseline = 'middle';
             sctx.fillText("Party", offsetX + 75, offsetY + 175, 100);
             sctx.font = '18px Arial';
-            sctx.fillText(stats.party?.name || "None", offsetX + 135, offsetY + 175, 160);
+            sctx.fillText(profileArguments.party || "None", offsetX + 135, offsetY + 175, 160);
 
             // Coins
             sctx.drawImage(coinsImage, offsetX + 310, offsetY + 140, 24, 24);
@@ -301,8 +303,7 @@ async function getProfileImage(user, stats) {
         };
 
         // Function to resize canvas
-        // eslint-disable-next-line no-inner-declarations
-        function resizeCanvas(scale) {
+        function resizeCanvas(scale: number) {
             // Create a temporary canvas
             const tempCanvas = createCanvas(staticCanvas.width, staticCanvas.height);
             tempCanvas.getContext('2d').drawImage(staticCanvas, 0, 0);
@@ -320,7 +321,7 @@ async function getProfileImage(user, stats) {
     };
 
     // Load background
-    const frames = await bg.loadImageArray(stats.forceStatic);
+    const frames = await bg.loadImageArray(profileArguments.forceStatic);
 
     // Create GIF encoder
     const encoder = new GIFEncoder(width * res, height * res);
@@ -341,6 +342,7 @@ async function getProfileImage(user, stats) {
         ctx.drawImage(staticCanvas, 0, 0);
 
         // Add the current frame to the GIF
+        // @ts-expect-error
         encoder.addFrame(ctx);
     };
 

@@ -6,7 +6,7 @@ import { CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySc
 //---------------------------------//
 
 export const getFullUserSchema = async (id: string): Promise<UserSchema | undefined> => {
-    const [user] = await query(`SELECT rowid, * FROM users WHERE id = $1`, [id]) as [UserSchema];
+    const [user] = await query(`SELECT * FROM users WHERE id = $1`, [id]) as [UserSchema];
     return user;
 };
 
@@ -33,52 +33,57 @@ export const getUserSchemas = async (ids: string[] | "*", whereClause?: string):
 };
 
 export const getServerSchema = async (id: string): Promise<ServerSchema | undefined> => {
-    const [server] = await query(`SELECT rowid, * FROM servers WHERE id = $1`, [id]) as [ServerSchema];
+    const [server] = await query(`SELECT * FROM servers WHERE id = $1`, [id]) as [ServerSchema];
     return server;
 };
 
 export const getWeaponSchema = async (uniqueid: string): Promise<WeaponSchema | undefined> => {
-    const [weapon] = await query(`SELECT rowid, * FROM weapons WHERE uniqueid = $1`, [uniqueid]) as [WeaponSchema];
+    const [weapon] = await query(`SELECT * FROM weapons WHERE uniqueid = $1`, [uniqueid]) as [WeaponSchema];
     return weapon;
 };
 
+export const getWeaponSchemas = async (uniqueids: string[]): Promise<WeaponSchema[]> => {
+    const weapons = await query(`SELECT * FROM weapons WHERE uniqueid = ANY($1)`, [uniqueids]) as WeaponSchema[];
+    return weapons;
+};
+
 export const getGuildSchema = async (id: string): Promise<GuildSchema | undefined> => {
-    const [guild] = await query(`SELECT rowid, * FROM guilds WHERE id = $1`, [id]) as [GuildSchema];
+    const [guild] = await query(`SELECT * FROM guilds WHERE id = $1`, [id]) as [GuildSchema];
     return guild;
 };
 
 export const getGuildDonationSchema = async (id: string): Promise<GuildDonationSchema | undefined> => {
-    const [guildDonation] = await query(`SELECT rowid, * FROM guild_donations WHERE id = $1`, [id]) as [GuildDonationSchema];
+    const [guildDonation] = await query(`SELECT * FROM guild_donations WHERE id = $1`, [id]) as [GuildDonationSchema];
     return guildDonation;
 };
 
 export const getStampedeSchema = async (id: string): Promise<StampedeSchema | undefined> => {
-    const [stampede] = await query(`SELECT rowid, * FROM stampedes WHERE id = $1`, [id]) as [StampedeSchema];
+    const [stampede] = await query(`SELECT * FROM stampedes WHERE id = $1`, [id]) as [StampedeSchema];
     return stampede;
 };
 
 export const getPartySchema = async (id: string): Promise<PartySchema | undefined> => {
-    const [party] = await query(`SELECT rowid, * FROM parties WHERE id = $1`, [id]) as [PartySchema];
+    const [party] = await query(`SELECT * FROM parties WHERE id = $1`, [id]) as [PartySchema];
     return party;
 };
 
 export const getTradeSchema = async (id: string): Promise<TradeSchema | undefined> => {
-    const [trade] = await query(`SELECT rowid, * FROM trades WHERE id = $1`, [id]) as [TradeSchema];
+    const [trade] = await query(`SELECT * FROM trades WHERE id = $1`, [id]) as [TradeSchema];
     return trade;
 };
 
 export const getFAQSchema = async (id: string): Promise<FAQSchema | undefined> => {
-    const [faq] = await query(`SELECT rowid, * FROM faq WHERE id = $1`, [id]) as [FAQSchema];
+    const [faq] = await query(`SELECT * FROM faq WHERE id = $1`, [id]) as [FAQSchema];
     return faq;
 };
 
 export const getFAQSchemaByName = async (name: string): Promise<FAQSchema | undefined> => {
-    const [faq] = await query(`SELECT rowid, * FROM faq WHERE name = $1`, [name]) as [FAQSchema];
+    const [faq] = await query(`SELECT * FROM faq WHERE name = $1`, [name]) as [FAQSchema];
     return faq;
 };
 
 export const getRaidSchema = async (id: string): Promise<RaidSchema | undefined> => {
-    const [raid] = await query(`SELECT rowid, * FROM raids WHERE id = $1`, [id]) as [RaidSchema];
+    const [raid] = await query(`SELECT * FROM raids WHERE id = $1`, [id]) as [RaidSchema];
     return raid;
 };
 
@@ -91,9 +96,12 @@ export const getTotalPlayers = async (): Promise<number> => {
     return result.players;
 };
 
-export const getPartyMembers = async (partyId: string): Promise<{ name: string; stampedechar: number; }[]> => {
-    const members = await query(`SELECT name, stampedechar FROM users WHERE party = $1`, [partyId]) as { name: string; stampedechar: number; }[];
-    return members;
+export const getPartyMembers = async (partyId: string, options: { excludeIds: string[], hasChristmasChar: boolean; } = { excludeIds: [], hasChristmasChar: false }): Promise<Pick<UserSchema, "id" | "name" | "party" | "stampedechar" | "craze_equipment">[]> => {
+    let members = await query(`SELECT id, name, party, stampedechar, craze_equipment FROM users WHERE party = $1 AND id != ANY($2)`, [partyId, options.excludeIds]) as Pick<UserSchema, "id" | "name" | "party" | "stampedechar" | "craze_equipment">[];
+
+    if (options.hasChristmasChar) members = members.filter((e) => e.craze_equipment.char !== undefined);
+
+    return members ?? [];
 };
 
 export const getLatestStampede = async (): Promise<StampedeSchema | undefined> => {
@@ -140,6 +148,63 @@ export const getWeaponCount = async (itemId: number): Promise<number> => {
 export const getUserWeapons = async (userId: string): Promise<WeaponSchema[]> => {
     const weapons = await query(`SELECT * FROM weapons WHERE id = $1`, [userId]) as WeaponSchema[];
     return weapons;
+};
+
+export const getReferredUsers = async (userId: string): Promise<(Pick<UserSchema, "id" | "name" | "created" | "dungeon_floors" | "xp"> & { age: number; floor: number; level: number; })[]> => {
+    const users = await query(`SELECT id, name, created, dungeon_floors, xp,
+        FLOOR(EXTRACT(EPOCH FROM (NOW() - created)) / 86400) AS age,
+        (SELECT COALESCE(MAX(CAST(key AS INTEGER)), 1)
+         FROM jsonb_object_keys(dungeon_floors) key) AS floor,
+        1::integer as level
+        FROM users
+        WHERE referred_by = $1
+    `, [userId]) as (Pick<UserSchema, "id" | "name" | "created" | "dungeon_floors" | "xp"> & { age: number; floor: number; level: number; })[];
+    return users;
+};
+
+export const getIndirectReferredUsers = async (userId: string): Promise<(Pick<UserSchema, "id" | "name" | "xp"> & { age: number; floor: number; level: number; })[]> => {
+    const { rows: users } = await query(`
+        SELECT u.id, u.name, u.xp,
+        FLOOR(EXTRACT(EPOCH FROM (NOW() - u.created)) / 86400) AS age,
+        (SELECT COALESCE(MAX(CAST(key AS INTEGER)), 1)
+         FROM jsonb_object_keys(u.dungeon_floors) key) AS floor,
+        1::integer as level
+        FROM users u
+        WHERE u.referred_by IN (
+            SELECT id FROM users WHERE referred_by = $1
+        )
+    `, [userId]) as { rows: (Pick<UserSchema, "id" | "name" | "xp"> & { age: number; floor: number; level: number; })[]; };
+    return users;
+};
+
+export const getReferralLeaderboard = async (type: "weekly" | "monthly" | "alltime"): Promise<{ referred_by: string; referral_count: string; }[]> => {
+    const timeFilter = type === "weekly" ?
+        "EXTRACT(EPOCH FROM (NOW() - created)) / 86400 < 7" :
+        type === "monthly" ?
+            "EXTRACT(EPOCH FROM (NOW() - created)) / 86400 < 30" :
+            "TRUE";
+
+    const leaderboard = await query(
+        `SELECT referred_by, COUNT(*)::text as referral_count 
+         FROM users 
+         WHERE referred_by IS NOT NULL 
+         AND ${timeFilter}
+         GROUP BY referred_by 
+         ORDER BY COUNT(*) DESC`,
+        []
+    ) as { referred_by: string; referral_count: string; }[];
+
+    return leaderboard;
+};
+
+
+//--------------------------------------------//
+//              CHECK STATEMENTS              //
+//--------------------------------------------//
+
+export const doesUserExist = async (userId: string): Promise<boolean> => {
+    const [exists] = await query(`SELECT id FROM users WHERE id = $1`, [userId]) as [{ id: string; }];
+    return !!exists;
 };
 
 //-------------------------------------------//
