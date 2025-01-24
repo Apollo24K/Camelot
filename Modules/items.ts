@@ -3145,7 +3145,7 @@ export const items = [
 
 
     //! Rings
-    new ringInfo("Ring of Deliverance", "ring", "ring", ["chest"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new ringInfo("Ecplise Fang", "ring", "ring", ["chest"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         // On Ability: +20/25/30% MD (2 turns)
         matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
@@ -3178,7 +3178,7 @@ export const items = [
         }, 9999, 1));
 
     }, (level) => `triggers Hope's End, when your health reaches below **${[10,12.5,15][level-1]}%** of your max HP, reducing your opponent's DEF and MR to 0 for the rest of the turn and launching a calamitous strike equal to **${[100,125,150][level-1]}%** of your normal damage.`, "Hope's End Signet Description", "mythical", 689),
-    new ringInfo("Trusilver Loop", "ring", "ring", ["chest"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new ringInfo("Astral Coronet", "ring", "ring", ["chest"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         
         myStats.trusilverLoop = 0;
         // On 16/13/10th abiltiy usage: 200% ATK/MD
@@ -3200,7 +3200,7 @@ export const items = [
         myStats.shield += Math.floor(myStats.maxhp * (0.5 + 0.1 * (level - 1)));
 
     }, (level) => `Loses **${[20, 22.5, 25, 27.5, 30][level - 1]}%** of your current HP and gains a shield equal to **${[50, 60, 70, 80, 90][level - 1]}%** of your max HP.`, "Oath of Love Description", "mythical", 691),
-    new ringInfo("Braveness", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan
+    new ringInfo("Azure Aegis", "ring", "ring", ["raid"], "", "", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan
         
         // +ATK/MD += Shield/ max: 40/60% ATK/MD
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3209,7 +3209,7 @@ export const items = [
         }, 9999));
 
     }, (level) => `Increases own ATK and MD based on your shield amount.`, "Braveness Description", "legendary", 692),
-    new ringInfo("Ring of Haunting", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* DoT
+    new ringInfo("Void's Whisper", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* DoT
 
         // -3/4.5/6% own HP, -6/7.5/9% enemy HP
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3218,7 +3218,7 @@ export const items = [
         }, 9999));
         
     }, (level) => `lose **${[3, 4.5, 6][level-1]}%** of your max HP and deal **${[6, 7.5, 9][level-1]}%** max HP to the enemy.`, "Ring of Haunting Description", "mythical", 693),
-    new ringInfo("Ring of Dauntless", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
+    new ringInfo("Dread Crown", "ring", "ring", ["raid"], "", "", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
         
         // steal 2/4/6/8/10 💧 from enemy
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3227,7 +3227,7 @@ export const items = [
         }, 9999));
 
     }, (level) => `steal **${[2,4,6,8,10][level-1]}**💧 from the enemy every turn.`, "Ring of Dauntless Description", "legendary", 694),
-    new ringInfo("Ring of Sacrifice", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+    new ringInfo("Thorn Script", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
 
         // -2.5/5/7% own HP, +10/15/20% counter chance ()
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3236,7 +3236,7 @@ export const items = [
         }, 9999));
 
     }, (level) => `lose **${[2.5, 5, 7][level-1]}%**of your max HP every turn but you have **+${[10, 15, 20][level-1]}%** counter chance.`, "Ring of Sacrifice Description", "mythical", 695),
-    new ringInfo("Ring of Anti-Heroism", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+    new ringInfo("Crimson Talon", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
         
         // On Counter: +5% CD (max: 40/50/60%)
         matchStats.on("counter", { maxUsage: 8 + 2 * (level - 1), callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
@@ -3248,7 +3248,7 @@ export const items = [
         }, });
 
     }, (level) => `gain **5%** CD every time you counter, up to **${[40, 50, 60][level-1]}%**`, "Ring of Anti-Heroism Description", "unique", 696),
-    new ringInfo("Ring of the Mass", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
+    new ringInfo("Mech Core", "ring", "ring", ["raid"], "", "", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
 
         // On Counter: Heal 8/9/10% current HP
         matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
