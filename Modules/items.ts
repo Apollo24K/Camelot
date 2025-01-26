@@ -3753,7 +3753,7 @@ export const items = [
             new ButtonBuilder().setCustomId('ATK').setEmoji(buttonConfigs[0].emoji).setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setCustomId('DEF').setEmoji(buttonConfigs[1].emoji).setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setCustomId('ABILITY').setEmoji(myStats.replaceButton?.ability?.emoji || '✨').setStyle(ButtonStyle.Secondary),
-            new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.skill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+            new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.cskill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
             new ButtonBuilder().setCustomId('SKIP').setEmoji(myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>').setStyle(ButtonStyle.Secondary)
         ];
         let availableButtons = [0, 1, 2, 3];
@@ -3763,14 +3763,13 @@ export const items = [
             buttons[0].setEmoji('✉️').setStyle(ButtonStyle.Success);
             buttons[1].setEmoji('✉️').setStyle(ButtonStyle.Danger);
 
-            const row = new ActionRowBuilder().addComponents(...buttons); 
-            return new ActionRowBuilder().addComponents(...buttons);
+            return new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
         }
 
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 6 === 0) {
                 // every 6th turn: Update ATK/ DEF to green/ red envelopes
-                matchStats.interaction.editReply({ components: [updateButtons(buttons)] });
+                matchStats.interaction.editReply({ components: [updateButtons(buttons).toJSON()] });
 
                 // Increases CD by 50% on ATK
                 matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
@@ -3787,8 +3786,7 @@ export const items = [
                 buttons[1].setEmoji(buttonConfigs[1].emoji).setStyle(ButtonStyle.Secondary);
 
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    const row = new ActionRowBuilder().addComponents(...buttons);
-                    matchStats.interaction.editReply({ components: [row] });
+                    matchStats.interaction.editReply({ components: [new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons)] });
                 }));
             }
         }, 9999));
@@ -3877,7 +3875,7 @@ export const items = [
                 new ButtonBuilder().setCustomId('ATK').setEmoji(myStats.replaceButton?.atk?.emoji || '⚔️').setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder().setCustomId('DEF').setEmoji(myStats.replaceButton?.def?.emoji || '🛡️').setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder().setCustomId('ABILITY').setEmoji(myStats.replaceButton?.ability?.emoji || '✨').setStyle(ButtonStyle.Secondary),
-                new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.skill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+                new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.cskill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
                 new ButtonBuilder().setCustomId('SKIP').setEmoji(myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>').setStyle(ButtonStyle.Secondary)
             ];
             
@@ -3899,7 +3897,7 @@ export const items = [
             new ButtonBuilder().setCustomId('ATK').setEmoji(myStats.replaceButton?.atk?.emoji || '⚔️').setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setCustomId('DEF').setEmoji(myStats.replaceButton?.def?.emoji || '🛡️').setStyle(ButtonStyle.Secondary),
             new ButtonBuilder().setCustomId('ABILITY').setEmoji(myStats.replaceButton?.ability?.emoji || '✨').setStyle(ButtonStyle.Secondary),
-            new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.skill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+            new ButtonBuilder().setCustomId('SKILL').setEmoji(myStats.replaceButton?.cskill?.emoji || '⚜️').setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
             new ButtonBuilder().setCustomId('SKIP').setEmoji(myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>').setStyle(ButtonStyle.Secondary)
         ];
 
@@ -4230,7 +4228,7 @@ export const items = [
 
                 // On Enemy Dodge: +2 rounds to all user buffs
                 Object.keys(mybuff).forEach((stat) => {
-                    mybuff[stat].forEach((buff: any) => {
+                    mybuff[stat as keyof Buffs].forEach((buff: any) => {
                         if (!buff.isDebuff) {
                             buff.last += 2;
                         }

@@ -1033,7 +1033,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.shield = myStats.maxhp * 0.65;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (!eStats.domain) eStats.shield += eStats.shield * 0.175;
-                matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     if (target === eStats) {
                         if (myStats.mdChance > 0) {
                             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
