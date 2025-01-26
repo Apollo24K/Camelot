@@ -40,3 +40,6 @@ build/
 # Various
 responsetimes.json
 response_time_plot.png
+
+# Poke
+slashCommands/fluxadmin.ts

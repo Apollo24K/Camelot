@@ -132,6 +132,8 @@ async function createTables() {
         raidxp INT DEFAULT 0 NOT NULL,
         guild_marks BIGINT DEFAULT 0 NOT NULL,
         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        image_credits INT DEFAULT 0 NOT NULL,
+        image_credits_claimed INT DEFAULT 0 NOT NULL,
 
         -- Characters table columns
         chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
@@ -293,6 +295,8 @@ async function alterTables() {
     // This function can be used for migrations
     // Example:
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS new_column TEXT');
+    //await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');
+    //await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits_claimed INT DEFAULT 0 NOT NULL');
 };
 
 async function dropTables() {

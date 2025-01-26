@@ -151,6 +151,8 @@ export interface UserSchema {
     rankscore: number;
     raidxp: number;
     guild_marks: number;
+    image_credits: number;
+    image_credits_claimed: number;
     created: Date;
 
     chars: number[];
