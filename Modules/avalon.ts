@@ -1,9 +1,8 @@
-/* eslint-disable no-unused-vars */
 import { ChatInputCommandInteraction } from "discord.js";
 import { achievements } from "./achievements";
 import { customEmojis, addHeal } from "./functions";
 import Trigger from "./trigger";
-import { Buffs, MatchStats, TriggerEvents, TriggerOptions } from "../types";
+import { Buffs, DetailedStats, MatchStats, TriggerEvents, TriggerOptions } from "../types";
 import buffInfo from "./buffs";
 
 export default class Avalon {
@@ -13,7 +12,7 @@ export default class Avalon {
 
     };
 
-    static checkIfEnded(myStatsC: any, eStatsC: any, matchStats: any, notice: any, interaction: any, minionDefeated: any, editEmbed: any, endMatch: any) {
+    static checkIfEnded(myStatsC: DetailedStats, eStatsC: DetailedStats, matchStats: MatchStats, notice: string[], interaction: ChatInputCommandInteraction, minionDefeated: any, editEmbed: any, endMatch: any) {
         if (myStatsC.hp < 1) {
             if (matchStats.currentCharacter) {
                 matchStats.trigger("minionDeath", myStatsC, eStatsC, myStatsC.buffs, eStatsC.buffs, {});
@@ -76,7 +75,7 @@ export default class Avalon {
         return bar;
     };
 
-    static padStats(stats: any) {
+    static padStats(stats: DetailedStats) {
         let line1 = customEmojis.atk, line2 = customEmojis.md;
 
         let len = Math.max(`${stats.atk}`.length, `${stats.md}`.length);

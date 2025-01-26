@@ -1,21 +1,20 @@
 
-/* eslint-disable no-unused-vars */
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Message } from "discord.js";
-import { dealDamage, deleteReplyIn, addHeal } from "./functions";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
+import { dealDamage, addHeal } from "./functions";
 import { items } from "./items";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
-import { CharacterRarity } from "../types";
-import { query } from "../db_handler";
+import { CharacterRarity, ClassAbility, IskillInfo } from "../types";
+import { getUserSchema } from "./queries";
 
-export default class skillInfo {
+export default class skillInfo implements IskillInfo {
     private _id: number;
     private _cost: number;
-    private _skill: (...args: any[]) => void;
-    private _passive: (...args: any[]) => void;
+    private _skill: ClassAbility;
+    private _passive: ClassAbility;
     private _list: any[];
 
-    constructor(id: number, cost: number, skill: (...args: any[]) => void, passive: (...args: any[]) => void = () => { }, list: any[] = []) {
+    constructor(id: number, cost: number, skill: ClassAbility, passive: ClassAbility = () => { }, list: any[] = []) {
         this._id = id;
         this._cost = cost;
         this._skill = skill;
@@ -38,6 +37,7 @@ export default class skillInfo {
     get list() {
         return this._list;
     };
+
     set list(lis: any[]) {
         this._list = lis ?? [];
     };
@@ -131,7 +131,7 @@ export const skills: skillInfo[] = [
         // Duelist counters the next attack
         if (myStats.classUsedRound > matchStats.round - 3) {
             myStats.sm += 50;
-            return matchStats.interaction.channel.send(`Duelist ability can only be used once every 3 rounds.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Duelist ability can only be used once every 3 rounds.`, ephemeral: true });
         };
         myStats.counter = 1;
         matchStats.turn = matchStats.turnSkill;
@@ -271,7 +271,7 @@ export const skills: skillInfo[] = [
         // Soulfist 
         if (myStats.classUsed >= 1) {
             myStats.sm += 100;
-            return matchStats.interaction.followUp({ content: `Soulfist skill can only be used 1 time.`, ephemeral: true }); //.then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Soulfist skill can only be used 1 time.`, ephemeral: true });
         };
         myStats.classUsed ||= 0;
         myStats.classUsed++;
@@ -390,7 +390,7 @@ export const skills: skillInfo[] = [
         matchStats.turn = matchStats.turnSkill;
         if (myStats.classUsed >= 12) {
             myStats.sm += 40;
-            return matchStats.interaction.channel.send(`Asura ability can only be used 12 times.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Asura ability can only be used 12 times.`, ephemeral: true });
         };
 
         const heal = myStats.asuraMaxHp * 0.1;
@@ -423,7 +423,7 @@ export const skills: skillInfo[] = [
         // Outlaw steals the equivalent of 7.5% of his stats from the enemy for 3 rounds
         if (myStats.classUsedRound > matchStats.round - 5) {
             myStats.sm += 40;
-            return matchStats.interaction.channel.send(`Outlaw ability can only be used once every 5 rounds.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Outlaw ability can only be used once every 5 rounds.`, ephemeral: true });
         };
 
         const satk = Math.min(Math.floor(myStats.atk * 0.1), eStats.atk); eStats.atk -= satk; myStats.atk += satk;
@@ -455,11 +455,11 @@ export const skills: skillInfo[] = [
         // Rogue steals the equivalent of 16% of his stats from the enemy for 4 rounds
         if (myStats.classUsed >= 6) {
             myStats.sm += 40;
-            return matchStats.interaction.channel.send(`Rogue ability can only be used 6 times.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Rogue ability can only be used 6 times.`, ephemeral: true });
         };
         if (myStats.classUsedRound > matchStats.round - 5) {
             myStats.sm += 40;
-            return matchStats.interaction.channel.send(`Rogue ability can only be used once every 5 rounds.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Rogue ability can only be used once every 5 rounds.`, ephemeral: true });
         };
 
         const satk = Math.min(Math.floor(myStats.atk * 0.2), eStats.atk); eStats.atk -= satk; myStats.atk += satk;
@@ -568,7 +568,7 @@ export const skills: skillInfo[] = [
     //         matchStats.heap1 = [];
     //         notice.push(`\n⚜️ **${char.name}** stopped ${char.gender === "F" ? "her" : "his"} transformation`);
     //     } else {
-    //         if (myStats.sm < 25) return matchStats.interaction.channel.send("You need at least **25**\\💧 to sustain this form");
+    //         if (myStats.sm < 25) return matchStats.interaction.followUp({ content: "You need at least **25**\\💧 to sustain this form", ephemeral: true });
     //         matchStats.consumeMana = 25;
 
     //         let atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.33), "9999");
@@ -604,11 +604,11 @@ export const skills: skillInfo[] = [
         // Demonic
         if (matchStats.round < 6) {
             myStats.sm += 80;
-            return matchStats.interaction.followUp({ content: `Demonic skill can only be used after round 6.`, ephemeral: true }); //.then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Demonic skill can only be used after round 6.`, ephemeral: true });
         };
         if (myStats.classUsed >= 1) {
             myStats.sm += 80;
-            return matchStats.interaction.followUp({ content: `Demonic skill can only be used 1 time.`, ephemeral: true }); //.then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Demonic skill can only be used 1 time.`, ephemeral: true });
         };
         myStats.classUsed ||= 0;
         myStats.classUsed++;
@@ -656,7 +656,7 @@ export const skills: skillInfo[] = [
         // Slayer counters the next 2 attacks
         if (myStats.classUsedRound > matchStats.round - 4) {
             myStats.sm += 60;
-            return matchStats.interaction.channel.send(`Slayer ability can only be used once every 4 rounds.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Slayer ability can only be used once every 4 rounds.`, ephemeral: true });
         };
         myStats.classUsedRound = matchStats.round;
 
@@ -707,6 +707,12 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(45, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Summoner summons spirits
+
+        myStats.sm += 50;
+        return matchStats.interaction.followUp({ content: `Summoner skill has been disabled for the time being.`, ephemeral: true });
+
+
+
         matchStats.myStatsCC = { ...myStats };
         matchStats.currentCharacter = 1;
 
@@ -735,14 +741,14 @@ export const skills: skillInfo[] = [
         // Shaman adds a shield of 20% max HP 
         if (myStats.classUsed >= 4) {
             myStats.sm += 60;
-            return matchStats.interaction.followUp({ content: `Shaman skill can only be used 4 times.`, ephemeral: true }); //.then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Shaman skill can only be used 4 times.`, ephemeral: true });
         };
         myStats.classUsed ||= 0;
         myStats.classUsed++;
 
         if (myStats.shield > 0) {
             myStats.sm += 60;
-            return matchStats.interaction.followUp({ content: `Shaman skill can only be used if you don't have a shield.`, ephemeral: true }); //.then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Shaman skill can only be used if you don't have a shield.`, ephemeral: true });
         };
 
         myStats.shield = Math.floor(myStats.maxhp * 0.2);
@@ -765,7 +771,7 @@ export const skills: skillInfo[] = [
         // Wizard
         if (myStats.classUsedRound > matchStats.round - 3) {
             myStats.sm += 80;
-            return matchStats.interaction.channel.send(`Wizard ability can only be used once every 3 rounds.`).then((msg: Message) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err: any) => console.log(err));
+            return matchStats.interaction.followUp({ content: `Wizard ability can only be used once every 3 rounds.`, ephemeral: true });
         };
         myStats.classUsedRound = matchStats.round;
 
@@ -1385,8 +1391,7 @@ export const crazeBossAbilities: skillInfo[] = [
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
 
-        const { 0: stats } = await query(`SELECT craze_levels FROM users WHERE users.id = ${matchStats.interaction.user.id}`);
-        if (stats) stats.craze_levels = JSON.parse(stats.craze_levels);
+        const stats = await getUserSchema(matchStats.interaction.user.id);
 
         if (stats?.craze_levels?.['15']) {
             eStats.image = "https://i.ibb.co/9p7zvsV/c.png";
@@ -1663,7 +1668,7 @@ export const rollingCowAbilities: skillInfo[] = [
         const ATK_EMOJI = myStats.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStats.replaceButton?.def?.emoji || '🛡️',
             ABILITY_EMOJI = myStats.replaceButton?.ability?.emoji || '✨',
-            SKILL_EMOJI = myStats.replaceButton?.skill?.emoji || '⚜️',
+            SKILL_EMOJI = myStats.replaceButton?.cskill?.emoji || '⚜️',
             SKIP_EMOJI = myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>';
 
         let buttons = [
@@ -1680,7 +1685,7 @@ export const rollingCowAbilities: skillInfo[] = [
             shift = ((shift % buttons.length) + buttons.length) % buttons.length; // Normalize shift value
             buttons = [...buttons.slice(shift), ...buttons.slice(0, shift)];
 
-            const row = new ActionRowBuilder()
+            const row = new ActionRowBuilder<ButtonBuilder>()
                 .addComponents(...buttons);
 
             matchStats.interaction.editReply({ components: [row] });

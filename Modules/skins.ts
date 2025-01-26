@@ -1,4 +1,4 @@
-class skinInfo {
+export default class skinInfo {
     private _name: string;
     private _cid: number;
     private _obtain: string;

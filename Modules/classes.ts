@@ -1,22 +1,8 @@
+import { ClassStats } from "../types";
+
 interface SkillDescription {
     active: string;
     passive: string;
-}
-
-interface Stats {
-    hp: [number, number];
-    atk: [number, number];
-    def: [number, number];
-    md: [number, number];
-    mr: [number, number];
-    cr: [number, number];
-    cd: [number, number];
-    br: [number, number];
-    agility: [number, number];
-    dodge: [number, number];
-    td: [number, number];
-    mana: [number, number];
-    mg: [number, number];
 }
 
 const skillDescs: SkillDescription[] = [
@@ -100,11 +86,11 @@ export default class classInfo {
     private _tier: number;
     private _emblem: string;
     private _image: string;
-    private _stats: Stats;
+    private _stats: ClassStats;
     private _id: number;
     private _path: number[][];
 
-    constructor(name: string, tier: number, emblem: string, image: string, stats: Stats, id: number, path: number[][] = []) {
+    constructor(name: string, tier: number, emblem: string, image: string, stats: ClassStats, id: number, path: number[][] = []) {
         this._name = name;
         this._tier = tier;
         this._emblem = emblem;
@@ -126,7 +112,7 @@ export default class classInfo {
     get image(): string {
         return this._image;
     };
-    get stats(): Stats {
+    get stats(): ClassStats {
         return this._stats;
     };
     get id(): number {

@@ -64,16 +64,16 @@ async function createTables() {
         arenawins INT DEFAULT 0 NOT NULL,
         arenalosses INT DEFAULT 0 NOT NULL,
         animationdelay INT DEFAULT 1200 NOT NULL,
-        achievements JSONB DEFAULT '[]' NOT NULL,
+        achievements INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         lastpull TIMESTAMP,
         pullreminder INT DEFAULT 0 NOT NULL,
         votereminder INT DEFAULT 0 NOT NULL,
         items JSONB DEFAULT '{}' NOT NULL,
-        skins JSONB DEFAULT '[]' NOT NULL,
+        skins INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         eventpts INT DEFAULT 0 NOT NULL,
         eventpts2 INT DEFAULT 0 NOT NULL,
         brbest INT DEFAULT 0 NOT NULL,
-        mailbox JSONB DEFAULT '[]' NOT NULL,
+        mailbox JSONB[] DEFAULT ARRAY[]::JSONB[] NOT NULL,
         eventrewreceived INT DEFAULT 0 NOT NULL,
         gems BIGINT DEFAULT 0 NOT NULL,
         tutorial INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
@@ -83,7 +83,7 @@ async function createTables() {
         donatedtotal BIGINT DEFAULT 0 NOT NULL,
         genesispity INT DEFAULT 0 NOT NULL,
         presets JSONB DEFAULT '[]' NOT NULL,
-        itemlock JSONB DEFAULT '[]' NOT NULL,
+        itemlock TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         party TEXT,
         stampedechar INT,
         mailreceived INT DEFAULT 0,
@@ -115,16 +115,16 @@ async function createTables() {
         lastguildjoin TIMESTAMP,
         valentine TEXT,
         bosshuntruns INT DEFAULT 0 NOT NULL,
-        bosshuntrevreceived INT DEFAULT 0,
+        bosshuntrevreceived INT DEFAULT 0 NOT NULL,
         monthlyshop JSONB DEFAULT '{}' NOT NULL,
-        itemwishlist JSONB DEFAULT '[]' NOT NULL,
+        itemwishlist INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         stampedeenergy INT DEFAULT 0 NOT NULL,
         background TEXT,
         backgrounds TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         charlock INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         animelock INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         cow_participation INT,
-        cow_chars TEXT,
+        cow_chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         cow_timer BIGINT,
         cow_rolled_today INT DEFAULT 0 NOT NULL,
         rank TEXT DEFAULT 'F-' NOT NULL,
@@ -144,12 +144,12 @@ async function createTables() {
         char_equipment JSONB DEFAULT '{}' NOT NULL,    -- renamed from 'equipment' to avoid conflicts
 
         -- Dungeon table columns
-        dungeon_floors JSONB DEFAULT '{"1":0}' NOT NULL,  -- renamed from 'floors' to avoid conflicts
-        dungeon_limit INT DEFAULT 0 NOT NULL,             -- renamed from 'limit' to avoid conflicts
-        dungeon_classes JSONB DEFAULT '[]' NOT NULL,      -- renamed from 'classes' to avoid conflicts
-        dungeon_classlevels JSONB DEFAULT '{}' NOT NULL, -- renamed from 'classlevels' to avoid conflicts
-        dungeon_responsetime TEXT DEFAULT '' NOT NULL,    -- renamed from 'responsetime' to avoid conflicts
-        stampede_responsetime TEXT DEFAULT '' NOT NULL   -- renamed from 's_responsetime' to avoid conflicts
+        dungeon_floors JSONB DEFAULT '{"1":0}' NOT NULL,            -- renamed from 'floors' to avoid conflicts
+        dungeon_limit INT DEFAULT 0 NOT NULL,                       -- renamed from 'limit' to avoid conflicts
+        dungeon_classes INT[] DEFAULT ARRAY[]::INT[] NOT NULL,      -- renamed from 'classes' to avoid conflicts
+        dungeon_classlevels JSONB DEFAULT '{}' NOT NULL,            -- renamed from 'classlevels' to avoid conflicts
+        dungeon_responsetime TIMESTAMP[] DEFAULT ARRAY[]::TIMESTAMP[] NOT NULL,              -- renamed from 'responsetime' to avoid conflicts
+        stampede_responsetime TIMESTAMP[] DEFAULT ARRAY[]::TIMESTAMP[] NOT NULL              -- renamed from 's_responsetime' to avoid conflicts
     )`);
 
     // Servers table
@@ -184,7 +184,7 @@ async function createTables() {
         color TEXT,
         level INT DEFAULT 1 NOT NULL,
         icon TEXT,
-        banner TEXT DEFAULT '',
+        banner TEXT,
         treasury BIGINT DEFAULT 0,
         treasury_gems BIGINT DEFAULT 0,
         tax INT DEFAULT 10 NOT NULL,
@@ -195,9 +195,9 @@ async function createTables() {
         lootbuff INT DEFAULT 0 NOT NULL,
         cdreduction INT DEFAULT 0 NOT NULL,
         master TEXT NOT NULL,
-        elders JSONB DEFAULT '[]' NOT NULL,
-        members JSONB DEFAULT '[]' NOT NULL,
-        banned JSONB DEFAULT '[]' NOT NULL,
+        elders TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+        members TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+        banned TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         eventpoints INT DEFAULT 0 NOT NULL,
         bosshuntstage INT DEFAULT 1 NOT NULL,
         boss1 BIGINT DEFAULT 124080 NOT NULL,
@@ -244,8 +244,8 @@ async function createTables() {
         description TEXT DEFAULT '' NOT NULL,
         color TEXT,
         icon TEXT,
-        banner TEXT DEFAULT '',
-        members JSONB DEFAULT '[]' NOT NULL,
+        banner TEXT,
+        members TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         created TIMESTAMP
     )`);
 
@@ -281,14 +281,183 @@ async function createTables() {
         participation JSONB DEFAULT '{}' NOT NULL,
         start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+};
 
+async function createIndexes() {
     // Create indexes for frequently accessed columns
-    // await query(`CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)`);
-    // await query(`CREATE INDEX IF NOT EXISTS idx_users_rowid ON users(rowid)`);
-    // await query(`CREATE INDEX IF NOT EXISTS idx_weapons_id ON weapons(id)`);
-    // await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
-    // await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
-    // await query(`CREATE INDEX IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_users_rowid ON users(rowid)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_weapons_id ON weapons(id)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
+};
+
+async function createTriggerWeaponUniqueId() {
+    // Create a function to generate random strings
+    await query(`
+        CREATE OR REPLACE FUNCTION generate_random_string(length INT) RETURNS TEXT AS $$
+        DECLARE
+            chars TEXT := '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
+            result TEXT := '';
+            i INT;
+        BEGIN
+            FOR i IN 1..length LOOP
+                result := result || substr(chars, floor(random() * length(chars) + 1)::integer, 1);
+            END LOOP;
+            RETURN result;
+        END;
+        $$ LANGUAGE plpgsql;
+    `);
+
+    // Create a function for the trigger
+    await query(`
+        CREATE OR REPLACE FUNCTION generate_weapon_uniqueid()
+        RETURNS TRIGGER AS $$
+        DECLARE
+            gen TEXT;
+            full_id TEXT;
+            len INT := 2;
+            max_attempts INT := 100;
+            attempt INT := 0;
+        BEGIN
+            LOOP
+                gen := generate_random_string(len);
+                full_id := gen || ':' || NEW.id;
+                
+                -- Check if the generated ID exists
+                IF NOT EXISTS (SELECT 1 FROM weapons WHERE uniqueid = full_id) THEN
+                    NEW.uniqueid := full_id;
+                    RETURN NEW;
+                END IF;
+                
+                attempt := attempt + 1;
+                
+                -- Increase length after some attempts
+                IF attempt % 10 = 0 THEN
+                    len := len + 1;
+                END IF;
+                
+                -- Prevent infinite loops
+                IF attempt >= max_attempts THEN
+                    RAISE EXCEPTION 'Could not generate unique ID after % attempts', max_attempts;
+                END IF;
+            END LOOP;
+        END;
+        $$ LANGUAGE plpgsql;
+    `);
+
+    // Create the trigger
+    await query(`
+        DROP TRIGGER IF EXISTS weapon_uniqueid_trigger ON weapons;
+        CREATE TRIGGER weapon_uniqueid_trigger
+        BEFORE INSERT ON weapons
+        FOR EACH ROW
+        WHEN (NEW.uniqueid IS NULL)
+        EXECUTE FUNCTION generate_weapon_uniqueid();
+    `);
+};
+
+async function createTriggerGuildId() {
+    // Create a function for the guild ID trigger
+    await query(`
+        CREATE OR REPLACE FUNCTION generate_guild_id()
+        RETURNS TRIGGER AS $$
+        DECLARE
+            gen TEXT;
+            len INT := 5;  -- Default length of 5 characters
+            max_attempts INT := 100;
+            attempt INT := 0;
+        BEGIN
+            LOOP
+                gen := generate_random_string(len);
+                
+                -- Check if the generated ID exists
+                IF NOT EXISTS (SELECT 1 FROM guilds WHERE id = gen) THEN
+                    NEW.id := gen;
+                    RETURN NEW;
+                END IF;
+                
+                attempt := attempt + 1;
+                
+                -- Increase length after some attempts
+                IF attempt % 10 = 0 THEN
+                    len := len + 1;
+                END IF;
+                
+                -- Prevent infinite loops
+                IF attempt >= max_attempts THEN
+                    RAISE EXCEPTION 'Could not generate unique guild ID after % attempts', max_attempts;
+                END IF;
+            END LOOP;
+        END;
+        $$ LANGUAGE plpgsql;
+    `);
+
+    // Create the trigger
+    await query(`
+        DROP TRIGGER IF EXISTS guild_id_trigger ON guilds;
+        CREATE TRIGGER guild_id_trigger
+        BEFORE INSERT ON guilds
+        FOR EACH ROW
+        WHEN (NEW.id IS NULL)
+        EXECUTE FUNCTION generate_guild_id();
+    `);
+};
+
+// ... existing code ...
+
+async function createTriggerPartyId() {
+    // Create a function for the party ID trigger
+    await query(`
+        CREATE OR REPLACE FUNCTION generate_party_id()
+        RETURNS TRIGGER AS $$
+        DECLARE
+            gen TEXT;
+            len INT := 5;  -- Default length of 5 characters
+            max_attempts INT := 100;
+            attempt INT := 0;
+        BEGIN
+            LOOP
+                gen := generate_random_string(len);
+                
+                -- Check if the generated ID exists
+                IF NOT EXISTS (SELECT 1 FROM parties WHERE id = gen) THEN
+                    NEW.id := gen;
+                    RETURN NEW;
+                END IF;
+                
+                attempt := attempt + 1;
+                
+                -- Increase length after some attempts
+                IF attempt % 10 = 0 THEN
+                    len := len + 1;
+                END IF;
+                
+                -- Prevent infinite loops
+                IF attempt >= max_attempts THEN
+                    RAISE EXCEPTION 'Could not generate unique party ID after % attempts', max_attempts;
+                END IF;
+            END LOOP;
+        END;
+        $$ LANGUAGE plpgsql;
+    `);
+
+    // Create the trigger
+    await query(`
+        DROP TRIGGER IF EXISTS party_id_trigger ON parties;
+        CREATE TRIGGER party_id_trigger
+        BEFORE INSERT ON parties
+        FOR EACH ROW
+        WHEN (NEW.id IS NULL)
+        EXECUTE FUNCTION generate_party_id();
+    `);
+};
+
+async function createTriggers() {
+    await createTriggerWeaponUniqueId();
+    await createTriggerGuildId();
+    await createTriggerPartyId();
 };
 
 async function alterTables() {
@@ -318,9 +487,13 @@ async function dropTables() {
 (async () => {
     try {
         await createTables();
+        await createIndexes();
         await alterTables();
+        // await createTriggers();
 
-        console.log('Database initialization complete');
+        const [{ size }] = await query(`SELECT pg_size_pretty(pg_database_size('${process.env.PG_DATABASE}')) AS size;`) as [{ size: string; }];
+
+        console.log(`Database initialization complete\nDatabase size: ${size}`);
     } catch (error) {
         console.error('Database initialization failed:', error);
     };

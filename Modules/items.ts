@@ -1,14 +1,13 @@
-/* eslint-disable no-unused-vars */
+import { Buffs, IbuffInfo, ItemAbility, ItemCategory, ItemRarity, ItemType, PrimaryStat } from "../types";
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
-import { ItemRarity, PrimaryStat } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
 
 export class itemInfo {
     private _name: string;
-    private _category: string;
-    private _type: string;
+    private _category: ItemCategory;
+    private _type: ItemType;
     private _obtain: string[];
     private _emoji: string;
     private _image: string;
@@ -20,7 +19,7 @@ export class itemInfo {
     private _desc: string;
     private _flair: string;
 
-    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean, tradable: boolean, sellable: boolean, desc: string = "", flair: string = "") {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean, tradable: boolean, sellable: boolean, desc: string = "", flair: string = "") {
         this._name = name;
         this._category = category; // ["weapon", "armor", "fish"]
         this._type = type; // ["sword", ..., "helmet", ..., "fish"]
@@ -107,7 +106,7 @@ export class itemInfo {
 export class fishInfo extends itemInfo {
     private _consumable: boolean;
 
-    constructor(name: string, category: string, type: string, obtain: string[], consumable: boolean, emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = true) {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], consumable: boolean, emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable);
         this._consumable = consumable;
     };
@@ -118,7 +117,7 @@ export class fishInfo extends itemInfo {
 };
 
 export class lootInfo extends itemInfo {
-    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = false, desc: string = "", flair: string = "") {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], emoji: string, image: string, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = false, desc: string = "", flair: string = "") {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
     };
 };
@@ -130,10 +129,10 @@ export class weaponInfo extends itemInfo {
     private _secondaryStat: PrimaryStat;
     private _ssmin: number;
     private _ssmax: number;
-    private _buff: (...args: any[]) => void;
+    private _buff: ItemAbility;
     private _buffdesc: string;
 
-    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, primaryStat: PrimaryStat, psmin: number, psmax: number, secondaryStat: PrimaryStat, ssmin: number, ssmax: number, buff: (...args: any[]) => void, buffdesc: string, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], emoji: string, image: string, primaryStat: PrimaryStat, psmin: number, psmax: number, secondaryStat: PrimaryStat, ssmin: number, ssmax: number, buff: ItemAbility, buffdesc: string, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
         this._primaryStat = primaryStat;
         this._psmin = psmin;
@@ -165,6 +164,9 @@ export class weaponInfo extends itemInfo {
         if (["atk%", "md%", "cr", "cd", "dodge", "br"].includes(this._secondaryStat)) return Math.round(this._ssmax * 100) + "%";
         return this._ssmax + "";
     };
+    get buff() {
+        return this._buff;
+    };
     get buffdesc() {
         return this._buffdesc;
     };
@@ -176,7 +178,7 @@ export class chestInfo extends itemInfo {
     private _drops: number;
     private _droprates: { [key in ItemRarity]?: number };
 
-    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, emoji2: string, image: string, image2: string, drops: number, droprates: { [key in ItemRarity]?: number; }, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = false, sellable: boolean = false, desc: string = "", flair: string = "") {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], emoji: string, emoji2: string, image: string, image2: string, drops: number, droprates: { [key in ItemRarity]?: number; }, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = false, sellable: boolean = false, desc: string = "", flair: string = "") {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
         this._emoji2 = emoji2;
         this._image2 = image2;
@@ -196,17 +198,29 @@ export class chestInfo extends itemInfo {
     get droprates() {
         return this._droprates;
     };
+
+    get dropratesFull() {
+        return {
+            genesis: this._droprates.genesis ?? 0,
+            mythical: this._droprates.mythical ?? 0,
+            legendary: this._droprates.legendary ?? 0,
+            unique: this._droprates.unique ?? 0,
+            rare: this._droprates.rare ?? 0,
+            special: this._droprates.special ?? 0,
+            normal: this._droprates.normal ?? 0
+        };
+    };
 };
 
 export class armorInfo extends itemInfo {
     private _setname: string;
-    private _primaryStat: string;
+    private _primaryStat: PrimaryStat;
     private _psmin: number;
     private _psmax: number;
-    private _buff: ((...args: any[]) => void) | undefined;
+    private _buff: ItemAbility | undefined;
     private _buffdesc: string | undefined;
 
-    constructor(name: string, category: string, type: string, setname: string, obtain: string[], emoji: string, image: string, primaryStat: string, psmin: number, psmax: number, grade: ItemRarity, id: number, buff: ((...args: any[]) => void) | undefined = undefined, buffdesc: string | undefined = undefined, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
+    constructor(name: string, category: ItemCategory, type: ItemType, setname: string, obtain: string[], emoji: string, image: string, primaryStat: PrimaryStat, psmin: number, psmax: number, grade: ItemRarity, id: number, buff: ItemAbility | undefined = undefined, buffdesc: string | undefined = undefined, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc);
         this._setname = setname;
         this._primaryStat = primaryStat;
@@ -228,6 +242,9 @@ export class armorInfo extends itemInfo {
     get psmax() {
         return this._psmax;
     };
+    get buff() {
+        return this._buff;
+    };
     get buffdesc() {
         return this._buffdesc;
     };
@@ -235,10 +252,10 @@ export class armorInfo extends itemInfo {
 
 export class ringInfo extends itemInfo {
     private _maxlevel: number;
-    private _buffs: (level: number) => (...args: any[]) => void;
+    private _buffs: (level: number) => ItemAbility;
     private _buffdescs: (level: number) => string;
 
-    constructor(name: string, category: string, type: string, obtain: string[], emoji: string, image: string, maxlevel: number, buffs: (level: number) => (...args: any[]) => void, buffdescs: (level: number) => string, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], emoji: string, image: string, maxlevel: number, buffs: (level: number) => ItemAbility, buffdescs: (level: number) => string, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
         this._maxlevel = maxlevel;
         this._buffs = buffs;
@@ -1615,7 +1632,7 @@ export const items = [
     }, "Immediately after the battle begins, deals **160%** damage to the enemy. Then burns **3%** of max HP from the enemy for the next 5 rounds. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **6%** of the wielders HP instead.", "As Death's Fragrance cleaves through the air, the scent of decay and destruction follows in its wake. Those who dare to stand against its wielder are met with a swift and brutal end, their bodies left to rot as a warning to others. In the heat of battle, this fearsome axe is a harbinger of death, bringing forth the end of all who oppose it.", "legendary", 321),
     new weaponInfo("Demonic Gram", "weapon", "axe", ["chest"], "<:demonic_gram:1068531132099993751>", "https://i.imgur.com/a1aoIZP.png", "atk", 56, 847, "md", 39, 683, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(3, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            ebuff.def -= Math.floor(Math.min(ebuff.def * (0.04 * Math.min(10, matchStats.round)), 1055));
+            eStats.def -= Math.floor(Math.min(eStats.def * (0.04 * Math.min(10, matchStats.round)), 1055));
         }));
     }, "Curses the enemy, decreasing **4%** of defense each round (up to 40%, max 3x damage)", "The Demonic Gram is a fearsome weapon crafted from the bones and blood of ancient demons. Those who wield this axe are known for their unmatched ferocity in battle, as the demonic power within the weapon drives them to unleash unbridled destruction upon their foes. Fear the Demonic Gram, for it is the harbinger of death and destruction.", "legendary", 322),
     new weaponInfo("Dragon's Maw", "weapon", "axe", ["crafting", "chest"], "<:dragons_maw:1068531134335557704>", "https://i.imgur.com/AqfYbB0.png", "atk", 48, 820, "md", 48, 820, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2318,7 +2335,7 @@ export const items = [
     // Weapons - Mythical Dagger
     new weaponInfo("Abyssal Shard", "weapon", "dagger", ["chest"], "<:abyssal_shard:1069019809993461872>", "https://i.imgur.com/W6u22OY.png", "md", 99, 999, "mg", 1, 5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mdChance = 1;
-        Object.keys(ebuff).forEach((e) => ebuff[e] = []);
+        Object.keys(ebuff).forEach((e) => ebuff[e as keyof Buffs] = []);
     }, "Removes all buffs and debuffs from the enemy at the start of battle. The wielder deals magic damage by default.", "The Abyssal Shard is a weapon of pure darkness, forged in the depths of the underworld by a powerful demon. Its jagged edge glints with malevolent intent, and those who wield it are said to be consumed by a thirst for destruction and power. Those who face the Abyssal Shard in combat are often struck with fear, knowing that they are facing the wrath of the abyss itself.", "mythical", 422),
     new weaponInfo("Arcane Slicer", "weapon", "dagger", ["chest"], "<:arcane_slicer:1069019806881284137>", "https://i.imgur.com/MbSEzOA.png", "md", 96, 1085, "cd", 0.12, 0.54, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.md += Math.floor(myStats.md * 0.25);
@@ -2409,14 +2426,14 @@ export const items = [
         myStats.durinsBaneStacks = 0;
 
         // On hit
-        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 caster.durinsBaneStacks++;
             };
         });
 
         // On miss
-        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+        matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 caster.durinsBaneStacks = 0;
             };
@@ -2854,7 +2871,7 @@ export const items = [
         mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr * 0.1), 9999));
         myStats.mr += Math.floor(myStats.mr * 0.1);
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            mybuff.hp = mybuff.hp.filter((buff: buffInfo) => (buff.type === "*" && buff.val > 1) || (buff.type === "+" && buff.val > 0));
+            mybuff.hp = mybuff.hp.filter((buff: IbuffInfo) => (buff.type === "*" && buff.val > 1) || (buff.type === "+" && buff.val > 0));
         }, 9999));
     }, "The wearer has **10%** increased magic resistance and is immune against DoT type of damage.\n\n_DoT = Damage over Time_"),
     new armorInfo("Bloodforged Helmet", "armor", "helmet", "Bloodforged Set", ["crafting", "chest"], "<:bloodforged_helmet:1081545922317664396>", "https://i.imgur.com/lw8o5Le.png", "hp", 48, 1647, "legendary", 575),
@@ -2964,7 +2981,7 @@ export const items = [
             "emoji": "<:deepsea_guardian_helmet:1081561801042444328>",
             "used": 0,
             "run": function (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any) {
-                if (this.used++ < 6) {
+                if (this.used !== undefined && this.used++ < 6) {
                     myStats.shield += 250;
                     myStats.usedBlockRound = matchStats.round;
                     notice.push(`\n<:shield:1062050038211166310> **${myStats.name}** has gained **+250** shield!`);

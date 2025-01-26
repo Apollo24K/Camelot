@@ -1,12 +1,13 @@
+import { IdelayedBuff, ItemAbility } from "../types";
 
-export default class delayedBuff {
+export default class delayedBuff implements IdelayedBuff {
     private _round: number;
-    private _func: (...args: any[]) => void;
+    private _func: ItemAbility;
     private _last: number;
     private _usage: number;
     private _used: number;
 
-    constructor(round: number, func: (...args: any[]) => void, last: number = 1, usage: number = 9999) {
+    constructor(round: number, func: ItemAbility, last: number = 1, usage: number = 9999) {
         this._round = round;
         this._func = func;
         this._last = last;

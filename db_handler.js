@@ -336,5 +336,5 @@ async function addMissingTrialItems() {
 
 
 
-// // Start migration
+// Start migration
 // migrateData().catch(console.error);

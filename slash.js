@@ -731,7 +731,7 @@ const commands = [
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('equip').setDescription('Equip your character with an item')
 				// .addStringOption(option => option.setName('character').setDescription('Choose a character').setRequired(true))
-				.addStringOption(option => option.setName('item').setDescription('Choose an item').setRequired(true)))
+				.addStringOption(option => option.setName('items').setDescription('Choose an item').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('unequip').setDescription('Unequip an item')
 				.addStringOption(option =>
 					option.setName('type')

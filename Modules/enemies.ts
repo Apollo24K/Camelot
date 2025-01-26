@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonStyle, ButtonBuilder } from "discord.js";
-import { Buffs, Gender, MatchStats } from "../types";
+import { Buffs, CharacterRarity, Gender, IenemyInfo, IskillInfo, MatchStats } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
@@ -7,11 +7,11 @@ import skillInfo from "./skills";
 import Trigger from "./trigger";
 import Avalon from "./avalon";
 
-export class enemyInfo {
+export class enemyInfo implements IenemyInfo {
     private _name: string;
     private _species: string;
     private _title: string;
-    private _gender: string;
+    private _gender: Gender;
     private _boss: boolean;
     private _setStats: object;
     private _multStats: object;
@@ -20,9 +20,9 @@ export class enemyInfo {
     private _image: string[];
     private _floor: number[];
     private _id: number;
-    private _ability?: skillInfo;
+    private _ability?: IskillInfo;
 
-    constructor(name: string, species: string, title: string, gender: Gender, boss: boolean, setStats: object, multStats: object, addStats: object, loot: number[], image: string[], floor: number[], id: number, ability?: skillInfo) {
+    constructor(name: string, species: string, title: string, gender: Gender, boss: boolean, setStats: object, multStats: object, addStats: object, loot: number[], image: string[], floor: number[], id: number, ability?: IskillInfo) {
         this._name = name;
         this._species = species;
         this._title = title;
@@ -80,6 +80,20 @@ export class enemyInfo {
 
     get url() {
         return this.image[Math.floor(Math.random() * this.image.length)];
+    };
+
+    // Entity info
+    get alias(): string[] {
+        return [];
+    };
+    get rarity(): CharacterRarity {
+        return "D";
+    };
+    get rarityEmoji(): string {
+        return "<:DTier:869316616071032843>";
+    };
+    get rarityValue(): number {
+        return 0;
     };
 };
 
@@ -259,7 +273,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.lightningResistance = 1;
             eStats.retaliationDamage = 0.2;
 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < 0.4 && matchStats.round % 2 === 0) {
                     eStats.sm += 30;
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
@@ -280,7 +294,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.lightningResistance = 1;
 
             eStats.retaliationDamage = 0.35;
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < 0.4) {
                     eStats.sm += 40;
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
@@ -303,7 +317,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.lightningResistance = 1;
 
             eStats.retaliationDamage = 0.4;
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < 0.4) {
                     eStats.sm += 60;
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
@@ -357,7 +371,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 eStats.def += 50;
                 eStats.mr += 50;
                 ebuff.def.push(new buffInfo("+", 50, 9999));
@@ -374,7 +388,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 eStats.def += 100;
                 eStats.mr += 100;
                 ebuff.def.push(new buffInfo("+", 100, 9999));
@@ -387,7 +401,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(8, 120, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.roundCost = 25;
-            eStats.sm += 120; eStats.mg = 0 
+            eStats.sm += 120; eStats.mg = 0;
             ebuff.mg.push(new buffInfo("=", 0, 9999));
 
             eStats.def += -Math.floor(eStats.def * 0.075);
@@ -433,7 +447,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.mg = 0;
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
                     const missingHpPercent = (myStats.maxhp - myStats.hp) / myStats.maxhp;
                     eStats.atk += Math.floor(eStats.atk * missingHpPercent * 0.75);
@@ -481,7 +495,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
                     const missingHpPercent = (myStats.maxhp - myStats.hp) / myStats.maxhp;
                     eStats.atk += Math.floor(eStats.atk * (missingHpPercent * 1.1));
@@ -518,7 +532,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                const drain = myStats.hp > myStats.maxhp * 0.5 ? Math.floor(myStats.hp * 0.05) : Math.floor(myStats.hp * 0.1) //? maxhp or current hp
+                const drain = myStats.hp > myStats.maxhp * 0.5 ? Math.floor(myStats.hp * 0.05) : Math.floor(myStats.hp * 0.1); //? maxhp or current hp
                 myStats.hp += -drain;
                 addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
@@ -539,7 +553,7 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.negateHeal = 1;
-            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats) eStats.hp += -Math.floor(eStats.hp * 0.03);
             });
 
@@ -557,7 +571,7 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.negateHeal = 1;
-            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats) {
                     eStats.hp += -Math.floor(eStats.hp * 0.035);
                     if (myStats.dodgeStreak >= 3 || myStats.brStreak >= 3) {
@@ -592,7 +606,7 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.negateHeal = 1;
-            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats) {
                     eStats.hp += -Math.floor(eStats.hp * 0.045);
                     if (myStats.dodgeStreak >= 4 || myStats.brStreak >= 4) {
@@ -628,7 +642,7 @@ export const raidBosses: enemyInfo[] = [
 
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** took your shield and threw it back and`, { overwriteDamage: Math.floor(myStats.shield * 0.7), ignoreShield: true, dodge: false, block: false }); //? How much damage is that?
             notice.push(`\n✨ YOUR SHIELD IS MINE!`);
-            eStats.shield += Math.floor(myStats.shield * 0.5); 
+            eStats.shield += Math.floor(myStats.shield * 0.5);
             myStats.shield = Math.floor(myStats.shield * 0.3);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -655,7 +669,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats && !options.isMagicDamage) {
                     myStats.maxhp -= Math.floor(myStats.maxhp * 0.03);
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
@@ -679,7 +693,7 @@ export const raidBosses: enemyInfo[] = [
                 matchStats.eStatsCC = { ...eStats };
                 matchStats.currentOpponent = 1;
                 embed.setImage("https://i.ibb.co/5YGvbFG/c.png"); //! Kyntheris Image
-        
+
                 eStats.hp = eStats.minionHealth;
                 eStats.maxhp = Math.floor(eStats.maxhp * 0.9);
                 eStats.def = Math.floor(eStats.def * 0.9);
@@ -691,9 +705,9 @@ export const raidBosses: enemyInfo[] = [
                     // Kyntheris switches into Velkris
                     if (matchStats.currentOpponent === 1) {
                         eStats.minionHealth = eStats.hp; matchStats.eStatsCC.minionHealth = eStats.minionHealth;
-                        
+
                         Object.assign(eStats, matchStats.eStatsCC);
-                        eStats.hp = matchStats.eStatsCC.hp; 
+                        eStats.hp = matchStats.eStatsCC.hp;
                         embed.setImage("https://i.ibb.co/XWT3Hg2/deluvian.png"); //! Velkris Image
 
                         matchStats.currentOpponent = 0;
@@ -714,18 +728,18 @@ export const raidBosses: enemyInfo[] = [
                 eStats.atk += Math.floor(eStats.atk * 0.075); ebuff.atk.push(new buffInfo("+", Math.floor(eStats.atk * 0.075), 5));
             }
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.minionHealth = Math.floor(eStats.maxhp * 0.8)
+            eStats.minionHealth = Math.floor(eStats.maxhp * 0.8);
 
             const randStats = ["atk", "def", "md", "mr", "dodge", "br"];
             matchStats.currentOpponent === 0 ? eStats.mdChance = 0 : eStats.mdChance = 1;
 
             // On Minion Death, sets minion health to 0
-            matchStats.on("minionDeath", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("minionDeath", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === eStats) eStats.minionHealth = 0; matchStats.eStatsCC.minionHealth = eStats.minionHealth;
             });
 
             // On Dodge (Velkris on field), increases Velkris's stats
-            matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats && matchStats.currentOpponent === 0) {
                     eStats.atk += Math.floor(eStats.atk * 0.05);
                     ebuff.atk.push(new buffInfo("+", Math.floor(eStats.atk * 0.05), 9999));
@@ -735,7 +749,7 @@ export const raidBosses: enemyInfo[] = [
             });
 
             // On Block (Kyntheris on field), increases Kyntheris's stats
-            matchStats.on("block", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("block", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats && matchStats.currentOpponent === 1) {
                     eStats.md += Math.floor(eStats.md * 0.05);
                     ebuff.md.push(new buffInfo("+", Math.floor(eStats.md * 0.05), 9999));
@@ -752,15 +766,15 @@ export const raidBosses: enemyInfo[] = [
                 if (matchStats.round % 2 === 0 && matchStats.currentOpponent === 0) {
                     var randStat = randStats[Math.floor(Math.random() * randStats.length)];
                     if (randStat === "dodge" || randStat === "br") {
-                        eStats[randStat] += Math.floor(eStats[randStat] + 0.05); 
+                        eStats[randStat] += Math.floor(eStats[randStat] + 0.05);
                         ebuff[randStat].push(new buffInfo("+", Math.floor(eStats[randStat] + 0.05), 3));
                         myStats[randStat] -= Math.floor(myStats[randStat] + 0.05);
                         mybuff[randStat].push(new buffInfo("+", -Math.floor(myStats[randStat] + 0.05), 3));
                     } else {
-                        eStats[randStat] += Math.floor(eStats[randStat] * 0.05); 
-                        ebuff[randStat].push(new buffInfo("+", Math.floor(eStats[randStat] * 0.05), 3));
+                        eStats[randStat] += Math.floor(eStats[randStat] * 0.05);
+                        ebuff[randStat as keyof Buffs].push(new buffInfo("+", Math.floor(eStats[randStat] * 0.05), 3));
                         myStats[randStat] -= Math.floor(myStats[randStat] * 0.05);
-                        mybuff[randStat].push(new buffInfo("+", -Math.floor(myStats[randStat] * 0.05), 3));
+                        mybuff[randStat as keyof Buffs].push(new buffInfo("+", -Math.floor(myStats[randStat] * 0.05), 3));
                     }
                 }
             }, 9999));
@@ -777,10 +791,10 @@ export const raidBosses: enemyInfo[] = [
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
                 Object.keys(ebuff).forEach((stat) => {
-                    ebuff[stat].forEach((buff: any) => {
+                    ebuff[stat as keyof Buffs].forEach((buff: any) => {
                         if (buff.isDebuff && !(eStats.buffIds.includes(buff.id))) {
                             eStats.buffIds.push(buff.id);
-                            mybuff[stat].push(new buffInfo(buff.type, buff.val, buff.last, buff.change, buff.ctype, buff.cap));
+                            mybuff[stat as keyof Buffs].push(new buffInfo(buff.type, buff.val, buff.last, buff.change, buff.ctype, buff.cap));
                             buff.val = buff.val * (eStats.buffScale + 0.5);
                         }
                     });
@@ -788,7 +802,7 @@ export const raidBosses: enemyInfo[] = [
 
                 if (matchStats.round % 10 === 0) {
                     Object.keys(ebuff).forEach((stat) => {
-                        ebuff[stat] = ebuff[stat].filter((buff: any) => !buff.isDebuff);
+                        ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff: any) => !buff.isDebuff);
                     });
                     eStats.buffScale += 0.25;
                     notice.push(`\n✨ **${enemy.name}** enrages and lost his debuffs and increased your bleeding damage.`);
@@ -823,10 +837,10 @@ export const raidBosses: enemyInfo[] = [
             eStats.buffIds = []; eStats.buffScale = 1;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 Object.keys(ebuff).forEach((stat) => {
-                    ebuff[stat].forEach((buff: any) => {
+                    ebuff[stat as keyof Buffs].forEach((buff: any) => {
                         if (buff.isDebuff && !(eStats.buffIds.includes(buff.id))) {
                             eStats.buffIds.push(buff.id);
-                            mybuff[stat].push(new buffInfo(buff.type, buff.val, buff.last, buff.change, buff.ctype, buff.cap));
+                            mybuff[stat as keyof Buffs].push(new buffInfo(buff.type, buff.val, buff.last, buff.change, buff.ctype, buff.cap));
                             buff.val = buff.val * (eStats.buffScale + 0.75);
                         }
                     });
@@ -834,7 +848,7 @@ export const raidBosses: enemyInfo[] = [
 
                 if (matchStats.round % 8 === 0) {
                     Object.keys(ebuff).forEach((stat) => {
-                        ebuff[stat] = ebuff[stat].filter((buff: any) => !buff.isDebuff);
+                        ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff: any) => !buff.isDebuff);
                     });
                     eStats.buffScale += 0.4;
                     notice.push(`\n✨ **${enemy.name}** enrages and lost his debuffs and increased your bleeding damage.`);
@@ -859,11 +873,11 @@ export const raidBosses: enemyInfo[] = [
             eStats.mailActive = false;
 
             const buttonConfigs = [
-                { id: 'ATK', trigger: 'attack', emoji: myStats.replaceButton?.atk?.emoji || '⚔️'},
-                { id: 'DEF', trigger: 'defend', emoji: myStats.replaceButton?.def?.emoji || '🛡️'},
-                { id: 'ABILITY', trigger: 'ability', emoji: myStats.replaceButton?.ability?.emoji || '✨'},
-                { id: 'SKILL', trigger: 'cskill', emoji: myStats.replaceButton?.skill?.emoji || '⚜️'},
-                { id: 'SKIP', trigger: 'skip', emoji: myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>'}
+                { id: 'ATK', trigger: 'attack', emoji: myStats.replaceButton?.atk?.emoji || '⚔️' },
+                { id: 'DEF', trigger: 'defend', emoji: myStats.replaceButton?.def?.emoji || '🛡️' },
+                { id: 'ABILITY', trigger: 'ability', emoji: myStats.replaceButton?.ability?.emoji || '✨' },
+                { id: 'SKILL', trigger: 'cskill', emoji: myStats.replaceButton?.cskill?.emoji || '⚜️' },
+                { id: 'SKIP', trigger: 'skip', emoji: myStats.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>' }
             ];
 
             let buttons = [
@@ -885,31 +899,29 @@ export const raidBosses: enemyInfo[] = [
                     [fakeDanger1, fakeDanger2].forEach(index => {
                         index === 3
                             ? buttons[index] = new ButtonBuilder().setCustomId(buttonConfigs[index].id).setEmoji(buttonConfigs[index].emoji).setStyle(ButtonStyle.Danger).setDisabled(myStats.class !== -1 ? false : true)
-                            : buttons[index] = new ButtonBuilder().setCustomId(buttonConfigs[index].id).setEmoji(buttonConfigs[index].emoji).setStyle(ButtonStyle.Danger)
+                            : buttons[index] = new ButtonBuilder().setCustomId(buttonConfigs[index].id).setEmoji(buttonConfigs[index].emoji).setStyle(ButtonStyle.Danger);
                     });
-                } 
-                successIndex === 3 
-                    ? buttons[successIndex] = new ButtonBuilder().setCustomId(buttonConfigs[successIndex].id).setEmoji(buttonConfigs[successIndex].emoji).setStyle(ButtonStyle.Success).setDisabled(myStats.class !== -1 ? false : true) 
+                }
+                successIndex === 3
+                    ? buttons[successIndex] = new ButtonBuilder().setCustomId(buttonConfigs[successIndex].id).setEmoji(buttonConfigs[successIndex].emoji).setStyle(ButtonStyle.Success).setDisabled(myStats.class !== -1 ? false : true)
                     : buttons[successIndex] = new ButtonBuilder().setCustomId(buttonConfigs[successIndex].id).setEmoji(buttonConfigs[successIndex].emoji).setStyle(ButtonStyle.Success);
-            
-                dangerIndex === 3 
+
+                dangerIndex === 3
                     ? buttons[dangerIndex] = new ButtonBuilder().setCustomId(buttonConfigs[dangerIndex].id).setEmoji(buttonConfigs[dangerIndex].emoji).setStyle(ButtonStyle.Danger).setDisabled(myStats.class !== -1 ? false : true)
                     : buttons[dangerIndex] = new ButtonBuilder().setCustomId(buttonConfigs[dangerIndex].id).setEmoji(buttonConfigs[dangerIndex].emoji).setStyle(ButtonStyle.Danger);
-            
+
                 eStats.mailButtonS = buttonConfigs[successIndex].trigger;
                 eStats.mailButtonD = buttonConfigs[dangerIndex].trigger;
                 eStats.mailButtonF1 = buttonConfigs[fakeDanger1].trigger;
                 eStats.mailButtonF2 = buttonConfigs[fakeDanger2].trigger;
-            
-                const row = new ActionRowBuilder().addComponents(...buttons);
-                
-                return new ActionRowBuilder().addComponents(...buttons);
-            }
+
+                return new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
+            };
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
                 // Increases damage when player uses special abilities
-                matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     if (caster === myStats) {
                         eStats.atk += Math.floor(eStats.atk * 0.1);
                         eStats.md += Math.floor(eStats.md * 0.1);
@@ -923,27 +935,35 @@ export const raidBosses: enemyInfo[] = [
 
                     notice.push(`\n✨ **${enemy.name}** sent a mail!`);
                     matchStats.interaction.editReply({ components: [updateButtons(buttons, availableButtons, myStats, enemy, eStats)] });
-                    
-                    matchStats.on(eStats.mailButtonS, { duration: 1, callback:({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                        if (caster === myStats) {
-                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail is in the trash and`, { atkMultiplier: 0.5, block: false, dodge: false });
+
+                    matchStats.on(eStats.mailButtonS, {
+                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                            if (caster === myStats) {
+                                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail is in the trash and`, { atkMultiplier: 0.5, block: false, dodge: false });
+                            }
                         }
-                    }});
-                    matchStats.on(eStats.mailButtonD, { duration: 1, callback:({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                        if (caster === myStats) {
-                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail demolished you and`, { atkMultiplier: 1.75, block: false, dodge: false, ignoreShield: true });
+                    });
+                    matchStats.on(eStats.mailButtonD, {
+                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                            if (caster === myStats) {
+                                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail demolished you and`, { atkMultiplier: 1.75, block: false, dodge: false, ignoreShield: true });
+                            }
                         }
-                    }});
-                    matchStats.on(eStats.mailButtonF1, { duration: 1, callback:({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                        if (caster === myStats) {
-                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail hit`, { ignoreShield: true, block: false, dodge: false });
+                    });
+                    matchStats.on(eStats.mailButtonF1, {
+                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                            if (caster === myStats) {
+                                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail hit`, { ignoreShield: true, block: false, dodge: false });
+                            }
                         }
-                    }});
-                    matchStats.on(eStats.mailButtonF2, { duration: 1, callback:({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                        if (caster === myStats) {
-                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail hit`, { ignoreShield: true, block: false, dodge: false });
+                    });
+                    matchStats.on(eStats.mailButtonF2, {
+                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                            if (caster === myStats) {
+                                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail hit`, { ignoreShield: true, block: false, dodge: false });
+                            }
                         }
-                    }});
+                    });
 
                     // Recover normal settings
                     availableButtons = [0, 1, 2, 3];
@@ -951,7 +971,7 @@ export const raidBosses: enemyInfo[] = [
                     eStats.mailActive = false;
 
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        const row = new ActionRowBuilder().addComponents(...buttons);
+                        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
                         matchStats.interaction.editReply({ components: [row] });
                     }));
                 }
@@ -975,12 +995,12 @@ export const raidBosses: enemyInfo[] = [
 
             eStats.shield = myStats.maxhp * 0.4;
 
-            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === eStats) {
                     if (myStats.mdChance > 0) myStats.mdChance = 0;
                     else myStats.mdChance = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        if (myStats.mdChance > 0 ) myStats.mdChance = 0;
+                        if (myStats.mdChance > 0) myStats.mdChance = 0;
                         else myStats.mdChance = 1;
                     }));
                 }
@@ -1010,23 +1030,24 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.shield = myStats.maxhp * 0.5;
-
-            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
-                if (target === eStats) {
-                    if (myStats.mdChance > 0) myStats.mdChance = 0;
-                    else myStats.mdChance = 1;
-                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 4, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        if (myStats.mdChance > 0 ) myStats.mdChance = 0;
-                        else myStats.mdChance = 1;
-                    }));
-                    myStats.dodge = 0;
-                    mybuff.dodge.push(new buffInfo("=", 0, 3));
-                }
-            });
-
+            eStats.shield = myStats.maxhp * 0.65;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (!eStats.domain) eStats.shield += eStats.shield * 0.075;
+                if (!eStats.domain) eStats.shield += eStats.shield * 0.175;
+                matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                    if (target === eStats) {
+                        if (myStats.mdChance > 0) {
+                            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.mdChance = 0;
+                            }, 4));
+                        } else {
+                            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.mdChance = 1;
+                            }, 4));
+                        };
+                        myStats.dodge = 0;
+                        mybuff.dodge.push(new buffInfo("=", 0, 3));
+                    }
+                });
                 if (matchStats.round % 2 === 0 || eStats.domain) eStats.mdChance = 1;
                 else eStats.mdChance = 0;
                 eStats.domain = false;
@@ -1050,12 +1071,12 @@ export const raidBosses: enemyInfo[] = [
 
             eStats.shield = myStats.maxhp * 0.75; eStats.shieldOrb = 0;
 
-            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === eStats) {
                     if (myStats.mdChance > 0) myStats.mdChance = 0;
                     else myStats.mdChance = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        if (myStats.mdChance > 0 ) myStats.mdChance = 0;
+                        if (myStats.mdChance > 0) myStats.mdChance = 0;
                         else myStats.mdChance = 1;
                     }));
                     myStats.dodge = 0;
@@ -1064,7 +1085,7 @@ export const raidBosses: enemyInfo[] = [
             });
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (!eStats.domain) { 
+                if (!eStats.domain) {
                     eStats.shieldOrb += eStats.shield * 0.15; // Orb saves 15% of your shield every round
                     eStats.shield += -eStats.shield * 0.1;
                 }

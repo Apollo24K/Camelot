@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { EmbedBuilder } from 'discord.js';
 import Package from '../package.json';
 import { SlashCommand } from '../types';

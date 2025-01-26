@@ -1,4 +1,4 @@
-import { TriggerEvents, TriggerOptions } from "../types";
+import { ITrigger, DetailedStats, TriggerEvents, TriggerOptions } from "../types";
 
 function* idGen(): Generator<number, number> {
     let id = 1;
@@ -8,14 +8,14 @@ function* idGen(): Generator<number, number> {
 };
 let getId = idGen();
 
-export default class Trigger {
+export default class Trigger implements ITrigger {
     private _event: TriggerEvents;
     private _duration: number;
     private _maxRound: number;
-    private _used: number;
     private _maxUsage: number;
-    private _target: any;
-    private _caster: any;
+    private _used: number;
+    private _target?: DetailedStats;
+    private _caster?: DetailedStats;
     private _callback: (...args: any[]) => any;
     private _id: number;
 
@@ -23,8 +23,8 @@ export default class Trigger {
         this._event = event;
         this._duration = duration ?? Infinity;
         this._maxRound = maxRound ?? Infinity;
-        this._used = 0;
         this._maxUsage = maxUsage ?? Infinity;
+        this._used = 0;
         this._target = target;
         this._caster = caster;
         this._callback = callback;
@@ -40,11 +40,11 @@ export default class Trigger {
     get maxRound() {
         return this._maxRound;
     };
-    get used() {
-        return this._used;
-    };
     get maxUsage() {
         return this._maxUsage;
+    };
+    get used() {
+        return this._used;
     };
     get target() {
         return this._target;
@@ -59,10 +59,10 @@ export default class Trigger {
         return this._id;
     };
 
-    set duration(duration) {
+    set duration(duration: number) {
         this._duration = duration;
     };
-    set used(used) {
+    set used(used: number) {
         this._used = used;
     };
 };

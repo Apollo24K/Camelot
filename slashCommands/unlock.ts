@@ -16,7 +16,7 @@ const exportCommand: SlashCommand = {
             const chars: any[] = [];
             choice.forEach((c) => {
                 const char = search(c, stats.chars, interaction, true);
-                if (!stats.charlock.includes(char.id)) isAlreadyUnlocked = true;
+                if (char && !stats.charlock.includes(char.id)) isAlreadyUnlocked = true;
                 if (char?.name && stats.chars.includes(char.id) && !chars.includes(char) && stats.charlock.includes(char.id)) chars.push(char);
             });
 
@@ -36,7 +36,7 @@ const exportCommand: SlashCommand = {
             const animes: any[] = [];
             choice.forEach((a) => {
                 const anime = searchAnimeTitle(a, interaction, true);
-                if (!stats.animelock.includes(anime.id)) isAlreadyUnlocked = true;
+                if (anime && !stats.animelock.includes(anime.id)) isAlreadyUnlocked = true;
                 if (anime?.name && !animes.includes(anime) && stats.animelock.includes(anime.id)) animes.push(anime);
             });
 

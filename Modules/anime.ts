@@ -1,9 +1,6 @@
+import { animeInfoOptions, IanimeInfo } from "../types";
 
-type animeInfoOptions = {
-    charid?: number;
-};
-
-export default class animeInfo {
+export default class animeInfo implements IanimeInfo {
     private _name: string;
     private _alias: string[];
     private _id: number;
@@ -627,10 +624,10 @@ export const anime: animeInfo[] = [
     let names = anime.reduce<string[]>((acc, ani) => [...acc, ani.name, ...ani.alias], []).sort();
     let len = names.length - 1, res = "";
     while (len--) if (names[len - 1] === names[len]) res += names[len--] + "\n";
-    if (res) console.log("WARNING! Duplicate names in anime: " + res);
+    if (res) throw new Error("WARNING! Duplicate names in anime: " + res);
 }
 
 // Check gender, rarity and ID
 anime.forEach((e, i) => {
-    if (e.id !== i) console.log("WARNING! Wrong ID in anime " + e.id + " in: " + e.name);
+    if (e.id !== i) throw new Error("WARNING! Wrong ID in anime " + e.id + " in: " + e.name);
 });

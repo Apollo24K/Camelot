@@ -1,8 +1,8 @@
 import { Asset } from "./assets";
 
-type CostTypes = { gems?: number, coins?: number, lilies?: number, jades?: number; };
+export type CostTypes = { gems?: number, coins?: number, lilies?: number, jades?: number; };
 
-class ProfileSet {
+export class ProfileSet {
     private _name: string;
     private _id: number;
     private _cost: CostTypes;
@@ -36,7 +36,7 @@ class ProfileSet {
 
 type ProfileDecorationsOptions = { delay: number, credits: string[]; };
 
-class ProfileDecorations {
+export class ProfileDecorations {
     private _name: string;
     private _category: "background" | "panel" | "decoration";
     private _cost: CostTypes;
@@ -92,15 +92,26 @@ class ProfileDecorations {
         return this._options;
     };
 
+    get delay() {
+        return this.options.delay ?? 70;
+    };
+    get credits() {
+        return this.options.credits ?? [];
+    };
+
     set set(obj) {
         this._set = obj;
     };
     set id(id) {
         this._id = id;
     };
+
+    async loadImageArray(forceStatic: boolean = false) {
+        return await this.asset.loadImageArray(forceStatic);
+    };
 };
 
-class Background extends ProfileDecorations {
+export class Background extends ProfileDecorations {
     constructor(name: string, cost: CostTypes, obtain: string[], asset: Asset, options: Partial<ProfileDecorationsOptions> = { delay: 70, credits: [] }) {
         const category = "background";
 
@@ -123,7 +134,7 @@ class Background extends ProfileDecorations {
     };
 };
 
-module.exports.profileSets = [
+export const profileSets = [
 
     new ProfileSet("Core Collection", 0, {}, [
         new Background("Skyward Spirals", {}, ["default"], new Asset({ path: "Images/ui/profile/backgrounds/core-collection/skyward-spirals.jpg", url: "https://i.ibb.co/TLFqcrh/ezgif-7-f66c86284b.jpg" }), { credits: ["715186861965967440"] }),
