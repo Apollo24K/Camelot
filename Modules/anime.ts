@@ -623,6 +623,8 @@ export const anime: animeInfo[] = [
 
     new animeInfo("CODE-E", [], 588),
     new animeInfo("The Book of Bantorra", ['Armed Librarians: The Book of Bantorra', 'Fighting Librarians', 'Tatakau Shisho', 'Tatakau Shisho to Koisuru Bakudan', 'Tatakau Shisho: The Book of Bantorra'], 589),
+    new animeInfo("Fena: Pirate Princess", ['Kaizoku Oujo', 'FPP', 'Fena Pirate Princess'], 590),
+    new animeInfo("R.O.D - READ OR DIE", ['R.O.D -READ OR DIE-', 'R.O.D -THE TV-', 'Read or Die', 'Read or Dream', 'R.O.D: Read or Dream', 'ROD'], 591),
 ];
 
 
