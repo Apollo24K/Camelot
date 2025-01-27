@@ -463,9 +463,10 @@ async function createTriggers() {
 async function alterTables() {
     // This function can be used for migrations
     // Example:
-    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS new_column TEXT');
-    //await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');
-    //await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits_claimed INT DEFAULT 0 NOT NULL');
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INT DEFAULT 0 NOT NULL');
+
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits_claimed INT DEFAULT 0 NOT NULL');
 };
 
 async function dropTables() {
