@@ -584,10 +584,10 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (target.marked > 0) {
         let multiplier = 1
         if (attacker.temple) {multiplier = 1.5};
-        attacker.cr += 0.6*multiplier;
+        attacker.cr += 0.3*multiplier;
         if (attacker.cr > 1) {attacker.cr = 1};
-        target.def -= Math.floor(target.def * 0.2 * multiplier);
-        target.mr -= Math.floor(target.mr * 0.2 * multiplier);
+        target.def -= Math.floor(target.def * 0.15 * multiplier);
+        target.mr -= Math.floor(target.mr * 0.15 * multiplier);
     };
 
     // Calculate damage
@@ -665,6 +665,12 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         target.damageOnHold = (target.damageOnHold ?? 0) + onHold;
         damage -= onHold;
     };
+
+    // Store DMG as frozenwounds (Rukia)
+    if (attacker.rukiaUsedActive) {
+        target.frozenwounds += damage;
+        damage = 0;
+    }
 
     // Apply damage to target
     if (!options.ignoreShield && target.shield > 0) {
