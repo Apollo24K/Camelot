@@ -4,7 +4,8 @@ import { EmbedBuilder } from 'discord.js';
 import { characters } from "../Modules/chars";
 import { formatNumberWithQuotes } from "../Modules/functions";
 import { updateUsers } from "../Modules/queries";
-import { generateImages } from '../Modules/runware';
+// import { generateImages } from '../Modules/runware';
+import { generateImages } from '../Modules/runwareDirectApi';
 import { generateText } from '../Modules/gemini';
 
 type GenType = "weapon" | "armor" | "ring" | "custom" | "character";
@@ -52,7 +53,7 @@ const exportCommand: SlashCommand = {
             image_credits: { type: "increment", value: -1 },
         });
 
-        return interaction.editReply({ content: `**Prompt: ** ${userprompt}`, files: images.map((img) => img.imageURL ?? "") });
+        return interaction.editReply({ content: `**Prompt: ** ${userprompt}`, files: images.map((img) => img ?? "") });
     },
 };
 
@@ -82,7 +83,7 @@ async function getPrompt(userprompt: string, type: GenType) {
             chatHistory: [
                 "Create a set of armor, including a helmet/hat/hodd, a cuirass/chestplate/robe/vest, a pair of gloves/vambraces/gauntlets and a pair of boots. It should be usable for an emoji/icon, is icon illustrared, the background transparent, fantasy style, illustration, non-realistic art style, not realistic",
                 userprompt,
-                "Create one detailed prompt for each armor piece for an illustrated fantasy rpg armor set and format it to JSON format, with the key being the armor piece, each named 'helmet', 'cuirass', 'gloves', 'boots', and the value being the prompt. The armor set should be named earlier. Exclude the '```json' and '```' from the response.",
+                "Create one detailed prompt for each armor piece for an illustrated fantasy rpg armor set and format it to JSON format, with the key being the armor piece, each named 'helmet', 'cuirass', 'gloves', 'boots', and the value being the prompt. The armor set should be named earlier.",
                 "All armor pieces's prompts should be very detailed and should be usable for emoji/ icon, icon illustrated, the background transparent, fantasy style, illustration, non-realistic art style, not realistic.",
                 "All prompts need to have a white background and non realistic illustration style",
                 "The pair of gloves/vambraces should not have fingers visible, only armor. Helmets should also just have the armor helmet and no kind of face.",
@@ -116,12 +117,14 @@ async function getPrompt(userprompt: string, type: GenType) {
 
     if (type === "character") {
         return await generateText({
-            systemInstruction: "Reply only with the result of your task, nothing else",
+            systemInstruction: "Reply only with the result of your task, nothing else.",
             chatHistory: [
-                "Create a custom character prompt based on the below user prompt in the following structure: watercolor (medium), (carne griffiths:1.2), yuko shimizu, masterpiece portrait, extreme details, (((${race}))), ${1girl|1boy}, (Waterfall braid ${hairColor} hair:1.2), dynamic pose, (${eyeAccent} ${eyeColor} eyes:1.2), Bold, Delighted, ${emotions}, (illustration), ${large|medium|small} breasts, (${clothing}:1.2), (character focus), ((perfect anatomy)), (((extreme detail))), ((${theme} theme)), masterpiece, best quality, highest quality, (dynamic lighting:1.1), (perfect face:1.1) intricate (high detail:1.1), official art, (chiaroscuro:1.1) ${otherOptionals}",
+                "Create a custom character prompt based on the below user prompt in the following structure:" +
+                // "(__theme__ theme:1.2), from above, upper body, 1girl, __race__, (__hair_style__ __hair_color__ hair:1.2), (__eyes__ __eye_color__ eyes:1.2), standing, {small|medium|large} breasts, (__outfit__:1.2), looking at viewer, floating hair" +
+                "watercolor (medium), (carne griffiths:1.2), yuko shimizu, masterpiece portrait, extreme details, (((${race}))), ${1girl|1boy}, (Waterfall braid ${hairColor} hair:1.2), dynamic pose, (${eyeAccent} ${eyeColor} eyes:1.2), Bold, Delighted, ${emotions}, (illustration), ${large|medium|small} breasts, (${clothing}:1.2), (character focus), ((perfect anatomy)), (((extreme detail))), ((${theme} theme)), masterpiece, best quality, highest quality, (dynamic lighting:1.1), (perfect face:1.1) intricate (high detail:1.1), official art, (chiaroscuro:1.1) ${otherOptionals}",
                 `Weighting Syntax: (text) (text:number) [text]\nUse parentheses () to increase attention, square brackets [] to decrease it. Add a number after the text to specify a custom multiplier.\n\nExamples:\n\nSingle words: (small) dog, pixar style\nMultiple words: small dog, [pixar style]\nHigher emphasis: (small:2.5) dog, pixar style\nCombined emphasis: (small dog:1.5), pixar style` +
-                "Note: Feel free to modify the prompt to fit the style of the user prompt. You may also slightly modify the user prompt to fit the style of the prompt, and to add some slight variety.",
-                "Note: If the user prompt is empty or missing certain vectors, fill in with random keywords to make the prompt more interesting. Vectors you can play with include hair color, hair style, eye color, clothing, setting, grimace, pose, etc.",
+                "Feel free to modify the base structure or user prompt to add some variety, without abandoning the syntax.",
+                "The less the user provides, the more you can play with the vectors. Vectors you can play with include hair color, hair style, eye color, clothing, setting, grimace, pose, etc.",
                 "User prompt:",
                 userprompt,
             ],
@@ -139,13 +142,14 @@ async function getImages(prompt: string, type: GenType, outputFormat: IOutputFor
 
     if (type === "armor") {
         const armorPrompts = parseArmorPrompts(prompt);
+
         if (armorPrompts === undefined) return [];
 
         const armorImages = await Promise.all([
             generateImages({ prompt: armorPrompts.helmet, outputFormat }),
             generateImages({ prompt: armorPrompts.cuirass, outputFormat }),
             generateImages({ prompt: armorPrompts.gloves, outputFormat }),
-            generateImages({ prompt: armorPrompts.boots, outputFormat })
+            generateImages({ prompt: armorPrompts.boots, outputFormat }),
         ]);
 
         return armorImages.flat();
@@ -153,7 +157,7 @@ async function getImages(prompt: string, type: GenType, outputFormat: IOutputFor
 
     if (type === "character") {
         return await generateImages({
-            prompt, outputFormat, model: "PrimeMix", numberOfImages: 2, width: 576, height: 896, CFGScale: 8, steps: 30,
+            prompt, outputFormat, model: "PrimeMix", width: 576, height: 896, numberOfImages: 2,
             negativePrompt: "easynegative, (mutilated:1.21), mutated hands, (poorly drawn hands:1.331), extra limbs, (disfigured:1.331), (missing arms:1.331), (extra legs:1.331), (fused fingers:1.61051), (too many fingers:1.61051), bad hands, missing fingers, extra digit"
         });
     };
@@ -163,7 +167,10 @@ async function getImages(prompt: string, type: GenType, outputFormat: IOutputFor
 
 function parseArmorPrompts(jsonString: string) {
     try {
-        const armorJson = JSON.parse(jsonString);
+        const jsonMatch = jsonString.match(/\{[^]*\}/);
+        if (!jsonMatch) return undefined;
+
+        const armorJson = JSON.parse(jsonMatch[0]);
 
         const requiredKeys = ['helmet', 'cuirass', 'gloves', 'boots'];
         for (const key of requiredKeys) {

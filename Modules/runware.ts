@@ -10,26 +10,34 @@ type ModelParameters = {
     vae?: string,
     scheduler?: string,
     promptWeighting?: TPromptWeighting,
+    steps?: number,
+    CFGScale?: number,
 };
 
 const runwareModel: Record<RunwareModel, ModelParameters> = {
     "FLUX.1 (Schnell)": {
         model: "runware:100@1",
+        steps: 20,
     },
     "FLUX.1 (Dev)": {
         model: "runware:101@1",
+        steps: 20,
     },
     "Anything V3": {
         model: "civitai:66@75",
         // vae: "civitai:276082@311162",
         scheduler: "DPM++ 2M Karras",
         promptWeighting: "sdEmbeds",
+        steps: 30,
+        CFGScale: 8,
     },
     "PrimeMix": {
         model: "civitai:28779@67388",
-        vae: "civitai:276082@311162",
+        vae: "civitai:23906@28569",
         scheduler: "DPM++ 2M Karras",
         promptWeighting: "sdEmbeds",
+        steps: 30,
+        CFGScale: 8,
     },
 };
 
@@ -75,9 +83,9 @@ export const generateImages = async ({ prompt, negativePrompt, outputFormat = "J
             negativePrompt,
             height,
             width,
-            steps,
+            steps: runwareModel[model].steps ?? steps,
             outputFormat,
-            CFGScale,
+            CFGScale: runwareModel[model].CFGScale ?? CFGScale,
             scheduler: runwareModel[model].scheduler,
             promptWeighting: runwareModel[model].promptWeighting,
 
