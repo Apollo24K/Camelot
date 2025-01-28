@@ -453,6 +453,9 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
             dStats.maskinfo = inv.equipment.mask;
         };
 
+        if ((id === 13780 || id === 13781 || id === 13782) && inv.equipment.prog) {
+            dStats.proginfo = inv.equipment.prog;
+        };
     };
 
     dStats.maxhp = dStats.hp;
@@ -580,6 +583,16 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         return 0;
     }; /* Reset DodgeStreak */ target.dodgeStreak = 0;
 
+    // Marked enemies (Nahida)
+    if (target.marked > 0) {
+        let multiplier = 1
+        if (attacker.temple) {multiplier = 1.5};
+        attacker.cr += 0.3*multiplier;
+        if (attacker.cr > 1) {attacker.cr = 1};
+        target.def -= Math.floor(target.def * 0.15 * multiplier);
+        target.mr -= Math.floor(target.mr * 0.15 * multiplier);
+    };
+
     // Calculate damage
     // let damage = getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
     let damage, isCrit = (options.canCrit && (options.critChance < (attacker.cr + options.critBuff)));
@@ -655,6 +668,12 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         target.damageOnHold = (target.damageOnHold ?? 0) + onHold;
         damage -= onHold;
     };
+
+    // Store DMG as frozenwounds (Rukia)
+    if (attacker.rukiaUsedActive) {
+        target.frozenwounds += damage;
+        damage = 0;
+    }
 
     // Apply damage to target
     if (!options.ignoreShield && target.shield > 0) {
