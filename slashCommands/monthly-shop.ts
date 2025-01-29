@@ -33,6 +33,11 @@ const row2 = new ActionRowBuilder<ButtonBuilder>()
             .setEmoji("💎")
             .setLabel("Premium")
             .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+            .setCustomId('other')
+            .setEmoji("🎐")
+            .setLabel("Other")
+            .setStyle(ButtonStyle.Secondary),
     );
 
 const exportCommand: SlashCommand = {
@@ -83,6 +88,13 @@ const exportCommand: SlashCommand = {
                     `## Monthly Shop\nWelcome to the monthly shop to buy limited resources!\nUse \`/buy monthly <item>\` to buy.\n` +
                     `### Premium\n${formatItems("Premium")}` +
                     `\n\n<:info:1131679799207796756> You can see all perks on our [Patreon](<https://www.patreon.com/cmlt/membership>). Prices might differ depending on your country and currency.`
+                ),
+            "other": new EmbedBuilder()
+                .setColor(0xbbffff)
+                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                .setDescription(
+                    `## Monthly Shop\nWelcome to the monthly shop to buy limited resources!\nUse \`/buy monthly <item>\` to buy.\n` +
+                    `### Image Credits\n${formatItems("Image Credits")}`
                 ),
         };
 

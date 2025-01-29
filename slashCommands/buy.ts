@@ -345,6 +345,8 @@ const exportCommand: SlashCommand = {
                         if (fItem.custom.itemid) updateOptions[fItem.custom.column as "ssticket"] = { type: "increment", value: amount };
                     } else if (fItem.section === "Chests") {
                         if (fItem.custom.itemid) updateOptions.items = { type: "merge_json", value: { [fItem.custom.itemid]: amount } };
+                    } else if (fItem.section === "Image Credits") {
+                        updateOptions.image_credits = { type: "increment", value: amount };
                     };
 
                     await updateUsers(interaction.user.id, updateOptions);

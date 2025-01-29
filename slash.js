@@ -1185,11 +1185,12 @@ const commands = [
 					{ name: 'weapon', value: 'weapon' },
 					{ name: 'armor', value: 'armor' },
 					{ name: 'ring', value: 'ring' },
+					{ name: 'item', value: 'item' },
 					{ name: 'character', value: 'character' },
-					{ name: 'custom', value: 'custom' },
 				)
 			)
 			.addStringOption(option => option.setName('prompt').setDescription('Enter your prompt').setRequired(false))
+			.addIntegerOption(option => option.setName('count').setDescription('Number of images to generate').setRequired(false))
 			.addBooleanOption(option => option.setName('enhance').setDescription('Enhance your prompt using an LLM | Default: true').setRequired(false))
 			.addStringOption(option => option.setName('output').setDescription('Select your output file format | Default: JPG').setRequired(false).addChoices(
 				{ name: 'JPG', value: "JPG" },

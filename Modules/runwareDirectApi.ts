@@ -19,11 +19,11 @@ type ModelParameters = {
 const runwareModel: Record<RunwareModel, ModelParameters> = {
     "FLUX.1 (Schnell)": {
         model: "runware:100@1",
-        steps: 20,
+        steps: 30,
     },
     "FLUX.1 (Dev)": {
         model: "runware:101@1",
-        steps: 20,
+        steps: 30,
     },
     "Anything V3": {
         model: "civitai:66@75",
@@ -49,15 +49,38 @@ const runwareModel: Record<RunwareModel, ModelParameters> = {
     },
 };
 
+export type GeneratedImage = {
+    url: string;
+    uuid: string;
+};
+
+type BackgroundRemovalOptions = {
+    inputImage: string;
+    outputType?: "base64Data" | "dataURI" | "URL";
+    outputFormat?: "JPG" | "PNG" | "WEBP";
+    outputQuality?: number;
+    includeCost?: boolean;
+    rgba?: [number, number, number, number];
+    postProcessMask?: boolean;
+    returnOnlyMask?: boolean;
+    alphaMatting?: boolean;
+    alphaMattingForegroundThreshold?: number;
+    alphaMattingBackgroundThreshold?: number;
+    alphaMattingErodeSize?: number;
+};
+
+type PendingTask = {
+    resolve: (result: any) => void,
+    images: GeneratedImage[],
+    expected: number,
+    type: 'imageInference' | 'imageBackgroundRemoval';
+};
+
 class RunwareDirectApi {
     private ws: WebSocket | null = null;
     private connectionSessionUUID: string | null = null;
     private apiKey: string;
-    private pendingTasks: Map<string, {
-        resolve: (result: any) => void,
-        urls: string[],
-        expected: number;
-    }> = new Map();
+    private pendingTasks: Map<string, PendingTask> = new Map();
     private reconnectAttempts = 0;
     private maxReconnectAttempts = 3;
     private isConnecting: Promise<void> | null = null;
@@ -91,9 +114,17 @@ class RunwareDirectApi {
                         } else {
                             const task = this.pendingTasks.get(result.taskUUID);
                             if (task) {
-                                task.urls.push(result.imageURL);
-                                if (task.urls.length === task.expected) {
-                                    task.resolve(task.urls);
+                                if (task.type === 'imageInference') {
+                                    task.images.push({
+                                        url: result.imageURL,
+                                        uuid: result.imageUUID
+                                    });
+                                    if (task.images.length === task.expected) {
+                                        task.resolve(task.images);
+                                        this.pendingTasks.delete(result.taskUUID);
+                                    }
+                                } else if (task.type === 'imageBackgroundRemoval') {
+                                    task.resolve(result);
                                     this.pendingTasks.delete(result.taskUUID);
                                 }
                             }
@@ -138,6 +169,69 @@ class RunwareDirectApi {
         });
     }
 
+    async uploadVaeModel({
+        name,
+        version,
+        downloadUrl,
+        uniqueIdentifier,
+        architecture = "sdxl",  // or other supported architecture
+        isPrivate = true,
+        description = "",
+    }: {
+        name: string;
+        version: string;
+        downloadUrl: string;
+        uniqueIdentifier: string;
+        architecture?: "flux1d" | "flux1s" | "pony" | "sd1x" | "sdhyper" | "sd1xlcm" | "sd3" | "sdxl" | "sdxldistilled" | "sdxlhyper" | "sdxllcm" | "sdxllightning" | "sdxlturbo";
+        isPrivate?: boolean;
+        description?: string;
+    }): Promise<string> {
+        try {
+            await this.connect();
+
+            const taskUUID = this.generateUUID();
+
+            const airId = 101; // Date.now()
+
+            const request = [{
+                taskType: "modelUpload",
+                taskUUID,
+                category: "vae",  // Specify that we're uploading a VAE
+                architecture,
+                format: "safetensors",  // Most VAEs are in safetensors format
+                air: `${config.runware.source}:${airId}@1`,
+                uniqueIdentifier,
+                name,
+                version,
+                downloadUrl,
+                private: isPrivate,
+                shortDescription: description,
+            }];
+
+            return new Promise((resolve, reject) => {
+                let modelAir: string | null = null;
+
+                this.pendingTasks.set(taskUUID, {
+                    resolve: (result: any) => {
+                        if (result.status === "ready") {
+                            resolve(modelAir || result.air);
+                        } else if (result.air && !modelAir) {
+                            modelAir = result.air;
+                        }
+                    },
+                    images: [],
+                    expected: 1,
+                    type: 'imageInference'
+                });
+
+                this.ws?.send(JSON.stringify(request));
+            });
+        } catch (error) {
+            console.error('Error uploading VAE model:', error);
+            throw error;
+        }
+    };
+
     async generateImages({
         prompt,
         negativePrompt,
@@ -164,7 +258,7 @@ class RunwareDirectApi {
          * Number of images to generate
          * @default 1
          */
-        numberOfImages?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+        numberOfImages?: number;
         /**
          * @default 512
          */
@@ -181,7 +275,7 @@ class RunwareDirectApi {
          * @default undefined
          */
         CFGScale?: number;
-    }): Promise<string[]> {
+    }): Promise<GeneratedImage[]> {
         try {
             await this.connect();
 
@@ -209,17 +303,85 @@ class RunwareDirectApi {
             return new Promise((resolve) => {
                 this.pendingTasks.set(taskUUID, {
                     resolve,
-                    urls: [],
-                    expected: numberOfImages
+                    images: [],
+                    expected: numberOfImages,
+                    type: 'imageInference'
+                });
+
+                this.ws?.send(JSON.stringify(request));
+            });
+        } catch {
+            return [];
+        };
+    };
+
+    async removeBackground({
+        inputImage,
+        outputType = "URL",
+        outputFormat = "PNG",
+        outputQuality = 95,
+        includeCost = false,
+        rgba,
+        postProcessMask = false,
+        returnOnlyMask = false,
+        alphaMatting = false,
+        alphaMattingForegroundThreshold = 240,
+        alphaMattingBackgroundThreshold = 10,
+        alphaMattingErodeSize = 10
+    }: BackgroundRemovalOptions): Promise<{
+        url?: string;
+        base64Data?: string;
+        dataURI?: string;
+        uuid: string;
+        inputUuid: string;
+        cost?: number;
+    }> {
+        try {
+            await this.connect();
+
+            const taskUUID = this.generateUUID();
+
+            const request = [{
+                taskType: "imageBackgroundRemoval",
+                taskUUID,
+                inputImage,
+                outputType,
+                outputFormat,
+                outputQuality,
+                includeCost,
+                ...(rgba && { rgba }),
+                postProcessMask,
+                returnOnlyMask,
+                alphaMatting,
+                alphaMattingForegroundThreshold,
+                alphaMattingBackgroundThreshold,
+                alphaMattingErodeSize
+            }];
+
+            return new Promise((resolve) => {
+                this.pendingTasks.set(taskUUID, {
+                    resolve: (result) => {
+                        resolve({
+                            url: result.imageURL,
+                            base64Data: result.imageBase64Data,
+                            dataURI: result.imageDataURI,
+                            uuid: result.imageUUID,
+                            inputUuid: result.inputImageUUID,
+                            cost: result.cost
+                        });
+                    },
+                    images: [],
+                    expected: 1,
+                    type: 'imageBackgroundRemoval'
                 });
 
                 this.ws?.send(JSON.stringify(request));
             });
         } catch (error) {
-            console.error('Error generating images:', error);
-            return [];
-        };
-    };
+            console.error('Error removing background:', error);
+            throw error;
+        }
+    }
 
     disconnect() {
         if (this.ws) {
@@ -231,3 +393,17 @@ class RunwareDirectApi {
 
 export const runwareApi = new RunwareDirectApi(config.runware.apiKey);
 export const generateImages = runwareApi.generateImages.bind(runwareApi);
+export const removeBackground = runwareApi.removeBackground.bind(runwareApi);
+
+
+// Model Upload Usage
+async function uploadVae() {
+    const vaeAir = await runwareApi.uploadVaeModel({
+        name: "OriginalAnythingV3VAE",
+        version: "1.0",
+        downloadUrl: "https://huggingface.co/ckpt/anything-v3.0/resolve/main/Anything-V3.0.vae.pt",
+        uniqueIdentifier: "f921fb3f29891d2a77a6571e56b8b5052420d2884129517a333c60b1b4816cdf",
+        architecture: "sd1x",
+        description: "A custom VAE for better image quality"
+    });
+};
