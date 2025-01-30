@@ -1,14 +1,27 @@
 import { IOutputFormat } from '@runware/sdk-js';
 import { SlashCommand } from '../types';
-import { EmbedBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, MessageFlags } from 'discord.js';
 import { characters } from "../Modules/chars";
 import { formatNumberWithQuotes } from "../Modules/functions";
-import { updateUsers } from "../Modules/queries";
-// import { generateImages } from '../Modules/runware';
-import { generateImages } from '../Modules/runwareDirectApi';
+import { getUserSchema, updateUsers } from "../Modules/queries";
 import { generateText } from '../Modules/gemini';
+import { generateImages, removeBackground } from '../Modules/runwareDirectApi';
 
-type GenType = "weapon" | "armor" | "ring" | "custom" | "character";
+type GenType = "weapon" | "armor" | "ring" | "item" | "character";
+
+const editRow = new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(
+        new ButtonBuilder()
+            .setCustomId(`ref-generate-removebg`)
+            .setLabel("Remove Background")
+            .setStyle(ButtonStyle.Secondary)
+    );
+
+const tips = [
+    "Each generated image costs **1** image credit",
+    "Removing backgrounds costs **1** image credit, regardless of how many images are affected!",
+    "You can add random selections into your prompt with the syntax `{option1|option2|option3}`",
+];
 
 const exportCommand: SlashCommand = {
     name: 'generate',
@@ -19,6 +32,9 @@ const exportCommand: SlashCommand = {
         const userprompt = interaction.options.getString('prompt') ?? type ?? "";
         const enhancePrompt = interaction.options.getBoolean('enhance') ?? true;
         const outputFormat = (interaction.options.getString('output') as IOutputFormat) ?? "JPG";
+        const numberOfImages = type === "armor"
+            ? 4
+            : Math.max(1, Math.min(9, interaction.options.getInteger('count') ?? 3));
 
         if (type === null) {
             let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
@@ -29,7 +45,7 @@ const exportCommand: SlashCommand = {
                 .setAuthor({ name: `Image Credits`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) })
                 .setThumbnail(thumbnail)
                 .setDescription(
-                    `Generate art in the style of Camelot, fitting for use in suggestions and contests! Please use this command only for that purpose. **All images get logged and reviewed, misuse can result in penalties!**\n\n` +
+                    `Generate art in the style of Camelot, fitting for use in suggestions and contests! Please use this command only for that purpose. **We log and review all images, misuse can result in penalties.**\n\n` +
                     `**Balance**: \`${formatNumberWithQuotes(stats.image_credits)}\` credits\n\n` +
                     `-# You can buy credits in the \`/monthly shop\` using coins <:coins:872926669055356939> or jades <:eternal_jade:1256124504141201428>`
                 );
@@ -37,23 +53,86 @@ const exportCommand: SlashCommand = {
         };
 
         try {
-            if (stats.image_credits <= 0) return interaction.reply("You don't have any image credits left.");
-            await interaction.reply({ content: "Generating images..." });
+            if (stats.image_credits < numberOfImages) return interaction.reply("You don't have enough image credits left <:KonataCry:794983219229098004>\nYou can get more in the `/monthly shop`!");
+            await interaction.reply({ content: `Generating images...\n\n-# **Tip**: ${tips[Math.floor(Math.random() * tips.length)]}` });
         } catch {
             return console.log(`ERROR Interaction Failed to reply, command: "${interaction.commandName}"`);
         };
 
+        // Update users table
+        await updateUsers(interaction.user.id, {
+            image_credits: { type: "increment", value: -numberOfImages },
+        });
+
         const prompt = enhancePrompt ? await getPrompt(userprompt, type) : userprompt;
 
-        const images = await getImages(prompt, type, outputFormat);
+        const images = await getImages(prompt, type, numberOfImages, outputFormat);
         if (images.length === 0) return interaction.editReply({ content: "An error occurred while generating the images. Please try again later.\n\nIf the issue persists, please contact us on our `/support` server!" });
+
+        try {
+            await interaction.editReply({
+                content: `**Prompt: ** ${userprompt.slice(0, 1800)}\n-# **UUID**: \`${images[0].uuid}\``,
+                files: images.map((img) => img.url ?? "").filter(Boolean),
+                components: type === "character" ? [] : [editRow],
+            });
+
+            // Log images
+            const channel = interaction.client.channels.cache.find(channel => channel.id === "1333567863805448283");
+            if (channel?.isSendable() && interaction.client.user.id === "706183309943767112") return channel.send({ content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\n**Prompt**: ${userprompt}\n\`\`\`yaml\n${prompt.slice(0, 1500)}\`\`\`\n-# **UUID**: \`${images[0].uuid}\``, files: images.map((img) => img.url ?? "").filter(Boolean), flags: MessageFlags.SuppressNotifications });
+        } catch (error: any) {
+            if (error?.rawError?.message === 'Explicit content cannot be sent to the desired recipient(s)') {
+                interaction.editReply({ content: "Your prompt was flagged as inappropriate. Please try again with a different prompt." });
+
+                // Log images
+                const channel = interaction.client.channels.cache.find(channel => channel.id === "1333567863805448283");
+                if (channel?.isSendable() && interaction.client.user.id === "706183309943767112") return channel.send({ content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\n**Prompt**: ${userprompt}\n\`\`\`yaml\n${prompt.slice(0, 1500)}\`\`\`\n-# **UUID**: \`${images[0].uuid}\``, files: images.map((img) => img.url ?? "").filter(Boolean), flags: MessageFlags.SuppressNotifications });
+            } else {
+                interaction.editReply({ content: "An error occurred while generating the images. Please try again later.\n\nIf the issue persists, please contact us on our `/support` server!" });
+            };
+        };
+    },
+    async executeButtonInteraction({ interaction }) {
+        const stats = await getUserSchema(interaction.user.id);
+        if (!stats) return interaction.followUp("Couldn't find user");
+
+        const urls = interaction.message.attachments.map((attachment) => attachment.url);
+
+        let reply: Message | undefined;
+        try {
+            if (stats.image_credits < 1) return interaction.followUp({ content: "You don't have enough image credits left <:KonataCry:794983219229098004>\nYou can get more in the `/monthly shop`!", flags: MessageFlags.Ephemeral });
+            reply = await interaction.followUp({ content: `Removing backgrounds...\n\n-# **Tip**: ${tips[Math.floor(Math.random() * tips.length)]}` });
+        } catch {
+            return;
+        };
+        if (!reply) return interaction.followUp({ content: "An error occurred while removing the background of your images. Please try again later.\n\nIf the issue persists, please contact us on our `/support` server!" });
 
         // Update users table
         await updateUsers(interaction.user.id, {
             image_credits: { type: "increment", value: -1 },
         });
 
-        return interaction.editReply({ content: `**Prompt: ** ${userprompt}`, files: images.map((img) => img ?? "") });
+        const results = await Promise.all(urls.map(async (url) => {
+            return await removeBackground({
+                inputImage: url,
+                outputFormat: "PNG",
+                alphaMatting: true
+            });
+        }));
+
+        const oldUuid = interaction.message.content.split("-# **UUID**: `")[1].split("`")[0];
+
+        await reply.edit({
+            content: `Removed Background of \`${oldUuid}\`\n-# **UUID**: \`${results[0].uuid}\``,
+            files: results.map((result) => result.url ?? "").filter(Boolean),
+        });
+
+        // Log images
+        const channel = interaction.client.channels.cache.find(channel => channel.id === "1333567863805448283");
+        if (channel?.isSendable() && interaction.client.user.id === "706183309943767112") return channel.send({
+            content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\nRemoved Background of \`${oldUuid}\`\n\n-# **UUID**: \`${results[0].uuid}\``,
+            files: results.map((result) => result.url ?? "").filter(Boolean),
+            flags: MessageFlags.SuppressNotifications
+        });
     },
 };
 
@@ -68,26 +147,29 @@ async function getPrompt(userprompt: string, type: GenType) {
 
     if (type === "weapon") {
         return await generateText({
-            systemInstruction: "You create detailed image prompts, suiting the style of FLUX.1 (Dev) for weapon icon illustrations.",
+            systemInstruction: "You create detailed image prompts guided by the user prompt, suiting the style of FLUX.1 (Dev) for weapon icon illustrations. Reply only with the result of your task, nothing else.",
             chatHistory: [
-                "Create a weapon that aligns with one corner, is usable for an emoji/ icon, is icon illustrared, the background transparent, fantasy style, illustration, non-realistic art style, not realistic",
-                userprompt,
-                "Create a prompt for an illustrated fantasy rpg weapon",
+                "[SYSTEM]: Create a weapon that aligns with one corner, is usable as an emoji/icon, is icon illustrared, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic",
+                "[SYSTEM]: The prompt should be very detailed and should be usable as emoji/icon, icon illustrated, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic.",
+                "[SYSTEM]: All prompts need to have a white background and non realistic illustration style.",
+                "[SYSTEM]: The weapon should have a creative design fitting a fantasy weapon to highlight its value as a powerful artifact.",
+                "[SYSTEM]: If the user prompt wasn't provided, you're free to create a unique weapon on your own accord. Be creative!",
+                `[USER]: ${parsePrompt(userprompt)}`,
             ],
         }) ?? userprompt;
     };
 
     if (type === "armor") {
         return await generateText({
-            systemInstruction: "You create detailed image prompts, suiting the style of FLUX.1 (Dev) for armor icon illustrations.",
+            systemInstruction: "You create detailed image prompts guided by the user prompt, suiting the style of FLUX.1 (Dev) for armor icon illustrations. Reply only with the result of your task, which is a JSON formatted string, nothing else. DO NOT INCLUDE ```json ``` IN YOUR REPLY.",
             chatHistory: [
-                "Create a set of armor, including a helmet/hat/hodd, a cuirass/chestplate/robe/vest, a pair of gloves/vambraces/gauntlets and a pair of boots. It should be usable for an emoji/icon, is icon illustrared, the background transparent, fantasy style, illustration, non-realistic art style, not realistic",
-                userprompt,
-                "Create one detailed prompt for each armor piece for an illustrated fantasy rpg armor set and format it to JSON format, with the key being the armor piece, each named 'helmet', 'cuirass', 'gloves', 'boots', and the value being the prompt. The armor set should be named earlier.",
-                "All armor pieces's prompts should be very detailed and should be usable for emoji/ icon, icon illustrated, the background transparent, fantasy style, illustration, non-realistic art style, not realistic.",
-                "All prompts need to have a white background and non realistic illustration style",
-                "The pair of gloves/vambraces should not have fingers visible, only armor. Helmets should also just have the armor helmet and no kind of face.",
-                "Create a prompt for an illustrated fantasy rpg armor set",
+                "[SYSTEM]: Create an armor set, including a helmet/hat/hodd, a cuirass/chestplate/robe/vest, a pair of gloves/vambraces/gauntlets and a pair of boots. It should be usable as an emoji/icon, is icon illustrared, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic",
+                "[SYSTEM]: Create one detailed prompt for each armor piece for an illustrated fantasy rpg armor set and format it to JSON format, with the key being the armor piece, each named 'helmet', 'cuirass', 'gloves', 'boots', and the value being the prompt. Include nothing other than the JSON output itself in your reply.",
+                "[SYSTEM]: Prompts of each piece should be very detailed and should be usable as emoji/icon, icon illustrated, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic.",
+                "[SYSTEM]: All prompts need to have a white background and non realistic illustration style",
+                "[SYSTEM]: The pair of gloves/vambraces should not have fingers visible, only armor. Helmets should also just have the armor helmet and no kind of face.",
+                "[SYSTEM]: If the user prompt wasn't provided, you're free to create a unique set on your own accord. Be creative!",
+                `[USER]: ${parsePrompt(userprompt)}`,
             ],
             maxOutputTokens: 1024,
         }) ?? userprompt;
@@ -95,22 +177,28 @@ async function getPrompt(userprompt: string, type: GenType) {
 
     if (type === "ring") {
         return await generateText({
-            systemInstruction: "You create detailed image prompts, suiting the style of FLUX.1 (Dev) for ring icon illustrations.",
+            systemInstruction: "You create detailed image prompts guided by the user prompt, suiting the style of FLUX.1 (Dev) for ring icon illustrations. Reply only with the result of your task, nothing else.",
             chatHistory: [
-                "Create a ring that is slightly tilted to the right, is usable for an emoji/ icon, is icon illustrared, the background transparent, fantasy style, illustration, non-realistic art style, not realistic",
-                userprompt,
-                "Create a prompt for an illustrated fantasy rpg ring",
+                "[SYSTEM]: Create a fantasy ring/signet/circlet that is slightly tilted to the right. It should be usable as an emoji/icon, is icon illustrared, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic",
+                "[SYSTEM]: The prompt should be very detailed and should be usable as emoji/icon, icon illustrated, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic.",
+                "[SYSTEM]: All prompts need to have a white background and non realistic illustration style.",
+                "[SYSTEM]: The ring should have a creative design fitting a fantasy ring to highlight its value as a powerful artifact, not just a simple circle.",
+                "[SYSTEM]: If the user prompt wasn't provided, you're free to create a unique ring on your own accord. Be creative!",
+                `[USER]: ${parsePrompt(userprompt)}`,
             ],
         }) ?? userprompt;
     };
 
-    if (type === "custom") {
+    if (type === "item") {
         return await generateText({
-            systemInstruction: "You create detailed image prompts, suiting the style of FLUX.1 (Dev) for item icon illustrations.",
+            systemInstruction: "You create detailed image prompts guided by the user prompt, suiting the style of FLUX.1 (Dev) for item icon illustrations. Reply only with the result of your task, nothing else.",
             chatHistory: [
-                "Create an item that is usable for an emoji/ icon, is icon illustrared, the background transparent, fantasy style, illustration, non-realistic art style, not realistic",
-                userprompt,
-                "Create a prompt for an illustrated fantasy rpg item icon",
+                "[SYSTEM]: Create an item that is usable as an emoji/icon, is icon illustrared, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic",
+                "[SYSTEM]: The prompt should be very detailed and should be usable as emoji/icon, icon illustrated, the background white/transparent, fantasy style, illustration, non-realistic art style, not realistic.",
+                "[SYSTEM]: All prompts need to have a white background and non realistic illustration style.",
+                "[SYSTEM]: The item should have a creative design fitting a fantasy item to highlight its value.",
+                "[SYSTEM]: If the user prompt wasn't provided, you're free to create a unique item on your own accord. Be creative!",
+                `[USER]: ${parsePrompt(userprompt)}`,
             ],
         }) ?? userprompt;
     };
@@ -119,14 +207,13 @@ async function getPrompt(userprompt: string, type: GenType) {
         return await generateText({
             systemInstruction: "Reply only with the result of your task, nothing else.",
             chatHistory: [
-                "Create a custom character prompt based on the below user prompt in the following structure:" +
-                // "(__theme__ theme:1.2), from above, upper body, 1girl, __race__, (__hair_style__ __hair_color__ hair:1.2), (__eyes__ __eye_color__ eyes:1.2), standing, {small|medium|large} breasts, (__outfit__:1.2), looking at viewer, floating hair" +
-                "watercolor (medium), (carne griffiths:1.2), yuko shimizu, masterpiece portrait, extreme details, (((${race}))), ${1girl|1boy}, (Waterfall braid ${hairColor} hair:1.2), dynamic pose, (${eyeAccent} ${eyeColor} eyes:1.2), Bold, Delighted, ${emotions}, (illustration), ${large|medium|small} breasts, (${clothing}:1.2), (character focus), ((perfect anatomy)), (((extreme detail))), ((${theme} theme)), masterpiece, best quality, highest quality, (dynamic lighting:1.1), (perfect face:1.1) intricate (high detail:1.1), official art, (chiaroscuro:1.1) ${otherOptionals}",
-                `Weighting Syntax: (text) (text:number) [text]\nUse parentheses () to increase attention, square brackets [] to decrease it. Add a number after the text to specify a custom multiplier.\n\nExamples:\n\nSingle words: (small) dog, pixar style\nMultiple words: small dog, [pixar style]\nHigher emphasis: (small:2.5) dog, pixar style\nCombined emphasis: (small dog:1.5), pixar style` +
-                "Feel free to modify the base structure or user prompt to add some variety, without abandoning the syntax.",
-                "The less the user provides, the more you can play with the vectors. Vectors you can play with include hair color, hair style, eye color, clothing, setting, grimace, pose, etc.",
-                "User prompt:",
-                userprompt,
+                "[SYSTEM]: Create a custom character prompt based on the below user prompt in the following structure:" +
+                "[SYSTEM]: watercolor (medium), (carne griffiths:1.2), yuko shimizu, masterpiece portrait, extreme details, {1girl, {large|medium|small} breasts|1boy}, (__hair_style__ __hair_color__ hair:1.2), dynamic pose, (__eyes__ __eye_color__ eyes:1.2), __emotions__, (illustration), (__outfit__:1.2), (character focus), (perfect anatomy:1.1), (extreme detail:1.2), (__theme__ theme:1.1), masterpiece, best quality, highest quality, (dynamic lighting:1.1), (perfect face:1.1) intricate (high detail:1.1), official art, (chiaroscuro:1.1), (__feel_free_to_add_anything_here__)" +
+                `[SYSTEM]: Weighting Syntax: (text) (text:number) [text]\nUse parentheses () to increase attention, square brackets [] to decrease it. Add a number after the text to specify a custom multiplier.\n\nExamples:\n\nSingle words: (small) dog, pixar style\nMultiple words: small dog, [pixar style]\nHigher emphasis: (small:2.5) dog, pixar style\nCombined emphasis: (small dog:1.5), pixar style` +
+                `[SYSTEM]: Random selection: Syntax of the form {text1|text2|text3} is used to randomly select one of the provided options. For example, if you are provided with "{small|medium|large} breasts", in either the base or user prompts, you need to randomly select one of the options. They can be nested, such as {1girl, {small|medium|large} breasts|1boy}, in this case you would pick between "1girl, {small|medium|large} breasts" or "1boy".` +
+                "[SYSTEM]: To clarify, in your output, you shall NOT use Random selection syntax. That is solely for you, and you need to pick from the selection." +
+                "[SYSTEM]: Lastly, the less the user provides, the more you can play with the vectors. Vectors you can play with include hair color, hair style, eye color, clothing, setting, grimace, pose, etc.",
+                `[USER]: ${parsePrompt(userprompt)}`,
             ],
         }) ?? userprompt;
     };
@@ -134,10 +221,10 @@ async function getPrompt(userprompt: string, type: GenType) {
     return userprompt;
 };
 
-async function getImages(prompt: string, type: GenType, outputFormat: IOutputFormat) {
+async function getImages(prompt: string, type: GenType, numberOfImages: number, outputFormat: IOutputFormat) {
 
-    if (type === "weapon" || type === "ring" || type === "custom") {
-        return await generateImages({ prompt, outputFormat, numberOfImages: 3 });
+    if (type === "weapon" || type === "ring" || type === "item") {
+        return await generateImages({ prompt, numberOfImages, outputFormat });
     };
 
     if (type === "armor") {
@@ -157,12 +244,20 @@ async function getImages(prompt: string, type: GenType, outputFormat: IOutputFor
 
     if (type === "character") {
         return await generateImages({
-            prompt, outputFormat, model: "PrimeMix", width: 576, height: 896, numberOfImages: 2,
+            prompt, numberOfImages, outputFormat, model: "PrimeMix", width: 576, height: 896,
             negativePrompt: "easynegative, (mutilated:1.21), mutated hands, (poorly drawn hands:1.331), extra limbs, (disfigured:1.331), (missing arms:1.331), (extra legs:1.331), (fused fingers:1.61051), (too many fingers:1.61051), bad hands, missing fingers, extra digit"
         });
     };
 
     return [];
+};
+
+function parsePrompt(prompt: string) {
+    // Replace all instances of {option1|option2|...} with a random option
+    return prompt.replace(/\{([^{}]+)\}/g, (match, options) => {
+        const choices = options.split('|');
+        return choices[Math.floor(Math.random() * choices.length)];
+    });
 };
 
 function parseArmorPrompts(jsonString: string) {

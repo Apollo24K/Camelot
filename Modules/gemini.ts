@@ -3,7 +3,8 @@ import config from '../config.json';
 
 const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
 const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash-8b",
+    // model: "gemini-1.5-flash-8b",
+    model: "gemini-2.0-flash-exp",
     generationConfig: {
         temperature: 2,
         topP: 0.95,

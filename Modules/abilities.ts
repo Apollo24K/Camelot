@@ -6,7 +6,7 @@ import { items } from "./items";
 import delayedBuffs from "./delayedBuffs";
 import buffInfo from "./buffs";
 import { Buffs, DetailedStats, IbuffInfo, IcharInfo, IentityInfo, MatchStats } from "../types";
-import { getLatestStampede, getUserSchema, getUserWeaponCount, updateUsers } from "./queries";
+import { getLatestStampede, getUserSchema, getUserWeaponCount, updateUsers, getPartyMembers, getUserSchemas } from "./queries";
 
 type Ability = {
     usage: number;
@@ -225,14 +225,16 @@ export const abilities: Record<number, Ability> = {
         desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously // 15% current 💖\n**Timeout**: `No/Yes`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. If he uses his ability again during this state, he will consume **15%** of current HP to lunge forward. This increases his dodge rate by **25%** for **3** turns, before dealing **150%** magic damage. This instance of damage is further boosted by current dodge rate, symbolizing the brute power behind the execution.",
         shortdesc: "**Uses**: `1`\n**Cost**: `0 💧 , then 10 💧 every turn // 15% current HP` \n**Timeout**: `No/Yes`\n**Role**: `DPS (Mana-losing, Nuke, Dodge)`\n\n__**Active**__ (✨)\nFalls in as General Alatus:\n- Halts mana regeneration\n- Consumes **10** 💧 every turn\n- **+30%** MD\nWhen he is below **50%** HP, using active (✨) consumes **15%** of his current HP to plunge forward:\n- **+25%** Dodge rate for **3** turns\n- Deal **150%** MD. This attack enjoys DMG bonus based on current dodge rate",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 150%*1+dodgerate% damage if used again.
-                if (myStats.hp/myStats.maxhp < 0.5) 
-                    {let sacrifice = Math.floor(myStats.hp * 0.15);
-                        mybuff.dodge.push(new buffInfo("+", 0.25, 2));
-                        myStats.dodge += 0.25;
-                        if (myStats.dodge > 1) {myStats.dodge = 1};
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 1.5*(1+myStats.dodge), magicDamage: true, mdChance: -1 })} 
-                    else {
+            if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 150% * (1 + dodge) damage if used again.
+                if (myStats.hp / myStats.maxhp < 0.5) {
+                    myStats.hp -= Math.floor(myStats.hp * 0.15); // Sacrifices 15% of HP
+
+                    mybuff.dodge.push(new buffInfo("+", 0.25, 2));
+                    myStats.dodge += 0.25;
+                    if (myStats.dodge >= 1) myStats.dodge = 1;
+
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 1.5 * (1 + myStats.dodge), magicDamage: true, mdChance: -1 }) //? Might be too strong, at least 225% damage with dodge boost
+                } else {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
                     return matchStats.interaction.followUp({ content: `You need to be below 50% 💖 (${Math.floor(myStats.maxhp*0.5)}) for this attack.`, ephemeral: true });
                     };              
@@ -278,7 +280,8 @@ export const abilities: Record<number, Ability> = {
             // Yoimiya
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: false });
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise!`, { atkMultiplier: 0.1*myStats.yoimiyaFlames, magicDamage: true, mdChance: -1 });
+            // Deals 10% DMG for every flame
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise! **${char.name}**`, { atkMultiplier: 0.1*myStats.yoimiyaFlames, magicDamage: true, mdChance: -1 });
 
             matchStats.twinshot = 1;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -288,24 +291,25 @@ export const abilities: Record<number, Ability> = {
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.yoimiyaFlames = 0;
             myStats.yoimiyaLastTwinshot = matchStats.round;
-            myStats.replaceButton.atk = {
-                run: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    if (myStats.yoimiyaFlames<20) {myStats.yoimiyaFlames++};
-                    let atkbuff = 1;
-                    if (myStats.yoimiyaFlames >= 3) {
-                        myStats.yoimiyaFlames = 0;
-                        atkbuff = 1.225;
-                    };
-                    const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: atkbuff, magicDamage: true });
-                    if (items[myStats.weapon]?.type === "bow") ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 2));
+
+            // Attack Trigger
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) {
+                 
+                    if (myStats.yoimiyaFlames < 20) myStats.yoimiyaFlames++;
+                    if (myStats.yoimiyaFlames >= 3) myStats.atk += Math.floor(myStats.atk * 0.225);
+                    
+                    // Deals additional 12.5% HP damage for 2 rounds each timee
+                    if (items[myStats.weapon]?.type === "bow") ebuff.hp.push(new buffInfo("+", -Math.floor(options.damage * 0.125), 2));
 
                     // Twinshot
                     if (matchStats.twinshot > Math.random() && myStats.yoimiyaLastTwinshot !== matchStats.round) {
                         myStats.yoimiyaLastTwinshot = matchStats.round;
                         myStats.replaceButton.atk?.run?.(myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list);
                     };
-                },
-            };
+                }
+            });
+
         },
     },
     "767": {
@@ -556,7 +560,7 @@ export const abilities: Record<number, Ability> = {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const mana = Math.min(40, myStats.sm);
                 myStats.sm -= mana;
-                myStats.dodge += Math.floor(0.015 * mana);
+                myStats.dodge += Math.floor(0.015 * mana * 100) / 100;
                 if (myStats.dodge > 0.7) myStats.dodge = 0.7;
             }, 9999));
         },
@@ -744,8 +748,8 @@ export const abilities: Record<number, Ability> = {
         mgId: -1,
         brId: -1,
         cost: 0,
-        desc: "**Total Usage**: `1+1`\n**Mana**: `20`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nLugh Tuatha Dé is a character built around timing and strategical thinking, offering both a long-term pay-off and immediate gains. His normal attacks fire off a ten-bullet barrage, each one dealing **9%** damage and increasing his crit damage by **3%** per hit for the following two rounds.\n\nHis ability, when activated, starts charging his attack Gungnir. During this time, Lugh stops generating mana but increases his block rate by **20%** as he focuses on defending himself and winning time. The second activation finally releases his charged attack, whose power increases by **40%** for each round up to a maximum of **10** rounds. This is followed by a permanent **25%** ATK & MD reduction on the enemy as they are pierced by this attack.\n\nWhen in a party, Lugh brings a combination of utility and raw power. For the first five rounds while charging his attack, he boosts mana generation by **+25**. After that, he fires off his charged Gungnir, dealing **200%** damage and reducing the enemy's ATK & MD by **25%** permanently. Additionally, the ally gains **15%** boosts on crit rate and crit damage for the rest of the battle.",
-        shortdesc: "**Uses**: `1+1`\n**Cost**: `20 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Tank (Nuke, Block, Disarm)`\n\n__**Passive**__\nATTACK is altered to **10** bullet hits:\n- Each deal **9%** DMG\n- Every hit bullet increases his critical DMG by **3%** for the next **2** turns\n\n__**Active**__ (✨)\nBegins charging Gungir:\n- Halts mana regeneration\n- **+20%** Block rate\n\nUsing the active (✨) again releases Gungir:\n- Removes effects of charging\n- Deals **40%** DMG for every turn charged, up to **400%**\n- **-25%** enemy's ATK & MD\n\n__**Party**__ (👥)\nDuring the first **5** turns:\n- **+4** Mana regeneration\n\nAfterwards:\n- Deals **130%** DMG once\n- **-25%** enemy's ATK & MD\n- **+15%** critical rate & critical DMG",
+        desc: "**Total Usage**: `1+1`\n**Mana**: `20`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nLugh Tuatha Dé is a character built around timing and strategical thinking, offering both a long-term pay-off and immediate gains. His normal attacks fire off a ten-bullet barrage, each one dealing **9%** damage and increasing his crit damage by **3%** per hit for the following two rounds.\n\nHis ability, when activated, starts charging his attack Gungnir. During this time, Lugh stops generating mana but increases his block rate by **20%** as he focuses on defending himself and winning time. The second activation finally releases his charged attack, whose power increases by **40%** for each round up to a maximum of **10** rounds. This is followed by a permanent **20%** ATK & MD reduction on the enemy as they are pierced by this attack.\n\nWhen in a party, Lugh brings a combination of utility and raw power. For the first five rounds while charging his attack, he boosts mana generation by **+25**. After that, he fires off his charged Gungnir, dealing **200%** damage and reducing the enemy's ATK & MD by **20%** permanently. Additionally, the ally gains **15%** boosts on crit rate and crit damage for the rest of the battle.",
+        shortdesc: "**Uses**: `1+1`\n**Cost**: `20 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Tank (Nuke, Block, Disarm)`\n\n__**Passive**__\nATTACK is altered to **10** bullet hits:\n- Each deal **9%** DMG\n- Every hit bullet increases his critical DMG by **3%** for the next **2** turns\n\n__**Active**__ (✨)\nBegins charging Gungir:\n- Halts mana regeneration\n- **+20%** Block rate\n\nUsing the active (✨) again releases Gungir:\n- Removes effects of charging\n- Deals **40%** DMG for every turn charged, up to **400%**\n- **-20%** enemy's ATK & MD\n\n__**Party**__ (👥)\nDuring the first **5** turns:\n- **+4** Mana regeneration\n\nAfterwards:\n- Deals **130%** DMG once\n- **-20%** enemy's ATK & MD\n- **+15%** critical rate & critical DMG",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (this.roundUsed === -1) {
                 this.used--;
@@ -764,13 +768,13 @@ export const abilities: Record<number, Ability> = {
                 mybuff.mg.splice(mybuff.mg.findIndex((e) => e.id === this.mgId), 1);
                 mybuff.br.splice(mybuff.br.findIndex((e) => e.id === this.brId), 1);
 
-                const atkMultiplier = 1 + (0.4 * Math.min(10, matchStats.round - this.roundUsed));
+                const damageMultiplier = 1 + (0.4 * Math.min(10, matchStats.round - this.roundUsed));
 
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Gungnir! He`, { atkMultiplier, shieldBreak: true, magicDamage: false, dodge: false, block: false });
-                eStats.atk -= Math.floor(eStats.atk*0.25);
-                eStats.md -= Math.floor(eStats.md*0.25);
-                ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.25), 9999));
-                ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md * 0.25), 9999));
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Gungnir! He`, { atkMultiplier: damageMultiplier, shieldBreak: true, magicDamage: false, dodge: false, block: false });
+                eStats.atk -= Math.floor(eStats.atk * 0.2);
+                eStats.md -= Math.floor(eStats.md * 0.2);
+                ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
+                ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md * 0.2), 9999));
             };
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -793,10 +797,10 @@ export const abilities: Record<number, Ability> = {
                     myStats.sm += 4;
                 } else if (matchStats.round === 6) {
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}** used Gungnir! He`, { atkMultiplier: 1.3, shieldBreak: true, magicDamage: false, dodge: false, block: false });
-                    eStats.atk -= Math.floor(eStats.atk*0.25);
-                    eStats.md -= Math.floor(eStats.md*0.25);
-                    ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.25), 9999));
-                    ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md * 0.25), 9999));
+                    eStats.atk -= Math.floor(eStats.atk*0.2);
+                    eStats.md -= Math.floor(eStats.md*0.2);
+                    ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
+                    ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md * 0.2), 9999));
                 } else {
                     myStats.cr += 0.15;
                     if (myStats.cr > 1) myStats.cr = 1;
@@ -920,29 +924,26 @@ export const abilities: Record<number, Ability> = {
         desc: "**Total Usage**: `0`\n**Role**: `Support`\n\nVladilena Milizé's ability is a Tactical Skill that brings the full force of mechanized artillery to aid her comrades during stampedes. Entering battle, she activates all processors and deals an undodgeable **150%** DMG hit.\n\nIn parties, she shows her strategic nature that embodies her character as a commander. During the first round, she deals an undodgeable **150%** hit to the opponent. For every round afterwards, she has a **34%** chance of comanding a devastating artillery bombardment on the enemy ranks, dealing **120%** damage.\n\nThanks to the accurate analysis and pinpointing by Vladilena, the enemy is marked with a **20%** vulnerability debuff (does not stack with other vulnerability sources), taking more damage from attacks.\n\nMoreover, for every ally that is a **S** or **SS** character (excluding herself) in her anime series (86 -Eighty Six-), her chance of intervention in that fight is increased by **33%** (up to **100%**), her vulnerability debuff is also increased by **5%**.",
         shortdesc: "**Uses**: `0`\n**Role**: `Sub-DPS (Additional Attack, Vulnerability)`\n\n__**Passive**__\n- Deals **150%** undodgeable DMG upon entering battle\n\n__**Party**__ (👥)\n- Deals **150%** undodgeable DMG to the enemy once upon entering battle\n- **34%** chance to intervene every turn to deal **120%** DMG\n- Enemy inflicted with a **20%** vulnerability debuff\n\nFor every S or SS character excluding herself in her anime (86 - Eighty Six -):\n- **+33%** intervention chance\n- **+5%** vulnerability debuff",
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vladconcern:1284691235868770386> Don't leave me behind... **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, dodge: 0 });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vladconcern:1284691235868770386> Don't leave me behind... **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, dodge: false });
         },
-        party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            let ally = 0;
-            let bombchance = 0.34;
-            let vulnrate = 0.2;
+        party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            let ally = 0, bombchance = 0.34, vulnrate = 0.2;
             // Get party stampede characters
-                let mates = [6030,6028,6031,6033,6034];
-
-                // Check if party stampede characters buff Vlad.
-                matchStats.partyChars.forEach((pChar:any) => {if (mates.includes(pChar.id)) {ally++}});
-
-                // Final buff confirmation
-                bombchance = 0.34+(0.33*ally);
-                if (bombchance > 1) {bombchance = 1};
-                vulnrate = 1.2+(0.05*ally);
-                notice.push(`\n<:vladconcern:1284691235868770386> Vladilena has offered her support in this fight! Assisting chance: **${bombchance*100}%**, Vulnerability rate: **${vulnrate*100}%**`);
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vladcommand:1284691781694390386> **Vladilena Milize**`, { atkMultiplier: 2, magicDamage: true, dodge: 0 });
-                myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (Math.random() < bombchance) {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vladcommand:1284691781694390386> **Vladilena Milize**`, { atkMultiplier: 1.5, magicDamage: true, dodge: 0 });
-                    if (!eStats.vulnerability) {eStats.vulnerability = vulnrate};
-                }},9999));
+            let mates = [6030,6028,6031,6033,6034];
+            // Check if party stampede characters buff Vlad.
+            matchStats.partyChars.forEach((pChar:any) => mates.includes(pChar.id) ? ally++ : false);
+            
+            // Final buff confirmation
+            bombchance += 0.33 * ally;
+            if (bombchance > 1) bombchance = 1;
+            vulnrate += 0.05*ally;
+            notice.push(`\n<:vladconcern:1284691235868770386> Vladilena has offered her support in this fight! Assisting chance: **${bombchance*100}%**, Vulnerability rate: **${vulnrate*100}%**`);
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vladcommand:1284691781694390386> **Vladilena Milize**`, { atkMultiplier: 2, magicDamage: true, dodge: false });
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < bombchance) { //? Too strong? If entire party full, then 100% chance to bomb every round
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vladcommand:1284691781694390386> **Vladilena Milize**`, { atkMultiplier: 1.5, magicDamage: true, dodge: false });
+                if (!eStats.vulnerability) eStats.vulnerability = vulnrate;
+            }}, 9999));
         },
     },
     "8189": {

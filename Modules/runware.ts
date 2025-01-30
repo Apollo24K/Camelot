@@ -41,6 +41,9 @@ const runwareModel: Record<RunwareModel, ModelParameters> = {
     },
 };
 
+/**
+ * @deprecated Use `generateImages` from `./Modules/runwareDirectApi.ts` instead
+ */
 export const generateImages = async ({ prompt, negativePrompt, outputFormat = "JPG", model = "FLUX.1 (Dev)", numberOfImages = 1, width = 512, height = 512, steps = 20, CFGScale = undefined }: {
     prompt: string,
     negativePrompt?: string,
