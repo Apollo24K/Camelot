@@ -1102,7 +1102,7 @@ export const abilities: Record<number, Ability> = {
                 return matchStats.interaction.followUp({ content: "You can't stack Tatsumaki's ability", ephemeral: true });
             };
             eStats.mr = Math.floor(eStats.mr * 0.7);
-            ebuff.mr.push(new buffInfo("*", 0.7, 3));
+            ebuff.mr.push(new buffInfo("*", 0.7, 4));
             this.roundUsed = matchStats.round;
             notice.push(`\n✨ **${char.name}** decreased enemy magic resistance by **30%** for 4 rounds!`);
         },
@@ -1300,34 +1300,31 @@ export const abilities: Record<number, Ability> = {
             };
             let healedamt = 0
             myStats.mdChance += 1;
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.33), 2));
             myStats.md += Math.floor(myStats.md * 0.33);
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.33), 2));
 
-            mybuff.cd.push(new buffInfo("+",0.33,2));
+            mybuff.cd.push(new buffInfo("+", 0.33, 2));
             myStats.cd += 0.33;
 
             // Every 3rd use : Additional effects
-            if ((this.used % 3) === 0) {
+            if (this.used % 3 === 0) {
                 //Below 50% HP = Grants 33% lost HP heal
                 if ((myStats.hp/myStats.maxhp) < 0.5) {
-                    healedamt = Math.floor((myStats.maxhp - myStats.hp) * 0.33);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.33), {});
                     notice.push(`\n👒 **${char.name}** has been graced by the light.`)
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, healedamt, {});
                 } else {
                 // 50% HP or above = Increase max HP by 33% for 3 turns
-                    const _ = require('lodash');
-                    const maxhpboost = _.cloneDeep(Math.floor(myStats.maxhp*0.33));
-                    myStats.maxhp += maxhpboost
-                    myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        myStats.maxhp = myStatsFixed.maxhp
-                        myStats.maxhp += maxhpboost
-                        }, 2));
+                    myStatsFixed.maxhp = myStats.maxhp;
+                    const maxhpboost = Math.floor(myStats.maxhp * 0.33);
+                    myStats.maxhp += maxhpboost;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         myStats.maxhp = myStatsFixed.maxhp
-                        }, 2));
+                        if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
+                    }));
                     notice.push(`\n👒 **${char.name}** has been graced by the light. Increased max HP by **${maxhpboost}**.`)
                 }};
             
+            //! Critical Heal (1. does less currently, 2. way too much probably)
             // Additionally heals 3% missing HP critically every turn
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1346,6 +1343,7 @@ export const abilities: Record<number, Ability> = {
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // Heals 3% missing HP critically every turn
+            //! Critical Heal (1. does less currently, 2. way too much probably)
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
@@ -1356,6 +1354,7 @@ export const abilities: Record<number, Ability> = {
             myStats.md += Math.floor(myStats.md * 0.2);
 
             // Heals 5% missing HP critically every turn
+            //! Critical Heal (1. does less currently, 2. way too much probably)
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05 * myStats.cd), {});
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05 * myStats.cd), {});
