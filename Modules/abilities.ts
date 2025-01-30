@@ -1401,20 +1401,20 @@ export const abilities: Record<number, Ability> = {
             };
 
             // Begins battles with 3x Counter attempts
-            myStats.counter??=0;
+            myStats.counter ??= 0;
             myStats.counter += 3;
 
             // When a coutner is available, Critical rate & DMG +33%
             if (myStats.counter > 0) {
                 myStats.cr += 0.33;
                 myStats.cd += 0.33;
-                if (myStats.cr > 1) {myStats.cr = 1};
+                if (myStats.cr > 1) myStats.cr = 1;
             };
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.counter > 0) {
                     myStats.cr += 0.33;
                     myStats.cd += 0.33;
-                    if (myStats.cr > 1) {myStats.cr = 1};
+                    if (myStats.cr > 1) myStats.cr = 1;
                 };
             }, 9999))
             
@@ -2137,7 +2137,7 @@ export const abilities: Record<number, Ability> = {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.round % 5 === 0) { // Sacrifice 5% current HP for shield
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.hp * 0.05), {});
+                    myStats.hp -= Math.floor(myStats.hp * 0.05);
                 };
                 if (myStats.shield > 0) {
                     myStats.def += Math.floor(myStats.def * 0.2);
@@ -2151,7 +2151,7 @@ export const abilities: Record<number, Ability> = {
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.round % 7 === 0) {
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.hp * 0.05), {});
+                    myStats.hp -= Math.floor(myStats.hp * 0.05);
                 };
                 if (myStats.shield > 0) {
                     myStats.def += Math.floor(myStats.def * 0.2);
@@ -2470,8 +2470,8 @@ export const abilities: Record<number, Ability> = {
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             let roundTime = (matchStats.round - 1) % 6; // day: [0, 1], noon: [2], night: [3, 4, 5];
 
-            // Check if day time [For the first 3 skill uses
-            if ((roundTime > 2)&&(this.used <= 3)) {
+            // Check if day time for the first 3 skill uses
+            if (roundTime > 2 && this.used <= 3) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 matchStats.interaction.followUp({ content: `${this.used === 3 ? "Final Prominence" : "Crazy Prominence"} can only be used during day time (in ${6 - roundTime} rounds)`, ephemeral: true});
                 myStats.sm += this.cost;
@@ -2479,20 +2479,21 @@ export const abilities: Record<number, Ability> = {
                 return;
             };
 
-            // Check if enough mana [For the first 3 skill uses]
+            // Check if enough mana for the first 3 skill uses
             if (this.used <= 3) {
-            let mana_cost = (this.used === 3) ? 30 : 0;
-            if (this.cost + mana_cost > myStats.sm) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true});
-                myStats.sm += this.cost;
-                this.used--;
-                return;
-            };
-            myStats.sm -= mana_cost};
+                let mana_cost = (this.used === 3) ? 80 : 50;
+                if (this.cost + mana_cost > myStats.sm) {
+                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true});
+                    myStats.sm += this.cost;
+                    this.used--;
+                    return;
+                };
+                myStats.sm -= mana_cost;
+        };
 
             let atkbuff = 1;
-            if (this.used === 4) {// Cruel Sun: Every 1 Heat -> +1% critical rate
+            if (this.used === 4) { // Cruel Sun: Every 1 Heat -> +1% critical rate
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (myStats.heat < 0) {
                     this.used--;
