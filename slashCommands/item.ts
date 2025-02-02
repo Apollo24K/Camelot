@@ -565,7 +565,8 @@ const exportCommand: SlashCommand = {
 
                     continue;
                 };
-
+                
+                /* //! 2B Something
                 // Nier Pod Programmes
                 if (itemChoice.toLowerCase().startsWith(`prog`)) {
                     let action = itemChoice.toLowerCase().split(" ")[1] ?? "info";
@@ -596,6 +597,7 @@ const exportCommand: SlashCommand = {
                     else return interaction.reply(`Unrecognized programme! Equip "prog info" to learn the list of available programmes!`);
                     continue;
                 };
+                */
 
                 const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
                 if (!item) {

@@ -1004,7 +1004,7 @@ export const abilities: Record<number, Ability> = {
 
             if (this.stacks < 4) {
                 this.stacks++;
-                myStats.putDamageOnHold += 0.04;
+                myStats.damageReduction += 0.04;
 
                 let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Dark Blaze! He`, { atkMultiplier: 1.3, magicDamage: true, mdChance: -1, combodmg: true, selfdmg: true, selfheal: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(dmg * (2 / 13)), 2));
@@ -1404,12 +1404,13 @@ export const abilities: Record<number, Ability> = {
             myStats.counter ??= 0;
             myStats.counter += 3;
 
-            // When a coutner is available, Critical rate & DMG +33%
+            // When a counter is available, Critical rate & DMG +33%
             if (myStats.counter > 0) {
                 myStats.cr += 0.33;
                 myStats.cd += 0.33;
                 if (myStats.cr > 1) myStats.cr = 1;
             };
+
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.counter > 0) {
                     myStats.cr += 0.33;
@@ -2462,11 +2463,11 @@ export const abilities: Record<number, Ability> = {
         },
     },
     "17686": {
-        usage: 3,
+        usage: 4,
         used: 0,
-        cost: 50,
-        desc: "**Total Usage**: `4`\n**Mana**: `50`\\💧 on first 2 usages, `80`\\💧 on 3rd usage, `0` on 4th usage\n**Timeout**: `Yes // No (on 4th usage)`\n**Role**: `DPS/Support`\n\nEscanor, known as the Lion's Sin of Pride, offers a gameplay style tied to a day-night cycle which changes every **3** rounds. Escanor's power dramatically shifts with the day-night cycle. During the day, he gains a **20%** boost to attack, magic damage, defense, and magic resistance, but loses **4%** of his max HP per round due to the strain to his body.\n\nMoreover, the last day in the cycle is regarded as Noon, where he unleashes his `The One` power, gaining double the stat boosts from normal day cycles. In addition, his DEFEND that turn is altered to a Divine Attack, decreasing the enemy's dodge and block rate to **0%**, removing all of their counter attempts, before dealing **150%** DMG and granting himself 10x `Heat`. At last, after every turn in Daytime, he gains 1x `Heat`.\n\nAs the night falls, he loses **20%** of attack, magic damage, defense, and magic resistance instead, but gains **20%** dodge chance as his power is so insignificant that he's barely sensable.\n\nEscanor's sunshine allows him to scorch the enemy for **2** turns whenever they dare inflict an attack on Escanor. Scorch is a stackable DoT that deals his current HP to the enemy every turn, **1%** for every 10x `Heat` owned, up to **4%**.\n\nMoving onto his active. During daytime rounds, Escanor can use `Crazy Prominence` with his first two usages, dealing additional damage based on the percentage of his remaining health (**100%** + **1%** damage for every **2%** remaining HP). With his 3rd usage, Escanor unleashes `Final Prominence`, which significantly enhances his damage output based on the percentage of his missing health (**100%** + **1%** damage for every **1%** missing HP).Escanor's final usage summons a miniature Sun on the sky, raising his critical rate by **2%** for every `Heat` owned. Any overflowing critical rate this way will be converted into **1%** Defense reduction on the enemy and **1%** critical DMG for Escanor.",
-        shortdesc: "**Uses**: `4`\n**Cost**: `50 💧 (first 2 usages), 80 💧 (3rd usage), 0 💧 (4th usage)`\n**Timeout**: `Yes/ No (4th usage)`\n**Role**: `DPS (Progressive, DoT, Burst, Anti-dodge/block/counter)`\n\n__**Passive**__\nWhenever receives an attack -> Inflicts Scorch for **2** turns:\n- Deals his current HP to the enemy every turn (**1%** for every **10x** `Heat` owned, up to **4%**)\n\nShifts Day and Night cycle every **3** turns ; The last turn of Day is regarded as *Noon*\n\nDay :\n- **+20%** ATK/MD & DEF/MR\n- Lose **4%** max HP every turn\n- Gain **1x** `Heat`\n\nNoon:\n- **+40%** ATK/MD & DEF/MR\n- Lose **4%** max HP\n- Gain **1x** Heat\n- DEFEND is altered to Divine Attack\n> Enemy dodge rate & block rate drops to **0%** for **1** turn. Removes any counter attempts (Counter next hit effects), before dealing **150%** DMG and gaining **10x** `Heat``)\n\nNight:\n- **-20%** ATK/MD & DEF/MR\n- **+20%** dodge chance \n\n__**Active**__ (✨)\nFirst TWO activations: *Crazy Prominence*\nCondition: `During Day/Noon`\n- Deals **100%** DMG, **+1%** DMG for every **2%** HP remaining\n\nTHIRD activation: *Final Prominence*\n- Deals **100%** DMG, **+1%** DMG for every **1%** HP missing\n\n- FOURTH activation: *Miniature Sun*\n- Increases critical rate by **2%** for every `Heat` owned\n\nEvery overflowing critical rate this way will be converted into:\n- Enemy DEF/MR **-1%**\n- Own critical DMG **+1%**",
+        cost: 0,
+        desc: "**Total Usage**: `4`\n**Mana**: `50`\\💧 on first 2 usages, `80`\\💧 on 3rd usage, `0` on 4th usage\n**Timeout**: `Yes // No (on 4th usage)`\n**Role**: `DPS/Support`\n\nEscanor, known as the Lion's Sin of Pride, offers a gameplay style tied to a day-night cycle which changes every **3** rounds. Escanor's power dramatically shifts with the day-night cycle. During the day, he gains a **20%** boost to attack, magic damage, defense, and magic resistance, but loses **4%** of his max HP per round due to the strain to his body.\n\nMoreover, the last day in the cycle is regarded as Noon, where he unleashes his `The One` power, gaining double the stat boosts from normal day cycles. In addition, his DEFEND that turn is altered to a Divine Attack, decreasing the enemy's dodge and block rate to **0%**, removing all of their counter attempts, before dealing **150%** DMG and granting himself 10x `Heat`. At last, after every turn in Daytime, he gains 1x `Heat`.\n\nAs the night falls, he loses **20%** of attack, magic damage, defense, and magic resistance instead, but gains **20%** dodge chance as his power is so insignificant that he's barely sensable.\n\nEscanor's sunshine allows him to scorch the enemy for **2** turns whenever they dare inflict an attack on Escanor. Scorch is a stackable DoT that deals his current HP to the enemy every turn, **1%** for every 10x `Heat` owned, up to **4%**.\n\nMoving onto his active. During daytime rounds, Escanor can use `Crazy Prominence` with his first two usages, dealing additional damage based on the percentage of his remaining health (**100%** + **1%** damage for every **2%** remaining HP). With his 3rd usage, Escanor unleashes `Final Prominence`, which significantly enhances his damage output based on the percentage of his missing health (**100%** + **1%** damage for every **1%** missing HP). Escanor's final usage summons a miniature Sun on the sky, raising his critical rate by **2%** for every `Heat` owned, up to 90% maximum crit rate. Any overflowing critical rate this way will be converted into **1%** Defense reduction on the enemy (up to 30%) and **1%** critical DMG for Escanor (up to 30%).",
+        shortdesc: "**Uses**: `4`\n**Cost**: `50 💧 (first 2 usages), 80 💧 (3rd usage), 0 💧 (4th usage)`\n**Timeout**: `Yes/ No (4th usage)`\n**Role**: `DPS (Progressive, DoT, Burst, Anti-dodge/block/counter)`\n\n__**Passive**__\nWhenever receives an attack -> Inflicts Scorch for **2** turns:\n- Deals his current HP to the enemy every turn (**1%** for every **10x** `Heat` owned, up to **4%**)\n\nShifts Day and Night cycle every **3** turns ; The last turn of Day is regarded as *Noon*\n\nDay :\n- **+20%** ATK/MD & DEF/MR\n- Lose **4%** max HP every turn\n- Gain **1x** `Heat`\n\nNoon:\n- **+40%** ATK/MD & DEF/MR\n- Lose **4%** max HP\n- Gain **1x** Heat\n- DEFEND is altered to Divine Attack\n> Enemy dodge rate & block rate drops to **0%** for **1** turn. Removes any counter attempts (Counter next hit effects), before dealing **150%** DMG and gaining **10x** `Heat``)\n\nNight:\n- **-20%** ATK/MD & DEF/MR\n- **+20%** dodge chance \n\n__**Active**__ (✨)\nFirst TWO activations: *Crazy Prominence*\nCondition: `During Day/Noon`\n- Deals **100%** DMG, **+1%** DMG for every **2%** HP remaining\n\nTHIRD activation: *Final Prominence*\n- Deals **100%** DMG, **+1%** DMG for every **1%** HP missing\n\n- FOURTH activation: *Miniature Sun*\n- Increases critical rate by **2%** for every `Heat` owned, up to 90%\n\nEvery overflowing critical rate this way will be converted into:\n- Enemy DEF/MR **-1%** (max: 30%)\n- Own critical DMG **+1%** (max: 30%)",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             let roundTime = (matchStats.round - 1) % 6; // day: [0, 1], noon: [2], night: [3, 4, 5];
 
@@ -2484,13 +2485,13 @@ export const abilities: Record<number, Ability> = {
                 let mana_cost = (this.used === 3) ? 80 : 50;
                 if (this.cost + mana_cost > myStats.sm) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true});
+                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true});
                     myStats.sm += this.cost;
                     this.used--;
                     return;
                 };
                 myStats.sm -= mana_cost;
-        };
+            };
 
             let atkbuff = 1;
             if (this.used === 4) { // Cruel Sun: Every 1 Heat -> +1% critical rate
@@ -2498,25 +2499,22 @@ export const abilities: Record<number, Ability> = {
                 if (myStats.heat < 0) {
                     this.used--;
                     return matchStats.interaction.followUp({ content: `${char.name} has no heat to summon a miniature sun!`, ephemeral: true})};
-                const _ = require('lodash');
-                const buffpercent = _.cloneDeep(myStats.heat * 0.01)?? 0;
-                if (myStats.cr > 1) {myStats.cr = 1};
+                let buffpercent = myStats.heat * 0.01 ?? 0;
                 myStats.cr += buffpercent;
-                if(myStats.cr <= 1) {
-                    notice.push(`\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${buffpercent*100}%**`);
+                if(myStats.cr <= 0.9) {
+                    notice.push(`\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${buffpercent * 100}%**`);
                     mybuff.cr.push(new buffInfo("+", buffpercent, 9999));               
                 } else {
-                    const overflowingpercent = _.cloneDeep((myStats.cr-1).toFixed(2))?? 0;
+                    const overflowingpercent = Math.floor((myStats.cr - 0.9) * 100) / 100 ?? 0;
                     //Overflowing critical rate -> 1% DEF shred & Crit DMG up to 30%
-                    myStats.cr = 1;
-                    eStats.def *= 1-Math.max(overflowingpercent,0.7);
-                    myStats.cd += Math.min(overflowingpercent,0.3);
-                    notice.push(`\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${Math.floor((buffpercent-overflowingpercent)*100)}%**. Overflowing heat additionally decreased the enemy's DEF and increased his critical damage by **${Math.floor(Math.min(overflowingpercent,0.3)*100)}%**!`);
-                    mybuff.cr.push(new buffInfo("+", buffpercent-overflowingpercent, 9999));
-                    ebuff.def.push(new buffInfo("*", 1-Math.max(overflowingpercent,0.7), 9999));
-                    mybuff.cd.push(new buffInfo("+", buffpercent-overflowingpercent, 9999));
+                    myStats.cr = 0.9;
+                    eStats.def -= Math.min(eStats.def * 0.3, Math.floor(eStats.def * overflowingpercent))
+                    myStats.cd += Math.min(overflowingpercent, 0.3);
+                    notice.push(`\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${Math.floor((buffpercent-overflowingpercent)*100)}%**. Overflowing heat additionally decreased the enemy's DEF and increased his critical damage by **${Math.min(overflowingpercent,0.3)*100}%**!`);
+                    ebuff.def.push(new buffInfo("+", -Math.min(eStats.def * 0.3, Math.floor(eStats.def * overflowingpercent)), 9999));
+                    mybuff.cd.push(new buffInfo("+", Math.min(overflowingpercent, 0.3), 9999));
                 };
-                return
+                return;
             }
             else if (this.used === 3) { // Final Prominence: Every 1% missing HP -> +1% damage
                 atkbuff += (1 - (myStats.hp / myStats.maxhp));
@@ -2532,27 +2530,29 @@ export const abilities: Record<number, Ability> = {
             myStats.md += Math.floor(myStats.md * 0.2);
             myStats.def += Math.floor(myStats.def * 0.2);
             myStats.mr += Math.floor(myStats.mr * 0.2);
-            myStats.heat??= 0;
+            myStats.heat ??= 0;
             notice.push(`\n⛅ It's Daytime!`);
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Scorch Effect
+                matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                    if (caster === eStats) ebuff.hp.push(new buffInfo("+", -Math.floor(eStats.hp * Math.min(0.01 * Math.floor(myStats.heat/10), 0.04)), 2));
+                });
+
                 let roundTime = (matchStats.round - 1) % 6; // day: [0, 1], noon: [2], night: [3, 4, 5];
-                if (roundTime == 2) {// Noon : The One
+                if (roundTime == 2) { // Noon : The One
                     notice.push(`\n☀️ It's Noon!`);
                     myStats.atk += Math.floor(myStats.atk * 0.4);
                     myStats.md += Math.floor(myStats.md * 0.4);
                     myStats.def += Math.floor(myStats.def * 0.4);
                     myStats.mr += Math.floor(myStats.mr * 0.4);
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.04), {});
-                    if (myStats.hp < 0) myStats.hp = 1;
+                    myStats.hp -= Math.floor(myStats.maxhp * 0.04);
+                    if (myStats.hp < 0) myStats.hp = 0;
                     myStats.replaceButton.def = { // Divine Attack
                     "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        eStats.counter??= 0;
-                        eStats.dodge = 0;
-                        eStats.br = 0;
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 **${char.name}** released his Divine Attack! He`, { atkMultiplier: 1.5});
+                        eStats.counter ??= 0;
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 **${char.name}** released his Divine Attack! He`, { atkMultiplier: 1.5, dodge: false, block: false});
                         myStats.heat += 10;
-                        delete myStats.replaceButton.def;
                     },
                 };
                     myStats.heat += 1;
@@ -2566,8 +2566,8 @@ export const abilities: Record<number, Ability> = {
                     myStats.md += Math.floor(myStats.md * 0.2);
                     myStats.def += Math.floor(myStats.def * 0.2);
                     myStats.mr += Math.floor(myStats.mr * 0.2);
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.04), {});
-                    if (myStats.hp < 0) myStats.hp = 1;
+                    myStats.hp -= Math.floor(myStats.maxhp * 0.04);
+                    if (myStats.hp < 0) myStats.hp = 0;
                     myStats.heat += 1;
                 } else {
                     if (roundTime == 3) notice.push(`\n🌑 It's Nighttime...`);
@@ -2748,13 +2748,12 @@ export const abilities: Record<number, Ability> = {
             const domainLast = 5, mana_cost = 150;
 
             // Check if enough mana
-            if (this.used < 1) {
-            if (mana_cost > myStats.sm) {
+            if (mana_cost > myStats.sm && this.used < 1) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 this.used--;
                 return;
-            }};
+            };
 
             // Domain activation
             if (this.used > 1) {
@@ -4342,11 +4341,10 @@ export const abilities: Record<number, Ability> = {
             // Nahida
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
 
-            
             // Condition: When in temple state and can mark enemy
             if (myStats.sm >= 40 && myStats.temple > 0) {
                 // Mark enemy (cheaper)
-                myStats.sm -= 30;
+                myStats.sm -= 40;
                 eStats.marked += 4;
                 notice.push(`\n𓇬 The enemy is now marked for ${eStats.marked} rounds!`);
             }
@@ -4354,7 +4352,7 @@ export const abilities: Record<number, Ability> = {
             // Condition: When not in temple state but still can mark enemy
             else if (myStats.sm >= 80 && myStats.sm < 110) {
                 // Mark enemy
-                myStats.sm -= 60;
+                myStats.sm -= 80;
                 eStats.marked += 2;
                 notice.push(`\n𓇬 The enemy is now marked for ${eStats.marked} rounds!`);
             }
@@ -4362,19 +4360,18 @@ export const abilities: Record<number, Ability> = {
             // Condition: Not in temple state but can summon temple
             else if (myStats.sm >= 110) {
                 // Summons temple for 4 turns
-                myStats.sm -= 100;
+                myStats.sm -= 110;
                 myStats.temple = 4;
                 notice.push(`\n✨ Summoned the temple of wisdom for **4** turns!`);
 
             } else {matchStats.interaction.followUp({ content: `${char.name} does not have sufficient mana to use any of her active abilities`, ephemeral: true })};
         },
         passive: function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-            // SETUP VARS
             myStats.temple = 0;
             eStats.marked = 0;
             
             // Gains shield equal to DMG taken (Up to 100% of own max HP) + Stun for 2 turn when below 35% HP at the start of the turn
-            myStats.delayedBuffs.push(new delayedBuffs(0,  (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if ((myStats.hp / myStats.maxhp <= 0.33) && this.burst) {
                     const shgain = Math.min(myStats.damageTaken, myStats.maxhp);
                     notice.push(`\n✧ Data collection is complete! ${char.name} gained **${shgain}** shield ✧`);
@@ -4388,45 +4385,41 @@ export const abilities: Record<number, Ability> = {
                         eStats.timeFrozen = false;
                     }));
                 };
-            }, 9999));
-            
-            // Loses 1 round of temple + enemy mark every turn
-            myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                if (myStats.temple > 0) {
-                    myStats.temple--;
-                    if (myStats.temple == 0) {
-                        notice.push(`\n💡 The temple of wisdom withered... ⋆.ೃ࿔*:･`);
-                    };
-                };
-                
+
+                // Marked enemies (Nahida)
                 if (eStats.marked > 0) {
                     eStats.marked--;
-                    if (eStats.marked == 0) {
-                        notice.push(`\n𓇬 The enemy lost the mark of Skandha...`);
-                        };
-                    };
-                }, 9999, 1));
+                    let multiplier = 1;
+                    if (myStats.temple > 0) multiplier = 1.5;
+                    myStats.cr += 0.3 * multiplier;
+                    if (myStats.cr > 1) myStats.cr = 1;
+                    eStats.def -= Math.floor(eStats.def * 0.15 * multiplier);
+                    eStats.mr -= Math.floor(eStats.mr * 0.15 * multiplier);
+                } else notice.push(`\n𓇬 The enemy lost the mark of Skandha...`);
+
+                if (myStats.temple > 0) myStats.temple--;
+                else notice.push(`\n💡 The temple of wisdom withered... ⋆.ೃ࿔*:･`);
+
+            }, 9999));
             
             // Gain +10 mana when critting a marked enemy
             matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-                if (eStats.marked > 0) {
+                if (eStats.marked > 0 && caster === myStats) {
                     myStats.sm += 10;
-                    if (myStats.temple > 0) {
-                        myStats.sm += 5;
-                        };
-                if (myStats.sm > myStats.mana) {myStats.sm = myStats.mana};
-                    };
-                });
+                    if (myStats.temple > 0) myStats.sm += 5;
+                    if (myStats.sm > myStats.mana) myStats.sm = myStats.mana
+                };
+            });
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {           
             // Marks enemy every 3 turns
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.round % 3 === 0) {
-                    eStats.marked??= 1;
-                    
-                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        eStats.marked--;
-                    }));
+                    // Marked enemy
+                    myStats.cr += 0.3;
+                    if (myStats.cr > 1) myStats.cr = 1;
+                    eStats.def -= Math.floor(eStats.def * 0.15);
+                    eStats.mr -= Math.floor(eStats.mr * 0.15);
                 };
             }, 9999));
 
@@ -4461,7 +4454,7 @@ export const abilities: Record<number, Ability> = {
 
             // During Domain
             eStats.frost += 4;
-            myStats.hp -= Math.floor(myStats.hp*0.1);
+            myStats.hp -= Math.floor(myStats.hp * 0.1);
             myStats.mg = 0;
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -4479,30 +4472,35 @@ export const abilities: Record<number, Ability> = {
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 myStats.rukiaUsedActive = false;
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ Hakka no Togame! **${char.name}**`, { atkMultiplier: 2.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                
                 const shatterdmg = eStats.frozenwounds * 1.5;
                 eStats.hp -= shatterdmg;
                 notice.push(`\n❄️ Frozen wounds shattered and dealt **${shatterdmg}** damage!`);
-                if (eStats.hp < 0) {eStats.hp = 0};
+                if (eStats.hp < 0) eStats.hp = 0;
                 eStats.frozenwounds = 0;
             }));
 
             notice.push(`\n✨ **${char.name}** lowered her temperature to absolute zero for ${domainLast} rounds.`);
         },
         passive: function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-            // SETUP VARS
+
             myStats.rukiaUsedActive = false;
             eStats.frost = 0;
             eStats.frozenwounds = 0;
-            eStats.vulnerability??= 1;
+            eStats.vulnerability ??= 1;
             
             // Alters ATTACK
             myStats.replaceButton.atk = {
                 emoji: "❄️",
                 run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    const dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `༒︎ **${char.name}**`, { atkMultiplier: 0.9, critBuff: 0.25});
-                    if (dmg) {eStats.frost += 1};
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `༒︎ **${char.name}**`, { atkMultiplier: 0.9, critBuff: 0.25});
                 },
             };
+
+            // Inflict Frost On Attack
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) myStats.frost += 1;
+            });
 
             // 5x Frost => Freeze enemy for 1 turn
             myStats.delayedBuffs.push(new delayedBuffs(0,  (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -4522,7 +4520,6 @@ export const abilities: Record<number, Ability> = {
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {           
-            // SETUP VAR
             eStats.vulnerability??= 0;
             
             // Freezes enemy and boosts cd every 5 turns
@@ -4542,11 +4539,10 @@ export const abilities: Record<number, Ability> = {
             // If Ichigo Kurosaki/Byakuya Kuchiki in party: Evades first 3 lethal hits
             if (["Ichigo Kurosaki", "Byakuya Kuchiki"].includes(myStats.name)) {
                 // SETUP VAR
-                myStats.evadeDeathStrike??= 0;
-                myStats.evadeDeathChance??= 0;
+                myStats.evadeDeathStrike ??= 0;
+                myStats.evadeDeathChance = 1;
 
                 myStats.evadeDeathStrike += 3;
-                myStats.evadeDeathChance += 3;
             };
         },
     },
