@@ -21,14 +21,6 @@ client.login(config.token);
 // Collections
 client.slashCommands = new Collection<string, SlashCommand>();
 
-// Add Commands
-client.commands = new Collection();
-const commandFiles = fs.readdirSync('./Commands').filter(file => file.endsWith('.js'));
-for (const file of commandFiles) {
-    const command = require(`./Commands/${file}`);
-    client.commands.set(command.name, command);
-};
-
 // Add Handlers
 const handlersDir = join(__dirname, "./handlers");
 fs.readdirSync(handlersDir).forEach(handler => {

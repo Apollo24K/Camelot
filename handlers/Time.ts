@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Client } from "discord.js";
-import { BotHandler } from "../types";
-import { query } from '../db_handler';
+import { BotHandler, UpdateUserOptions } from "../types";
+import { getPlayerbaseStats, insertNewStampede, resetDailyResponses, resetDungeonLimit, updateUsers } from '../Modules/queries';
 
 const handler: BotHandler = {
     name: "Time",
@@ -10,48 +10,40 @@ const handler: BotHandler = {
         setTimeout(() => setInterval(async () => {
             const now = new Date();
 
+            const userUpdates: UpdateUserOptions = {};
+
             // Daily
             if (now.getHours() === 0 && now.getMinutes() === 0) {
 
                 // Daily Reset
-                await query(`UPDATE users SET dailyclaimed = 0, dailies = '{}', feedlimit = 0, cow_rolled_today = 0`);
+                userUpdates.dailyclaimed = { type: "set", value: 0 };
+                userUpdates.dailies = { type: "set", value: {} };
+                userUpdates.feedlimit = { type: "set", value: 0 };
+                userUpdates.cow_rolled_today = { type: "set", value: 0 };
 
                 // Reset Low Responses
-                await query(`UPDATE dungeon SET responsetime = "" WHERE LENGTH(responsetime)/14 < 200`);
+                await resetDailyResponses();
 
                 // Start new Stampede
                 if (now.getDate() === 14 && (now.getMonth() % 2) === 1) {
-                    await query(`INSERT INTO stampedes (type, bosshp, bosshpmax, generalhp, generalhpmax, generalstotal, generalsleft, monsterstotal, monstersleft) values (0, 183728460, 183728460, 1582760, 1582760, 486, 486, 0, 0)`);
+                    await insertNewStampede();
                 };
 
                 // Daily Stats
-                const stats = await query(`SELECT lastpull FROM users`) as { lastpull: number; }[];
+                const stats = await getPlayerbaseStats();
                 const chnl = client.channels.cache.find(channel => channel.id === "1029507771567190017");
-                if (chnl?.isSendable()) chnl.send(`Servers: **${client.guilds.cache.size}**\nPlayers: **${stats.length}**\nActive: **${stats.filter((e) => now.getTime() - e.lastpull < 7 * 24 * 60 * 60 * 1000).length}**\nDaily: **${stats.filter((e) => now.getTime() - e.lastpull < 24 * 60 * 60 * 1000).length}**`);
+                if (chnl?.isSendable()) chnl.send(`Servers: **${client.guilds.cache.size}**\nPlayers: **${stats.players}**\nActive: **${stats.active}**\nDaily: **${stats.daily}**`);
             };
 
             // Weekly Reset
             if (now.getDay() === 0 && now.getHours() === 0 && now.getMinutes() === 0) {
-                await query(`UPDATE users SET weeklyclaimed = 0`);
+                userUpdates.weeklyclaimed = { type: "set", value: 0 };
             };
 
             // Every 8 hours
             if (now.getHours() % 8 === 0 && now.getMinutes() === 0) {
                 // Dungeon Reset
-                await query(`
-                    UPDATE dungeon
-                    SET 'limit' = CASE
-                        WHEN users.premium = 7 THEN 
-                            CASE 
-                                WHEN (dungeon.'limit' > 20) THEN 0
-                                WHEN (dungeon.'limit' < -20) THEN -40
-                                ELSE (dungeon.'limit' - 20)
-                            END
-                        ELSE 0
-                    END
-                    FROM users
-                    WHERE dungeon.id = users.id
-                `);
+                await resetDungeonLimit();
             };
 
             // Every 4 hours
@@ -62,7 +54,9 @@ const handler: BotHandler = {
             // Every 2 hours
             if (now.getHours() % 2 === 0 && now.getMinutes() === 0) {
                 // Bosshunt Reset
-                await query(`UPDATE users SET bosshuntruns = bosshuntruns - 1 WHERE bosshuntruns > 0`);
+                await updateUsers("*", {
+                    bosshuntruns: { type: "increment", value: -1 }
+                }, "bosshuntruns > 0");
             };
 
             // Monthly
@@ -73,13 +67,21 @@ const handler: BotHandler = {
                 });
 
                 // Reset monthly shop
-                await query(`UPDATE users SET monthlyshop = "{}"`);
+                userUpdates.monthlyshop = { type: "set", value: {} };
             };
 
             // Every 5 Minutes
             if ((now.getMinutes() % 5) === 0) {
                 // Stampede Energy
-                await query(`UPDATE users SET stampedeenergy = stampedeenergy - 1 WHERE stampedeenergy > 0`);
+                await updateUsers("*", {
+                    stampedeenergy: { type: "increment", value: -1 }
+                }, "stampedeenergy > 0");
+            };
+
+
+            // Apply Updates
+            if (Object.keys(userUpdates).length > 0) {
+                await updateUsers("*", userUpdates);
             };
 
         }, 60000), 60000 - (Date.now() % 60000));

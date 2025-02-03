@@ -6,19 +6,19 @@ import sharp from 'sharp';
 import https from "https";
 import { createCanvas } from '@napi-rs/canvas';
 import crypto from 'crypto';
-import { db, query } from "../db_handler";
 import charInfo, { characters } from "./chars";
 import { anime } from "./anime";
 import { achievements } from "./achievements";
 import { dailies } from "./dailyQuests";
 import classInfo, { classes } from "./classes";
-import { rankLowerRanges } from "./components";
+import { donationWeekStart, rankLowerRanges } from "./components";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { armorInfo, itemInfo, items, lootInfo, weaponInfo } from "./items";
 import _ from 'lodash';
 import { Buffs, CharacterRarity, ClassStats, CompactUserSchema, DetailedStats, Expertise, GuildDonationSchema, GuildSchema, IRoK, MatchStats, PrimaryStat, UserSchemaForStats, WeaponSchema } from '../types';
 import { curses } from './curses';
+import { getWeaponSchema } from './queries';
 
 const statsOp: { base: { hp: Record<number, number>; atk: Record<number, number>; def: Record<number, number>; expertise: Record<number, string>; }; } = {
     "base": {
@@ -143,7 +143,7 @@ const lvlupStats = {
     "D": { "hp": { "base": 2, "add": 0.4 }, "atk": { "base": 0.75, "add": 0.25 }, "def": { "base": 0.4, "add": 0.1 } },
 };
 
-const retainItemStats = new Map();
+const retainItemStats = new Map<string, { timeout: NodeJS.Timeout, stats: WeaponSchema; }>();
 
 export const getDetailedStats = async (id: number, inv: UserSchemaForStats, classLevels: Record<string, number>, lu: number = 0, refine: boolean = false) => {
 
@@ -260,23 +260,23 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
 
     // Item Stats
     if (inv?.equipment) {
-        let weapon, shield, helmet, cuirass, gloves, boots;
+        let weapon: WeaponSchema | undefined, shield: WeaponSchema | undefined, helmet: WeaponSchema | undefined, cuirass: WeaponSchema | undefined, gloves: WeaponSchema | undefined, boots: WeaponSchema | undefined;
 
         // Add weapon stats if available
         if (inv.equipment.weapon) {
-
             clearTimeout(retainItemStats.get(inv.equipment.weapon)?.timeout);
-            weapon = retainItemStats.get(inv.equipment.weapon)?.stats ?? await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.weapon}'`);
-            retainItemStats.set(inv.equipment.weapon, { stats: weapon, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.weapon), 10 * 1000) });
+            weapon = retainItemStats.get(inv.equipment.weapon)?.stats ?? await getWeaponSchema(inv.equipment.weapon);
 
-            // weapon = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.weapon}'`);
-            if (weapon[0]) {
-                dStats.uniqueids.push(weapon[0].uniqueid.split(":")[0]);
-                weapon = { id: weapon[0].itemid, level: getItemLevel(weapon[0].level), ascension: weapon[0].ascension };
-                const item = items[weapon.id];
+            if (weapon) {
+                retainItemStats.set(inv.equipment.weapon, { stats: weapon, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.weapon), 10 * 1000) });
+
+                dStats.uniqueids.push(weapon.uniqueid.split(":")[0]);
+                weapon.level = getItemLevel(weapon.level);
+
+                const item = items[weapon.itemid];
                 if (item instanceof weaponInfo) {
                     // Set item to dStats
-                    dStats.weapon = weapon.id;
+                    dStats.weapon = weapon.itemid;
                     dStats.weaponicon = item.emoji;
                     dStats.weaponinfo = { ...weapon };
 
@@ -312,19 +312,19 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
 
         // Add shield stats if available
         if (inv.equipment.shield && (inv.premium > 3 || inv.shield_slot)) {
-
             clearTimeout(retainItemStats.get(inv.equipment.shield)?.timeout);
-            shield = retainItemStats.get(inv.equipment.shield)?.stats ?? await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.shield}'`);
-            retainItemStats.set(inv.equipment.shield, { stats: shield, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.shield), 10 * 1000) });
+            shield = retainItemStats.get(inv.equipment.shield)?.stats ?? await getWeaponSchema(inv.equipment.shield);
 
-            // shield = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.shield}'`);
-            if (shield[0]) {
-                dStats.uniqueids.push(shield[0].uniqueid.split(":")[0]);
-                shield = { id: shield[0].itemid, level: getItemLevel(shield[0].level), ascension: shield[0].ascension };
-                const item = items[shield.id];
+            if (shield) {
+                retainItemStats.set(inv.equipment.shield, { stats: shield, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.shield), 10 * 1000) });
+
+                dStats.uniqueids.push(shield.uniqueid.split(":")[0]);
+                shield.level = getItemLevel(shield.level);
+
+                const item = items[shield.itemid];
                 if (item instanceof weaponInfo) {
                     // Set item to dStats
-                    dStats.shieldid = shield.id;
+                    dStats.shieldid = shield.itemid;
                     dStats.shieldicon = item.emoji;
                     dStats.shieldinfo = { ...shield };
 
@@ -356,18 +356,19 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         // Add helmet stat if available
         if (inv.equipment.helmet) {
             clearTimeout(retainItemStats.get(inv.equipment.helmet)?.timeout);
-            helmet = retainItemStats.get(inv.equipment.helmet)?.stats ?? await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.helmet}'`);
-            retainItemStats.set(inv.equipment.helmet, { stats: helmet, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.helmet), 10 * 1000) });
+            helmet = retainItemStats.get(inv.equipment.helmet)?.stats ?? await getWeaponSchema(inv.equipment.helmet);
 
-            // helmet = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.helmet}'`);
-            if (helmet[0]) {
-                dStats.uniqueids.push(helmet[0].uniqueid.split(":")[0]);
-                helmet = { id: helmet[0].itemid, level: getItemLevel(helmet[0].level), ascension: helmet[0].ascension };
-                const item = items[helmet.id];
+            if (helmet) {
+                retainItemStats.set(inv.equipment.helmet, { stats: helmet, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.helmet), 10 * 1000) });
+
+                dStats.uniqueids.push(helmet.uniqueid.split(":")[0]);
+                helmet.level = getItemLevel(helmet.level);
+
+                const item = items[helmet.itemid];
                 if (item instanceof armorInfo) {
 
                     // Set item to dStats
-                    dStats.helmet = helmet.id;
+                    dStats.helmet = helmet.itemid;
                     dStats.helmeticon = item.emoji;
                     dStats.helmetinfo = { ...helmet };
 
@@ -379,18 +380,18 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         // Add cuirass stat if available
         if (inv.equipment.cuirass) {
             clearTimeout(retainItemStats.get(inv.equipment.cuirass)?.timeout);
-            cuirass = retainItemStats.get(inv.equipment.cuirass)?.stats ?? await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.cuirass}'`);
-            retainItemStats.set(inv.equipment.cuirass, { stats: cuirass, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.cuirass), 10 * 1000) });
+            cuirass = retainItemStats.get(inv.equipment.cuirass)?.stats ?? await getWeaponSchema(inv.equipment.cuirass);
+            if (cuirass) {
+                retainItemStats.set(inv.equipment.cuirass, { stats: cuirass, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.cuirass), 10 * 1000) });
 
-            // cuirass = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.cuirass}'`);
-            if (cuirass[0]) {
-                dStats.uniqueids.push(cuirass[0].uniqueid.split(":")[0]);
-                cuirass = { id: cuirass[0].itemid, level: getItemLevel(cuirass[0].level), ascension: cuirass[0].ascension };
-                const item = items[cuirass.id];
+                dStats.uniqueids.push(cuirass.uniqueid.split(":")[0]);
+                cuirass.level = getItemLevel(cuirass.level);
+
+                const item = items[cuirass.itemid];
                 if (item instanceof armorInfo) {
 
                     // Set item to dStats
-                    dStats.cuirass = cuirass.id;
+                    dStats.cuirass = cuirass.itemid;
                     dStats.cuirassicon = item.emoji;
                     dStats.cuirassinfo = { ...cuirass };
 
@@ -402,18 +403,19 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         // Add gloves stat if available
         if (inv.equipment.gloves) {
             clearTimeout(retainItemStats.get(inv.equipment.gloves)?.timeout);
-            gloves = retainItemStats.get(inv.equipment.gloves)?.stats ?? await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.gloves}'`);
-            retainItemStats.set(inv.equipment.gloves, { stats: gloves, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.gloves), 10 * 1000) });
+            gloves = retainItemStats.get(inv.equipment.gloves)?.stats ?? await getWeaponSchema(inv.equipment.gloves);
 
-            // gloves = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.gloves}'`);
-            if (gloves[0]) {
-                dStats.uniqueids.push(gloves[0].uniqueid.split(":")[0]);
-                gloves = { id: gloves[0].itemid, level: getItemLevel(gloves[0].level), ascension: gloves[0].ascension };
-                const item = items[gloves.id];
+            if (gloves) {
+                retainItemStats.set(inv.equipment.gloves, { stats: gloves, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.gloves), 10 * 1000) });
+
+                dStats.uniqueids.push(gloves.uniqueid.split(":")[0]);
+                gloves.level = getItemLevel(gloves.level);
+
+                const item = items[gloves.itemid];
                 if (item instanceof armorInfo) {
 
                     // Set item to dStats
-                    dStats.gloves = gloves.id;
+                    dStats.gloves = gloves.itemid;
                     dStats.glovesicon = item.emoji;
                     dStats.glovesinfo = { ...gloves };
 
@@ -425,18 +427,19 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         // Add gloves stat if available
         if (inv.equipment.boots) {
             clearTimeout(retainItemStats.get(inv.equipment.boots)?.timeout);
-            boots = retainItemStats.get(inv.equipment.boots)?.stats ?? await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.boots}'`);
-            retainItemStats.set(inv.equipment.boots, { stats: boots, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.boots), 10 * 1000) });
+            boots = retainItemStats.get(inv.equipment.boots)?.stats ?? await getWeaponSchema(inv.equipment.boots);
 
-            // boots = await query(`SELECT * FROM weapons WHERE uniqueid = '${inv.equipment.boots}'`);
-            if (boots[0]) {
-                dStats.uniqueids.push(boots[0].uniqueid.split(":")[0]);
-                boots = { id: boots[0].itemid, level: getItemLevel(boots[0].level), ascension: boots[0].ascension };
-                const item = items[boots.id];
+            if (boots) {
+                retainItemStats.set(inv.equipment.boots, { stats: boots, timeout: setTimeout(() => retainItemStats.delete(inv.equipment.boots), 10 * 1000) });
+
+                dStats.uniqueids.push(boots.uniqueid.split(":")[0]);
+                boots.level = getItemLevel(boots.level);
+
+                const item = items[boots.itemid];
                 if (item instanceof armorInfo) {
 
                     // Set item to dStats
-                    dStats.boots = boots.id;
+                    dStats.boots = boots.itemid;
                     dStats.bootsicon = item.emoji;
                     dStats.bootsinfo = { ...boots };
 
@@ -525,6 +528,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         execute: matchStats.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: false,
+        isLightning: false,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
@@ -591,12 +595,21 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
 
     // Calculate damage
-    // let damage = getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
     let damage, isCrit = (options.canCrit && (options.critChance < (attacker.cr + options.critBuff)));
+    const multipliers = {
+        atk: options.atkMultiplier * attacker.atk,
+        md: options.atkMultiplier * attacker.md,
+        def: Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1)),
+        mr: Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1)),
+        crit: (isCrit ? (options.critMultiplier * attacker.cd) : 1),
+        combo: ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1),
+        lightning: 1 + (options.isLightning ? (attacker.lightningMultiplier ?? 0) : 0),
+        rng: (1 - (0.2 * Math.random())),
+    };
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * (isCrit ? (options.critMultiplier * attacker.cd) : 1));
+        damage = options.overwriteDamage || Math.floor(multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     } else {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * (isCrit ? (options.critMultiplier * attacker.cd) : 1));
+        damage = options.overwriteDamage || Math.floor(multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     };
     attacker.crittedTotal ||= 0;
     attacker.crittedTotal++;
@@ -695,11 +708,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             };
         };
 
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
         target.hp = Math.floor(target.hp - damage);
         if (target.hp < 1) target.hp = 0;
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
     };
 
     // Reflect damage
@@ -758,7 +771,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance) });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
@@ -1188,7 +1201,7 @@ export const searchItem = (name: string | number, interaction: ChatInputCommandI
     return fArray[0];
 };
 
-export const searchGuild = (name: string, guilds: GuildSchema[]) => {
+export const searchGuild = <T extends GuildSchema>(name: string, guilds: T[]) => {
     name = name.toLowerCase();
     if (!name) return guilds.sort((a, b) => 0.5 - Math.random());
 
@@ -1317,22 +1330,6 @@ export const generateCaptcha = () => {
         attachement: new AttachmentBuilder(buffer),
         text: captchaText
     };
-};
-
-export const donationWeekStart = new Date('2024-02-12T00:00:00');
-
-export const addGuildDonation = async (user: User, guildid: string, amount: number, type: "coins" | "gems" = "coins") => {
-    const week = Math.ceil((Date.now() - donationWeekStart.getTime()) / (7 * 24 * 60 * 60 * 1000));
-
-    const { 0: donation } = await query(`SELECT * FROM guild_donations WHERE userid = ${user.id} AND guildid = '${guildid}' AND week = ${week} AND type = '${type}'`);
-
-    if (donation) {
-        await query(`UPDATE guild_donations SET amount = amount + ${amount} WHERE userid = ${user.id} AND guildid = '${guildid}' AND week = ${week} AND type = '${type}'`);
-    } else {
-        await query(`INSERT INTO guild_donations (userid, guildid, week, type, amount) values ('${user.id}', '${guildid}', ${week}, '${type}', ${amount})`);
-    };
-
-    await query(`UPDATE guilds SET ${type === "coins" ? `treasury = treasury + ${amount}` : `treasury_gems = treasury_gems + ${amount}`} WHERE id = '${guildid}'`);
 };
 
 const dateString = (date: Date) => {
