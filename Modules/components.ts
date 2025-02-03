@@ -58,6 +58,8 @@ export const dungeonTempBan = new Map();
 
 export const botPfp = "https://i.ibb.co/mDX54t4/Ta2YDBN.png";
 
+export const donationWeekStart = new Date('2024-02-12T00:00:00');
+
 export const shardEmoji = {
     "EX": "<:ss_shard:917203009543503892>",
     "SS": "<:ss_shard:917203009543503892>",

@@ -10,12 +10,12 @@ import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
-import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, addGuildDonation, formatNumberWithQuotes } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, formatNumberWithQuotes } from "../Modules/functions";
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
-import { getGuildSchema, getUserSchema, updateUsers } from '../Modules/queries';
+import { addGuildDonation, getGuildSchema, getUserSchema, updateUsers } from '../Modules/queries';
 
 const dungeonInProgress = new Set();
 const captchaCooldown = new Map();
@@ -138,8 +138,8 @@ const exportCommand: SlashCommand = {
         if (!requestVerification.has(interaction.user.id) && stats.dungeon_limit > 100 && Math.random() < 0.005 && !captchaCooldown.has(interaction.user.id)) requestVerification.set(interaction.user.id, { repeats: 0 });
         if (requestVerification.has(interaction.user.id)) {
             const captcha = generateCaptcha();
-            clearTimeout(requestVerification.get(interaction.user.id).timeout);
-            requestVerification.set(interaction.user.id, { text: captcha.text, repeats: requestVerification.get(interaction.user.id).repeats + 1, timeout: setTimeout(() => requestVerification.delete(interaction.user.id), 60 * 60 * 1000) });
+            clearTimeout(requestVerification.get(interaction.user.id)?.timeout);
+            requestVerification.set(interaction.user.id, { text: captcha.text, repeats: (requestVerification.get(interaction.user.id)?.repeats ?? 0) + 1, timeout: setTimeout(() => requestVerification.delete(interaction.user.id), 60 * 60 * 1000) });
 
             // Temp ban
             if (requestVerification.get(interaction.user.id).repeats > 4) {
@@ -147,7 +147,8 @@ const exportCommand: SlashCommand = {
                 dungeonTempBan.set(interaction.user.id, { ends: (dungeonTempBan.get(interaction.user.id)?.ends || Date.now()) + (20 * 60 * 1000), timeout: setTimeout(() => dungeonTempBan.delete(interaction.user.id), ((dungeonTempBan.get(interaction.user.id)?.ends || Date.now()) + (20 * 60 * 1000)) - Date.now()) });
             };
 
-            await updateUsers(interaction.user.id, { dungeon_responsetime: { type: 'append_unique', value: [new Date(), new Date()] } });
+            const now = new Date();
+            await updateUsers(interaction.user.id, { dungeon_responsetime: { type: 'append', value: [now, now] } });
 
             // Captcha cooldown
             captchaCooldown.set(interaction.user.id, Date.now());
@@ -175,7 +176,7 @@ const exportCommand: SlashCommand = {
         // Update users table
         await updateUsers(interaction.user.id, {
             dungeon_limit: { type: 'set', value: stats.dungeon_limit },
-            dungeon_responsetime: { type: 'append_unique', value: [new Date()] },
+            dungeon_responsetime: { type: 'append', value: [new Date()] },
         });
 
         // User stats
@@ -304,7 +305,7 @@ const exportCommand: SlashCommand = {
             if (loot > 0 && guild && guild.tax) {
                 const tax = Math.floor(loot * (guild.tax / 100));
                 loot = Math.floor(loot - tax);
-                await addGuildDonation(interaction.user, guild.id, tax, "coins");
+                await addGuildDonation(guild.id, interaction.user.id, "coins", tax);
             };
 
             // Crafting Resources

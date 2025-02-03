@@ -14,10 +14,10 @@ export default class buffInfo implements IbuffInfo {
     private _last: number;
     private _change: number;
     private _ctype: string;
-    private _cap: number | undefined;
+    private _cap: number | [number, number] | undefined;
     private _id: number;
 
-    constructor(type: BuffType, val: number, last: number, change: number = 0, ctype: string = "+", cap: number | undefined = undefined) {
+    constructor(type: BuffType, val: number, last: number, change: number = 0, ctype: string = "+", cap: number | [number, number] | undefined = undefined) {
         this._type = type;
         this._val = val;
         this._last = last;
@@ -58,5 +58,10 @@ export default class buffInfo implements IbuffInfo {
 
     get isDebuff() {
         return ((this.type === "*" && this.val < 1) || (this.type === "+" && this.val < 0));
+    };
+    get range(): [number, number] {
+        if (this._cap === undefined) return [-Infinity, Infinity];
+        if (Array.isArray(this._cap)) return this._cap;
+        return [-Infinity, this._cap];
     };
 };

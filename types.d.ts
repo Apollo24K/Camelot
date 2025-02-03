@@ -319,7 +319,7 @@ export interface UserSchema {
     eventrewreceived: number;
     gems: number;
     tutorial: number[];
-    transactions: any[];
+    transactions: RankShopTransaction[];
     dailies: Record<string, number>;
     guild: string | null;
     donatedtotal: number;
@@ -367,7 +367,7 @@ export interface UserSchema {
     lastguildjoin: Date | null;
     valentine: string | null;
     bosshuntruns: number;
-    bosshuntrevreceived: number | null;
+    bosshuntrevreceived: number;
     monthlyshop: Record<string, any>;
     itemwishlist: number[];
     stampedeenergy: number;
@@ -376,13 +376,14 @@ export interface UserSchema {
     charlock: number[];
     animelock: number[];
     cow_participation: number | null;
-    cow_chars: string | null;
+    cow_chars: number[];
     cow_timer: number | null;
     cow_rolled_today: number;
     rank: string;
     rankscore: number;
     raidxp: number;
     guild_marks: number;
+    image_credits: number;
     created: Date;
 
     chars: number[];
@@ -429,8 +430,8 @@ export interface GuildSchema {
     description: string;
     color: string | null;
     level: number;
-    icon: string;
-    banner: string;
+    icon: string | null;
+    banner: string | null;
     treasury: number;
     treasury_gems: number;
     tax: number;
@@ -474,7 +475,7 @@ export interface StampedeSchema {
     generalsleft: number;
     monsterstotal: number;
     monstersleft: number;
-    participation: Record<string, any>;
+    participation: Record<string, [number, number]>;
 }
 
 export interface PartySchema {
@@ -483,8 +484,8 @@ export interface PartySchema {
     name: string;
     description: string;
     color: string | null;
-    icon: string;
-    banner: string;
+    icon: string | null;
+    banner: string | null;
     members: string[];
     created: Date | null;
 }
@@ -512,7 +513,7 @@ export interface RaidSchema {
     raidid: number;
     enemy_hp: number;
     enemy_hpmax: number;
-    participation: Record<string, any>;
+    participation: Record<string, [number, number]>;
     start_date: Date;
 }
 
@@ -537,9 +538,11 @@ export type IbuffInfo = {
     last: number;
     change: number;
     ctype: string;
-    cap?: number;
+    cap?: number | [number, number];
     id: number;
+
     isDebuff: boolean;
+    range: [number, number];
 };
 
 export type Buffs = {
@@ -577,7 +580,9 @@ export interface ITrigger {
     set used(used: number);
 };
 
-export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "defend" | "cskill" | "minionDeath";
+export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "defend" | "cskill" | "minionDeath" | "minionDeath" | "revival" | "heal";
+
+export type TriggerCallback = ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any);
 
 export type TriggerOptions = {
     event: TriggerEvents;
@@ -586,7 +591,7 @@ export type TriggerOptions = {
     maxUsage?: number;
     target?: DetailedStats;
     caster?: DetailedStats;
-    callback: (...args: any[]) => any;
+    callback: TriggerCallback;
 };
 
 export type MatchStats = {
@@ -627,11 +632,12 @@ export type MatchStats = {
     allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
     consumeMana: number;
+    lightningMultiplier?: number;
     dodgebuffLast?: number;
     dodgebuff?: number;
     heap1: any;
     listeners: Record<TriggerEvents, ITrigger[]>;
-    on(event: TriggerEvents, options: PartialBy<TriggerOptions, "event"> | ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any)): void;
+    on(event: TriggerEvents, options: PartialBy<TriggerOptions, "event"> | TriggerCallback): void;
     off(event: TriggerEvents, trigger: ITrigger | number): void;
     trigger(event: TriggerEvents, caster: any, target: any, casterBuff: any, targetBuff: any, options?: any): void;
 
@@ -695,6 +701,82 @@ export type UpdateWeaponOptions = {
 };
 
 
+type UpdateGuildOperation<K extends keyof GuildSchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: GuildSchema[K]; }
+
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<GuildSchema>
+        ? { type: 'increment'; value: number; }
+        : never)
+
+    // Array operations - only work with array fields
+    | (K extends ArrayKeys<GuildSchema>
+        ? { type: 'append'; value: GuildSchema[K]; }
+        | { type: 'append_unique'; value: GuildSchema[K]; }
+        | { type: 'remove'; value: GuildSchema[K]; }
+        | { type: 'remove_all'; value: GuildSchema[K]; }
+        : never)
+
+    // JSON operations - only work with object fields
+    | (K extends JsonKeys<GuildSchema>
+        ? { type: 'set_json'; value: GuildSchema[K]; }
+        | { type: 'merge_json'; value: Partial<GuildSchema[K]>; }
+        : never);
+
+export type UpdateGuildOptions = {
+    [K in keyof Partial<GuildSchema>]: UpdateGuildOperation<K>;
+};
+
+
+type UpdatePartyOperation<K extends keyof PartySchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: PartySchema[K]; }
+
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<PartySchema>
+        ? { type: 'increment'; value: number; }
+        : never)
+
+    // Array operations - only work with array fields
+    | (K extends ArrayKeys<PartySchema>
+        ? { type: 'append'; value: PartySchema[K]; }
+        | { type: 'append_unique'; value: PartySchema[K]; }
+        | { type: 'remove'; value: PartySchema[K]; }
+        | { type: 'remove_all'; value: PartySchema[K]; }
+        : never)
+
+    // JSON operations - only work with object fields
+    | (K extends JsonKeys<PartySchema>
+        ? { type: 'set_json'; value: PartySchema[K]; }
+        | { type: 'merge_json'; value: Partial<PartySchema[K]>; }
+        : never);
+
+export type UpdatePartyOptions = {
+    [K in keyof Partial<PartySchema>]: UpdatePartyOperation<K>;
+};
+
+
+type UpdateStampedeOperation<K extends keyof StampedeSchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: StampedeSchema[K]; }
+
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<StampedeSchema>
+        ? { type: 'increment'; value: number; }
+        : never)
+
+    // JSON operations - only work with object fields
+    | (K extends JsonKeys<StampedeSchema>
+        ? { type: 'set_json'; value: StampedeSchema[K]; }
+        | { type: 'merge_json'; value: Partial<StampedeSchema[K]>; }
+        : never);
+
+export type UpdateStampedeOptions = {
+    [K in keyof Partial<StampedeSchema>]: UpdateStampedeOperation<K>;
+};
+
+
 declare global {
     namespace NodeJS {
         interface ProcessEnv {
@@ -727,7 +809,6 @@ declare global {
 
 declare module "discord.js" {
     export interface Client {
-        commands: Collection<string, any>;
         slashCommands: Collection<string, SlashCommand>;
     }
 }
