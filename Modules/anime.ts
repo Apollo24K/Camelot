@@ -620,11 +620,16 @@ export const anime: animeInfo[] = [
     new animeInfo("Kindergarten WARS", ['Kindergarten Wars', 'Youchien WARS'], 585),
     new animeInfo("Bokura wa Minna Kawai-sou", ['Bokura wa Minna Kawaisou', 'The Kawai Complex Guide to Manors and Hostel Behavior', 'BMK'], 586),
     new animeInfo("Psychic Squad", ['Absolutely Lovely Children', 'Unlimited Psychic Squad', 'ZKC', 'Zettai Karen Children', 'The Unlimited: Hyoubu Kyousuke'], 587),
-
     new animeInfo("CODE-E", [], 588),
     new animeInfo("The Book of Bantorra", ['Armed Librarians: The Book of Bantorra', 'Fighting Librarians', 'Tatakau Shisho', 'Tatakau Shisho to Koisuru Bakudan', 'Tatakau Shisho: The Book of Bantorra'], 589),
     new animeInfo("Fena: Pirate Princess", ['Kaizoku Oujo', 'FPP', 'Fena Pirate Princess'], 590),
     new animeInfo("R.O.D - READ OR DIE", ['R.O.D -READ OR DIE-', 'R.O.D -THE TV-', 'Read or Die', 'Read or Dream', 'R.O.D: Read or Dream', 'ROD'], 591),
+    new animeInfo("Blood", ['BLOOD THE LAST VAMPIRE', 'BLOOD+', 'BLOOD-C', 'Blood Plus', 'Blood: The Last Vampire'], 592),
+    new animeInfo("Sabikui Bisco", ['Bisco Si Pemakan Karat', 'Rust-Eater Bisco'], 593),
+    new animeInfo("Gun x Sword", ['Gun vs Sword', 'Gun x Sword-san', 'GxS', 'Gun and Sword', 'Gun times Sword'], 594),
+    new animeInfo("I Was Reincarnated as the 7th Prince So I Can Take My Time Perfecting My Magical Ability", ['Dainanaoji', 'Tensei Shitara Dai Nana Ouji Dattanode', 'Tensei Shitara Dai Nana Ouji Dattanode, Kimamani Majutsu wo Kiwamemasu', 'I Was Reincarnated As the 7th Prince so I Will Perfect My Magic As I Please', 'TenOuji'], 595),
+    new animeInfo("Outlaw Star", ['Future Hero Next Generation Outlaw Star', 'Seihou Bukyou Outlaw Star', 'Starward Warrior Knight Outlaw Star'], 596),
+    new animeInfo("Arpeggio of Blue Steel", ['Aoki Hagane no Arpeggio', 'Aoki Hagane no Arpeggio: Ars Nova - Cadenza', 'Aoki Hagane no Arpeggio: Ars Nova - DC', 'Arpeggio of Blue Steel - Cadenza', 'Arpeggio of Blue Steel - DC', 'AoBS'], 597),
 ];
 
 
