@@ -22988,6 +22988,8 @@ export const characters: charInfo[] = [
     new charInfo("Lee Linho", [], anime[591], "M", "https://i.ibb.co/0YRL9Xw/c.png", 22897, "D"),
     new charInfo("Kim-san", ["Mr. Kim"], anime[591], "M", "https://i.ibb.co/h7kx3Bp/c.png", 22898, "D"),
 
+
+
 ];
 
 
