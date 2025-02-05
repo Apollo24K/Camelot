@@ -271,17 +271,17 @@ export const abilities: Record<number, Ability> = {
         },
     },
     "735": {
-        usage: 5,
+        usage: 10,
         used: 0,
-        cost: 55,
-        desc: "**Total Usage**: `15`\n**Mana**: `40`\\💧\n**Timeout**: `Yes`\n**Role**: `DPS`\n\nEach use of Yoimiya's normal attack will grant her a 'flame', up to **20**. After collecting three 'flames', her normal attack receives a substantial **22.5%** increase in damage. Additionally, if Yoimiya is wielding a bow as her primary weapon, her normal attacks will apply a burn effect dealing **12.5%** true damage for **2** rounds.\n\nHer active ability has her deliver a one-two punch of **80%** physical and magical damage each, before unleashing a festive reprise, dealing **10%** DMG for every flame collected. The next round after using her active ability, her normal attack will trigger twice.\n\nYoimiya is **not** compatible with other ATK replacing abilities.",
-        shortdesc: "**Uses**: `15`\n**Cost**: `40 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (DEF-scaling)`\n\n__**Passive**__\n\nATTACK is altered to:\n- Grant **1x** `Flame` (Up to 20)\n- Deals **100%** DMG. This is increased to **122.5%** when she has **3** or more `Flame`\n- When equipped with a bow, additionally deals **12.5%** true DMG for **2** turns\n\n__**Active**__ (✨)\n- Deals **80%** ATK + **80%** MD\n- Then deals **10%** DMG for every `Flame` owned\n- Her normal ATTACK next turn will trigger twice\n\nNote:- This unit is incompatible with other ATK-replacing effects",
+        cost: 65,
+        desc: "**Total Usage**: `10`\n**Mana**: `65`\\💧\n**Timeout**: `Yes`\n**Role**: `DPS`\n\nEach use of Yoimiya's normal attack will grant her a 'flame', up to **20**. After collecting three 'flames', her normal attack receives a substantial **22.5%** increase in damage. Additionally, if Yoimiya is wielding a bow as her primary weapon, her normal attacks will apply a burn effect dealing **12.5%** true damage for **2** rounds.\n\nHer active ability has her deliver a one-two punch of **80%** physical and magical damage each, before unleashing a festive reprise, dealing **10%** DMG for every flame collected, for a maximum of **100%**. The next round after using her active ability, her normal attack will trigger twice.\n\nYoimiya is **not** compatible with other ATK replacing abilities.",
+        shortdesc: "**Uses**: `10`\n**Cost**: `65 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (DEF-scaling)`\n\n__**Passive**__\n\nATTACK is altered to:\n- Grant **1x** `Flame` (Up to 20)\n- Deals **100%** DMG. This is increased to **122.5%** when she has **3** or more `Flame`\n- When equipped with a bow, additionally deals **12.5%** true DMG for **2** turns\n\n__**Active**__ (✨)\n- Deals **80%** ATK + **80%** MD\n- Then deals **10%** DMG for every `Flame` owned (up to 100%)\n- Her normal ATTACK next turn will trigger twice\n\nNote:- This unit is incompatible with other ATK-replacing effects",
         ability: (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Yoimiya
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: false });
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-            // Deals 10% DMG for every flame
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise! **${char.name}**`, { atkMultiplier: 0.1*myStats.yoimiyaFlames, magicDamage: true, mdChance: -1 });
+            // Deals 10% DMG for every flame (100% max)
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise! **${char.name}**`, { atkMultiplier: 0.1 * Math.min(myStats.yoimiyaFlames, 10), magicDamage: true, mdChance: -1 });
 
             matchStats.twinshot = 1;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -771,6 +771,7 @@ export const abilities: Record<number, Ability> = {
                 const damageMultiplier = 1 + (0.4 * Math.min(10, matchStats.round - this.roundUsed));
 
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Gungnir! He`, { atkMultiplier: damageMultiplier, shieldBreak: true, magicDamage: false, dodge: false, block: false });
+
                 eStats.atk -= Math.floor(eStats.atk * 0.2);
                 eStats.md -= Math.floor(eStats.md * 0.2);
                 ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
@@ -1004,7 +1005,10 @@ export const abilities: Record<number, Ability> = {
 
             if (this.stacks < 4) {
                 this.stacks++;
-                myStats.damageReduction += 0.04;
+                myStats.def += 40;
+                myStats.mr += 40;
+                mybuff.def.push(new buffInfo("+", 40, 9999));
+                mybuff.mr.push(new buffInfo("+", 40, 9999));
 
                 let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Dark Blaze! He`, { atkMultiplier: 1.3, magicDamage: true, mdChance: -1, combodmg: true, selfdmg: true, selfheal: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(dmg * (2 / 13)), 2));
@@ -1013,7 +1017,10 @@ export const abilities: Record<number, Ability> = {
 
                 if (this.stacks === 4) {
                     this.stacks++;
-                    myStats.putDamageOnHold += 0.04;
+                    myStats.def += 40;
+                    myStats.mr += 40;
+                    mybuff.def.push(new buffInfo("+", 40, 9999));
+                    mybuff.mr.push(new buffInfo("+", 40, 9999));
                 };
 
                 let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Dark Blast Inferno! He`, { atkMultiplier: 1.6, magicDamage: true, mdChance: -1, combodmg: true, selfdmg: true, selfheal: true });
@@ -1292,44 +1299,20 @@ export const abilities: Record<number, Ability> = {
         desc: "**Total Usage**: `unlimited`\n**Mana**: `50`\\💧\n**Timeout**: `no`\n**Role**: `Support/DPS`\n\nLuminous brings a unique blend of healing and damage to the battlefield. Her abilities not only bolster her offensive capabilities but also provide a reliable source of health recovery for herself and her allies.\n\nShe steadily recovers **3%** of her missing health every round. As the lightbearer of truth, this consistent restoration always results in a critical recovery, ensuring that the light is always ignited, against all odds of suppression.\n\nWhen her active ability is used, Luminous enters a heightened state for **3 rounds**, increasing her magic damage and critical damage by **33%** and doubling her passive from **3%** to **6%**, and during this state she deals magic damage to her opponents. However, it's important to note that this ability can't be stacked, meaning it can't be used again while the effect is still active. \n\n *The light- I... I see the light.*\n Every third use of her ability prompts the illumination of darkness. When she is below **50%** HP, she immediately recovers **33%** lost HP. Else, she increases max HP by **33%** instead, lasting for **3** turns. She will also negate max HP altering effects (whether positive or negative).\n\nWhen part of a party, Luminous extends her blessings to her friends as well. She increases the party's magic damage by **20%** and ensures they stay in the fight by healing them for **5%** of their missing health every round. Accompanied by the dazzling glow, this restoration always results in a critical heal.",
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `50 💧`\n**Timeout**: `Yes`\n**Role**: `Support/DPS (Healing, Crit-boost, max HP-boost)`\n\n__**Passive**__\n- Restores **3%** missing HP\n- This restoration results in a critical heal (Benefits from critical DMG)\n\n__**Active**__ (✨)\nFor **3** turns:\n- **+33%** MD & Critical DMG\n- Additionally restores **3%** missing HP which critically heals\n- Attacks deal MD hits\nEvery **3rd** use grants additional effects:\n- When above **50%** HP: Increases max HP by **33%**\n- Else: Recovers **33%** of missing HP\n\n__**Party**__ (👥)\n- **+20%** MD\n- Restores **5%** missing HP as a critical heal every turn",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            // Luminous increases her magic damage, critical damage for 3 rounds
+            // Luminous increases her magic damage for 3 rounds
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (matchStats.round < this.roundUsed + 3) {
                 myStats.sm += this.cost;
-                this.used--
-                return matchStats.interaction.followUp({content: `You can't stack Luminous' ability`, ephemeral: true});
+                return matchStats.interaction.followUp({ content: "You can't stack Luminous' ability", ephemeral: true });
             };
-            let healedamt = 0
+
             myStats.mdChance += 1;
-            myStats.md += Math.floor(myStats.md * 0.33);
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.33), 2));
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.25), 2));
+            myStats.md += Math.floor(myStats.md * 0.25);
 
-            mybuff.cd.push(new buffInfo("+", 0.33, 2));
-            myStats.cd += 0.33;
-
-            // Every 3rd use : Additional effects
-            if (this.used % 3 === 0) {
-                //Below 50% HP = Grants 33% lost HP heal
-                if ((myStats.hp/myStats.maxhp) < 0.5) {
-                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.33), {});
-                    notice.push(`\n👒 **${char.name}** has been graced by the light.`)
-                } else {
-                // 50% HP or above = Increase max HP by 33% for 3 turns
-                    myStatsFixed.maxhp = myStats.maxhp;
-                    const maxhpboost = Math.floor(myStats.maxhp * 0.33);
-                    myStats.maxhp += maxhpboost;
-                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        myStats.maxhp = myStatsFixed.maxhp
-                        if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-                    }));
-                    notice.push(`\n👒 **${char.name}** has been graced by the light. Increased max HP by **${maxhpboost}**.`)
-                }};
-            
-            //! Critical Heal (1. does less currently, 2. way too much probably)
-            // Additionally heals 3% missing HP critically every turn
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.1), {});
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03), {});
             }, 2));
 
             // Change image after 3 rounds
@@ -1339,27 +1322,20 @@ export const abilities: Record<number, Ability> = {
             }));
 
             embed.setThumbnail("https://i.ibb.co/NKnp3KM/luminous.png");
-            notice.push(`\n✨ **${char.name}** increased her MD and critical DMG by **33%** for 3 rounds!`);
+            notice.push(`\n✨ **${char.name}** increased her MD by **25%** for 3 rounds!`);
             this.roundUsed = matchStats.round;
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            // Heals 3% missing HP critically every turn
-            //! Critical Heal (1. does less currently, 2. way too much probably)
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03 * myStats.cd), {});
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.03), {});
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.2), 9999));
-            myStats.md += Math.floor(myStats.md * 0.2);
-
-            // Heals 5% missing HP critically every turn
-            //! Critical Heal (1. does less currently, 2. way too much probably)
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05 * myStats.cd), {});
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.16), 9999));
+            myStats.md += Math.floor(myStats.md * 0.16);
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05 * myStats.cd), {});
-            }, 9999));;
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
+            }, 9999));
         },
     },
     "10520": {
@@ -1369,7 +1345,7 @@ export const abilities: Record<number, Ability> = {
         roundUsed: 0,
         usedThisRound: 0,
         desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧 on active, `-25`\\💧 on passive\n**HP**: `5%`<:HP:1062043800979116143>\n**Timeout**: `no`\n**Role**: `DPS`\n\nVictoria, an accomplished knight and a decorated war hero, has become a formidable force on the battlefield through her countless skirmishes. Her vast experience and relentless determination have honed her skills, allowing her to stand toe to toe with dragons, with her prowess mirroring their ferocity and prestige.\n\nIn an ongoing testament to her thirst for knowledge and self-improvement, Victoria gains **+25%** class xp, and her countless encounters with dragons have sharpened her combat abilities against them, resulting in a **20%** increase in ATK when facing dragons.\n\nVictoria's resilience in combat is further enhanced by her ability to use mana to heal herself. When enough mana is available, Victoria will consume **25**\\💧 to regenerate **6%** of max HP, showcasing her ability to adapt and endure even in the direst of situations.\n\nVictoria can also tap into the raw energy of life itself, making the ultimate sacrifice for the promise of power. She can willingly sacrifice **5%** of her HP to gain a **25%** ATK boost for that round. This effect can be stacked up to **3 times** at once, embodying Victoria's willingness to risk everything for overwhelming power, mirroring the very dragons she battles in ferocity and resilience.",
-        shortdesc: "**Uses**: `Unlimited`\n**Cost**: `5% max HP`\n**Timeout**: `No`\n**Role**: `DPS (Mana-losing, Healing, Counter, Anti-dragon)`\n\n__**Passive**__\n- Begins battles by countering the next **3** hits (stackable)\n- When she is ready to counter a hit: **+33%** critical rate & critical DMG\n- When against dragons: **+20%** ATK\n- At the start of every turn, if available, consumes **25** 💧 to restore **6%** max HP (once)\n- Gains **+25%** class XP\n\n__**Active**__ (✨)\n- **+25%** ATK for **1** turn",
+        shortdesc: "**Uses**: `Unlimited`\n**Cost**: `5% max HP`\n**Timeout**: `No`\n**Role**: `DPS (Mana-losing, Healing, Counter, Anti-dragon)`\n\n__**Passive**__\n- Begins battles by countering the next **3** hits (stackable)\n- When she is ready to counter a hit: **+25%** critical rate & critical DMG\n- When against dragons: **+20%** ATK\n- At the start of every turn, if available, consumes **25** 💧 to restore **6%** max HP (once)\n- Gains **+25%** class XP\n\n__**Active**__ (✨)\n- **+25%** ATK for **1** turn",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Victoria gains 20% more class xp. Has 20% increased ATK if she fights against a dragon.
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -1404,17 +1380,17 @@ export const abilities: Record<number, Ability> = {
             myStats.counter ??= 0;
             myStats.counter += 3;
 
-            // When a counter is available, Critical rate & DMG +33%
+            // When a counter is available, Critical rate & DMG +25%
             if (myStats.counter > 0) {
-                myStats.cr += 0.33;
-                myStats.cd += 0.33;
+                myStats.cr += 0.25;
+                myStats.cd += 0.25;
                 if (myStats.cr > 1) myStats.cr = 1;
             };
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.counter > 0) {
-                    myStats.cr += 0.33;
-                    myStats.cd += 0.33;
+                    myStats.cr += 0.25;
+                    myStats.cd += 0.25;
                     if (myStats.cr > 1) myStats.cr = 1;
                 };
             }, 9999))
@@ -4335,8 +4311,8 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 0,
         burst: true,
-        ddesc: "**Total Usage**: `Unlimited`\n**Mana**: `110`\\💧\n**Timeout**: `No/No`\n**Role**: `DPS/Support`\n\nOnce bounded in a sanctuary, the Dendro archon has been freed, purging darkness with dreams, where she finds solace in boundless bliss.\n\nWith telepathic skills, she first gathers battle data, recording all DMG taken. At the start of the turn, if she's below **33%** HP, exits the mode and gains a shield equivalent to all DMG taken, up to **100%** of her max HP, before overwhelming the enemy, stunning them for **2** turns.\n\n*Sunlight paints the dream in a golden hue anew, as butterflies meet grass glittering with dew...*\n\nHer ability is split into **2** parts depending on mana owned.\n\n`All Schemes to Know` : Consumes **80** :droplet: allows her to aim and mark the enemy with the Seed of Skandha for **2** turns. If used when the enemy already has the seed, extends the duration of marking.\nAttacks against marked opponents grants the following effects:\n> - **+30%** critical rate (45% when in temple)\n> - Ignore **15%** of enemy's DEF & MR (22.5% when in temple)\n> - A critical hit restores **10** :droplet:(15 when in temple)\n\n`Illusory Heart` : Consumes **110** :droplet: to summon the __Temple of Wisdom__ for **4** turns with the following effects:\n> - The marking ability will cost **50%** less but have **+50%** effectiveness. (40 cost, mark for 4 turns)\n> - The marking effects will have **+50%** effectiveness.\n\nIf Temple is already active, she'll always prioritize casting `All Schemes to Know` even if she has 110 mana or more.\n\nIn a party, she marks the enemy every **3** turns, with the marking lasting for that turn only.",
-        desc: "**Uses**: `Unlimited`\n**Cost**: `110 💧`\n**Timeout**: `No/No`\n**Role**: `DPS (Marking, Burst survival)`\n\n__**Passive**__\n- Records DMG taken\nAt the start of the turn, if she's below **33%** HP:\n- Gains a shield equivalent to DMG taken (Up to **100%** of max HP, usable once in battle)\n\n__**Active**__ (✨)\n80 💧: Marks enemy with `Seed` for **2** turns, repeated markings extend duration.\nAttacks against marked enemies have the following properties:\n- **+30%** critical rate (+45% when in temple)\n- Ignore **15%** DEF & MR (-22.5% when in temple)\n- Critical hit restores **10** 💧 (15 when in temple)\n\n110 💧: Summons temple for **4** turns\n- Marking ability costs **50%** less but has **+50%** effectiveness (40 cost, mark for 4 turns)\nIf temple is active, always prioritizes using marking\n\n__**Party**__ (👥)\n- Marks enemy for **1** turn every **3** turns",
+        ddesc: "**Total Usage**: `Unlimited`\n**Mana**: `110`\\💧\n**Timeout**: `No/No`\n**Role**: `DPS/Support`\n\nOnce bounded in a sanctuary, the Dendro archon has been freed, purging darkness with dreams, where she finds solace in boundless bliss.\n\nWith telepathic skills, she first gathers battle data, recording all DMG taken. At the start of the turn, if she's below **33%** HP, exits the mode and gains a shield equivalent to all DMG taken, up to **100%** of her max HP, before overwhelming the enemy, stunning them for **2** turns.\n\n*Sunlight paints the dream in a golden hue anew, as butterflies meet grass glittering with dew...*\n\nHer ability is split into **2** parts depending on mana owned.\n\n`All Schemes to Know` : Consumes **80** :droplet: allows her to aim and mark the enemy with the Seed of Skandha for **2** turns. If used when the enemy already has the seed, extends the duration of marking.\nAttacks against marked opponents grants the following effects:\n> - **+30%** critical rate (45% when in temple)\n> - Ignore **15%** of enemy's DEF & MR (22.5% when in temple)\n> - A critical hit restores **6** :droplet:(9 when in temple)\n\n`Illusory Heart` : Consumes **110** :droplet: to summon the __Temple of Wisdom__ for **4** turns with the following effects:\n> - The marking ability will cost **50%** less but have **+50%** effectiveness. (40 cost, mark for 4 turns)\n> - The marking effects will have **+50%** effectiveness.\n\nIf Temple is already active, she'll always prioritize casting `All Schemes to Know` even if she has 110 mana or more.\n\nIn a party, she marks the enemy every **3** turns, with the marking lasting for that turn only.",
+        desc: "**Uses**: `Unlimited`\n**Cost**: `110 💧`\n**Timeout**: `No/No`\n**Role**: `DPS (Marking, Burst survival)`\n\n__**Passive**__\n- Records DMG taken\nAt the start of the turn, if she's below **33%** HP:\n- Gains a shield equivalent to DMG taken (Up to **100%** of max HP, usable once in battle)\n\n__**Active**__ (✨)\n80 💧: Marks enemy with `Seed` for **2** turns, repeated markings extend duration.\nAttacks against marked enemies have the following properties:\n- **+30%** critical rate (+45% when in temple)\n- Ignore **15%** DEF & MR (-22.5% when in temple)\n- Critical hit restores **6** 💧 (9 when in temple)\n\n110 💧: Summons temple for **4** turns\n- Marking ability costs **50%** less but has **+50%** effectiveness (40 cost, mark for 4 turns)\nIf temple is active, always prioritizes using marking\n\n__**Party**__ (👥)\n- Marks enemy for **1** turn every **3** turns",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Nahida
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -4402,11 +4378,11 @@ export const abilities: Record<number, Ability> = {
 
             }, 9999));
             
-            // Gain +10 mana when critting a marked enemy
+            // Gain +6 mana when critting a marked enemy
             matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
                 if (eStats.marked > 0 && caster === myStats) {
-                    myStats.sm += 10;
-                    if (myStats.temple > 0) myStats.sm += 5;
+                    myStats.sm += 6;
+                    if (myStats.temple > 0) myStats.sm += 3;
                     if (myStats.sm > myStats.mana) myStats.sm = myStats.mana
                 };
             });
@@ -4435,8 +4411,8 @@ export const abilities: Record<number, Ability> = {
         usage: 4,
         used: 0,
         cost: 100,
-        ddesc: "**Total Uses:** `4 (CD: 10 turns)`\n**Mana Cost:** `100 💧` \n**Timeout:** `No`\n**Tags:** `DPS/Support`\n\nGoing through the cycles of loneliness and regret, Rukia finds a sense of belonging and comfort by gaining unwavering resolve through new encounters and allies.\n\nHer normal attack is altered to __Sode No Shirayuki__ :\n> Deals **90%** DMG with **+25%** critical rate\n> Every hit inflicts **1x** `Frost`\n\nAt the start of her turn, when the enemy has **5** or more `Frost`, consumes **5x** to freeze the enemy for **1** turn. When the enemy is frozen, they take **+20%** DMG.\n\nUsing her active, she consumes **100** 💧 to utilize __Hakka no Togame__, her bankai, overcoming her fear to gain the purity of ice and uncover the true form of her Sode No Shirayuki.\n\nFor **4** turns, lowers body temperature to absolute zero, inflicting **4x** `Frost` every turn, in return losing **10%** current HP every turn, and halting mana regeneration. Moreover, non-DoT DMG dealt from her is stored up as `Frozen Wounds`.\n\nAfter **4** turns, she unleashes a massive wave of freezing cold, dealing **250%** DMG. Then, cracks open `Frozen Wounds`, dealing fixed DMG equivalent to **1.5x** the DMG stored before resetting `Frozen Wounds`. This attack cannot be dodged, blocked or countered, and penetrates shields, but will not trigger a critical hit.\n\nWhen in a party, she intervenes every **5** turns, releasing her Hakka no Togame in a wide range, freezing the enemy for **1** turn, causing them to take **+20%** DMG.\n\nMoreover, if her party contains Ichigo Kurosaki / Byakuya Kuchiki, she evades the first **3** lethal hits (stackable), and helps them evade the first **3** lethal hits as well (stackable).",
-        desc: "**Uses**: `4`\n**Cooldown:** `10 turns`\n**Cost**: `100 💧`\n**Timeout**: `No`\n**Role**: `DPS (Frost, Freeze, DMG-delay)`\n\n__**Passive**__\n- ATTACK is altered to deal **90%** DMG with **+25%** critical rate\n- A successful hit inflicts `Frost`\n\nAt the start of the turn:\n- When the enemy has **5x** `Frost` or more: Consumes **5x** and freezes the enemy for **1** turn\n- Frozen enemies take **+20%** DMG\n\n__**Active**__ (✨)\nFor **4** turns:\n- Loses **10%** current HP every turn\n- Inflicts **4x** `Frost` every turn\n- Non-DoT DMG dealt by her is not dealt but stored as `Frozen Wounds`\n\nAfter **4** turns:\n- Deals **250%** DMG\n- Deals **1.5x** `Frozen Wounds` as fixed DMG to the enemy\n- Frozen Wounds will not crit, but ignores DEF/MR, and cannot be dodged/blocked/countered\n\n__**Party**__ (👥)\n- Intervenes every **5** turns and freezes the enemy for **1** turn\n- Frozen enemies this way receive **+20%** DMG\n\nIf party contains Ichigo Kurosaki/Byakuya Kuchiki:\n- She evades first **3** lethal hits\n- They evade first **3** lethal hits",
+        ddesc: "**Total Uses:** `4 (CD: 10 turns)`\n**Mana Cost:** `100 💧` \n**Timeout:** `No`\n**Tags:** `DPS/Support`\n\nGoing through the cycles of loneliness and regret, Rukia finds a sense of belonging and comfort by gaining unwavering resolve through new encounters and allies.\n\nHer normal attack is altered to __Sode No Shirayuki__ :\n> Deals **90%** DMG with **+25%** critical rate\n> Every hit inflicts **1x** `Frost`\n\nAt the start of her turn, when the enemy has **5** or more `Frost`, consumes **5x** to freeze the enemy for **1** turn. When the enemy is frozen, they take **+20%** DMG.\n\nUsing her active, she consumes **100** 💧 to utilize __Hakka no Togame__, her bankai, overcoming her fear to gain the purity of ice and uncover the true form of her Sode No Shirayuki.\n\nFor **4** turns, lowers body temperature to absolute zero, inflicting **4x** `Frost` every turn, in return losing **10%** current HP every turn, and halting mana regeneration. Moreover, non-DoT DMG dealt from her is stored up as `Frozen Wounds`.\n\nAfter **4** turns, she unleashes a massive wave of freezing cold, dealing **200%** DMG. Then, cracks open `Frozen Wounds`, dealing fixed DMG equivalent to **1.5x** the DMG stored before resetting `Frozen Wounds`. This attack cannot be dodged, blocked or countered, and penetrates shields, but will not trigger a critical hit.\n\nWhen in a party, she intervenes every **5** turns, releasing her Hakka no Togame in a wide range, freezing the enemy for **1** turn, causing them to take **+20%** DMG.\n\nMoreover, if her party contains Ichigo Kurosaki / Byakuya Kuchiki, she evades the first **3** lethal hits (stackable), and helps them evade the first **3** lethal hits as well (stackable).",
+        desc: "**Uses**: `4`\n**Cooldown:** `10 turns`\n**Cost**: `100 💧`\n**Timeout**: `No`\n**Role**: `DPS (Frost, Freeze, DMG-delay)`\n\n__**Passive**__\n- ATTACK is altered to deal **90%** DMG with **+25%** critical rate\n- A successful hit inflicts `Frost`\n\nAt the start of the turn:\n- When the enemy has **5x** `Frost` or more: Consumes **5x** and freezes the enemy for **1** turn\n- Frozen enemies take **+20%** DMG\n\n__**Active**__ (✨)\nFor **4** turns:\n- Loses **10%** current HP every turn\n- Inflicts **4x** `Frost` every turn\n- Non-DoT DMG dealt by her is not dealt but stored as `Frozen Wounds`\n\nAfter **4** turns:\n- Deals **200%** DMG\n- Deals **1.5x** `Frozen Wounds` as fixed DMG to the enemy\n- Frozen Wounds will not crit, but ignores DEF/MR, and cannot be dodged/blocked/countered\n\n__**Party**__ (👥)\n- Intervenes every **5** turns and freezes the enemy for **1** turn\n- Frozen enemies this way receive **+20%** DMG\n\nIf party contains Ichigo Kurosaki/Byakuya Kuchiki:\n- She evades first **3** lethal hits\n- They evade first **3** lethal hits",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Rukia Kuchiki
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -4471,7 +4447,7 @@ export const abilities: Record<number, Ability> = {
             // When Domain Ends
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 myStats.rukiaUsedActive = false;
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ Hakka no Togame! **${char.name}**`, { atkMultiplier: 2.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ Hakka no Togame! **${char.name}**`, { atkMultiplier: 2, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                 
                 const shatterdmg = eStats.frozenwounds * 1.5;
                 eStats.hp -= shatterdmg;
@@ -4520,7 +4496,7 @@ export const abilities: Record<number, Ability> = {
             }, 9999));
         },
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {           
-            eStats.vulnerability??= 0;
+            eStats.vulnerability ??= 0;
             
             // Freezes enemy and boosts cd every 5 turns
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
