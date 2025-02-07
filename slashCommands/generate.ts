@@ -78,14 +78,14 @@ const exportCommand: SlashCommand = {
 
             // Log images
             const channel = interaction.client.channels.cache.find(channel => channel.id === "1333567863805448283");
-            if (channel?.isSendable() && interaction.client.user.id === "706183309943767112") return channel.send({ content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\n**Prompt**: ${userprompt}\n\`\`\`yaml\n${prompt.slice(0, 1500)}\`\`\`\n-# **UUID**: \`${images[0].uuid}\``, files: images.map((img) => img.url ?? "").filter(Boolean), flags: MessageFlags.SuppressNotifications });
+            if (channel?.isSendable()) return channel.send({ content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\n**Prompt**: ${userprompt}\n\`\`\`yaml\n${prompt.slice(0, 1500)}\`\`\`\n-# **UUID**: \`${images[0].uuid}\``, files: images.map((img) => img.url ?? "").filter(Boolean), flags: MessageFlags.SuppressNotifications });
         } catch (error: any) {
             if (error?.rawError?.message === 'Explicit content cannot be sent to the desired recipient(s)') {
                 interaction.editReply({ content: "Your prompt was flagged as inappropriate. Please try again with a different prompt." });
 
                 // Log images
                 const channel = interaction.client.channels.cache.find(channel => channel.id === "1333567863805448283");
-                if (channel?.isSendable() && interaction.client.user.id === "706183309943767112") return channel.send({ content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\n**Prompt**: ${userprompt}\n\`\`\`yaml\n${prompt.slice(0, 1500)}\`\`\`\n-# **UUID**: \`${images[0].uuid}\``, files: images.map((img) => img.url ?? "").filter(Boolean), flags: MessageFlags.SuppressNotifications });
+                if (channel?.isSendable()) return channel.send({ content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\n**Prompt**: ${userprompt}\n\`\`\`yaml\n${prompt.slice(0, 1500)}\`\`\`\n-# **UUID**: \`${images[0].uuid}\``, files: images.map((img) => img.url ?? "").filter(Boolean), flags: MessageFlags.SuppressNotifications });
             } else {
                 interaction.editReply({ content: "An error occurred while generating the images. Please try again later.\n\nIf the issue persists, please contact us on our `/support` server!" });
             };
@@ -128,7 +128,8 @@ const exportCommand: SlashCommand = {
 
         // Log images
         const channel = interaction.client.channels.cache.find(channel => channel.id === "1333567863805448283");
-        if (channel?.isSendable() && interaction.client.user.id === "706183309943767112") return channel.send({
+        // && interaction.client.user.id === "706183309943767112"
+        if (channel?.isSendable()) return channel.send({
             content: `**User**: ${interaction.user.toString()} | ${interaction.user.username} | ${interaction.user.id}\n**Server**: ${interaction.guild ? `${interaction.guild.name} | ${interaction.guild.id}` : "`unknown`"}\nRemoved Background of \`${oldUuid}\`\n\n-# **UUID**: \`${results[0].uuid}\``,
             files: results.map((result) => result.url ?? "").filter(Boolean),
             flags: MessageFlags.SuppressNotifications

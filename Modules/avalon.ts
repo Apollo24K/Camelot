@@ -143,6 +143,7 @@ export default class Avalon {
             allowExecution: true,
             damageFormula: "default" as "default" | `log_scale_${number}`,
             consumeMana: 0,
+            lightningMultiplier: 0,
             dodgebuff: 0,
             heap1: 0,
 
@@ -210,11 +211,11 @@ export default class Avalon {
     static applyBuffs(stats: any, eStats: any, obj: any, ebuff: any, matchstats: any, notice: any) {
         Object.keys(obj).forEach((stat) => {
             if (obj[stat].length) obj[stat].forEach((buff: buffInfo) => {
-                if (stat === "hp" && buff.type === "+") addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val, {});
+                if (stat === "hp" && buff.type === "+") addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, Math.min(buff.range[1], Math.max(buff.range[0], buff.val)), {});
                 switch (buff.type) {
-                    case "*": stats[stat] = (buff.cap !== undefined && buff.val > buff.cap) ? Math.floor(stats[stat] * buff.cap) : Math.floor(stats[stat] * buff.val); break;
-                    case "+": stats[stat] += (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val; break;
-                    case "=": stats[stat] = (buff.cap !== undefined && buff.val > buff.cap) ? buff.cap : buff.val; break;
+                    case "*": stats[stat] = Math.floor(stats[stat] * Math.min(buff.range[1], Math.max(buff.range[0], buff.val))); break;
+                    case "+": stats[stat] += Math.min(buff.range[1], Math.max(buff.range[0], buff.val)); break;
+                    case "=": stats[stat] = Math.min(buff.range[1], Math.max(buff.range[0], buff.val)); break;
                     default: false; break;
                 };
                 switch (buff.ctype) {

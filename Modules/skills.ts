@@ -357,7 +357,7 @@ export const skills: skillInfo[] = [
         mybuff.mg.push(new buffInfo("+", -2, 9999));
         myStats.mg -= 2;
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-        if (!eStats.negateHeal)notice.push(`\n⚜️ **${char.name}** has restored **${hhp}** HP`);
+        if (!eStats.negateHeal) notice.push(`\n⚜️ **${char.name}** has restored **${hhp}** HP`);
     }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         mybuff.hp.push(new buffInfo("*", 1.05, 9999));
         myStats.rev = 1;

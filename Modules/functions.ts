@@ -530,6 +530,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         execute: matchStats.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: false,
+        isLightning: false,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
@@ -586,12 +587,21 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     }; /* Reset DodgeStreak */ target.dodgeStreak = 0;
 
     // Calculate damage
-    // let damage = getDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, flags);
     let damage, isCrit = (options.canCrit && (options.critChance < (attacker.cr + options.critBuff)));
+    const multipliers = {
+        atk: options.atkMultiplier * attacker.atk,
+        md: options.atkMultiplier * attacker.md,
+        def: Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1)),
+        mr: Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1)),
+        crit: (isCrit ? (options.critMultiplier * attacker.cd) : 1),
+        combo: ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1),
+        lightning: 1 + (options.isLightning ? (attacker.lightningMultiplier ?? 0) : 0),
+        rng: (1 - (0.2 * Math.random())),
+    };
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.md * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * (isCrit ? (options.critMultiplier * attacker.cd) : 1));
+        damage = options.overwriteDamage || Math.floor(multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     } else {
-        damage = options.overwriteDamage || Math.floor(((options.atkMultiplier * attacker.atk * ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1)) * Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1))) * (1 - (0.2 * Math.random())) * (isCrit ? (options.critMultiplier * attacker.cd) : 1));
+        damage = options.overwriteDamage || Math.floor(multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     };
     attacker.crittedTotal ||= 0;
     attacker.crittedTotal++;
@@ -690,11 +700,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             };
         };
 
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
         target.hp = Math.floor(target.hp - damage);
         if (target.hp < 1) target.hp = 0;
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
     };
 
     // Reflect damage
@@ -753,7 +763,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance) });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
