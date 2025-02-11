@@ -3537,7 +3537,7 @@ export const items = [
     new ringInfo("Lightning Circuit", "ring", "ring", ["raid"], "<:lightning_circuit:1334265250454700094>", "https://i.ibb.co/6cCFbJKY/Lightning-Circuit.png", 15, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Lightning
 
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            // Every 3 rounds: Deal 65/70/75% lightning damage
+            // Every 3 rounds: Deal 40/42.5/45/47.5/50/52.5/55/57.5/60/62.5/65/67.5/70/72.5/75% lightning damage
             if (matchStats.round % 3 === 0) {
                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚡ **${char.name}**`, { isLightning: true, atkMultiplier: [0.4, 0.425, 0.45, 0.475, 0.5, 0.525, 0.55, 0.575, 0.6, 0.625, 0.65, 0.675, 0.7, 0.725, 0.75][level - 1] });
             };
@@ -3546,7 +3546,7 @@ export const items = [
     }, (level) => `The wearer deals **${[40, 42.5, 45, 47.5, 50, 52.5, 55, 57.5, 60, 62.5, 65, 67.5, 70, 72.5, 75][level - 1]}%** lightning damage every **3** rounds.`, "Designed like an intricate circuit board, the Lightning Circuit combines modernity with mysticism. Its sleek, metallic band is accented with glowing electric blue patterns that pulse rhythmically, mimicking the flow of energy itself. This ring is lightweight yet durable, emphasizing agility and speed. The wearer gains enhanced reflexes and the ability to channel lightning in combat. Each spark that leaps from the band serves as a reminder of the unseen forces at play. Ideal for rogue engineers or swift spellcasters, this ring merges technology and ancient magic into a singular embodiment of power.", "unique", 714),
     new ringInfo("Static Surge", "ring", "ring", ["raid"], "<:static_surge:1334266402026291322>", "https://i.ibb.co/Z7m5Zhs/Static-Surge.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Lightning
 
-        // On Crit: Deal 75% lightning damage
+        // On Crit: Deal 15/17.5/20/22.5/25/27.5/30% lightning damage
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚡ **${char.name}**`, { isLightning: true, atkMultiplier: [0.15, 0.175, 0.2, 0.225, 0.25, 0.275, 0.3][level - 1] });
