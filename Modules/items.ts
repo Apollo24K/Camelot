@@ -3167,16 +3167,16 @@ export const items = [
         // On Ability: +20/25/30% MD (2 turns)
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
-                myStats.md += Math.floor(myStats.md * (0.2 + 0.05 * (level - 1)));
                 mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.2 + 0.05 * (level - 1))), 2));
+                myStats.md += Math.floor(myStats.md * (0.2 + 0.05 * (level - 1)));
             };
         });
 
         // On Skill: +20/25/30% ATK (2 turns)
         matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
-                myStats.atk += Math.floor(myStats.atk * (0.2 + 0.05 * (level - 1)));
                 mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.2 + 0.05 * (level - 1))), 2));
+                myStats.atk += Math.floor(myStats.atk * (0.2 + 0.05 * (level - 1)));
             }
         });
 
@@ -3220,14 +3220,14 @@ export const items = [
     }, (level) => `Loses **${[20, 22.5, 25, 27.5, 30][level - 1]}%** of your current HP and gains a shield equal to **${[40, 50, 60, 70, 80][level - 1]}%** of your max HP.`, "The Oath of Love ring embodies romance and eternity, crafted from warm, polished bronze that complements the heart-shaped ruby at its center. Surrounding the gemstone are delicate floral motifs, intricately entwined to symbolize the bonds of love and devotion. The vibrant ruby sparkles with fiery passion, representing an unbreakable promise between lovers. Those who wear the Oath of Love can expect heightened emotional awareness and an ability to forge deep connections with others, making it a cherished talisman for couples seeking to strengthen their union.", "mythical", 691),
     new ringInfo("Azure Aegis", "ring", "ring", ["raid"], "<:azure_aegis:1333965898968600677>", "https://i.ibb.co/4ZFH0gxS/Azure-Aegis.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan
 
-        // +ATK/MD += Shield/ max: 40/60% ATK/MD
+        // +ATK/MD += Shield/ max: 10/15/20/25% ATK/MD
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.atk += Math.floor(Math.min(myStats.shield, myStats.atk * (0.1 + 0.05 * (level - 1)))); //! Shield Amount Scaling
             myStats.md += Math.floor(Math.min(myStats.shield, myStats.md * (0.1 + 0.05 * (level - 1)))); //! Shield Amount Scaling
         }, 9999));
 
-    }, (level) => `Increases the wearer's ATK and MD by **${[10, 15, 20, 25][level - 1]}%** of their shield amount at any given time.`, "The Azure Aegis is a stunning ring, designed in the shape of a shield encasing a radiant blue gem. Intricate patterns of swirling that evoke ocean waves cover the band, embodying strength and protection. Crafted from a blue-tinted metal that glistens like the sea at sunrise, it shimmers with a soft, inviting light. When worn, it enhances defensive abilities, creating a protective aura around the bearer, thus ensuring their safety and fortitude in challenging situations.", "legendary", 692),
-    new ringInfo("Ethereal Spiral", "ring", "ring", ["raid"], "<:ethereal_spiral:1333967191678390333>", "https://i.ibb.co/TDqBgJpr/Ethereal-Spiral.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* DoT
+    }, (level) => `Increases the wearer's ATK and MD by their shield amount at any given time, up to **${[10, 15, 20, 25][level - 1]}%** of their ATK/MD.`, "The Azure Aegis is a stunning ring, designed in the shape of a shield encasing a radiant blue gem. Intricate patterns of swirling that evoke ocean waves cover the band, embodying strength and protection. Crafted from a blue-tinted metal that glistens like the sea at sunrise, it shimmers with a soft, inviting light. When worn, it enhances defensive abilities, creating a protective aura around the bearer, thus ensuring their safety and fortitude in challenging situations.", "legendary", 692),
+    new ringInfo("Ethereal Spiral", "ring", "ring", ["raid"], "<:ethereal_spiral:1333967191678390333>", "https://i.ibb.co/TDqBgJpr/Ethereal-Spiral.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana (DoT before)
 
         // Steals 2/3/4/5 💧 from the enemy
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3247,7 +3247,7 @@ export const items = [
     }, (level) => ``, "The Dread Crown is a ring that embodies the terror of darkness itself. Crafted from blackened metal, its spiked silhouette resembles the jagged peaks of a cursed mountain range. The central gemstone, a deep crimson, pulsates with a sinister light, echoing the life force of a thousand fallen foes. Intricate symbols of ancient runes are etched into the band, hinting at forgotten sorceries of domination and fear. Wearing this ring grants the bearer unsettling influence, striking dread into the hearts of their enemies, while enhancing their necromantic capabilities. It is a soul-bound accessory for dark lords and cunning villains.", "legendary", 694),
     new ringInfo("Thorn Script", "ring", "ring", ["raid"], "<:thorn_script:1333976186610520084>", "https://i.ibb.co/PvgkfwxS/Thorn-Script.png", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
 
-        // -2.5/5/7% own HP, +10/15/20% counter chance ()
+        // -7/6/5 max HP, +10/15/20% counter chance
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.hp -= Math.floor(myStats.maxhp * [0.07, 0.06, 0.05][level - 1]);
             if (myStats.hp < 0) myStats.hp = 0;
@@ -3258,7 +3258,7 @@ export const items = [
     }, (level) => `The wearer loses **${[7, 6, 5][level - 1]}%** of their max HP every turn but they have **+${[10, 15, 20][level - 1]}%** counter chance.`, "The Thorn Script features an ornate design resembling creeping vines and thorns enfolding a rich black stone. Embedded within the design are delicate etchings of ancient runes that glow softly when invoked. The intertwining thorns symbolize resilience, while the deep stone at its core embodies the bearer's struggles and strength. Known to enhance one's cunning and resourcefulness, this ring is favored by those who walk the precarious edge of danger and strategy.", "mythical", 695),
     new ringInfo("Crimson Talon", "ring", "ring", ["raid"], "<:crimson_talon:1333982303961219135>", "https://i.ibb.co/Ng9K63yQ/Crimson-Talon.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
 
-        // On Counter: +5% CD (max: 60/70/80/90/100/110/120%)
+        // On Counter: +5% CD (max: 30/35/40/45/50/55/60%)
         matchStats.on("counter", {
             maxUsage: 6 + (level - 1), callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
@@ -3274,13 +3274,13 @@ export const items = [
 
         // On Counter: Heal 3/4/5/6/7/8% current HP
         matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.hp * 0.08 + 0.01 * (level - 1)));
+            if (caster === myStats) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.hp * 0.03 + 0.01 * (level - 1)));
         });
 
     }, (level) => `Heals the wearer for **${[3, 4, 5, 6, 7, 8][level - 1]}%** of their current HP every time they counter.`, "Forged in the heart of an ancient colossus, this ring hums with the unyielding power of machine and myth. Its intricate engravings glow faintly, resonating with the energy of the titanic forces that shaped it. Wield it wisely, for within its steel lies the strength to move mountains.", "rare", 697),
     new ringInfo("Shadow Drake Band", "ring", "ring", ["raid"], "<:shadow_drake_band:1333985563119845400>", "https://i.ibb.co/Kjp75cbH/Shadow-Drake-Band.png", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Counter
 
-        // When HP < 70%: +3/4/5 counter stacks (once)
+        // When HP < 30%: +3/4/5 counter stacks (once)
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (myStats.hp < myStats.maxhp * 0.3) {
                 myStats.counter += [3, 4, 5][level - 1];
@@ -3292,26 +3292,27 @@ export const items = [
     }, (level) => `The wearer gains **${[2, 3, 4][level - 1]}** counter stacks, when their HP falls below **30%** of their max HP for the first time.`, "Forged from obsidian-black metal, the Shadow Drake Band is adorned with cruel, jagged spikes that seem to absorb light. Intricate draconic runes, etched in dark crimson, encircle the band, pulsating with an eerie glow under moonlight. This formidable ring is said to resonate with the spirits of ancient drakes, granting its bearer enhanced agility and stealth. As shadows twist and crawl, whispers of the drakes' secrets flicker in the wearer's mind, empowering their spells with eldritch energy. Treasures that glitter from within can lure thieves, but only those with a true heart may harness its dark potential without succumbing to madness.", "legendary", 698),
     new ringInfo("Ocean's Reverie", "ring", "ring", ["raid"], "<:oceans_reverie:1333987029590999111>", "https://i.ibb.co/XrTCXyfM/Ocean-s-Reverie.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
 
-        myStats.ringOfVictoryRush = 0;
+        myStats.oceanReverie = 0;
+        const steal = Math.floor(eStats.sm * 0.3 + 0.05 * (level - 1));
 
-        // On every 3rd ability usage: Steal 50% mana
+        // On every 3rd ability/ cskill usage: Steal 30/35/40/45/50% mana
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
-                myStats.ringOfVictoryRush++;
-                if (myStats.ringOfVictoryRush % 3 === 0) {
-                    myStats.sm += Math.floor(myStats.sm * 0.5);
+                myStats.oceanReverie++;
+                if (myStats.oceanReverie % 3 === 0) {
+                    myStats.sm += steal;
                     if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
-                    eStats.sm -= Math.floor(eStats.sm * 0.5);
+                    eStats.sm -= steal;
                 };
             };
         });
         matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
-                myStats.ringOfVictoryRush++;
-                if (myStats.ringOfVictoryRush % 3 === 0) {
-                    myStats.sm += Math.floor(myStats.sm * 0.5);
+                myStats.oceanReverie++;
+                if (myStats.oceanReverie % 3 === 0) {
+                    myStats.sm += steal;
                     if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
-                    eStats.sm -= Math.floor(eStats.sm * 0.5);
+                    eStats.sm -= steal;
                 };
             };
         });
@@ -3319,20 +3320,34 @@ export const items = [
     }, (level) => `Steals **${[30, 35, 40, 45, 50][level - 1]}%** of enemy mana on every **3rd** ability or skill usage.`, "Delicately designed, the Ocean's Reverie ring flows with the essence of the sea. The silver band is intricately etched with fluid patterns resembling waves, and gemstones resembling deep ocean blues are set throughout. A luminous aqua stone sits prominently at its center, radiating a soft, calming glow. Legends say this ring grants the wearer a deep affinity with water, allowing them to breathe underwater and communicate with aquatic creatures. Ocean's Reverie serves as a talisman for those who draw strength from the ocean's depths, whether they be sailors or sorcerers.", "unique", 699),
     new ringInfo("Equilibrium Band", "ring", "ring", ["raid"], "<:equilibrium_band:1333989254933778566>", "https://i.ibb.co/yn4DrqR8/Equilibrium-Band.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* ShieldMan
 
-        myStats.ringOfCalculation = 0;
+        myStats.equilibriumBand = 0;
         // On every 4th ability usage: +15/17.5/20/22.5/25% shield (max HP)
         matchStats.on("ABILITY", {
-            maxUsage: [3, 4][level - 1],
+            maxUsage: [3, 3, 4, 4, 4][level - 1],
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
-                    myStats.ringOfCalculation++;
-                    if (myStats.ringOfCalculation % 4 === 0) {
+                    myStats.equilibriumBand++;
+                    if (myStats.equilibriumBand % 4 === 0) {
+                        myStats.shield += Math.floor(myStats.maxhp * [0.15, 0.175, 0.2, 0.225, 0.25][level - 1]);
+                        
+                        return true;
+                    };
+                };
+            },
+        });
+        /* without equilibriumBand Stat //?(idk if this works, does trigger.used start at 1?)
+        matchStats.on("ABILITY", {
+            maxUsage: [12, 12, 16, 16, 16][level - 1],
+            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats) {
+                    if (trigger.used % 4 === 0) {
                         myStats.shield += Math.floor(myStats.maxhp * [0.15, 0.175, 0.2, 0.225, 0.25][level - 1]);
                     };
                     return true;
                 };
             },
         });
+        */
 
     }, (level) => `The wearer gains **${[15, 17.5, 20, 22.5, 25][level - 1]}%** of their max HP as shield for every **4th** ability usage (up to **${[3, 3, 4, 4, 4][level - 1]}** times).`, "The Equilibrium Band is a striking artifact forged from enchanted iron, with a symmetrical design that perfectly balances elegance and strength. The band features dual gemstones—one radiant sapphire and one luminous amber—set in exquisite harmony at its center. Intricate etchings depicting the duality of existence spiral around the ring, conveying the essence of balance. When worn, the ring grants its bearer the ability to navigate life's chaos, ensuring they endure conflicts and forge alliances with ease. Rumors whisper that those attuned to its power can influence fate, stabilizing even the most desperate situations in their favor.", "legendary", 700),
     new ringInfo("Skyward Rune", "ring", "ring", ["raid"], "<:skyward_rune:1333991494725664789>", "https://i.ibb.co/wrjvXSh4/Skyward-Rune.png", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
@@ -3345,38 +3360,41 @@ export const items = [
 
     }, (level) => `Records dodge rate upon entering battle. By turn **${[10, 7][level - 1]}**, gains 1% damage reduction per dodge rate difference.`, "Embodying the essence of the heavens, the Skyward Rune is a breathtaking ring crafted from celestial silver. A brilliant azure gemstone rests at the center, surrounded by swirling clouds of silver filigree that dance around it like a tempest. Inscribed with runes of the sky, this ring is revered for its ability to amplify the wearer's connection to the air element, enhancing their spells and speed. Legends tell of heroes who wielded this ring to summon storms and control winds, bending them to their will. With it, the sky is not merely above, but a companion in adventure, guiding the brave through the troubles below.", "genesis", 701),
     new ringInfo("Ceneinuica", "ring", "ring", ["raid"], "<:ceneinuica:1334123617440628736>", "https://i.ibb.co/TqKyPkMj/Ceneinuica.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Dusty
-        myStats.painAwakening = 0;
+        myStats.ceneinuica = 0;
 
         // On every 4th attack received, increase ATK/MD by 3/3/4/4/5% (max 7/8/9/10/12 times)
         matchStats.on("attack", {
             maxUsage: [7, 8, 9, 10, 12][level - 1],
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === eStats) {
-                    myStats.painAwakening++;
-                    if (myStats.painAwakening % 4 === 0) {
+                    myStats.ceneinuica++;
+                    if (myStats.ceneinuica % 4 === 0) {
                         const boost = [0.03, 0.03, 0.04, 0.04, 0.05][level - 1];
 
                         mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * boost), 9999));
                         mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * boost), 9999));
                         myStats.atk += Math.floor(myStats.atk * boost);
                         myStats.md += Math.floor(myStats.md * boost);
+
+                        return true;
                     };
-                    return true;
                 };
             },
         });
+
+        //? same here as with Equilibrium Band
 
     }, (level) => `On every **4th** attack received, the wearer gains **${[3, 3, 4, 4, 5][level - 1]}%** ATK and MD permanently, up to **${[7, 8, 9, 10, 12][level - 1]}** times.`, "Ceneinuica is a ring fashioned from a dark, obsidian-like stone that captures the essence of forgotten magic. The band is interspersed with ancient, vibrant inscriptions glowing eerily against the darker hues, telling tales lost to time. Atop the ring, a crystalline shard reflects light in scattered hues, embodying the fragmented memories of past worlds. Rumored to contain a fragment of the void, the ring enhances its wearer's mastery over magic, unlocking formidable spells of concealment and restoration. Only those with an unwavering spirit can wield Ceneinuica, as its power demands a heavy price—one must confront the shadows of the past to embrace its potential fully.", "mythical", 702),
     new ringInfo("Starweaver's Glimmer", "ring", "ring", ["raid"], "<:starweavers_glimmer:1334125620841680937>", "https://i.ibb.co/JRv2Lv9C/Starweaver-s-Glimmer.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
         myStats.starweaverGlimmer = 0;
 
-        // On every block: heal 1/1/1/2/2% max HP, +5% CR (max: 20%)
+        // On every block: heal 1/1/1/2/2% max HP, + 3,4,5,5,5% CR (max: 15,20,25,25,30%)
         matchStats.on("block", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (target === myStats) {
                 myStats.hp += Math.floor(myStats.maxhp * [0.01, 0.01, 0.01, 0.02, 0.02][level - 1]);
                 if (myStats.starweaverGlimmer < [5, 5, 5, 5, 6][level - 1]) {
                     myStats.starweaverGlimmer++;
-                    myStats.cr += [0.03, 0.04, 0.05, 0.05, 0.05][level - 1]; // 20% Cap
+                    myStats.cr += [0.03, 0.04, 0.05, 0.05, 0.05][level - 1];
                     mybuff.cr.push(new buffInfo("+", [0.03, 0.04, 0.05, 0.05, 0.05][level - 1], 9999));
                 };
             };
@@ -3385,7 +3403,7 @@ export const items = [
     }, (level) => `A successful block heals the wearer for **${[1, 1, 1, 2, 2][level - 1]}%** of their max HP and increases their Crit Rate by **${[3, 4, 5, 5, 5][level - 1]}%** (max **${[15, 20, 25, 25, 30][level - 1]}%**).`, "The Starweaver's Glimmer is a resplendent ring crafted from gleaming starlight-infused gold. Adorned with twinkling gems simulating stars captured in a dance of celestial light, the ring seems almost alive, as if the cosmos pulse within its frame. Its design is elegant, with swirling motifs that resemble the night sky, while the center stone glows softly like a distant star. This ring is believed to bless its wearer with newfound insight and inspiration, allowing them to communicate with celestial forces for guidance. Legends say that those who wear the Starweaver's Glimmer can momentarily manipulate time, weaving their fate among the constellations.", "unique", 703),
     new ringInfo("Tidebound Crown", "ring", "ring", ["raid"], "<:tidebound_crown:1334127016932282419>", "https://i.ibb.co/mV0sGbHG/Tidebound-Crown.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
 
-        // On Crit: +5/10/15% BR (3 turns)
+        // On Crit: +5/7.5/10/12.5/15% BR (3 turns)
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 myStats.br += [0.05, 0.075, 0.1, 0.125, 0.15][level - 1];
@@ -3396,7 +3414,7 @@ export const items = [
     }, (level) => `The wearer gains **+${[5, 7.5, 10, 12.5, 15][level - 1]}%** block rate for **3** turns upon a successful critical hit.`, "The Tidebound Crown stands as a majestic artifact, reminiscent of a coral reef. Crafted from intertwined blue and silver metals, it mimics the appearance of ocean waves frozen in time. Swirling patterns etched into its surface echo the rhythm of tides, while tiny shells and pearls adorn the band. This crown, filled with the essence of the sea, grants dominion over water and marine life. Wearers are endowed with the ability to summon tidal forces and navigate through storms, making it an invaluable item for rulers of coastal realms and sea-dwellers.", "rare", 704),
     new ringInfo("Splintered Storm", "ring", "ring", ["raid"], "<:splintered_storm:1334170779583119433>", "https://i.ibb.co/VW2d80Sf/Splintered-Storm.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Hammer
 
-        // On (own) shield break: +5% max HP, heal 0.1-1.5% max HP
+        // On (own) shield break: +4/4/5/5/5% max HP
         matchStats.on("shieldBreak", {
             maxUsage: [6, 7, 8, 9, 10][level - 1],
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
@@ -3438,7 +3456,7 @@ export const items = [
     new ringInfo("Lightning Seal", "ring", "ring", ["raid"], "<:lightning_seal:1334174859202269214>", "https://i.ibb.co/B5dTvCMh/Lightning-Seal.png", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* DoT
 
         myStats.replaceButton.atk = {
-            "emoji": "<Emoji>", //! Emoji
+            "emoji": "<:lightning_seal:1334174859202269214>",
             "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 // 2x 40% (lightning) damage
                 let shockDMG1 = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<Emoji> **${char.name}**`, { atkMultiplier: 0.4, isLightning: true });
@@ -3450,7 +3468,7 @@ export const items = [
             },
         };
 
-    }, (level) => `Normal attacks deal 2 hits of 40% lightning damage, each with a 40% chance to inflict Shock on the enemy, dealing **50%** of the previous damage for **2** rounds.`, "Crafted from darkened steel, the Lightning Seal ring is adorned with jagged edges that mimic the ferocity of a thunderstorm. Its deep indigo hue shifts to vibrant electric blue, sparking with arcs of energy that dance across its surface. Embedded at its center is a translucent blue gem, embodying the essence of storm clouds. This ring grants the wearer mastery over lightning magic, channeling raw energy into powerful spells while enhancing reflexes and agility during combat. Whispers of ancient storms resonate from the ring, bestowing the courage to challenge the fiercest of foes.", "mythical", 708),
+    }, (level) => `Normal attacks deal 2 hits of 40% lightning damage, each with a 40% chance to inflict Shock on the enemy, dealing **50%** of the previous damage for **2** rounds.`, "Crafted from darkened steel, the Lightning Seal ring is adorned with jagged edges that mimic the ferocity of a thunderstorm. Its deep indigo hue shifts to vibrant electric blue, sparking with arcs of energy that dance across its surface. Embedded at its center is a translucent blue gem, embodying the essence of storm clouds. This ring grants the wearer mastery over lightning magic, channeling raw energy into powerful spells while enhancing reflexes and agility during combat. Whispers of ancient storms resonate from the ring, bestowing the courage to challenge the fiercest of foes.", "genesis", 708),
     new ringInfo("Dreadlord's Dominion", "ring", "ring", ["raid"], "<:dreadlords_dominion:1334195301073817620>", "https://i.ibb.co/bjQxhFqC/Dreadlord-s-Dominion.png", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Hammer
 
         // Create and break shield
@@ -3462,10 +3480,10 @@ export const items = [
             };
         }, 9999));
 
-        // On (own) shield break: +5% max HP, heal 0.1-1.5% max HP
+        // On (own) shield break: deal 10/12.5/15% damage
         matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (target === myStats) {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<Emoji> **${char.name}**`, { atkMultiplier: [0.1, 0.125, 0.15][level - 1], });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:dreadlords_dominion:1334195301073817620> **${char.name}**`, { atkMultiplier: [0.1, 0.125, 0.15][level - 1], });
             };
         });
 
@@ -3486,7 +3504,7 @@ export const items = [
     }, (level) => `Upon gaining a shield, enters the state of "Rebounce" for 1 turn, countering any damage taken.`, "The Arcane Rebound is a masterpiece of magical craftsmanship, adorned with intricate blue filigree that glimmers like stars against a dark backdrop. The ring is smooth and slightly curved, resembling a spellcaster's focus tool, with an ethereal light emanating from the core. Tiny arcs of electricity flicker around the band, forming patterns reminiscent of a magical glyph, enhancing the wielder's spell defense. When activated, it can absorb hostile magic and redirect it, turning an enemy's strength against them. The ring's unique design highlights its functionality, making it the ideal choice for scholars and sorcerers alike, ensuring that their arcane power never wavers.", "unique", 710),
     new ringInfo("Lucky Star Band", "ring", "ring", ["raid"], "<:lucky_star_band:1334250598849052744>", "https://i.ibb.co/fz6N3qv9/Lucky-Star-Band.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
 
-        // On enemy dodge: 60% chance to attack twice (once)
+        // On enemy dodge: 30/35/40/45/50% chance to attack twice
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (target === eStats && Math.random() < [0.3, 0.35, 0.4, 0.45, 0.5][level - 1]) {
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3499,7 +3517,7 @@ export const items = [
     }, (level) => `Every time the enemy evades an attack, the wearer has a **${[30, 35, 40, 45, 50][level - 1]}%** chance to hit twice the next turn.`, "Crafted from gleaming gold, the Lucky Star Band shines with an inviting warmth. This ring features a horseshoe shape, adorned with delicate engravings of stars and a vibrant turquoise gemstone at its center, cradled like a precious gem in fortune's embrace. The stars appear as if they twinkle, shifting in color with each movement, radiating luck and prosperity. When worn, this ring enhances the wearer's chances in games of chance and ensures favorable outcomes in their adventures. Its charm is irresistible, making it a must-have for rogues and gamblers seeking fortune's favor.", "mythical", 711),
     new ringInfo("Eye of Avarice", "ring", "ring", ["raid"], "<:eye_of_avarice:1334258299411107924>", "https://i.ibb.co/SX0GtSLz/Eye-of-Avarice.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Cakey
 
-        // -1/2/4/6/8% enemy mana generation
+        // -2/3/4/5 enemy mana generation
         eStats.mg -= [2, 3, 4, 5][level - 1];
         ebuff.mg.push(new buffInfo("+", -[2, 3, 4, 5][level - 1], 9999));
 
