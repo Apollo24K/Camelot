@@ -1,9 +1,8 @@
 import config from '../config.json';
 import { ChannelType, Client, EmbedBuilder } from "discord.js";
-import { BotHandler, RankShopTransaction } from "../types";
+import { BotHandler, RankShopTransaction, UpdateUserOptions } from "../types";
 import express from 'express';
-import { query } from "../db_handler";
-// import { queryUserSchema } from "../functions";
+import { getFullUserSchema, updateUsers } from '../Modules/queries';
 
 const products: { [key: string]: { jades: number, bonus: number, char?: number; }; } = {
     // Rank.top
@@ -25,6 +24,7 @@ const handler: BotHandler = {
         app.listen(3010);
         // Rank.top Webhook
         app.post('/rankshop', async (req, res): Promise<any> => {
+
             const donation = req.body as RankShopTransaction;
 
             // Check if authorization is valid
@@ -40,8 +40,8 @@ const handler: BotHandler = {
             // Get channel
             const chnl = client.channels.cache.find(channel => channel.id === "1030963832136417320");
 
-            // Get user stats
-            const { 0: stats } = await query(`SELECT users.jades, users.gems, users.transactions, users.referred_by, characters.chars FROM users JOIN characters ON users.id = characters.id WHERE users.id = ${donation.buyer_id}`);
+            // Get user stats 
+            const stats = await getFullUserSchema(donation.buyer_id);
             if (!stats) {
                 if (!chnl || chnl.type !== ChannelType.GuildText) return;
                 return chnl.send(`User <@${donation.buyer_id}> (${donation.buyer_id}) has no profile.\nEmail: **${donation.buyer_email}**\nOrder: **${donation.product_id}**\nPrice: **${donation.price} ${donation.currency}**`);
@@ -50,9 +50,13 @@ const handler: BotHandler = {
             const product = products[donation.product_id];
             const jades = product.jades + (donation.first_purchase ? product.bonus : 0);
 
-            stats.transactions = JSON.parse(stats.transactions), stats.chars = JSON.parse(stats.chars);
-            await query(`UPDATE users SET jades = jades + ${jades}, transactions = '${JSON.stringify([...stats.transactions, donation])}' WHERE id = ${donation.buyer_id}`);
-            if (product.char && donation.first_purchase) await query(`UPDATE characters SET chars = '${JSON.stringify([...stats.chars, product.char])}' WHERE id = ${donation.buyer_id}`);
+            // Update users table
+            const userUpdates: UpdateUserOptions = {
+                jades: { type: "increment", value: jades },
+                transactions: { type: "append", value: [donation] },
+            };
+            if (product.char && donation.first_purchase) userUpdates.chars = { type: "append", value: [product.char] };
+            await updateUsers(donation.buyer_id, userUpdates);
 
             // Send DM
             const dmUser = await client.users.fetch(donation.buyer_id);
@@ -69,11 +73,13 @@ const handler: BotHandler = {
 
             // Send referral reward if any
             if (stats.referred_by && (stats.transactions.reduce((acc: number, transaction: RankShopTransaction) => acc + parseInt(transaction.price), 0) + parseInt(donation.price)) <= 500) {
-                const { 0: user } = await query(`SELECT mailbox FROM users WHERE id = ${stats.referred_by}`);
-                if (!user) return;
-                user.mailbox = JSON.parse(user.mailbox);
-                user.mailbox.push({ "type": "9", "rewards": `gems|${Math.floor(0.2 * jades)}`, "message": `Hey <@${stats.referred_by}>! <:MashaWave:928370055354400799>\nA player you have referred has bought some jades, here is your reward <:TohruPoint:928370972132782090>\nThank you for playing <:LoveHeart:928369932683595827>`, "date": Date.now() });
-                await query(`UPDATE users SET referred_gems = referred_gems + ${Math.floor(0.2 * jades)}, mailbox = '${JSON.stringify(user.mailbox)}' WHERE id = ${stats.referred_by}`);
+                const mail = { "type": "9", "rewards": `gems|${Math.floor(0.2 * jades)}`, "message": `Hey <@${stats.referred_by}>! <:MashaWave:928370055354400799>\nA player you have referred has bought some jades, here is your reward <:TohruPoint:928370972132782090>\nThank you for playing <:LoveHeart:928369932683595827>`, "date": Date.now() };
+
+                // Update users table
+                await updateUsers(donation.buyer_id, {
+                    referred_gems: { type: "increment", value: Math.floor(0.2 * jades) },
+                    mailbox: { type: "append", value: [mail] },
+                });
             };
         });
 

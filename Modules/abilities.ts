@@ -1,15 +1,12 @@
-/* eslint-disable no-unused-vars */
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
-import { getDetailedStats, dealDamage, deleteReplyIn, addHeal } from "./functions";
-import { db, query } from "../db_handler";
+import { getDetailedStats, dealDamage, addHeal } from "./functions";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
 import delayedBuffs from "./delayedBuffs";
 import buffInfo from "./buffs";
-import { Buffs, DetailedStats, IbuffInfo, IcharInfo, MatchStats } from "../types";
-import { enemyInfo } from "./enemies";
-import { getUserSchema } from "./queries";
+import { Buffs, DetailedStats, IbuffInfo, IcharInfo, IentityInfo, MatchStats } from "../types";
+import { getLatestStampede, getUserSchema, getUserWeaponCount, updateUsers } from "./queries";
 
 type Ability = {
     usage: number;
@@ -17,9 +14,9 @@ type Ability = {
     cost: number;
     desc: string;
     [key: string]: any;
-    ability?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, eStatsFixed: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: enemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, message: Message, ...list: any[]) => void;
-    passive?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: enemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
-    party?: (pStats: DetailedStats, myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: enemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+    ability?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, eStatsFixed: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, message: Message, ...list: any[]) => void;
+    passive?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+    party?: (pStats: DetailedStats, myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
 };
 
 export const abilities: Record<number, Ability> = {
@@ -152,9 +149,10 @@ export const abilities: Record<number, Ability> = {
         cost: 0,
         desc: "**Total Usage**: `1`\n**Mana**: `0`\\💧 on active, `35`\\💧 on passive\n**Timeout**: `no`\n**Role**: `DPS/Support`\n\nGilgamesh, the King of Heroes, brings his mighty arsenal to bear, showcasing a battle style as grand as his title. His potent abilities revolve around his majestic Gates of Babylon and his ultimate weapon, the Sword of Rupture, Ea.\n\nGilgamesh's passive becomes apparent whenever he possesses at least **35**\\💧. He opens the Gates of Babylon, launching a weapon straight at his opponent, causing damage equivalent to **40%** of his normal damage. Each successful strike bolsters Gilgamesh's own strength, incrementing his attack and magic damage by **2%**. However, there is an element of chance, as these attacks can potentially miss or be blocked by the enemy.\n\nOnce per battle, Gilgamesh reveals his trump card, the formidable Ea. He initiates the ability by commencing the charge of Enuma Elish, a process that takes three turns to charge. Once the charge reaches its peak, the unleashed attack inflicts damage equal to **150%** of Gilgamesh's attack. This damage can further be boosted, gaining an additional **1%** for every weapon the player owns up to a whopping **250%**.\n\nWhile he may display an air of arrogance, Gilgamesh's abilities undeniably reflect his moniker as the King of Heroes, wreaking havoc among his enemies with his versatile and formidable armaments. And his companions he doesn't leave on their own, assisting them with his Gates of Babylon during stampedes.",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
-            const { 0: { n: inv } } = await query(`SELECT COUNT(*) AS n FROM weapons WHERE id = ${matchStats.interaction.user.id} AND item_type = "weapon"`);
+            const weaponCount = await getUserWeaponCount(matchStats.interaction.user.id, "weapon");
+
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Ea! He`, { atkMultiplier: 1.5 + Math.min((inv || 0) / 100, 1), magicDamage: true, dodge: false });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Ea! He`, { atkMultiplier: 1.5 + Math.min(weaponCount / 100, 1), magicDamage: true, dodge: false });
             }));
             notice.push(`\n✨ **${char.name}** began charging Ea`);
         },
@@ -689,11 +687,10 @@ export const abilities: Record<number, Ability> = {
             }, 9999));
         },
         party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-            const { 0: stampede } = await query(`SELECT participation FROM stampedes ORDER BY rowid DESC LIMIT 1`);
-            stampede.participation = JSON.parse(stampede.participation);
+            const stampede = await getLatestStampede();
 
             myStats.delayedBuffs.push(new delayedBuffs(0, function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                if (Math.random() < Math.min(125, stampede.participation[matchStats.interaction.user.id]?.[1] || 0) / 500) {
+                if (Math.random() < Math.min(125, stampede?.participation[matchStats.interaction.user.id]?.[1] || 0) / 500) {
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
                 };
             }, 9999));
@@ -1413,8 +1410,8 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             this.used--;
 
-            const { 0: stats } = await query(`SELECT coins FROM users WHERE id = ${matchStats.interaction.user.id}`);
-            stats.coins = Math.min(stats.coins, 100000);
+            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const coins = Math.min(stats?.coins ?? 0, 100000);
 
             if (matchStats.round === this.roundUsed) {
                 if (++this.usedThisRound >= 3) return matchStats.interaction.followUp({ content: "You can stack **Eliza**'s ability up to **3** times max.", ephemeral: true });
@@ -1424,21 +1421,31 @@ export const abilities: Record<number, Ability> = {
             switch (this.usedThisRound) {
                 case 0: if (myStats.sm < 70) return matchStats.interaction.followUp({ content: `You don't have enough mana (**${myStats.sm}**/70).`, ephemeral: true });
                     myStats.sm -= 70;
-                    atkbuff = Math.floor(myStats.atk * (0.2 * (stats.coins / 100000)));
+                    atkbuff = Math.floor(myStats.atk * (0.2 * (coins / 100000)));
                     myStats.atk += atkbuff;
                     notice.push(`\n✨ **${char.name}** gains **${atkbuff}** ATK`); break;
-                case 1: if (stats.coins < 250) return matchStats.interaction.followUp({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
-                    atkbuff = Math.floor(myStats.atk * (0.1 * (stats.coins / 100000)));
+                case 1: if (coins < 250) return matchStats.interaction.followUp({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
+                    atkbuff = Math.floor(myStats.atk * (0.1 * (coins / 100000)));
                     myStats.atk += atkbuff;
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
                     notice.push(`\n✨ **${char.name}** uses 250<:coins:872926669055356939> to gain **${atkbuff}** ATK and **${Math.floor(myStats.maxhp * 0.05)}** Shield`);
-                    await query(`UPDATE users SET coins = coins - 250 WHERE id = ${matchStats.interaction.user.id}`); break;
-                case 2: if (stats.coins < 250) return matchStats.interaction.followUp({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
-                    atkbuff = Math.floor(myStats.atk * (0.1 * (stats.coins / 100000)));
+
+                    // Update users table
+                    await updateUsers(matchStats.interaction.user.id, {
+                        coins: { type: "increment", value: -250 },
+                    });
+                    break;
+                case 2: if (coins < 250) return matchStats.interaction.followUp({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
+                    atkbuff = Math.floor(myStats.atk * (0.1 * (coins / 100000)));
                     myStats.atk += atkbuff;
                     myStats.shield += Math.floor(myStats.maxhp * 0.05);
                     notice.push(`\n✨ **${char.name}** uses 250<:coins:872926669055356939> to gain **${atkbuff}** ATK and **${Math.floor(myStats.maxhp * 0.05)}** Shield`);
-                    await query(`UPDATE users SET coins = coins - 250 WHERE id = ${matchStats.interaction.user.id}`); break;
+
+                    // Update users table
+                    await updateUsers(matchStats.interaction.user.id, {
+                        coins: { type: "increment", value: -250 },
+                    });
+                    break;
                 default: false; break;
             };
 
@@ -1563,11 +1570,13 @@ export const abilities: Record<number, Ability> = {
             };
 
             // Remove fish from the user's inventory
+            const updateItems: Record<string, number> = {};
             Object.entries(fishToConsume).forEach(([key, val]) => {
-                if (inv.items[key] <= val) delete inv.items[key];
-                else inv.items[key] -= val;
+                updateItems[key] = -val;
             });
-            await query(`UPDATE users SET items = '${JSON.stringify(inv.items)}' WHERE id = ${matchStats.interaction.user.id}`);
+            await updateUsers(matchStats.interaction.user.id, {
+                items: { type: "merge_json", value: updateItems },
+            });
 
             // Counter
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1716,10 +1725,9 @@ export const abilities: Record<number, Ability> = {
                     eStats.hp = 0;
                     notice.push(`\n✨ I am to goblins what goblins are to us.`);
                 } else {
-                    const { 0: stampede } = await query(`SELECT participation FROM stampedes ORDER BY rowid DESC LIMIT 1`);
-                    stampede.participation = JSON.parse(stampede.participation);
+                    const stampede = await getLatestStampede();
 
-                    const points = Math.min(200, stampede.participation[matchStats.interaction.user.id][1] || 0);
+                    const points = Math.min(200, stampede?.participation[matchStats.interaction.user.id][1] || 0);
 
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.002 * points)), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.002 * points)), 9999));
@@ -2508,8 +2516,10 @@ export const abilities: Record<number, Ability> = {
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             // User has Artemis?
-            const { 0: stats } = await query(`SELECT chars FROM characters WHERE id = ${matchStats.interaction.user.id}`);
-            this.hasArtemis = JSON.parse(stats.chars).includes(17689);
+
+            const stats = await getUserSchema(matchStats.interaction.user.id);
+
+            this.hasArtemis = stats?.chars.includes(17689) ?? false;
 
             // Boost XP
             matchStats.xpboost += 0.25;
@@ -2623,8 +2633,9 @@ export const abilities: Record<number, Ability> = {
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             // User has Apollo?
-            const { 0: stats } = await query(`SELECT chars FROM characters WHERE id = ${matchStats.interaction.user.id}`);
-            this.hasApollo = JSON.parse(stats.chars).includes(17688);
+            const stats = await getUserSchema(matchStats.interaction.user.id);
+
+            this.hasApollo = stats?.chars.includes(17688) ?? false;
 
             // Boost XP
             matchStats.xpboost += 0.2;
@@ -3336,30 +3347,30 @@ export const abilities: Record<number, Ability> = {
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, increaseHp, {});
             };
 
-            const { 0: stats } = await query(`SELECT items FROM users WHERE id = ${matchStats.interaction.user.id}`);
-            stats.items = JSON.parse(stats.items);
+            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const items = stats?.items ?? {};
 
-            const atkBuff = Math.floor(myStats.atk * Math.min(0.3, (stats.items[663] ?? 0) * 0.001));
+            const atkBuff = Math.floor(myStats.atk * Math.min(0.3, (items[663] ?? 0) * 0.001));
             mybuff.atk.push(new buffInfo("+", atkBuff, 9999));
             myStats.atk += atkBuff;
 
-            const mrBuff = Math.floor(myStats.mr * Math.min(0.225, (stats.items[47] ?? 0) * 0.00075));
+            const mrBuff = Math.floor(myStats.mr * Math.min(0.225, (items[47] ?? 0) * 0.00075));
             mybuff.mr.push(new buffInfo("+", mrBuff, 9999));
             myStats.mr += mrBuff;
 
-            const defBuff = Math.floor(myStats.def * Math.min(0.225, (stats.items[667] ?? 0) * 0.00075));
+            const defBuff = Math.floor(myStats.def * Math.min(0.225, (items[667] ?? 0) * 0.00075));
             mybuff.def.push(new buffInfo("+", defBuff, 9999));
             myStats.def += defBuff;
 
-            const crBuff = Math.min(0.15, (stats.items[672] ?? 0) * 0.0005);
+            const crBuff = Math.min(0.15, (items[672] ?? 0) * 0.0005);
             mybuff.cr.push(new buffInfo("+", crBuff, 9999));
             myStats.cr += crBuff;
 
-            const cdBuff = Math.min(0.3, (stats.items[92] ?? 0) * 0.001);
+            const cdBuff = Math.min(0.3, (items[92] ?? 0) * 0.001);
             mybuff.cd.push(new buffInfo("+", cdBuff, 9999));
             myStats.cd += cdBuff;
 
-            const dodgeBuff = Math.min(0.1, (stats.items[665] ?? 0) * 0.0005);
+            const dodgeBuff = Math.min(0.1, (items[665] ?? 0) * 0.0005);
             mybuff.dodge.push(new buffInfo("+", dodgeBuff, 9999));
             myStats.dodge += dodgeBuff;
         },
@@ -3566,10 +3577,9 @@ export const abilities: Record<number, Ability> = {
         passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             // Get SS shards
-            const { 0: inv } = await query(`SELECT ssshard FROM users WHERE id = ${matchStats.interaction.user.id}`);
-            inv.ssshard;
+            const stats = await getUserSchema(matchStats.interaction.user.id);
 
-            const shardStacks = Math.min(5, inv.ssshard / 50);
+            const shardStacks = Math.min(5, (stats?.ssshard ?? 0) / 50);
 
             // Max HP buff
             const increaseHp = Math.floor(myStatsFixed.maxhp * 0.025 * shardStacks);

@@ -1,5 +1,4 @@
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ComponentType, ButtonStyle, Message, SelectMenuComponentOptionData } from "discord.js";
-import { query } from "../db_handler";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ComponentType, ButtonStyle, SelectMenuComponentOptionData } from "discord.js";
 import { charactersA } from "../Modules/chars";
 import { achievements } from "../Modules/achievements";
 import classInfo, { classes } from "../Modules/classes";
@@ -7,7 +6,7 @@ import { skills } from "../Modules/skills";
 import { items, weaponInfo } from "../Modules/items";
 import { splitTitle, getRefinement, rarity, searchClass, customEmojis, generateUniqueItemId } from "../Modules/functions";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, insertNewWeapon, updateUsers } from "../Modules/queries";
 
 function formatPath(fClass: classInfo) {
     if (!fClass.path.length) return "Unique\n";
@@ -297,16 +296,17 @@ const exportCommand: SlashCommand = {
                             console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
                         });
 
-                        // Write to database
-                        const uid = generateUniqueItemId(interaction.user.id, []);
-                        await query(`INSERT INTO weapons (id, itemid, uniqueid, character) VALUES (${interaction.user.id}, ${parseInt(r.values[0])}, '${uid + ":" + interaction.user.id}', ${stats.battlechar})`, 'run');
+                        const item = items[parseInt(r.values[0])];
 
-                        // Assign weapon
-                        stats.equipment.weapon = uid + ":" + interaction.user.id;
-                        await query(`UPDATE users SET equipment = '${JSON.stringify(stats.equipment)}' WHERE id = ${interaction.user.id}`);
+                        // Insert new weapon
+                        const drop = await insertNewWeapon(interaction.user.id, item.id, item.category);
 
-                        // Update tutorial
-                        await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                        // Update users table
+                        stats.equipment.weapon = drop.uniqueid;
+                        await updateUsers(interaction.user.id, {
+                            equipment: { type: "set", value: stats.equipment },
+                            tutorial: { type: 'append_unique', value: [tutorial] }
+                        });
 
                         triggerTutorial();
                     });

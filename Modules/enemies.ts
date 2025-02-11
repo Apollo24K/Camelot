@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonStyle, ButtonBuilder } from "discord.js";
-import { Buffs, Gender, IenemyInfo, IskillInfo, MatchStats } from "../types";
+import { Buffs, CharacterRarity, Gender, IenemyInfo, IskillInfo, MatchStats } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
@@ -79,6 +79,20 @@ export class enemyInfo implements IenemyInfo {
 
     get url() {
         return this.image[Math.floor(Math.random() * this.image.length)];
+    };
+
+    // Entity info
+    get alias(): string[] {
+        return [];
+    };
+    get rarity(): CharacterRarity {
+        return "D";
+    };
+    get rarityEmoji(): string {
+        return "<:DTier:869316616071032843>";
+    };
+    get rarityValue(): number {
+        return 0;
     };
 };
 
@@ -255,7 +269,7 @@ export const raidBosses: enemyInfo[] = [
             notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **10%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.lightningImmunity = true;
+            eStats.lightningResistance = 1;
             eStats.retaliationDamage = 0.2;
 
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
@@ -276,7 +290,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.lightningImmunity = true;
+            eStats.lightningResistance = 1;
 
             eStats.retaliationDamage = 0.35;
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
@@ -299,7 +313,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.lightningImmunity = true;
+            eStats.lightningResistance = 1;
 
             eStats.retaliationDamage = 0.4;
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
@@ -310,7 +324,6 @@ export const raidBosses: enemyInfo[] = [
             });
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                console.log("Debuff: " + Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01)));
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.01));
             }, 9999));
         }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **33%** damage", "**Active**: Increases her retaliation damage (**100** <:mana:1047269152957661255>)"]])
@@ -582,10 +595,10 @@ export const raidBosses: enemyInfo[] = [
                 if (Math.random() < 0.5) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** is in rage mode`, { atkMultiplier: 1.8 });
             }, 3));
             matchStats.on("miss", {
-                maxRound: matchStats.round + 3, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                maxRound: matchStats.round + 3, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     if (target === myStats) {
                         dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** reflected your miss and`, { atkMultiplier: 2.5 });
-                    }
+                    };
                 },
             });
 
@@ -656,7 +669,7 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (caster === myStats && !options.magicDamage) {
+                if (caster === myStats && !options.isMagicDamage) {
                     myStats.maxhp -= Math.floor(myStats.maxhp * 0.03);
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                 }
@@ -907,7 +920,7 @@ export const raidBosses: enemyInfo[] = [
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
                 // Increases damage when player uses special abilities
-                matchStats.on("ability", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     if (caster === myStats) {
                         eStats.atk += Math.floor(eStats.atk * 0.1);
                         eStats.md += Math.floor(eStats.md * 0.1);
@@ -937,14 +950,14 @@ export const raidBosses: enemyInfo[] = [
                         }
                     });
                     matchStats.on(eStats.mailButtonF1, {
-                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                             if (caster === myStats) {
                                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail hit`, { ignoreShield: true, block: false, dodge: false });
                             }
                         }
                     });
                     matchStats.on(eStats.mailButtonF2, {
-                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: { trigger: Trigger, caster: any, target: any, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => {
+                        duration: 1, callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                             if (caster === myStats) {
                                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s mail hit`, { ignoreShield: true, block: false, dodge: false });
                             }
@@ -969,12 +982,12 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚡ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.4, mdChance: 0.5 });
             }, 5));
             eStats.cr = 0.5;
             eStats.cd = 1.5;
             ebuff.cr.push(new buffInfo("=", 0.5, 5));
             ebuff.cd.push(new buffInfo("=", 1.5, 5));
-            //! Give Boss Lightning Damage for 5 rounds
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -998,60 +1011,59 @@ export const raidBosses: enemyInfo[] = [
                 eStats.domain = false;
             }, 9999));
 
-        }, [["Gains 40% of your max HP as a shield", "Gains 2.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 3 rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 50% and sets his crit damage to 150%, has lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains 40% of your max HP as a shield", "Gains 2.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 3 rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 50% and sets his crit damage to 150%, and deals 40% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Vortharion, the Warden of Shadows", "Dark Paladin", "the Warden of Shadows", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 23, //needs Image
         new skillInfo(23, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** is too fast for you and`, { atkMultiplier: 0.4, mdChance: 0.5 });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.45, mdChance: 0.5 });
             }, 5));
 
             eStats.cr = 0.6;
             eStats.cd = 1.75;
             ebuff.cr.push(new buffInfo("=", 0.6, 5));
             ebuff.cd.push(new buffInfo("=", 1.75, 5));
-            //! Give Boss Lightning Damage for 5 rounds
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.shield = myStats.maxhp * 0.5;
-
-            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (target === eStats) {
-                    if (myStats.mdChance > 0) myStats.mdChance = 0;
-                    else myStats.mdChance = 1;
-                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 4, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        if (myStats.mdChance > 0) myStats.mdChance = 0;
-                        else myStats.mdChance = 1;
-                    }));
-                    myStats.dodge = 0;
-                    mybuff.dodge.push(new buffInfo("=", 0, 3));
-                }
-            });
-
+            eStats.shield = myStats.maxhp * 0.65;
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (!eStats.domain) eStats.shield += eStats.shield * 0.075;
+                if (!eStats.domain) eStats.shield += eStats.shield * 0.175;
+                matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (target === eStats) {
+                        if (myStats.mdChance > 0) {
+                            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.mdChance = 0;
+                            }, 4));
+                        } else {
+                            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.mdChance = 1;
+                            }, 4));
+                        };
+                        myStats.dodge = 0;
+                        mybuff.dodge.push(new buffInfo("=", 0, 3));
+                    }
+                });
                 if (matchStats.round % 2 === 0 || eStats.domain) eStats.mdChance = 1;
                 else eStats.mdChance = 0;
                 eStats.domain = false;
             }, 9999));
 
-        }, [["Gains 50% of your max HP as a shield", "Gains 17.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 4 rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, has lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains 50% of your max HP as a shield", "Gains 17.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 4 rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, and deals 45% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Duskraze, the Umbra Emperor", "Dark Paladin", "the Umbra Emperor", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 24, //needs Image
         new skillInfo(24, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** is too fast for you and`, { atkMultiplier: 0.4, mdChance: 0.5 });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.5, mdChance: 0.5 });
             }, 5));
             eStats.cr = 0.6;
             eStats.cd = 1.75;
             ebuff.cr.push(new buffInfo("=", 0.6, 5));
             ebuff.cd.push(new buffInfo("=", 1.75, 5));
-            //! Give Boss Lightning Damage for 5 rounds
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -1086,7 +1098,7 @@ export const raidBosses: enemyInfo[] = [
                 }
                 eStats.domain = false;
             }, 9999));
-        }, [["Gains 75% of your max HP as a shield", "His Void Orb gains 15% of its shield orb every round, his shield decreases by 10% every round", "On Shield Break, Reverses your Type of Damage for 5 rounds", "Attacks each rounds with either physical damage or magical damage", "Every 6 rounds, he activates his Void Orb, dealing his saved amount of Shield as damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, has lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains 75% of your max HP as a shield", "His Void Orb gains 15% of its shield orb every round, his shield decreases by 10% every round", "On Shield Break, Reverses your Type of Damage for 5 rounds", "Attacks each rounds with either physical damage or magical damage", "Every 6 rounds, he activates his Void Orb, dealing his saved amount of Shield as damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, and deals 50% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
 ];
 

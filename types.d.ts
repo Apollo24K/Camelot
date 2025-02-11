@@ -1,4 +1,4 @@
-import { EmbedBuilder, User, ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
+import { EmbedBuilder, User, ButtonInteraction, ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -11,6 +11,10 @@ export type ItemRarity = 'genesis' | 'mythical' | 'legendary' | 'unique' | 'rare
 
 export type PrimaryStat = 'hp' | 'hp%' | 'atk' | 'atk%' | 'def' | 'def%' | 'md' | 'md%' | 'mr' | 'cr' | 'cd' | 'dodge' | 'br' | 'mana' | 'sm' | 'mg' | 'shield';
 
+export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring";
+
+export type ItemType = "fish" | "crafting material" | "ascension material" | "levelup material" | "awakening material" | "exchange point" | "event exclusive item" | "chest" | "sword" | "staff" | "axe" | "bow" | "lance" | "dagger" | "ring" | "shield" | "helmet" | "cuirass" | "gloves" | "boots";
+
 export type RaidRank = 'F-' | 'F' | 'F+' | 'E-' | 'E' | 'E+' | 'D-' | 'D' | 'D+' | 'C-' | 'C' | 'C+' | 'B-' | 'B' | 'B+' | 'A-' | 'A' | 'A+' | 'S-' | 'S' | 'S+' | 'SS-' | 'SS' | 'SS+' | 'SSS-' | 'SSS' | 'SSS+' | 'EX-' | 'EX' | 'EX+';
 
 export type Expertise = 'sword' | 'staff' | 'axe' | 'bow' | 'lance' | 'dagger' | 'shield' | 'any';
@@ -18,6 +22,38 @@ export type Expertise = 'sword' | 'staff' | 'axe' | 'bow' | 'lance' | 'dagger' |
 export type BuffType = "*" | "+" | "=";
 
 export type IRoK = { name: string, id: string, char: number, ep: number; };
+
+export type ProfileImageArguments = {
+    profilecolor: string | null;
+    quality: string | null;
+    forceStatic: boolean;
+    thumbnail: string | undefined;
+
+    stats: DetailedStats;
+    ref: number;
+    classlevels: Record<string, number>;
+    floor: number;
+
+    guild: string | undefined;
+    party: string | undefined;
+
+    colorLight: string;
+    colorDark: string;
+
+    profilePicture: string;
+    classImage: string | undefined;
+    className: string | undefined;
+    classLevel: number | undefined;
+    userLvl: number;
+    lastActive: string;
+
+    weaponImage: string | undefined;
+    shieldImage: string | undefined;
+    helmetImage: string | undefined;
+    cuirassImage: string | undefined;
+    glovesImage: string | undefined;
+    bootsImage: string | undefined;
+};
 
 export type ClassStats = {
     hp: [number, number];
@@ -48,30 +84,6 @@ export interface IanimeInfo {
     thumbnailCharId?: number;
 };
 
-export type CharInfoOptions = {
-    staticImage?: string;
-};
-
-export interface IcharInfo {
-    name: string;
-    alias: string[];
-    animeInfo: IanimeInfo;
-    gender: Gender;
-    image: string;
-    id: number;
-    rarity: CharacterRarity;
-    options: CharInfoOptions;
-
-    anime: string;
-    anialias: string[];
-    staticImage?: string;
-    tryStaticImage: string;
-    rarityValue: number;
-    rarityEmoji: string;
-
-    getImage(premium: number, url: string, skin?: number, isStatic?: boolean);
-};
-
 export interface IskillInfo {
     id: number;
     cost: number;
@@ -82,22 +94,53 @@ export interface IskillInfo {
     set list(lis: any[]);
 };
 
-export interface IenemyInfo {
+export interface IentityInfo {
+    // Shared info
     name: string;
-    species: string;
-    title: string;
-    gender: Gender;
-    boss: boolean;
-    setStats: object;
-    multStats: object;
-    addStats: object;
-    loot: number[];
-    image: string[];
-    floor: number[];
     id: number;
-    ability?: IskillInfo;
+    gender: Gender;
+    image: string | string[];
 
+    // Character info
+    alias: string[];
+    animeInfo?: IanimeInfo;
+    rarity: CharacterRarity;
+    anime?: string;
+    anialias?: string[];
+    staticImage?: string;
+    rarityValue: number;
+    rarityEmoji: string;
+
+    // Enemy info
+    species: string;
+    boss: boolean;
+    setStats?: object;
+    multStats?: object;
+    addStats?: object;
+    loot: number[];
+    floor: number[];
+    ability?: IskillInfo;
     url: string;
+};
+
+export type CharInfoOptions = {
+    staticImage?: string;
+};
+
+export interface IcharInfo extends IentityInfo {
+    animeInfo: IanimeInfo;
+    image: string;
+    options: CharInfoOptions;
+    anime: string;
+    anialias: string[];
+    tryStaticImage: string;
+
+    getImage(premium: number, url: string, skin?: number, isStatic?: boolean);
+};
+
+export interface IenemyInfo extends IentityInfo {
+    title: string;
+    image: string[];
 };
 
 export interface IdelayedBuff {
@@ -110,11 +153,11 @@ export interface IdelayedBuff {
     set used(used: number);
 
     decrement(): void;
-}
+};
 
-export type ClassAbility = (myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IenemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+export type ClassAbility = (myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
 
-export type ItemAbility = (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IenemyInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+export type ItemAbility = (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
 
 type ReplaceButtonAction = {
     emoji?: string;
@@ -221,6 +264,7 @@ export interface SlashCommand {
     name: string,
     execute: ({ }: executeSlashCommand) => void,
     autocomplete?: ({ }: { interaction: AutocompleteInteraction; }) => Promise<Array<{ name: string, value: string; }>>,
+    executeButtonInteraction?: ({ }: { interaction: ButtonInteraction; }) => void,
     cooldown?: number, // in seconds
 }
 
@@ -271,16 +315,25 @@ export interface UserSchema {
     skins: number[];
     eventpts: number;
     brbest: number;
-    mailbox: any[];
+    mailbox: { type: string, rewards: string, message: string, date: number; }[];
     eventrewreceived: number;
     gems: number;
     tutorial: number[];
-    transactions: any[];
+    transactions: RankShopTransaction[];
     dailies: Record<string, number>;
     guild: string | null;
     donatedtotal: number;
     genesispity: number;
-    presets: any[];
+    presets: Array<{
+        character?: number;
+        class?: number;
+        weapon?: string;
+        shield?: string;
+        helmet?: string;
+        cuirass?: string;
+        gloves?: string;
+        boots?: string;
+    }>;
     itemlock: string[];
     party: string | null;
     stampedechar: number | null;
@@ -314,7 +367,7 @@ export interface UserSchema {
     lastguildjoin: Date | null;
     valentine: string | null;
     bosshuntruns: number;
-    bosshuntrevreceived: number | null;
+    bosshuntrevreceived: number;
     monthlyshop: Record<string, any>;
     itemwishlist: number[];
     stampedeenergy: number;
@@ -323,13 +376,14 @@ export interface UserSchema {
     charlock: number[];
     animelock: number[];
     cow_participation: number | null;
-    cow_chars: string | null;
+    cow_chars: number[];
     cow_timer: number | null;
     cow_rolled_today: number;
     rank: string;
     rankscore: number;
     raidxp: number;
     guild_marks: number;
+    image_credits: number;
     created: Date;
 
     chars: number[];
@@ -343,8 +397,8 @@ export interface UserSchema {
     dungeon_limit: number;
     dungeon_classes: number[];
     dungeon_classlevels: Record<string, any>;
-    dungeon_responsetime: string;
-    stampede_responsetime: string;
+    dungeon_responsetime: Date[];
+    stampede_responsetime: Date[];
 }
 
 export type CompactUserSchema = Omit<UserSchema, "transactions" | "char_level" | "char_class" | "char_equipment" | "dungeon_responsetime" | "stampede_responsetime">;
@@ -376,8 +430,8 @@ export interface GuildSchema {
     description: string;
     color: string | null;
     level: number;
-    icon: string;
-    banner: string;
+    icon: string | null;
+    banner: string | null;
     treasury: number;
     treasury_gems: number;
     tax: number;
@@ -421,7 +475,7 @@ export interface StampedeSchema {
     generalsleft: number;
     monsterstotal: number;
     monstersleft: number;
-    participation: Record<string, any>;
+    participation: Record<string, [number, number]>;
 }
 
 export interface PartySchema {
@@ -430,8 +484,8 @@ export interface PartySchema {
     name: string;
     description: string;
     color: string | null;
-    icon: string;
-    banner: string;
+    icon: string | null;
+    banner: string | null;
     members: string[];
     created: Date | null;
 }
@@ -459,7 +513,7 @@ export interface RaidSchema {
     raidid: number;
     enemy_hp: number;
     enemy_hpmax: number;
-    participation: Record<string, any>;
+    participation: Record<string, [number, number]>;
     start_date: Date;
 }
 
@@ -484,9 +538,11 @@ export type IbuffInfo = {
     last: number;
     change: number;
     ctype: string;
-    cap?: number;
+    cap?: number | [number, number];
     id: number;
+
     isDebuff: boolean;
+    range: [number, number];
 };
 
 export type Buffs = {
@@ -524,7 +580,9 @@ export interface ITrigger {
     set used(used: number);
 };
 
-export type TriggerEvents = "attack" | "crit" | "ability" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "defend" | "cskill" | "minionDeath";
+export type TriggerEvents = "attack" | "crit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal";
+
+export type TriggerCallback = ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any);
 
 export type TriggerOptions = {
     event: TriggerEvents;
@@ -533,7 +591,7 @@ export type TriggerOptions = {
     maxUsage?: number;
     target?: DetailedStats;
     caster?: DetailedStats;
-    callback: (...args: any[]) => any;
+    callback: TriggerCallback;
 };
 
 export type MatchStats = {
@@ -574,11 +632,12 @@ export type MatchStats = {
     allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
     consumeMana: number;
+    lightningMultiplier?: number;
     dodgebuffLast?: number;
     dodgebuff?: number;
     heap1: any;
     listeners: Record<TriggerEvents, ITrigger[]>;
-    on(event: TriggerEvents, options: PartialBy<TriggerOptions, "event"> | ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any)): void;
+    on(event: TriggerEvents, options: PartialBy<TriggerOptions, "event"> | TriggerCallback): void;
     off(event: TriggerEvents, trigger: ITrigger | number): void;
     trigger(event: TriggerEvents, caster: any, target: any, casterBuff: any, targetBuff: any, options?: any): void;
 
@@ -614,7 +673,7 @@ type UpdateUserOperation<K extends keyof UserSchema> =
     | (K extends ArrayKeys<UserSchema>
         ? { type: 'append'; value: UserSchema[K]; }
         | { type: 'append_unique'; value: UserSchema[K]; }
-        | { type: 'remove'; value: UserSchema[K][number]; }
+        | { type: 'remove'; value: UserSchema[K]; }
         | { type: 'remove_all'; value: UserSchema[K]; }
         : never)
 
@@ -626,6 +685,95 @@ type UpdateUserOperation<K extends keyof UserSchema> =
 
 export type UpdateUserOptions = {
     [K in keyof Partial<UserSchema>]: UpdateUserOperation<K>;
+};
+
+
+type UpdateWeaponOperation<K extends keyof WeaponSchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: WeaponSchema[K]; }
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<WeaponSchema>
+        ? { type: 'increment'; value: number; }
+        : never);
+
+export type UpdateWeaponOptions = {
+    [K in keyof Partial<WeaponSchema>]: UpdateWeaponOperation<K>;
+};
+
+
+type UpdateGuildOperation<K extends keyof GuildSchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: GuildSchema[K]; }
+
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<GuildSchema>
+        ? { type: 'increment'; value: number; }
+        : never)
+
+    // Array operations - only work with array fields
+    | (K extends ArrayKeys<GuildSchema>
+        ? { type: 'append'; value: GuildSchema[K]; }
+        | { type: 'append_unique'; value: GuildSchema[K]; }
+        | { type: 'remove'; value: GuildSchema[K]; }
+        | { type: 'remove_all'; value: GuildSchema[K]; }
+        : never)
+
+    // JSON operations - only work with object fields
+    | (K extends JsonKeys<GuildSchema>
+        ? { type: 'set_json'; value: GuildSchema[K]; }
+        | { type: 'merge_json'; value: Partial<GuildSchema[K]>; }
+        : never);
+
+export type UpdateGuildOptions = {
+    [K in keyof Partial<GuildSchema>]: UpdateGuildOperation<K>;
+};
+
+
+type UpdatePartyOperation<K extends keyof PartySchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: PartySchema[K]; }
+
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<PartySchema>
+        ? { type: 'increment'; value: number; }
+        : never)
+
+    // Array operations - only work with array fields
+    | (K extends ArrayKeys<PartySchema>
+        ? { type: 'append'; value: PartySchema[K]; }
+        | { type: 'append_unique'; value: PartySchema[K]; }
+        | { type: 'remove'; value: PartySchema[K]; }
+        | { type: 'remove_all'; value: PartySchema[K]; }
+        : never)
+
+    // JSON operations - only work with object fields
+    | (K extends JsonKeys<PartySchema>
+        ? { type: 'set_json'; value: PartySchema[K]; }
+        | { type: 'merge_json'; value: Partial<PartySchema[K]>; }
+        : never);
+
+export type UpdatePartyOptions = {
+    [K in keyof Partial<PartySchema>]: UpdatePartyOperation<K>;
+};
+
+
+type UpdateStampedeOperation<K extends keyof StampedeSchema> =
+    // Simple set operation - works with any key
+    | { type: 'set'; value: StampedeSchema[K]; }
+
+    // Increment operation - only works with number fields
+    | (K extends NumberKeys<StampedeSchema>
+        ? { type: 'increment'; value: number; }
+        : never)
+
+    // JSON operations - only work with object fields
+    | (K extends JsonKeys<StampedeSchema>
+        ? { type: 'set_json'; value: StampedeSchema[K]; }
+        | { type: 'merge_json'; value: Partial<StampedeSchema[K]>; }
+        : never);
+
+export type UpdateStampedeOptions = {
+    [K in keyof Partial<StampedeSchema>]: UpdateStampedeOperation<K>;
 };
 
 
@@ -661,7 +809,6 @@ declare global {
 
 declare module "discord.js" {
     export interface Client {
-        commands: Collection<string, any>;
         slashCommands: Collection<string, SlashCommand>;
     }
 }

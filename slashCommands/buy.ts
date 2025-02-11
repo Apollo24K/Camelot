@@ -275,7 +275,7 @@ const exportCommand: SlashCommand = {
             const cost = Math.round(fItem.price * amount);
             if (amount < 1 || stats[fItem.currency] < cost) return interaction.reply(`You don't have enough ${fItem.currency} (${fItem.displayPrice})`);
 
-            return interaction.reply({ content: `Would you like to buy ${amount}x ${fItem.displayName} for **${cost}** ${fItem.emojiIcon}?`, components: [OfferRow], fetchReply: true }).then(msg => {
+            return interaction.reply({ content: `Would you like to buy ${amount}x ${fItem.displayName} for **${cost}** ${fItem.emojiIcon}?`, components: [OfferRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
                 collector.on('collect', async r => {
@@ -345,6 +345,8 @@ const exportCommand: SlashCommand = {
                         if (fItem.custom.itemid) updateOptions[fItem.custom.column as "ssticket"] = { type: "increment", value: amount };
                     } else if (fItem.section === "Chests") {
                         if (fItem.custom.itemid) updateOptions.items = { type: "merge_json", value: { [fItem.custom.itemid]: amount } };
+                    } else if (fItem.section === "Image Credits") {
+                        updateOptions.image_credits = { type: "increment", value: amount };
                     };
 
                     await updateUsers(interaction.user.id, updateOptions);

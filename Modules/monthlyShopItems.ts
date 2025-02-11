@@ -128,6 +128,10 @@ export const monthlyShopItems = [
     new MonthlyShopItemInfos("Premium Tier 6", "", "Premium", 1, 2280, "jades", 52, { tier: 6 }),
     new MonthlyShopItemInfos("Premium Tier 7", "", "Premium", 1, 3800, "jades", 53, { tier: 7 }),
 
+    new MonthlyShopItemInfos("Image Credits", "Image Credits (free)", "Image Credits", 20, 0, "coins", 54, { column: "image_credits" }),
+    new MonthlyShopItemInfos("Image Credits", "Image Credits", "Image Credits", 80, 125, "coins", 55, { column: "image_credits" }),
+    new MonthlyShopItemInfos("Image Credits", "100 Image Credits (bundle)", "Image Credits", 10000, 100, "jades", 56, { column: "image_credits" }),
+
 ];
 
 // Check gender, rarity and ID

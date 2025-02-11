@@ -731,7 +731,7 @@ const commands = [
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('equip').setDescription('Equip your character with an item')
 				// .addStringOption(option => option.setName('character').setDescription('Choose a character').setRequired(true))
-				.addStringOption(option => option.setName('item').setDescription('Choose an item').setRequired(true)))
+				.addStringOption(option => option.setName('items').setDescription('Choose an item').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('unequip').setDescription('Unequip an item')
 				.addStringOption(option =>
 					option.setName('type')
@@ -1174,11 +1174,64 @@ const commands = [
 					)
 			)
 	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('generate')
+			.setDescription('Generate images')
+			.addStringOption(option => option.setName('type')
+				.setDescription('Choose what you want to generate')
+				.setRequired(false)
+				.addChoices(
+					{ name: 'weapon', value: 'weapon' },
+					{ name: 'armor', value: 'armor' },
+					{ name: 'ring', value: 'ring' },
+					{ name: 'item', value: 'item' },
+					{ name: 'character', value: 'character' },
+				)
+			)
+			.addStringOption(option => option.setName('prompt').setDescription('Enter your prompt').setRequired(false))
+			.addIntegerOption(option => option.setName('count').setDescription('Number of images to generate').setRequired(false))
+			.addBooleanOption(option => option.setName('enhance').setDescription('Enhance your prompt using an LLM | Default: true').setRequired(false))
+			.addStringOption(option => option.setName('output').setDescription('Select your output file format | Default: JPG').setRequired(false).addChoices(
+				{ name: 'JPG', value: "JPG" },
+				{ name: 'PNG', value: "PNG" },
+				{ name: 'WEBP', value: "WEBP" },
+			))
+	}.data.toJSON(),
 	// {
 	// 	data: new SlashCommandBuilder()
 	// 			.setName('reset')
 	// 			.setDescription('Reset a characters level to get some of your invested ressources back')
 	// 			.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(true))
+	// }.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 		.setName('fluxadmin')
+	// 		.setDescription('generate flux images')
+	// 		.addStringOption(option => 
+	// 			option.setName('item')
+	// 				.setDescription('Select an item')
+	// 				.setRequired(true)
+	// 				.addChoices(
+	// 					{ name: 'ring', value: 'ring' },
+	// 					{ name: 'sword', value: 'sword' },
+	// 					{ name: 'bow', value: 'bow' },
+	// 					{ name: 'staff', value: 'staff' },
+	// 					{ name: 'shield', value: 'shield' },
+	// 					{ name: 'lance', value: 'lance' },
+	// 					{ name: 'dagger', value: 'dagger' },
+	// 					{ name: 'axe', value: 'axe' },
+	// 					{ name: 'armor', value: 'armor' },
+	// 					{ name: 'runes', value: 'runes' },
+	// 					{ name: 'artifacts', value: 'artifacts' },
+	// 					{ name: 'items', value: 'items' },
+	// 					{ name: 'own', value: 'own' },
+	// 				)
+	// 		)
+	// 		.addStringOption(option => option.setName('devprompt').setDescription('Set your developer prompt input').setRequired(false))
+	// 		.addStringOption(option => option.setName('userprompt').setDescription('Set your prompt input').setRequired(false))
+	// 		.addStringOption(option => option.setName('assistantprompt').setDescription('Set your assistant prompt input').setRequired(false))
+	// 		.addIntegerOption(option => option.setName('tokens').setDescription('Set the amount of tokens ChatGPT should use').setRequired(false))
 	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

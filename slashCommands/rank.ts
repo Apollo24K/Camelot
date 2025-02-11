@@ -1,11 +1,10 @@
 import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
-import { db, query } from "../db_handler";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, showPage, baseEP, RoK } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { IRoK, SlashCommand } from '../types';
-import { getUserSchema, getUserSchemas } from '../Modules/queries';
+import { getUserSchema } from '../Modules/queries';
 
 /*
     Formula                         | P0 100  1  0  EP:   1.00

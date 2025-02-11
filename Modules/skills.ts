@@ -1,12 +1,11 @@
 
-/* eslint-disable no-unused-vars */
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { dealDamage, addHeal } from "./functions";
 import { items } from "./items";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { CharacterRarity, ClassAbility, IskillInfo } from "../types";
-import { query } from "../db_handler";
+import { getUserSchema } from "./queries";
 
 export default class skillInfo implements IskillInfo {
     private _id: number;
@@ -1392,8 +1391,7 @@ export const crazeBossAbilities: skillInfo[] = [
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
 
-        const { 0: stats } = await query(`SELECT craze_levels FROM users WHERE users.id = ${matchStats.interaction.user.id}`);
-        if (stats) stats.craze_levels = JSON.parse(stats.craze_levels);
+        const stats = await getUserSchema(matchStats.interaction.user.id);
 
         if (stats?.craze_levels?.['15']) {
             eStats.image = "https://i.ibb.co/9p7zvsV/c.png";

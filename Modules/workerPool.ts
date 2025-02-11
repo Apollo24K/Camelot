@@ -57,7 +57,7 @@ export default class WorkerPool {
         };
     };
 
-    runTask(data: any) {
+    runTask(data: any): any {
         return new Promise((resolve, reject) => {
             const task = { data, resolve, reject };
             this.queue.push(task);

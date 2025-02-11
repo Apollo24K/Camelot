@@ -1,6 +1,5 @@
 import fs from 'fs';
 import { EmbedBuilder } from "discord.js";
-import { db, query } from "../db_handler";
 import { achievements } from "../Modules/achievements";
 import { search } from "../Modules/functions";
 import { SlashCommand } from '../types';
