@@ -22590,7 +22590,7 @@ export const characters: charInfo[] = [
     new charInfo("Takashi (SK8)", [], anime[569], "M", "https://i.ibb.co/M2n9spt/c.png", 22485, "C"),
     new charInfo("Ema (SK8)", [], anime[569], "F", "https://i.ibb.co/Kq75Yfy/c.png", 22486, "D"),
     new charInfo("Yan Xiao", [], anime[570], "M", "https://i.ibb.co/wzZpTkF/c.png", 22487, "A"),
-    new charInfo("Lin  Cai", ["Queen Medusa"], anime[570], "F", "https://i.ibb.co/KLpMFc2/c.png", 22488, "A"),
+    new charInfo("Lin Cai", ["Queen Medusa"], anime[570], "F", "https://i.ibb.co/KLpMFc2/c.png", 22488, "A"),
     new charInfo("Chen Yao", [], anime[570], "M", "https://i.ibb.co/zr5SBmM/c.png", 22489, "B"),
     new charInfo("Xuner Xiao", [], anime[570], "F", "https://i.ibb.co/qyM6SWS/c.png", 22490, "C"),
     new charInfo("Yanran Na Lan", ["Little Sect Leader"], anime[570], "F", "https://i.ibb.co/Zz7WF72/c.png", 22491, "C"),

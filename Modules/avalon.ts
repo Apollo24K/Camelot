@@ -22,7 +22,7 @@ export default class Avalon {
                 myStatsC.revivedTotal++;
                 myStatsC.hp = Math.floor(myStatsC.maxhp * myStatsC.revhp);
                 notice.push(`\n✨ ${myStatsC.name} survived! Restored **${myStatsC.hp}** HP`);
-                matchStats.trigger("revival", eStatsC, myStatsC, eStatsC.buffs, myStatsC.buffs, {});
+                matchStats.trigger("revival", myStatsC, eStatsC, myStatsC.buffs, eStatsC.buffs, {});
                 matchStats.turn === 1;
                 editEmbed();
 
@@ -40,7 +40,7 @@ export default class Avalon {
                 eStatsC.revivedTotal++;
                 eStatsC.hp = Math.floor(eStatsC.maxhp * eStatsC.revhp);
                 notice.push(`\n✨ ${eStatsC.name} survived! Restored **${eStatsC.hp}** HP`);
-                matchStats.trigger("revival", myStatsC, eStatsC, myStatsC.buffs, eStatsC.buffs, {});
+                matchStats.trigger("revival", eStatsC, myStatsC, eStatsC.buffs, myStatsC.buffs, {});
                 matchStats.turn === 1;
                 editEmbed();
             } else {

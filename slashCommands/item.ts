@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, weaponInfo } from "../Modules/items";
+import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, weaponInfo } from "../Modules/items";
 import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
@@ -152,6 +152,18 @@ const exportCommand: SlashCommand = {
                         const count = await getWeaponCount(fItem.id);
                         const set = items.filter((e) => ((e instanceof armorInfo) && (e.setname === fItem.setname))) as armorInfo[];
                         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n**${fItem.setname}**: ${set[0].emoji + set[1].emoji + set[2].emoji + set[3].emoji}\n**Crafts in existence**: ${count}\n\n**Primary Stat**: \`${fItem.psmin}-${fItem.psmax}\` ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
+                        Embeds.push(Embed);
+                    } else if (fItem instanceof ringInfo) {
+                        const count = await getWeaponCount(fItem.id);
+                        Embed.setDescription(
+                            `**Grade**: ${fItem.gradeEmote}\n` +
+                            `**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n` +
+                            `**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n` +
+                            `**Crafts in existence**: ${count}\n\n` +
+                            `**Passive${fItem.maxlevel > 1 ? " (Asc. 1)" : ""}**: ${fItem.getBuffDesc(1)}\n\n` +
+                            `${fItem.maxlevel > 1 ? `**Passive (Asc. ${fItem.maxlevel})**: ${fItem.getBuffDesc(fItem.maxlevel)}\n\n` : ""}` +
+                            `>>> ${fItem.flair}`
+                        );
                         Embeds.push(Embed);
                     } else if (fItem instanceof fishInfo) {
                         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}`);

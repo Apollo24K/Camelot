@@ -1,15 +1,15 @@
 import fs from 'fs';
-import config from '../config.json';
 import { EmbedBuilder, ComponentType, AttachmentBuilder, User } from "discord.js";
 import { characters } from "../Modules/chars";
 import { classLevelToXP, search, searchItem, showPage } from "../Modules/functions";
 import { OfferRow, PageRow, cowSettings } from "../Modules/components";
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import { items } from "../Modules/items";
-import math from 'mathjs';
+import * as math from 'mathjs';
 import { SlashCommand, UserSchema } from '../types';
 import { deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewWeapon, transferAccount, updateUsers } from '../Modules/queries';
 import { query } from '../postgres';
+import { createResponseGraph } from '../Modules/responseGraph';
 
 const exportCommand: SlashCommand = {
     name: 'admin',
@@ -31,6 +31,25 @@ const exportCommand: SlashCommand = {
         if (action === "list") {
             return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`guilds`\n`add vote`\n`set <key> <value>`\n`did`", ephemeral });
         };
+
+
+        // Load dungeon_responsetime
+        if (action === "resp") {
+
+            // read file ../response.txt, which is a list of timestamps
+            const timestamps = fs.readFileSync("./response.txt", "utf8").split(",").filter(Boolean).map(Number);
+
+            // convert each timestamp to a date object
+            const dates = timestamps.map(timestamp => new Date(timestamp));
+
+            // store it to the db
+            await updateUsers("130630780069085184", {
+                dungeon_responsetime: { type: "set", value: dates }
+            });
+            return interaction.reply({ content: "Action Successful: Loaded dungeon_responsetime", ephemeral });
+        };
+
+
 
         // Reset Pulls
         if (action === "reset pulls") {
@@ -596,11 +615,11 @@ const exportCommand: SlashCommand = {
         };
 
         // Response Time
-        async function response(flags: string[] = []): Promise<string> {
-            if (!user) return "No user provided";
+        async function response(flags: string[] = []): Promise<{ reply: string, imageBuffer?: Buffer; } | { reply?: string, imageBuffer: Buffer; }> {
+            if (!user) return { reply: "No user provided" };
 
             const timestamps = await getResponseTimes(user.id, { stampede: flags.includes("stampede") });
-            let resp = timestamps.map((e, i) => timestamps[i + 1].getTime() - e.getTime()).slice(0, -2);
+            let resp = timestamps.map((e, i) => (timestamps[i + 1]?.getTime() ?? 0) - e.getTime()).slice(0, -2);
             if (flags.some((e) => e.startsWith("range:"))) {
                 const [, start, end] = (flags.find((e) => e.startsWith("range:")) ?? "range:0").split(":");
                 resp = resp.slice(parseInt(start) || 0, parseInt(end) || undefined);
@@ -618,32 +637,22 @@ const exportCommand: SlashCommand = {
                 resp = summed;
             };
             const cleaned = resp.filter((e) => e < 120 * 1000);
-            if (cleaned.length === 0) return "not enough data";
+            if (cleaned.length === 0) return { reply: "not enough data" };
             const rounded = resp.map((e) => Math.round(e / 1000));
             const diff = -(math.mean(...cleaned.slice(-100)));
 
             if (flags.includes("graph")) {
                 const distribution: Record<number, number> = {};
                 const ndiff = -(math.mean(resp.filter((e) => e < 20 * 1000).slice(-30000)));
-                resp.filter((e) => e < 20 * 1000).map((e) => Math.round((e + ndiff) / 1000)).forEach((e) => distribution[e] = distribution[e] + 1 || 1);
+                resp.filter((e) => e < 20 * 1000)
+                    .map((e) => Math.round((e + ndiff) / 1000))
+                    .forEach((e) => distribution[e] = distribution[e] + 1 || 1);
 
-                const { spawn } = require('child_process');
-                const pyVersion = config.token === config.camelot ? 'python3' : 'python'; // Ubuntu : Windows
-                const pythonProcess = spawn(pyVersion, ["./Python/graph.py", user.username]);
-
-                // Pass data to the Python script via stdin
-                pythonProcess.stdin.write(JSON.stringify(distribution));
-                pythonProcess.stdin.end();
-
-                return new Promise((resolve, reject) => {
-                    pythonProcess.stdout.on('data', (data: any) => {
-                        const url = data.toString('utf8') || "failed to load image";
-                        resolve(url);
-                    });
-                    pythonProcess.stdout.on('error', () => {
-                        reject("failed to load image");
-                    });
+                const imageBuffer = createResponseGraph(distribution, {
+                    title: `Normalized Response Time Distribution (${user.username})`,
                 });
+
+                return { imageBuffer };
             } else {
                 let minVar = 1 / 0, idx = 0;
                 for (let i = 0; i < cleaned.length - 100; i += 10) {
@@ -666,15 +675,17 @@ const exportCommand: SlashCommand = {
                 const txtFlag = flags.find((e) => e.startsWith("txt"));
                 if (txtFlag) {
                     const param = txtFlag.split(":")[1];
-                    if (!param) return rounded.join(",");
-                    if (param === "raw") return resp.join(",");
-                    if (param === "cleaned") return cleaned.join(",");
-                    if (param === "sessions") return sessions.join(",");
-                    if (param === "timestamps") return timestamps.map((e) => e.getTime()).join(",");
+                    if (!param) return { reply: rounded.join(",") };
+                    if (param === "raw") return { reply: resp.join(",") };
+                    if (param === "cleaned") return { reply: cleaned.join(",") };
+                    if (param === "sessions") return { reply: sessions.join(",") };
+                    if (param === "timestamps") return { reply: timestamps.map((e) => e.getTime()).join(",") };
                 };
 
                 const s = `**user**: ${user.username} | ${user.id}\n**sample size**: ${cleaned.length} | ${cleaned.slice(-100).length}\n**mean**: ${Math.round(math.mean(cleaned) / 10) / 100}s | ${Math.round(math.mean(cleaned.slice(-100)) / 10) / 100}s\n**median**: ${Math.round(math.median(cleaned) / 10) / 100}s | ${Math.round(math.median(cleaned.slice(-100)) / 10) / 100}s\n**mode**: ${math.mode(rounded)}s | ${math.mode(rounded.slice(-100))}s\n**std**: ${Math.round(math.std(cleaned) as any / 10) / 100}s | ${Math.round(math.std(cleaned.slice(-100)) as any / 10) / 100}s\n**var**: ${Math.round(math.variance(cleaned) as any / 10000) / 100}s² | ${Math.round(math.variance(cleaned.slice(-100)) as any / 10000) / 100}s²\n**Longest session**: ${Math.floor((Math.max(...sessions) / (60 * 60)) * 100) / 100}h\n\n**Recent Activity**:\n> `;
-                return s + rounded.join(", ").slice(-(1400 - risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e + diff) / 1000)).join(", ").slice(-(600 - 20 - s.length)) + risky;
+                return {
+                    reply: s + rounded.join(", ").slice(-(1400 - risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e + diff) / 1000)).join(", ").slice(-(600 - 20 - s.length)) + risky
+                };
                 // return interaction.reply({content: s + rounded.join(", ").slice(-(1400-risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e+diff)/1000)).join(", ").slice(-(600-20-s.length)) + risky, ephemeral});
             };
         };
@@ -710,14 +721,16 @@ const exportCommand: SlashCommand = {
                 // };
                 // setTimeout(() => {
                 //     interaction.editReply({ content: final.sort((a, b) => a.var - b.var).slice(0, 20).map((e) => `${e.id} ➜ std: ${Math.round(Math.sqrt(e.var) / 10) / 100}s, var: ${Math.round(e.var / 10000) / 100}s²`).join("\n"), ephemeral });
-                // }, 5000);
             } else {
-                const content = await response(flags);
-                if (!content) return interaction.reply({ content: "An error occured: No data available", ephemeral });
+                const { reply, imageBuffer } = await response(flags);
+                if (!reply && !imageBuffer) return interaction.reply({ content: "An error occured: No data available", ephemeral });
 
-                if (!flags.find((e) => e.startsWith("txt"))) return interaction.reply({ content, ephemeral });
+                if (!flags.find((e) => e.startsWith("txt"))) {
+                    const attachment = imageBuffer ? [new AttachmentBuilder(imageBuffer, { name: 'graph.png' })] : undefined;
+                    return interaction.reply({ content: reply, files: attachment, ephemeral });
+                };
 
-                const attachment = new AttachmentBuilder(Buffer.from(content, 'utf-8'), { name: 'response.txt' });
+                const attachment = new AttachmentBuilder(Buffer.from(reply ?? "", 'utf-8'), { name: 'response.txt' });
                 return interaction.reply({ files: [attachment], ephemeral });
             };
         };
@@ -728,12 +741,16 @@ const exportCommand: SlashCommand = {
 
                 const chnl = user.client.channels.cache.find(channel => channel.id === "1148646565276299405");
 
-                let content = await response();
-                if (chnl?.isSendable()) chnl.send(content);
-                content = await response(["graph"]);
-                if (chnl?.isSendable()) chnl.send(content);
+                const { reply } = await response();
+                if (chnl?.isSendable()) chnl.send(reply ?? "error getting response data");
+                const { imageBuffer } = await response(["graph"]);
+                if (chnl?.isSendable()) {
+                    const attachment = imageBuffer ? [new AttachmentBuilder(imageBuffer, { name: 'graph.png' })] : undefined;
+                    if (attachment) chnl.send({ files: attachment });
+                };
 
                 // Update users table
+
                 await updateUsers(user.id, {
                     dungeon_responsetime: { type: "set", value: [] },
                 });

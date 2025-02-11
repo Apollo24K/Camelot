@@ -1,6 +1,6 @@
 import fs from 'fs';
 import csvWriter from 'fast-csv';
-import math from 'mathjs';
+import * as math from 'mathjs';
 import { ComponentType, ActionRowBuilder, ButtonBuilder, EmbedBuilder, AttachmentBuilder, ButtonStyle } from "discord.js";
 import config from '../config.json';
 import { characters } from "../Modules/chars";
@@ -211,7 +211,7 @@ const exportCommand: SlashCommand = {
             if (!user) return "No user provided";
 
             const timestamps = await getResponseTimes(user.id, { stampede: flags.includes("stampede") });
-            let resp = timestamps.map((e, i) => timestamps[i + 1].getTime() - e.getTime()).slice(0, -2);
+            let resp = timestamps.map((e, i) => (timestamps[i + 1]?.getTime() ?? 0) - e.getTime()).slice(0, -2);
             if (flags.some((e) => e.startsWith("range:"))) {
                 const [, start, end] = (flags.find((e) => e.startsWith("range:")) ?? "range:0").split(":");
                 resp = resp.slice(parseInt(start) || 0, parseInt(end) || undefined);

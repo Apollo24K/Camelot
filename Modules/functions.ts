@@ -763,7 +763,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isCrit, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
