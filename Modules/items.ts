@@ -3562,17 +3562,17 @@ export const items = [
         //     myStats.chainLightning = 0;
         // }, 9999));
 
-        // On lightning attack (30/35/40% chance): deal 60% lightning damage (max. 2 strikes per turn)
+        // On lightning attack (20/25/25/30/30/35/35/40/40% chance): deal 10/12.5/12.5/15/15/17.5/17.5/20/20% lightning damage // // (max. 2 strikes per turn)
         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && options.isLightning && Math.random() < [0.2, 0.25, 0.25, 0.3, 0.3, 0.35, 0.35, 0.4, 0.4][level - 1] /* && myStats.chainLightning < 2 */) {
                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚡ **${char.name}**`, { atkMultiplier: [0.1, 0.1, 0.125, 0.125, 0.15, 0.15, 0.175, 0.175, 0.2][level - 1], isLightning: true });
-                myStats.chainLightning++;
+                // myStats.chainLightning++;
             };
         });
 
     }, (level) => `Each lightning strike has a **${[20, 25, 25, 30, 30, 35, 35, 40, 40][level - 1]}%** chance to trigger another lightning strike dealing **${[10, 10, 12.5, 12.5, 15, 15, 17.5, 17.5, 20][level - 1]}%** damage.`, "The Chromatic Nexus features a kaleidoscope of colors, its polished surface shimmering with iridescence. The ring is adorned with gemstones of various hues, each representing a different element—fire, water, earth, and air—surrounding a central orb that pulsates like a heartbeat. The craftsmanship is exquisite, with intricate engravings that depict mythical creatures entwined with the elements. This ring allows the user to harness elemental magic, granting them incredible versatile power in battle. Wielders often feel the ebb and flow of elemental forces when wearing it, making it a treasure for any elemental mage seeking harmony with nature.", "mythical", 716),
     new ringInfo("Conductor's Band", "ring", "ring", ["raid"], "<:conductors_band:1334319260943515698>", "https://i.ibb.co/jZsbrMGd/Conductor-s-Band.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Lightning
-
+3
         myStats.lightningMultiplier = (myStats.lightningMultiplier ?? 0) + [0.2, 0.225, 0.25, 0.275, 0.3, 0.325, 0.35][level - 1];
 
         // // On lightning attack: "Conductive" for 2 rounds: +25/25/30/30/35/35% lightning damage, -12/12/15/15/18/18% enemy dodge
@@ -3635,7 +3635,7 @@ export const items = [
     }, (level) => `The user's first attack hits twice.`, "The Sneak Attack ring whispers the promise of stealth and cunning. Its band features a textured design that mimics the surface of a leather-bound path, sleek and unobtrusive. Atop, a cunningly crafted dagger-shaped ornament points outward, encrusted with a dimly glowing emerald. With every flicker of light, it casts a subtle shimmer, hinting at hidden traps. When activated, this ring enhances its wearer's stealth abilities, making them nearly invisible during the night and allowing them to move unseen among their foes.", "rare", 721),
     new ringInfo("Verdant Melody", "ring", "ring", ["guild"], "<:verdant_melody:1334561565935931465>", "https://i.ibb.co/Jj1qG9nh/Verdant-Melody.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        const atkDebuff = [-0.3, -0.275, -0.25, -0.225, -0.2][level - 1];
+        const atkDebuff = [0.3, 0.275, 0.25, 0.225, 0.2][level - 1];
 
         // 0-10 rounds: -30% atk, -30% md, +30% br
         mybuff.atk.push(new buffInfo("+", -Math.floor(myStats.atk * atkDebuff), 10));
@@ -3650,7 +3650,7 @@ export const items = [
             mybuff.atk.push(new buffInfo("*", 1.02, 9999, 0.02, "+", 1.6));
             mybuff.md.push(new buffInfo("*", 1.02, 9999, 0.02, "+", 1.6));
             mybuff.br.push(new buffInfo("*", 0.99, 9999, -0.01, "+", [0.7, 1]));
-        }));
+        }, 30));
 
     }, (level) => `For the first **10** rounds, the wearer has **${[-30, -27.5, -25, -22.5, -20][level - 1]}%** attack and magic damage and **+30%** block rate. For the next **30** rounds after the previous debuffs wear off, the wearer gains **+2%** attack and magic damage and **-1%** block rate each round.`, "Woven from the very essence of nature, the Verdant Melody ring boasts a swirling band of golden foliage, elegantly wrapping around a bright, triangular citrine gem reminiscent of the sun. Each leaf is delicately engraved with musical notes, vibrating softly to the rhythm of nature's song. This ring is a favorite among druids and bards, enhancing their connection to the forest and empowering their songs. Those who wear it can soothe wild beasts or summon nature to their aid, harmonizing their spirit with the world around them.", "unique", 722),
     new ringInfo("Shadow's Pact", "ring", "ring", ["guild"], "<:shadows_pact:1334561570000343083>", "https://i.ibb.co/XZQ78kg4/Shadow-s-Pact.png", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3686,7 +3686,7 @@ export const items = [
     }, (level) => `The wearer deals **${[5, 7.5, 10, 12.5, 15][level - 1]}%** of the damage taken back to the enemy.`, "Embodying fierce tenacity and strength, the Barbed Glory ring features a blackened iron band adorned with protruding spikes and thorn-like designs, imparting a formidable presence. At its center lies a deep crimson gem, symbolizing blood and bravery. When activated, the ring allows its wearer to absorb damage, converting it into fleeting bursts of strength and unleashing retaliatory spikes against adversaries. This ring is a testament to the power of resilience and is often favored by warriors who thrive in the midst of combat.", "mythical", 725),
     new ringInfo("Necro's Grasp", "ring", "ring", ["raid"], "<:necros_grasp:1334561554045206530>", "https://i.ibb.co/MyT6nTzR/Necro-s-Grasp.png", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
 
-        // +1% atk & md per 1% missing HP
+        // +1% atk & md per 1% missing HP (max: 10/12.5/15/17.5/20% missing HP)
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const missingHpPercent = Math.min(0.1 + 0.025 * (level - 1), (myStats.maxhp - myStats.hp) / myStats.maxhp);
             myStats.atk += Math.floor(myStats.atk * missingHpPercent);
@@ -3694,9 +3694,9 @@ export const items = [
         }, 9999));
 
     }, (level) => `The wearer gains **1%** attack and magic damage for every **1%** missing HP (up to **${[10, 12.5, 15, 17.5, 20][level - 1]}%**).`, "The foreboding Necro's Grasp ring is crafted from shadowy metals, entwined with ethereal wisps that emanate an unsettling glow. Designed with intricate skull motifs and green gemstones resembling glowing eyes, it whispers secrets from beyond the grave. This ring imbues its wearer with necromantic powers, enabling them to manipulate deathly energies to raise the fallen or drain vitality from foes. It is a coveted artifact for dark sorcerers seeking to wield the forces of life and death.", "legendary", 726),
-    new ringInfo("Vinebound Bond", "ring", "ring", ["raid"], "<:vinebound_bond:1334561559195942984>", "https://i.ibb.co/chz7YprQ/Vinebound-Bond.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new ringInfo("Vinebound Bond", "ring", "ring", ["raid"], "<:vinebound_bond:1334561559195942984>", "https://i.ibb.co/chz7YprQ/Vinebound-Bond.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* noHeal/ Nekro
 
-        // HP < 50%: heal 5% max HP
+        // HP < 50%: heal 0.85/1/1.15/1.25/1.4/1.5% max HP
         // HP >= 50%: +5% crit rate
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (myStats.hp < myStats.maxhp * 0.5) {
@@ -3753,12 +3753,12 @@ export const items = [
 
                 myStats.hp -= Math.floor(myStats.hp * 0.03);
 
-                // If dodge/block streak >= 3: +25% atk, +25% md for 1 turn
+                // If dodge/block streak >= 3: +10/12.5/15/17.5/20/22.5/25% atk, md for 1 turn
                 if (myStats.dodgeStreak >= 3 || myStats.blockStreak >= 3) {
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1 + 0.025 * (level - 1)), 1));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.1 + 0.025 * (level - 1)), 1));
-                    myStats.atk += Math.floor(myStats.atk * 0.25);
-                    myStats.md += Math.floor(myStats.md * 0.25);
+                    myStats.atk += Math.floor(myStats.atk * 0.1 + 0.025 * (level - 1));
+                    myStats.md += Math.floor(myStats.md * 0.1 + 0.025 * (level - 1));
                 };
             };
         });
