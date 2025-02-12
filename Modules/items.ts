@@ -3766,7 +3766,7 @@ export const items = [
     }, (level) => `The wearer increases their ATK & MD by **${[5, 6.25, 7.5, 8.75, 10, 11.25, 12.5][level - 1]}%** for **3** rounds if they evade an attack, but also loses **3%** of current HP every time. After **3** consecutive dodges or blocks, the wearer additionally increases their ATK & MD by **${[10, 12.5, 15, 17.5, 20, 22.5, 25][level - 1]}%** for **1** round.`, "The Crimson Pulse glows with an intense, fiery quality, its darkened band encircled by flowing flames crafted from enchanted red gemstones. The inner side is inscribed with ancient numerical runes, glowing faintly in synchronization with the heartbeat of its wearer. Aside from its breathtaking beauty, it grants the wearer augmentations of strength and vitality, making them a formidable opponent in battle. When wielded in combat, the flames surge in response to the wearer's emotions, casting an intimidating and powerful aura on the battlefield, as if fueling a raging firestorm of crimson light.", "legendary", 730),
     new ringInfo("Radiant Ember", "ring", "ring", ["raid"], "<:radiant_ember:1336036400264515756>", "https://i.ibb.co/QF7G1X7H/Radiant-Ember.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Magma
 
-        const cdBuff = 0.5 + 0.025 * (level - 1);
+        const cdBuff = 0.05 + 0.025 * (level - 1);
         myStats.cd += cdBuff;
         mybuff.cd.push(new buffInfo("+", cdBuff, 9999));
 
@@ -3812,14 +3812,14 @@ export const items = [
     }, (level) => `The wearer revives with **${[1, 5, 10, 15, 20, 25, 30, 35, 40][level - 1]}** once.`, "The Defiant Survival's Ring embodies resilience, crafted from a twisted amalgam of bronze and darkened wood, evoking the relentless strength of nature. Adorned with a brilliant green stone at its heart, it radiates a natural energy palpable to the touch. Vines and leaves seem to crawl across the surface of the band, appearing nearly alive. This ring is said to harbor protective enchantments, granting the wearer enhanced survival skills in perilous situations. When activated, the vines elongate, providing support, and can even aid in regrowing minor injuries. It is a cherished artifact for adventurers and forest dwellers alike.", "legendary", 733),
     new ringInfo("Mystic Wave", "ring", "ring", ["raid"], "<:mystic_wave:1336068414015279124>", "https://i.ibb.co/KpBdCJyq/Mystic-Wave.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
 
-        // Increases Damage by mg%
+        // Increases Damage by 0.25/0.5/0.75/1% per 1 mg (max: 10/10/15/20%)
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            const mgScale = myStats.mg / 100;
+            const mgScale = Math.min(myStats.mg * [0.25, 0.5, 1, 1.25][level - 1] / 100, [10, 10, 15, 20][level - 1] / 100);
             myStats.atk += Math.floor(myStats.atk * mgScale);
             myStats.md += Math.floor(myStats.md * mgScale);
         }, 9999));
 
-    }, (level) => `Increases your attack and magic damage by **${[0.25, 0.5, 0.1, 0.125][level - 1]}%** for every **1** mana generation stat (up to **${[10, 10, 15, 20][level - 1]}%**).`, "The Mystic Wave ring is a masterwork of blue and silver, embodying the essence of the ocean. Its smooth band twists and curls like crashing waves, shimmering under light. A deep sapphire rests at its zenith, glistening with the fluidity of water. The design evokes the tranquility of the sea, while also hinting at its enigmatic depths. This ring grants the ability to control water and manipulate tides, providing protection against fiery adversaries. When in water, the sapphire glows brightly, summoning a protective wave that can shield the wearer from harm. It is a favored ring among ocean mages and water elementals.", "legendary", 734),
+    }, (level) => `Increases your attack and magic damage by **${[0.25, 0.5, 1, 1.25][level - 1]}%** for every **1** mana generation stat (up to **${[10, 10, 15, 20][level - 1]}%**).`, "The Mystic Wave ring is a masterwork of blue and silver, embodying the essence of the ocean. Its smooth band twists and curls like crashing waves, shimmering under light. A deep sapphire rests at its zenith, glistening with the fluidity of water. The design evokes the tranquility of the sea, while also hinting at its enigmatic depths. This ring grants the ability to control water and manipulate tides, providing protection against fiery adversaries. When in water, the sapphire glows brightly, summoning a protective wave that can shield the wearer from harm. It is a favored ring among ocean mages and water elementals.", "legendary", 734),
     new ringInfo("Yuletide Band", "ring", "ring", ["raid"], "<:yuletide_band:1336068419509944320>", "https://i.ibb.co/mrWDF4Hj/Yuletide-Band.png", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
 
         // const ATK_EMOJI = myStats.replaceButton?.atk?.emoji || '⚔️',
@@ -3868,12 +3868,12 @@ export const items = [
         // }, 9999));
 
     }, (level) => `Every **${[8, 8, 7, 7, 6, 6][level - 1]}** rounds, replaces ATK/ DEF to green/ red envelopes. ATK increases crit damage by **50%** for **1** turn. DEF gains **100** shield.`, "The Yuletide Band, infused with the spirit of celebration, is a festive creation adorned with red and green floral decorations mirroring holly leaves and berries. The golden circular band shimmers with warmth and goodwill, making it a perfect charm for the holiday season. Tiny gemstones resemble glimmering ornaments, each twinkling with a touch of magic. This whimsical ring is known to enhance the wearer's charm and charisma, spreading joy and eliciting smiles among comrades. When donned, the band radiates a festive glow, bolstering camaraderie and temporarily raising morale within a close-knit group. It shines brightest amidst celebrations, creating enchanting moments.", "unique", 735),
-    new ringInfo("Scorching Oath", "ring", "ring", ["raid"], "<:scorching_oath:1336082162654642196>", "https://i.ibb.co/y9gQ609/Scorching-Oath.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
+    new ringInfo("Scorching Oath", "ring", "ring", ["raid"], "<:scorching_oath:1336082162654642196>", "https://i.ibb.co/y9gQ609/Scorching-Oath.png", 8, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
 
         const atkScale = [2, 2.5, 3, 3.5, 4, 4.5, 5, 5][level - 1] / 100;
         myStats.MartialMomentum = [5, 5, 5, 5, 5, 5, 5, 6][level - 1];
 
-        // On Ability/Skill: increases damage by [5,6,7,8,9]%, cap: [50,54,56,56,54]%, turns: [10,9,8,7,6]
+        // On Ability/Skill: increases atk/md by [2,2.5,3,3.5,4,4.5,5,5][level - 1]% (max: [10,12.5,15,17.5,20,22.5,25,30]%)
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && myStats.MartialMomentum > 0) {
                 myStats.MartialMomentum--;
@@ -3897,13 +3897,13 @@ export const items = [
     new ringInfo("Scripted Circle", "ring", "ring", ["raid"], "<:scripted_circle:1336299841181192215>", "https://i.ibb.co/GBhtJPH/Scripted-Circle.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
 
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (Math.random() < ([30, 32, 34, 36, 38, 40][level - 1] / 100)) {
+            if (Math.random() < ([20, 24, 28, 32, 36, 40][level - 1] / 100)) {
                 const rand = Math.random();
-                if (rand < 0.4) { // Decreases enemy DEF and MR by 30%
+                if (rand < 0.4) { // Decreases enemy DEF and MR by 20%
                     notice.push(`\n💌 **${char.name}** sent a love letter to **${enemy.name}**!`);
                     eStats.def -= Math.floor(eStats.def * 0.2);
                     eStats.mr -= Math.floor(eStats.mr * 0.2);
-                } else if (rand < 0.8) { // Increases damage by 30%
+                } else if (rand < 0.8) { // Increases damage by 20%
                     notice.push(`\n📨 **${char.name}** sent a complaint letter to **${enemy.name}**!`);
                     myStats.atk += Math.floor(myStats.atk * 0.2);
                     myStats.md += Math.floor(myStats.md * 0.2);
