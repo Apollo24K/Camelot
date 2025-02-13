@@ -4022,10 +4022,10 @@ export const items = [
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
                     const atkBuff = [25, 30, 35, 40][level - 1] / 100;
-                    myStats.atk += Math.floor(myStats.atk * atkBuff);
-                    myStats.md += Math.floor(myStats.md * atkBuff);
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * atkBuff), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkBuff), 9999));
+                    myStats.atk += Math.floor(myStats.atk * atkBuff);
+                    myStats.md += Math.floor(myStats.md * atkBuff);
 
                     myStats.damageReduction = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + [2, 3, 4, 5][level - 1], (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -4134,7 +4134,7 @@ export const items = [
     }, (level) => `The wearer drains **${[0.3, 0.4, 0.5, 0.6, 0.7, 0.75][level - 1]}%** of their max HP from the enemy with every successful hit.`, "The Jade Talon ring boasts a fearsome design, reminiscent of a predatory bird's claw. Crafted from darkened silver, its band bears twisting, barbed tendrils that intertwine and ascend toward a striking jade centerpiece. The gem glimmers with an inner light, pulsating green hues that evoke the essence of nature's spirit. Surrounding the central stone, smaller emerald shards are embedded, enhancing its fierce aura. When worn, this ring grants enhanced agility and a keen sense for danger, making it sought after by both warriors and rogues. Legends say that the wearer can channel their inner beast, tapping into primal instincts with each heartbeat.", "legendary", 748),
     new ringInfo("The Prism Sovereign", "ring", "ring", ["guild"], "<:the_prism_sovereign:1337806356111167628>", "https://i.ibb.co/5W4CDPJR/The-Prism-Sovereign.png", 8, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // If no active ability/skill was used for 30 rounds, 20% chance to twinshot
+        // If no active ability/skill was used for 30 rounds, 20/22/24/26/28/30/32/33% chance to twinshot
         myStats.delayedBuffs.push(new delayedBuffs(30, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (!myStats.activeUsed) {
                 matchStats.twinshot = [20, 22, 24, 26, 28, 30, 32, 33][level - 1] / 100;
@@ -4180,7 +4180,7 @@ export const items = [
                 myStats.cwUsed = true;
                 myStats.cwStreak++;
 
-                const buff = [0.04, 0.05, 0.06][level - 1];
+                const buff = [3, 4, 5, 6][level - 1] / 100;
                 mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * buff), 9999));
                 mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * buff), 9999));
                 myStats.atk += Math.floor(myStats.atk * buff);
@@ -4212,7 +4212,7 @@ export const items = [
         myStats.rev += [20, 25, 30, 35, 40, 45, 50][level - 1] / 100;
         myStats.revhp += 0.3;
 
-        // On Revival: +4% Lifesteal
+        // On Revival: +1/1.25/1.5/1.75/2/2.25/2.5% Lifesteal
         matchStats.on("revival", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 myStats.selfhealChance.push(1);
@@ -4234,8 +4234,8 @@ export const items = [
                     // Remove old debuff
                     casterBuff.hp = casterBuff.hp.filter((buff) => buff.id !== hpDebuff.id);
 
-                    // Push new buff
-                    casterBuff.hp.push(new buffInfo("+", amount, 5));
+                    // Push new buff 
+                    casterBuff.hp.push(new buffInfo("+", amount, 9999)); //? Was this supposed to be 5 rounds only?
 
                     return true;
                 };
@@ -4245,6 +4245,7 @@ export const items = [
     }, (level) => `The wearer loses **${[2, 3, 4][level - 1]}%** of their max HP every round. However, after a successful revival, the wearer no longer loses but instead recovers said **${[2, 3, 4][level - 1]}%** of max HP every round.`, "Abyssal Bloom is a hauntingly beautiful piece that encapsulates the mysteries of unseen depths. Its band is crafted from darkened silver, entwined with tangled vines that appear alive, each adorned with small emeralds resembling dew drops. At its heart lies a glowing blue crystal, resembling the rarest flower blooming in the depths of an abyss. Worn by dark druids and sorcerers, this ring enhances the user's connection to the arcane mysteries of nature. It whispers secrets of the ancient ocean, allowing the wearer to summon tidal waves or ensnare enemies in vines, making it a prized possession among those who thrive in darkness.", "genesis", 755),
     new ringInfo("Mariner's Halo", "ring", "ring", ["guild"], "<:mariners_halo:1337953347008987146>", "https://i.ibb.co/ZRbCG7hS/Mariner-s-Halo.png", 9, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
+        // On 1st Ability: deal 80/90/100/110/120/130/140/150/160% dmg 
         matchStats.on("ABILITY", {
             maxUsage: 1,
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
@@ -4268,7 +4269,7 @@ export const items = [
         });
 
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            // After not using ability for 10+ turns: recover 100 mana, lifesteal +5%
+            // After not using ability for 15/14/13/12/11/10+ turns: recover 50/60/70/80/90/100 mana, +1/1.2/1.4/1.6/1.8/2% lifesteal 
             if (matchStats.round - myStats.geLastAbilityRoundUsed >= [15, 14, 13, 12, 11, 10][level - 1]) {
                 // Recover mana
                 myStats.sm += [50, 60, 70, 80, 90, 100][level - 1];
