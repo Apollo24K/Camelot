@@ -225,14 +225,16 @@ export const abilities: Record<number, Ability> = {
         usage: 9999,
         used: 0,
         cost: 0,
-        desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously // 15% current 💖\n**Timeout**: `No/Yes`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. If he uses his ability again during this state, he will consume **15%** of current HP to lunge forward, dealing **130%** magic damage. This hit has **+1%** critical rate for every **2%** HP lost, up to a **33%** critical rate boost, symbolizing the brute power from pain behind the execution.",
-        shortdesc: "**Uses**: `Unlimited`\n**Cost**: `0 💧 , then 10 💧 every turn // 15% current HP` \n**Timeout**: `No/Yes`\n**Role**: `DPS (Mana-losing, Sacrificial, Nuke)`\n\n__**Active**__ (✨)\nFalls in as General Alatus:\n- Halts mana regeneration\n- Consumes **10** 💧 every turn\n- **+30%** MD\n\nUsing his active (✨) when he's in this state, consumes **15%** of his current HP to plunge forward, dealing **130%** DMG.\n- This benefits from a **1%** critical rate boost for every **2%** lost HP, up to **33%**",
+        desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously // 15% current 💖\n**Timeout**: `No/Yes`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. If he uses his ability again during this state, he will consume **15%** of current HP to lunge forward. This increases his dodge rate by **25%** for **3** turns, before dealing **150%** magic damage. This instance of damage is further boosted by current dodge rate, symbolizing the brute power behind the execution.",
+        shortdesc: "**Uses**: `1`\n**Cost**: `0 💧 , then 10 💧 every turn // 15% current HP` \n**Timeout**: `No/Yes`\n**Role**: `DPS (Mana-losing, Nuke, Dodge)`\n\n__**Active**__ (✨)\nFalls in as General Alatus:\n- Halts mana regeneration\n- Consumes **10** 💧 every turn\n- **+30%** MD\nWhen he is below **50%** HP, using active (✨) consumes **15%** of his current HP to plunge forward:\n- **+25%** Dodge rate for **3** turns\n- Deal **150%** MD. This attack enjoys DMG bonus based on current dodge rate",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 200% damage if used again.
-                const sacrifice = Math.floor(myStats.hp*0.15);
-                myStats.hp -= sacrifice;
-                let critboost = Math.min(0.33, (Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp))/2);
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 1.3, magicDamage: true, mdChance: -1, critBuff: critboost });
+                if (myStats.sm < 50) {
+                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    return matchStats.interaction.followUp({ content: "You need at least **50**\\💧 for this attack.", ephemeral: true });
+                };
+                myStats.sm -= 40;
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 });
             } else {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (myStats.sm < 10) return matchStats.interaction.followUp({ content: "You need at least **10**\\💧 to sustain this form", ephemeral: true });
@@ -2553,11 +2555,11 @@ export const abilities: Record<number, Ability> = {
         },
     },
     "17117": {
-        usage: 6,
+        usage: 3,
         used: 0,
         cost: 80,
-        desc: "**Total Usage**: `unlimited`, `unlimited`, `6`\n**Mana**: `10-20`\\💧, `20-30`\\💧, `80-100`\\💧\n**Timeout**: `yes`, `yes`, `yes`\n**Role**: `DPS/Support`\n\nRudeus Greyrat encapsulates the progression and versatility of a mage that requires keen management of his considerable mana pool said to rival that of the ancient Demon God Laplace. His mana generation is increased by **+20** as well, reflecting his proficiency and natural talent in magic. And as the fight continues, Rudeus keeps learning and growing as a mage, increasing the potency of his spells on the 5th and 10th rounds each. His 3 spells are as follows:\n\n**Stone Cannon**: Rudeus can utilize this spell to fire a powerful projectile at his opponent. Notably, this attack has both a physical and magical damage component, dealing **100-120%** magic damage, and an additional **10-20%** physical damage caused by the impact. If Rudeus is low on mana only the physical impact will cause damage.\n\n**Quagmire**: Upon casting, Rudeus will drastically increase his dodge rate to **50-75%**, making him harder to hit in the subsequent round. It also weakens the opponent, reducing their DEF and MR by **15-25%** , as well as their dodge rate to **0%** for the next 2 rounds.\n\n**Electric**: Electric channels a surge of magical energy to electrocute the opponent. A high cost high damage spell with limited use, dealing **150-200%** magic damage to the opponent.\n\nIn a party, Rudeus offers a unique advantage backing his party members from the rear. He has a **30%** chance to intervene randomly, delivering a magical blow to the enemy dealing **60%** magic damage and reducing enemy DEF and MR by **10%** for 2 rounds.",
-        shortdesc: "**Uses**: `6`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ACTIVE are *enhanced* on the **5th** and **10th** rounds, having permanent upgrades.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of DEFEND)\n- **+50%-75%** Dodge rate that turn\n- **-15-25%** enemy's DEF/MR for the next **2** turns\n\n__**Active**__ (✨)\n- Deals **150**/**170**/**200%** DMG (Depends on *enhancement* of DEFEND)\n\n__**Party**__ (👥)\n- Every turn: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** turns",
+        desc: "**Total Usage**: `unlimited`, `unlimited`, `3`\n**Mana**: `10-20`\\💧, `20-30`\\💧, `80-100`\\💧\n**Timeout**: `yes`, `yes`, `yes`\n**Role**: `DPS/Support`\n\nRudeus Greyrat encapsulates the progression and versatility of a mage that requires keen management of his considerable mana pool said to rival that of the ancient Demon God Laplace. His mana generation is increased by **+20** as well, reflecting his proficiency and natural talent in magic. And as the fight continues, Rudeus keeps learning and growing as a mage, increasing the potency of his spells on the 5th and 10th rounds each. His 3 spells are as follows:\n\n**Stone Cannon**: Rudeus can utilize this spell to fire a powerful projectile at his opponent. Notably, this attack has both a physical and magical damage component, dealing **100-120%** magic damage, and an additional **10-20%** physical damage caused by the impact. If Rudeus is low on mana only the physical impact will cause damage.\n\n**Quagmire**: Upon casting, Rudeus will drastically increase his dodge rate to **50-75%**, making him harder to hit in the subsequent round. It also weakens the opponent, reducing their DEF and MR by **15-25%** the next round.\n\n**Electric**: Electric channels a surge of magical energy to electrocute the opponent. A high cost high damage spell with limited use, dealing **150-200%** magic damage to the opponent.\n\nIn a party, Rudeus offers a unique advantage backing his party members from the rear. He has a **30%** chance to intervene randomly, delivering a magical blow to the enemy dealing **60%** magic damage and reducing enemy DEF and MR by **10%** for 2 rounds.",
+        shortdesc: "**Uses**: `3`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ABILITY *enhanced* on the **5th** and **10th** rounds.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of ATTACK)\n- **+50%-75%** Dodge rate that turn\n- **-15-25%** Enemy's DEF/MR for **2** turns\n\n__**Active**__ (✨)\n- Deals **150-200%** DMG\n\n__**Party**__ (👥)\n- Every turn: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** turns",
         ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Rudeus Greyrat | Rudy | Rudeus EX
             let atkbuff = 1.5, mana_cost = 0;
@@ -2610,9 +2612,12 @@ export const abilities: Record<number, Ability> = {
 
                     myStats.sm -= mana_cost;
                     myStats.dodge = dodge_buff;
-                    ebuff.dodge.push(new buffInfo("=", 0, 2));
-                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * def_debuff), 2));
-                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * def_debuff), 2));
+                    ebuff.dodge.push(new buffInfo("=", 0, 3));
+                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * def_debuff), 1));
+                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * def_debuff), 1));
+                    eStats.dodge = 0;
+                    eStats.def -= Math.floor(eStats.def * def_debuff);
+                    eStats.mr -= Math.floor(eStats.mr * def_debuff);
                     notice.push(`\n<:quagmire:1140026835225292841> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%**`);
                 },
             };
