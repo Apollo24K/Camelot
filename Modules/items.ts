@@ -3920,6 +3920,7 @@ export const items = [
     }, (level) => `Every round there is a **${[20, 24, 28, 32, 36, 40][level - 1]}%** chance to send one of the following letters:\n- __Love Letter__: Decreases enemy DEF and MR by **20%** for that round.\n- __Complaint Letter__: Increases damage by **20%** for that round.\n- __Termination Letter__: Your next attack is cast twice.`, "The Scripted Circle is crafted from ornate silver, resembling an ancient tome wrapped around the finger. At its center rests an open book, its pages inscribed with glowing runes that sparkle with knowledge. The band is adorned with intricate scrollwork that expresses motion, emphasizing the fluidity of written magic. This ring bestows an unparalleled connection to the mystical arts, amplifying one's spellcasting ability and granting access to forgotten lore. In moments of need, the pages flutter as if caught in an unseen breeze, whispering secrets to its bearer. Scholars and mages alike revere this ring for its wisdom and boundless potential for knowledge.", "mythical", 737),
     new ringInfo("Harmony's Edge", "ring", "ring", ["raid"], "<:harmonys_edge:1336486295320526969>", "https://i.ibb.co/zhz7WrB6/Harmony-s-Edge.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mail
 
+        // +10/12.5/15/17.5/20/22.5/25% ATK/MD (2 rounds)
         matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && matchStats.round % 4 === 0) {
                 const buffScale = [10, 12.5, 15, 17.5, 20, 22.5, 25][level - 1] / 100;
@@ -3930,6 +3931,7 @@ export const items = [
             };
         });
 
+        // +10/12/14/16/18/19/20% BR (2 rounds)
         matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && matchStats.round % 4 === 0) {
                 const buff = [10, 12, 14, 16, 18, 19, 20][level - 1] / 100;
@@ -3938,6 +3940,7 @@ export const items = [
             };
         });
 
+        // dealDamage 15/17.5/20/22.5/25/27.5/30% dmg
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && matchStats.round % 4 === 0) {
                 const atkMultiplier = [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
@@ -3945,6 +3948,7 @@ export const items = [
             };
         });
 
+        // heal 5/5.5/6/6.5/7/7.5/8% max hp
         matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && matchStats.round % 4 === 0) {
                 const healScale = [5, 5.5, 6, 6.5, 7, 7.5, 8][level - 1] / 100;
@@ -3990,11 +3994,12 @@ export const items = [
             ];
 
             if (matchStats.round % 4 === 0) {
+                // Disable every button excluding ATk, SKIP
                 buttons[1].setDisabled(true); buttons[2].setDisabled(true); buttons[3].setDisabled(true);
                 const updatedRow = new ActionRowBuilder<ButtonBuilder>().addComponents(...buttons);
                 matchStats.interaction.editReply({ components: [updatedRow] });
 
-                // Buffs
+                // Buffs: +20/22.5/25/27.5/30/32.5/35/37.5/40% ATK/MD
                 const atkScale = [20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40][level - 1] / 100;
                 myStats.atk += Math.floor(myStats.atk * atkScale);
                 myStats.md += Math.floor(myStats.md * atkScale);
@@ -4008,15 +4013,22 @@ export const items = [
     }, (level) => `Every 4th round, the wearer is overcome with bloodlust, forced to attack, but deals **${[20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40][level - 1]}%** more damage.`, "Fury of the Abyss is a striking ring, designed as if it were forged from the remnants of a dying star. Its band is obsidian-black, adorned with flames of crimson and onyx that seem to flicker and dance, culminating in a central deep red gem that radiates intense heat. The fiery motif hints at its volatile nature, empowering its wearer with raw, primal rage. This ring not only amplifies combat prowess but also ignites the inner fury of its possessor, making it a favored artifact among warriors who wish to harness their anger for overwhelming strikes on the battlefield.", "unique", 740),
     new ringInfo("Vile Revenant", "ring", "ring", ["raid"], "<:vile_revenant:1336499647971328055>", "https://i.ibb.co/tPb3Nr6y/Vile-Revenant.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
 
-        // On Revival: immortal for 3/4/5 rounds, +100% cr, cd
+        // On Revival: immortal for 2/3/4/5 rounds, +25/30/35/40% ATK/MD, dies after that
+        //? Health DoT
         myStats.rev = 1;
-        myStats.revhp = 0.01;
+        myStats.revhp = 0.1;
         matchStats.on("revival", {
             maxUsage: 1,
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
+                    const atkBuff = [25, 30, 35, 40][level - 1] / 100;
+                    myStats.atk += Math.floor(myStats.atk * atkBuff);
+                    myStats.md += Math.floor(myStats.md * atkBuff);
+                    mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * atkBuff), 9999));
+                    mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkBuff), 9999));
+
                     myStats.damageReduction = 1;
-                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + [3, 4, 5][level - 1], (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + [2, 3, 4, 5][level - 1], (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         myStats.damageReduction = 0;
                         myStats.hp = 0;
                     }));
@@ -4026,7 +4038,7 @@ export const items = [
             },
         });
 
-    }, (level) => `After dying, the undying corpse of the wearer seeks revenge. During the next **${[2, 3, 4, 5][level - 1]}** rounds, the revived wearer is immune to active damages, but dies after the rounds end.`, "Crafted from a curious amalgam of shadowy metal and crimson-tinted gems, the Vile Revenant ring possesses an unsettling beauty. Its design features sharp, jagged edges that resemble bone fragments, giving it an eerie, formidable appearance. The central gem pulses a sinister glow, mirroring the essence of those lost to darkness. Adorned with faint, swirling symbols that tell tales of undying spirits, this ring serves as a conduit for necromantic energies. Wearers gain the ability to commune with the departed, yet at the risk of drawing their own spirit towards the realm of the forgotten.", "legendary", 741),
+    }, (level) => `After dying, the undying corpse of the wearer seeks revenge. During the next **${[2, 3, 4, 5][level - 1]}** rounds, the revived wearer is immune to active damages and increases the wearer's ATK & MD by **${[25, 30, 35, 40][level - 1]}%, but dies after the rounds end.`, "Crafted from a curious amalgam of shadowy metal and crimson-tinted gems, the Vile Revenant ring possesses an unsettling beauty. Its design features sharp, jagged edges that resemble bone fragments, giving it an eerie, formidable appearance. The central gem pulses a sinister glow, mirroring the essence of those lost to darkness. Adorned with faint, swirling symbols that tell tales of undying spirits, this ring serves as a conduit for necromantic energies. Wearers gain the ability to commune with the departed, yet at the risk of drawing their own spirit towards the realm of the forgotten.", "legendary", 741),
     new ringInfo("Elemental Conflux", "ring", "ring", ["raid"], "<:elemental_conflux:1336501924505321564>", "https://i.ibb.co/9kyxXLPK/Elemental-Conflux.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Cakey
 
         // When HP < 50%: Heal 18/22/24/26/28/30% max HP
@@ -4078,7 +4090,7 @@ export const items = [
     }, (level) => `Records **${[40, 45, 50][level - 1]}%** of damage taken per round. When the recorded damage reaches your attack or magic damage, counterattacks with the accumulated damage.`, "The Aqua Serpent ring features a stunning wrap-around design, mirroring the sinuous form of a serpent made of shimmering ocean-blue materials. Its band glistens as if it were polished by the waves, while an azure gemstone–shaped like a serpent's heart–rests as its centerpiece. The ring radiates a calming aura, allowing the wearer to commune with water elementals and control water's flow. Embellished with silver scales etched with intricate oceanic patterns, it is a prized possession for those who traverse the waters or seek harmony with the aquatic realms, enhancing their affinity for the sea.", "legendary", 745),
     new ringInfo("Starlit Whirl", "ring", "ring", ["guild"], "<:starlit_whirl:1336655984659271700>", "https://i.ibb.co/0VFf8r7V/Starlit-Whirl.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // On Crit: Steal 5% CR
+        // On eCrit: Steal 5% CR
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === eStats && eStats.cr > 0) {
                 const steal = Math.min([0.03, 0.03, 0.04, 0.04, 0.05, 0.05][level - 1], eStats.cr);
@@ -4090,7 +4102,7 @@ export const items = [
         });
 
     }, (level) => `Upon receiving a critical hit, the wearer steals **${[3, 3, 4, 4, 5, 5][level - 1]}%** crit rate from the enemy, lasting **${[4, 5, 5, 6, 6, 7][level - 1]}** rounds.`, "The smooth, iridescent band of the Starlit Whirl glimmers with ethereal colors resembling a night sky filled with shimmering stars. Elegantly spiraled arms cradle a mesmerizing gem that captures light like a celestial body, reflected in its depths. The enchanting design embodies the essence of cosmic beauty, evoking whispers of lost constellations and ancient prophecies. This ring enhances the wearer's connection to the cosmos, granting visions of alternate realities and the ability to draw upon celestial magic. Worn by oracles and stargazers, this ring serves as a bridge to the mysteries of the universe.", "legendary", 746),
-    new ringInfo("Parasitical Tendrils", "ring", "ring", ["raid"], "<:parasitical_tendrils:1336659107091841034>", "https://i.ibb.co/5x8BMbZR/Parasitical-Tendrils.png", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Drain
+    new ringInfo("Parasitical Tendrils", "ring", "ring", ["raid"], "<:parasitical_tendrils:1336659107091841034>", "https://i.ibb.co/5x8BMbZR/Parasitical-Tendrils.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Drain
 
         // Drain: 1/1.2/1.4/1.6/1.8/2% HP
         const drainAmount = Math.floor(myStats.hp * ([1, 1.2, 1.4, 1.6, 1.8, 2][level - 1] / 100));
