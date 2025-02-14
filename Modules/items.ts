@@ -2423,18 +2423,19 @@ export const items = [
 
     // Weapons - Genesis Sword
     new weaponInfo("Durin's Bane", "weapon", "sword", ["chest"], "<:durins_bane:1069025075036160020>", "https://i.imgur.com/TOWyMFD.png", "atk", 164, 1000, "atk", 92, 645, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        myStats.durinsBaneStacks = 0;
+        myStats.durinsBaneStacks = 0, myStats.durinsBaneRound = 0;
 
         // On hit
         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 caster.durinsBaneStacks++;
+                caster.durinsBaneRound = matchStats.round;
             };
         });
 
         // On miss
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats) {
+            if (target === eStats && myStats.durinsBaneRound === matchStats.round) {
                 caster.durinsBaneStacks = 0;
             };
         });
@@ -4325,7 +4326,7 @@ export const items = [
 
         // Debuff on miss
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats) {
+            if (target === myStats) {
                 const atkDebuff = Math.floor(eStats.atk * [20, 22, 24, 26, 28, 30][level - 1] / 100);
                 ebuff.atk.push(new buffInfo("+", -atkDebuff, 2));
                 eStats.atk -= atkDebuff;
@@ -4339,7 +4340,7 @@ export const items = [
 
         // On Enemy Dodge: buff ATK/MD
         matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats && myStats.shardOfInfinityStacks < 10) {
+            if (target === eStats && myStats.shardOfInfinityStacks < 10) {
                 myStats.shardOfInfinityStacks++;
 
                 const buffScale = [1.5, 1.7, 1.9, 2][level - 1] / 100;
