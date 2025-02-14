@@ -2435,7 +2435,7 @@ export const items = [
 
         // On miss
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (target === eStats && myStats.durinsBaneRound === matchStats.round) {
+            if (caster === myStats && myStats.durinsBaneRound === matchStats.round) {
                 caster.durinsBaneStacks = 0;
             };
         });
@@ -3507,7 +3507,7 @@ export const items = [
 
         // On enemy dodge: 30/35/40/45/50% chance to attack twice
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (target === eStats && Math.random() < [0.3, 0.35, 0.4, 0.45, 0.5][level - 1]) {
+            if (caster === myStats && Math.random() < [0.3, 0.35, 0.4, 0.45, 0.5][level - 1]) {
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                     matchStats.twinshot = 0;
                 }));
@@ -3714,7 +3714,7 @@ export const items = [
         matchStats.on("miss", {
             maxUsage: 5,
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (target === myStats) {
+                if (caster === eStats) {
                     myStats.hp -= Math.floor(myStats.maxhp * 0.03);
                     myStats.dodge += 0.03 + 0.01 * (level - 1);
                     myStats.br += 0.03 + 0.01 * (level - 1);
@@ -3743,7 +3743,7 @@ export const items = [
 
         // On own miss: -3% HP; +7.5/8.75/10% atk, +7.5/8.75/10% md for 2 turns
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (target === myStats) {
+            if (caster === eStats) {
                 const atkBuff = Math.floor(myStats.atk * (0.05 + 0.0125 * (level - 1)));
                 const mdBuff = Math.floor(myStats.md * (0.05 + 0.0125 * (level - 1)));
 
@@ -4326,7 +4326,7 @@ export const items = [
 
         // Debuff on miss
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (target === myStats) {
+            if (caster === myStats) {
                 const atkDebuff = Math.floor(eStats.atk * [20, 22, 24, 26, 28, 30][level - 1] / 100);
                 ebuff.atk.push(new buffInfo("+", -atkDebuff, 2));
                 eStats.atk -= atkDebuff;
@@ -4338,18 +4338,19 @@ export const items = [
 
         myStats.shardOfInfinityStacks = 0;
 
-        // On Enemy Dodge: buff ATK/MD
+        // On Enemy Dodge: buff ATK/MD (up to 10 times)
         matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (target === eStats && myStats.shardOfInfinityStacks < 10) {
                 myStats.shardOfInfinityStacks++;
 
+                // +1.5/1.7/1.9/2% ATK/MD
                 const buffScale = [1.5, 1.7, 1.9, 2][level - 1] / 100;
                 mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * buffScale), 9999));
                 mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * buffScale), 9999));
                 myStats.atk += Math.floor(myStats.atk * buffScale);
                 myStats.md += Math.floor(myStats.md * buffScale);
 
-                // Extend buff durations
+                // Extend buff durations by 1/1/1/2 rounds
                 Object.keys(mybuff).forEach((stat) => {
                     mybuff[stat as keyof Buffs].forEach((buff) => {
                         if (!buff.isDebuff) {
@@ -4363,7 +4364,7 @@ export const items = [
     }, (level) => `The wearer increases their own attack and magic damage by **${[1.5, 1.7, 1.9, 2][level - 1]}%** every time the enemy dodges an attack (up to **10** times), and extends all buff durations by **${[1, 1, 1, 2][level - 1]}** ${level === 4 ? "rounds" : "round"}.`, "The Shard of Infinity is a ring of exquisite craftsmanship, featuring a large, kaleidoscopic gem that seems to reflect the entire cosmos within its facets. The band, made from intricately twisted silver vines, cradles the gemstone as if safeguarding the secrets of the universe. Ethereal energies swirl around the gemstone, hinting at its ability to manipulate time and space. Wearers of this ring speak of glimpsing fleeting visions of alternate realities, harnessing the Shard's power for strategic advantage in battles. This ring is particularly sought after by scholars and mages eager to unlock the mysteries of existence.", "genesis", 760),
     new ringInfo("Golden Bough", "ring", "ring", ["chest"], "<:golden_bough:1338643191464984616>", "https://i.ibb.co/60gGtPbk/Golden-Bough.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // cd buff on revival
+        // +15/17.5/20/22.5/25/27.5/30% CD on revival
         matchStats.on("revival", {
             maxUsage: 1,
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
@@ -4383,11 +4384,13 @@ export const items = [
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
                     if (myStats.atk < myStats.md) {
-                        mybuff.atk.push(new buffInfo("+", myStats.md - myStats.atk, 9999));
-                        myStats.atk = myStats.md;
+                        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.atk = myStats.md;
+                        }, 9999));
                     } else {
-                        mybuff.md.push(new buffInfo("+", myStats.atk - myStats.md, 9999));
-                        myStats.md = myStats.atk;
+                        myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.md = myStats.atk;
+                        }, 9999));
                     };
 
                     return true;
@@ -4400,7 +4403,7 @@ export const items = [
 
         myStats.ringOfHeroism = 0;
 
-        // On every 3rd ability usage: ATK/MD += buff% (1 turn)
+        // On every 3rd ability usage: +15/22.5/20/22.5/25/27.5/30/32.5/35% ATK/MD (1 turn)
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 myStats.ringOfHeroism++;
@@ -4420,6 +4423,7 @@ export const items = [
 
         myStats.hasDepartedOne = true;
 
+        // On Ability: -20% HP (odd), +17.5/20/22.5/25/27.5/30% CR (even)
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 if (matchStats.round % 2 === 1) {
@@ -4440,6 +4444,7 @@ export const items = [
 
         myStats.hasPartedOne = true;
 
+        // On Ability: -20% HP (even), +27.5/30/32.5/35/37.5/40% CD (odd)
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 if (matchStats.round % 2 === 0) {
@@ -4457,12 +4462,12 @@ export const items = [
     }, (level) => `If an ability is used on an even turn, the wearer loses **20%** of their current HP (unless the wearer also has <:the_departed_one:1338646510392315924> The Departed One). If an ability is used on an odd turn, the wearer gains **${[27.5, 30, 32.5, 35, 37.5, 40][level - 1]}%** crit damage for **2** turns.`, "The Parted One ring is a mesmerizing piece that embodies a mix of elegance and mystery. Its band is made of finely crafted silver, shaped to resemble a twisting current that divides at the center. Here, a radiant gem glows in an enchanting aquamarine shade, continuously shifting and swirling like water caught in eternal motion. This ring grants its wearer the ability to navigate through tumultuous waters, quite literally and metaphorically, facilitating smoother paths during turbulent times. Lore speaks of seers who attune themselves to the energies of the sea, finding peace with the help of this remarkable ring.", "legendary", 765),
     new ringInfo("Glass Shard", "ring", "ring", ["chest"], "<:glass_shard:1338650597821255711>", "https://i.ibb.co/j9zZPVPM/Glass-Shard.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // 50% max HP
+        // -50% max HP
         myStatsFixed.maxhp -= Math.floor(myStatsFixed.maxhp * 0.5);
         myStats.maxhp -= Math.floor(myStats.maxhp * 0.5);
         myStats.hp = Math.min(myStats.maxhp, myStats.hp);
 
-        // 200% ATK/MD
+        // +30/35/40/45/50/55/60% ATK/MD
         const buffScale = [30, 35, 40, 45, 50, 55, 60][level - 1] / 100;
         mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * buffScale), 9999));
         mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * buffScale), 9999));
@@ -4486,10 +4491,10 @@ export const items = [
             },
         });
 
-    }, (level) => `After the first successful revival, increases the wearer's mana generation by **${[1, 2, 3][level - 1]}💧**`, "Cindercrest is a striking ring forged from darkened steel, with intricate patterns resembling swirling smoke etched into its surface. At its crown sits a smoldering ember-like gemstone that flickers with hues of red and orange, reminiscent of a dying star. This ring symbolizes transformation and regeneration, allowing its wearer to harness the raw power of fire and ash. Cindercrest is favored by warriors and mages alike who wish to wield the destructive forces of fire. Known to spark creativity and rebirth, it serves as a powerful reminder of the beauty that can emerge from chaos and destruction.", "mythical", 767),
+    }, (level) => `After the first successful revival, increases the wearer's mana generation by **${[1, 2, 3][level - 1]}💧**`, "Cindercrest is a striking ring forged from darkened steel, with intricate patterns resembling swirling smoke etched into its surface. At its crown sits a smoldering ember-like gemstone that flickers with hues of red and orange, reminiscent of a dying star. This ring symbolizes transformation and regeneration, allowing its wearer to harness the raw power of fire and ash. Cindercrest is favored by warriors and mages alike who wish to wield the destructive forces of fire. Known to spark creativity and rebirth, it serves as a powerful reminder of the beauty that can emerge from chaos and destruction.", "legendary", 767),
     new ringInfo("Glyph of Growth", "ring", "ring", ["chest"], "<:glyph_of_growth:1338654486067019827>", "https://i.ibb.co/JwKymcMJ/Glyph-of-Growth.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // Counter chance on crit received
+        // 20/22.5/25/27.5/30% counter chance on crit received
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             const counterChance = [20, 22.5, 25, 27.5, 30][level - 1] / 100;
             if (caster === eStats && Math.random() < counterChance && myStats.counter === 0) {
@@ -4500,7 +4505,7 @@ export const items = [
     }, (level) => `After being hit by a critical strike, the wearer has a **${[20, 22.5, 25, 27.5, 30][level - 1]}%** chance of countering the next attack.`, "The Glyph of Growth is a striking ring, crafted from deep green metal entwined with intricate vine patterns that hint at its nature magic. Elegant purple and vibrant green gemstones are embedded into the band, radiating a soft, ethereal glow. The centerpiece is a larger, emerald-like stone that pulses with an inner light, symbolizing the essence of life itself. Those who wear this ring experience an enhanced affinity with nature, allowing for improved communication with flora and increased powers in healing arts. Ancient runes are etched along the sides of the band, whispering secrets of plant growth and rejuvenation.", "mythical", 768),
     new ringInfo("Gemweaver", "ring", "ring", ["chest"], "<:gemweaver:1338656064262115468>", "https://i.ibb.co/6RGNBM3T/Gemweaver.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // On Crit Received: Heal % of missing HP
+        // On Crit Received: Heal 3/3.5/4/4.5/5% of missing HP
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === eStats) {
                 const heal = Math.floor((myStats.maxhp - myStats.hp) * ([3, 3.5, 4, 4.5, 5][level - 1] / 100));
@@ -4522,7 +4527,7 @@ export const items = [
     }, (level) => `After dealing a critical strike, the wearer heals **${[3, 3.5, 4, 4.5, 5][level - 1]}%** of their missing HP.`, "The Reversed Vinebound ring is a striking blend of elegance and dark magic. Crafted from glossy, obsidian metal, its design includes sculpted vines that curve upwards, encasing a luminescent blue gemstone at its core. Each vine is adorned with small, jagged crystals that seem to be pulling away, representing a break from natural ties. The inner band is engraved with enigmatic runes that resonate with the wearer's inner strength and resilience. This ring empowers those who seek to break free from nature's constraints, providing buffs to spellcasting while enhancing innate abilities, making it perfect for warlocks and renegade druids.", "legendary", 770),
     new ringInfo("Stoneheart", "ring", "ring", ["chest"], "<:stoneheart:1338658007612915822>", "https://i.ibb.co/chn2PNbD/Stoneheart.png", 7, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        // +15-30% max HP
+        // +15/17.5/20/22.5/25/27.5/30% max HP
         const hpBuff = [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
         myStats.myStatsFixed += Math.floor(myStats.myStatsFixed * hpBuff);
         myStats.maxhp += Math.floor(myStats.maxhp * hpBuff);
@@ -4537,7 +4542,7 @@ export const items = [
 
         myStats.eclipseGemStacks = 0;
 
-        // On Skill: every 3rd skill: Heal 7.5/10/12.5% max HP, steal 7/10/13💧
+        // On every 3rd skill: Heal 4/5/6/7/7.5% max HP, steal 3/3/4/4/5 💧
         matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 myStats.eclipseGemStacks++;
