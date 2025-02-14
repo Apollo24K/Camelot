@@ -1218,7 +1218,7 @@ export const abilities: Record<number, Ability> = {
                 myStats.rukiaUsedActive = false;
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ Hakka no Togame! **${char.name}**`, { atkMultiplier: 2, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
 
-                const shatterdmg = eStats.frozenwounds * 1.5;
+                const shatterdmg = Math.floor(eStats.frozenwounds * 1.5);
                 eStats.hp -= shatterdmg;
                 notice.push(`\n❄️ Frozen wounds shattered and dealt **${shatterdmg}** damage!`);
                 if (eStats.hp < 0) eStats.hp = 0;
@@ -2393,7 +2393,7 @@ export const abilities: Record<number, Ability> = {
                 eStats.marked += 4;
                 notice.push(`\n𓇬 The enemy is now marked for ${eStats.marked} rounds!`);
             }
-            // || myStats.sm >= 60 && myStats.sm < 100 && myStats.temple == 0
+
             // Condition: When not in temple state but still can mark enemy
             else if (myStats.sm >= 80 && myStats.sm < 110) {
                 // Mark enemy
@@ -2440,10 +2440,12 @@ export const abilities: Record<number, Ability> = {
                     if (myStats.cr > 1) myStats.cr = 1;
                     eStats.def -= Math.floor(eStats.def * 0.15 * multiplier);
                     eStats.mr -= Math.floor(eStats.mr * 0.15 * multiplier);
-                } else notice.push(`\n𓇬 The enemy lost the mark of Skandha...`);
+                    
+                    if (eStats.marked === 0) notice.push(`\n𓇬 The enemy lost the mark of Skandha...`);}
 
-                if (myStats.temple > 0) myStats.temple--;
-                else notice.push(`\n💡 The temple of wisdom withered... ⋆.ೃ࿔*:･`);
+                if (myStats.temple > 0) {
+                    myStats.temple--;
+                    if (myStats.temple === 0) notice.push(`\n💡 The temple of wisdom withered... ⋆.ೃ࿔*:･`);}
             }, 9999));
 
             // Gain +6 mana when critting a marked enemy
