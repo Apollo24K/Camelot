@@ -157,9 +157,9 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "def": baseDEF(id),
         "bdef": 1,
         "ep": 0,
-        "md": 0,
+        "md": baseATK(id),
         "bmd": 1,
-        "mr": 0,
+        "mr": baseDEF(id),
         "bmr": 0,
         "cr": 0.18,
         "cd": 1.25,
@@ -236,8 +236,10 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
     const bankup = Math.max(0, Math.floor((Math.sqrt((2 * (inv.bank)) + (100 * (dStats.lvl * dStats.lvl)) + (700 * dStats.lvl) + 1225) / 10) - 3.5 - dStats.lvl));
     dStats.hp = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.hp) + Math.round((lvlupStats[characters[id].rarity].hp.base + (lvlupStats[characters[id].rarity].hp.add * ((strCode(id) % 10) / 9))) * (dStats.lvl - 1 + bankup));
     dStats.atk = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.atk) + Math.round((lvlupStats[characters[id].rarity].atk.base + (lvlupStats[characters[id].rarity].atk.add * ((dStats.atk - 50) / 30))) * (dStats.lvl - 1 + bankup));
+    dStats.md = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.md) + Math.round((lvlupStats[characters[id].rarity].atk.base + (lvlupStats[characters[id].rarity].atk.add * ((dStats.md - 50) / 30))) * (dStats.lvl - 1 + bankup));
     dStats.def = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.def) + Math.round((lvlupStats[characters[id].rarity].def.base + (lvlupStats[characters[id].rarity].def.add * ((dStats.def - 50) / 30))) * (dStats.lvl - 1 + bankup));
-    dStats.bhp = dStats.hp, dStats.td = dStats.atk, dStats.md = dStats.atk, dStats.batk = dStats.atk, dStats.bmd = dStats.atk, dStats.mr = dStats.def, dStats.bdef = dStats.def, dStats.bmr = dStats.def;
+    dStats.mr = Math.floor((1 + (0.3333 * dStats.ref)) * dStats.mr) + Math.round((lvlupStats[characters[id].rarity].def.base + (lvlupStats[characters[id].rarity].def.add * ((dStats.mr - 50) / 30))) * (dStats.lvl - 1 + bankup));
+    dStats.bhp = dStats.hp, dStats.td = dStats.atk, dStats.batk = dStats.atk, dStats.bmd = dStats.md, dStats.bdef = dStats.def, dStats.bmr = dStats.mr;
 
     if (dStats.class !== -1) {
         const clsStats = classes[dStats.class].stats;

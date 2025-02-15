@@ -61,6 +61,25 @@ function itemsToShow(show: (itemInfo & { uid?: string; })[]) {
     return desc;
 };
 
+function getItemPool(grade: ItemRarity, wishlist: number[]) {
+    const fItems = items.filter((e) => e.obtain.includes("chest") && e.grade === grade);
+    return fItems.reduce((acc, e) => wishlist.includes(e.id) ? [...acc, e.id, e.id] : [...acc, e.id], [] as number[]);
+};
+
+function getItemPools(wishlist: number[]) {
+    const fIds: Record<ItemRarity, number[]> = {
+        "genesis": getItemPool("genesis", wishlist),
+        "mythical": getItemPool("mythical", wishlist),
+        "legendary": getItemPool("legendary", wishlist),
+        "unique": getItemPool("unique", wishlist),
+        "rare": getItemPool("rare", wishlist),
+        "special": getItemPool("special", wishlist),
+        "normal": getItemPool("normal", wishlist),
+    };
+
+    return fIds;
+};
+
 const exportCommand: SlashCommand = {
     name: 'open',
     async execute({ interaction, author }) {
@@ -138,7 +157,7 @@ const exportCommand: SlashCommand = {
             // Amount to open
             if (amountFlag.toLowerCase() === "max") amount = stats.items[chest.id];
             if (amount < 1) return interaction.editReply(`You can't open ${amount} chests.`);
-            if (amount > 100) return interaction.editReply(`You can't open more than 100 chests at once.`);
+            if (amount > 1000) return interaction.editReply(`You can't open more than 1000 chests at once.`);
             if (amount > stats.items[chest.id]) return interaction.editReply(`You don't have ${amount} chests`);
 
             // Update users table
@@ -150,14 +169,16 @@ const exportCommand: SlashCommand = {
                 items: { type: "merge_json", value: newItemsValues },
             });
 
+            // Get item pools to draw from
+            const fIds = getItemPools(stats.itemwishlist);
+
             // Generate drops
             const drops: (itemInfo & { uid?: string; })[] = [];
             for (let j = 0; j < chest.drops * amount; j++) {
                 let grade = weightedRandom(chest.dropratesFull);
                 if (chest.id === 458 && j % 6 === 0 && ++stats.genesispity >= 24) grade = "genesis";
                 if (chest.id === 458 && grade === "genesis") stats.genesispity = 0;
-                const fItems = items.filter((e) => e.obtain.includes("chest") && e.grade === grade);
-                drops.push(fItems[Math.floor(Math.random() * fItems.length)]);
+                drops.push(items[fIds[grade][Math.floor(Math.random() * fIds[grade].length)]]);
 
                 // Insert new weapon
                 const drop = await insertNewWeapon(interaction.user.id, drops[j].id, drops[j].category);

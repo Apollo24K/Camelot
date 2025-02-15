@@ -611,6 +611,39 @@ const exportCommand: SlashCommand = {
                 };
                 */
 
+                /* //! 2B Something
+                // Nier Pod Programmes
+                if (itemChoice.toLowerCase().startsWith(`prog`)) {
+                    let action = itemChoice.toLowerCase().split(" ")[1] ?? "info";
+                    if (action === "remove") {
+                        delete stats.equipment["prog"];
+                        equipped.push(`Unequipped Pod's programme`);
+                    }
+                    else if (action === "info") {
+                        // Show list of programmes
+                        let progmsg = "`Gravity` : Gathers foes every **3** turns, reducing their ATK, MD, DEF, MR, Block rate and Dodge rate by **25%** for **1** turn.\n`Mirage` : Analyzes foes every **3** turns, increasing own critical rate by **20%** before guaranteeing **2** hits of **20%** DMG on the enemy.\n`Repair` : Initiates restoration every **3** turns, applying a **10%** max HP heal over **2** turns.\n`Scanner` : Sharply locates loot, increasing coins obtained from dungeons by **15%**.\n`Remove` : Removes any existing programme from the pod.";
+                        return interaction.reply(`⚙️ Correct usage: /item equip item:prog <action>. Valid programmes actions:\n\n${progmsg}`)
+                    }
+                    else if (action === "gravity"||action === "mirage"||action === "repair"||action === "scanner") {
+                        // Dictionary of pod and relevant effects
+                        const proglist = {
+                            "gravity" : "Gathers foes every **3** turns, reducing their ATK, MD, DEF, MR, Block rate and Dodge rate by **25%** for **1** turn.",
+                            "mirage" : "Analyzes foes every **3** turns, increasing own critical rate by **20%** before guaranteeing **2** hits of **20%** DMG on the enemy.",
+                            "repair" : "Initiates restoration every **3** turns, applying a **10%** max HP heal over **2** turns.",
+                            "scanner" : "Sharply locates loot, increasing coins obtained from dungeons by **15%**.",
+                            "remove" : "Removes any existing programme from the pod."
+                        };
+                        
+                        // Equips programme + shows relevant effect
+                        stats.equipment["prog"] = action;
+                        equipped.push(`**__Programme: ${action}__**`);
+                        return interaction.reply(proglist[action])
+                    }
+                    else return interaction.reply(`Unrecognized programme! Equip "prog info" to learn the list of available programmes!`);
+                    continue;
+                };
+                */
+
                 const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
                 if (!item) {
                     const fItem = searchItem(itemChoice, interaction);
@@ -742,7 +775,7 @@ const exportCommand: SlashCommand = {
 
             const fItem = searchItem(choice, interaction);
             if (!fItem) return;
-            if (!(fItem.category === "armor" || fItem.category === "weapon")) return interaction.reply(`You can only wish for weapons or armor pieces`);
+            if (!(fItem.category === "armor" || fItem.category === "weapon" || fItem.category === "ring")) return interaction.reply(`You can only wish for weapons, armor pieces or rings`);
 
             const newWishList = [fItem.id, ...wished.filter((item) => (item.grade !== fItem.grade) && (item.id !== fItem.id)).map((item) => item.id)];
 

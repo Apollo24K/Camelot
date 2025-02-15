@@ -1,7 +1,3 @@
-// import { migrateData } from './migration';
-// import { query as postgresQuery } from './postgres';
-// console.log(postgresQuery);
-
 const sqlite3 = require('sqlite3').verbose();
 export const db = new sqlite3.Database('./sqliteDB.db', sqlite3.OPEN_READWRITE, (err) => {
     if (err) console.error(err.message);
@@ -333,8 +329,3 @@ async function addMissingTrialItems() {
 //     const et = new Date().getTime();
 //     console.log(et-st+"ms", img);
 // });
-
-
-
-// Start migration
-// migrateData().catch(console.error);

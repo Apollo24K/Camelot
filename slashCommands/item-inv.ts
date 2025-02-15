@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
-import { armorInfo, items, weaponInfo } from "../Modules/items";
+import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { showPage, getItemLevel, customEmojis } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { ItemRarity, SlashCommand, WeaponSchema } from '../types';
@@ -40,6 +40,10 @@ function list(grade: ItemRarity, show: any[], type: "weapon" | "loot" = "loot", 
         };
         return arr;
     } else if (type === "weapon") {
+        if (show[0].item_type === "ring") {
+            return show.filter((b) => items[b.itemid].grade === grade).map((e) => `${items[e.itemid].bar}${locked.includes(e.uniqueid.split(":")[0]) ? "🔒" : ""}\`${e.uniqueid.split(":")[0]}\` | ${items[e.itemid].emoji} __**${items[e.itemid].name}**__ Lvl. **${e.level + 1}**/${(items[e.itemid] as ringInfo).maxlevel}`);
+        };
+
         return show.filter((b) => items[b.itemid].grade === grade).map((e) => `${items[e.itemid].bar}${locked.includes(e.uniqueid.split(":")[0]) ? "🔒" : ""}\`${e.uniqueid.split(":")[0]}\` | ${items[e.itemid].emoji} __**${items[e.itemid].name}**__ Lvl. **${getItemLevel(e.level)}**/${(e.ascension * 10) + 20} ➜ ${getAscension(e.ascension)}`);
     };
 
@@ -100,6 +104,8 @@ function detailedPage(item: WeaponSchema) {
         pstat += Math.floor(fItem.psmin + ((fItem.psmax - fItem.psmin) / 150) * ((itemLevel - 1) + (item.ascension * 3)));
 
         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + itemLevel + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**${fItem.setname}**: ${set[0].emoji + set[1].emoji + set[2].emoji + set[3].emoji}\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
+    } else if (fItem instanceof ringInfo) {
+        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.join(", ")}\n**Ascension**: **${item.level + 1}**/${fItem.maxlevel}\n\n**Passive${fItem.maxlevel > (item.level + 1) ? ` (Asc. ${item.level + 1})` : ""}**: ${fItem.getBuffDesc(item.level + 1)}${fItem.maxlevel > 1 ? `\n\n**Passive${fItem.maxlevel > 2 ? ` (Asc. ${fItem.maxlevel})` : ""}**: ${fItem.getBuffDesc(fItem.maxlevel)}` : ""}`);
     };
 
     return Embed;

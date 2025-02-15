@@ -1,4 +1,3 @@
-/* eslint-disable no-mixed-spaces-and-tabs */
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const { token, clientId } = require('./config.json');
@@ -10,6 +9,7 @@ const commands = [
 			.setName('ability')
 			.setDescription('Look up characters with abilities')
 			.addStringOption(option => option.setName('character').setDescription('Get more information about a characters ability').setRequired(false))
+			.addBooleanOption(option => option.setName('compact').setDescription('Display in compact view').setRequired(false))
 			.addStringOption(option =>
 				option.setName('filter')
 					.setDescription('Select a filter')
@@ -827,6 +827,17 @@ const commands = [
 							{ name: 'boots', value: 'boots' },
 						)
 				)
+				.addStringOption(option =>
+					option.setName('flag')
+						.setDescription('Choose how to display the items')
+						.setRequired(false)
+						.addChoices(
+							{ name: 'detailed', value: 'detailed' },
+						)
+				))
+			.addSubcommand((subcommand) => subcommand.setName('ring').setDescription('See your ring inventory')
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 				.addStringOption(option =>
 					option.setName('flag')
 						.setDescription('Choose how to display the items')

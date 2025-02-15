@@ -14,6 +14,7 @@ const exportCommand: SlashCommand = {
         let choice = interaction.options.getString('character');
         const filter = interaction.options.getString('filter');
         let page = interaction.options.getInteger('page') || 1;
+        let isSummary = interaction.options.getBoolean('compact') ?? false;
         let selection: "single" | "list" = choice ? "single" : "list";
 
         const inv = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
@@ -75,10 +76,16 @@ const exportCommand: SlashCommand = {
             ];
 
             if (selection === "single") {
-                components.push(new ButtonBuilder()
-                    .setURL(`https://sites.google.com/view/camelotbuilds/abilities/characters/${fArray.name.toLowerCase().replace(/[.'()]/g, '').replace(/ /g, '-')}`)
-                    .setLabel("Community Builds")
-                    .setStyle(ButtonStyle.Link));
+                components.push(
+                    new ButtonBuilder()
+                        .setCustomId('summary')
+                        .setLabel(isSummary ? "Full" : "Compact")
+                        .setStyle(ButtonStyle.Primary),
+                    new ButtonBuilder()
+                        .setURL(`https://sites.google.com/view/camelotbuilds/abilities/characters/${fArray.name.toLowerCase().replace(/[.'()]/g, '').replace(/ /g, '-')}`)
+                        .setLabel("Community Builds")
+                        .setStyle(ButtonStyle.Link)
+                );
             };
 
             const row = new ActionRowBuilder<ButtonBuilder>()
@@ -94,8 +101,18 @@ const exportCommand: SlashCommand = {
                 .setColor(0xbbffff)
                 .setTitle(selection === "single" ? `${fArray.name}'s Ability` : `Characters with ${filter ? (filter === "ability" ? "Active " : `${filter[0].toUpperCase()}${filter.slice(1)} `) : ""}Abilities`)
                 .setThumbnail(selection === "single" ? fArray.image : chars[Math.floor(Math.random() * chars.length)].image)
-                .setDescription(selection === "single" ? abilities[fArray.id].desc : `Use \`/ability <char>\` for more information\n\n${showCharsF.join("\n")}`)
-                .setFooter({ text: selection === "single" ? `Page ${singleCurrPage}/${singlePagesTotal}` : `Page ${currPage}/${pagesTotal}` });
+                .setDescription(
+                    selection === "single"
+                        ? isSummary
+                            ? abilities[fArray.id].shortdesc
+                            : abilities[fArray.id].desc
+                        : `Use \`/ability <char>\` for more information\n\n${showCharsF.join("\n")}`
+                )
+                .setFooter({
+                    text: selection === "single"
+                        ? `Page ${singleCurrPage}/${singlePagesTotal}${isSummary ? " | ⚠️ Compact View is only available for your convenience and may include inaccuracies, please refer to the full version for the most accurate information." : ""}`
+                        : `Page ${currPage}/${pagesTotal}`
+                });
         };
 
         let Embed = changeEmbed();
@@ -104,6 +121,7 @@ const exportCommand: SlashCommand = {
             const prev = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 90000 });
             const next = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 90000 });
             const view = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "view", componentType: ComponentType.Button, time: 90000 });
+            const summary = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "summary", componentType: ComponentType.Button, time: 90000 });
 
             prev.on('collect', async r => {
                 if (selection === "single") {
@@ -111,16 +129,17 @@ const exportCommand: SlashCommand = {
                     else singleCurrPage = singlePagesTotal;
 
                     fArray = chars[singleCurrPage - 1];
-                    Embed.setTitle(`${fArray.name}'s Ability`).setThumbnail(fArray.image).setDescription(abilities[fArray.id].desc).setFooter({ text: `Page ${singleCurrPage}/${singlePagesTotal}` });
+                    // Embed.setTitle(`${fArray.name}'s Ability`).setThumbnail(fArray.image).setDescription(abilities[fArray.id].desc).setFooter({ text: `Page ${singleCurrPage}/${singlePagesTotal}` });
                 } else {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
 
                     showCharsF = showPage(currPage, showChars, elementsPerPage);
 
-                    Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    // Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 };
 
+                Embed = changeEmbed();
                 interaction.editReply({ embeds: [Embed], components: [r1()] });
             });
 
@@ -131,16 +150,17 @@ const exportCommand: SlashCommand = {
 
                     fArray = chars[singleCurrPage - 1];
 
-                    Embed.setTitle(`${fArray.name}'s Ability`).setThumbnail(fArray.image).setDescription(abilities[fArray.id].desc).setFooter({ text: `Page ${singleCurrPage}/${singlePagesTotal}` });
+                    // Embed.setTitle(`${fArray.name}'s Ability`).setThumbnail(fArray.image).setDescription(abilities[fArray.id].desc).setFooter({ text: `Page ${singleCurrPage}/${singlePagesTotal}` });
                 } else {
                     if (currPage < pagesTotal) currPage++;
                     else currPage = 1;
 
                     showCharsF = showPage(currPage, showChars, elementsPerPage);
 
-                    Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    // Embed.setDescription(`Use \`/ability <char>\` for more information\n\n` + showCharsF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 };
 
+                Embed = changeEmbed();
                 interaction.editReply({ embeds: [Embed], components: [r1()] });
             });
 
@@ -150,6 +170,14 @@ const exportCommand: SlashCommand = {
 
                 Embed = changeEmbed();
                 interaction.editReply({ embeds: [Embed], components: [r1()] });
+            });
+
+            summary.on('collect', async r => {
+                if (selection === "single") {
+                    isSummary = !isSummary;
+                    Embed = changeEmbed();
+                    interaction.editReply({ embeds: [Embed], components: [r1()] });
+                };
             });
 
         });

@@ -1,6 +1,7 @@
 import sqlite3 from 'sqlite3';
 import { query } from './postgres';
 import { query as sqliteQuery } from './db_handler';
+import { characters as charInfoChars } from './Modules/chars';
 
 const sqliteDb = new sqlite3.Database('./sqliteDB.db', sqlite3.OPEN_READONLY);
 
@@ -62,8 +63,12 @@ export const migrateData = async () => {
                     user.weeklyclaimed, user.dailyclaimed, user.dailystreak,
                     user.lastdaily ? new Date(user.lastdaily) : null,
                     user.pullcount, user.pullstacks, user.pullstacksinterval,
-                    user.pullstotal, user.lastss, user.lasts, user.premium,
-                    user.pullresets, user.ssshard, user.sshard, user.ashard,
+                    user.pullstotal, user.lastss, user.lasts, user.premium, user.pullresets,
+                    user.ssshard + Object.entries(JSON.parse(charData.ref) as Record<string, number>)
+                        .filter(([key,]) => charInfoChars[key as any].rarity === "SS" || charInfoChars[key as any].rarity === "EX")
+                        .filter(([, value]) => value > 2)
+                        .reduce((a, [, b]) => a + (b > 3 ? 4 : 1), 0),
+                    user.sshard, user.ashard,
                     user.bshard, user.cshard, user.dshard, user.ssticket,
                     user.sticket, user.aticket, user.bticket, user.cticket,
                     user.dticket, user.votestotal, user.arenawins,
@@ -72,8 +77,8 @@ export const migrateData = async () => {
                     user.pullreminder, user.votereminder, user.items,
                     JSON.parse(user.skins), user.eventpts, user.brbest,
                     user.eventrewreceived, user.gems, JSON.parse(user.tutorial),
-                    user.transactions, user.dailies, user.guild,
-                    user.donatedtotal, user.genesispity, user.presets,
+                    JSON.parse(user.transactions), user.dailies, user.guild,
+                    user.donatedtotal, user.genesispity, JSON.parse(user.presets),
                     JSON.parse(user.itemlock), user.party, user.stampedechar,
                     user.mailreceived, user.eventpts2, user.class,
                     user.aboutme, user.profilecolor, user.jades, user.pass, user.passlevel,
@@ -91,7 +96,7 @@ export const migrateData = async () => {
                     user.cow_participation, [], user.cow_timer,
                     user.cow_rolled_today, user.rank, user.rankscore, user.raidxp,
                     user.guild_marks, new Date(user.created),
-                    JSON.parse(charData.chars), charData.ref, charData.level,
+                    JSON.parse(charData.chars), {}, charData.level,
                     charData.class, charData.skin, charData.equipment,
                     dungeonData.floors, dungeonData.limit, JSON.parse(dungeonData.classes),
                     dungeonData.classlevels, dungeonData.responsetime.split(',').filter(Boolean).map(Date.parse),

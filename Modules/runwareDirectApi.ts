@@ -27,10 +27,11 @@ const runwareModel: Record<RunwareModel, ModelParameters> = {
     },
     "Anything V3": {
         model: "civitai:66@75",
-        scheduler: "DPM++ 2M Karras",
-        promptWeighting: "sdEmbeds",
         steps: 30,
         CFGScale: 8,
+        promptWeighting: "sdEmbeds",
+        scheduler: "DPM++ 2M Karras",
+        vae: "civitai:22354@88156",
     },
     "PrimeMix": {
         model: "civitai:28779@67388",
@@ -38,14 +39,14 @@ const runwareModel: Record<RunwareModel, ModelParameters> = {
         CFGScale: 8,
         promptWeighting: "sdEmbeds",
         scheduler: "DPM++ 2M Karras",
-        // vae: "civitai:22354@88156",
         vae: "civitai:22354@88156",
+        // vae: "avalon:101@1",
         embeddings: [
             {
                 model: "civitai:7808@9536",
                 weight: 1
             }
-        ]
+        ],
     },
 };
 
@@ -398,6 +399,8 @@ export const removeBackground = runwareApi.removeBackground.bind(runwareApi);
 
 // Model Upload Usage
 async function uploadVae() {
+    // console.log("Uploading VAE model...");
+
     const vaeAir = await runwareApi.uploadVaeModel({
         name: "OriginalAnythingV3VAE",
         version: "1.0",
@@ -407,3 +410,4 @@ async function uploadVae() {
         description: "A custom VAE for better image quality"
     });
 };
+// uploadVae();

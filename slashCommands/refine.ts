@@ -114,22 +114,25 @@ export default exportCommand;
 
 
 
-// const { characters } = require("../Modules/chars.js");
+// import { characters } from "../Modules/chars.js";
 // (async () => {
-//     for (const id of ["489490486734880774", "386942536314519552", "557223261209886730"]) {
-//         const { 0: inv } = await query(`SELECT users.id, users.class, users.coins, users.bank, users.ssshard, users.sshard, users.ashard, users.bshard, users.cshard, users.dshard, users.premium, users.shield_slot, characters.chars, characters.ref, users.level, users.equipment, characters.skin, dungeon.classlevels FROM characters JOIN dungeon ON characters.id = dungeon.id JOIN users ON characters.id = users.id WHERE characters.id = ${id}`);
-//         inv.chars = JSON.parse(inv.chars), inv.ref = JSON.parse(inv.ref), inv.equipment = JSON.parse(inv.equipment), inv.skin = JSON.parse(inv.skin), inv.classlevels = JSON.parse(inv.classlevels);
+//     const ids = ["489490486734880774", "386942536314519552", "557223261209886730"];
 
-//         // console.log("Total Refinements:", Object.values(inv.ref).reduce((a, b) => a + b, 0));
-//         // console.log("Reduced Refinements:", Object.values(inv.ref).filter(x => x > 1).reduce((a, b) => a + b, 0));
-//         // console.log("Reduced Refinements:", Object.values(inv.ref).filter(x => x > 2).map(x => x > 4 ? 5 : (x < 4 ? 1 : x)).reduce((a, b) => a + b, 0));
+//     for (const id of ids) {
+//         const inv = await getUserSchema(id);
+//         if (inv) {
+//             console.log(inv.name);
+//             // console.log("Total Refinements:", Object.values(inv.char_ref).reduce((a, b) => a + b, 0));
+//             // console.log("Reduced Refinements:", Object.values(inv.char_ref).filter(x => x > 1).reduce((a, b) => a + b, 0));
+//             // console.log("Reduced Refinements:", Object.values(inv.char_ref).filter(x => x > 2).map(x => x > 4 ? 5 : (x < 4 ? 1 : x)).reduce((a, b) => a + b, 0));
 
-//         const chars = Object.entries(inv.ref)
-//             .filter(([key,]) => characters[key].rarity === "SS" || characters[key].rarity === "EX")
-//             .filter(([, value]) => value > 2)
-//             .reduce((a, [, b]) => a + (b > 3 ? 4 : 1), 0);
+//             const chars = Object.entries(inv.char_ref)
+//                 .filter(([key,]) => characters[key as any].rarity === "SS" || characters[key as any].rarity === "EX")
+//                 .filter(([, value]) => value > 2)
+//                 .reduce((a, [, b]) => a + (b > 3 ? 4 : 1), 0);
 
-//         console.log(`${chars} (${chars / 21})`);
+//             console.log(`${chars} (${chars / 21})`);
+//         };
 //     };
 // })();
 

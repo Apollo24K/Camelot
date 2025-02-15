@@ -1,4 +1,7 @@
 import { createCanvas, SKRSContext2D } from '@napi-rs/canvas';
+import * as math from 'mathjs';
+import { getResponseTimes } from './queries';
+import { User } from 'discord.js';
 
 interface GraphOptions {
     width?: number;
@@ -150,3 +153,79 @@ function drawLabels(
     // ctx.fillText('Frequency', 0, 0);
     // ctx.restore();
 }
+
+export async function getResponseData(user: User | null, flags: string[] = []): Promise<{ reply: string, imageBuffer?: Buffer; } | { reply?: string, imageBuffer: Buffer; }> {
+    if (!user) return { reply: "No user provided" };
+
+    const timestamps = await getResponseTimes(user.id, { stampede: flags.includes("stampede") });
+    let resp = timestamps.map((e, i) => (timestamps[i + 1]?.getTime() ?? 0) - e.getTime()).slice(0, -2);
+    if (flags.some((e) => e.startsWith("range:"))) {
+        const [, start, end] = (flags.find((e) => e.startsWith("range:")) ?? "range:0").split(":");
+        resp = resp.slice(parseInt(start) || 0, parseInt(end) || undefined);
+    };
+    if (flags.some((e) => e.startsWith("interval:"))) {
+        let [, intervalString, averaged] = (flags.find((e) => e.startsWith("interval:")) ?? "interval:1").split(":");
+        let interval = parseInt(intervalString) || 1;
+        if (interval < 1) interval = 1;
+        const summed = [];
+        for (let i = 0; i < resp.length; i += interval) {
+            const sum = resp.slice(i, i + interval).reduce((acc, num) => acc + num, 0);
+            if (averaged) summed.push(Math.round(sum / interval));
+            else summed.push(sum);
+        };
+        resp = summed;
+    };
+    const cleaned = resp.filter((e) => e < 120 * 1000);
+    if (cleaned.length === 0) return { reply: "not enough data" };
+    const rounded = resp.map((e) => Math.round(e / 1000));
+    const diff = -(math.mean(...cleaned.slice(-100)));
+
+    if (flags.includes("graph")) {
+        const distribution: Record<number, number> = {};
+        const ndiff = -(math.mean(resp.filter((e) => e < 20 * 1000).slice(-30000)));
+        resp.filter((e) => e < 20 * 1000)
+            .map((e) => Math.round((e + ndiff) / 1000))
+            .forEach((e) => distribution[e] = distribution[e] + 1 || 1);
+
+        const imageBuffer = createResponseGraph(distribution, {
+            title: `Normalized Response Time Distribution (${user.username})`,
+        });
+
+        return { imageBuffer };
+    } else {
+        let minVar = 1 / 0, idx = 0;
+        for (let i = 0; i < cleaned.length - 100; i += 10) {
+            if (math.variance(cleaned.slice(i, i + 100)) as any < minVar) {
+                minVar = math.variance(cleaned.slice(i, i + 100)) as any;
+                idx = i;
+            };
+        };
+        let risky = minVar === 1 / 0 ? "" : `\n\n**Highest Risk** (std: ${Math.round(Math.sqrt(minVar) / 10) / 100}s, var: ${Math.round(minVar / 10000) / 100}s²):\n> ` + cleaned.slice(idx, idx + 100).map((e) => Math.round(e / 1000)).join(", ").slice(-(400));
+
+        // Longest seesion
+        const sessions = [-rounded[0]];
+        const maxBreak = parseInt((flags.find((e) => e.startsWith("session:")) ?? "session:300").split(":")[1]) || 300;
+        for (const n of rounded) {
+            if (n < maxBreak) sessions[sessions.length - 1] += n;
+            else sessions.push(0);
+        };
+
+        // Return txt
+        const txtFlag = flags.find((e) => e.startsWith("txt"));
+        if (txtFlag) {
+            const param = txtFlag.split(":")[1];
+            if (!param) return { reply: rounded.join(",") };
+            if (param === "raw") return { reply: resp.join(",") };
+            if (param === "cleaned") return { reply: cleaned.join(",") };
+            if (param === "sessions") return { reply: sessions.join(",") };
+            if (param === "timestamps") return { reply: timestamps.map((e) => e.getTime()).join(",") };
+        };
+
+        const s = `**user**: ${user.username} | ${user.id}\n**sample size**: ${cleaned.length} | ${cleaned.slice(-100).length}\n**mean**: ${Math.round(math.mean(cleaned) / 10) / 100}s | ${Math.round(math.mean(cleaned.slice(-100)) / 10) / 100}s\n**median**: ${Math.round(math.median(cleaned) / 10) / 100}s | ${Math.round(math.median(cleaned.slice(-100)) / 10) / 100}s\n**mode**: ${math.mode(rounded)}s | ${math.mode(rounded.slice(-100))}s\n**std**: ${Math.round(math.std(cleaned) as any / 10) / 100}s | ${Math.round(math.std(cleaned.slice(-100)) as any / 10) / 100}s\n**var**: ${Math.round(math.variance(cleaned) as any / 10000) / 100}s² | ${Math.round(math.variance(cleaned.slice(-100)) as any / 10000) / 100}s²\n**Longest session**: ${Math.floor((Math.max(...sessions) / (60 * 60)) * 100) / 100}h\n\n**Recent Activity**:\n> `;
+        return {
+            reply: s + rounded.join(", ").slice(-(1400 - risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e + diff) / 1000)).join(", ").slice(-(600 - 20 - s.length)) + risky
+        };
+        // return interaction.reply({content: s + rounded.join(", ").slice(-(1400-risky.length)) + `\n\n**Normalized**:\n> ` + resp.slice(-100).map((e) => Math.round((e+diff)/1000)).join(", ").slice(-(600-20-s.length)) + risky, ephemeral});
+    };
+};
+

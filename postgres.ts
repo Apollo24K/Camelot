@@ -77,12 +77,12 @@ async function createTables() {
         eventrewreceived INT DEFAULT 0 NOT NULL,
         gems BIGINT DEFAULT 0 NOT NULL,
         tutorial INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
-        transactions JSONB DEFAULT '[]' NOT NULL,
+        transactions JSONB[] DEFAULT ARRAY[]::JSONB[] NOT NULL,
         dailies JSONB DEFAULT '{}' NOT NULL,
         guild TEXT,
         donatedtotal BIGINT DEFAULT 0 NOT NULL,
         genesispity INT DEFAULT 0 NOT NULL,
-        presets JSONB DEFAULT '[]' NOT NULL,
+        presets JSONB[] DEFAULT ARRAY[]::JSONB[] NOT NULL,
         itemlock TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         party TEXT,
         stampedechar INT,
@@ -460,7 +460,6 @@ async function createTriggers() {
 };
 
 async function alterTables() {
-    // This function can be used for migrations
     // Example:
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INT DEFAULT 0 NOT NULL');
 
@@ -480,6 +479,17 @@ async function dropTables() {
     // await query('DROP TABLE IF EXISTS trades CASCADE');
     // await query('DROP TABLE IF EXISTS faq CASCADE');
     // await query('DROP TABLE IF EXISTS raids CASCADE');
+};
+
+//* Start migration
+// import { migrateData } from './migration';
+async function resetDatabase(migrate: boolean = false) {
+    // await dropTables();
+    // await createTables();
+    // await createIndexes();
+    // await alterTables();
+    // await createTriggers();
+    // if (migrate) await migrateData().catch(console.error);
 };
 
 // Self-executing async function to initialize database

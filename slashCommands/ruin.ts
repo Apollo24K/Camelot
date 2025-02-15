@@ -54,7 +54,7 @@ function ruin(input: string): string {
       });
    });
 
-   if (Object.keys(matches).length === 0) return `I'm sorry I couldn't ruin \`${input}\` by changing only 1 letter.\nIf you know of a good pun, please \`/submit\` it to us so we can improve the algorithm!`;
+   if (Object.keys(matches).length === 0) return `I'm sorry I couldn't ruin \`${input}\` by changing only 1 letter.\nIf you know of a good pun, feel free to let us know on our \`/support\` server so we can improve the algorithm!`;
    const weightedMatch = weightedRandom(matches);
 
    return input.toLowerCase().replace(weightedMatch, matches[weightedMatch][Math.floor(Math.random() * matches[weightedMatch].length)]);
