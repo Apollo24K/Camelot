@@ -223,9 +223,9 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(0, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             if (myStats.usedBlockRound === matchStats.round) { // Def used last round (40% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** throws magma balls at you and`, { atkMultiplier: 0.4, ignoreShield: true, dodge: false, block: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 0.4, ignoreShield: true, dodge: false, block: false });
             } else { // Def not used last round (200% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** throws magma balls at you and`, { atkMultiplier: 2, ignoreShield: true, dodge: false, block: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 2, ignoreShield: true, dodge: false, block: false });
             }
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -240,9 +240,9 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(1, 150, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             if (myStats.usedBlockRound === matchStats.round) { // Def used last round (50% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** throws magma balls at you`, { atkMultiplier: 0.5, ignoreShield: true, dodge: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 0.5, ignoreShield: true, dodge: false });
             } else { // Def not used last round (250% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** throws magma balls at you`, { atkMultiplier: 2.5, ignoreShield: true, dodge: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 2.5, ignoreShield: true, dodge: false });
             }
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -256,7 +256,7 @@ export const raidBosses: enemyInfo[] = [
                 if (matchStats.round === 20) { // Erupts at round 20, can't be revived
                     myStats.rev = 0;
                     myStats.hp = 0;
-                    notice.push(`\n⚜️ **${enemy.name}** erupted and ended the fight.`);
+                    notice.push(`\n<:eruption:1340451903506616350> **${enemy.name}** erupted and ended the fight.`);
                 }
             }, 9999));
 
@@ -266,7 +266,7 @@ export const raidBosses: enemyInfo[] = [
     new enemyInfo("Velourith", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 5 }, {}, { mana: 120 }, [], ["https://i.ibb.co/Gpz18Kg/c.png"], [], 2,
         new skillInfo(2, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.retaliationDamage += 0.1;
-            notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **10%**`);
+            notice.push(`\n<:retaliation:1340455881736716359> **${enemy.name}** increases her retaliation damage by **10%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.lightningResistance = 1;
@@ -275,7 +275,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < 0.4 && matchStats.round % 2 === 0) {
                     eStats.sm += 30;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
 
@@ -286,7 +286,7 @@ export const raidBosses: enemyInfo[] = [
 
             eStats.retaliationDamage += 0.2;
 
-            notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **15%**`);
+            notice.push(`\n<:retaliation:1340455881736716359> **${enemy.name}** increases her retaliation damage by **15%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -296,7 +296,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < 0.4) {
                     eStats.sm += 40;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
 
                 }
             });
@@ -309,7 +309,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(4, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.retaliationDamage += 0.25;
 
-            notice.push(`\n⚜️ **${enemy.name}** increases her retaliation damage by **15%**`);
+            notice.push(`\n<:retaliation:1340455881736716359> **${enemy.name}** increases her retaliation damage by **15%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -319,7 +319,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < 0.4) {
                     eStats.sm += 60;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
 
@@ -333,7 +333,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(5, 300, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             // Deal 500% damage
-            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: 5, magicDamage: true, selfdmg: true });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:vortex_attack:1340457236031602749> **${enemy.name}** created a vortex! **${enemy.name}**`, { atkMultiplier: 5, magicDamage: true, selfdmg: true });
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // Always deals md
@@ -366,7 +366,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(6, 120, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.counter = 2;
-            notice.push(`\n⚜️ **${enemy.name}** prepares to counter the next 2 attacks`);
+            notice.push(`\n<:counter:1340459549374546032>  **${enemy.name}** prepares to counter the next 2 attacks`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -383,7 +383,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(7, 80, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.counter = 3;
-            notice.push(`\n⚜️ **${enemy.name}** prepares to counter the next **3** attacks`);
+            notice.push(`\n<:counter:1340459549374546032>  **${enemy.name}** prepares to counter the next **3** attacks`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -410,7 +410,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.sm += -eStats.roundCost;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s absorb damage`, { overwriteDamage: eStats.damageTakenBuff * 0.6, dodge: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:sand_absorb:1340461883748126881> **${enemy.name}**'s absorbed damage`, { overwriteDamage: eStats.damageTakenBuff * 0.6, dodge: false });
                 eStats.damageTakenBuff += -Math.floor(eStats.damageTakenBuff * 0.5);
 
             }, Math.floor(eStats.sm / eStats.roundCost)));
@@ -419,7 +419,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.damageTakenBuff += eStats.damageTaken;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s reflect`, { overwriteDamage: Math.floor(eStats.damageTaken * 0.2) });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:sand_absorb:1340461883748126881> **${enemy.name}**'s reflect`, { overwriteDamage: Math.floor(eStats.damageTaken * 0.2) });
                 //? gets part of it back?: addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.damageTaken * 0.2), {});
                 eStats.damageTaken = 0;
             }, 9999));
