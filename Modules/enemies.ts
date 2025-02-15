@@ -982,7 +982,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚡ **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.4, mdChance: 0.5 });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning:1340309243827458139> **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.4, mdChance: 0.5 });
             }, 5));
             eStats.cr = 0.5;
             eStats.cd = 1.5;
