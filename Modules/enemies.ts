@@ -653,41 +653,52 @@ export const raidBosses: enemyInfo[] = [
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.ignoreShield = true;
+            const buffMax = 2.5, buffScale = 0.00025;
+
+            // +0.025% of shield as atk and md (max 250%) //* 10k shield = 250% atk
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.atk += Math.floor(myStats.atk * (myStats.shield * 0.00025)); // 0.025% of shield, 10k shield = 250% atk
-                myStats.md += Math.floor(myStats.md * (myStats.shield * 0.00025)); // 0.025% of shield, 10k shield = 250% md
+                myStats.atk += Math.floor(myStats.atk * Math.min(myStats.shield * buffScale, buffMax));
+                myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax)); 
             }, 9999));
 
-        }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md", "**Active**: Takes all of your shield (**100** <:mana:1047269152957661255>)"]])
+        }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md, up to 250%", "**Active**: Takes all of your shield (**85** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Runesmith Kraghammer", "Golem", "the Warbreaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 16, //needs Image
         new skillInfo(16, 105, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:steal_shield:1340630053695918100> **${enemy.name}** took your shield and threw it back at you! **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.shield * 0.7), ignoreShield: true, dodge: false, block: false }); //? How much damage is that?
+            //? How much damage is that?
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:steal_shield:1340630053695918100> **${enemy.name}** took your shield and threw it back at you! **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.shield * 0.7), ignoreShield: true, dodge: false, block: false });
             notice.push(`\n<:steal_shield:1340630053695918100> YOUR SHIELD IS MINE!`);
+            
             eStats.shield += Math.floor(myStats.shield * 0.5);
             myStats.shield = Math.floor(myStats.shield * 0.3);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.ignoreShield = true;
+            const buffMax = 2.5, buffScale = 0.00025;
+
+            // +0.025% of shield as atk and md (max 250%) //* 10k shield = 250% atk
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.atk += Math.floor(myStats.atk * (myStats.shield * 0.00025)); // 0.025% of shield, 10k shield = 250% atk
-                myStats.md += Math.floor(myStats.md * (myStats.shield * 0.00025)); // 0.025% of shield, 10k shield = 250% md
+                myStats.atk += Math.floor(myStats.atk * Math.min(myStats.shield * buffScale, buffMax));
+                myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax)); 
             }, 9999));
 
-        }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md", "**Active**: Takes 70% of your shield and deals 50% of your shield as damage (**105** <:mana:1047269152957661255>)"]])
+        }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md, up to 250%", "**Active**: Takes 50% of your shield and deals 70% of your shield as damage (**105** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Cake Witch, the Baking Bad", "Witch", "the Corrupted Depression", "F", true, { mdChance: 1 }, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 17, //needs Image
         new skillInfo(17, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            eStats.md += Math.floor(myStats.md * 0.05);
-            ebuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.05), 9999));
-            myStats.md += -Math.floor(myStats.md * 0.05);
-            mybuff.md.push(new buffInfo("+", -Math.floor(myStats.md * 0.05), 9999));
-            eStats.mr += Math.floor(eStats.mr * 0.03);
-            ebuff.mr.push(new buffInfo("+", Math.floor(eStats.mr * 0.03), 9999));
+            const atkScale = 0.05, mrScale = 0.03;
 
+            eStats.md += Math.floor(myStats.md * atkScale);
+            ebuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkScale), 9999));
+            myStats.md += -Math.floor(myStats.md * atkScale);
+            mybuff.md.push(new buffInfo("+", -Math.floor(myStats.md * atkScale), 9999));
+            eStats.mr += Math.floor(eStats.mr * mrScale);
+            ebuff.mr.push(new buffInfo("+", Math.floor(eStats.mr * mrScale), 9999));
+
+            //? More Fun Message: @freezerfallen
             notice.push(`\n<:cakey:1340671224430329928> **${enemy.name}** took 5% of your magic damage and added it to her own`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -695,11 +706,14 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats && !options.isMagicDamage) {
                     myStats.maxhp -= Math.floor(myStats.maxhp * 0.03);
+                    myStats.hp -= Math.floor(myStats.hp * 0.03);
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
+                    //? More Fun Message: @freezerfallen
+                    notice.push(`\n<:cakey:1340671224430329928> **${enemy.name}** took 3% of your max HP`);
                 }
             });
 
-        }, [["Reduces character max hp by 3%, when attacking with physical damage", "**Active**: Steals 5% of your magic damage and gets 3% magic resistance (**55** <:mana:1047269152957661255>)"]])
+        }, [["Reduces character max hp by 3%, when you attack with physical damage", "**Active**: Steals 5% of your magic damage and gets 3% magic resistance (**55** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Velkris", "Duo", "the Miss Duo", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 18, //needs Image
         new skillInfo(18, 85, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
