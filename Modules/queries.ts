@@ -63,6 +63,11 @@ export const getWeaponSchemas = async (uniqueids: string[]): Promise<WeaponSchem
     return weapons;
 };
 
+export const getWeaponDupeSchemas = async (itemId: number, userId: string): Promise<WeaponSchema[]> => {
+    const weapons = await query(`SELECT * FROM weapons WHERE itemid = $1 AND id = $2`, [itemId, userId]) as WeaponSchema[];
+    return weapons;
+};
+
 export const getGuildSchema = async (id: string): Promise<GuildSchema | undefined> => {
     const [guild] = await query(`SELECT * FROM guilds WHERE id = $1`, [id]) as [GuildSchema];
     return guild;
