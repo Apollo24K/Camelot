@@ -4,7 +4,7 @@ import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel 
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
 import { ItemCategory, ItemRarity, ItemType, SlashCommand } from "../types";
-import { getUserSchema, getWeaponCount, getWeaponSchema, updateUsers, updateWeapons } from "../Modules/queries";
+import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, updateUsers, updateWeapons } from "../Modules/queries";
 
 function getAscension(lvl: number) {
     let asc = "";
@@ -268,9 +268,10 @@ const exportCommand: SlashCommand = {
             const limit = (item.ascension * 10) + 20;
             let currLevel = getItemLevel(item.level);
             if (currLevel === 170) return interaction.reply(`You have reached the maximum level.`);
+            if (fItem instanceof ringInfo && (item.level + 1) >= fItem.maxlevel) return interaction.reply(`You have reached the maximum level.`);
 
             // Separate ascension and levelup
-            if (currLevel === limit) {
+            if (currLevel === limit && !(fItem instanceof ringInfo)) {
                 // Ascend
                 const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
                 const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade) as lootInfo;
@@ -347,6 +348,65 @@ const exportCommand: SlashCommand = {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     });
                 });
+            } else if (fItem instanceof ringInfo) {
+                const dItems = await getWeaponDupeSchemas(fItem.id, interaction.user.id);
+                if (dItems.length < 1) return interaction.reply(`You don't have any duplicates of ${fItem.emoji} **__${fItem.name}__**`);
+
+                // Get lowest level item
+                dItems.sort((a, b) => a.level - b.level);
+                const dItem = dItems[0];
+
+                const Embed = new EmbedBuilder()
+                    .setTitle(fItem.name)
+                    .setColor(0xbbffff)
+                    .setDescription(`Do you want to ascend ${fItem.emoji} **__${fItem.name}__** to **${item.level + 2}**/${fItem.maxlevel} by consuming ${fItem.emoji} **__${fItem.name}__** (UID: \`${dItem.uniqueid.split(":")[0]}\`)?`)
+                    .setThumbnail(fItem.image);
+                return interaction.reply({ embeds: [Embed], components: [OfferRow] }).then(msg => {
+                    const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
+                    const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
+
+                    confirm.on('collect', async () => {
+                        confirm.stop(), cancel.stop();
+
+                        const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
+                        if (!item) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`Couldn't find item with id \`${itemChoice}\``);
+                            return;
+                        };
+                        if (fItem instanceof ringInfo && (item.level + 1) >= fItem.maxlevel) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`You have reached the maximum level.`);
+                            return;
+                        };
+                        if (fItem.id !== item.itemid) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`Couldn't find ring with id \`${itemChoice}\``);
+                            return;
+                        };
+
+                        const dItems = await getWeaponDupeSchemas(fItem.id, interaction.user.id);
+                        if (dItems.length < 1) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have any duplicates of ${fItem.emoji} **__${fItem.name}__**`);
+                            return;
+                        };
+                        if (dItems.find((e) => e.uniqueid === dItem.uniqueid) === undefined) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`Couldn't find ring with UID \`${dItem.uniqueid.split(":")[0]}\`, please try again.`);
+                            return;
+                        };
+
+                        // Delete duplicate
+                        await deleteWeapon(dItem.uniqueid);
+
+                        // Update weapons table
+                        await updateWeapons(`${itemChoice}:${interaction.user.id}`, {
+                            level: { type: "increment", value: 1 },
+                        });
+                    });
+
+                    cancel.on('collect', () => {
+                        confirm.stop(), cancel.stop();
+                        if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
+                    });
+                });
+
             } else {
                 const matsToUse = {
                     "20": {
