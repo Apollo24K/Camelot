@@ -392,7 +392,7 @@ const exportCommand: SlashCommand = {
                             return;
                         };
 
-                        // Delete duplicate
+                        // Delete duplicate 
                         await deleteWeapon(dItem.uniqueid);
 
                         // Update weapons table
