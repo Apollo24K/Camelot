@@ -392,6 +392,8 @@ const exportCommand: SlashCommand = {
                             return;
                         };
 
+                        //@PokeLink - frick you
+
                         // Delete duplicate
                         await deleteWeapon(dItem.uniqueid);
 
