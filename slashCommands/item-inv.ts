@@ -41,7 +41,7 @@ function list(grade: ItemRarity, show: any[], type: "weapon" | "loot" = "loot", 
         return arr;
     } else if (type === "weapon") {
         if (show[0].item_type === "ring") {
-            return show.filter((b) => items[b.itemid].grade === grade).map((e) => `${items[e.itemid].bar}${locked.includes(e.uniqueid.split(":")[0]) ? "🔒" : ""}\`${e.uniqueid.split(":")[0]}\` | ${items[e.itemid].emoji} __**${items[e.itemid].name}**__ Lvl. **${e.level + 1}**/${(items[e.itemid] as ringInfo).maxlevel}`);
+            return show.filter((b) => items[b.itemid].grade === grade).map((e) => `${items[e.itemid].bar}${locked.includes(e.uniqueid.split(":")[0]) ? "🔒" : ""}\`${e.uniqueid.split(":")[0]}\` | ${items[e.itemid].emoji} __**${items[e.itemid].name}**__ Asc. **${e.level + 1}**/${(items[e.itemid] as ringInfo).maxlevel}`);
         };
 
         return show.filter((b) => items[b.itemid].grade === grade).map((e) => `${items[e.itemid].bar}${locked.includes(e.uniqueid.split(":")[0]) ? "🔒" : ""}\`${e.uniqueid.split(":")[0]}\` | ${items[e.itemid].emoji} __**${items[e.itemid].name}**__ Lvl. **${getItemLevel(e.level)}**/${(e.ascension * 10) + 20} ➜ ${getAscension(e.ascension)}`);

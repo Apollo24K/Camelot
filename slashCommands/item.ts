@@ -86,11 +86,11 @@ const exportCommand: SlashCommand = {
 
             const Embeds: EmbedBuilder[] = [];
 
-            for (const choice of choices.split(",").filter((s) => s).map((s) => s.trim())) {
+            const choiceArr = choices.split(",").filter((s) => s).map((s) => s.trim());
+            for (const choice of choiceArr) {
                 if (flag === "my") {
                     const item = await getWeaponSchema(`${choice}:${user.id}`);
                     if (!item) continue;
-                    item.level = getItemLevel(item.level);
                     const fItem = items[item.itemid];
 
                     const Embed = new EmbedBuilder()
@@ -100,6 +100,8 @@ const exportCommand: SlashCommand = {
                         .setFooter({ text: `ID: #${fItem.id}` });
 
                     if (fItem instanceof weaponInfo) {
+                        item.level = getItemLevel(item.level);
+
                         let pstat = 0, sstat = 0;
 
                         // Primary Stat
@@ -126,12 +128,26 @@ const exportCommand: SlashCommand = {
                         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n**Secondary Stat**: ${sstat < 1 ? Math.round(sstat * 100) + "%" : sstat} ${customEmojis[fItem.secondaryStat] || fItem.secondaryStat}\n\n**Passive**: ${fItem.buffdesc}`);
                         Embeds.push(Embed);
                     } else if (fItem instanceof armorInfo) {
+                        item.level = getItemLevel(item.level);
+
                         const set = items.filter((e) => ((e instanceof armorInfo) && (e.setname === fItem.setname))) as armorInfo[];
 
                         let pstat = 0;
                         pstat += Math.floor(fItem.psmin + ((fItem.psmax - fItem.psmin) / 150) * ((item.level - 1) + (item.ascension * 3)));
 
                         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Level**: ${"**" + item.level + "**/" + ((item.ascension * 10) + 20) + " ➜ " + getAscension(item.ascension)}\n\n**${fItem.setname}**: ${set[0].emoji + set[1].emoji + set[2].emoji + set[3].emoji}\n**Primary Stat**: ${pstat} ${customEmojis[fItem.primaryStat] || fItem.primaryStat}\n\n**Set Bonus**: ${set[3].buffdesc}`);
+                        Embeds.push(Embed);
+                    } else if (fItem instanceof ringInfo) {
+                        Embed.setDescription(
+                            `**Grade**: ${fItem.gradeEmote}\n` +
+                            `**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n` +
+                            `**Unique ID**: \`${item.uniqueid.split(":")[0]}\`\n` +
+                            `**Level**: **${item.level + 1}**/${fItem.maxlevel}\n\n` +
+                            `**Passive${fItem.maxlevel > 1 ? " (Asc. 1)" : ""}**: ${fItem.getBuffDesc(1)}\n\n` +
+                            `${fItem.maxlevel > 1 ? `**Passive (Asc. ${fItem.maxlevel})**: ${fItem.getBuffDesc(fItem.maxlevel)}\n\n` : ""}` +
+                            `>>> ${fItem.flair}`
+                        );
+
                         Embeds.push(Embed);
                     };
                 } else {
@@ -349,7 +365,7 @@ const exportCommand: SlashCommand = {
                     });
                 });
             } else if (fItem instanceof ringInfo) {
-                const dItems = await getWeaponDupeSchemas(fItem.id, interaction.user.id);
+                const dItems = await getWeaponDupeSchemas(fItem.id, interaction.user.id, item.uniqueid);
                 if (dItems.length < 1) return interaction.reply(`You don't have any duplicates of ${fItem.emoji} **__${fItem.name}__**`);
 
                 // Get lowest level item
@@ -359,7 +375,7 @@ const exportCommand: SlashCommand = {
                 const Embed = new EmbedBuilder()
                     .setTitle(fItem.name)
                     .setColor(0xbbffff)
-                    .setDescription(`Do you want to ascend ${fItem.emoji} **__${fItem.name}__** to **${item.level + 2}**/${fItem.maxlevel} by consuming ${fItem.emoji} **__${fItem.name}__** (UID: \`${dItem.uniqueid.split(":")[0]}\`)?`)
+                    .setDescription(`Do you want to ascend ${fItem.emoji} **__${fItem.name}__** (\`${item.uniqueid.split(":")[0]}\`) to Asc. **${item.level + 2}**/${fItem.maxlevel}\nby consuming ${fItem.emoji} **__${fItem.name}__** (\`${dItem.uniqueid.split(":")[0]}\`)?`)
                     .setThumbnail(fItem.image);
                 return interaction.reply({ embeds: [Embed], components: [OfferRow] }).then(msg => {
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
@@ -382,7 +398,7 @@ const exportCommand: SlashCommand = {
                             return;
                         };
 
-                        const dItems = await getWeaponDupeSchemas(fItem.id, interaction.user.id);
+                        const dItems = await getWeaponDupeSchemas(fItem.id, interaction.user.id, item.uniqueid);
                         if (dItems.length < 1) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have any duplicates of ${fItem.emoji} **__${fItem.name}__**`);
                             return;
@@ -392,8 +408,6 @@ const exportCommand: SlashCommand = {
                             return;
                         };
 
-                        //@PokeLink - frick you
-
                         // Delete duplicate
                         await deleteWeapon(dItem.uniqueid);
 
@@ -401,10 +415,14 @@ const exportCommand: SlashCommand = {
                         await updateWeapons(`${itemChoice}:${interaction.user.id}`, {
                             level: { type: "increment", value: 1 },
                         });
+
+                        interaction.editReply({ components: [] });
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully ascended ${fItem.emoji} __**${fItem.name}**__!`);
                     });
 
                     cancel.on('collect', () => {
                         confirm.stop(), cancel.stop();
+                        interaction.editReply({ components: [] });
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     });
                 });
