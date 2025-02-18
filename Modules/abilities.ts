@@ -2639,7 +2639,7 @@ export const abilities: Record<number, Ability> = {
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${name}**`, { atkMultiplier: 0.6, ignoreShield: true, magicDamage: true, mdChance: -1 });
                     ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.1), 2));
                     ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.1), 2));
-                    eStats.def -= Math.floor(eStats.def * 0.1);
+                    eStats.def -= Math.floor(eStats.def * 0.1);                    
                     eStats.mr -= Math.floor(eStats.mr * 0.1);
                 };
             }, 9999));
