@@ -79,8 +79,8 @@ const exportCommand: SlashCommand = {
                 components.push(
                     new ButtonBuilder()
                         .setCustomId('summary')
-                        .setLabel(isSummary ? "Full Desc" : "Compact Desc")
-                        .setStyle(ButtonStyle.Secondary),
+                        .setLabel(isSummary ? "Full" : "Compact")
+                        .setStyle(ButtonStyle.Primary),
                     new ButtonBuilder()
                         .setURL(`https://sites.google.com/view/camelotbuilds/abilities/characters/${fArray.name.toLowerCase().replace(/[.'()]/g, '').replace(/ /g, '-')}`)
                         .setLabel("Community Builds")

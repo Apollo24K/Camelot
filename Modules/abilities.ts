@@ -2574,7 +2574,7 @@ export const abilities: Record<number, Ability> = {
             };
             myStats.sm -= mana_cost;
 
-            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stormbolt:1068649152898154546> **${char.name}**`, { atkMultiplier: atkbuff, mdChance: -1, magicDamage: true, dodge: false, ignoreShield: true });
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stormbolt:1340378654919884981> **${char.name}**`, { atkMultiplier: atkbuff, mdChance: -1, magicDamage: true, dodge: false, ignoreShield: true });
         },
         passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -2584,11 +2584,11 @@ export const abilities: Record<number, Ability> = {
             myStats.mg += 20;
 
             // Electric
-            myStats.replaceButton.ability = { "emoji": "<:stormbolt:1068649152898154546>" };
+            myStats.replaceButton.ability = { "emoji": "<:stormbolt:1340378654919884981>" };
 
             // Stone Cannon
             myStats.replaceButton.atk = {
-                "emoji": "<:stone_cannon:1140023818254028982>",
+                "emoji": "<:stonecannon:1340376201058844733>",
                 "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                     let mana_cost = 10, normal_dmg = 0.1, magic_damage = 1;
                     if (matchStats.round > 10) mana_cost = 20, normal_dmg = 0.4, magic_damage = 1.2;
@@ -2597,14 +2597,14 @@ export const abilities: Record<number, Ability> = {
                     if (mana_cost > myStats.sm) return dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}** is out of mana and`, { atkMultiplier: normal_dmg, magicDamage: false });
 
                     myStats.sm -= mana_cost;
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stone_cannon:1140023818254028982> **${char.name}**`, { atkMultiplier: magic_damage, magicDamage: true, mdChance: -1 }); // normal magical damage
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stone_cannon:1140023818254028982> **${char.name}**`, { atkMultiplier: normal_dmg, magicDamage: false }); // 10% physical damage
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${char.name}**`, { atkMultiplier: magic_damage, magicDamage: true, mdChance: -1 }); // normal magical damage
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${char.name}**`, { atkMultiplier: normal_dmg, magicDamage: false }); // 10% physical damage
                 },
             };
 
             // Quagmire
             myStats.replaceButton.def = {
-                "emoji": "<:quagmire:1140026835225292841>",
+                "emoji": "<:quagmire:1340378636284461116>",
                 "run": (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                     let mana_cost = 20, dodge_buff = 0.5, def_debuff = 0.15;
                     if (matchStats.round > 10) mana_cost = 30, dodge_buff = 0.75, def_debuff = 0.25;
@@ -2620,7 +2620,7 @@ export const abilities: Record<number, Ability> = {
                     eStats.dodge = 0;
                     eStats.def -= Math.floor(eStats.def * def_debuff);
                     eStats.mr -= Math.floor(eStats.mr * def_debuff);
-                    notice.push(`\n<:quagmire:1140026835225292841> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%**`);
+                    notice.push(`\n<:quagmire:1340378636284461116> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%**`);
                 },
             };
 
@@ -2628,7 +2628,7 @@ export const abilities: Record<number, Ability> = {
         party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const name = pStats.name;
             if (Math.random() < 0.3) {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.6, ignoreShield: true, magicDamage: true, mdChance: -1 });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${name}**`, { atkMultiplier: 0.6, ignoreShield: true, magicDamage: true, mdChance: -1 });
                 ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.1), 2));
                 ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.1), 2));
                 eStats.def -= Math.floor(eStats.def * 0.1);
@@ -2636,10 +2636,10 @@ export const abilities: Record<number, Ability> = {
             };
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (Math.random() < 0.3) {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${name}**`, { atkMultiplier: 0.6, ignoreShield: true, magicDamage: true, mdChance: -1 });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${name}**`, { atkMultiplier: 0.6, ignoreShield: true, magicDamage: true, mdChance: -1 });
                     ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.1), 2));
                     ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.1), 2));
-                    eStats.def -= Math.floor(eStats.def * 0.1);
+                    eStats.def -= Math.floor(eStats.def * 0.1);                    
                     eStats.mr -= Math.floor(eStats.mr * 0.1);
                 };
             }, 9999));

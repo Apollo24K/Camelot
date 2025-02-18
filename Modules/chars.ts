@@ -16301,7 +16301,7 @@ export const characters: charInfo[] = [
     new charInfo("Tighnari", [], anime[30], "M", "https://i.ibb.co/HD3zQLB/c.png", 16196, "B"),
     new charInfo("Kuki Shinobu", [], anime[30], "F", "https://i.ibb.co/wwBCK6D/c.png", 16197, "C"),
     new charInfo("Nilou", [], anime[30], "F", "https://i.ibb.co/tQnC4N4/c.png", 16198, "C"),
-    new charInfo("Nahida", [], anime[30], "F", "https://i.ibb.co/QYn17y1/c.png", 16199, "C"),
+    new charInfo("Nahida", [], anime[30], "F", "https://i.ibb.co/4Zm0h4N8/c.png", 16199, "SS"),
     new charInfo("Shikanoin Heizou", [], anime[30], "M", "https://i.ibb.co/Gp4mK9b/c.png", 16200, "C"),
     new charInfo("Kaveh", [], anime[30], "M", "https://i.ibb.co/kqgrsN6/c.png", 16201, "C"),
     new charInfo("Dehya", [], anime[30], "F", "https://i.ibb.co/TRVFm2R/c.png", 16202, "C"),
