@@ -1244,35 +1244,35 @@ const commands = [
 	// 		.addStringOption(option => option.setName('assistantprompt').setDescription('Set your assistant prompt input').setRequired(false))
 	// 		.addIntegerOption(option => option.setName('tokens').setDescription('Set the amount of tokens ChatGPT should use').setRequired(false))
 	// }.data.toJSON(),
-	//{
-	// 	data: new SlashCommandBuilder()
-	// 		.setName('fluxadmin')
-	// 		.setDescription('generate flux images')
-	// 		.addStringOption(option => 
-	// 			option.setName('item')
-	// 				.setDescription('Select an item')
-	// 				.setRequired(true)
-	// 				.addChoices(
-	// 					{ name: 'ring', value: 'ring' },
-	// 					{ name: 'sword', value: 'sword' },
-	// 					{ name: 'bow', value: 'bow' },
-	// 					{ name: 'staff', value: 'staff' },
-	// 					{ name: 'shield', value: 'shield' },
-	// 					{ name: 'lance', value: 'lance' },
-	// 					{ name: 'dagger', value: 'dagger' },
-	// 					{ name: 'axe', value: 'axe' },
-	// 					{ name: 'armor', value: 'armor' },
-	// 					{ name: 'runes', value: 'runes' },
-	// 					{ name: 'artifacts', value: 'artifacts' },
-	// 					{ name: 'items', value: 'items' },
-	// 					{ name: 'own', value: 'own' },
-	// 				)
-	// 		)
-	// 		.addStringOption(option => option.setName('devprompt').setDescription('Set your developer prompt input').setRequired(false))
-	// 		.addStringOption(option => option.setName('userprompt').setDescription('Set your prompt input').setRequired(false))
-	// 		.addStringOption(option => option.setName('assistantprompt').setDescription('Set your assistant prompt input').setRequired(false))
-	// 		.addIntegerOption(option => option.setName('tokens').setDescription('Set the amount of tokens ChatGPT should use').setRequired(false))
-	// }.data.toJSON(),
+	{
+	 	data: new SlashCommandBuilder()
+	 		.setName('fluxadmin')
+	 		.setDescription('generate flux images')
+	 		.addStringOption(option => 
+	 			option.setName('item')
+	 				.setDescription('Select an item')
+	 				.setRequired(true)
+	 				.addChoices(
+	 					{ name: 'ring', value: 'ring' },
+	 					{ name: 'sword', value: 'sword' },
+	 					{ name: 'bow', value: 'bow' },
+	 					{ name: 'staff', value: 'staff' },
+	 					{ name: 'shield', value: 'shield' },
+	 					{ name: 'lance', value: 'lance' },
+	 					{ name: 'dagger', value: 'dagger' },
+	 					{ name: 'axe', value: 'axe' },
+	 					{ name: 'armor', value: 'armor' },
+	 					{ name: 'runes', value: 'runes' },
+	 					{ name: 'artifacts', value: 'artifacts' },
+	 					{ name: 'items', value: 'items' },
+	 					{ name: 'own', value: 'own' },
+	 				)
+	 		)
+	 		.addStringOption(option => option.setName('devprompt').setDescription('Set your developer prompt input').setRequired(false))
+	 		.addStringOption(option => option.setName('userprompt').setDescription('Set your prompt input').setRequired(false))
+	 		.addStringOption(option => option.setName('assistantprompt').setDescription('Set your assistant prompt input').setRequired(false))
+	 		.addIntegerOption(option => option.setName('tokens').setDescription('Set the amount of tokens ChatGPT should use').setRequired(false))
+	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('rolling')

@@ -200,7 +200,7 @@ class RunwareDirectApi {
                 category: "vae",  // Specify that we're uploading a VAE
                 architecture,
                 format: "safetensors",  // Most VAEs are in safetensors format
-                air: `${config.runware.source}:${airId}@1`,
+                // air: `${config.runware.source}:${airId}@1`,
                 uniqueIdentifier,
                 name,
                 version,
