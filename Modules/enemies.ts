@@ -1,10 +1,9 @@
 import { ActionRowBuilder, ButtonStyle, ButtonBuilder } from "discord.js";
-import { Buffs, CharacterRarity, Gender, IenemyInfo, IskillInfo, MatchStats } from "../types";
+import { Buffs, CharacterRarity, Gender, IenemyInfo, IskillInfo } from "../types";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
 import skillInfo from "./skills";
-import Trigger from "./trigger";
 
 export class enemyInfo implements IenemyInfo {
     private _name: string;
@@ -16,12 +15,12 @@ export class enemyInfo implements IenemyInfo {
     private _multStats: object;
     private _addStats: object;
     private _loot: number[];
-    private _image: string[];
+    private _image: Array<`https://${string}`>;
     private _floor: number[];
     private _id: number;
     private _ability?: IskillInfo;
 
-    constructor(name: string, species: string, title: string, gender: Gender, boss: boolean, setStats: object, multStats: object, addStats: object, loot: number[], image: string[], floor: number[], id: number, ability?: IskillInfo) {
+    constructor(name: string, species: string, title: string, gender: Gender, boss: boolean, setStats: object, multStats: object, addStats: object, loot: number[], image: Array<`https://${string}`>, floor: number[], id: number, ability?: IskillInfo) {
         this._name = name;
         this._species = species;
         this._title = title;
@@ -409,7 +408,8 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["All counters increase its DEF by **100**", "**Active**: Counters the next **3** attacks (**110** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Dusty", "Dust Elemental", "the Dust Storm", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 8, //! needs Image
+
+    new enemyInfo("Dusty", "Dust Elemental", "the Dust Storm", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/SDBcJcTk/dusty.png"], [], 8,
         new skillInfo(8, 120, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             const defScale = 0.075;
@@ -441,14 +441,15 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Reflects 20% of accumulated damage every round ", "**Active**: Decreases his DEF and MR by **7.5%** but reflects 60% of all accumulated damage back, which decreases by 50% every round (**120** <:mana:1047269152957661255>, **25** <:mana:1047269152957661255> per round)"]])    
     ),
-    new enemyInfo("Nekro", "Necromancer", "the Death Caller", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 9, //! needs Image
+
+    new enemyInfo("Nekro", "Necromancer", "the Death Caller", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/1Yt4DdYZ/nekro.png"], [], 9,
         new skillInfo(9, 140, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             notice.push(`\n<:summon:1340620694655995925> **${enemy.name}** summons a minion with 20% of its stats`);
             matchStats.eStatsCC = { ...eStats };
             matchStats.currentOpponent = 1;
             const statScale = 0.2;
-            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; // Minion Placeholder
+            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; //! Minion Placeholder
             embed.setImage(eStats.image);
 
             eStats.hp = Math.floor(eStats.maxhp * statScale * 0.01); //! HP Scaling
@@ -469,14 +470,14 @@ export const raidBosses: enemyInfo[] = [
             });
         }, [["Scales attack and magic damage based on your missing HP", "**Active**: Summons a minion with 20% of your stats (**140** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("NecroVamp", "Necromancer", "the Death Eater", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 10, //! needs Image
+    new enemyInfo("NecroVamp", "Necromancer", "the Death Eater", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/H0sjR0p/nekrovamp.png"], [], 10,
         new skillInfo(10, 150, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             notice.push(`\n<:summon:1340620694655995925> **${enemy.name}** summons a minion with 30% of its stats`);
             matchStats.eStatsCC = { ...eStats };
             matchStats.currentOpponent = 1;
             const statScale = 0.3;
-            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; // Minion Placeholder
+            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; //! Minion Placeholder
             embed.setImage(eStats.image);
 
             // HP Scaling, 0.3% of maxhp
@@ -514,12 +515,13 @@ export const raidBosses: enemyInfo[] = [
                     const missingHpPercent = (myStats.maxhp - myStats.hp) / myStats.maxhp;
                     eStats.atk += Math.floor(eStats.atk * (missingHpPercent * 1.1));
                     eStats.md += Math.floor(eStats.md * (missingHpPercent * 1.1));
-                }
+                };
             });
 
         }, [["Scales attack and magic damage based on your missing HP by 110%", "**Active**: Summons a minion with 30% of your stats (**150** <:mana:1047269152957661255>)", "If you cannot beat the minion, it will be eaten by the Necromancer and increase its stats by 20%"]])
     ),
-    new enemyInfo("Rootlord Morivar", "Eldritch Forest Parasite", "Father of Decay", "M", true, {}, {}, { mana: 120, mg: 15 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 11, //! needs Image
+
+    new enemyInfo("Rootlord Morivar", "Eldritch Forest Parasite", "Father of Decay", "M", true, {}, {}, { mana: 120, mg: 15 }, [], ["https://i.ibb.co/0yFsFCbk/morivar.png"], [], 11,
         new skillInfo(11, 125, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:drain_roots:1340624066956234792> **${enemy.name}** plants its roots! **${enemy.name}**`, { dodge: false, atkMultiplier: 1.2 });
@@ -568,7 +570,8 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Drains 5% of your HP every round, until player has less than 50% of their max HP, then drains 10%", "**Active**: Steals player stats for 4 rounds and deals 120% undodgeable damage (**125** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Sapwyrm, the Lifedrainer", "Eldritch Forest Parasite", "the Lifedrainer", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 12, //! needs Image
+
+    new enemyInfo("Sapwyrm", "Sapwyrm", "the Lifedrainer", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/Y4mWLFKS/sapwyrm.png"], [], 12,
         new skillInfo(12, 70, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.dodge = 0; myStats.br = 0;
@@ -587,7 +590,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Negates healing", "gets 3% of its own hp as damage from dodged or blocked attacks", "**Active**: Has a 60% chance to deal 150% damage and disables dodges and blocks for 2 rounds (**70** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Greater Sapwyrm, the Lifebinder", "Eldritch Forest Parasite", "the Lifebinder", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 13, //! needs Image
+    new enemyInfo("Greater Sapwyrm", "Sapwyrm", "the Lifebinder", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/2X18TjV/greater-sapwyrm.png"], [], 13,
         new skillInfo(13, 80, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.dodge = 0; myStats.br = 0;
@@ -618,7 +621,7 @@ export const raidBosses: enemyInfo[] = [
         }, [["Negates healing", "gets 3.5% of its own hp as damage from dodged or blocked attacks", "When reaching a doge or block streak of 3, heals character for 3% of its max hp and increases character attack and magic damage by 5%", "**Active**: Has a 50% chance to deal 160% damage and disables dodges and blocks for 3 rounds (**80** <:mana:1047269152957661255>)"]])
     ),
     //* Might needs some checking again
-    new enemyInfo("Elder Sapwyrm, the Forest Ravager", "Eldritch Forest Parasite", "the Forest Ravager", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 14, //! needs Image
+    new enemyInfo("Elder Sapwyrm", "Sapwyrm", "the Forest Ravager", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/4R483ktJ/elder-sapwyrm.png"], [], 14,
         new skillInfo(14, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             mybuff.dodge.push(new buffInfo("+", 0.1, 3));
@@ -657,7 +660,8 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Negates healing", "gets 4.5% of its own hp as damage from dodged or blocked attacks", "When reaching a doge or block streak of 4, heals character for 5% of its max hp and increases character attack and magic damage by 15%", "**Active**: Has a 50% chance to deal 180% damage, you get a lot of damage from dodges or blocks and increases your dodge and block chance by 10% for 3 rounds (**100** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Sledgefist, the Stone Breaker", "Golem", "the Breaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 14, //! needs Image
+
+    new enemyInfo("Sledgefist", "Golem", "the Stonebreaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/B5n382Vc/sledgefist.png"], [], 14,
         new skillInfo(15, 85, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.shield = 0;
@@ -676,7 +680,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md, up to 250%", "**Active**: Takes all of your shield (**85** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Runesmith Kraghammer", "Golem", "the Warbreaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 16, //! needs Image
+    new enemyInfo("Kraghammer", "Golem", "the Warbreaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/5gknttwn/kraghammer.png"], [], 16,
         new skillInfo(16, 105, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             //? How much damage is that?
@@ -699,7 +703,8 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md, up to 250%", "**Active**: Takes 50% of your shield and deals 70% of your shield as damage (**105** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Cake Witch, the Baking Bad", "Witch", "the Corrupted Depression", "F", true, { mdChance: 1 }, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 17, //! needs Image
+
+    new enemyInfo("Cake Witch", "Witch", "the Baking Bad", "F", true, { mdChance: 1 }, {}, { mana: 120 }, [], ["https://i.ibb.co/ccCZfzfk/cake-witch.png"], [], 17,
         new skillInfo(17, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             const atkScale = 0.05, mrScale = 0.03;
@@ -730,7 +735,8 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Reduces character max hp by 3%, when you attack with physical damage", "**Active**: Steals 5% of your magic damage and gets 3% magic resistance (**55** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Velkris", "Duo", "the Miss Duo", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 18, //! needs Image
+
+    new enemyInfo("Velkris/Kyntheris", "Void Knight", "the Void Knights", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/NnKqLhHH/velkris.png"], [], 18,
         new skillInfo(18, 85, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             //* 0: Velkris is Main Character
             //* 1: Kyntheris is Summoned Boss (Minion)
@@ -738,12 +744,12 @@ export const raidBosses: enemyInfo[] = [
             // Velkris switches into Kyntheris
             if (matchStats.currentOpponent === 0 && eStats.minionHealth > 0) {
 
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `\n<:switch:1340696278576926781> **Velkris** switched into **Kyntheris** and`, { atkMultiplier: (1 + myStats.dodge) });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `\n<:switch:1340696278576926781> **Velkris** switched places with **Kyntheris** and`, { atkMultiplier: (1 + myStats.dodge) });
                 myStats.dodge = 0; mybuff.dodge.push(new buffInfo("=", 0, 3));
 
                 matchStats.eStatsCC = { ...eStats };
                 matchStats.currentOpponent = 1;
-                embed.setImage("https://i.ibb.co/5YGvbFG/c.png"); //! Kyntheris Image
+                embed.setImage("https://i.ibb.co/MxTH1q1s/kyntheris.png");
 
                 eStats.hp = eStats.minionHealth;
                 eStats.maxhp = Math.floor(eStats.maxhp * 0.9);
@@ -760,7 +766,7 @@ export const raidBosses: enemyInfo[] = [
 
                         Object.assign(eStats, matchStats.eStatsCC);
                         eStats.hp = matchStats.eStatsCC.hp;
-                        embed.setImage("https://i.ibb.co/XWT3Hg2/deluvian.png"); //! Velkris Image
+                        embed.setImage("https://i.ibb.co/NnKqLhHH/velkris.png");
 
                         matchStats.currentOpponent = 0;
 
@@ -772,7 +778,7 @@ export const raidBosses: enemyInfo[] = [
                         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                             if (matchStats.currentOpponent === 0) eStats.atk += Math.floor(eStats.atk * Math.min(eStats.shield * 0.0002, 1.5));
                         }, 9999));
-                        notice.push(`\n<:switch:1340696278576926781> **Kyntheris** switched into **Velkris**`);
+                        notice.push(`\n<:switch:1340696278576926781> **Kyntheris** switched places with **Velkris**`);
                     }
                 }));
 
@@ -807,7 +813,7 @@ export const raidBosses: enemyInfo[] = [
                     eStats.atk += Math.floor(eStats.atk * atkScale);
                     ebuff.def.push(new buffInfo("+", Math.floor(eStats.def * defScale), 9999));
                     eStats.def += Math.floor(eStats.def * defScale);
-                }
+                };
             });
 
             // Kyntheris: On Block: +5% md, +2.5% mr, 40% phys. damage
@@ -821,7 +827,7 @@ export const raidBosses: enemyInfo[] = [
                     eStats.mr += Math.floor(eStats.mr * mrScale);
 
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:quick_strike:1340696280636067922> **Velkris** dealt a quick strike`, { atkMultiplier: 0.4, mdChance: 0 });
-                }
+                };
             });
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -845,8 +851,8 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
         }, [["Duo Boss, Velkris gets stronger when Character dodges, Kyntheris gets stronger when Character blocks", "Support Ability Velkris: Velkris deals Damage, when Character blocks", "Support Ability Kyntheris: Kyntheris steals every 3 rounds 5% of a random stat and Velkris gets it for 3 rounds", "**Active**: Velkris switches into Kyntheris, Kyntheris switches into Velkris (**105** <:mana:1047269152957661255>)"]])
     ),
-    //! Boss Name
-    new enemyInfo("DoT Gimmick", "Gimmick", "the DoT Gimmick", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 19, //! needs Image
+
+    new enemyInfo("Hooded Hopper", "Bunny", "the Shadow Hare", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/wFXPyyBx/hooded-hopper.png"], [], 19,
         new skillInfo(19, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:bleeding_attack:1340697423793754134> **${enemy.name}**'s unstoppable bleeding attack`, { atkMultiplier: 1.25 });
@@ -878,8 +884,7 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
         }, [["Reflects any damage over time", "Gets 50% more damage over time", "After every 10 rounds, removes his debuffs and increases the damage over time by 25%", "**Active**: Afflicts unstoppable bleeding with 4% of your HP (**40** <:mana:1047269152957661255>)"]])
     ),
-    //! Boss Name
-    new enemyInfo("DoT Gimmick 2", "Gimmick", "the DoT Gimmick", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 20, //! needs Image
+    new enemyInfo("Hooded Striker", "Bunny", "the Shadow Hare", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/v6w1Z8g4/hooded-striker.png"], [], 20,
         new skillInfo(20, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:bleeding_attack:1340697423793754134> **${enemy.name}**'s unstoppable bleeding attack`, { atkMultiplier: 1.35 });
@@ -931,11 +936,12 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
         }, [["Reflects any damage over time", "Gets 75% more damage over time", "After every 8 rounds, removes his debuffs and increases the damage over time by 40%", "**Active**: Applies either Burn, Poison, or Freeze that either decreases your attack, defense or miss stats", "**Active**: Afflicts unstoppable bleeding with 5% of your HP and (**55** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("POSTMASTER MALEDICT", "M", "the Postmaster Maledict", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 21, //! needs Image
+
+    new enemyInfo("POSTMASTER MALEDICT", "M", "the Postmaster", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/DHk8Nfyz/POSTMASTER-MALEDICT.png"], [], 21,
         new skillInfo(21, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.mailActive = true;
-            notice.push(`\n<:mail_destruction:1340705160304787617> ACTIVAT, MAIL. DEEEEEESTRUCTION!`);
+            notice.push(`\n<:mail_destruction:1340705160304787617> ACTIVATE, MAIL. TEERMINAAATIONNNN!!!`);
 
             // -15% DEF/MR (3 rounds)
             mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.15), 3));
@@ -1006,8 +1012,8 @@ export const raidBosses: enemyInfo[] = [
                         eStats.md += Math.floor(eStats.md * atkScale);
                         ebuff.atk.push(new buffInfo("+", eStats.atk * atkScale, 5));
                         ebuff.md.push(new buffInfo("+", eStats.md * atkScale, 5));
-                        notice.push(`\n<:handling_fee:1340705156450484378> Special Handling Fee Applied!`);
-                    }
+                        notice.push(`\n<:handling_fee:1340705156450484378> SPECIAL HANDLING FEE APPLIED!`);
+                    };
                 });
 
                 if (matchStats.round % 3 === 0 || eStats.mailActive) {
@@ -1057,7 +1063,8 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
         }, [["Sends a mail every 3 rounds. The green button decreases the damage dealt, the red button incrases it", "Increases its damage every time character ability is used", "**Active**: Decreases your defense and magic resist by 15% for 3 rounds", "**Active**: Adds 2 more red buttons, only one is the real red button (**55** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Valkorath, the Dark Sentinel", "Dark Paladin", "the Dark Sentinel", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 22, //! needs Image
+
+    new enemyInfo("Valkorath", "Dark Paladin", "the Dark Sentinel", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/nqzkvYBR/valkorath.png"], [], 22,
         new skillInfo(22, 90, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             const domainDuration = 5, crSet = 0.5, cdSet = 1.5;
@@ -1097,7 +1104,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Gains 40% of your max HP as a shield", "Gains 7.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 3 rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 50% and sets his crit damage to 150%, and deals 40% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Vortharion, the Warden of Shadows", "Dark Paladin", "the Warden of Shadows", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 23, //! needs Image
+    new enemyInfo("Vortharion", "Dark Paladin", "the Warden of Shadows", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/TQTQXVy/vortharion.png"], [], 23,
         new skillInfo(23, 90, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             const domainDuration = 5, crSet = 0.6, cdSet = 1.75;
@@ -1143,7 +1150,7 @@ export const raidBosses: enemyInfo[] = [
 
         }, [["Gains 50% of your max HP as a shield", "Gains 17.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 4 rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, and deals 45% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
     ),
-    new enemyInfo("Duskraze, the Umbra Emperor", "Dark Paladin", "the Umbra Emperor", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/XWT3Hg2/deluvian.png"], [], 24, //! needs Image
+    new enemyInfo("Duskraze", "Dark Paladin", "the Dark Emperor", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/hRLBMbvt/duskraze.png"], [], 24,
         new skillInfo(24, 90, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             const domainDuration = 5, crSet = 0.7, cdSet = 2;

@@ -80,48 +80,48 @@ export const raids: RaidInfo[] = [
 
     // Damage Absorption Manipulation boss
     //* Dusty
-    new RaidInfo(8, "Dusty", "D", raidBosses[8], { accentColor: "#c17f59" }),
+    new RaidInfo(8, "Dusty", "D", raidBosses[8], { accentColor: "#ffa500" }),
 
     // Summoner, eat summoned boss
     //* Nekro
-    new RaidInfo(9, "Nekro", "SS-", raidBosses[9], { accentColor: "#4A0404", phase: 1, phasesTotal: 2, nextPhase: 10 }),
-    new RaidInfo(10, "NecroVamp", "SS-", raidBosses[10], { accentColor: "#4A0404", phase: 2, phasesTotal: 2 }),
+    new RaidInfo(9, "Nekro", "SS-", raidBosses[9], { accentColor: "#00ffbf", phase: 1, phasesTotal: 2, nextPhase: 10 }),
+    new RaidInfo(10, "NecroVamp", "SS-", raidBosses[10], { accentColor: "#ff0040", phase: 2, phasesTotal: 2 }),
 
     // Drains enemy and steals stats
     //* Drain
-    new RaidInfo(11, "Rootlord Morivar", "S", raidBosses[11], { accentColor: "#3d2412" }),
+    new RaidInfo(11, "Rootlord Morivar", "S", raidBosses[11], { accentColor: "#7f6553" }),
 
     // Negates heal, gets miss damage
     //* NoHeal
-    new RaidInfo(12, "Sapwyrm, the Lifedrainer", "SSS", raidBosses[12], { accentColor: "#235937", phase: 1, phasesTotal: 3, nextPhase: 13 }),
-    new RaidInfo(13, "Greater Sapwyrm, the Lifebinder", "SSS", raidBosses[13], { accentColor: "#235937", phase: 2, phasesTotal: 3, nextPhase: 14 }),
-    new RaidInfo(14, "Elder Sapwyrm, the Forest Ravager", "SSS", raidBosses[14], { accentColor: "#235937", phase: 3, phasesTotal: 3 }),
+    new RaidInfo(12, "Sapwyrm", "SSS", raidBosses[12], { accentColor: "#00ff3d", phase: 1, phasesTotal: 3, nextPhase: 13 }),
+    new RaidInfo(13, "Greater Sapwyrm", "SSS", raidBosses[13], { accentColor: "#00ff3d", phase: 2, phasesTotal: 3, nextPhase: 14 }),
+    new RaidInfo(14, "Elder Sapwyrm", "SSS", raidBosses[14], { accentColor: "#00a621", phase: 3, phasesTotal: 3 }),
 
     // True damage, but shield scales it down
     //* Hammer
-    new RaidInfo(15, "Sledgefist, the Stone Breaker", "S+", raidBosses[15], { accentColor: "#ff4400", phase: 1, phasesTotal: 2, nextPhase: 16 }),
-    new RaidInfo(16, "Runesmith Kraghammer", "S+", raidBosses[16], { accentColor: "#ff4400", phase: 2, phasesTotal: 2 }),
+    new RaidInfo(15, "Sledgefist", "S+", raidBosses[15], { accentColor: "#ff3a00", phase: 1, phasesTotal: 2, nextPhase: 16 }),
+    new RaidInfo(16, "Kraghammer", "S+", raidBosses[16], { accentColor: "#ff3a00", phase: 2, phasesTotal: 2 }),
 
     // Reduces max hp, when phys. hit, steals md, gets mr
     //* Cakey
-    new RaidInfo(17, "Cake Witch, the Baking Bad", "A+", raidBosses[17], { accentColor: "#23292f" }),
+    new RaidInfo(17, "Cake Witch, the Baking Bad", "A+", raidBosses[17], { accentColor: "#000000" }),
 
     // Duo Boss, gets stronger from dodge/ block
     //* Duo
-    new RaidInfo(18, "Velkris/ Kyntheris", "SSS-", raidBosses[18], { accentColor: "#2e1f3e" }),
+    new RaidInfo(18, "Velkris/Kyntheris", "SSS-", raidBosses[18], { accentColor: "#b2eeff" }),
 
     // Reflects any dot, but is weak to it
-    //* DoT G.
-    new RaidInfo(19, "DoT Gimmick", "D", raidBosses[19], { accentColor: "#49212a", phase: 1, phasesTotal: 2, nextPhase: 20 }),
-    new RaidInfo(20, "DoT Gimmick 2", "D", raidBosses[20], { accentColor: "#49212a", phase: 2, phasesTotal: 2 }),
+    //* DoT Gimmick
+    new RaidInfo(19, "Hooded Hopper", "D", raidBosses[19], { accentColor: "#ff00bc", phase: 1, phasesTotal: 2, nextPhase: 20 }),
+    new RaidInfo(20, "Hooded Striker", "D", raidBosses[20], { accentColor: "#7b0013", phase: 2, phasesTotal: 2 }),
 
     // annoying mail
     //* Mail
-    new RaidInfo(21, "POSTMASTER MALEDICT", "F", raidBosses[21], { accentColor: "#00B4B4" }),
+    new RaidInfo(21, "POSTMASTER MALEDICT", "B", raidBosses[21], { accentColor: "#ffd000" }),
 
     // Shield play around it boss
     //* ShieldMan
-    new RaidInfo(22, "Valkorath, the Dark Sentinel", "A", raidBosses[22], { accentColor: "#2E1F4A", phase: 1, phasesTotal: 3, nextPhase: 23 }),
-    new RaidInfo(23, "Vortharion, the Warden of Shadows", "A", raidBosses[23], { accentColor: "#2E1F4A", phase: 2, phasesTotal: 3, nextPhase: 24 }),
-    new RaidInfo(24, "Duskraze, the Umbra Emperor", "A", raidBosses[24], { accentColor: "#2E1F4A", phase: 3, phasesTotal: 3 }),
+    new RaidInfo(22, "Valkorath", "A", raidBosses[22], { accentColor: "#5f00ff", phase: 1, phasesTotal: 3, nextPhase: 23 }),
+    new RaidInfo(23, "Vortharion", "A", raidBosses[23], { accentColor: "#5f00ff", phase: 2, phasesTotal: 3, nextPhase: 24 }),
+    new RaidInfo(24, "Duskraze", "A", raidBosses[24], { accentColor: "#5f00ff", phase: 3, phasesTotal: 3 }),
 ];
