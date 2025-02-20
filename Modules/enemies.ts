@@ -222,9 +222,9 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(0, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             if (myStats.usedBlockRound === matchStats.round) { // Def used last round (40% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 0.4, ignoreShield: true, dodge: false, block: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> *T... target spotted.* **${enemy.name}** threw spheres of magma at you! **${enemy.name}**`, { atkMultiplier: 0.4, ignoreShield: true, dodge: false, block: false });
             } else { // Def not used last round (200% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 2, ignoreShield: true, dodge: false, block: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> *Return... to ash!* **${enemy.name}** threw spheres of magma at you! **${enemy.name}**`, { atkMultiplier: 2, ignoreShield: true, dodge: false, block: false });
             }
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -234,15 +234,15 @@ export const raidBosses: enemyInfo[] = [
             mybuff.cd.push(new buffInfo("+", 1, 9999));
             mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * 0.03), 9999));
 
-        }, [["Receives 100% more Critical Damage", "Applies 3% HP DoT on player", "**Active**: Throws magma balls at player with 200% damage, unblocked or 40% damage blocked (**100** <:mana:1047269152957661255>)"]])
+        }, [["Receives **100%** more Critical Damage", "Applies **3%** current HP DoT on player", "**Active**: Throws spheres of magma at player with **200%** damage when unblocked, or **40%** damage when attempted to block (**100** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Kael'theron", "Titan", "the Ashen Devourer", "M", true, {}, {}, { mana: 100 }, [], ["https://i.ibb.co/drsdyGm/c.png"], [], 1,
         new skillInfo(1, 150, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             if (myStats.usedBlockRound === matchStats.round) { // Def used last round (50% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 0.5, ignoreShield: true, dodge: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> *Just... a little more.* **${enemy.name}** threw spheres of magma at you! **${enemy.name}**`, { atkMultiplier: 0.5, ignoreShield: true, dodge: false });
             } else { // Def not used last round (250% damage)
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> **${enemy.name}** throws magma balls at you! **${enemy.name}**`, { atkMultiplier: 2.5, ignoreShield: true, dodge: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:magma_ball:1340448973194006679> *To... become one with flames!* **${enemy.name}** threw spheres of magma at you! **${enemy.name}**`, { atkMultiplier: 2.5, ignoreShield: true, dodge: false });
             }
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -253,20 +253,25 @@ export const raidBosses: enemyInfo[] = [
             mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * 0.05), 9999));
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Buildup
+                if (matchStats.round === 17) {notice.push(`\n**Three.**`)}
+                else if (matchStats.round === 18) {notice.push(`\n**Two.**`)}
+                else if (matchStats.round === 19) {notice.push(`\n**One.**`)}
                 // Erupts (ends fight) at round 20, can't be revived
-                if (matchStats.round === 20) { 
+                else if (matchStats.round === 20) { 
                     myStats.rev = 0;
                     myStats.hp = 0;
+                    notice.push(`\n*I... shall be the last witness.*`);
                     notice.push(`\n<:eruption:1340451903506616350> **${enemy.name}** erupted and ended the fight.`);
                 }
             }, 9999));
 
-        }, [["Kael'theron erupts at round 20", "Receives 100% more Critical Damage", "Applies 5% HP DoT on player", "**Active**: Throws magma balls at player with 250% damage, unblocked or 50% damage blocked (**150** <:mana:1047269152957661255>)"]])
+        }, [["Kael'theron erupts at round **20**", "Receives **100%** more Critical Damage", "Applies **5%** current HP DoT on player", "**Active**: Throws spheres of magma at player with **250%** damage when unblocked, or **50%** damage when attempted to block (**150** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Velourith", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 5 }, {}, { mana: 120 }, [], ["https://i.ibb.co/Gpz18Kg/c.png"], [], 2,
         new skillInfo(2, 50, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.retaliationDamage += 0.1;
-            notice.push(`\n<:retaliation:1340455881736716359> **${enemy.name}** increases her retaliation damage by **10%**`);
+            notice.push(`\n<:retaliation:1340455881736716359> *These knaves...* **${enemy.name}** increased her retaliation damage scaling by **10%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.lightningResistance = 1;
@@ -277,18 +282,18 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < retaliationChance && matchStats.round % 2 === 0) {
                     eStats.sm += 25;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Get, out.* **${enemy.name}** retaliated`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
 
-        }, [["Immune to lightning damage", "Possibly retaliates every 2nd hit on herself, dealing **20%** damage", "**Active**: Increases her retaliation damage by 10% (**50** <:mana:1047269152957661255>)"]])
+        }, [["Immune to lightning damage", "Has a **40%** chance to retaliate attacks on herself every even turn, dealing **20%** damage", "**Active**: Increases her retaliation damage scaling by **10%** (**50** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Veloura", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 0 }, {}, { mana: 120 }, [], ["https://i.ibb.co/DCDzxsp/n.png"], [], 3,
         new skillInfo(3, 70, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.retaliationDamage += 0.15;
 
-            notice.push(`\n<:retaliation:1340455881736716359> **${enemy.name}** increases her retaliation damage by **15%**`);
+            notice.push(`\n<:retaliation:1340455881736716359> *These knaves...* **${enemy.name}** increased her retaliation damage scaling by **15%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.lightningResistance = 1;
@@ -299,7 +304,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < retaliationChance) {
                     eStats.sm += 35;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Stay, away.* **${enemy.name}** retaliated`, { atkMultiplier: eStats.retaliationDamage });
 
                 }
             });
@@ -308,13 +313,13 @@ export const raidBosses: enemyInfo[] = [
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.1));
             }, 9999));
-        }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **33%** damage", "**Active**: Increases her retaliation damage by 15% (**70** <:mana:1047269152957661255>)"]])
+        }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Has a **40%** chance to retaliate attacks on herself, dealing **33%** damage", "**Active**: Increases her retaliation damage scaling by **15%** (**70** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Velia", "Doppelgänger", "the Void Harbinger", "F", true, { mg: 0 }, {}, { mana: 120 }, [], ["https://i.ibb.co/Js46cdL/l.png"], [], 4,
         new skillInfo(4, 100, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.retaliationDamage += 0.25;
 
-            notice.push(`\n<:retaliation:1340455881736716359> **${enemy.name}** increases her retaliation damage by **25%**`);
+            notice.push(`\n<:retaliation:1340455881736716359> *I will cut your future short.* **${enemy.name}** increases her retaliation damage by **25%**`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.lightningResistance = 1;
@@ -325,7 +330,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < retaliationChance) {
                     eStats.sm += 50;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliate`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Leave me, alONE!* **${enemy.name}** retaliated`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
 
@@ -333,13 +338,13 @@ export const raidBosses: enemyInfo[] = [
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.hp -= Math.floor(eStats.hp * (0.003 + eStats.retaliationDamage * 0.1));
             }, 9999));
-        }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Possibly retaliates every hit on herself, dealing **40%** damage", "**Active**: Increases her retaliation damage by 25% (**100** <:mana:1047269152957661255>)"]])
+        }, [["Immune to lightning damage", "applies some DoT, proportional to her retaliation damage, to herself", "Has a **40%** chance to  every attack on herself, dealing **40%** damage", "**Active**: Increases her retaliation damage scaling by **25%** (**100** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Zerthrax", "Titan", "the Storm Devourer", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/C0BtZzW/c.png"], [], 5,
         new skillInfo(5, 300, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             // Deal 500% damage
-            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:vortex_attack:1340457236031602749> **${enemy.name}** created a vortex! **${enemy.name}**`, { atkMultiplier: 5, magicDamage: true, selfdmg: true });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:vortex_attack:1340457236031602749> *Nothing escapes my watchful eye.* **${enemy.name}** created a vortex! **${enemy.name}**`, { atkMultiplier: 5, magicDamage: true, selfdmg: true });
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // Always deals md
@@ -373,7 +378,7 @@ export const raidBosses: enemyInfo[] = [
             //? why so weak/ boring?
             
             eStats.counter = 2;
-            notice.push(`\n<:counter:1340459549374546032>  **${enemy.name}** prepares to counter the next 2 attacks`);
+            notice.push(`\n<:counter:1340459549374546032> *Submerge!* **${enemy.name}** prepares to counter the next 2 attacks`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -393,7 +398,7 @@ export const raidBosses: enemyInfo[] = [
             //? why so weak/ boring?
 
             eStats.counter = 3;
-            notice.push(`\n<:counter:1340459549374546032>  **${enemy.name}** prepares to counter the next **3** attacks`);
+            notice.push(`\n<:counter:1340459549374546032> *Feel, these gentle hugs from the tides.* **${enemy.name}** prepares to counter the next **3** attacks`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -425,7 +430,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.sm -= eStats.roundCost;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:sand_absorb:1340461883748126881> **${enemy.name}**'s absorbed damage`, { overwriteDamage: eStats.damageTakenBuff * 0.6, dodge: false });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:sand_absorb:1340461883748126881> *T'is time to return the favor.* **${enemy.name}**'s absorbed damage`, { overwriteDamage: eStats.damageTakenBuff * 0.6, dodge: false });
                 eStats.damageTakenBuff -= Math.floor(eStats.damageTakenBuff * 0.5);
 
             }, Math.floor(eStats.sm / eStats.roundCost)));
@@ -439,13 +444,13 @@ export const raidBosses: enemyInfo[] = [
                 eStats.damageTaken = 0;
             }, 9999));
 
-        }, [["Reflects 20% of accumulated damage every round ", "**Active**: Decreases his DEF and MR by **7.5%** but reflects 60% of all accumulated damage back, which decreases by 50% every round (**120** <:mana:1047269152957661255>, **25** <:mana:1047269152957661255> per round)"]])    
+        }, [["Reflects **20%** of accumulated damage every round ", "**Active**: Decreases his DEF and MR by **7.5%** but reflects **60%** of all accumulated damage back, which is halved every round (**120** <:mana:1047269152957661255>, **25** <:mana:1047269152957661255> per round)"]])    
     ),
 
     new enemyInfo("Nekro", "Necromancer", "the Death Caller", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/1Yt4DdYZ/nekro.png"], [], 9,
         new skillInfo(9, 140, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            notice.push(`\n<:summon:1340620694655995925> **${enemy.name}** summons a minion with 20% of its stats`);
+            notice.push(`\n<:summon:1340620694655995925> *It's playtime.* **${enemy.name}** summons a minion with 20% of its stats`);
             matchStats.eStatsCC = { ...eStats };
             matchStats.currentOpponent = 1;
             const statScale = 0.2;
@@ -468,12 +473,12 @@ export const raidBosses: enemyInfo[] = [
                     eStats.md += Math.floor(eStats.md * missingHpPercent * 0.75);
                 }
             });
-        }, [["Scales attack and magic damage based on your missing HP", "**Active**: Summons a minion with 20% of your stats (**140** <:mana:1047269152957661255>)"]])
+        }, [["Scales attack and magic damage based on your missing HP", "**Active**: Summons a minion with **20%** of your stats (**140** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("NecroVamp", "Necromancer", "the Death Eater", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/H0sjR0p/nekrovamp.png"], [], 10,
         new skillInfo(10, 150, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            notice.push(`\n<:summon:1340620694655995925> **${enemy.name}** summons a minion with 30% of its stats`);
+            notice.push(`\n<:summon:1340620694655995925> *It's playtime.* **${enemy.name}** summons a minion with 30% of its stats`);
             matchStats.eStatsCC = { ...eStats };
             matchStats.currentOpponent = 1;
             const statScale = 0.3;
@@ -491,7 +496,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 5, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (matchStats.currentOpponent === 1) {
-                    notice.push(`\n<:summon:1340620694655995925> **${enemy.name}** has eaten the minion`);
+                    notice.push(`\n *Playtime is over.* <:summon:1340620694655995925> **${enemy.name}** ate the minion`);
                     eStats.hp = 0;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.hp * 0.1), {});
@@ -518,13 +523,13 @@ export const raidBosses: enemyInfo[] = [
                 };
             });
 
-        }, [["Scales attack and magic damage based on your missing HP by 110%", "**Active**: Summons a minion with 30% of your stats (**150** <:mana:1047269152957661255>)", "If you cannot beat the minion, it will be eaten by the Necromancer and increase its stats by 20%"]])
+        }, [["Scales attack and magic damage based on your missing HP by **110%**", "**Active**: Summons a minion with **30%** of your stats (**150** <:mana:1047269152957661255>)", "If you cannot beat the minion, it will be eaten by the Necromancer and increase its stats by **20%**"]])
     ),
 
     new enemyInfo("Rootlord Morivar", "Eldritch Forest Parasite", "Father of Decay", "M", true, {}, {}, { mana: 120, mg: 15 }, [], ["https://i.ibb.co/0yFsFCbk/morivar.png"], [], 11,
         new skillInfo(11, 125, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:drain_roots:1340624066956234792> **${enemy.name}** plants its roots! **${enemy.name}**`, { dodge: false, atkMultiplier: 1.2 });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:drain_roots:1340624066956234792> **${enemy.name}** planted its roots! **${enemy.name}**`, { dodge: false, atkMultiplier: 1.2 });
 
             //! Scaling Issue
             // steals 20% of player stats, eStats scales with 4x
@@ -568,7 +573,7 @@ export const raidBosses: enemyInfo[] = [
                 if (myStats.hp < 0) myStats.hp = 0;
             }, 9999));
 
-        }, [["Drains 5% of your HP every round, until player has less than 50% of their max HP, then drains 10%", "**Active**: Steals player stats for 4 rounds and deals 120% undodgeable damage (**125** <:mana:1047269152957661255>)"]])
+        }, [["Drains **5%** of your current HP every round, until player has less than **50%** of their max HP, then drains **10%**", "**Active**: Steals player stats for **4** rounds and deals **120%** undodgeable damage (**125** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Sapwyrm", "Sapwyrm", "the Lifedrainer", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/Y4mWLFKS/sapwyrm.png"], [], 12,
@@ -577,7 +582,7 @@ export const raidBosses: enemyInfo[] = [
             myStats.dodge = 0; myStats.br = 0;
             mybuff.dodge.push(new buffInfo("=", 0, 2)); mybuff.br.push(new buffInfo("=", 0, 2));
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (Math.random() < 0.6) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:poison_rage:1340625165175754844>  **${enemy.name}** is in rage mode! **${enemy.name}**`, { atkMultiplier: 1.5 });
+                if (Math.random() < 0.6) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:poison_rage:1340625165175754844>  **${enemy.name}** is enraged! **${enemy.name}**`, { atkMultiplier: 1.5 });
             }, 2));
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -588,7 +593,7 @@ export const raidBosses: enemyInfo[] = [
                 if (target === myStats) eStats.hp -= Math.floor(eStats.hp * 0.03);
             });
 
-        }, [["Negates healing", "gets 3% of its own hp as damage from dodged or blocked attacks", "**Active**: Has a 60% chance to deal 150% damage and disables dodges and blocks for 2 rounds (**70** <:mana:1047269152957661255>)"]])
+        }, [["Negates healing", "gets **3%** of its own hp as damage from dodged or blocked attacks", "**Active**: Has a **60%** chance to deal **150%** damage and disable dodges and blocks for **2** rounds (**70** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Greater Sapwyrm", "Sapwyrm", "the Lifebinder", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/2X18TjV/greater-sapwyrm.png"], [], 13,
         new skillInfo(13, 80, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -596,7 +601,7 @@ export const raidBosses: enemyInfo[] = [
             myStats.dodge = 0; myStats.br = 0;
             mybuff.dodge.push(new buffInfo("=", 0, 3)); mybuff.br.push(new buffInfo("=", 0, 3));
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (Math.random() < 0.5) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:poison_rage:1340625165175754844>  **${enemy.name}** is in rage mode! **${enemy.name}**`, { atkMultiplier: 1.6 });
+                if (Math.random() < 0.5) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:poison_rage:1340625165175754844>  **${enemy.name}** is enraged! **${enemy.name}**`, { atkMultiplier: 1.6 });
             }, 3));
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -618,7 +623,7 @@ export const raidBosses: enemyInfo[] = [
                 }
             });
 
-        }, [["Negates healing", "gets 3.5% of its own hp as damage from dodged or blocked attacks", "When reaching a doge or block streak of 3, heals character for 3% of its max hp and increases character attack and magic damage by 5%", "**Active**: Has a 50% chance to deal 160% damage and disables dodges and blocks for 3 rounds (**80** <:mana:1047269152957661255>)"]])
+        }, [["Negates healing", "gets **3.5%** of its own hp as damage from dodged or blocked attacks", "When reaching a doge or block streak of **3**, heals player for **3%** of their max hp and increases player's attack and magic damage by **5%**", "**Active**: Has a **50%** chance to deal **160%** damage and disable dodges and blocks for **3** rounds (**80** <:mana:1047269152957661255>)"]])
     ),
     //* Might needs some checking again
     new enemyInfo("Elder Sapwyrm", "Sapwyrm", "the Forest Ravager", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/4R483ktJ/elder-sapwyrm.png"], [], 14,
@@ -658,14 +663,14 @@ export const raidBosses: enemyInfo[] = [
                 }
             });
 
-        }, [["Negates healing", "gets 4.5% of its own hp as damage from dodged or blocked attacks", "When reaching a doge or block streak of 4, heals character for 5% of its max hp and increases character attack and magic damage by 15%", "**Active**: Has a 50% chance to deal 180% damage, you get a lot of damage from dodges or blocks and increases your dodge and block chance by 10% for 3 rounds (**100** <:mana:1047269152957661255>)"]])
+        }, [["Negates healing", "gets **4.5%** of its own hp as damage from dodged or blocked attacks", "When reaching a dosge or block streak of **4**, heals player for **5%** of their max hp and increases player's attack and magic damage by **15%**", "**Active**: Has a **50%** chance to deal **180%** damage, you get a lot of damage from dodges or blocks and increases your dodge and block chance by **10%** for **3** rounds (**100** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Sledgefist", "Golem", "the Stonebreaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/B5n382Vc/sledgefist.png"], [], 14,
         new skillInfo(15, 85, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             myStats.shield = 0;
-            notice.push(`\n<:steal_shield:1340630053695918100> HAHAHAHA, Your shield is MINE!`);
+            notice.push(`\n<:steal_shield:1340630053695918100> HAHAHAHA, STOP HIDING!`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -678,7 +683,7 @@ export const raidBosses: enemyInfo[] = [
                 myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax)); 
             }, 9999));
 
-        }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md, up to 250%", "**Active**: Takes all of your shield (**85** <:mana:1047269152957661255>)"]])
+        }, [["Only deals true damage", "Character gets **0.025%** of their shield as atk and md, up to **250%**", "**Active**: Takes all of your shield (**85** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Kraghammer", "Golem", "the Warbreaker", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/5gknttwn/kraghammer.png"], [], 16,
         new skillInfo(16, 105, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -701,7 +706,7 @@ export const raidBosses: enemyInfo[] = [
                 myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax)); 
             }, 9999));
 
-        }, [["Only deals true damage", "Character gets 0.025% of their shield as atk and md, up to 250%", "**Active**: Takes 50% of your shield and deals 70% of your shield as damage (**105** <:mana:1047269152957661255>)"]])
+        }, [["Only deals true damage", "Character gets **0.025%** of their shield as atk and md, up to **250%**", "**Active**: Takes **50%** of your shield and deals **70%** of your shield as damage (**105** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Cake Witch", "Witch", "the Baking Bad", "F", true, { mdChance: 1 }, {}, { mana: 120 }, [], ["https://i.ibb.co/ccCZfzfk/cake-witch.png"], [], 17,
@@ -718,7 +723,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.mr += Math.floor(eStats.mr * mrScale);
 
             //? More Fun Message: @freezerfallen
-            notice.push(`\n<:cakey:1340671224430329928> **${enemy.name}** took 5% of your magic damage and added it to her own`);
+            notice.push(`\n<:cakey:1340671224430329928> *You... shouldn't be here.* **${enemy.name}** took **5%** of your magic damage and added it to her own`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -729,11 +734,11 @@ export const raidBosses: enemyInfo[] = [
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                     
                     //? More Fun Message: @freezerfallen
-                    notice.push(`\n<:cakey:1340671224430329928> **${enemy.name}** took 3% of your max HP`);
+                    notice.push(`\n<:cakey:1340671224430329928> *I- don't want to do this...* **${enemy.name}** reduced your max HP by 3%`);
                 }
             });
 
-        }, [["Reduces character max hp by 3%, when you attack with physical damage", "**Active**: Steals 5% of your magic damage and gets 3% magic resistance (**55** <:mana:1047269152957661255>)"]])
+        }, [["Reduces character max hp by **3%**, when you attack with non-magical damage", "**Active**: Steals **5%** of your magic damage and gets **3%** magic resistance (**55** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Velkris/Kyntheris", "Void Knight", "the Void Knights", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/NnKqLhHH/velkris.png"], [], 18,
@@ -849,13 +854,13 @@ export const raidBosses: enemyInfo[] = [
                     }
                 }
             }, 9999));
-        }, [["Duo Boss, Velkris gets stronger when Character dodges, Kyntheris gets stronger when Character blocks", "Support Ability Velkris: Velkris deals Damage, when Character blocks", "Support Ability Kyntheris: Kyntheris steals every 3 rounds 5% of a random stat and Velkris gets it for 3 rounds", "**Active**: Velkris switches into Kyntheris, Kyntheris switches into Velkris (**105** <:mana:1047269152957661255>)"]])
+        }, [["Duo Boss, Velkris gets stronger when Character dodges, Kyntheris gets stronger when Character blocks", "Support Ability Velkris: Velkris deals Damage, when Character blocks", "Support Ability Kyntheris: Kyntheris steals every **3** rounds **5%** of a random stat and Velkris gets it for **3** rounds", "**Active**: Velkris switches into Kyntheris, Kyntheris switches into Velkris (**105** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Hooded Hopper", "Bunny", "the Shadow Hare", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/wFXPyyBx/hooded-hopper.png"], [], 19,
         new skillInfo(19, 40, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:bleeding_attack:1340697423793754134> **${enemy.name}**'s unstoppable bleeding attack`, { atkMultiplier: 1.25 });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:bleeding_attack:1340697423793754134> **${enemy.name}**'s sharp bleeding attack`, { atkMultiplier: 1.25 });
             mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * (0.04 + eStats.buffScale * 0.08)), 9999)); // gets increased by 2% every 10 rounds
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -879,10 +884,10 @@ export const raidBosses: enemyInfo[] = [
                         ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff: any) => !buff.isDebuff);
                     });
                     eStats.buffScale += 0.25;
-                    notice.push(`\n<:bleeding_rage:1340697425630986240> **${enemy.name}** enrages and lost his debuffs and increased your bleeding damage.`);
+                    notice.push(`\n<:bleeding_rage:1340697425630986240> **${enemy.name}** enrages, losing his debuffs and increasing your bleeding damage.`);
                 }
             }, 9999));
-        }, [["Reflects any damage over time", "Gets 50% more damage over time", "After every 10 rounds, removes his debuffs and increases the damage over time by 25%", "**Active**: Afflicts unstoppable bleeding with 4% of your HP (**40** <:mana:1047269152957661255>)"]])
+        }, [["Reflects any damage over time", "Receives **50%** more damage from over time effects (DoT)", "After every **10** rounds, removes his debuffs and increases the damage received by over time effects (DoT) by **25%**", "**Active**: Deals **125%** DMG","Afflicts bleeding regardless if the attack hit, dealing **4%** of your HP every round (stackable) (**40** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Hooded Striker", "Bunny", "the Shadow Hare", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/v6w1Z8g4/hooded-striker.png"], [], 20,
         new skillInfo(20, 55, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1061,7 +1066,7 @@ export const raidBosses: enemyInfo[] = [
                     }));
                 }
             }, 9999));
-        }, [["Sends a mail every 3 rounds. The green button decreases the damage dealt, the red button incrases it", "Increases its damage every time character ability is used", "**Active**: Decreases your defense and magic resist by 15% for 3 rounds", "**Active**: Adds 2 more red buttons, only one is the real red button (**55** <:mana:1047269152957661255>)"]])
+        }, [["Sends a mail every **3** rounds. The green button decreases the damage dealt, the red button incrases it", "Increases its damage every time character ability is used", "**Active**: Decreases your defense and magic resist by **15%** for **3** rounds", "**Active**: Adds **2** more red buttons, only one is the real red button (**55** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Valkorath", "Dark Paladin", "the Dark Sentinel", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/nqzkvYBR/valkorath.png"], [], 22,
@@ -1071,7 +1076,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning_domain:1340700503889412238> **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.4, mdChance: (Math.random() < 0.5 ? 1 : 0), magicDamage: true });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning_domain:1340700503889412238> *Oh lord of the shadows, I shall cleanse this filth for you...* **${enemy.name}** entered its domain for ${domainDuration} rounds and`, { isLightning: true, atkMultiplier: 0.4, mdChance: (Math.random() < 0.5 ? 1 : 0), magicDamage: true });
             }, domainDuration));
             eStats.cr = crSet;
             eStats.cd = cdSet;
@@ -1085,6 +1090,7 @@ export const raidBosses: enemyInfo[] = [
             // On boss shield break: Reverses type of damage for 3 rounds
             matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === eStats) {
+                    notice.push(`\nHuh, what a tickle.`);
                     if (myStats.mdChance > 0) myStats.mdChance = 0;
                     else myStats.mdChance = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1102,7 +1108,7 @@ export const raidBosses: enemyInfo[] = [
                 eStats.domain = false;
             }, 9999));
 
-        }, [["Gains 40% of your max HP as a shield", "Gains 7.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 3 rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 50% and sets his crit damage to 150%, and deals 40% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains **40%** of player's max HP as a shield", "Gains **7.5%** of its shield every round", "On Shield Break, Reverses your Type of Damage for **3** rounds", "Attacks each round with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by **50%** and sets his crit damage to **150%**, and deals **40%** lightning damage for **5** rounds (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Vortharion", "Dark Paladin", "the Warden of Shadows", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/TQTQXVy/vortharion.png"], [], 23,
         new skillInfo(23, 90, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1111,7 +1117,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning_domain:1340700503889412238> **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.45, mdChance: (Math.random() < 0.5 ? 1 : 0), magicDamage: true });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning_domain:1340700503889412238> *Oh lord of the shadows, allow me to purge this impurity for you...* **${enemy.name}** entered its domain for ${domainDuration} rounds and`, { isLightning: true, atkMultiplier: 0.45, mdChance: (Math.random() < 0.5 ? 1 : 0), magicDamage: true });
             }, domainDuration));
 
             eStats.cr = crSet;
@@ -1128,6 +1134,7 @@ export const raidBosses: enemyInfo[] = [
             // On boss shield break: Reverses type of damage, player: 0% dodge for 4 rounds
             matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === eStats) {
+                    notice.push(`\nOh, you got some tricks up your sleeve?`);
                     if (myStats.mdChance > 0) myStats.mdChance = 0;
                     else myStats.mdChance = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + shieldBreakDuration, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1148,7 +1155,7 @@ export const raidBosses: enemyInfo[] = [
                 eStats.domain = false;
             }, 9999));
 
-        }, [["Gains 50% of your max HP as a shield", "Gains 17.5% of its shield every round", "On Shield Break, Reverses your Type of Damage for 4 rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by 60% and sets his crit damage to 175%, and deals 45% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains **50%** of your max HP as a shield", "Gains **17.5%** of its shield every round", "On Shield Break, Reverses your Type of Damage for **4** rounds", "Attacks each rounds with either physical damage or magical damage", "**Active**: Enters a domain, in which he increases his crit rate by **60%** and sets his crit damage to **175%**, and deals **45%** lightning damage for **5** rounds (**90** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Duskraze", "Dark Paladin", "the Dark Emperor", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/hRLBMbvt/duskraze.png"], [], 24,
         new skillInfo(24, 90, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1157,7 +1164,7 @@ export const raidBosses: enemyInfo[] = [
 
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.domain = true;
-                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning_domain:1340700503889412238> **${enemy.name}**'s domain`, { isLightning: true, atkMultiplier: 0.5, mdChance: (Math.random() < 0.5 ? 1 : 0), magicDamage: true });
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning_domain:1340700503889412238> *Oh lord of the shadows, heed MY CALLS!* **${enemy.name}** entered its domain for ${domainDuration} rounds and`, { isLightning: true, atkMultiplier: 0.5, mdChance: (Math.random() < 0.5 ? 1 : 0), magicDamage: true });
             }, domainDuration));
 
             eStats.cr = crSet;
@@ -1172,6 +1179,7 @@ export const raidBosses: enemyInfo[] = [
 
             matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === eStats) {
+                    notice.push(`\nFor glory of dusk, for Shadowlord!`);
                     if (myStats.mdChance > 0) myStats.mdChance = 0;
                     else myStats.mdChance = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + shieldBreakDuration, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1195,13 +1203,13 @@ export const raidBosses: enemyInfo[] = [
                 if (matchStats.round % 6 === 0) {
                     //? maybe as lightning damage?
                     //? Check damage
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:void_orb:1340700501905379440> **${enemy.name}** used his VOID! **${enemy.name}**`, { overwriteDamage: Math.floor(eStats.shieldOrb * 0.8), dodge: false, block: false, ignoreShield: true });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:void_orb:1340700501905379440> **${enemy.name}** summoned his VOID! **${enemy.name}**`, { overwriteDamage: Math.floor(eStats.shieldOrb * 0.8), dodge: false, block: false, ignoreShield: true });
                     eStats.shield += eStats.shieldOrb * 0.35;
                     eStats.shieldOrb = 0;
                 }
                 eStats.domain = false;
             }, 9999));
-        }, [["Gains 75% of your max HP as a shield", "His Void Orb gains 15% of its shield orb every round, his shield decreases by 10% every round", "On Shield Break, Reverses your Type of Damage for 5 rounds", "Attacks each rounds with either physical damage or magical damage", "Every 6 rounds, he activates his Void Orb, dealing his saved amount of Shield as damage", "**Active**: Enters a domain, in which he increases his crit rate by 70% and sets his crit damage to 175%, and deals 50% lightning damage for 5 rounds (**90** <:mana:1047269152957661255>)"]])
+        }, [["Gains **75%** of the player's max HP as a shield", "His Void Orb gains **15%** of its his shield every round, his shield decreases by **10%** every round", "On Shield Break, Reverses your Type of Damage for **5** rounds", "Attacks each rounds with either physical damage or magical damage", "Every **6** rounds, he activates his Void Orb, dealing his saved amount of Shield as damage", "**Active**: Enters a domain, in which he increases his crit rate by **70%** and sets his crit damage to **175%**, and deals **50%** lightning damage for **5** rounds (**90** <:mana:1047269152957661255>)"]])
     ),
 ];
 
