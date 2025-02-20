@@ -63,8 +63,8 @@ export const getWeaponSchemas = async (uniqueids: string[]): Promise<WeaponSchem
     return weapons;
 };
 
-export const getWeaponDupeSchemas = async (itemId: number, userId: string): Promise<WeaponSchema[]> => {
-    const weapons = await query(`SELECT * FROM weapons WHERE itemid = $1 AND id = $2`, [itemId, userId]) as WeaponSchema[];
+export const getWeaponDupeSchemas = async (itemId: number, userId: string, excludeId?: string): Promise<WeaponSchema[]> => {
+    const weapons = await query(`SELECT * FROM weapons WHERE itemid = $1 AND id = $2 ${excludeId ? `AND uniqueid != $3` : ""}`, excludeId ? [itemId, userId, excludeId] : [itemId, userId]) as WeaponSchema[];
     return weapons;
 };
 

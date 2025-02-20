@@ -658,7 +658,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         (Math.floor(target.hp - damage) < 1) // Would kill
     ) {
         target.evadeDeathStrike--;
-        notice.push(`\n✨ **${target.name}** has evaded a deadly attack!`);
+        notice.push(`\n💨 **${target.name}** has evaded a deadly attack!`);
 
         // Event Triggers
         matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
@@ -777,7 +777,7 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
-    if (attacker.negateHeal && amount > 0 && target === caster && attacker !== caster) notice.push(`\n💖 **${attacker.name}** has negated the heal!`);
+    if (attacker.negateHeal && amount > 0 && target === caster && attacker !== caster) notice.push(`\n<:negated_heal:1341346312699904044> **${attacker.name}** has negated the heal!`);
     else {
         target.hp += amount;
         if (target.hp > target.maxhp) target.hp = target.maxhp;

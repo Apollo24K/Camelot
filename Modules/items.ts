@@ -3349,20 +3349,6 @@ export const items = [
             },
         });
 
-        /* without equilibriumBand Stat //?(idk if this works, does trigger.used start at 1?)
-        matchStats.on("ABILITY", {
-            maxUsage: [12, 12, 16, 16, 16][level - 1],
-            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (caster === myStats) {
-                    if (trigger.used % 4 === 0) {
-                        myStats.shield += Math.floor(myStats.maxhp * [0.15, 0.175, 0.2, 0.225, 0.25][level - 1]);
-                    };
-                    return true;
-                };
-            },
-        });
-        */
-
     }, (level) => `The wearer gains **${[15, 17.5, 20, 22.5, 25][level - 1]}%** of their max HP as shield for every **4th** ability usage (up to **${[3, 3, 4, 4, 4][level - 1]}** times).`, "The Equilibrium Band is a striking artifact forged from enchanted iron, with a symmetrical design that perfectly balances elegance and strength. The band features dual gemstones—one radiant sapphire and one luminous amber—set in exquisite harmony at its center. Intricate etchings depicting the duality of existence spiral around the ring, conveying the essence of balance. When worn, the ring grants its bearer the ability to navigate life's chaos, ensuring they endure conflicts and forge alliances with ease. Rumors whisper that those attuned to its power can influence fate, stabilizing even the most desperate situations in their favor.", "legendary", 700),
     new ringInfo("Skyward Rune", "ring", "ring", ["raid"], "<:skyward_rune:1333991494725664789>", "https://i.ibb.co/wrjvXSh4/Skyward-Rune.png", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
 
@@ -3395,8 +3381,6 @@ export const items = [
                 };
             },
         });
-
-        //? same here as with Equilibrium Band
 
     }, (level) => `On every **4th** attack received, the wearer gains **${[3, 3, 4, 4, 5][level - 1]}%** ATK and MD permanently, up to **${[7, 8, 9, 10, 12][level - 1]}** times.`, "Ceneinuica is a ring fashioned from a dark, obsidian-like stone that captures the essence of forgotten magic. The band is interspersed with ancient, vibrant inscriptions glowing eerily against the darker hues, telling tales lost to time. Atop the ring, a row of spikes reflects light in scattered hues, embodying the fragmented memories of past worlds. Rumored to contain a fragment of the void, the ring enhances its wearer's mastery over magic, unlocking formidable spells of concealment and restoration. Only those with an unwavering spirit can wield Ceneinuica, as its power demands a heavy price—one must confront the shadows of the past to embrace its potential fully.", "mythical", 702),
     new ringInfo("Starweaver's Glimmer", "ring", "ring", ["raid"], "<:starweavers_glimmer:1334125620841680937>", "https://i.ibb.co/JRv2Lv9C/Starweaver-s-Glimmer.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
@@ -3621,12 +3605,12 @@ export const items = [
         });
 
     }, (level) => `After dealing a critical strike, the wearer heals **${[3, 3.5, 4, 4.5, 5][level - 1]}%** of their missing HP.`, "The Reversed Vinebound ring is a striking blend of elegance and dark magic. Crafted from glossy, obsidian metal, its design includes sculpted vines that curve upwards, encasing a luminescent green gemstone at its core. Each vine is adorned with small, jagged crystals that seem to be pulling away, representing a break from natural ties. The inner band is engraved with enigmatic runes that resonate with the wearer's inner strength and resilience. This ring empowers those who seek to break free from nature's constraints, providing buffs to spellcasting while enhancing innate abilities, making it perfect for warlocks and renegade druids.", "legendary", 718),
-    new ringInfo("Storm's Caress", "ring", "ring", ["guild"], "<:storms_caress:1334558474931277827>", "https://i.ibb.co/35bQdY9g/Storm-s-Caress.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //? chest?
+    new ringInfo("Storm's Caress", "ring", "ring", ["guild"], "<:storms_caress:1334558474931277827>", "https://i.ibb.co/35bQdY9g/Storm-s-Caress.png", 5, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         myStats.lightningMultiplier += [20, 25, 30, 35, 40][level - 1] / 100;
 
     }, (level) => `Increases your lightning damage by **${[20, 25, 30, 35, 40][level - 1]}%** for the rest of battle.`, "Embodying the essence of tempestuous skies, the Storm's Caress ring features a swirling design adorned with delicate clouds and pinpointed flashes of light. Crafted from an ethereal silver alloy, the ring cradles a pulsating azure gem, resembling a stormy sea beneath turbulent skies. Tails of mist emanate from either side, whispering secrets of the winds. When worn, the bearer can summon gusts of wind to aid in travel or unleash thunderous rain, striking down foes from above, all while gaining poise and swiftness in combat.", "unique", 719),
-    new ringInfo("Vortex Thorn", "ring", "ring", ["guild"], "<:vortex_thorn:1334560161263521812>", "https://i.ibb.co/tpsb5j6j/Vortex-Thorn.png", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //? chest?
+    new ringInfo("Vortex Thorn", "ring", "ring", ["guild"], "<:vortex_thorn:1334560161263521812>", "https://i.ibb.co/tpsb5j6j/Vortex-Thorn.png", 3, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         // Deal 10/15/20% lightning dmg every round, heal 50% of lightning damage dealt
         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -4008,7 +3992,6 @@ export const items = [
     new ringInfo("Vile Revenant", "ring", "ring", ["raid"], "<:vile_revenant:1336499647971328055>", "https://i.ibb.co/tPb3Nr6y/Vile-Revenant.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Nekro
 
         // On Revival: immortal for 2/3/4/5 rounds, +25/30/35/40% ATK/MD, dies after that
-        //? Health DoT
         myStats.rev = 1;
         myStats.revhp = 0.1;
         matchStats.on("revival", {
@@ -4083,7 +4066,7 @@ export const items = [
         });
 
     }, (level) => `After the wearer misses an attack, decreases the enemy's MD by **${[20, 22, 24, 26, 28, 30][level - 1]}%** for 2 rounds.`, "The Aqua Serpent ring features a stunning wrap-around design, mirroring the sinuous form of a serpent made of shimmering ocean-blue materials. Its band glistens as if it were polished by the waves, while an azure gemstone–shaped like a serpent's heart–rests as its centerpiece. The ring radiates a calming aura, allowing the wearer to commune with water elementals and control water's flow. Embellished with silver scales etched with intricate oceanic patterns, it is a prized possession for those who traverse the waters or seek harmony with the aquatic realms, enhancing their affinity for the sea.", "legendary", 745),
-    new ringInfo("Starlit Whirl", "ring", "ring", ["guild"], "<:starlit_whirl:1336655984659271700>", "https://i.ibb.co/0VFf8r7V/Starlit-Whirl.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new ringInfo("Starlit Whirl", "ring", "ring", ["guild"], "<:starlit_whirl:1341442725072998441>", "https://i.ibb.co/p6hgZWqb/Starlit-Whirl.png", 6, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         // On eCrit: Steal 5% CR
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
@@ -4474,67 +4457,20 @@ export const items = [
 
         //! new ability
 
-        // myStats.ringOfRebound = myStats.shield;
-        // // On Shield Gain: "Rebounce" for 1 turn: +1 counter
-        // myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        //     if (myStats.shield > 0 && myStats.ringOfRebound === 0) { // Check if he got a new shield
-        //         myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        //             myStats.counter = 1;
-        //         }));
-        //     };
-        //     myStats.ringOfRebound = myStats.shield;
-        // }, 9999));
-
     }, (level) => `Upon gaining a shield, enters the state of "Rebounce" for 1 turn, countering any damage taken.`, "The Arcane Rebound is a masterpiece of magical craftsmanship, adorned with intricate blue filigree that glimmers like stars against a dark backdrop. The ring is smooth and slightly curved, resembling a spellcaster's focus tool, with an ethereal light emanating from the core. Tiny arcs of electricity flicker around the band, forming patterns reminiscent of a magical glyph, enhancing the wielder's spell defense. When activated, it can absorb hostile magic and redirect it, turning an enemy's strength against them. The ring's unique design highlights its functionality, making it the ideal choice for scholars and sorcerers alike, ensuring that their arcane power never wavers.", "unique", 768),
     new ringInfo("Gama's Awakening", "ring", "ring", ["raid"], "<:gamas_awakening:1334260075304321167>", "https://i.ibb.co/RTsBMw2m/Gama-s-Awakening.png", 2, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Drain
 
-        //! new ability (no maxHP)
-
-        // // HP < 15/17.5% in 4/5 rounds: -20% enemy max HP, heal 40% max HP
-        // myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        //     if (myStats.hp <= myStats.maxhp * (0.15 + 0.025 * (level - 1))) {
-        //         eStats.hp -= Math.floor(eStats.maxhp * 0.2);
-        //         if (eStats.hp < 0) eStats.hp = 0;
-        //         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.4));
-        //     };
-        // }, matchStats.round + [4, 5][level - 1]));
+        //! new ability
 
     }, (level) => `If the wearer's HP falls below **${[15, 17.5][level - 1]}%** of their max HP in **${[4, 5][level - 1]}** rounds, the enemy will lose **20%** of their max HP and the wearer will heal for **40%** of their max HP.`, "The Gama's Awakening ring radiates an aura of transformation, carved from sapphire-blue stone and entwined with ethereal symbols that evoke nature's untamed splendor. Pinkish jewerly glisten like dewdrops around the central piece of a purplish gemstone, resembling a watchful eye, attuned to the energies of the world. Soft waves ripple across its surface, akin to tears from the breakthrough. When worn, this ring enhances the wearer's connection to the natural world, allowing them to understand and constantly evolve themselves. It's a perfect ally for druids and nature guardians, embodying the spirit of rebirth and awakening.", "legendary", 769),
     new ringInfo("Voltage Overload", "ring", "ring", ["guild"], "<:voltage_overload:1334325589242544269>", "https://i.ibb.co/PZfXXBLt/Voltage-Overload.png", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         //! new ability
 
-        //myStats.overload = false;
-
-        // //? Does this reset before the trigger?
-        // myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        //     myStats.overload = false;
-        // }, 9999));
-
-        // // lightning attacks cost 5💧
-        // // On lightning attack: Deal currentMana% damage, max: 40%
-        // matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-        //     if (caster === myStats && options.isLightning && myStats.sm >= 5 && !myStats.overload) {
-        //         myStats.sm -= 5;
-        //         dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:lightning:1340309243827458139> **${char.name}**`, { isLightning: true, atkMultiplier: Math.min(0.4, (myStats.sm / myStats.mana)) });
-        //         myStats.overload = true;
-        //     };
-        // });
-
     }, (level) => `Lightning attacks cost **5**💧 but follow up by an additional lightning strike dealing damage based on your current mana.`, "Forged in the heart of a thunderstorm, the Voltage Overload ring radiates with a majestic aura of electrifying energy. Its deep blue steel band is accentuated by intricate engravings resembling bolts of lightning, while a shimmering emerald gem rests prominently at its center. Emanating a soft glow, the gem feels alive, surging with static electricity, ready to unleash chaotic charges when called upon. Worn by those who dance with the tempest, this ring grants its bearer heightened reflexes and an affinity for electric magic, empowering attacks with volatile bursts of energy.", "legendary", 770),
     new ringInfo("Deathbloom Ring", "ring", "ring", ["raid"], "<:deathbloom_ring:1336031521181532280>", "https://i.ibb.co/Nn74bhyg/Deathbloom-Ring.png", 1, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* noHeal
 
-        //! new ability (preferable sth with negateHeal)
-
-        // // On own heal: negate enemy heal for 1 turn
-        // matchStats.on("heal", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-        //     if (caster === myStats && options.caster === myStats) {
-        //         myStats.negateHeal = 1;
-        //         matchStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        //             myStats.negateHeal = 0;
-        //         }));
-        //     };
-        // });
+        //! new ability
 
     }, (level) => `If you recover HP, negates the healing of the enemy that turn.`, "The Deathbloom ring is a macabre masterpiece crafted from obsidian, adorned with twisted thorns and faintly glowing purple flowers. At its center lies a dark amethyst, encapsulated by grotesque skulls—a reminder of life's fleeting nature. The flowers bloom eternally, echoing life amid decay. This ring grants its wearer dominion over the energies of life and death, empowering necromantic spells and drawing upon the despair of the fallen. It exudes an eerie charm, enticing those who seek dark knowledge and power. Legends tell of its creation in the Valley of Lost Souls, where the balance between life and death is forever debated.", "legendary", 771),
     new ringInfo("Thalamir's Promise", "ring", "ring", ["guild"], "<:defiant_survivals_ring:1336068330330525826>", "https://i.ibb.co/60kDLhT0/Defiant-Survival-s-Ring.png", 9, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -4542,11 +4478,11 @@ export const items = [
         //! new ability
 
     }, (level) => ``, "Thalamir's Promise is forged from an alloy that shimmers between copper and twilight hues, centered by a deep emerald said to contain an ancient guardian's last breath. Silver spirals thread through the band like moonlight streams, bearing whispered enchantments of preservation. When death approaches, ethereal vines of pure energy emerge to anchor their bearer to the mortal realm, fulfilling Thalamir's ancient vow that life shall endure.", "legendary", 772),
-    new ringInfo("Mystic Wave", "ring", "ring", ["raid"], "<:mystic_wave:1336068414015279124>", "https://i.ibb.co/KpBdCJyq/Mystic-Wave.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
-        //? Can we rename it to "Ferocious Overflow"? The name rn doesn't really match the picture
+    new ringInfo("Ferocious Overflow", "ring", "ring", ["raid"], "<:ferocious_overflow:1336068414015279124>", "https://i.ibb.co/JjHcKqZ2/Ferocious-Overflow.png", 4, (level) => (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
+
         //! new ability
 
-    }, (level) => ``, "The Mystic Wave ring is a masterwork of muted olive and collards, embodying the essence of the ocean. Its smooth band twists and curls like crashing waves, shimmering under light. A rigorous outburst of elixir occurs at its zenith, akin to a seismic wave, yet glistening with the fluidity of water. The design evokes the tranquility of the sea, while also hinting at its enigmatic depths. This ring grants the ability to control and manipulate all types of emergencies, providing protection against fiery adversaries. Amidst the bearer’s physical and mental overloads, the sapphire glows brightly, summoning a protective wave that can shield the wearer from stress and harm momentarily. It is a favored ring among ocean mages and water elementals.", "legendary", 773),
+    }, (level) => ``, "The Ferocious Overflow is a masterwork of muted olive and collards, embodying the essence of the ocean. Its smooth band twists and curls like crashing waves, shimmering under light. A rigorous outburst of elixir occurs at its zenith, akin to a seismic wave, yet glistening with the fluidity of water. The design evokes the tranquility of the sea, while also hinting at its enigmatic depths. This ring grants the ability to control and manipulate all types of emergencies, providing protection against fiery adversaries. Amidst the bearer’s physical and mental overloads, the sapphire glows brightly, summoning a protective wave that can shield the wearer from stress and harm momentarily. It is a favored ring among ocean mages and water elementals.", "legendary", 773),
 
 ];
 
