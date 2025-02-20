@@ -702,11 +702,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             };
         };
 
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical " + ((options.magicDamage && options.mdChance < attacker.mdChance && !attacker.isLightning) ? "magic" : "") + ((!(options.magicDamage && options.mdChance < attacker.mdChance) && attacker.isLightning) ? "lightning" : "") + " hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
         target.hp = Math.floor(target.hp - damage);
         if (target.hp < 1) target.hp = 0;
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical " + ((options.magicDamage && options.mdChance < attacker.mdChance && !attacker.isLightning) ? "magic" : "") + ((!(options.magicDamage && options.mdChance < attacker.mdChance) && attacker.isLightning) ? "lightning" : "") + " hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
     };
 
     // Reflect damage
