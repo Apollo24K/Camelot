@@ -282,7 +282,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < retaliationChance && matchStats.round % 2 === 0) {
                     eStats.sm += 25;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Get, out.* **${enemy.name}** retaliated`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Get, out.* **${enemy.name}** retaliated and`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
 
@@ -304,7 +304,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < retaliationChance) {
                     eStats.sm += 35;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Stay, away.* **${enemy.name}** retaliated`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Stay, away.* **${enemy.name}** retaliated and`, { atkMultiplier: eStats.retaliationDamage });
 
                 }
             });
@@ -330,7 +330,7 @@ export const raidBosses: enemyInfo[] = [
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
                 if (caster === myStats && Math.random() < retaliationChance) {
                     eStats.sm += 50;
-                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Leave me, alONE!* **${enemy.name}** retaliated`, { atkMultiplier: eStats.retaliationDamage });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> *Leave me, ALONE!* **${enemy.name}** retaliated and`, { atkMultiplier: eStats.retaliationDamage });
                 }
             });
 
@@ -378,7 +378,7 @@ export const raidBosses: enemyInfo[] = [
             //? why so weak/ boring?
             
             eStats.counter = 2;
-            notice.push(`\n<:counter:1340459549374546032> *Submerge!* **${enemy.name}** prepares to counter the next 2 attacks`);
+            notice.push(`\n<:counter:1340459549374546032> *Submerge!* **${enemy.name}** prepares to counter the next **2** attacks`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
@@ -450,11 +450,11 @@ export const raidBosses: enemyInfo[] = [
     new enemyInfo("Nekro", "Necromancer", "the Death Caller", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/1Yt4DdYZ/nekro.png"], [], 9,
         new skillInfo(9, 140, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            notice.push(`\n<:summon:1340620694655995925> *It's playtime.* **${enemy.name}** summons a minion with 20% of its stats`);
+            notice.push(`\n<:summon:1340620694655995925> *It's playtime.* **${enemy.name}** summons a minion with **20%** of **${enemy.name}**'s stats`);
             matchStats.eStatsCC = { ...eStats };
             matchStats.currentOpponent = 1;
             const statScale = 0.2;
-            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; //! Minion Placeholder
+            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; //TODO: Minion Placeholder
             embed.setImage(eStats.image);
 
             eStats.hp = Math.floor(eStats.maxhp * statScale * 0.01); //! HP Scaling
@@ -478,11 +478,11 @@ export const raidBosses: enemyInfo[] = [
     new enemyInfo("NecroVamp", "Necromancer", "the Death Eater", "M", true, {}, {}, { mana: 120, mg: 10 }, [], ["https://i.ibb.co/H0sjR0p/nekrovamp.png"], [], 10,
         new skillInfo(10, 150, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-            notice.push(`\n<:summon:1340620694655995925> *It's playtime.* **${enemy.name}** summons a minion with 30% of its stats`);
+            notice.push(`\n<:summon:1340620694655995925> *It's playtime.* **${enemy.name}** summons a minion with **30%** of **${enemy.name}**'s stats`);
             matchStats.eStatsCC = { ...eStats };
             matchStats.currentOpponent = 1;
             const statScale = 0.3;
-            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; //! Minion Placeholder
+            eStats.image = "https://i.ibb.co/Hz73P9Q/s.png"; //TODO: Minion Placeholder
             embed.setImage(eStats.image);
 
             // HP Scaling, 0.3% of maxhp
@@ -533,15 +533,15 @@ export const raidBosses: enemyInfo[] = [
 
             //! Scaling Issue
             // steals 20% of player stats, eStats scales with 4x
-            const satk = Math.floor(myStats.atk * 0.2); 
-            const sdef = Math.floor(myStats.def * 0.2); 
-            const smd = Math.floor(myStats.md * 0.2); 
-            const smr = Math.floor(myStats.mr * 0.2); 
+            const satk = Math.floor(myStats.atk * 0.2);
+            const sdef = Math.floor(myStats.def * 0.2);
+            const smd = Math.floor(myStats.md * 0.2);
+            const smr = Math.floor(myStats.mr * 0.2);
 
-            const sdodge = Math.floor(myStats.dodge * 20) / 100; 
-            const scr = Math.floor(myStats.cr * 20) / 100; 
-            const scd = Math.floor(myStats.cd * 20) / 100; 
-            const sbr = Math.floor(myStats.br * 20) / 100; 
+            const sdodge = Math.floor(myStats.dodge * 20) / 100;
+            const scr = Math.floor(myStats.cr * 20) / 100;
+            const scd = Math.floor(myStats.cd * 20) / 100;
+            const sbr = Math.floor(myStats.br * 20) / 100;
 
             ebuff.atk.push(new buffInfo("+", satk * 4, 4)); mybuff.atk.push(new buffInfo("+", -satk, 4));
             ebuff.def.push(new buffInfo("+", sdef * 2, 4)); mybuff.def.push(new buffInfo("+", -sdef, 4));
@@ -563,7 +563,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.br += sbr; myStats.br -= sbr;
             
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            
+
             // Drain 5/10% cHP
             myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const drain = myStats.hp > myStats.maxhp * 0.5 ? Math.floor(myStats.hp * 0.05) : Math.floor(myStats.hp * 0.1);
@@ -722,7 +722,6 @@ export const raidBosses: enemyInfo[] = [
             ebuff.mr.push(new buffInfo("+", Math.floor(eStats.mr * mrScale), 9999));
             eStats.mr += Math.floor(eStats.mr * mrScale);
 
-            //? More Fun Message: @freezerfallen
             notice.push(`\n<:cakey:1340671224430329928> *You... shouldn't be here.* **${enemy.name}** took **5%** of your magic damage and added it to her own`);
 
         }, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -733,7 +732,6 @@ export const raidBosses: enemyInfo[] = [
                     myStats.hp -= Math.floor(myStats.hp * 0.03);
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
                     
-                    //? More Fun Message: @freezerfallen
                     notice.push(`\n<:cakey:1340671224430329928> *I- don't want to do this...* **${enemy.name}** reduced your max HP by 3%`);
                 }
             });
