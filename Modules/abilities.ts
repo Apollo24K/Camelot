@@ -848,6 +848,7 @@ export const abilities: Record<number, Ability> = {
                     if (eStats.shield > 0) {
                         eStats.shield = 0;
                         notice.push(`\n✨ **${enemy.name}**'s shield broke down!`);
+                        matchStats.trigger("shieldBreak", myStats, eStats, mybuff, ebuff);
                     };
                     notice.push(`\n✨ **${char.name}** entered his shadow form!`);
                     embed.setThumbnail("https://i.imgur.com/2VZTpDS.png");
