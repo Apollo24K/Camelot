@@ -533,6 +533,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: false,
         isLightning: false,
+        canCounter: true,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
@@ -630,6 +631,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
 
     // Counter the attack
+    if (options.canCounter) {
     if (target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
         target.counter--;
         notice.push(`\n<:counter:1340459549374546032> **${target.name}** countered the attack!`);
@@ -648,7 +650,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
 
         return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
-    };
+    }};
 
     // Evade Deadly Attack
     if (
