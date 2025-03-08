@@ -4707,4 +4707,147 @@ export const abilities: Record<number, Ability> = {
             }, 9999, 1));
         },
     },
+    "1": {
+        usage: 9999,
+        used: 0,
+        cost: 100,
+        pause: -11,
+        desc: "**Total Usage**: `Unlimited (CD: 10)`\n**Cost**: `100 💧+ 25% current HP`\n**Timeout**: `false`\n**Role**: `DPS (Non-critical)`\n\nBuilt out of high-energy pure crystals, Shorekeeper acts as a vessel where data filled with grief, chaos and decay flow through her for analysis. She repairs her scars with new crystals, as she witnesses the tragedies of humanity.\n\nHer ATTACK is altered to __Origin Calculus__, interpreting the reverberations. She deals **80%** DMG. For every `Flare Stare Butterfly` summoned, this hit’s damage scaling is increased by **5%**. If the hit is non-critical, gains **3x** `Core`. When she has **5x** or more `Core`, she immediately follows up with __Astral Chord__.\n\nAfter using DEFEND, she follows up with  __Astral Chord__. For every **5** existing `Core`, transforms them into **1x** `Flare Stare Butterfly` (Up to 10). She then casts Suction, where for every `Flare Stare Butterfly` on-field, the enemy has **-2%** critical rate and **-2%** DEF & MR for **3** rounds, meanwhile boosting her DEF & MR by **5** permanently, up to **750**.\n\nConsuming **100** 💧and **30%** of her current HP, she casts her active, __End Loop__, where she summons a domain of Stellarealm for **10** rounds. During this period, She restores **5%** lost HP every round and has **+3%** ATK for every **1x** `Flare Stare Butterfly` owned. Moreover, attacks will *benefit from the critical damage scaling* even if they don’t land a critical strike\n\nRight before exiting the domain, she increases critical DMG by **50%** for **1** round, before giving a final ordination.\n- [Default] : Deals **50%** DMG\n- [5+ Butterflies] : Deals **150%** DMG + restores **15%** max HP\n- [10 Butterflies] : Deals **250%** DMG + restores **25%** max HP + Increases dodge rate by **100%** for **1** round\n\nIn a party, she increases the ally’s dodge rate by **2%** for every **5%** missing HP, up to **20%** dodge rate. Moreover, allies evade the first **3** lethal attacks and restore **10%** max HP.",
+        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `10 rounds`\n**Cost**: `100 💧+ 25% current HP`\n**Timeout**: `No`\n**Role**: `DPS (Non-critical)`\n\n__**Passive**__\n- After using DEF, follows up with “Astral Chord”\n\nATTACK is altered:\n- Deals **80%** DMG\n- For each `Butterfly` summoned, DMG scaling is increased by **5%**\n- If this hit is non-critical, grant **3x** additional `Core`\n- If amount of `Core` reaches **5** or more, follows up with “Astral Chord”\n\n“Astral Chord”:\n- For every **5** existing cores, transforms them to **1x** `Butterfly` (Up to 10)\n- For every `Butterfly` on-field:\n> - Reduces enemy’s critical rate by **2%** for **3** rounds\n> - Reduces enemy’s DEF/MR by **2%** for **3** rounds\n> - Increases DEF/MR by **5** (Up to 750)\n\n__**Active**__ (✨)\nCreates a domain of Stellarealm for **10** rounds, during this period:\n- Restores **5%** lost HP every round\n- Boosts ATK by **3%** for every **1x** `Butterfly` owned (Up to 30%)\n- All attacks **will benefit from the critical damage scaling** even if they don’t land a critical strike\n\nRight before exiting the domain:\n- Increases critical DMG by **50%** for **1** round\n- Grants additional effects based off `Butterfly` owned\n> - [Default] : Deals **50%** DMG\n> - [5+ Butterflies] : Deals **150%** DMG + restores **15%** max HP\n> - [10 Butterflies] : Deals **250%** DMG + restores **25%** max HP + Increases dodge rate by **100%** for **1** round\n\n__**Party**__ (👥):\n- For every **5%** HP missing: Increases ally’s dodge rate by **2%** (Up to 20%)\n- Allies evades lethal attacks and restores **10%** max HP (Up to 3 times)",
+        ability: function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            // Shorekeeper EX
+            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+
+            if (this.pause > matchStats.round) {
+                myStats.sm += this.cost;
+                matchStats.interaction.followUp({ content: `${char.name} needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                this.used--;
+                return;
+            };
+            this.pause = matchStats.round + 10;
+
+            const domainLast = 10;
+            
+            myStats.shorekeeperUsedActive = true;
+            myStats.hp -= Math.floor(myStats.hp * 0.25);
+
+            // Enter Stellarealm
+            const atkbuff = Math.floor(myStats.atk * Math.min(0.03 * myStats.butterfly)) 
+            mybuff.atk.push(new buffInfo("+", atkbuff, domainLast - 1));
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
+            }, domainLast - 1));
+
+            // Exit Stellarealm
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.cd += 0.5;
+
+                // Activates additional effects based off Butterfly
+                switch (true) {
+                    case myStats.butterfly >= 10:
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Rectify!* **${char.name}** dealt`, { atkMultiplier: 2.5, dodge: false});
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.25), {});
+                        myStats.dodge = 1;
+                        break;
+                    case myStats.butterfly >= 5: 
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Perish!* **${char.name}** dealt`, { atkMultiplier: 1.5, dodge: false});
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15), {});
+                        break;
+                    default: 
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Ordained!* **${char.name}** dealt`, { atkMultiplier: 0.5, dodge: false});
+                        break;
+                };
+
+                myStats.shorekeeperUsedActive = false;
+            }));
+
+            notice.push(`\n✨ **${char.name}** summoned the Domain of Stellarealm for ${domainLast} rounds!`);
+        },
+        passive: (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.core ??= 0;
+            myStats.butterfly ??= 0;
+            myStats.astraldefcap = 750;
+            myStats.shorekeeperUsedActive = false;
+
+            // Alter DEFEND
+            const astralchord = () => {
+
+                // Transform Core -> Butterfly (Up to 10)
+                while (myStats.core >= 5) {
+                    myStats.core -= 5;
+                    if (myStats.butterfly < 10) {
+                        myStats.butterfly += 1;
+                }
+            };
+                // Suction - debuffs for 3 turns
+                const def_debuff = 0.02 * myStats.butterfly
+                eStats.cr -= def_debuff;
+                if (eStats.cr < 0) eStats.cr = 0;
+                eStats.def -= Math.floor(eStats.def * def_debuff);
+                eStats.mr -= Math.floor(eStats.mr * def_debuff);
+
+                ebuff.def.push(new buffInfo("+", Math.floor(eStats.def * def_debuff), 2));
+                ebuff.mr.push(new buffInfo("+", Math.floor(eStats.mr * def_debuff), 2));
+                ebuff.cr.push(new buffInfo("=", Math.min(0, eStats.cr - def_debuff), 2));
+
+                // Increase DEF/MR up to 750
+                if (myStats.astraldefcap > 0) {
+                    const defmrboost = Math.min(5 * myStats.butterfly, myStats.astraldefcap)
+                    myStats.def += defmrboost;
+                    myStats.mr += defmrboost;
+                    mybuff.def.push(new buffInfo("+", defmrboost, 2));
+                    mybuff.mr.push(new buffInfo("+", defmrboost, 2));
+                    myStats.astraldefcap -= defmrboost;
+                };
+                notice.push(`\n🦋 **${char.name}** decreased the enemy's DEF & MR by ${Math.floor(def_debuff * 100)}%`)
+            };
+            
+            // Alter ATTACK
+            myStats.replaceButton.atk = {
+                "emoji": "🫧",
+                "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    const buff_multiplier = 0.05 * myStats.butterfly;
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🫧 **${char.name}** used Origin Calculus! She`, { atkMultiplier: 0.8 + buff_multiplier, magicDamage: true, combodmg: true});
+                },
+            };
+
+            // Gain 1x Core when ATTACK doesn't crit
+            matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats && !(options.canCrit && (options.critChance < (caster.cr + options.critBuff)))) myStats.core += 3;
+                if (myStats.core >= 5) astralchord();
+            });
+
+            // After DEFEND, uses astralchord
+            matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) astralchord();
+            });
+        },
+        party: (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            
+            myStats.evadeDeathStrike ??= 0;
+            myStats.evadeDeathStrike += 3;
+
+            // Upon death evasion, restores 10% max HP (up to 3 times)
+            matchStats.on("deathEvade", {
+                maxUsage: 3,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (caster === myStats) {
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});           
+                        return true;
+                    }},
+                });
+
+            // Allies cannot fall below 0% dodge rate. Increases dodge rate by 2% for every 5% missing HP, up to 20%
+            if (myStats.dodge < 0) myStats.dodge = 0;
+            const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);
+            myStats.dodge += Math.min(dodgebuff , 0.2);
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        if (myStats.dodge < 0) myStats.dodge = 0;
+                        const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);
+                        myStats.dodge += Math.min(dodgebuff , 0.2);
+                    }, 9999));
+        },
+    },
 };

@@ -601,6 +601,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         lightning: 1 + (options.isLightning ? (attacker.lightningMultiplier ?? 0) : 0),
         rng: (1 - (0.2 * Math.random())),
     };
+    if (attacker.shorekeeperUsedActive && !isCrit) options.critMultiplier * attacker.cd;
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
         damage = options.overwriteDamage || Math.floor(multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     } else {
@@ -663,6 +664,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         notice.push(`\n💨 **${target.name}** has evaded a deadly attack!`);
 
         // Event Triggers
+        matchStats.trigger("deathEvade", attacker, target, attackerBuff, targetBuff);
         matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
 
         return 0;
