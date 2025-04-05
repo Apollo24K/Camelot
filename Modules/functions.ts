@@ -455,10 +455,10 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
             dStats.maskinfo = inv.equipment.mask;
         };
 
-        //! 2B Something
-        // if ((id === 13780 || id === 13781 || id === 13782) && inv.equipment.prog) {
-        //     dStats.proginfo = inv.equipment.prog;
-        // };
+        // 2B&9S EX's programmes
+         if (id === 2 && inv.equipment.prog) {
+             dStats.proginfo = inv.equipment.prog;
+         };
 
     };
 
@@ -607,6 +607,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     } else {
         damage = options.overwriteDamage || Math.floor(multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     };
+    if (attacker.critbonus && (isCrit || attacker.shorekeeperUsedActive)) damage *= 1+attacker.critbonus;
     attacker.crittedTotal ||= 0;
     attacker.crittedTotal++;
 
@@ -770,7 +771,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Event Triggers
     matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isCrit, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
-    if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
+    if (isCrit) {matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage })} else {matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage })}
 
     return damage;
 };

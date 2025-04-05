@@ -658,38 +658,42 @@ const exportCommand: SlashCommand = {
                     continue;
                 };
 
-                /* //! 2B Something
-                // Nier Pod Programmes
+                // 2B&9S EX Programmes
                 if (itemChoice.toLowerCase().startsWith(`prog`)) {
                     let action = itemChoice.toLowerCase().split(" ")[1] ?? "info";
                     if (action === "remove") {
                         delete stats.equipment["prog"];
-                        equipped.push(`Unequipped Pod's programme`);
+                        equipped.push(`Unequipped pod's programme(s)`);
                     }
                     else if (action === "info") {
                         // Show list of programmes
-                        let progmsg = "`Gravity` : Gathers foes every **3** turns, reducing their ATK, MD, DEF, MR, Block rate and Dodge rate by **25%** for **1** turn.\n`Mirage` : Analyzes foes every **3** turns, increasing own critical rate by **20%** before guaranteeing **2** hits of **20%** DMG on the enemy.\n`Repair` : Initiates restoration every **3** turns, applying a **10%** max HP heal over **2** turns.\n`Scanner` : Sharply locates loot, increasing coins obtained from dungeons by **15%**.\n`Remove` : Removes any existing programme from the pod.";
-                        return interaction.reply(`⚙️ Correct usage: /item equip item:prog <action>. Valid programmes actions:\n\n${progmsg}`)
+                        let progmsg = "`A110` : Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds.\n`A120` : Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **3** rounds, reducing their ATK, MD, DEF, MR by **20%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **3** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme from the pod.";
+                        return interaction.reply(`⚙️ Correct usage: /item equip item:prog <ID>. Valid programmes:\n\n${progmsg}`)
                     }
-                    else if (action === "gravity"||action === "mirage"||action === "repair"||action === "scanner") {
+                    else if (action === "a110" || action === "a120" || action === "a140" || action === "a170" || action === "r020") {
                         // Dictionary of pod and relevant effects
                         const proglist = {
-                            "gravity" : "Gathers foes every **3** turns, reducing their ATK, MD, DEF, MR, Block rate and Dodge rate by **25%** for **1** turn.",
-                            "mirage" : "Analyzes foes every **3** turns, increasing own critical rate by **20%** before guaranteeing **2** hits of **20%** DMG on the enemy.",
-                            "repair" : "Initiates restoration every **3** turns, applying a **10%** max HP heal over **2** turns.",
-                            "scanner" : "Sharply locates loot, increasing coins obtained from dungeons by **15%**.",
+                            "a110" : "Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds",
+                            "a120" : "Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.",
+                            "a140" : "Gathers enemy **3** rounds, reducing their ATK, MD, DEF & MR by **20%** for **1** round.",
+                            "a170" : "Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.",
+                            "r020" : "Analyzes enemy every **3** rounds, dealing **2** hits of **20%** DMG on the enemy.",
                             "remove" : "Removes any existing programme from the pod."
                         };
                         
                         // Equips programme + shows relevant effect
-                        stats.equipment["prog"] = action;
-                        equipped.push(`**__Programme: ${action}__**`);
-                        return interaction.reply(proglist[action])
-                    }
-                    else return interaction.reply(`Unrecognized programme! Equip "prog info" to learn the list of available programmes!`);
+                        stats.equipment["prog"] ??= [];
+
+                        // Disallow duplicate or over 2 programmes
+                        if (stats.equipment["prog"].includes(action)) equipped.push(`You cannot equip the same programme twice.`)
+                        else if (stats.equipment["prog"].length >= 2) equipped.push("You cannot equip more than two programmes. To clear all programmes, do `/item equip prog remove` instead.");
+                        else {
+                        stats.equipment["prog"].push(action);
+                        equipped.push(`[${action.toUpperCase()}]. Effect:\n> ${proglist[action]}`);
+                    }}
+                    else equipped.push(`Unrecognized programme! Equip "prog info" to learn the list of available programmes!`);
                     continue;
-                };
-                */
+            };
 
                 const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
                 if (!item) {
