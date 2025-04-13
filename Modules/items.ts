@@ -4277,6 +4277,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, (level) => `Increases the wearer's ATK and MD by their shield amount at any given time, up to **${[10, 15, 20, 25][level - 1]}%** of their ATK/MD.`, "The Azure Aegis is a stunning ring, designed in the shape of a shield encasing a radiant blue gem. Intricate patterns of swirling that evoke ocean waves cover the band, embodying strength and protection. Crafted from a blue-tinted metal that glistens like the sea at sunrise, it shimmers with a soft, inviting light. When worn, it enhances defensive abilities, creating a protective aura around the bearer, thus ensuring their safety and fortitude in challenging situations.", "legendary", 692),
     new ringInfo("Ethereal Spiral", "ring", "ring", ["raid"], "<:ethereal_spiral:1333967191678390333>", "https://i.ibb.co/TDqBgJpr/Ethereal-Spiral.png", 4, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana (DoT before)
+
         // Steals 2/3/4/5 💧 from the enemy
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const steal = Math.min(eStats.sm, Math.floor(2 + 2 * (level - 1)));
