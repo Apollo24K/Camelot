@@ -30,7 +30,7 @@ const exportCommand: SlashCommand = {
                 .setAuthor({ name: "Camelot Premium", iconURL: user.displayAvatarURL({ size: 1024 }) })
                 .setColor(0xbbffff)
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setDescription(`Your current tier: **${stats.premium}** 💎\n${giftLimit === 0 ? "" : `Gifts left this month: **${Math.max(0, giftLimit - premiumGifted)}**/${giftLimit} T${giftTier}\n`}\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees`)
+                .setDescription(`Your current tier: **${stats.premium}** 💎\n${giftLimit === 0 ? "" : `Gifts left this month: **${Math.max(0, giftLimit - premiumGifted)}**/${giftLimit} T${giftTier}\n`}\nPatreon: https://www.patreon.com/cmlt/membership\nSee https://ko-fi.com/camelot24 for donations and lower fees`)
                 .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
             return interaction.reply({ embeds: [Embed] });
         };
@@ -39,7 +39,7 @@ const exportCommand: SlashCommand = {
             .setTitle("Camelot Premium")
             .setColor(0xbbffff)
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-            .setDescription("Camelot Premium offers a lot of features to improve your playing experience. If you enjoy playing with Camelot, we would really appreciate your support! <:fumino_heart:794983494534955038>\nYou can find out more about the features and benefits of premium on our patreon.\n\nPatreon: https://www.patreon.com/cmlt\nSee https://ko-fi.com/camelot24 for donations and lower fees")
+            .setDescription("Camelot Premium offers a lot of features to improve your playing experience. If you enjoy playing with Camelot, we would really appreciate your support! <:fumino_heart:794983494534955038>\nYou can find out more about the features and benefits of premium on our patreon.\n\nPatreon: https://www.patreon.com/cmlt/membership\nSee https://ko-fi.com/camelot24 for donations and lower fees")
             .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
         return interaction.reply({ embeds: [Embed] });
     },

@@ -22,8 +22,7 @@ export const query = async (text: string, params?: any[]) => {
 };
 
 async function createTables() {
-    // Users table (combined with characters and dungeon)
-    // Create sequences for auto-incrementing IDs
+    // Users table
     await query(`CREATE SEQUENCE IF NOT EXISTS users_rowid_seq`);
     await query(`CREATE TABLE IF NOT EXISTS users (
         rowid BIGINT NOT NULL DEFAULT nextval('users_rowid_seq'::regclass),
@@ -127,12 +126,15 @@ async function createTables() {
         cow_chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         cow_timer BIGINT,
         cow_rolled_today INT DEFAULT 0 NOT NULL,
-        rank TEXT DEFAULT 'F-' NOT NULL,
+        rank INT DEFAULT 0 NOT NULL,
         rankscore BIGINT DEFAULT 0 NOT NULL,
         raidxp INT DEFAULT 0 NOT NULL,
         guild_marks BIGINT DEFAULT 0 NOT NULL,
         created TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
         image_credits INT DEFAULT 0 NOT NULL,
+        skill_tree JSONB DEFAULT '{}' NOT NULL,
+        skill_points INT DEFAULT 0 NOT NULL,
+        raid_supports INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
 
         -- Characters table columns
         chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
@@ -193,6 +195,9 @@ async function createTables() {
         xpbuff INT DEFAULT 0 NOT NULL,
         lootbuff INT DEFAULT 0 NOT NULL,
         cdreduction INT DEFAULT 0 NOT NULL,
+        atkbuff INT DEFAULT 0 NOT NULL,
+        hpbuff INT DEFAULT 0 NOT NULL,
+        defbuff INT DEFAULT 0 NOT NULL,
         master TEXT NOT NULL,
         elders TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         members TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
@@ -464,6 +469,11 @@ async function alterTables() {
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INT DEFAULT 0 NOT NULL');
 
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');
+    // await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS skill_tree JSONB DEFAULT '{}' NOT NULL");
+    // await query("ALTER TABLE users ADD COLUMN IF NOT EXISTS skill_points INT DEFAULT 0 NOT NULL");
+    // await query("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS atkbuff INT DEFAULT 0 NOT NULL");
+    // await query("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS hpbuff INT DEFAULT 0 NOT NULL");
+    // await query("ALTER TABLE guilds ADD COLUMN IF NOT EXISTS defbuff INT DEFAULT 0 NOT NULL");
 };
 
 async function dropTables() {

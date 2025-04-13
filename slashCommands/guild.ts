@@ -1,6 +1,6 @@
 import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable } from "discord.js";
 import { dailies } from "../Modules/dailyQuests";
-import { showPage, searchGuild, getDonationsPageWeek, lastActive, formatNumberWithQuotes } from "../Modules/functions";
+import { showPage, searchGuild, getDonationsPageWeek, lastActive, formatNumberWithQuotes, customEmojis } from "../Modules/functions";
 import { PageRow, OfferRow, donationWeekStart } from "../Modules/components";
 import { GuildSchema, SlashCommand } from "../types";
 import { addGuildDonation, deleteGuild, getGuildDonationSchemas, getGuildSchema, getGuildSchemas, getUserSchema, getUserSchemas, insertNewGuild, updateGuildDonationsGuildId, updateGuilds, updateUsers } from "../Modules/queries";
@@ -10,18 +10,18 @@ function lastActiveInDays(timestamp: Date | number) {
     return Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 };
 
-function upgradePrice(level: number) {
+function upgradePrice(level: number): number {
     switch (level) {
-        case 1: return 100000;
-        case 2: return 300000;
-        case 3: return 500000;
-        case 4: return 1000000;
-        case 5: return 2000000;
-        case 6: return 5000000;
-        case 7: return 8000000;
-        case 8: return 12000000;
-        case 9: return 20000000;
-        default: return 30000000;
+        case 1: return 100_000;
+        case 2: return 300_000;
+        case 3: return 500_000;
+        case 4: return 1_000_000;
+        case 5: return 2_000_000;
+        case 6: return 5_000_000;
+        case 7: return 8_000_000;
+        case 8: return 12_000_000;
+        case 9: return 20_000_000;
+        default: return 20_000_000 + (Math.floor(level / 10) * 10_000_000);
     };
 };
 
@@ -104,10 +104,17 @@ const exportCommand: SlashCommand = {
                 .setTitle(guild.name)
                 .setColor(guild.color as ColorResolvable || 0xbbffff)
                 .setThumbnail(guild.icon || 'https://i.imgur.com/JEvfGSR.png')
-                .setDescription((guild.description?.replace(/\\n/g, "\n") || "_Missing description. Use `/guild edit` to add one._")
+                .setDescription(
+                    (guild.description?.replace(/\\n/g, "\n") || "_Missing description. Use `/guild edit` to add one._")
                     + `\n\n**Guild Level**: \`${guild.level}\`\n**Capacity**: \`${members.length}/${10 + Math.min(guild.level - 1, 10)}\`\n**Tax Rate**: \`${guild.tax}%\`\n**Treasury**: \`${formatNumberWithQuotes(guild.treasury)}\`<:coins:872926669055356939>, \`${formatNumberWithQuotes(guild.treasury_gems)}\`<:genesis_gems:1034179687720681492>`
-                    + `\n\n<:ATK:1063214925528440832> **XP Buffs**: level ${guild.xpbuff}${guild.xpbuff ? `<:blank:917804200363171860>ㅤ(__+${20 * guild.xpbuff}__%)` : ""}\n<:coins:872926669055356939> **Loot Buffs**: level ${guild.lootbuff}${guild.lootbuff ? `<:blank:917804200363171860>(__+${20 * guild.lootbuff}__%)` : ""}\n⏱️ **Timers**: level ${guild.cdreduction}${guild.cdreduction ? `<:blank:917804200363171860> <:blank:917804200363171860>(__-${guild.cdreduction}__ min)` : ""}`
-                )//+ `\n\n**Members**\n${members.sort((a, b) => b.value-a.value).map((e) => `${e.name}${e.status} ➜ last online __${lastActive(e.lastdaily)}__`).join("\n")}`)
+                    + `\n\n**Perks**`
+                    + `\n${customEmojis.atk} **XP Buffs**: level ${guild.xpbuff}${guild.xpbuff ? `<:blank:917804200363171860>ㅤ(__+${20 * guild.xpbuff}__%)` : ""}`
+                    + `\n<:coins:872926669055356939> **Loot Buffs**: level ${guild.lootbuff}${guild.lootbuff ? `<:blank:917804200363171860>(__+${20 * guild.lootbuff}__%)` : ""}`
+                    + `\n\n**Raid Perks**`
+                    + `\n${customEmojis.atk} **ATK Buff**: level ${guild.atkbuff}${guild.atkbuff ? `<:blank:917804200363171860>ㅤ(__+${20 * guild.atkbuff}__%)` : ""}`
+                    + `\n${customEmojis.hp} **HP Buff**: level ${guild.hpbuff}${guild.hpbuff ? `<:blank:917804200363171860>ㅤ(__+${20 * guild.hpbuff}__%)` : ""}`
+                    + `\n${customEmojis.def} **DEF Buff**: level ${guild.defbuff}${guild.defbuff ? `<:blank:917804200363171860>ㅤ(__+${100 * guild.defbuff}__)` : ""}`
+                )
                 .addFields(
                     { name: "Members", value: `${members.map((e) => `${e.name}${e.status}`).join("\n")}`, inline: true },
                     detailsTab
@@ -913,15 +920,19 @@ const exportCommand: SlashCommand = {
 
             });
         } else if (subcommand === "upgrade") {
-            const perks = ["membercap", "xpbuff", "lootbuff", "cdreduction"] as const;
+            const perks = ["membercap", "xpbuff", "lootbuff", "cdreduction", "atkbuff", "hpbuff", "defbuff"] as const;
             const perk = interaction.options.getString('perk', true) as (typeof perks)[number];
-            const perkName = { "membercap": "Guild Size", "xpbuff": "XP Buffs", "lootbuff": "Loot Buffs", "cdreduction": "Timers" }[perk];
+            const perkName = { "membercap": "Guild Size", "xpbuff": "XP Buffs", "lootbuff": "Loot Buffs", "cdreduction": "Timers", "atkbuff": "ATK & MD Buff", "hpbuff": "HP Buff", "defbuff": "DEF & MR Buff" }[perk];
 
             const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
             if (!guild || guild.master !== interaction.user.id) return interaction.reply(`You don't own a guild.`);
 
             if (!guild.tokens) return interaction.reply(`**${guild.name}** does not have any tokens left. Try again after leveling up.`);
-            if (guild[perk] >= 10) return interaction.reply(`**${guild.name}** has already reached the maximum level the **${perkName}** perk.`);
+            if (guild[perk] >= 10) return interaction.reply(`**${guild.name}** has already reached the maximum level for the **${perkName}** perk.`);
+
+            if (["atkbuff", "hpbuff", "defbuff"].includes(perk)) {
+                if (guild.xpbuff !== 10 || guild.lootbuff !== 10) return interaction.reply(`Please upgrade the **XP Buffs** and **Loot Buffs** perks to level 10 first.`);
+            };
 
             return interaction.reply({ content: `Are you sure you want to upgrade **${perkName}** to level **${guild[perk] + 1}** by using 1 out of your currently available ${guild.tokens === 1 ? "1 token" : `${guild.tokens} tokens`}?`, components: [OfferRow] }).then(msg => {
 
@@ -949,7 +960,7 @@ const exportCommand: SlashCommand = {
                         tokens: { type: "increment", value: -1 },
                     });
 
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully upgraded **${perk}** to level **${guild[perk] + 1}**!`);
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully upgraded the **${perkName}** perk to level **${guild[perk] + 1}**!`);
                 });
 
                 cancel.on('collect', () => {

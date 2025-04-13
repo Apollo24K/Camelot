@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import { search, splitTitle, baseHP, baseATK, baseDEF, baseEP, baseExpertise, getDetailedStats, rarity, getRefinement, customEmojis } from "../Modules/functions";
+import { search, splitTitle, baseHP, baseATK, baseDEF, baseEP, baseExpertise, getDetailedStats, rarity, getRefinement, customEmojis, getClassLvl } from "../Modules/functions";
 import { classes } from "../Modules/classes";
 import skinInfo, { skins } from "../Modules/skins";
 import { PageRow } from "../Modules/components";
@@ -239,7 +239,21 @@ const exportCommand: SlashCommand = {
                 const Embed = new EmbedBuilder()
                     .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
                     .setThumbnail(img)
-                    .setDescription(`**${char.name}** - ${char.anime}\n**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${(stats.premium > 3 || stats.shield_slot) && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>\n\n`)
+                    .setDescription(
+                        `**${char.name}** - ${char.anime}\n` +
+                        `**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n` +
+                        `**Class**: ${cls}\n` +
+                        `**Equipment**: ${charstats.weaponicon}`
+                        + `${(stats.premium > 3 || stats.shield_slot) && charstats.shieldicon ? charstats.shieldicon : ""} `
+                        + `${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}`
+                        + `${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}`
+                        + `${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}`
+                        + `${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n` +
+                        `**Items**: <:rune_empty:1034507494539669635> `
+                        + `${charstats.ring1icon}`
+                        + `${charstats.ring2icon}`
+                        + `${charstats.ring3icon}`
+                    )
                     .addFields(
                         { name: 'Stats', value: `${customEmojis.hp} **HP**: __${charstats.bhp}__ + ${charstats.hp - charstats.bhp}\n${customEmojis.atk} **ATK**: __${charstats.batk}__ + ${charstats.atk - charstats.batk}\n${customEmojis.def} **DEF**: __${charstats.bdef}__ + ${charstats.def - charstats.bdef}\n<:magic_dmg:948568336621527040> **MD**: __${charstats.bmd}__ + ${charstats.md - charstats.bmd}\n${customEmojis.mr} **MR**: __${charstats.bmr}__ + ${charstats.mr - charstats.bmr}`, inline: true },
                         { name: '_ _', value: `${customEmojis.cr} **Crit Rate**: ${Math.floor(charstats.cr * 100)}%\n${customEmojis.cd} **Crit Damage**: ${Math.floor(charstats.cd * 100)}%\n${customEmojis.br} **Block Rate**: ${Math.floor(charstats.br * 100)}%\n${customEmojis.dodge} **Dodge**: ${Math.floor(charstats.dodge * 100)}%`, inline: true },
