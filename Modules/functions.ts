@@ -721,8 +721,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (options.isTest) return damage;
 
     // Counter the attack
-    if (options.canCounter) {
-    if (target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
+    if (options.canCounter && target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
         target.counter--;
         notice.push(`\n<:counter:1340459549374546032> **${target.name}** countered the attack!`);
         if (target.soulfistAtkStack !== undefined) {
@@ -740,7 +739,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
 
         return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
-    }};
+    };
 
     // Evade Deadly Attack
     if (
@@ -860,7 +859,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Event Triggers
     matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isCrit, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
-    if (isCrit) {matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage })} else {matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage })}
+    if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
+    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
 };
