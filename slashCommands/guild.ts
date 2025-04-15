@@ -4,6 +4,7 @@ import { showPage, searchGuild, getDonationsPageWeek, lastActive, formatNumberWi
 import { PageRow, OfferRow, donationWeekStart } from "../Modules/components";
 import { GuildSchema, SlashCommand } from "../types";
 import { addGuildDonation, deleteGuild, getGuildDonationSchemas, getGuildSchema, getGuildSchemas, getUserSchema, getUserSchemas, insertNewGuild, updateGuildDonationsGuildId, updateGuilds, updateUsers } from "../Modules/queries";
+import { achievements } from "../Modules/achievements";
 
 function lastActiveInDays(timestamp: Date | number) {
     const now = new Date(), date = new Date(timestamp);
@@ -817,6 +818,9 @@ const exportCommand: SlashCommand = {
 
                     // Daily Quests
                     dailies[9].update(interaction, donation);
+
+                    // Achievements
+                    achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);
 
                     // Add guild donation
                     await addGuildDonation(guild.id, interaction.user.id, currency, donation);

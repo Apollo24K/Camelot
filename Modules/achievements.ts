@@ -215,6 +215,13 @@ export default class achievInfo {
             case 57: if (list[0] === 200 && list[1]) this.addRewards(interaction, user), this.notify(interaction); break;
             case 58: if (list[0] === 270 && list[1]) this.addRewards(interaction, user), this.notify(interaction); break;
 
+             // Guild Dono achievement
+            case 59: if (stats.donatedtotal >= 50000) this.addRewards(interaction, user), this.notify(interaction); break;
+            case 60: if (stats.donatedtotal >= 100000) this.addRewards(interaction, user), this.notify(interaction); break;
+            case 61: if (stats.donatedtotal >= 250000) this.addRewards(interaction, user), this.notify(interaction); break;
+            case 62: if (stats.donatedtotal >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
+            case 63: if (stats.donatedtotal >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
+
             default: false; break;
         };
     };
@@ -300,6 +307,12 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Challenger ⅠⅠ", "Beat the floor 150 Guardian", 56, 19, "1,2,3", "xp|300", "coins|12500", "ss shard|16"),
     new achievInfo("Challenger ⅠⅠ", "Beat the floor 200 Guardian", 57, 19, "1,2,3", "xp|350", "coins|15000", "ss shard|16"),
     new achievInfo("Challenger ⅠⅠ", "Beat the floor 270 Guardian", 58, 19, "6,1,2,4", "xp|500", "coins|20000", "ss ticket|3"),
+
+    new achievInfo("Blessing to the Guild", "Donate 50,000", 59, 20, "1", "xp|10"),
+    new achievInfo("Blessing to the Guild", "Donate 100,000", 60, 20, "1,2", "xp|20", "coins|1000"),
+    new achievInfo("Blessing to the Guild", "Donate 250,000", 61, 20, "1,2", "xp|40", "coins|2000"),
+    new achievInfo("Blessing to the Guild", "Donate 500,000", 62, 20, "1,2", "xp|80", "coins|4000"),
+    new achievInfo("Blessing to the Guild", "Donate 1,000,000", 63, 20, "1,2", "xp|100", "coins|10000"),
 
 
 

@@ -155,6 +155,12 @@ const exportCommand: SlashCommand = {
                     if (id === 58) return achvmBar(cFloor / 270, ` (${cFloor}/270)\n`);
                     break;
                 };
+                case 59: return achvmBar(stats.donatedtotal / 50000, ` (${stats.donatedtotal}/50000)\n`);
+                case 60: return achvmBar(stats.donatedtotal / 100000, ` (${stats.donatedtotal}/100000)\n`);
+                case 61: return achvmBar(stats.donatedtotal / 250000, ` (${stats.donatedtotal}/250000)\n`);
+                case 62: return achvmBar(stats.donatedtotal / 500000, ` (${stats.donatedtotal}/500000)\n`);
+                case 63: return achvmBar(stats.donatedtotal / 1000000, ` (${stats.donatedtotal}/1000000)\n`);
+               
                 default: return achvmBar(0);
             };
         };
