@@ -1051,6 +1051,9 @@ export const items = [
             return AbilityResponse.SUCCESS;
         }, 9999));
 
+        // dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🩸 **${char.name}**`, { atkMultiplier: 0.8, ignoreShield: true, magicDamage: true });
+
+
         return AbilityResponse.SUCCESS;
     }, "Drains the equivalent of **2%** of the wielders HP from the enemy and adds it to the wielder after each round. This number increases by **1%** every 4 rounds (up to a maximum of **10%**).", "The Cursed Scepter of Nosferatu is a powerful tool of dark magic, imbued with the essence of the legendary vampire himself. Those who wield it are said to gain immense power, but at a terrible cost. The scepter drains the life force of its wielder, slowly turning them into a creature of the night. Only the strongest and most determined can resist its corruption, but even they must tread carefully, lest they fall prey to its dark allure.", "unique", 189),
     new weaponInfo("Deflector of Hope", "weapon", "staff", ["crafting", "chest"], "<:deflector_of_hope:1066863389864906852>", "https://i.imgur.com/x3TzkoM.png", "md", 37, 586, "mg", 1, 5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

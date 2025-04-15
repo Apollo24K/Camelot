@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, ColorResolvable } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, ColorResolvable, TextInputBuilder, TextInputStyle, ModalBuilder } from "discord.js";
 import { abilities } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
@@ -7,14 +7,14 @@ import { raids } from "../Modules/raids";
 import { armorInfo, itemInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, customEmojis, dealDamage, getClassLvl } from "../Modules/functions";
-import { AbilityResponse, dungeonTempBan } from "../Modules/components";
+import { getDetailedStats, customEmojis, dealDamage, getClassLvl, getRingSlotsTotal, search } from "../Modules/functions";
+import { AbilityResponse, dungeonTempBan, raidRankIndices, raidRankLetters } from "../Modules/components";
 import delayedBuffs from "../Modules/delayedBuffs";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, RaidSchema, SlashCommand } from '../types';
-import { getGuildSchema, getLatestRaid, getWeaponSchemas, updateRaidParticipation } from '../Modules/queries';
+import { getGuildSchema, getLatestRaid, getWeaponSchemas, updateRaidParticipation, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
@@ -35,7 +35,7 @@ function getRaidButtonRow(tab: string, canPlay: boolean): ActionRowBuilder<Butto
     if (tab === "overview") {
         buttons.push(
             new ButtonBuilder()
-                .setCustomId('edit')
+                .setCustomId('ignore_defer-edit')
                 .setLabel(`Edit Support`)
                 .setStyle(ButtonStyle.Secondary)
         );
@@ -43,6 +43,34 @@ function getRaidButtonRow(tab: string, canPlay: boolean): ActionRowBuilder<Butto
 
     return new ActionRowBuilder<ButtonBuilder>()
         .addComponents(...buttons);
+};
+
+function getModal(uid: string) {
+    return new ModalBuilder()
+        .setCustomId('edit_raid_' + uid)
+        .setTitle('Edit Raid Support')
+        .addComponents(
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('support1')
+                    .setLabel("Support Character 1")
+                    .setStyle(TextInputStyle.Short)
+                    // .setMinLength(16)
+                    // .setMaxLength(20)
+                    .setPlaceholder('E.g. Luminous EX (type "remove" to remove)')
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('support2')
+                    .setLabel("Support Character 2")
+                    .setStyle(TextInputStyle.Short)
+                    // .setMinLength(16)
+                    // .setMaxLength(20)
+                    .setPlaceholder('E.g. Acheron EX (type "remove" to remove)')
+                    .setRequired(false)
+            ),
+        );
 };
 
 const timeLeft = (endDate: Date) => {
@@ -69,7 +97,7 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
         //     "You can take the exam as many times as you want!",
         // ];
 
-        let tab = "overview"; // "ranking"
+        let tab: "overview" | "ranking" = "overview";
 
         const attemptsUsed = raid.participation[interaction.user.id]?.[1] ?? 0;
         const attemptsTotal = (Math.floor((Date.now() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1) * 4;
@@ -84,8 +112,14 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
                     // + `\n\n**Stats**\n**Current Rank**: ${stats.rank}\n**Highest Score**: ${stats.rankscore ? formatNumberWithQuotes(stats.rankscore) : "--"}`
                     + `\n\n**Build**\n**Character**: ${characters[stats.battlechar ?? -1].name} Lvl. ${stats.level}\n**Class**: ${stats.class !== null ? classes[stats.class].name + classes[stats.class].emblem + `Lvl. ${getClassLvl(stats.class, stats.dungeon_classlevels)}` : "`None`"}`
                     + `\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
-                    + `\n**Items**: <:locked:1034511902417621002><:locked:1034511902417621002><:locked:1034511902417621002>`
-                    + `\n**Support 1**: <:locked:1034511902417621002>\n**Support 2**: <:locked:1034511902417621002>`
+
+                    + `\n**Items**: <:rune_empty:1034507494539669635> `
+                    + userItems.filter((e) => e.category === "ring").map((e) => e.emoji).concat(
+                        Array(Math.max(0, getRingSlotsTotal(stats) - userItems.filter((e) => e.category === "ring").length)).fill("<:ring_empty:1034509903886299136>")
+                    ).concat(["<:locked:1034511902417621002>", "<:locked:1034511902417621002>", "<:locked:1034511902417621002>"]).slice(0, 3).join("")
+
+                    + (stats.rank < raidRankIndices["B"] ? "\n**Support 1**: <:locked:1034511902417621002> (unlocks after reaching rank **B**)" : `\n**Support 1**: ${(stats.raid_supports[0] !== undefined && stats.raid_supports[0] !== null) ? characters[stats.raid_supports[0]].name : "`None`"}`)
+                    + (stats.rank < raidRankIndices["S"] ? "\n**Support 2**: <:locked:1034511902417621002> (unlocks after reaching rank **S**)" : `\n**Support 2**: ${(stats.raid_supports[1] !== undefined && stats.raid_supports[1] !== null) ? characters[stats.raid_supports[1]].name : "`None`"}`)
                     + `\n\n-# Attempts left: ${attemptsLeft}/${attemptsTotal}`;
                 // + `\n\n-# <:info:1131679799207796756> ${tips[Math.floor(Math.random() * tips.length)]}`;
             } else if (tab === "ranking") {
@@ -105,10 +139,10 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
             .setColor(0xff3838)
             .setThumbnail(currentRaid.enemy.image[0])
             .setDescription(getDesc());
-        interaction.reply({ embeds: [Embed], components: [getRaidButtonRow(tab, attemptsLeft > 0)], fetchReply: true }).then((msg) => {
+        interaction.reply({ embeds: [Embed], components: [getRaidButtonRow(tab, attemptsLeft > 0)] }).then((msg) => {
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "play", componentType: ComponentType.Button, time: 90000 });
             const ranking = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ranking", componentType: ComponentType.Button, time: 90000 });
-            const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "edit", componentType: ComponentType.Button, time: 90000 });
+            const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
 
             play.on('collect', () => {
                 if (dungeonInProgress.has(stats.id)) {
@@ -125,8 +159,42 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
                 interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getRaidButtonRow(tab, attemptsLeft > 0)] });
             });
 
-            edit.on('collect', () => {
+            edit.on('collect', (rr) => {
+                const uid = Math.random().toString(36).substring(2, 15);
+                rr.showModal(getModal(uid));
 
+                interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_raid_' + uid), time: 90000 }).then(async (r) => {
+                    const support1 = r.fields.getTextInputValue('support1');
+                    const support2 = r.fields.getTextInputValue('support2');
+
+                    // Match character
+                    if (support1) {
+                        let getChar = search(support1, stats.chars, interaction, true);
+                        if (getChar?.name) {
+                            if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                            stats.raid_supports[0] = getChar.id;
+                        };
+                        if (support1 === "remove") stats.raid_supports.shift();
+                    };
+
+                    if (support2) {
+                        let getChar = search(support2, stats.chars, interaction, true);
+                        if (getChar?.name) {
+                            if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                            if (stats.raid_supports[0] !== 0) stats.raid_supports[1] = getChar.id;
+                            else stats.raid_supports[0] = getChar.id;
+                        };
+                        if (support2 === "remove") stats.raid_supports.pop();
+                    };
+
+                    // Update users table
+                    await updateUsers(interaction.user.id, {
+                        raid_supports: { type: "set", value: stats.raid_supports },
+                    });
+
+                    interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
+                    r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                });
             });
 
             play.on('end', () => {
@@ -206,7 +274,7 @@ const exportCommand: SlashCommand = {
         if (test && raids[parseInt(test)]) raid.raidid = parseInt(test);
 
 
-        const myWeapons = await getWeaponSchemas([stats.equipment.weapon, stats.equipment.shield, stats.equipment.helmet, stats.equipment.cuirass, stats.equipment.gloves, stats.equipment.boots]);
+        const myWeapons = await getWeaponSchemas([stats.equipment.weapon, stats.equipment.shield, stats.equipment.helmet, stats.equipment.cuirass, stats.equipment.gloves, stats.equipment.boots, stats.equipment.ring1, stats.equipment.ring2, stats.equipment.ring3]);
         const userItems = myWeapons.map((e) => items[e.itemid]);
 
         // Overview
@@ -336,9 +404,9 @@ const exportCommand: SlashCommand = {
         let notice = ["", "", "", ""];
 
         // Apply skill tree
-        Object.entries(stats.skill_tree).forEach(([skill, level]) => {
-            skillTree[parseInt(skill)].passive(level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        });
+        for (const [skill, level] of Object.entries(stats.skill_tree)) {
+            await skillTree[parseInt(skill)].passive(level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        };
 
         // Apply passives
         if (skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
@@ -346,12 +414,15 @@ const exportCommand: SlashCommand = {
         if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.helmet && (items[myStats.helmet] as armorInfo).setname === (items[myStats.cuirass] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.gloves] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.boots] as armorInfo)?.setname) await (items[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        eAbility?.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+        await eAbility?.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
 
-        if (myStats.ring1) (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.ring2) (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.ring3) (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
+        for (const sid of stats.raid_supports) {
+            if (sid !== undefined && sid !== null) await abilities[sid]?.party?.(myStatsC, myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        };
 
         const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',

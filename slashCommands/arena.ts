@@ -128,26 +128,26 @@ const exportCommand: SlashCommand = {
             .addComponents(atkButton, defButton, abilityButton, skillButton);
 
         // Player 1
-        if (skill && myChar.id !== 4767 && enemy.id !== 4767) skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
-        if (myAbility?.passive && enemy.id !== 4767) myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.weapon !== -1) (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.shieldid) (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.helmet && (items[myStats.helmet] as armorInfo).setname === (items[myStats.cuirass] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.gloves] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.boots] as armorInfo)?.setname) (items[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (skill && myChar.id !== 4767 && enemy.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+        if (myAbility?.passive && enemy.id !== 4767) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.helmet && (items[myStats.helmet] as armorInfo).setname === (items[myStats.cuirass] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.gloves] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.boots] as armorInfo)?.setname) await (items[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-        if (myStats.ring1) (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.ring2) (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.ring3) (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
         // Player 2
-        if (eSkill && myChar.id !== 4767 && enemy.id !== 4767) eSkill.passive(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user, interaction.commandName);
-        if (eAbility?.passive && myChar.id !== 4767) eAbility.passive(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.weapon !== -1) (items[eStats.weapon] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.shieldid) (items[eStats.shieldid] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.helmet && (items[eStats.helmet] as armorInfo).setname === (items[eStats.cuirass] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.gloves] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.boots] as armorInfo)?.setname) (items[eStats.boots] as armorInfo)?.buff?.(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eSkill && myChar.id !== 4767 && enemy.id !== 4767) await eSkill.passive(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user, interaction.commandName);
+        if (eAbility?.passive && myChar.id !== 4767) await eAbility.passive(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.weapon !== -1) await (items[eStats.weapon] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.shieldid) await (items[eStats.shieldid] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.helmet && (items[eStats.helmet] as armorInfo).setname === (items[eStats.cuirass] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.gloves] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.boots] as armorInfo)?.setname) await (items[eStats.boots] as armorInfo)?.buff?.(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
 
-        if (eStats.ring1) (items[eStats.ring1] as ringInfo).getBuff(eStats.ring1info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.ring2) (items[eStats.ring2] as ringInfo).getBuff(eStats.ring2info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.ring3) (items[eStats.ring3] as ringInfo).getBuff(eStats.ring3info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.ring1) await (items[eStats.ring1] as ringInfo).getBuff(eStats.ring1info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.ring2) await (items[eStats.ring2] as ringInfo).getBuff(eStats.ring2info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.ring3) await (items[eStats.ring3] as ringInfo).getBuff(eStats.ring3info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
 
         async function newFight() {
             let timestart = new Date().getTime();

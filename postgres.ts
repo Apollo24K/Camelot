@@ -22,8 +22,7 @@ export const query = async (text: string, params?: any[]) => {
 };
 
 async function createTables() {
-    // Users table (combined with characters and dungeon)
-    // Create sequences for auto-incrementing IDs
+    // Users table
     await query(`CREATE SEQUENCE IF NOT EXISTS users_rowid_seq`);
     await query(`CREATE TABLE IF NOT EXISTS users (
         rowid BIGINT NOT NULL DEFAULT nextval('users_rowid_seq'::regclass),
@@ -135,6 +134,7 @@ async function createTables() {
         image_credits INT DEFAULT 0 NOT NULL,
         skill_tree JSONB DEFAULT '{}' NOT NULL,
         skill_points INT DEFAULT 0 NOT NULL,
+        raid_supports INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
 
         -- Characters table columns
         chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,

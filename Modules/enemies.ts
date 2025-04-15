@@ -145,7 +145,7 @@ export const enemies: enemyInfo[] = [
     new enemyInfo("Acnologia", "Dragon", "the Dragon King", "M", true, { mdChance: 1 }, {}, {}, [663, 667], ["https://i.ibb.co/qNXB6sm/acnnologia.png"], [97], 45),
     new enemyInfo("Vaision", "Dragon", "a Dragon Lord", "M", true, {}, {}, {}, [49, 667], ["https://i.ibb.co/DDVwf6b/pdl.png"], [98], 46),
     new enemyInfo("Ainz Ooal Gown", "Overlord", "the Overlord", "M", true, { mdChance: 1 }, {}, { mana: 120 }, [673], ["https://i.ibb.co/9NZgKGJ/aog.png"], [99], 47),
-    new enemyInfo("Veldora", "True Dragon", "a True Dragon", "M", true, { mdChance: 0.75 }, {}, {}, [48, 667], ["https://i.ibb.co/DrSCF5S/veldora.png"], [100], 48),
+    new enemyInfo("Veldora", "True Dragon", "a True Dragon", "M", true, { mdChance: 0.75 }, {}, {}, [48, 667], ["https://i.ibb.co/ds61TGkm/veldora.png"], [100], 48),
 ];
 
 export const bossMobs: enemyInfo[] = [

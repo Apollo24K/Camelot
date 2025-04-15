@@ -403,6 +403,7 @@ export interface UserSchema {
     image_credits: number;
     skill_tree: Record<string, number>;
     skill_points: number;
+    raid_supports: number[];
     created: Date;
 
     chars: number[];
@@ -602,7 +603,7 @@ export interface ITrigger {
     set used(used: number);
 };
 
-export type TriggerEvents = "attack" | "crit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal";
+export type TriggerEvents = "attack" | "crit" | "noncrit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade";
 
 export type TriggerCallback = ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any);
 

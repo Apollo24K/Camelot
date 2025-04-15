@@ -68,7 +68,7 @@ export const shardEmoji = {
     "B": "<:b_shard:917202862851899392>",
     "C": "<:c_shard:917202862499582002>",
     "D": "<:d_shard:917202840563363891>",
-};
+} as const;
 
 export const profileColors = {
     creme: ['#FFF9F3', '#FFEEDD'],
@@ -142,7 +142,7 @@ export const raidRankLetters: Record<number, RaidRank> = {
     27: "EX-",
     28: "EX",
     29: "EX+",
-};
+} as const;
 
 export const raidRankIndices: Record<RaidRank, number> = {
     "F-": 0,
@@ -175,7 +175,7 @@ export const raidRankIndices: Record<RaidRank, number> = {
     "EX-": 27,
     "EX": 28,
     "EX+": 29,
-};
+} as const;
 
 export const rankLowerRanges: Record<RaidRank, number> = {
     "F-": 0,
@@ -208,4 +208,4 @@ export const rankLowerRanges: Record<RaidRank, number> = {
     "EX-": 50_000_000_000,
     "EX": 100_000_000_000,
     "EX+": 200_000_000_000,
-};
+} as const;

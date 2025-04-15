@@ -534,10 +534,10 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
             dStats.maskinfo = inv.equipment.mask;
         };
 
-        //! 2B Something
-        // if ((id === 13780 || id === 13781 || id === 13782) && inv.equipment.prog) {
-        //     dStats.proginfo = inv.equipment.prog;
-        // };
+        // 2B&9S EX's programmes
+        if (id === 23185 && inv.equipment.prog) {
+            dStats.proginfo = inv.equipment?.prog?.split(",") ?? [];
+        };
 
     };
 
@@ -587,6 +587,7 @@ export const getDamage = (target: DetailedStats, attacker: DetailedStats, target
 
 export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], log: string, flags = {}): number => {
     const options = { // true = enabled, false = disabled
+        isTest: false,
         block: target.usedBlockRound === matchStats.round,
         dodge: true,
         overwriteDamage: 0,
@@ -612,11 +613,12 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: false,
         isLightning: false,
+        canCounter: true,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
     // Try blocking or dodging
-    if (options.block && Math.random() < Math.min(target.br, target.brCap ?? target.br)) {
+    if (!options.isTest && options.block && Math.random() < Math.min(target.br, target.brCap ?? target.br)) {
         notice.push(`\n🛡️ **${target.name}** blocked the attack!`);
         attacker.attackStreak = 0;
         target.dodgeStreak = 0;
@@ -636,7 +638,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         if (target.blockStreak === 2) dailies[6].update(matchStats.interaction); // Impenetrable Defense
         return 0;
     }; /* Reset BlockStreak */ target.blockStreak = 0;
-    if (options.dodge && Math.random() < Math.min(target.dodge, target.dodgeCap ?? target.dodge)) {
+    if (!options.isTest && options.dodge && Math.random() < Math.min(target.dodge, target.dodgeCap ?? target.dodge)) {
         notice.push(`\n💨 **${target.name}** dodged the attack!${matchStats.dodgebuff ? ` Gained **+${matchStats.dodgebuff * 100}%** ATK` : ""}`);
         attacker.attackStreak = 0;
         target.dodgeStreak++;
@@ -673,21 +675,24 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Calculate damage
     let damage, isCrit = (options.canCrit && (options.critChance < (attacker.cr + options.critBuff)));
+    let effectiveDef = target.def * (1 - (attacker.ignoreDefPercent ?? 0)), effectiveMr = target.mr * (1 - (attacker.ignoreMrPercent ?? 0));
     const multipliers = {
         atk: options.atkMultiplier * attacker.atk,
         md: options.atkMultiplier * attacker.md,
-        def: Math.max(Math.pow(0.99895, options.defMultiplier * target.def), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_defcap ?? 0) > 0) && ((options.defMultiplier * target.def) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * target.def) - 2192, options.defMultiplier * target.increase_defcap)) : 1),
-        mr: Math.max(Math.pow(0.99895, options.defMultiplier * target.mr), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_mrcap ?? 0) > 0) && ((options.defMultiplier * target.mr) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * target.mr) - 2192, options.defMultiplier * target.increase_mrcap)) : 1),
+        def: Math.max(Math.pow(0.99895, options.defMultiplier * effectiveDef), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_defcap ?? 0) > 0) && ((options.defMultiplier * effectiveDef) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * effectiveDef) - 2192, options.defMultiplier * target.increase_defcap)) : 1),
+        mr: Math.max(Math.pow(0.99895, options.defMultiplier * effectiveMr), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_mrcap ?? 0) > 0) && ((options.defMultiplier * effectiveMr) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * effectiveMr) - 2192, options.defMultiplier * target.increase_mrcap)) : 1),
         crit: (isCrit ? (options.critMultiplier * attacker.cd) : 1),
         combo: ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1),
         lightning: 1 + (options.isLightning ? (attacker.lightningMultiplier ?? 0) : 0),
         rng: (1 - (0.2 * Math.random())),
     };
+    if (attacker.shorekeeperUsedActive && !isCrit) options.critMultiplier * attacker.cd;
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
         damage = options.overwriteDamage || Math.floor(multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     } else {
         damage = options.overwriteDamage || Math.floor(multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     };
+    if (attacker.critbonus && (isCrit || attacker.shorekeeperUsedActive)) damage *= 1 + attacker.critbonus;
     attacker.crittedTotal ||= 0;
     attacker.crittedTotal++;
 
@@ -712,8 +717,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damage = Math.floor(damage * target.vulnerability);
     };
 
+    //* RETURN IF TEST
+    if (options.isTest) return damage;
+
     // Counter the attack
-    if (target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
+    if (options.canCounter && target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
         target.counter--;
         notice.push(`\n<:counter:1340459549374546032> **${target.name}** countered the attack!`);
         if (target.soulfistAtkStack !== undefined) {
@@ -744,6 +752,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         notice.push(`\n💨 **${target.name}** has evaded a deadly attack!`);
 
         // Event Triggers
+        matchStats.trigger("deathEvade", attacker, target, attackerBuff, targetBuff);
         matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
 
         return 0;
@@ -851,6 +860,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     // Event Triggers
     matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isCrit, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
+    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage });
 
     return damage;
 };
@@ -866,9 +876,51 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
     } else {
         target.hp += amount;
         if (target.hp > target.maxhp) target.hp = target.maxhp;
+        if (target.hp < 0) target.hp = 0;
     };
-    if (log) notice.push(`\n💖 **${target.name}** has healed **${amount}** HP`);
+    if (log && amount > 0) notice.push(`\n💖 **${target.name}** has healed **${amount}** HP`);
+    if (log && amount < 0) notice.push(`\n💔 **${target.name}** has lost **${amount}** HP`);
 };
+
+// export const applyDynamicDoT = (
+//     { type, percentage, last }: {
+//         type: "drain" | "bleed",
+//         /**
+//          * Integer between [0-100+)
+//          */
+//         percentage: number,
+//         last: number,
+//     },
+//     target: DetailedStats, attacker: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], flags = {}) => {
+//     const options = { // true = enabled, false = disabled
+
+//     };
+//     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
+
+//     const damage = dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, `🩸 **${attacker.name}**`, { atkMultiplier: percentage / 100, isTest: true, magicDamage: true, canCrit: false });
+
+//     const debuff = new buffInfo("+", -damage, last);
+//     const heal = new buffInfo("+", damage, last);
+//     targetBuff.hp.push(debuff);
+
+//     if (type === "drain") {
+//         attackerBuff.hp.push(heal);
+//     };
+
+//     // Update value
+//     (attacker.delayedBuffs || target.delayedBuffs).push(new delayedBuffs(0, async () => {
+//         const DoT = targetBuff.hp.find((e) => e.id === debuff.id);
+//         const HoT = attackerBuff.hp.find((e) => e.id === heal.id);
+//         if (DoT || HoT) {
+//             const refreshedDamage = dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, `🩸 **${attacker.name}**`, { atkMultiplier: percentage / 100, isTest: true, magicDamage: true, canCrit: false });
+
+//             if (DoT) DoT.val = -refreshedDamage;
+//             if (HoT) HoT.val = refreshedDamage;
+//         };
+
+//         return AbilityResponse.SUCCESS;
+//     }, 9999));
+// };
 
 export const getAscensionMaterial = (id: string | number, ascItems: lootInfo[]) => {
     id = `${id}camelot`;

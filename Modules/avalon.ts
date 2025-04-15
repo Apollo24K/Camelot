@@ -208,15 +208,21 @@ export default class Avalon {
         };
     };
 
-    static applyBuffs(stats: any, eStats: any, obj: any, ebuff: any, matchstats: any, notice: any) {
-        Object.keys(obj).forEach((stat) => {
-            if (obj[stat].length) obj[stat].forEach((buff: buffInfo) => {
-                if (stat === "hp" && buff.type === "+") addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, Math.min(buff.range[1], Math.max(buff.range[0], buff.val)), {});
-                switch (buff.type) {
-                    case "*": stats[stat] = Math.floor(stats[stat] * Math.min(buff.range[1], Math.max(buff.range[0], buff.val))); break;
-                    case "+": stats[stat] += Math.min(buff.range[1], Math.max(buff.range[0], buff.val)); break;
-                    case "=": stats[stat] = Math.min(buff.range[1], Math.max(buff.range[0], buff.val)); break;
-                    default: false; break;
+    static applyBuffs(stats: DetailedStats, eStats: DetailedStats, obj: Buffs, ebuff: Buffs, matchstats: MatchStats, notice: string[]) {
+        (Object.keys(obj) as (keyof Buffs)[]).forEach((stat) => {
+            if (obj[stat].length) obj[stat].forEach((buff) => {
+                if (stat === "hp" && buff.type === "+") {
+                    const heal = buff.isDebuff
+                        ? Math.min(buff.range[1], Math.max(buff.range[0], (buff.val * Math.pow(0.99895, Math.max(stats.def, stats.mr)))))
+                        : Math.min(buff.range[1], Math.max(buff.range[0], buff.val));
+                    addHeal(stats, eStats, stats, obj, ebuff, matchstats, notice, ``, heal, {});
+                } else {
+                    switch (buff.type) {
+                        case "*": stats[stat] = Math.floor(stats[stat] * Math.min(buff.range[1], Math.max(buff.range[0], buff.val))); break;
+                        case "+": stats[stat] += Math.min(buff.range[1], Math.max(buff.range[0], buff.val)); break;
+                        case "=": stats[stat] = Math.min(buff.range[1], Math.max(buff.range[0], buff.val)); break;
+                        default: false; break;
+                    };
                 };
                 switch (buff.ctype) {
                     case "*": buff.val = Math.floor(buff.val * buff.change); break;
@@ -226,7 +232,7 @@ export default class Avalon {
                 };
                 buff.last--;
             });
-            if (obj[stat].length) obj[stat] = obj[stat].filter((buff: buffInfo) => buff.last);
+            if (obj[stat].length) obj[stat] = obj[stat].filter((buff) => buff.last);
         });
         stats.sm += stats.mg;
         if (stats.sm > stats.mana) stats.sm = stats.mana;
