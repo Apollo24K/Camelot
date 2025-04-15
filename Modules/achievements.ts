@@ -226,10 +226,10 @@ export default class achievInfo {
 
                 // Guild Donation Achievements
                 case 59: if (stats.donatedtotal >= 50000) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 60: if (stats.donatedtotal >= 100000) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 61: if (stats.donatedtotal >= 250000) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 62: if (stats.donatedtotal >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
-                case 63: if (stats.donatedtotal >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 60: if (stats.donatedtotal >= 250000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 61: if (stats.donatedtotal >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 62: if (stats.donatedtotal >= 5000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 63: if (stats.donatedtotal >= 20000000) this.addRewards(interaction, user), this.notify(interaction); break;
 
                 default: false; break;
             };
