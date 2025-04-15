@@ -230,6 +230,13 @@ export default class achievInfo {
                 case 61: if (stats.donatedtotal >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 62: if (stats.donatedtotal >= 5000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 63: if (stats.donatedtotal >= 20000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                
+                
+                // Levelup spend achievements
+                case 64: if (list[0] >= 100000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 65: if (list[0] >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 66: if (list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
+
 
                 default: false; break;
             };
@@ -326,6 +333,10 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Blessing to the Guild", "Donate 1'000'000", 61, 20, "1,2", "xp|150", "coins|10000"),
     new achievInfo("Blessing to the Guild", "Donate 5'000'000", 62, 20, "1,2", "xp|250", "coins|30000"),
     new achievInfo("Blessing to the Guild", "Donate 20'000'000", 63, 20, "1,2", "xp|500", "coins|50000"),
+
+    new achievInfo("From Riches to Rags", "Spend 100'000 in one levelup", 64, 21, "1,3", "xp|20", "s shard|8", "a shard|16"),
+    new achievInfo("From Riches to Rags", "Spend 500'000 in one levelup", 65, 21, "1,3", "xp|100", "ss shard|4", "s shard|16","a shard|24"),
+    new achievInfo("From Riches to Rags", "Spend 1'000'000 in one levelup", 66, 21, "1,3", "xp|200", "ss shard|8", "s shard|24","a shard|32"),
 
 
 ];

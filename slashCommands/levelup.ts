@@ -101,6 +101,9 @@ const exportCommand: SlashCommand = {
 
                 // Achievements
                 achievements[42].check(interaction, interaction.user, currLvl + up), achievements[43].check(interaction, interaction.user, currLvl + up), achievements[44].check(interaction, interaction.user, currLvl + up), achievements[45].check(interaction, interaction.user, currLvl + up); // The Battle is to the Strongest
+
+                // From Riches to Rags
+                achievements[64].check(interaction, interaction.user, price), achievements[65].check(interaction, interaction.user, price), achievements[66].check(interaction, interaction.user, price);
             });
 
             collector.on('end', () => {

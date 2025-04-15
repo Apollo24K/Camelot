@@ -161,6 +161,12 @@ const exportCommand: SlashCommand = {
                 case 62: return achvmBar(stats.donatedtotal / 5_000_000, ` (${stats.donatedtotal}/5'000'000)\n`);
                 case 63: return achvmBar(stats.donatedtotal / 20_000_000, ` (${stats.donatedtotal}/20'000'000)\n`);
 
+                case 64: if (stats.achievements.includes(64)) return achvmBar(1, " (Spend 100'000 in one levelup)\n") 
+                    break;
+                case 65: if (stats.achievements.includes(65)) return achvmBar(1, " (Spend 500'000 in one levelup)\n")
+                    break;
+                case 66: if (stats.achievements.includes(66)) return achvmBar(1, " (Spend 1'000'000 in one levelup)\n")
+                    break;
                 default: return achvmBar(0);
             };
         };
