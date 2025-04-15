@@ -630,7 +630,10 @@ export const anime: animeInfo[] = [
     new animeInfo("I Was Reincarnated as the 7th Prince So I Can Take My Time Perfecting My Magical Ability", ['Dainanaoji', 'Tensei Shitara Dai Nana Ouji Dattanode', 'Tensei Shitara Dai Nana Ouji Dattanode, Kimamani Majutsu wo Kiwamemasu', 'I Was Reincarnated As the 7th Prince so I Will Perfect My Magic As I Please', 'TenOuji'], 595),
     new animeInfo("Outlaw Star", ['Future Hero Next Generation Outlaw Star', 'Seihou Bukyou Outlaw Star', 'Starward Warrior Knight Outlaw Star'], 596),
     new animeInfo("Arpeggio of Blue Steel", ['Aoki Hagane no Arpeggio', 'Aoki Hagane no Arpeggio: Ars Nova - Cadenza', 'Aoki Hagane no Arpeggio: Ars Nova - DC', 'Arpeggio of Blue Steel - Cadenza', 'Arpeggio of Blue Steel - DC', 'AoBS'], 597),
-
+    new animeInfo("Koto oto Tomare", ["Stop This Sound"], 598),
+    new animeInfo("Beast Tamer", ['Yuusha Party wo Tsuihou Sareta Beast Tamer, Saikyoushu no Nekomimi Shoujo to Deau', 'Beast Tamer and the Cat Girl'], 599),    
+    new animeInfo("Cardcaptor Sakura", ["Kadokyaputa Sakura"], 600),
+    new animeInfo("I am getting married to a girl I hate in my class", ["Kurakon", "Class no Daikirai na Joshi to Kekkon suru Koto ni Natta.", " I Got Married to the Girl I Hate Most in Class"], 601),
 
 ];
 
