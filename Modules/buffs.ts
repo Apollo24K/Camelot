@@ -15,6 +15,7 @@ export default class buffInfo implements IbuffInfo {
     private _change: number;
     private _ctype: string;
     private _cap: number | [number, number] | undefined;
+    private _label: string | undefined;
     private _id: number;
 
     constructor(type: BuffType, val: number, last: number, change: number = 0, ctype: string = "+", cap: number | [number, number] | undefined = undefined) {
@@ -45,6 +46,9 @@ export default class buffInfo implements IbuffInfo {
     get cap() {
         return this._cap;
     };
+    get label(): string {
+        return this._label ?? "No label";
+    };
     get id() {
         return this._id;
     };
@@ -54,6 +58,9 @@ export default class buffInfo implements IbuffInfo {
     };
     set last(last: number) {
         this._last = last;
+    };
+    set label(label: string) {
+        this._label = label;
     };
 
     get isDebuff() {

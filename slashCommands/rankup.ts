@@ -4,17 +4,18 @@ import { abilities } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
 import { rankupDummy } from "../Modules/enemies";
-import { armorInfo, itemInfo, items, weaponInfo } from "../Modules/items";
+import { armorInfo, itemInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, customEmojis, dealDamage, getClassLvl, formatNumberWithQuotes, getLetterRank } from "../Modules/functions";
-import { dungeonTempBan } from "../Modules/components";
+import { AbilityResponse, dungeonTempBan, raidRankLetters, raidRankIndices } from "../Modules/components";
 import delayedBuffs from "../Modules/delayedBuffs";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
 import { getUserSchema, getWeaponSchemas, updateUsers } from '../Modules/queries';
+import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
 
@@ -36,7 +37,7 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
         const getDesc = () => {
             return `### Rank-Up Exam`
                 + `\nAfter the exam you will be assigned a rank based on your performance.`
-                + `\n\n**Stats**\n**Current Rank**: ${stats.rank}\n**Highest Score**: ${stats.rankscore ? formatNumberWithQuotes(stats.rankscore) : "--"}`
+                + `\n\n**Stats**\n**Current Rank**: ${raidRankLetters[stats.rank]}\n**Highest Score**: ${stats.rankscore ? formatNumberWithQuotes(stats.rankscore) : "--"}`
                 + `\n\n**Character**\n**Name**: ${characters[stats.battlechar ?? 0].name} Lvl. ${stats.level}\n**Class**: ${stats.class !== null ? classes[stats.class].name + classes[stats.class].emblem + `Lvl. ${getClassLvl(stats.class, stats.dungeon_classlevels)}` : "`None`"}\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
                 + `\n\n-# <:info:1131679799207796756> ${tips[Math.floor(Math.random() * tips.length)]}`;
         };
@@ -111,11 +112,13 @@ const exportCommand: SlashCommand = {
 
         // Battle Scale
         const enemyScale = 0.0005 * myStatsC.hp * Math.pow((1 / 0.99895), Math.min(2192, Math.max(myStatsC.def, myStatsC.mr)));
-        const enemyAtk = Math.floor((300 * enemyScale) * 1.05);
+        const enemyAtk = Math.floor(300 * enemyScale);
 
-        myStatsC.delayedBuffs.push(new delayedBuffs(0, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats) => {
-            eStats.atk *= (1 + (matchStats.round * 0.05));
-            eStats.md *= (1 + (matchStats.round * 0.05));
+        myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats) => {
+            eStats.atk *= (1 + ((matchStats.round - 1) * 0.05));
+            eStats.md *= (1 + ((matchStats.round - 1) * 0.05));
+
+            return AbilityResponse.SUCCESS;
         }, 9999));
 
         let eStats: any = {
@@ -171,12 +174,15 @@ const exportCommand: SlashCommand = {
 
             // Stats
             const damageDealt = eStatsC.maxhp - eStatsC.hp;
-            const score = Math.floor(damageDealt * enemyScale * ((matchStats.round * (matchStats.round + 1)) / 80));
+            // const score = Math.floor((damageDealt * enemyScale * ((matchStats.round * (matchStats.round + 1)) / 2)) / 40);
+
+            const roundWeight = (Math.pow(1.05, matchStats.round) - 1) / (1.05 - 1); // (1.05^N - 1) / 0.05
+            const score = Math.floor((damageDealt * enemyScale * roundWeight) / 40);
 
             // Update users table
             if (stats.rankscore < score) {
                 await updateUsers(interaction.user.id, {
-                    rank: { type: "set", value: getLetterRank(score) },
+                    rank: { type: "set", value: raidRankIndices[getLetterRank(score)] },
                     rankscore: { type: "set", value: score },
                 });
             };
@@ -185,19 +191,28 @@ const exportCommand: SlashCommand = {
                 .setColor([0x6def83, 0xfac044, 0xff7d7d, 0x7c7c7c, 0xbbffff][threatLevel]) // Blue: 0x58b1ff
                 .setThumbnail(myStatsC.thumbnail)
                 .setTitle(`Rank-Up Exam`)
-                .setDescription(`Results for **${myChar.name}**\n<a:arrow_green:916716811842621450> Score: ${formatNumberWithQuotes(score)}${score > stats.rankscore ? ` (New Record!)` : ""}\n<a:arrow_orange:916716747623641210> Rank: ${getLetterRank(score)}\n<a:arrow_red:916716702618767401> Scale: ${enemyScale.toFixed(2)}`)
+                .setDescription(`Results for **${myChar.name}**\n<a:arrow_green:916716811842621450> Score: ${formatNumberWithQuotes(score)}${score > stats.rankscore ? ` (New Record!)` : ""}\n<a:arrow_orange:916716747623641210> Rank: ${getLetterRank(score)}\n<a:arrow_red:916716702618767401> Damage: ${damageDealt}\n<a:arrow_red:916716702618767401> Scale: ${enemyScale.toFixed(2)}\n<a:arrow_red:916716702618767401> RF: ${roundWeight.toFixed(2)}`)
                 .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         };
 
         let matchStats = Avalon.getMatchStats(interaction);
         let notice = ["", "", "", ""];
 
+        // Apply skill tree
+        for (const [skill, level] of Object.entries(stats.skill_tree)) {
+            await skillTree[parseInt(skill)].passive(level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        };
+
         // Apply passives
-        if (skill && myChar.id !== 4767) skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+        if (skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
         if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.weapon !== -1) (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.shieldid) (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.helmet && (items[myStats.helmet] as armorInfo).setname === (items[myStats.cuirass] as armorInfo).setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.gloves] as armorInfo).setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.boots] as armorInfo).setname) (items[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.helmet && (items[myStats.helmet] as armorInfo).setname === (items[myStats.cuirass] as armorInfo).setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.gloves] as armorInfo).setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.boots] as armorInfo).setname) await (items[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+
+        if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
         const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
@@ -456,10 +471,12 @@ const exportCommand: SlashCommand = {
                         if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
-                            myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            const response = await myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                             // Event Triggers
-                            matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                            if (response === AbilityResponse.SUCCESS) {
+                                matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                            };
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -475,11 +492,13 @@ const exportCommand: SlashCommand = {
                                         matchStats.turn = 0;
                                         myStatsC.attackStreak = 0;
                                         myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                        const response = await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
                                         myStatsC.sm -= myAbility.cost;
 
                                         // Event Triggers
-                                        matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                                        if (response === AbilityResponse.SUCCESS) {
+                                            matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                                        };
 
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -490,16 +509,18 @@ const exportCommand: SlashCommand = {
                         };
                     });
 
-                    cskill.on('collect', () => {
+                    cskill.on('collect', async () => {
 
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
-                            myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                             // Event Triggers
-                            matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                            if (response === AbilityResponse.SUCCESS) {
+                                matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                            };
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -515,10 +536,12 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
 
                                     // Event Triggers
-                                    matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                                    if (response === AbilityResponse.SUCCESS) {
+                                        matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                                    };
 
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

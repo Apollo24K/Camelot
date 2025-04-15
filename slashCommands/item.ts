@@ -1,10 +1,10 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, weaponInfo } from "../Modules/items";
-import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel } from "../Modules/functions";
+import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel, getRingSlotsTotal } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
 import { ItemCategory, ItemRarity, ItemType, SlashCommand } from "../types";
-import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, updateUsers, updateWeapons } from "../Modules/queries";
+import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, getWeaponSchemas, updateUsers, updateWeapons } from "../Modules/queries";
 
 function getAscension(lvl: number) {
     let asc = "";
@@ -142,9 +142,8 @@ const exportCommand: SlashCommand = {
                             `**Grade**: ${fItem.gradeEmote}\n` +
                             `**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n` +
                             `**Unique ID**: \`${item.uniqueid.split(":")[0]}\`\n` +
-                            `**Level**: **${item.level + 1}**/${fItem.maxlevel}\n\n` +
-                            `**Passive${fItem.maxlevel > 1 ? " (Asc. 1)" : ""}**: ${fItem.getBuffDesc(1)}\n\n` +
-                            `${fItem.maxlevel > 1 ? `**Passive (Asc. ${fItem.maxlevel})**: ${fItem.getBuffDesc(fItem.maxlevel)}\n\n` : ""}` +
+                            `**Ascension**: **${item.level + 1}**/${fItem.maxlevel}\n\n` +
+                            `**Passive${fItem.maxlevel > 1 ? ` (Asc. ${item.level + 1})` : ""}**: ${fItem.getBuffDesc(item.level + 1)}\n\n` +
                             `>>> ${fItem.flair}`
                         );
 
@@ -592,57 +591,13 @@ const exportCommand: SlashCommand = {
         };
 
         // Item Equip
-        // if (subcommand === "equip") {
-        //     const itemChoice = interaction.options.getString('item', true);
-
-        //     const stats = author.schema;
-        //     if (!stats.battlechar) return interaction.reply(`You don't have a battle character selected, please use \`/select\` to do so`);
-
-        //     const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
-
-        //     // Lria's Masks
-        //     if (["remove mask", "verdant mask", "phantasmal mask", "valkyrie mask"].includes(itemChoice.toLowerCase())) {
-        //         if (itemChoice.toLowerCase() === "remove mask") delete stats.equipment["mask"];
-        //         else stats.equipment["mask"] = itemChoice.toLowerCase().split(" ")[0];
-
-        //         // Update users table
-        //         await updateUsers(interaction.user.id, {
-        //             equipment: { type: "set", value: stats.equipment },
-        //         });
-
-        //         return interaction.reply(itemChoice.toLowerCase() === "remove mask" ? "Unequipped **Lria**'s mask" : `Equipped **Lria** <a:EXTRA:1138530846144462968> with the **__${itemChoice.toLowerCase()}__**`);
-        //     };
-
-        //     if (item) {
-        //         const fItem = items[item.itemid];
-
-        //         let type: ItemCategory | ItemType = fItem.category;
-        //         if (type === "armor" || fItem.type === "shield") type = fItem.type;
-        //         if (type === "shield" && (stats.premium < 4 && stats.shield_slot === 0)) type = "weapon";
-
-        //         // Assign weapon
-        //         stats.equipment[type] = `${itemChoice}:${interaction.user.id}`;
-
-        //         // Update users table
-        //         await updateUsers(interaction.user.id, {
-        //             equipment: { type: "set", value: stats.equipment },
-        //         });
-
-        //         return interaction.reply(`Equipped **${characters[stats.battlechar].name}** with ${fItem.emoji} **__${fItem.name}__**`);
-        //     };
-
-        //     const fItem = searchItem(itemChoice, interaction);
-        //     if (!fItem?.name) return;
-
-        //     return interaction.reply(`Please use the weapons id instead of name. You can find the id with \`/items\``);
-        // };
-
-        // Item Equip
         if (subcommand === "equip") {
             const itemChoices = [...new Set(interaction.options.getString('items', true).split(",").map((e) => e.trim()))].filter(Boolean);
 
             const stats = author.schema;
             if (!stats.battlechar) return interaction.reply(`You don't have a battle character selected, please use \`/select\` to do so`);
+
+            const ringSlotsTotal = getRingSlotsTotal(stats);
 
             const equipped: string[] = [];
 
@@ -658,42 +613,39 @@ const exportCommand: SlashCommand = {
                     continue;
                 };
 
-                // 2B&9S EX Programmes
-                if (itemChoice.toLowerCase().startsWith(`prog`)) {
+                // 2B/9S Duo Programmes
+                if (itemChoice.toLowerCase().startsWith("prog ")) {
                     let action = itemChoice.toLowerCase().split(" ")[1] ?? "info";
+
                     if (action === "remove") {
                         delete stats.equipment["prog"];
                         equipped.push(`Unequipped pod's programme(s)`);
-                    }
-                    else if (action === "info") {
-                        // Show list of programmes
-                        let progmsg = "`A110` : Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds.\n`A120` : Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **3** rounds, reducing their ATK, MD, DEF, MR by **20%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **3** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme from the pod.";
-                        return interaction.reply(`⚙️ Correct usage: /item equip item:prog <ID>. Valid programmes:\n\n${progmsg}`)
-                    }
-                    else if (action === "a110" || action === "a120" || action === "a140" || action === "a170" || action === "r020") {
+                    } else if (action === "a110" || action === "a120" || action === "a140" || action === "a170" || action === "r020") {
                         // Dictionary of pod and relevant effects
-                        const proglist = {
-                            "a110" : "Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds",
-                            "a120" : "Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.",
-                            "a140" : "Gathers enemy **3** rounds, reducing their ATK, MD, DEF & MR by **20%** for **1** round.",
-                            "a170" : "Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.",
-                            "r020" : "Analyzes enemy every **3** rounds, dealing **2** hits of **20%** DMG on the enemy.",
-                            "remove" : "Removes any existing programme from the pod."
-                        };
-                        
-                        // Equips programme + shows relevant effect
-                        stats.equipment["prog"] ??= [];
+                        // const proglist = {
+                        //     "a110": "Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds",
+                        //     "a120": "Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.",
+                        //     "a140": "Gathers enemy **3** rounds, reducing their ATK, MD, DEF & MR by **20%** for **1** round.",
+                        //     "a170": "Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.",
+                        //     "r020": "Analyzes enemy every **3** rounds, dealing **2** hits of **20%** DMG on the enemy.",
+                        //     "remove": "Removes any existing programme from the pod."
+                        // };
+
+                        const equippedProgs = stats.equipment["prog"]?.split(",").filter(Boolean) ?? [];
 
                         // Disallow duplicate or over 2 programmes
-                        if (stats.equipment["prog"].includes(action)) equipped.push(`You cannot equip the same programme twice.`)
-                        else if (stats.equipment["prog"].length >= 2) equipped.push("You cannot equip more than two programmes. To clear all programmes, do `/item equip prog remove` instead.");
-                        else {
-                        stats.equipment["prog"].push(action);
-                        equipped.push(`[${action.toUpperCase()}]. Effect:\n> ${proglist[action]}`);
-                    }}
-                    else equipped.push(`Unrecognized programme! Equip "prog info" to learn the list of available programmes!`);
+                        if (equippedProgs.includes(action)) return interaction.reply(`You cannot equip the same programme twice.`);
+                        if (equippedProgs.length >= 2) return interaction.reply("You cannot equip more than two programmes. To clear all programmes, use `/item equip prog remove`");
+
+                        equippedProgs.push(action);
+                        stats.equipment["prog"] = equippedProgs.join(",");
+                        equipped.push(`[${action.toUpperCase()}]`);
+                    } else {
+                        let progmsg = "`A110` : Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds.\n`A120` : Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **3** rounds, reducing their ATK, MD, DEF, MR by **20%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **3** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme from the pod.";
+                        return interaction.reply(`⚙️ Correct usage: /item equip item:prog <ID>. Valid programmes:\n\n${progmsg}`);
+                    };
                     continue;
-            };
+                };
 
                 const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
                 if (!item) {
@@ -707,10 +659,30 @@ const exportCommand: SlashCommand = {
                 let type: ItemCategory | ItemType = fItem.category;
                 if (type === "armor" || fItem.type === "shield") type = fItem.type;
                 if (type === "shield" && (stats.premium < 4 && stats.shield_slot === 0)) type = "weapon";
+                if (type === "ring") {
+                    if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
+
+                    let slot = 1;
+                    if ("ring1" in stats.equipment) {
+                        slot++;
+                        if ("ring2" in stats.equipment) slot++;
+                    };
+                    if (slot > ringSlotsTotal) slot = ringSlotsTotal;
+                    type += slot;
+                };
 
                 // Assign weapon
                 stats.equipment[type] = `${itemChoice}:${interaction.user.id}`;
                 equipped.push(`${fItem.emoji} **__${fItem.name}__**`);
+            };
+
+            // Check if rings are unique
+            const ringUIDs = Object.entries(stats.equipment).filter(([key, value]) => key.startsWith("ring")).map(([key, value]) => value).filter(Boolean);
+            if (ringUIDs.length > 1) {
+                const rings = await getWeaponSchemas(ringUIDs);
+                const ringIDs = [...new Set(rings.map((ring) => ring.itemid))];
+
+                if (ringUIDs.length !== ringIDs.length) return interaction.reply(`You can't equip the same ring twice!`);
             };
 
             // Update users table
@@ -729,7 +701,16 @@ const exportCommand: SlashCommand = {
             if (!stats.battlechar) return interaction.reply(`You don't have a battle character selected, please use \`/select\` to do so`);
 
             if (typeChoice === "all") stats.equipment = {};
-            else delete stats.equipment[typeChoice];
+            else if (typeChoice === "armor") {
+                delete stats.equipment["helmet"];
+                delete stats.equipment["cuirass"];
+                delete stats.equipment["gloves"];
+                delete stats.equipment["boots"];
+            } else if (typeChoice === "rings") {
+                delete stats.equipment["ring1"];
+                delete stats.equipment["ring2"];
+                delete stats.equipment["ring3"];
+            } else delete stats.equipment[typeChoice];
 
             // Update users table
             await updateUsers(interaction.user.id, {
@@ -796,7 +777,7 @@ const exportCommand: SlashCommand = {
             if (subcommand === "lock") stats.itemlock = [...new Set([...stats.itemlock, ...choice])];
             else stats.itemlock = stats.itemlock.filter((e) => !choice.includes(e));
 
-            if (stats.itemlock.length > 200) return interaction.reply(`You can't lock more than 200 items at once.`);
+            if (stats.itemlock.length > 500) return interaction.reply(`You can't lock more than 500 items at once.`);
 
             // Update users table
             await updateUsers(interaction.user.id, {

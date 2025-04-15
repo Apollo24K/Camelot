@@ -1,6 +1,8 @@
 import { ChatInputCommandInteraction, User } from "discord.js";
 import { getUserSchema, updateUsers } from "./queries.js";
 
+const dailyLock = new Set<string>();
+
 function getHash(key: string, hash: number) {
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
@@ -47,52 +49,60 @@ class dailyQuestInfo {
 
     async update(interaction: ChatInputCommandInteraction | undefined, change: number = 1, user: User | { id: string; } = interaction?.user ?? { id: "" }) {
 
-        // Get the users dailies
+        // Get the user's dailies
         const todaysQuests = getQuests(user.id, dailies.length);
 
         // Return if not included
         if (!todaysQuests.some((quest) => this.id === quest.id)) return;
 
-        // Get user stats
-        const stats = await getUserSchema(user.id);
-        if (!stats) return;
+        // Lock
+        const lockKey = `${user.id}:${this.id}`;
+        if (dailyLock.has(lockKey)) return;
+        dailyLock.add(lockKey);
 
-        // Check if it's already completed
-        if (this.id in stats.dailies && this.check(stats.dailies[this.id])) return;
+        try {
+            // Get user stats
+            const stats = await getUserSchema(user.id);
+            if (!stats) return;
 
-        // Apply change
-        if (this.id in stats.dailies) stats.dailies[this.id] += change;
-        else stats.dailies[this.id] = change;
+            // Check if it's already completed
+            if (this.id in stats.dailies && this.check(stats.dailies[this.id])) return;
 
-        // Check if it was completed now
-        if (this.check(stats.dailies[this.id])) {
-            if (todaysQuests.every((quest) => quest.check(stats.dailies[quest.id]))) { // passlevel = passlevel + 1,
+            // Apply change
+            if (this.id in stats.dailies) stats.dailies[this.id] += change;
+            else stats.dailies[this.id] = change;
 
-                await updateUsers(user.id, {
-                    xp: { type: "increment", value: 20 },
-                    coins: { type: "increment", value: 1000 },
-                    gems: { type: "increment", value: 4 },
-                    dailies: { type: "set_json", value: stats.dailies }
-                });
+            // Check if it was completed now
+            if (this.check(stats.dailies[this.id])) {
+                if (todaysQuests.every((quest) => quest.check(stats.dailies[quest.id]))) { // passlevel = passlevel + 1,
 
-                if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
+                    await updateUsers(user.id, {
+                        xp: { type: "increment", value: 20 },
+                        coins: { type: "increment", value: 1000 },
+                        gems: { type: "increment", value: 4 },
+                        dailies: { type: "set_json", value: stats.dailies }
+                    });
+
+                    if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
+                } else {
+
+                    await updateUsers(user.id, {
+                        xp: { type: "increment", value: 10 },
+                        coins: { type: "increment", value: 500 },
+                        gems: { type: "increment", value: 2 },
+                        dailies: { type: "set_json", value: stats.dailies }
+                    });
+
+                    if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
+                };
             } else {
-
                 await updateUsers(user.id, {
-                    xp: { type: "increment", value: 10 },
-                    coins: { type: "increment", value: 500 },
-                    gems: { type: "increment", value: 2 },
                     dailies: { type: "set_json", value: stats.dailies }
                 });
-
-                if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
             };
-        } else {
-            await updateUsers(user.id, {
-                dailies: { type: "set_json", value: stats.dailies }
-            });
+        } finally {
+            dailyLock.delete(lockKey);
         };
-
     };
 
 };

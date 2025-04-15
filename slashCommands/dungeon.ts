@@ -11,7 +11,7 @@ import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
 import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, formatNumberWithQuotes } from "../Modules/functions";
-import { requestVerification, dungeonTempBan } from "../Modules/components";
+import { requestVerification, dungeonTempBan, AbilityResponse } from "../Modules/components";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
@@ -227,13 +227,17 @@ const exportCommand: SlashCommand = {
             clearTimeout(userTimeout);
             dungeonInProgress.delete(stats.id);
 
+            const runsLeftStr = (Math.max(-1, dunLim[1] - stats.dungeon_limit) > -1)
+                ? `<a:arrow_orange:916716747623641210> Runs left: **${Math.max(0, dunLim[0] - stats.dungeon_limit)}** loot **${Math.max(0, dunLim[1] - stats.dungeon_limit)}** progress`
+                : `<a:arrow_orange:916716747623641210> Runs made: **${stats.dungeon_limit}** (this interval)`;
+
             const Embed = new EmbedBuilder()
                 .setColor([0x6def83, 0xfac044, 0xff7d7d, 0x7c7c7c, 0xbbffff][threatLevel]) // Blue: 0x58b1ff
                 .setThumbnail(myStatsC.thumbnail)
                 .setTitle(`Dungeon Floor ${(floor - 1) % 100 + 1} ${enemy.boss ? "(Boss)" : ""}`);
             if (dunLim[0] - stats.dungeon_limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
             else Embed.setFooter({ text: `${myClass.name} level: ${myStats.clvl} | XP left: ${(myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))}`, iconURL: myClass.image });
-            if (r === "l") return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.dungeon_floors[floor]}**/${floors[floor]?.winsNeeded}\n<a:arrow_orange:916716747623641210> Runs left: **${stats.dungeon_limit < dunLim[0] ? dunLim[0] - stats.dungeon_limit : 0}** + **${stats.dungeon_limit < dunLim[1] ? dunLim[1] - stats.dungeon_limit : 0}**\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
+            if (r === "l") return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.dungeon_floors[floor]}**/${floors[floor]?.winsNeeded}\n${runsLeftStr}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
 
             if (dunLim[1] - stats.dungeon_limit >= 0 || stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) stats.dungeon_floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
 
@@ -465,7 +469,7 @@ const exportCommand: SlashCommand = {
                 ? (myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))
                 : 0;
 
-            Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n<a:arrow_orange:916716747623641210> Runs left: **${stats.dungeon_limit < dunLim[0] ? dunLim[0] - stats.dungeon_limit : 0}** loot **${stats.dungeon_limit < dunLim[1] ? dunLim[1] - stats.dungeon_limit : 0}** progress\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
+            Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
             if (dunLim[0] - stats.dungeon_limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins + loot)} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
             else Embed.setFooter({ text: `${myClass.name} level: ${xpleft < 1 ? myStats.clvl + 1 : myStats.clvl} | XP left: ${xpleft < 1 ? (((myStats.clvl + 1) * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl + 1) * 25))) : xpleft}`, iconURL: xpleft < 1 ? "https://i.ibb.co/Y8k36J1/Nks94u8.gif" : myClass.image });
             return Embed;
@@ -475,14 +479,15 @@ const exportCommand: SlashCommand = {
         let notice = ["", "", "", ""];
 
         // Apply passives
-        if (skill && myChar.id !== 4767) skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+        if (skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
         if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.weapon !== -1) (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.shieldid) (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        if (myStats.helmet && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.cuirass] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.gloves] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.boots] as armorInfo)?.setname) (items?.[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.helmet && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.cuirass] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.gloves] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.boots] as armorInfo)?.setname) await (items?.[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-        // Test abilities
-        (items[688] as ringInfo).getBuff(1)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
         const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
@@ -757,10 +762,12 @@ const exportCommand: SlashCommand = {
                         if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
-                            myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            const response = await myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                             // Event Triggers
-                            matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                            if (response === AbilityResponse.SUCCESS) {
+                                matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                            };
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -776,11 +783,13 @@ const exportCommand: SlashCommand = {
                                         matchStats.turn = 0;
                                         myStatsC.attackStreak = 0;
                                         myAbility.used++;
-                                        await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                        const response = await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
                                         myStatsC.sm -= myAbility.cost;
 
                                         // Event Triggers
-                                        matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                                        if (response === AbilityResponse.SUCCESS) {
+                                            matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                                        };
 
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -791,15 +800,17 @@ const exportCommand: SlashCommand = {
                         };
                     });
 
-                    cskill.on('collect', () => {
+                    cskill.on('collect', async () => {
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
-                            myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                             // Event Triggers
-                            matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                            if (response === AbilityResponse.SUCCESS) {
+                                matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                            };
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -815,10 +826,12 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
 
                                     // Event Triggers
-                                    matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                                    if (response === AbilityResponse.SUCCESS) {
+                                        matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                                    };
 
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);

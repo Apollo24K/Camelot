@@ -155,9 +155,14 @@ export interface IdelayedBuff {
     decrement(): void;
 };
 
-export type ClassAbility = (myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+enum AbilityResponse {
+    SUCCESS = 1,
+    FAILURE = 0,
+};
 
-export type ItemAbility = (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => void;
+export type ClassAbility = (myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => Promise<AbilityResponse>;
+
+export type ItemAbility = (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: IcharInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => Promise<AbilityResponse>;
 
 type ReplaceButtonAction = {
     emoji?: string;
@@ -182,11 +187,13 @@ export type DetailedStats = {
     batk: number;
     def: number;
     bdef: number;
+    increase_defcap: number;
     ep: number;
     md: number;
     bmd: number;
     mr: number;
     bmr: number;
+    increase_mrcap: number;
     cr: number;
     cd: number;
     td: number;
@@ -228,10 +235,20 @@ export type DetailedStats = {
     class: number;
     clvl: number;
     expertise: Expertise;
+    ringSlots: number;
     weapon: number;
     weaponinfo: Record<string, any>;
     weaponicon: string;
     uniqueids: Array<string>;
+    ring1?: number;
+    ring2?: number;
+    ring3?: number;
+    ring1icon: string;
+    ring2icon: string;
+    ring3icon: string;
+    ring1info?: WeaponSchema;
+    ring2info?: WeaponSchema;
+    ring3info?: WeaponSchema;
     [key: string]: any;
 };
 
@@ -360,7 +377,7 @@ export interface UserSchema {
     passpurchaselimit: number;
     expity: number;
     craze_equipment: Record<string, any>;
-    equipment: Record<string, any>;
+    equipment: Record<string, string>;
     trial_equipment: Record<string, any>;
     craze_levels: Record<string, any>;
     shield_slot: number;
@@ -379,11 +396,14 @@ export interface UserSchema {
     cow_chars: number[];
     cow_timer: number | null;
     cow_rolled_today: number;
-    rank: string;
+    rank: number;
     rankscore: number;
     raidxp: number;
     guild_marks: number;
     image_credits: number;
+    skill_tree: Record<string, number>;
+    skill_points: number;
+    raid_supports: number[];
     created: Date;
 
     chars: number[];
@@ -396,14 +416,14 @@ export interface UserSchema {
     dungeon_floors: Record<string, number>;
     dungeon_limit: number;
     dungeon_classes: number[];
-    dungeon_classlevels: Record<string, any>;
+    dungeon_classlevels: Record<string, number>;
     dungeon_responsetime: Date[];
     stampede_responsetime: Date[];
 }
 
 export type CompactUserSchema = Omit<UserSchema, "transactions" | "char_level" | "char_class" | "char_equipment" | "dungeon_responsetime" | "stampede_responsetime">;
 
-export type UserSchemaForStats = Pick<CompactUserSchema, "id" | "name" | "premium" | "battlechar" | "level" | "bank" | "char_ref" | "equipment" | "shield_slot" | "class" | "dungeon_classlevels">;
+export type UserSchemaForStats = Pick<CompactUserSchema, "id" | "name" | "xp" | "premium" | "battlechar" | "level" | "bank" | "char_ref" | "equipment" | "shield_slot" | "class" | "dungeon_classlevels" | "dungeon_floors">;
 
 export interface ServerSchema {
     rowid: number;
@@ -441,6 +461,9 @@ export interface GuildSchema {
     xpbuff: number;
     lootbuff: number;
     cdreduction: number;
+    atkbuff: number;
+    hpbuff: number;
+    defbuff: number;
     master: string;
     elders: string[];
     members: string[];
@@ -580,7 +603,7 @@ export interface ITrigger {
     set used(used: number);
 };
 
-export type TriggerEvents = "attack" | "crit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade";
+export type TriggerEvents = "attack" | "crit" | "noncrit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade";
 
 export type TriggerCallback = ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any);
 

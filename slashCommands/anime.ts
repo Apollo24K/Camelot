@@ -59,7 +59,7 @@ const exportCommand: SlashCommand = {
 
         // Setup Pages
         const elementsPerPage = 15;
-        let pagesTotal = Math.ceil(uniq.length / elementsPerPage);
+        const pagesTotal = Math.ceil(uniq.length / elementsPerPage);
         let currPage = 1;
         if (page <= pagesTotal && page > 0) {
             currPage = page;
@@ -73,7 +73,7 @@ const exportCommand: SlashCommand = {
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
             .setDescription(showAnime.join("\n"))
             .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-        return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then((msg) => {
+        return interaction.reply({ embeds: [Embed], components: [PageRow] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
             collector.on('collect', r => {

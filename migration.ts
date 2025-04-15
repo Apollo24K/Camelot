@@ -51,11 +51,11 @@ export const migrateData = async () => {
                     equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine,
                     bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy,
                     background, backgrounds, charlock, animelock, cow_participation, cow_chars,
-                    cow_timer, cow_rolled_today, rank, rankscore, raidxp, guild_marks, created,
+                    cow_timer, cow_rolled_today, raidxp, guild_marks, created,
                     chars, char_ref, char_level, char_class, char_skin, char_equipment,
                     dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels,
                     dungeon_responsetime, stampede_responsetime
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70, $71, $72, $73, $74, $75, $76, $77, $78, $79, $80, $81, $82, $83, $84, $85, $86, $87, $88, $89, $90, $91, $92, $93, $94, $95, $96, $97, $98, $99, $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110, $111, $112, $113, $114, $115, $116, $117)`,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38, $39, $40, $41, $42, $43, $44, $45, $46, $47, $48, $49, $50, $51, $52, $53, $54, $55, $56, $57, $58, $59, $60, $61, $62, $63, $64, $65, $66, $67, $68, $69, $70, $71, $72, $73, $74, $75, $76, $77, $78, $79, $80, $81, $82, $83, $84, $85, $86, $87, $88, $89, $90, $91, $92, $93, $94, $95, $96, $97, $98, $99, $100, $101, $102, $103, $104, $105, $106, $107, $108, $109, $110, $111, $112, $113, $114, $115)`,
                 [
                     user.rowid, user.id, user.name, user.xp, Math.floor(user.coins), user.lilies,
                     user.favchar, user.battlechar, user.lootbox,
@@ -94,7 +94,7 @@ export const migrateData = async () => {
                     user.charlock ? user.charlock.split(',').map(Number).filter(Boolean) : [],
                     user.animelock ? user.animelock.split(',').map(Number).filter(Boolean) : [],
                     user.cow_participation, [], user.cow_timer,
-                    user.cow_rolled_today, user.rank, user.rankscore, user.raidxp,
+                    user.cow_rolled_today, user.raidxp,
                     user.guild_marks, new Date(user.created),
                     JSON.parse(charData.chars), {}, charData.level,
                     charData.class, charData.skin, charData.equipment,
@@ -139,9 +139,9 @@ export const migrateData = async () => {
                     lastlevelup, raidid)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18,
                     $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)`,
-                [guild.rowid, guild.id, guild.name, guild.description, guild.color, guild.level, guild.icon,
-                guild.banner, guild.treasury, guild.treasury_gems, guild.tax, guild.canjoin, guild.tokens,
-                guild.membercap, guild.xpbuff, guild.lootbuff, guild.cdreduction, guild.master,
+                [guild.rowid, guild.id, guild.name, guild.description, guild.color, Math.min(20, guild.level), guild.icon,
+                guild.banner, guild.treasury + (guild.level > 20 ? ((guild.level - 20) * 30_000_000) : 0), guild.treasury_gems, guild.tax, guild.canjoin, Math.min(20, guild.xpbuff + guild.lootbuff + guild.cdreduction),
+                guild.membercap, 0, 0, 0, guild.master,
                 guild.elders.split(',').filter(Boolean), guild.members.split(',').filter(Boolean), guild.banned.split(',').filter(Boolean), guild.eventpoints,
                 guild.bosshuntstage, guild.boss1, guild.boss2, guild.boss3, guild.boss4,
                 guild.lastlevelup ? new Date(guild.lastlevelup) : null, guild.raidid]

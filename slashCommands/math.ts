@@ -1,5 +1,5 @@
 import { EmbedBuilder } from "discord.js";
-import math from 'mathjs';
+import * as math from 'mathjs';
 import { achievements } from "../Modules/achievements";
 import { SlashCommand } from '../types';
 
