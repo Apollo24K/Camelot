@@ -1,6 +1,7 @@
 import { characters, auniq } from "./chars.js";
 import { ChatInputCommandInteraction, User } from "discord.js";
 import { getUserSchema, updateUsers } from "./queries.js";
+import { items } from "./items.js";
 
 // Set to track ongoing achievement checks (userId:achievementId)
 const achvmLock = new Set<string>();
@@ -236,6 +237,22 @@ export default class achievInfo {
                 case 65: if (list[0] >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 66: if (list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
 
+                // Ascension Material Achievements
+                case 67:
+                case 68:
+                case 69:
+                case 70:{
+                    const totalAscensionMaterials = Object.entries(stats.items)
+                    .filter(([itemId]) => items[parseInt(itemId)]?.type === "ascension material")
+                    .reduce((sum, [_, amount]) => sum + amount, 0);
+
+                    if(this.id === 67) if(totalAscensionMaterials >= 2000) this.addRewards(interaction,user), this.notify(interaction);
+                    if(this.id === 68) if(totalAscensionMaterials >= 10000) this.addRewards(interaction,user), this.notify(interaction);
+                    if(this.id === 69) if(totalAscensionMaterials >= 50000) this.addRewards(interaction,user), this.notify(interaction);
+                    if(this.id === 70) if(totalAscensionMaterials >= 200000) this.addRewards(interaction,user), this.notify(interaction);
+                    break;
+                }
+
                 default: false; break;
             };
         } catch {
@@ -335,6 +352,12 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("From Riches to Rags", "Spend 100'000 in one levelup", 64, 21, "1,3", "xp|20", "s shard|8", "a shard|16"),
     new achievInfo("From Riches to Rags", "Spend 500'000 in one levelup", 65, 21, "1,3", "xp|100", "ss shard|4", "s shard|16", "a shard|24"),
     new achievInfo("From Riches to Rags", "Spend 1'000'000 in one levelup", 66, 21, "1,3", "xp|200", "ss shard|8", "s shard|24", "a shard|32"),
+
+    new achievInfo("Ascension Material Hoarder", "Obtain 2'000 ascension materials", 67, 22, "1,2", "xp|20", "coins|1000"),
+    new achievInfo("Ascension Material Hoarder", "Obtain 10'000 ascension materials", 68, 22, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Ascension Material Hoarder", "Obtain 50'000 ascension materials", 69, 22, "1,2", "xp|100", "coins|7500"),
+    new achievInfo("Ascension Material Hoarder", "Obtain 200'000 ascension materials", 70, 22, "1,2,4", "xp|150", "coins|10000", "ss ticket|1"),
+
 
 
 ];

@@ -7,6 +7,7 @@ import { userLevel } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from '../types';
 import { getUserSchema } from "../Modules/queries";
+import { items } from '../Modules/items';
 
 /**
  * Formats a price value for display by converting large numbers to k/m format
@@ -177,6 +178,22 @@ const exportCommand: SlashCommand = {
                 case 64:
                 case 65:
                 case 66: return achvmBar(0);
+
+                // Ascension Material Achievements
+                case 67:
+                case 68:
+                case 69:
+                case 70: {
+                    const totalAscensionMaterials = Object.entries(stats.items)
+                        .filter(([itemId]) => items[parseInt(itemId)]?.type === "ascension material")
+                        .reduce((sum, [_, amount]) => sum + amount, 0);
+                
+                    if(id === 67) return achvmBar(totalAscensionMaterials / 2000, ` (${totalAscensionMaterials}/2000)\n`);
+                    if(id === 68) return achvmBar(totalAscensionMaterials / 10000, ` (${totalAscensionMaterials}/10000)\n`);
+                    if(id === 69) return achvmBar(totalAscensionMaterials / 50000, ` (${totalAscensionMaterials}/50000)\n`);
+                    if(id === 70) return achvmBar(totalAscensionMaterials / 200000, ` (${totalAscensionMaterials}/200000)\n`);
+                    break;
+                }
 
                 default: return achvmBar(0);
             };
