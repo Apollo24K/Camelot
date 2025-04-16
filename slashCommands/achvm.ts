@@ -167,6 +167,36 @@ const exportCommand: SlashCommand = {
                     break;
                 case 66: if (stats.achievements.includes(66)) return achvmBar(1, " (Spend 1'000'000 in one levelup)\n")
                     break;
+                case 67: return achvmBar(stats.items[41] / 100, ` (${stats.items[41]}/100)\n`);
+                case 68: return achvmBar(stats.items[41] / 500, ` (${stats.items[41]}/500)\n`);
+                case 69: return achvmBar(stats.items[41] / 1000, ` (${stats.items[41]}/1000)\n`);
+                case 70: return achvmBar(stats.items[41] / 5000, ` (${stats.items[41]}/5000)\n`);
+                case 71: return achvmBar(stats.items[41] / 10000, ` (${stats.items[41]}/10000)\n`);
+                
+                case 72: return achvmBar(stats.items[42] / 100, ` (${stats.items[42]}/100)\n`);
+                case 73: return achvmBar(stats.items[42] / 500, ` (${stats.items[42]}/500)\n`);
+                case 74: return achvmBar(stats.items[42] / 1000, ` (${stats.items[42]}/1000)\n`);
+                case 75: return achvmBar(stats.items[42] / 5000, ` (${stats.items[42]}/5000)\n`);
+                case 76: return achvmBar(stats.items[42] / 10000, ` (${stats.items[42]}/10000)\n`);
+                
+                case 77: return achvmBar(stats.items[664] / 100, ` (${stats.items[664]}/100)\n`);
+                case 78: return achvmBar(stats.items[664] / 500, ` (${stats.items[664]}/500)\n`);
+                case 79: return achvmBar(stats.items[664] / 1000, ` (${stats.items[664]}/1000)\n`);
+                case 80: return achvmBar(stats.items[664] / 5000, ` (${stats.items[664]}/5000)\n`);
+                case 81: return achvmBar(stats.items[664] / 10000, ` (${stats.items[664]}/10000)\n`);
+                
+                case 82: return achvmBar(stats.items[90] / 100, ` (${stats.items[90]}/100)\n`);
+                case 83: return achvmBar(stats.items[90] / 500, ` (${stats.items[90]}/500)\n`);
+                case 84: return achvmBar(stats.items[90] / 1000, ` (${stats.items[90]}/1000)\n`);
+                case 85: return achvmBar(stats.items[90] / 5000, ` (${stats.items[90]}/5000)\n`);
+                case 86: return achvmBar(stats.items[90] / 10000, ` (${stats.items[90]}/10000)\n`);
+                
+                case 87: return achvmBar(stats.items[671] / 100, ` (${stats.items[671]}/100)\n`);
+                case 88: return achvmBar(stats.items[671] / 500, ` (${stats.items[671]}/500)\n`);
+                case 89: return achvmBar(stats.items[671] / 1000, ` (${stats.items[671]}/1000)\n`);
+                case 90: return achvmBar(stats.items[671] / 5000, ` (${stats.items[671]}/5000)\n`);
+                case 91: return achvmBar(stats.items[671] / 10000, ` (${stats.items[671]}/10000)\n`);
+
                 default: return achvmBar(0);
             };
         };

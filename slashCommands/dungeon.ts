@@ -419,6 +419,23 @@ const exportCommand: SlashCommand = {
                 tutorial: { type: 'append_unique', value: [9] },
             });
 
+            // Ascension achievement check
+
+            //Bones
+            achievements[67].check(interaction, interaction.user), achievements[68].check(interaction, interaction.user), achievements[69].check(interaction, interaction.user), achievements[70].check(interaction, interaction.user), achievements[71].check(interaction, interaction.user)
+
+            // Wolf teeth
+            achievements[72].check(interaction, interaction.user), achievements[73].check(interaction, interaction.user), achievements[74].check(interaction, interaction.user), achievements[75].check(interaction, interaction.user), achievements[76].check(interaction, interaction.user)
+
+            // Sacks of gold
+            achievements[77].check(interaction, interaction.user), achievements[78].check(interaction, interaction.user), achievements[79].check(interaction, interaction.user), achievements[80].check(interaction, interaction.user), achievements[81].check(interaction, interaction.user)
+
+            // Ancient dice
+            achievements[82].check(interaction, interaction.user), achievements[83].check(interaction, interaction.user), achievements[84].check(interaction, interaction.user), achievements[85].check(interaction, interaction.user), achievements[86].check(interaction, interaction.user)
+            
+            // Metal gears
+            achievements[87].check(interaction, interaction.user), achievements[88].check(interaction, interaction.user), achievements[89].check(interaction, interaction.user), achievements[90].check(interaction, interaction.user), achievements[91].check(interaction, interaction.user)
+
             // Tutorial
             if (!stats.tutorial.includes(9)) {
                 const row = new ActionRowBuilder<ButtonBuilder>()

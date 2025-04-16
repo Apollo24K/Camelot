@@ -238,6 +238,43 @@ export default class achievInfo {
                 case 66: if (list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
 
 
+                // Ascension mat achievements
+
+                //Bones
+                case 67: if (stats.items[41] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 68: if (stats.items[41] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 69: if (stats.items[41] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 70: if (stats.items[41] >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 71: if (stats.items[41] >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+
+                // Wolf teeth
+                case 72: if (stats.items[42] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 73: if (stats.items[42] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 74: if (stats.items[42] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 75: if (stats.items[42] >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 76: if (stats.items[42] >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+
+                // Sacks of gold
+                case 77: if (stats.items[664] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 78: if (stats.items[664] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 79: if (stats.items[664] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 80: if (stats.items[664] >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 81: if (stats.items[664] >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+
+                // Ancient Dice
+                case 82: if (stats.items[90] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 83: if (stats.items[90] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 84: if (stats.items[90] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 85: if (stats.items[90] >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 86: if (stats.items[90] >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+
+                // Metal Gear
+                case 87: if (stats.items[671] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 88: if (stats.items[671] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 89: if (stats.items[671] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 90: if (stats.items[671] >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 91: if (stats.items[671] >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
         } catch {
@@ -338,5 +375,34 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("From Riches to Rags", "Spend 500'000 in one levelup", 65, 21, "1,3", "xp|100", "ss shard|4", "s shard|16","a shard|24"),
     new achievInfo("From Riches to Rags", "Spend 1'000'000 in one levelup", 66, 21, "1,3", "xp|200", "ss shard|8", "s shard|24","a shard|32"),
 
+    new achievInfo("Death stays Dead", "Obtain 100 bones", 67, 22, "1,2", "xp|10", "coins|100"),
+    new achievInfo("Death stays Dead", "Obtain 500 bones", 68, 22, "1,2", "xp|20", "coins|200"),
+    new achievInfo("Death stays Dead", "Obtain 1000 bones", 69, 22, "1,2", "xp|30", "coins|500"),
+    new achievInfo("Death stays Dead", "Obtain 5000 bones", 70, 22, "1,2", "xp|50", "coins|2000"),
+    new achievInfo("Death stays Dead", "Obtain 10000 bones", 71, 22, "1,2", "xp|100", "coins|4000"),
+
+    new achievInfo("Tooth fairy?", "Obtain 100 wolf teeth", 72, 23, "1,2", "xp|10", "coins|100"),
+    new achievInfo("Tooth fairy?", "Obtain 500 wolf teeth", 73, 23, "1,2", "xp|20", "coins|200"),
+    new achievInfo("Tooth fairy?", "Obtain 1000 wolf teeth", 74, 23, "1,2", "xp|30", "coins|500"),
+    new achievInfo("Tooth fairy?", "Obtain 5000 wolf teeth", 75, 23, "1,2", "xp|50", "coins|2000"),
+    new achievInfo("Tooth fairy?", "Obtain 10000 wolf teeth", 76, 23, "1,2", "xp|100", "coins|4000"),
+
+    new achievInfo("Guys, how to open sack of gold?", "Obtain 100 sacks of gold", 77, 24, "1,2", "xp|10", "coins|100"),
+    new achievInfo("Guys, how to open sack of gold?", "Obtain 500 sacks of gold", 78, 24, "1,2", "xp|20", "coins|200"),
+    new achievInfo("Guys, how to open sack of gold?", "Obtain 1000 sacks of gold", 79, 24, "1,2", "xp|30", "coins|500"),
+    new achievInfo("Guys, how to open sack of gold?", "Obtain 5000 sacks of gold", 80, 24, "1,2", "xp|50", "coins|2000"),
+    new achievInfo("Guys, how to open sack of gold?", "Obtain 10000 sacks of gold", 81, 24, "1,2", "xp|100", "coins|4000"),
+
+    new achievInfo("Fates of Old", "Obtain 100 ancient dice", 82, 25, "1,2", "xp|10", "coins|100"),
+    new achievInfo("Fates of Old", "Obtain 500 ancient dice", 83, 25, "1,2", "xp|20", "coins|200"),
+    new achievInfo("Fates of Old", "Obtain 1000 ancient dice", 84, 25, "1,2", "xp|30", "coins|500"),
+    new achievInfo("Fates of Old", "Obtain 5000 ancient dice", 85, 25, "1,2", "xp|50", "coins|2000"),
+    new achievInfo("Fates of Old", "Obtain 10000 ancient dice", 86, 25, "1,2", "xp|100", "coins|4000"),
+
+    new achievInfo("Solid Metal Gear", "Obtain 100 metal gears", 87, 26, "1,2", "xp|10", "coins|100"),
+    new achievInfo("Solid Metal Gear", "Obtain 500 metal gears", 88, 26, "1,2", "xp|20", "coins|200"),
+    new achievInfo("Solid Metal Gear", "Obtain 1000 metal gears", 89, 26, "1,2", "xp|30", "coins|500"),
+    new achievInfo("Solid Metal Gear", "Obtain 5000 metal gears", 90, 26, "1,2", "xp|50", "coins|2000"),
+    new achievInfo("Solid Metal Gear", "Obtain 10000 metal gears", 91, 26, "1,2", "xp|100", "coins|4000"),
 
 ];
