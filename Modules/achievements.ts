@@ -231,12 +231,10 @@ export default class achievInfo {
                 case 62: if (stats.donatedtotal >= 5000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 63: if (stats.donatedtotal >= 20000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 
-                
                 // Levelup spend achievements
                 case 64: if (list[0] >= 100000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 65: if (list[0] >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 66: if (list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
-
 
                 default: false; break;
             };
