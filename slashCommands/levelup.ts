@@ -104,6 +104,9 @@ const exportCommand: SlashCommand = {
 
                 // From Riches to Rags
                 achievements[64].check(interaction, interaction.user, price), achievements[65].check(interaction, interaction.user, price), achievements[66].check(interaction, interaction.user, price);
+
+                // The Battle is to the Strongest II
+                achievements[71].check(interaction, interaction.user, currLvl + up), achievements[72].check(interaction, interaction.user, currLvl + up), achievements[73].check(interaction, interaction.user, currLvl + up), achievements[74].check(interaction, interaction.user, currLvl + up);
             });
 
             collector.on('end', () => {

@@ -192,6 +192,10 @@ const exportCommand: SlashCommand = {
 
                     return achvmBar(totalAscensionMaterials / threshold, ` (${totalAscensionMaterials}/${threshold})\n`);
                 }
+                case 71: return achvmBar(stats.level / 300, `(${stats.level} / 300)\n`);
+                case 72: return achvmBar(stats.level / 500, `(${stats.level} / 500)\n`);
+                case 73: return achvmBar(stats.level / 700, `(${stats.level} / 700)\n`);
+                case 74: return achvmBar(stats.level / 1000, `(${stats.level} / 1000)\n`);
 
                 default: return achvmBar(0);
             };

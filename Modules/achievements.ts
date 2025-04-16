@@ -252,6 +252,11 @@ export default class achievInfo {
                     break;
                 }
 
+                case 71: if (list[0] >= 300) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 72: if (list[0] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 73: if (list[0] >= 700) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 74: if (list[0] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
         } catch {
@@ -357,6 +362,9 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Just a Few Mats", "Obtain 50'000 ascension materials", 69, 22, "1,2", "xp|100", "coins|7500"),
     new achievInfo("Just a Few Mats", "Obtain 200'000 ascension materials", 70, 22, "1,2,4", "xp|150", "coins|10000", "ss ticket|1"),
 
-
+    new achievInfo("The Battle is to the Strong II", "Reach level 300 with a character", 71, 23, "1,2,3", "xp|400", "coins|10000", "ss shards|12"),
+    new achievInfo("The Battle is to the Strong II", "Reach level 500 with a character", 72, 23, "1,2,3", "xp|600", "coins|15000", "ss shards|16"),
+    new achievInfo("The Battle is to the Strong II", "Reach level 700 with a character", 73, 23, "1,2,3", "xp|800", "coins|25000", "ss shards|24"),
+    new achievInfo("The Battle is to the Strong II", "Reach level 1000 with a character", 74, 23, "1,2,3", "xp|1000", "coins|50000", "ss shards|36"),
 
 ];
