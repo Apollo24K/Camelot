@@ -8,6 +8,18 @@ import { PageRow } from "../Modules/components";
 import { SlashCommand } from '../types';
 import { getUserSchema } from "../Modules/queries";
 
+/**
+ * Formats a price value for display by converting large numbers to k/m format
+ * @param price The price value to format
+ * @returns Formatted price text (e.g. "5k" or "2m")
+ */
+function formatPriceText(price: string | number): string {
+    let priceStr = `${price}`;
+    if (priceStr.endsWith("000000")) priceStr = `${priceStr.slice(0, priceStr.length - 6)}m`;
+    else if (priceStr.endsWith("000")) priceStr = `${priceStr.slice(0, priceStr.length - 3)}k`;
+    return priceStr;
+};
+
 const exportCommand: SlashCommand = {
     name: 'achievements',
     async execute({ interaction, author }) {
@@ -161,12 +173,11 @@ const exportCommand: SlashCommand = {
                 case 62: return achvmBar(stats.donatedtotal / 5_000_000, ` (${stats.donatedtotal}/5'000'000)\n`);
                 case 63: return achvmBar(stats.donatedtotal / 20_000_000, ` (${stats.donatedtotal}/20'000'000)\n`);
 
-                case 64: if (stats.achievements.includes(64)) return achvmBar(1, " (Spend 100'000 in one levelup)\n") 
-                    break;
-                case 65: if (stats.achievements.includes(65)) return achvmBar(1, " (Spend 500'000 in one levelup)\n")
-                    break;
-                case 66: if (stats.achievements.includes(66)) return achvmBar(1, " (Spend 1'000'000 in one levelup)\n")
-                    break;
+                // From Riches to Rags: Spend x coins in one levelup
+                case 64:
+                case 65:
+                case 66: return achvmBar(0);
+                
                 case 67: return achvmBar(stats.items[41] / 100, ` (${stats.items[41]}/100)\n`);
                 case 68: return achvmBar(stats.items[41] / 500, ` (${stats.items[41]}/500)\n`);
                 case 69: return achvmBar(stats.items[41] / 1000, ` (${stats.items[41]}/1000)\n`);
@@ -205,8 +216,8 @@ const exportCommand: SlashCommand = {
             let rews: string[] = [];
             a.type.forEach((type) => {
                 switch (type) {
-                    case "1": a.rewards.forEach((rew) => { if (rew.match(/xp/gi)) rews.push(`**${rew.split("|")[1]}** XP`); }); break;
-                    case "2": a.rewards.forEach((rew) => { if (rew.match(/coins/gi)) rews.push(`**${rew.split("|")[1]}** <:coins:872926669055356939>`); }); break;
+                    case "1": a.rewards.forEach((rew) => { if (rew.match(/xp/gi)) rews.push(`**${formatPriceText(rew.split("|")[1])}** XP`); }); break;
+                    case "2": a.rewards.forEach((rew) => { if (rew.match(/coins/gi)) rews.push(`**${formatPriceText(rew.split("|")[1])}** <:coins:872926669055356939>`); }); break;
                     case "3": a.rewards.forEach((rew) => { if (rew.match(/shard/gi)) rews.push(`**${rew.split("|")[1]}**x ${shardEmojis[rew.split(" ")[0] as keyof typeof shardEmojis]}`); }); break;
                     case "4": a.rewards.forEach((rew) => { if (rew.match(/ticket/gi)) rews.push(`**${rew.split("|")[1]}**x ${ticketEmojis[rew.split(" ")[0] as keyof typeof ticketEmojis]}`); }); break;
                     case "5": a.rewards.forEach((rew) => { if (rew.match(/lb/gi)) rews.push(`**${rew.split("|")[1]}** ${rew.split("|")[1] == "1" ? "lootbox" : "lootboxes"}`); }); break;

@@ -230,13 +230,11 @@ export default class achievInfo {
                 case 61: if (stats.donatedtotal >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 62: if (stats.donatedtotal >= 5000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 63: if (stats.donatedtotal >= 20000000) this.addRewards(interaction, user), this.notify(interaction); break;
-                
-                
+
                 // Levelup spend achievements
                 case 64: if (list[0] >= 100000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 65: if (list[0] >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 66: if (list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
-
 
                 // Ascension mat achievements
 
@@ -361,9 +359,9 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Angler's Triumph", "Catch a mythical fish", 54, 18, "1,2,4", "xp|150", "coins|5000", "ss ticket|1"),
 
     new achievInfo("Challenger ⅠⅠ", "Beat the floor 100 Guardian", 55, 19, "1,2,3", "xp|250", "coins|10000", "ss shard|16"),
-    new achievInfo("Challenger ⅠⅠ", "Beat the floor 150 Guardian", 56, 19, "1,2,3", "xp|300", "coins|12500", "ss shard|16"),
-    new achievInfo("Challenger ⅠⅠ", "Beat the floor 200 Guardian", 57, 19, "1,2,3", "xp|350", "coins|15000", "ss shard|16"),
-    new achievInfo("Challenger ⅠⅠ", "Beat the floor 270 Guardian", 58, 19, "6,1,2,4", "xp|500", "coins|20000", "ss ticket|3"),
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 150 Guardian", 56, 19, "1,2,3", "xp|300", "coins|15000", "ss shard|16"),
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 200 Guardian", 57, 19, "1,2,3", "xp|350", "coins|20000", "ss shard|16"),
+    new achievInfo("Challenger ⅠⅠ", "Beat the floor 270 Guardian", 58, 19, "6,1,2,4", "xp|500", "coins|25000", "ss ticket|3"),
 
     new achievInfo("Blessing to the Guild", "Donate 50'000", 59, 20, "1,2", "xp|25", "coins|2500"),
     new achievInfo("Blessing to the Guild", "Donate 250'000", 60, 20, "1,2", "xp|75", "coins|7500"),
@@ -372,8 +370,8 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Blessing to the Guild", "Donate 20'000'000", 63, 20, "1,2", "xp|500", "coins|50000"),
 
     new achievInfo("From Riches to Rags", "Spend 100'000 in one levelup", 64, 21, "1,3", "xp|20", "s shard|8", "a shard|16"),
-    new achievInfo("From Riches to Rags", "Spend 500'000 in one levelup", 65, 21, "1,3", "xp|100", "ss shard|4", "s shard|16","a shard|24"),
-    new achievInfo("From Riches to Rags", "Spend 1'000'000 in one levelup", 66, 21, "1,3", "xp|200", "ss shard|8", "s shard|24","a shard|32"),
+    new achievInfo("From Riches to Rags", "Spend 500'000 in one levelup", 65, 21, "1,3", "xp|100", "ss shard|4", "s shard|16", "a shard|24"),
+    new achievInfo("From Riches to Rags", "Spend 1'000'000 in one levelup", 66, 21, "1,3", "xp|200", "ss shard|8", "s shard|24", "a shard|32"),
 
     new achievInfo("Death stays Dead", "Obtain 100 bones", 67, 22, "1,2", "xp|10", "coins|100"),
     new achievInfo("Death stays Dead", "Obtain 500 bones", 68, 22, "1,2", "xp|20", "coins|200"),
@@ -404,5 +402,6 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Solid Metal Gear", "Obtain 1000 metal gears", 89, 26, "1,2", "xp|30", "coins|500"),
     new achievInfo("Solid Metal Gear", "Obtain 5000 metal gears", 90, 26, "1,2", "xp|50", "coins|2000"),
     new achievInfo("Solid Metal Gear", "Obtain 10000 metal gears", 91, 26, "1,2", "xp|100", "coins|4000"),
+
 
 ];
