@@ -5,6 +5,7 @@ import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
 import { ItemCategory, ItemRarity, ItemType, SlashCommand } from "../types";
 import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, getWeaponSchemas, updateUsers, updateWeapons } from "../Modules/queries";
+import { achievements } from "../Modules/achievements";
 
 function getAscension(lvl: number) {
     let asc = "";
@@ -350,6 +351,8 @@ const exportCommand: SlashCommand = {
                             },
                         });
 
+
+
                         // Update weapons table
                         await updateWeapons(`${itemChoice}:${interaction.user.id}`, {
                             ascension: { type: "increment", value: 1 },
@@ -577,8 +580,15 @@ const exportCommand: SlashCommand = {
                             level: { type: "increment", value: xpSelected },
                         });
 
+
                         interaction.editReply({ components: [] });
                         if (interaction.channel?.isSendable()) interaction.channel.send(`Leveled ${fItem.emoji} __**${fItem.name}**__ up to level **${currLevel}**!`);
+
+
+                        //* Achievements
+                        // Veteran in the Making
+                        const itemLvl = getItemLevel(item.level + xpSelected);
+                        achievements[78].check(interaction, interaction.user, itemLvl), achievements[79].check(interaction, interaction.user, itemLvl), achievements[80].check(interaction, interaction.user, itemLvl), achievements[81].check(interaction, interaction.user, itemLvl);
                     });
 
                     cancel.on('collect', () => {

@@ -200,6 +200,11 @@ const exportCommand: SlashCommand = {
                 case 75:
                 case 76:
                 case 77: return achvmBar(0);
+                
+                case 78:
+                case 79:
+                case 80:
+                case 81: return achvmBar(0);
 
                 default: return achvmBar(0);
             };

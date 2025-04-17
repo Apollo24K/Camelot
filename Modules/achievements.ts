@@ -261,6 +261,11 @@ export default class achievInfo {
                 case 76: if (list[0] === 200 && list[1] === "D") this.addRewards(interaction, user), this.notify(interaction); break;
                 case 77: if (list[0] === 300 && list[1] === "D") this.addRewards(interaction, user), this.notify(interaction); break;
 
+                case 78: if (list[0] === 40) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 79: if (list[0] === 80) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 80: if (list[0] === 120) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 81: if (list[0] === 170) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
         } catch {
@@ -374,6 +379,12 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Zero to Hero", "Defeat floor 100 with a D rank character", 75, 24, "1,2", "xp|50", "coins|2000"),
     new achievInfo("Zero to Hero", "Defeat floor 200 with a D rank character", 76, 24, "1,2", "xp|75", "coins|5000"),
     new achievInfo("Zero to Hero", "Defeat floor 300 with a D rank character", 77, 24, "1,2,4", "xp|100", "coins|15000", "ss ticket|1"),
+
+    new achievInfo("Veteran in the Making", "Upgrade an item to level 40", 78, 25, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Veteran in the Making", "Upgrade an item to level 80", 79, 25, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Veteran in the Making", "Upgrade an item to level 120", 80, 25, "1,2", "xp|100", "coins|10000"),
+    new achievInfo("Veteran in the Making", "Upgrade an item to level 170", 81, 25, "1,2", "xp|200", "coins|20000"),
+
 
 
 ];
