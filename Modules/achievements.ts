@@ -268,6 +268,21 @@ export default class achievInfo {
 
                 case 82: if(stats.bank >= list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
 
+                case 83:
+                case 84:
+                case 85:
+                case 86:
+                case 87: {
+                    const totalFish = Object.entries(stats.items)
+                    .filter(([itemId]) => items[parseInt(itemId)]?.type === "fish")
+                    .reduce((sum, [_, amount]) => sum + amount, 0);
+
+                const threshold = { 83: 100, 84: 200, 85: 500, 86: 1000, 87: 2000 }[this.id];
+
+                if (totalFish >= threshold) this.addRewards(interaction, user), this.notify(interaction);
+                break;
+                }
+
                 default: false; break;
             };
         } catch {
@@ -387,7 +402,13 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Veteran in the Making", "Upgrade an item to level 120", 80, 25, "1,2", "xp|100", "coins|10000"),
     new achievInfo("Veteran in the Making", "Upgrade an item to level 170", 81, 25, "1,2", "xp|200", "coins|20000"),
 
-    new achievInfo("Stop Hoarding", "Reach max capacity in bank", 82, 26, "2", "coins|2000")
+    new achievInfo("Stop Hoarding", "Reach max capacity in bank", 82, 26, "2", "coins|2000"),
+
+    new achievInfo("Something's Fishy", "Catch 100 fish", 83, 27, "1,2", "xp|10", "coins|100"),
+    new achievInfo("Something's Fishy", "Catch 200 fish", 84, 27, "1,2", "xp|25", "coins|300"),
+    new achievInfo("Something's Fishy", "Catch 500 fish", 85, 27, "1,2", "xp|50", "coins|500"),
+    new achievInfo("Something's Fishy", "Catch 1000 fish", 86, 27, "1,4", "xp|75", "s ticket|2"),
+    new achievInfo("Something's Fishy", "Catch 2000 fish", 87, 27, "1,4", "xp|100", "ss ticket|2"),
 
 
 ];

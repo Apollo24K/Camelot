@@ -200,13 +200,25 @@ const exportCommand: SlashCommand = {
                 case 75:
                 case 76:
                 case 77: return achvmBar(0);
-                
+
                 case 78:
                 case 79:
                 case 80:
                 case 81: return achvmBar(0);
                 case 82: return achvmBar(0);
+                case 83:
+                case 84:
+                case 85:
+                case 86:
+                case 87: {
+                    const totalFish = Object.entries(stats.items)
+                        .filter(([itemId]) => items[parseInt(itemId)]?.type === "fish")
+                        .reduce((sum, [_, amount]) => sum + amount, 0);
 
+                    const threshold = { 83: 100, 84: 200, 85: 500, 86: 1000, 87: 2000 }[id];
+
+                    return achvmBar(totalFish / threshold, ` (${totalFish}/${threshold})\n`);
+                }
                 default: return achvmBar(0);
             };
         };
