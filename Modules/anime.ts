@@ -634,6 +634,7 @@ export const anime: animeInfo[] = [
     new animeInfo("Beast Tamer", ['Yuusha Party wo Tsuihou Sareta Beast Tamer, Saikyoushu no Nekomimi Shoujo to Deau', 'Beast Tamer and the Cat Girl'], 599),    
     new animeInfo("Cardcaptor Sakura", ["Kadokyaputa Sakura"], 600),
     new animeInfo("I am getting married to a girl I hate in my class", ["Kurakon", "Class no Daikirai na Joshi to Kekkon suru Koto ni Natta.", " I Got Married to the Girl I Hate Most in Class"], 601),
+    new animeInfo("Sengoku BASARA", ['SB1', 'Devil Kings'], 602),
 
 ];
 
