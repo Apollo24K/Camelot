@@ -257,6 +257,10 @@ export default class achievInfo {
                 case 73: if (list[0] >= 700) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 74: if (list[0] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
 
+                case 75: if (list[0] === 100 && list[1] === "D") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 76: if (list[0] === 200 && list[1] === "D") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 77: if (list[0] === 300 && list[1] === "D") this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
         } catch {
@@ -366,5 +370,10 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("The Battle is to the Strong ⅠⅠ", "Reach level 500 with a character", 72, 23, "1,2,3", "xp|600", "coins|15000", "ss shards|16"),
     new achievInfo("The Battle is to the Strong ⅠⅠ", "Reach level 700 with a character", 73, 23, "1,2,3", "xp|800", "coins|25000", "ss shards|24"),
     new achievInfo("The Battle is to the Strong ⅠⅠ", "Reach level 1000 with a character", 74, 23, "1,2,3", "xp|1000", "coins|50000", "ss shards|36"),
+
+    new achievInfo("Zero to Hero", "Defeat floor 100 with a D rank character", 75, 24, "1,2", "xp|50", "coins|2000"),
+    new achievInfo("Zero to Hero", "Defeat floor 200 with a D rank character", 76, 24, "1,2", "xp|75", "coins|5000"),
+    new achievInfo("Zero to Hero", "Defeat floor 300 with a D rank character", 77, 24, "1,2,4", "xp|100", "coins|15000", "ss ticket|1"),
+
 
 ];

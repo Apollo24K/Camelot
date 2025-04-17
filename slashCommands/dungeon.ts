@@ -466,6 +466,9 @@ const exportCommand: SlashCommand = {
             // Ascension material achievement
             achievements[67].check(interaction, interaction.user), achievements[68].check(interaction, interaction.user), achievements[69].check(interaction, interaction.user), achievements[70].check(interaction, interaction.user);
 
+            // Zero to Hero
+            achievements[75].check(interaction, interaction.user, floor, characters[stats.battlechar ?? -1]?.rarity), achievements[76].check(interaction, interaction.user, floor, characters[stats.battlechar ?? -1]?.rarity), achievements[77].check(interaction, interaction.user, floor, characters[stats.battlechar ?? -1]?.rarity);
+
             //* Daily Quests
             dailies[2].update(interaction, skipRounds); // Increasing Danger
 
