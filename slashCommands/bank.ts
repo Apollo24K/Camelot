@@ -2,6 +2,7 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentTy
 import { formatNumberWithQuotes } from "../Modules/functions";
 import { getUserSchema, updateUsers } from "../Modules/queries";
 import { SlashCommand } from '../types';
+import { achievements } from "../Modules/achievements";
 
 const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -73,6 +74,10 @@ const exportCommand: SlashCommand = {
                 coins: { type: 'increment', value: -amount },
                 bank: { type: 'increment', value: amount + (stats.bank === -1 ? 1 : 0) }
             });
+
+            //* Achievements
+            // Bank achievement
+            achievements[82].check(interaction, user, cap);
 
             return interaction.reply(`Deposited **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> in your bank!\nBank balance: \`${formatNumberWithQuotes(stats.bank + (amount + (stats.bank === -1 ? 1 : 0)))}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
         };

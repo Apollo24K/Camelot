@@ -266,6 +266,8 @@ export default class achievInfo {
                 case 80: if (list[0] === 120) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 81: if (list[0] === 170) this.addRewards(interaction, user), this.notify(interaction); break;
 
+                case 82: if(stats.bank >= list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
         } catch {
@@ -385,6 +387,7 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Veteran in the Making", "Upgrade an item to level 120", 80, 25, "1,2", "xp|100", "coins|10000"),
     new achievInfo("Veteran in the Making", "Upgrade an item to level 170", 81, 25, "1,2", "xp|200", "coins|20000"),
 
+    new achievInfo("Stop Hoarding", "Reach max capacity in bank", 82, 26, "2", "coins|2000")
 
 
 ];
