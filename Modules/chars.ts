@@ -23330,7 +23330,6 @@ export const characters: charInfo[] = [
     new charInfo("The Herta", [], anime[343], "F", "https://i.ibb.co/rRcb5hSk/c.png", 23225, "SS"),
     new charInfo("Fugue", [], anime[343], "F", "https://i.ibb.co/dw1JVkDL/c.png", 23226, "S"),
     new charInfo("Dan Heng Imbibitor Lunae", [], anime[343], "M", "https://i.ibb.co/tTM9WX9H/c.png", 23227, "SS"),
-    //* Poke
     new charInfo("Mercurius", ["Karl Ernst Krafft", "Cagliostro", "Snake of Mercury", "Paracelsus", "Hermes Trismegistus", "Faust (Di)", "The Mercurial Snake", "Alessandro di Cagliostro", "Ahesvar", "Albertus Magnus", "Saint Germain", "Christian Rosenkreutz", "Johaan George Faust", "Mercury (Di)", "The Mercurial King", "Herme"], anime[603], "M", "https://i.ibb.co/Mxmwht6K/c.png", 23228, "SS"),
     new charInfo("Reinhard Tristan Eugen Heydrich", ["Mephistopheles", "Blond Beast", "Golden Monarch", "Monarch of Destruction", "Harbinger of Beguiling Light", "The Golden Beast", "King of Valhalla", "The Man with an Iron Heart", "Young Evil God of Death", "Butcher of Prauge", "Ougon", "Kemono Dono"], anime[603], "M", "https://i.ibb.co/j2Sszx2/c.png", 23229, "S"),
     new charInfo("Ren Fujii", ["Zarathustra", "Ephemeral Moment", "Mercurius' Substitute"], anime[603], "M", "https://i.ibb.co/JWsRKRhv/c.png", 23230, "S"),
