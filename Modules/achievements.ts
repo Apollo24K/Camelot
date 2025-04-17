@@ -283,6 +283,8 @@ export default class achievInfo {
                     break;
                 }
 
+                case 88: if(list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
+        
                 default: false; break;
             };
         } catch {
@@ -410,5 +412,6 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Something's Fishy", "Catch 1000 fish", 86, 27, "1,4", "xp|75", "s ticket|2"),
     new achievInfo("Something's Fishy", "Catch 2000 fish", 87, 27, "1,4", "xp|100", "ss ticket|2"),
 
+    new achievInfo("David versus Goliath", "Defeat an enemy with 500% of your EP", 88, 28, "1,2", "xp|50", "coins|2000"),
 
 ];

@@ -469,6 +469,9 @@ const exportCommand: SlashCommand = {
             // Zero to Hero
             achievements[75].check(interaction, interaction.user, floor, myChar.rarity), achievements[76].check(interaction, interaction.user, floor, myChar.rarity), achievements[77].check(interaction, interaction.user, floor, myChar.rarity);
 
+            // David versus Goliath
+            achievements[88].check(interaction, interaction.user, eStats.ep >= myStats.ep * 5);
+
             //* Daily Quests
             // Increasing Danger
             dailies[2].update(interaction, skipRounds);

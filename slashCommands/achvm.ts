@@ -216,9 +216,10 @@ const exportCommand: SlashCommand = {
                         .reduce((sum, [_, amount]) => sum + amount, 0);
 
                     const threshold = { 83: 100, 84: 200, 85: 500, 86: 1000, 87: 2000 }[id];
-
+                    
                     return achvmBar(totalFish / threshold, ` (${totalFish}/${threshold})\n`);
                 }
+                case 88: return achvmBar(0);
                 default: return achvmBar(0);
             };
         };
