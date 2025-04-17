@@ -635,6 +635,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Cardcaptor Sakura", ["Kadokyaputa Sakura"], 600),
     new animeInfo("I am getting married to a girl I hate in my class", ["Kurakon", "Class no Daikirai na Joshi to Kekkon suru Koto ni Natta.", " I Got Married to the Girl I Hate Most in Class"], 601),
     new animeInfo("Sengoku BASARA", ['SB1', 'Devil Kings'], 602),
+    new animeInfo("Dies irae", ['Day of Wrath', 'Di'], 603),
+    new animeInfo("EDENS ZERO", ['EZ', "Eden's Zero", 'EDENSZERO'], 604),
+    new animeInfo("Re:Monster", ['Re:Monster Shisatsu Kara Hajimaru Kaibutsu Tensei-ki', 'R:M', 'Stabbed to Death', 'Reincarnated: Monster'], 605),
+    new animeInfo("Tears to Tiara", [], 606),
 
 ];
 
