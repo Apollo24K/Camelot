@@ -5397,7 +5397,7 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    "2": {
+    "23185": {
         usage: 2,
         used: 0,
         cost: 20,
