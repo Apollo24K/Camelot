@@ -641,7 +641,7 @@ const exportCommand: SlashCommand = {
                         stats.equipment["prog"] = equippedProgs.join(",");
                         equipped.push(`[${action.toUpperCase()}]`);
                     } else {
-                        let progmsg = "`A110` : Slows enemy every **3** rounds, decreasing their dodge rate to **0%** for **2** rounds.\n`A120` : Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **3** rounds, reducing their ATK, MD, DEF, MR by **20%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **3** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme from the pod.";
+                        let progmsg = "`A110` : Slows enemy every **2** rounds. If dodge is below **0%**, sets dodge to **0%**, before increasing dodge rate by **1%** for every **1%** HP missing, up to **20%**\n`A120` : Initiates restoration every **3** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **3** rounds, reducing their ATK, MD, DEF, MR by **25%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **3** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme from the pod.";
                         return interaction.reply(`⚙️ Correct usage: /item equip item:prog <ID>. Valid programmes:\n\n${progmsg}`);
                     };
                     continue;

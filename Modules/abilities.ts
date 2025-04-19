@@ -5403,8 +5403,8 @@ export const abilities: Record<number, Ability> = {
         cost: 20,
         pause: 0,
         selfhealidx: 0,
-        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+30%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **90%** DMG, before slamming them in a strike, dealing an additional instance of **1%** DMG for every **1%** HP missing from the enemy (Up to 50%).\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** [ɪɴꜱɪɢʜᴛ], 9S consumes all [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+3%** ATK/MD. Cannot have more than **8** stacks at all time.\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**. Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **2%** permanently (Up to 20%). After using DEFEND, activates “Boost”, increasing dodge rate by **30%** for **2** rounds and decreases enemy’s DEF by **2%** permanently (Up to 20%). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **2%** permanently (Up to 20%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, every even round, 2B pushes forward with her blade. If the ally’s dodge is below **0%**, set dodge to **0%**, before increasing dodge rate by **1%** for every **1%** of the ally’s missing HP, up to 30%.",
-        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+30%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`\n\nATTACK is altered:\n> - Loses **7%** current HP\n> - Deals **90%** DMG, before dealing another instance of **1%** DMG for every **1%** HP missing from the enemy (Up to 50%).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+3%** ATK. Cannot have more than **8** stacks at all time.\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **25%** chance to counter the next hit (stackable)\n- **-2%** enemy's ATK permanently (Up to 20%)\n\nAfter using DEFEND:\n- **+30%** dodge rate for **2** rounds\n- **-2%** enemy's DEF permanently (Up to 20%)\n\nAfter using CLASS SKILL:\n- **+2%** DMG mitigation permanently (Up to 20%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\n- When 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\nEvery even round:\n- If ally’s dodge is below **0%**, set dodge to **0%**\n- Then increases dodge rate by **1%** for every **1%** HP missing, up to 30%",
+        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+30%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **90%** DMG, before slamming them in a strike, dealing an additional instance of **1%** DMG for every **1%** HP missing from the enemy (Up to 50%). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+3%** ATK/MD, up to **+24%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**. Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **2%** permanently (Up to 20%). After using DEFEND, activates “Boost”, increasing dodge rate by **30%** for **2** rounds and decreases enemy’s DEF by **2%** permanently (Up to 20%). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **2%** permanently (Up to 20%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of ɪɴꜱɪɢʜᴛ instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
+        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+30%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **100%** DMG, before dealing another instance of **1%** DMG for every **1%** HP missing from the enemy (Up to 50%).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+3%** ATK. Cannot have more than **8** stacks at all time.\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **25%** chance to counter the next hit (stackable)\n- **-2%** enemy's ATK permanently (Up to 20%)\n\nAfter using DEFEND:\n- **+30%** dodge rate for **2** rounds\n- **-2%** enemy's DEF permanently (Up to 20%)\n\nAfter using CLASS SKILL:\n- **+2%** DMG mitigation permanently (Up to 20%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\n- When 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\nEvery even round:\n- If ally’s dodge is below **0%**, set dodge to **0%**\n- Then increases dodge rate by **1%** for every **1%** HP missing, up to 30%",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // 2B&9S EX
 
@@ -5490,6 +5490,7 @@ export const abilities: Record<number, Ability> = {
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             myStats.insight ??= 0;
+            myStats.duorevived ??= false;
 
             let prog = myStats.proginfo;
             if (prog) {
@@ -5498,9 +5499,9 @@ export const abilities: Record<number, Ability> = {
                         case "a110":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Slow**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                                if (matchStats.round % 3 === 0) {
-                                    eStats.dodge = 0;
-                                    ebuff.dodge.push(new buffInfo("=", 0, 2));
+                                if (matchStats.round % 2 === 0) {
+                                    if (myStats.dodge < 0) myStats.dodge = 0;
+                                    myStats.dodge += Math.min(0.2, 0.1 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -5563,7 +5564,6 @@ export const abilities: Record<number, Ability> = {
             } else {
                 notice.push("\n`⚙️` Pod is not equipped with any programme! Please run `/item equip item:prog` to proceed with choosing one!");
             };
-
             myStats.hacking = false;
             const domainLast = 4;
             const atklist = ["敵ノ", "破壊ヲ", "確認"];
@@ -5583,21 +5583,19 @@ export const abilities: Record<number, Ability> = {
 
             this.selfhealidx = myStats.selfheal.length - 1;
 
-            // When below 50% HP: +7% lifesteal
-            if (myStats.hp / myStats.maxhp < 0.5) {
-                myStats.selfheal[this.selfhealidx] += 0.07;
+            // Remember revive
+            matchStats.on("revival", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) {
+                    myStats.duorevived = true;
+                };
+            });
 
-                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    myStats.selfheal[this.selfhealidx] -= 0.07;
+            // Insight Mechanic
+            myStats.atk += Math.floor(myStats.atk * Math.min( 0.03 * myStats.insight, 0.24 ));            
 
-                    return AbilityResponse.SUCCESS;
-                }));
-            };
-
-            myStats.atk += Math.floor(myStats.atk * 0.03 * myStats.insight);
             matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
                 if (caster === myStats) {
-                    if (myStats.insight < 8) myStats.insight++;
+                    myStats.insight++;
                 };
             });
 
@@ -5605,7 +5603,11 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.atk = {
                 "emoji": "⚔️",
                 "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    myStats.hp -= Math.floor(myStats.hp * 0.07);
+                    if (myStats.duorevived) {
+                        myStats.hp -= Math.floor(myStats.hp * 0.07)
+                    } else {
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.hp * 0.07), {});
+                    };
                     const secondhit = Math.min(0.5, 0.01 * Math.floor(((eStats.maxhp - eStats.hp) / eStats.maxhp) * 100) / 100);
                     const flair = atklist[myStats.atkcount];
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⌦ ${flair} **2B**`, { atkMultiplier: 0.9, magicDamage: true, combodmg: true });
@@ -5617,8 +5619,20 @@ export const abilities: Record<number, Ability> = {
                 },
             };
 
-            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                myStats.atk += Math.floor(myStats.atk * 0.03 * myStats.insight);
+            myStats.delayedBuffs.push(new delayedBuffs(0, async  (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.atk += Math.floor(myStats.atk * Math.min( 0.03 * myStats.insight, 0.24 ));
+                
+                // When below 50% HP: +7% lifesteal
+                if (myStats.hp / myStats.maxhp < 0.5) {
+                    myStats.selfheal[this.selfhealidx] += 0.07;
+
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        myStats.selfheal[this.selfhealidx] -= 0.07;
+
+                        return AbilityResponse.SUCCESS;
+                }));
+            };
+
 
                 // Enter HACKING mode
                 if (myStats.insight >= 8 && !myStats.hacking) {
@@ -5665,12 +5679,82 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
         party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (matchStats.round % 2 === 0) {
-                    if (myStats.dodge < 0) myStats.dodge = 0;
-                    myStats.dodge += Math.min(0.3, 0.1 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
-                };
+            myStats.insight ??= 0;
+            
+            // Add prog programmes to allies
+            let prog = pStats.proginfo;
+            if (prog) {
+                for (let i = 0; i < prog.length; i++) {
+                    switch (prog[i]) {
+                        case "a110":
+                            notice.push("\n`⚙️` Pod has been equipped with programme : **Slow**.");
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+                                if (matchStats.round % 2 === 0) {
+                                    if (myStats.dodge < 0) myStats.dodge = 0;
+                                    myStats.dodge += Math.min(0.2, 0.1 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
+                                };
 
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                            break;
+                        case "a120":
+                            notice.push("\n`⚙️` Pod has been equipped with programme : **Repair**.");
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                if (matchStats.round % 3 === 0) {
+                                    myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                        const heal = Math.floor(myStats.maxhp * 0.05);
+                                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
+
+                                        return AbilityResponse.SUCCESS;
+                                    }, 2));
+                                };
+
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                            break;
+                        case "a140":
+                            notice.push("\n`⚙️` Pod has been equipped with programme : **Gravity**.");
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                if (matchStats.round % 3 === 0) {
+                                    eStats.atk -= Math.floor(eStats.atk * 0.25);
+                                    eStats.md -= Math.floor(eStats.md * 0.25);
+                                    eStats.def -= Math.floor(eStats.def * 0.25);
+                                    eStats.mr -= Math.floor(eStats.mr * 0.25);
+                                };
+
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                            break;
+                        case "a170":
+                            notice.push("\n`⚙️` Pod has been equipped with programme : **Scanner**.");
+                            matchStats.lootm += 0.15;
+                            matchStats.xpboost += 0.25;
+                            myStats.insight++;
+                            notice.push(`\n<:coins:1287057582858436648> Ultrasonic waves released...`);
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.insight++;
+
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                            break;
+                        case "r020":
+                            notice.push("\n`⚙️` Pod has been equipped with programme : **Mirage**.");
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                if (matchStats.round % 3 === 0) {
+                                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, "`⚙️` Pod analyzed the foe! **Pod**", { atkMultiplier: 0.2, dodge: 0 });
+                                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, "`⚙️` Pod analyzed the foe! **Pod**", { atkMultiplier: 0.2, dodge: 0 });
+                                };
+
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                            break;
+                        default: notice.push(`\nFailed to connect to pod...`); break;
+                    };
+                };
+            }
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.atk += Math.floor(myStats.atk * Math.min( 0.02 * myStats.insight, 0.16 ));
                 return AbilityResponse.SUCCESS;
             }, 9999));
 
