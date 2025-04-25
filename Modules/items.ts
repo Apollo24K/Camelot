@@ -5623,15 +5623,41 @@ export const items = [
     new ringInfo("Cindercrest", "ring", "ring", ["chest"], "<:cindercrest:1338653441668419697>", "https://i.ibb.co/TGsHkrK/Cindercrest.png", 3, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         //! new ability
+        myStats.activatedCindercrest = false; // boolean for checking if ability has been activated
+
+        if (!myStats.activatedCindercrest && myStats.hp < myStats.maxhp * 0.1) {
+            myStats.activatedCindercrest = true;
+            myStats.mana = 0; // consuming all remaining mana
+
+            const dmgDealt = Math.floor((myStats.maxhp - myStats.hp)); // 100% of missing HP 
+            eStats.hp -= dmgDealt;
+
+        }
 
         return AbilityResponse.SUCCESS;
-    }, (level) => ``, "Cindercrest is a striking ring forged from darkened steel, with intricate patterns resembling swirling smoke etched into its surface. At its crown sits a smoldering ember-like horns that flickers with hues of red and orange, reminiscent of an arrogant beast. This ring symbolizes transformation and regeneration, allowing its wearer to harness the raw power of fire and ash. Cindercrest is favored by warriors and mages alike who wish to wield the destructive forces of fire. Known to spark creativity and rebirth, it serves as a powerful reminder of the beauty that can emerge from chaos and destruction.", "mythical", 766),
+    }, (level) => `Once per battle, when the wearer falls below **10%** HP, Cindercrest activates, consuming all remaining mana to ignite the wearer in flame, dealing damage equal to **100%** of their missing HP to the enemy.`,
+        /* Old Description:
+        Cindercrest is a striking ring forged from darkened steel, with intricate patterns resembling swirling smoke etched into its surface. At its crown sits a smoldering ember-like horns that flickers with hues of red and orange, reminiscent of an arrogant beast. This ring symbolizes transformation and regeneration, allowing its wearer to harness the raw power of fire and ash. Cindercrest is favored by warriors and mages alike who wish to wield the destructive forces of fire. Known to spark creativity and rebirth, it serves as a powerful reminder of the beauty that can emerge from chaos and destruction.
+        */
+        "Cindercrest is a revered relic wrought from darkened steel, its surface etched with ever-shifting patterns that mimic the dance of rising smoke. Crowned by twin ember-forged horns that glow with the sullen light of molten flame, it pulses with the prideful fury of a forgotten fireborn beast. Born in the heart of a dying volcano and quenched in the ashes of a phoenix, Cindercrest embodies the eternal cycle of destruction and rebirth. Those who wear it find their will stoked like a forge, drawing upon the searing essence of flame and ruin. Favored by battle-scarred pyromancers and fearless warriors, the ring grants command over fire and ash, kindling both relentless power and untamed inspiration. It is a symbol of transformation—of beauty birthed from ruin, and life reborn from cinders.", "mythical", 766),
     new ringInfo("Dread Crown", "ring", "ring", ["raid"], "<:dread_crown:1333967667543146646>", "https://i.ibb.co/6JvXx1vR/Dread-Crown.png", 4, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
 
         //! new ability
 
+        // On Enemy Crit: -20% ATK and MD for 2 turns on enemy
+        matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === eStats) {
+                casterBuff.atk.push(new buffInfo("+", -0.20, 2));
+                casterBuff.md.push(new buffInfo("+", -0.20, 2));
+            }
+        });
+
         return AbilityResponse.SUCCESS;
-    }, (level) => ``, "The Dread Crown is a ring that embodies the terror of darkness itself. Crafted from blackened metal, its spiked silhouette resembles the jagged peaks of a cursed mountain range. The central gemstone, a dome of pure darkness, pulsates with a sinister aura when shone, echoing the life force of a thousand fallen foes. Tiny rubies are etched into the band, hinting at forgotten sorceries of domination and fear. Wearing this ring grants the bearer unsettling influence, striking dread into the hearts of their enemies, while enhancing their necromantic capabilities. It is a soul-bound accessory for dark lords and cunning villains.", "legendary", 767),
+    }, (level) => `Whenever the wearer receives a critical hit, the attacker suffers a **20%** ATK and **20%** MD reduction for **2** turns.`,
+        /* Old Description:
+        The Dread Crown is a ring that embodies the terror of darkness itself. Crafted from blackened metal, its spiked silhouette resembles the jagged peaks of a cursed mountain range. The central gemstone, a dome of pure darkness, pulsates with a sinister aura when shone, echoing the life force of a thousand fallen foes. Tiny rubies are etched into the band, hinting at forgotten sorceries of domination and fear. Wearing this ring grants the bearer unsettling influence, striking dread into the hearts of their enemies, while enhancing their necromantic capabilities. It is a soul-bound accessory for dark lords and cunning villains.
+        */
+        "Forged in the smoldering shadows beneath the Obsidian Wastes, the Dread Crown is no mere ornament—it is a relic of ancient tyranny. Its band, wrought from blacksteel kissed by the breath of wraithfire, coils like a crown of thorns around the finger. At its heart lies a gem of voidglass, ever swirling with the whispers of the condemned, and said to house the final breath of a forgotten god. Blood-rubies encrust the ring's edges, each inscribed with runes long erased from mortal memory—sigils of dominion, despair, and death. To don this ring is to command fear itself. The air thickens around the wearer, dread bleeding into every glance and word. Spirits tremble, the living falter, and necromantic rites swell with newfound power, their bounds widened by the ring's malignant will. It is not worn—it claims its bearer, marking them as heir to an empire of shadow.", "legendary", 767),
     new ringInfo("Arcane Rebound", "ring", "ring", ["raid"], "<:arcane_rebound:1334246581679165572>", "https://i.ibb.co/RtCBGSG/Arcane-Rebound.png", 1, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Hammer
 
         //! new ability
