@@ -5775,6 +5775,8 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 90,
         pause: 0,
+        passivePause: 0,
+        partyPause: 0,
         desc: "",
         shortdesc: "",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
@@ -5865,6 +5867,13 @@ export const abilities: Record<number, Ability> = {
             const stats = await getUserSchema(matchStats.interaction.user.id);
             myStats.equippedSkin ??= stats?.char_skin[char.id];
 
+            // Encounters Saitama
+            if(enemy.name === "Saitama"){
+                myStats.hp = 0;
+                myStats.rev = 0;
+                notice.push(`\n✨ Is he even human?`);
+                return AbilityResponse.SUCCESS;
+            }
             myStats.risingSurge ??= 0;
             myStats.redirectionLastTriggered ??= 0;
             matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
@@ -5891,8 +5900,8 @@ export const abilities: Record<number, Ability> = {
 
             matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
                 if (caster === myStats) {
-                    myStats.defCooldown ??= 0;
-                    if (matchStats.round < myStats.defCooldown) {
+                    
+                    if (matchStats.round < this.passivePause) {
                         return;
                     }
 
@@ -5903,7 +5912,7 @@ export const abilities: Record<number, Ability> = {
                         const excess = myStats.dodge - 1;
                         mybuff.cd.push(new buffInfo("+", excess, 5));
                     }
-                    myStats.defCooldown = matchStats.round + 5; // 5 round cooldown
+                    this.passivePause = matchStats.round + 5; // 5 round cooldown
 
                 }
             });
@@ -5923,9 +5932,8 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
         party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-            myStats.partyCooldown ??= 0;
 
-            if (matchStats.round < myStats.partyCooldown) {
+            if (matchStats.round < this.partyPause) {
                 return AbilityResponse.FAILURE;
             }
             myStats.absorbedHits = 0;
@@ -5941,7 +5949,7 @@ export const abilities: Record<number, Ability> = {
 
                 return AbilityResponse.SUCCESS;
             }));
-            myStats.partyCooldown = matchStats.round + 5; // 5 round cooldown
+            this.partyPause = matchStats.round + 5; // 5 round cooldown
             return AbilityResponse.SUCCESS;
         },
     },
