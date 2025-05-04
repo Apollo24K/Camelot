@@ -5770,6 +5770,181 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
+    "23390": {
+        usage: 5,
+        used: 0,
+        cost: 90,
+        pause: 0,
+        desc: "",
+        shortdesc: "",
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            //Garou EX
+
+            //Active (I) : Wild Instincts (Monster skin)
+            if (myStats.equippedSkin === "113") { // Random number for now until monster skin is added
+
+                if (this.pause > matchStats.round) {
+                    myStats.sm += this.cost;
+                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    matchStats.interaction.followUp({ content: `Monster Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                    this.used--;
+                    return AbilityResponse.FAILURE;
+                };
+                this.pause = matchStats.round + 10;
+
+                myStats.risingSurge += 1;
+
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { atkMultiplier: 1.5 + (Math.min(myStats.risingSurge * 0.05, 1)) });
+
+                // Grants x1 rising surge if redirection occurs within 4 rounds
+                if (myStats.redirectionLastTriggered > matchStats.round - 4) {
+                    myStats.risingSurge += 1;
+                }
+            }
+            //Active (II): God Killer (Cosmic skin)
+            if (myStats.equippedSkin === "112") {
+                if (this.pause > matchStats.round) {
+                    myStats.sm += this.cost;
+                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    matchStats.interaction.followUp({ content: `Cosmic Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                    this.used--;
+                    return AbilityResponse.FAILURE;
+                };
+
+                // Cost: times used * 10% of max hp
+                mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * (this.used * 0.10)), 9999))
+                myStats.hp -= Math.floor(myStats.maxhp * (this.used * 0.10));
+                
+                this.pause = matchStats.round + 4;
+
+                // First use
+                if (this.used === 1) {
+                    myStats.replaceButton.atk = {
+                        "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.7, dodge: false });
+
+                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
+
+                            const shred = Math.floor((myStats.maxhp - myStats.hp) * 0.05);
+                            // DEF / MR shred
+                            mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * shred), 9999));
+                            mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * shred), 9999));
+                            myStats.def -= Math.floor(myStats.def * shred);
+                            myStats.mr -= Math.floor(myStats.mr * shred);
+
+                            if(myStats.def < 1000) myStats.def = 1000;
+                            if(myStats.mr < 1000) myStats.mr = 1000;
+
+                            return AbilityResponse.SUCCESS;
+                        },
+                    };
+                }
+
+                // Every use
+                mybuff.atk.push(new buffInfo("+", 0.07, 9999))
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.5});
+                myStats.risingSurge += 1;
+
+
+                //Rising Surge
+                if(myStats.risingSurge <= 3){
+                    for(let i = 0; i < myStats.risingSurge; i++){
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, {});
+                    }
+                }else {
+                    const excessStacks = myStats.risingSurge - 3;
+                    
+                    myStats.damageReduction += (excessStacks * 0.04)
+                }
+
+
+            }
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            const stats = await getUserSchema(matchStats.interaction.user.id);
+            myStats.equippedSkin ??= stats?.char_skin[char.id];
+
+            myStats.risingSurge ??= 0;
+            myStats.redirectionLastTriggered ??= 0;
+            matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+
+                if (caster === myStats) {
+                    // Reflecting 50% of dmg
+                    myStats.reflectDamage = 0.5;
+
+
+                    if (matchStats.round > myStats.redirectionLastTriggered) {
+                        myStats.redirectionLastTriggered = matchStats.round;
+                        // 25% CR increase for 2 rounds
+                        mybuff.cr.push(new buffInfo("+", 0.25, 2));
+
+                        // Deal 30% DMG
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { atkMultiplier: 0.30 });
+
+                        // Sluggish Enemy Movement
+                        ebuff.dodge.push(new buffInfo("=", 0, 5));
+                    }
+                }
+
+            });
+
+            matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) {
+                    myStats.defCooldown ??= 0;
+                    if (matchStats.round < myStats.defCooldown) {
+                        return;
+                    }
+
+                    myStats.dodge += 1;
+
+                    // Handle excess dodge
+                    if (myStats.dodge > 1) {
+                        const excess = myStats.dodge - 1;
+                        mybuff.cd.push(new buffInfo("+", excess, 5));
+                    }
+                    myStats.defCooldown = matchStats.round + 5; // 5 round cooldown
+
+                }
+            });
+
+            myStats.evadeDeathStrike ??= 0;
+            myStats.evadeDeathChance ??= 0;
+            myStats.evadeDeathStrike += 3;
+            myStats.evadeDeathChance += 3;
+
+            matchStats.on("deathEvade", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) {
+                    mybuff.cr.push(new buffInfo("+", 0.15, 9999));
+                    mybuff.cd.push(new buffInfo("+", 0.30, 9999));
+                    myStats.risingSurge += 1;
+                }
+            });
+            return AbilityResponse.SUCCESS;
+        },
+        party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            myStats.partyCooldown ??= 0;
+
+            if (matchStats.round < myStats.partyCooldown) {
+                return AbilityResponse.FAILURE;
+            }
+            myStats.absorbedHits = 0;
+            myStats.absorbed = false;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+
+                // Allies hp under 30%
+                if (myStats.hp / myStats.maxhp < 0.3 && !myStats.absorbed) {
+                    myStats.absorbedHits = 3; // Absorbing incoming dmg
+                    myStats.absorbed = true;
+                }
+
+                return AbilityResponse.SUCCESS;
+            }));
+            myStats.partyCooldown = matchStats.round + 5; // 5 round cooldown
+            return AbilityResponse.SUCCESS;
+        },
+    },
     // "1": {
     //     usage: 9999,
     //     used: 0,

@@ -771,6 +771,15 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damage = 0;
     }
 
+    // Absorbed DMG (Garou EX)
+    if (target.absorbedHits > 0) {
+        damage = 0;
+        addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor((target.maxhp - target.hp) * 0.05), {});
+        target.sm += 5;
+        target.absorbedHits--;
+
+    }
+
     // Apply damage to target
     if (!options.ignoreShield && target.shield > 0) {
         target.shield = Math.floor(target.shield - damage);
