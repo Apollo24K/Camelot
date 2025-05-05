@@ -5777,8 +5777,8 @@ export const abilities: Record<number, Ability> = {
         pause: 0,
         passivePause: 0,
         partyPause: 0,
-        desc: "",
-        shortdesc: "",
+        desc: "**Total Usage**: `5 (CD: 10) // 5 (CD: 4)`\nCost: `90 💧 // times used * 10% max HP`\nTimeout: `Yes // No`\n\nAs a martial arts prodigy, he is known as the 'Hero Hunter' even though he's a human, though behind his sadistic act is a misguided heart. Yet, despite the moniker, there's one hero he can never hunt.\n\nUpon dodging, he uses the opponent's momentum against themselves, reflecting **50%** of the DMG. It's possible to dodge and redirect active curse hits too (DoT excluded). Afterwards, he increases critical rate by **25%** for **2** rounds, before cutting down on the opponent's pressure points, dealing **30%** DMG and turning their movement sluggish, where they are unable to dodge for **5** rounds. The post-dodge effect can be triggered at most once every round.\n\nUtilizing his DEFEND, he attempts to learn the fighting style of the enemy. This increases his dodge rate by **100%** for that round, before converting any excess dodge rate to a critical DMG boost persisting for **5** rounds. This has a 5 round cooldown.\n\nHe evades the first **3** lethal hits (stackable). After evading any lethal hit, he has **+15%** critical rate, **+30%** critical damage and **1x** [Rising Surge].\n\nHis active depends on which skin he is wearing.\nIf Garou has the Monster skin, he activates **Wild Instincts** which grants **1x** [Rising Surge] and deals **150%** DMG, increased by **5%** for every **1x** [Rising Surge], up to **250%**. Moreover, he gains **1x** additional [Rising Surge] if any redirection is triggered within **4** rounds.\n\nIf Garou has the Cosmic skin, he activates **God Killer** which upon first use deals **70%** undodgeable DMG, and every attack that connected will grant the user **5%** of their missing HP back, at the cost of lowering their DEF/MR by the same amount (Final DEF/MR won't be lower than 1000).\nFor every use, he evolves stronger, increasing ATK by **7%** and deals **150%** DMG also gaining **1x** [Rising Surge]\n\n[Rising Surge] : For each stack, Cosmic Garou's normal ATK hit **1** more time (up to **3** hits each round at max). Each excess stack after **3x** instead grants Garou **4%** DMG mitigation that round\n\nWhen in a party, he absorbs **3** instances of incoming damage (including curse damage, if any) when allies fall under **30%** HP. For every attack absorbed, allies regenerate **5** mana and **5%** of their missing HP. This can only occur once every **5** rounds.",
+        shortdesc: "**Uses**: `5 // 5`\n**Cooldown**: `10 rounds // 4 rounds`\n**Cost**: `90 💧 // times used * 10% max HP`\n**Timeout**: `Yes // No`\n**Role**: `DPS (Counter, Critical)`\n\n**Passive**:\n- Redirects **50%** DMG upon dodging (includes curse hits, excludes DoT)\n- After dodging: **+25%** crit rate for **2 rounds**, deals **30%** DMG, disables dodge for **5 rounds**\n- Using DEFEND: **+100%** dodge rate; excess converted to crit DMG for **5 rounds** (*CD: 5 rounds*)\n- Evades first **3** lethal hits (stackable); each grants **+15%** crit rate, **+30%** crit DMG, and **1x** [Rising Surge]\n- Flees when facing **Saitama**\n\n**Active**:\n- *Monster Skin*:\n  - Grants **+1x Rising Surge**, deals **150% DMG**, increased by **+5% per Rising Surge** (up to **250%**)\n  - Gains **+1x Rising Surge** if redirection is triggered within **4 rounds**\n\n- *Cosmic Skin*:\n  - Alters ATTACK: deals **70% undodgeable DMG**, heals **5% missing HP per hit**, reduces **DEF/MR** by the same amount (not below 1000)\n  - Each use: **+7% ATK**, deals **150% DMG**, and gains **+1x Rising Surge**\n\n**Rising Surge**:\nEach stack gives Cosmic Garou **+1 hit** to normal ATK (**max 3 hits/round**)\nExtra stacks grant Garou **+4% DMG mitigation** for that round\n\n**Party**:\nWhen allies fall below **30% HP**, absorbs **3 hits** (including curse)\nEach hit restores **5 mana** & **5% missing HP**\n(*Cooldown: 5 rounds*)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             //Garou EX
 
@@ -5814,9 +5814,9 @@ export const abilities: Record<number, Ability> = {
                 };
 
                 // Cost: times used * 10% of max hp
-                mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * (this.used * 0.10)), 9999))
+                mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * (this.used * 0.10)), 9999));
                 myStats.hp -= Math.floor(myStats.maxhp * (this.used * 0.10));
-                
+
                 this.pause = matchStats.round + 4;
 
                 // First use
@@ -5834,8 +5834,8 @@ export const abilities: Record<number, Ability> = {
                             myStats.def -= Math.floor(myStats.def * shred);
                             myStats.mr -= Math.floor(myStats.mr * shred);
 
-                            if(myStats.def < 1000) myStats.def = 1000;
-                            if(myStats.mr < 1000) myStats.mr = 1000;
+                            if (myStats.def < 1000) myStats.def = 1000;
+                            if (myStats.mr < 1000) myStats.mr = 1000;
 
                             return AbilityResponse.SUCCESS;
                         },
@@ -5843,20 +5843,20 @@ export const abilities: Record<number, Ability> = {
                 }
 
                 // Every use
-                mybuff.atk.push(new buffInfo("+", 0.07, 9999))
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.5});
+                mybuff.atk.push(new buffInfo("+", 0.07, 9999));
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.5 });
                 myStats.risingSurge += 1;
 
 
                 //Rising Surge
-                if(myStats.risingSurge <= 3){
-                    for(let i = 0; i < myStats.risingSurge; i++){
+                if (myStats.risingSurge <= 3) {
+                    for (let i = 0; i < myStats.risingSurge; i++) {
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, {});
                     }
-                }else {
+                } else {
                     const excessStacks = myStats.risingSurge - 3;
-                    
-                    myStats.damageReduction += (excessStacks * 0.04)
+
+                    myStats.damageReduction += (excessStacks * 0.04);
                 }
 
 
@@ -5868,7 +5868,7 @@ export const abilities: Record<number, Ability> = {
             myStats.equippedSkin ??= stats?.char_skin[char.id];
 
             // Encounters Saitama
-            if(enemy.name === "Saitama"){
+            if (enemy.name === "Saitama") {
                 myStats.hp = 0;
                 myStats.rev = 0;
                 notice.push(`\n✨ Is he even human?`);
@@ -5900,7 +5900,7 @@ export const abilities: Record<number, Ability> = {
 
             matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
                 if (caster === myStats) {
-                    
+
                     if (matchStats.round < this.passivePause) {
                         return;
                     }
@@ -5933,23 +5933,45 @@ export const abilities: Record<number, Ability> = {
         },
         party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
 
-            if (matchStats.round < this.partyPause) {
-                return AbilityResponse.FAILURE;
-            }
-            myStats.absorbedHits = 0;
-            myStats.absorbed = false;
+            myStats.garouAbsorbedHits ??= 0;
+            myStats.garouAbsorbed ??= false;
 
-            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
 
-                // Allies hp under 30%
-                if (myStats.hp / myStats.maxhp < 0.3 && !myStats.absorbed) {
-                    myStats.absorbedHits = 3; // Absorbing incoming dmg
-                    myStats.absorbed = true;
+
+            // Absorbs enemy hits if allies under 30% hp 
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+
+                if (caster === eStats) {
+
+                    if (matchStats.round < this.partyPause) {
+                        return;
+                    }
+
+                    // Allies hp under 30%
+                    if (myStats.hp / myStats.maxhp < 0.3 && !myStats.garouAbsorbed) {
+                        myStats.garouAbsorbedHits = 3; // Absorbing incoming dmg
+                        myStats.garouAbsorbed = true;
+                        this.partyPause = matchStats.round + 5; // 5 round cooldown
+                    }
+
+
+                    // Absorbed DMG 
+                    if (myStats.garouAbsorbedHits > 0) {
+                        myStats.damageTaken = 0;
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
+                        myStats.sm += 5;
+                        myStats.garouAbsorbedHits--;
+
+                        // Reset 
+                        if(myStats.garouAbsorbedHits <= 0) {
+                            myStats.garouAbsorbed = false;
+                        }
+
+                    }
+
                 }
-
-                return AbilityResponse.SUCCESS;
-            }));
-            this.partyPause = matchStats.round + 5; // 5 round cooldown
+                
+            });
             return AbilityResponse.SUCCESS;
         },
     },
