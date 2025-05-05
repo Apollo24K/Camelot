@@ -5819,45 +5819,49 @@ export const abilities: Record<number, Ability> = {
 
                 this.pause = matchStats.round + 4;
 
+                //Altered ATK
+                const godKiller = () => {
+                    const amountHealed = Math.floor((myStats.maxhp - myStats.hp) * 0.05);
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.7, dodge: false });
+
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, amountHealed, {});
+
+                    // DEF / MR shred
+                    mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * amountHealed), 9999));
+                    mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * amountHealed), 9999));
+                    myStats.def -= Math.floor(myStats.def * amountHealed);
+                    myStats.mr -= Math.floor(myStats.mr * amountHealed);
+
+                    if (myStats.def < 1000) myStats.def = 1000;
+                    if (myStats.mr < 1000) myStats.mr = 1000;
+
+                };
                 // First use
                 if (this.used === 1) {
                     myStats.replaceButton.atk = {
                         "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.7, dodge: false });
+                            godKiller();
+                            //Rising Surge
+                            if (myStats.risingSurge <= 3) {
+                                for (let i = 0; i < myStats.risingSurge; i++) {
+                                    godKiller();
+                                }
+                            } else {
+                                const excessStacks = myStats.risingSurge - 3;
 
-                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
-
-                            const shred = Math.floor((myStats.maxhp - myStats.hp) * 0.05);
-                            // DEF / MR shred
-                            mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * shred), 9999));
-                            mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * shred), 9999));
-                            myStats.def -= Math.floor(myStats.def * shred);
-                            myStats.mr -= Math.floor(myStats.mr * shred);
-
-                            if (myStats.def < 1000) myStats.def = 1000;
-                            if (myStats.mr < 1000) myStats.mr = 1000;
-
+                                myStats.damageReduction += (excessStacks * 0.04);
+                            }
                             return AbilityResponse.SUCCESS;
                         },
                     };
                 }
 
                 // Every use
-                mybuff.atk.push(new buffInfo("+", 0.07, 9999));
+                mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.07), 9999));
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.5 });
                 myStats.risingSurge += 1;
 
 
-                //Rising Surge
-                if (myStats.risingSurge <= 3) {
-                    for (let i = 0; i < myStats.risingSurge; i++) {
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, {});
-                    }
-                } else {
-                    const excessStacks = myStats.risingSurge - 3;
-
-                    myStats.damageReduction += (excessStacks * 0.04);
-                }
 
 
             }
@@ -5934,7 +5938,6 @@ export const abilities: Record<number, Ability> = {
         party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
 
             myStats.garouAbsorbedHits ??= 0;
-            myStats.garouAbsorbed ??= false;
 
 
 
@@ -5943,34 +5946,28 @@ export const abilities: Record<number, Ability> = {
 
                 if (caster === eStats) {
 
-                    if (matchStats.round < this.partyPause) {
-                        return;
-                    }
 
-                    // Allies hp under 30%
-                    if (myStats.hp / myStats.maxhp < 0.3 && !myStats.garouAbsorbed) {
-                        myStats.garouAbsorbedHits = 3; // Absorbing incoming dmg
-                        myStats.garouAbsorbed = true;
-                        this.partyPause = matchStats.round + 5; // 5 round cooldown
-                    }
+                    // Checks if cooldown is over to reactivate
+                    if (matchStats.round >= this.partyPause) {
+                        // Allies hp under 30%
+                        if (myStats.hp / myStats.maxhp < 0.3) {
+                            myStats.garouAbsorbedHits = 3; // Absorbing incoming dmg
+                            this.partyPause = matchStats.round + 5; // 5 round cooldown
+                        }
 
+                    }
 
                     // Absorbed DMG 
-                    if (myStats.garouAbsorbedHits > 0) {
+                    if (myStats.garouAbsorbedHits > 0 && myStats.hp / myStats.maxhp < 0.3) {
                         myStats.damageTaken = 0;
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
                         myStats.sm += 5;
                         myStats.garouAbsorbedHits--;
 
-                        // Reset 
-                        if(myStats.garouAbsorbedHits <= 0) {
-                            myStats.garouAbsorbed = false;
-                        }
-
                     }
 
                 }
-                
+
             });
             return AbilityResponse.SUCCESS;
         },
