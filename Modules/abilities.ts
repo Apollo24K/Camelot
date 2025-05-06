@@ -5846,11 +5846,7 @@ export const abilities: Record<number, Ability> = {
                                 for (let i = 0; i < myStats.risingSurge; i++) {
                                     godKiller();
                                 }
-                            } else {
-                                const excessStacks = myStats.risingSurge - 3;
-
-                                myStats.damageReduction += (excessStacks * 0.04);
-                            }
+                            } 
                             return AbilityResponse.SUCCESS;
                         },
                     };
@@ -5861,8 +5857,12 @@ export const abilities: Record<number, Ability> = {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.5 });
                 myStats.risingSurge += 1;
 
+                //Rising Surge Excess stacks
+                if(myStats.risingSurge > 3) {
+                    const excessStacks = myStats.risingSurge - 3;
 
-
+                    myStats.damageReduction += (excessStacks * 0.04);
+                }
 
             }
             return AbilityResponse.SUCCESS;
@@ -5883,8 +5883,9 @@ export const abilities: Record<number, Ability> = {
             matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
 
                 if (caster === myStats) {
-                    // Reflecting 50% of dmg
-                    myStats.reflectDamage = 0.5;
+                    // Reflecting 50% of incoming dmg
+                    const redirection =  Math.floor(Math.max(eStats.atk, eStats.md) * 0.5)
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { overwriteDamage: redirection });
 
 
                     if (matchStats.round > myStats.redirectionLastTriggered) {
@@ -5946,7 +5947,7 @@ export const abilities: Record<number, Ability> = {
 
                 if (caster === eStats) {
 
-
+                    let prevReduction = myStats.damageReduction;
                     // Checks if cooldown is over to reactivate
                     if (matchStats.round >= this.partyPause) {
                         // Allies hp under 30%
@@ -5959,10 +5960,14 @@ export const abilities: Record<number, Ability> = {
 
                     // Absorbed DMG 
                     if (myStats.garouAbsorbedHits > 0 && myStats.hp / myStats.maxhp < 0.3) {
-                        myStats.damageTaken = 0;
+                        myStats.damageReduction = 1;
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
                         myStats.sm += 5;
                         myStats.garouAbsorbedHits--;
+
+                        if(myStats.garouAbsorbedHits <= 0){
+                            myStats.damageReduction = prevReduction;
+                        }
 
                     }
 
