@@ -363,7 +363,7 @@ const exportCommand: SlashCommand = {
         // Mail
         if (cmd === "mail" || cmd === "mailbox" || cmd === "gift") {
             args = args.join(" ").split("-BR-");
-            if (!args[0] || !args[1] || !args[2]) return interaction.reply({ content: "Sending Gifts\n> `/admin gift <type>-BR-<rewards>-BR-<message>`\n> `/admin cmd args[0] args[1] args.slice(2)`\n\nTypes:\n> 1 = xp\n> 2 = coins\n> 3 = ss shard|s shard|a shard|b shard|c shard|d shard\n> 4 = ss ticket|s ticket|a ticket|b ticket|c ticket|d ticket\n> 5 = lb\n> 6 = char\n> 7 = skin\n> 8 = item\n> 9 = gems\n\nExamples:\n> `/admin gift 1,2,8-BR-xp|50,coins|500,item|458|3-BR-Thank you for playing!`", ephemeral });
+            if (!args[0] || !args[1] || !args[2]) return interaction.reply({ content: "Sending Gifts\n> `/admin gift <type>-BR-<rewards>-BR-<message>`\n> `/admin cmd args[0] args[1] args.slice(2)`\n\nTypes:\n> 1 = xp\n> 2 = coins\n> 3 = ss shard|s shard|a shard|b shard|c shard|d shard\n> 4 = ss ticket|s ticket|a ticket|b ticket|c ticket|d ticket\n> 5 = lb\n> 6 = char\n> 7 = skin\n> 8 = item\n> 9 = gems\n> 10 = marks\n> 11 = skillpts\n\nExamples:\n> `/admin gift 1,2,8-BR-xp|50,coins|500,item|458|3-BR-Thank you for playing!`", ephemeral });
 
             const mail = { "type": args[0], "rewards": args[1], "message": args.slice(2).join(""), "date": new Date().getTime() };
 

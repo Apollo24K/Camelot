@@ -995,7 +995,7 @@ export const search = (name: string | number, inv: number[], interaction: ChatIn
     name = name.toString().toLowerCase().split(" ").filter((e) => e).join(" ");
     if (name === "last" || name === "latest") name = inv[inv.length - 1].toString();
 
-    if (!isNaN(parseInt(name))) {
+    if (!isNaN(Number(name))) {
         if (parseInt(name) < 0) {
             if (!silent) interaction.reply("The ID can't be negative.");
             return;

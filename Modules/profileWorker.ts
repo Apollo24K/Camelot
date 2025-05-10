@@ -4,10 +4,22 @@ import GIFEncoder from 'gifencoder';
 import { Asset } from "./assets";
 import { profileSets } from "./profileDecorations";
 import { setImmediate } from 'timers/promises';
-import { CompactUserSchema, ProfileImageArguments } from '../types';
+import { CompactUserSchema, ProfileImageArguments, RaidRank } from '../types';
 import { User } from 'discord.js';
-import { raidRankLetters } from './components';
-import { getLetterRank } from './functions';
+import { rankLowerRanges } from './components';
+
+// Copied from functions.ts to prevent multiple db connections
+const getLetterRank = (score: number) => {
+    const ranks = Object.keys(rankLowerRanges) as (keyof typeof rankLowerRanges)[];
+    let highestRank: RaidRank = "F-", highestRankScore = 0;
+    for (const rank of ranks) {
+        if (score >= rankLowerRanges[rank] && rankLowerRanges[rank] > highestRankScore) {
+            highestRank = rank;
+            highestRankScore = rankLowerRanges[rank];
+        };
+    };
+    return highestRank;
+};
 
 const newProfileColors = {
     creme: { text: '#FDE8FF', floor: '#a89aa8', gradStart: '#FDE8FF', gradEnd: '#000000' },

@@ -6,6 +6,7 @@ import { characters } from "../Modules/chars";
 import { ItemCategory, ItemRarity, ItemType, SlashCommand } from "../types";
 import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, getWeaponSchemas, updateUsers, updateWeapons } from "../Modules/queries";
 import { achievements } from "../Modules/achievements";
+import { raids } from "../Modules/raids";
 
 function getAscension(lvl: number) {
     let asc = "";
@@ -82,7 +83,7 @@ const exportCommand: SlashCommand = {
         // Item info
         if (subcommand === "info") {
             const choices = interaction.options.getString('items', true);
-            const flag = interaction.options.getString('flag', true) as "base" | "my";
+            const flag = (interaction.options.getString('flag') ?? "base") as "base" | "my";
             const user = interaction.options.getUser('user') ?? interaction.user;
 
             const Embeds: EmbedBuilder[] = [];
@@ -174,7 +175,7 @@ const exportCommand: SlashCommand = {
                         Embed.setDescription(
                             `**Grade**: ${fItem.gradeEmote}\n` +
                             `**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n` +
-                            `**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n` +
+                            `**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}${fItem.obtain.includes("raid") ? ` (boss: ${raids.find((e) => e.loot.includes(fItem.id))?.name})` : ""}\n` +
                             `**Crafts in existence**: ${count}\n\n` +
                             `**Passive${fItem.maxlevel > 1 ? " (Asc. 1)" : ""}**: ${fItem.getBuffDesc(1)}\n\n` +
                             `${fItem.maxlevel > 1 ? `**Passive (Asc. ${fItem.maxlevel})**: ${fItem.getBuffDesc(fItem.maxlevel)}\n\n` : ""}` +

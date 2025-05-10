@@ -571,7 +571,9 @@ const exportCommand: SlashCommand = {
                         add_tickets = { "ss": 0, "s": 0, "a": 0, "b": 0, "c": 0, "d": 0 },
                         add_chars: number[] = [],
                         add_skins: number[] = [],
-                        add_items: Record<string, number> = {};
+                        add_items: Record<string, number> = {},
+                        add_guild_marks = 0,
+                        add_skill_points = 0;
 
                     const types = {
                         "1": { // XP
@@ -631,7 +633,7 @@ const exportCommand: SlashCommand = {
                                 });
                             },
                         },
-                        "8": {
+                        "8": { // Items
                             run: () => {
                                 for (const rew of mail.rewards.split(",")) {
                                     if (rew.match(/item/gi)) {
@@ -644,6 +646,20 @@ const exportCommand: SlashCommand = {
                             run: () => {
                                 mail.rewards.split(",").forEach((rew: string) => {
                                     if (rew.match(/gems/gi)) add_gems += parseInt(rew.split("|")[1]);
+                                });
+                            },
+                        },
+                        "10": { // Guild Marks
+                            run: () => {
+                                mail.rewards.split(",").forEach((rew: string) => {
+                                    if (rew.match(/marks/gi)) add_guild_marks += parseInt(rew.split("|")[1]);
+                                });
+                            },
+                        },
+                        "11": { // Skill Points
+                            run: () => {
+                                mail.rewards.split(",").forEach((rew: string) => {
+                                    if (rew.match(/skillpts/gi)) add_skill_points += parseInt(rew.split("|")[1]);
                                 });
                             },
                         },
@@ -672,9 +688,11 @@ const exportCommand: SlashCommand = {
                             case "4": mail.rewards.split(",").forEach((rew) => { if (rew.match(/ticket/gi)) notification += `Added **${rew.split("|")[1]}**x ${ticketEmojis[rew.split(" ")[0] as keyof typeof ticketEmojis]}\n`; }); break;
                             case "5": mail.rewards.split(",").forEach((rew) => { if (rew.match(/lb/gi)) notification += `Added **${rew.split("|")[1]}** ${rew.split("|")[1] == "1" ? "lootbox" : "lootboxes"}\n`; }); break;
                             case "6": mail.rewards.split(",").forEach((rew) => { if (rew.match(/char/gi)) { notification += `Added ${characters[parseInt(rew.split("|")[1])].rarity}-Tier **${characters[parseInt(rew.split("|")[1])].name}**\n`; Mail.setImage(characters[parseInt(rew.split("|")[1])].image); }; }); break;
-                            case "7": mail.rewards.split(",").forEach(async (rew) => { if (rew.match(/skin/gi)) { notification += `Added **${skins[parseInt(rew.split("|")[1])].name}** skin\n`; Mail.setImage(skins[parseInt(rew.split("|")[1])].image); }; }); break;
+                            case "7": mail.rewards.split(",").forEach((rew) => { if (rew.match(/skin/gi)) { notification += `Added **${skins[parseInt(rew.split("|")[1])].name}** skin\n`; Mail.setImage(skins[parseInt(rew.split("|")[1])].image); }; }); break;
                             case "8": mail.rewards.split(",").forEach((rew) => { if (rew.match(/item/gi)) notification += `Added **${rew.split("|")[2]}**x ${items[parseInt(rew.split("|")[1])].emoji} **__${items[parseInt(rew.split("|")[1])].name}__**\n`; }); break;
                             case "9": mail.rewards.split(",").forEach((rew) => { if (rew.match(/gems/gi)) notification += `Added **${rew.split("|")[1]}** <:genesis_gems:1034179687720681492>\n`; }); break;
+                            case "10": mail.rewards.split(",").forEach((rew) => { if (rew.match(/marks/gi)) notification += `Added **${rew.split("|")[1]}** <:guild_mark:1317944450814840923>\n`; }); break;
+                            case "11": mail.rewards.split(",").forEach((rew) => { if (rew.match(/skillpts/gi)) notification += `Added **${rew.split("|")[1]}** <:skill_point:1351505460301136014>\n`; }); break;
                         };
                     });
 
@@ -699,6 +717,8 @@ const exportCommand: SlashCommand = {
                         chars: { type: "append", value: add_chars },
                         skins: { type: "append", value: add_skins },
                         items: { type: "merge_json", value: add_items },
+                        guild_marks: { type: "increment", value: add_guild_marks },
+                        skill_points: { type: "increment", value: add_skill_points },
                         mailbox: { type: "set", value: stats.mailbox },
                         mailreceived: { type: "increment", value: -1 }
                     });

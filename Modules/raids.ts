@@ -42,6 +42,10 @@ export default class RaidInfo {
         return this._options;
     };
 
+    get loot() {
+        return this.enemy.loot;
+    }
+
     get accentColor() {
         return this.options.accentColor ?? "#ff3838";
     };
@@ -104,7 +108,7 @@ export const raids: RaidInfo[] = [
 
     // Reduces max hp, when phys. hit, steals md, gets mr
     //* Cakey
-    new RaidInfo(17, "Cake Witch, the Baking Bad", "A+", raidBosses[17], { accentColor: "#000000" }),
+    new RaidInfo(17, "Cake Witch", "A+", raidBosses[17], { accentColor: "#000000" }),
 
     // Duo Boss, gets stronger from dodge/ block
     //* Duo

@@ -750,7 +750,7 @@ const commands = [
 				.addStringOption(option =>
 					option.setName('flag')
 						.setDescription('Choose how to display the item')
-						.setRequired(true)
+						.setRequired(false)
 						.addChoices(
 							{ name: 'base', value: 'base' },
 							{ name: 'my', value: 'my' },

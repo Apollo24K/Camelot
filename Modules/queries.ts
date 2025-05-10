@@ -191,6 +191,11 @@ export const getLatestRaid = async (guildId: string): Promise<RaidSchema | undef
     return raid;
 };
 
+export const getRaidByRaidId = async (raidId: number): Promise<RaidSchema | undefined> => {
+    const [raid] = await query(`SELECT * FROM raids WHERE raidid = $1`, [raidId]) as [RaidSchema];
+    return raid;
+};
+
 export const getLatestStampede = async (): Promise<StampedeSchema | undefined> => {
     const [stampede] = await query(`SELECT * FROM stampedes ORDER BY rowid DESC LIMIT 1`) as [StampedeSchema];
     return stampede;
@@ -675,6 +680,12 @@ export const updateRaidParticipation = async (raidRowId: number, userId: string,
             )
         WHERE rowid = $1
     `, [raidRowId, participation, damage]);
+};
+
+export const updateRaidPhase = async (raidRowId: number, newRaidId: number, newEnemyHp: number): Promise<RaidSchema | undefined> => {
+    const { rows: [raid] } = await query(`UPDATE raids SET raidid = $1, enemy_hp = $2, enemy_hpmax = $2 WHERE rowid = $3 RETURNING *`, [newRaidId, newEnemyHp, raidRowId]) as { rows: RaidSchema[]; };
+    if (raid.raidid === newRaidId) return undefined;
+    return raid;
 };
 
 

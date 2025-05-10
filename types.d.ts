@@ -534,8 +534,12 @@ export interface RaidSchema {
     rowid: number;
     guildid: string;
     raidid: number;
+    rank_letter: RaidRank;
     enemy_hp: number;
     enemy_hpmax: number;
+    /**
+     * [damage, runs]
+     */
     participation: Record<string, [number, number]>;
     start_date: Date;
     end_date: Date | null;

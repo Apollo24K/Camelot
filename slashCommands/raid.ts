@@ -8,13 +8,13 @@ import { armorInfo, itemInfo, items, ringInfo, weaponInfo } from "../Modules/ite
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, customEmojis, dealDamage, getClassLvl, getRingSlotsTotal, search, getLetterRank } from "../Modules/functions";
-import { AbilityResponse, dungeonTempBan, raidRankIndices } from "../Modules/components";
+import { AbilityResponse, dungeonTempBan, raidRankIndices, raidRankLetters } from "../Modules/components";
 import delayedBuffs from "../Modules/delayedBuffs";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
-import { CompactUserSchema, DetailedStats, GuildSchema, RaidSchema, SlashCommand } from '../types';
-import { cancelRaid, getGuildSchema, getLatestRaid, getUserSchemas, getWeaponSchemas, insertNewRaid, updateRaidParticipation, updateUsers } from '../Modules/queries';
+import { CompactUserSchema, DetailedStats, GuildSchema, RaidRank, RaidSchema, SlashCommand } from '../types';
+import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
@@ -307,9 +307,114 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
     });
 };
 
+type RaidRewards = {
+    coins: number;
+    guild_marks: number;
+    skill_points: number;
+    featured_ring: number;
+    glorious_chest: number;
+    luxurious_chest: number;
+    royal_chest: number;
+    deluxe_chest: number;
+};
+
+const raidRewards: Record<string, RaidRewards> = {
+    "C-": {
+        coins: 200000,       // 5% = 10000
+        guild_marks: 1000,   // 5% =    50
+        skill_points: 40,    // 5% =     2
+        featured_ring: 2,    // 5% =     0.1
+        glorious_chest: 60,  // 5% =     3
+        luxurious_chest: 20, // 5% =     1
+        royal_chest: 5,      // 5% =     0.25
+        deluxe_chest: 0,     // 5% =     0
+    },
+    "B-": {
+        coins: 300000,
+        guild_marks: 1500,
+        skill_points: 60,
+        featured_ring: 3,
+        glorious_chest: 90,
+        luxurious_chest: 30,
+        royal_chest: 7.5,
+        deluxe_chest: 0,
+    },
+    "A-": {
+        coins: 400000,
+        guild_marks: 2000,
+        skill_points: 80,
+        featured_ring: 4,
+        glorious_chest: 120,
+        luxurious_chest: 40,
+        royal_chest: 10,
+        deluxe_chest: 4, // 5% = 0.2
+    },
+    "S-": {
+        coins: 500000,
+        guild_marks: 2500,
+        skill_points: 100,
+        featured_ring: 5,
+        glorious_chest: 150,
+        luxurious_chest: 50,
+        royal_chest: 12.5,
+        deluxe_chest: 6,
+    },
+    "SS-": {
+        coins: 600000,
+        guild_marks: 3000,
+        skill_points: 120,
+        featured_ring: 6,
+        glorious_chest: 180,
+        luxurious_chest: 60,
+        royal_chest: 15,
+        deluxe_chest: 8,
+    },
+    "SSS-": {
+        coins: 700000,
+        guild_marks: 3500,
+        skill_points: 140,
+        featured_ring: 7,
+        glorious_chest: 210,
+        luxurious_chest: 70,
+        royal_chest: 17.5,
+        deluxe_chest: 10,
+    },
+    "EX-": {
+        coins: 800000,
+        guild_marks: 4000,
+        skill_points: 160,
+        featured_ring: 8,
+        glorious_chest: 240,
+        luxurious_chest: 80,
+        royal_chest: 20,
+        deluxe_chest: 12,
+    },
+} as const;
+
+function getRaidRewardPool(rank: RaidRank, participants: number, sumOfShares: number) {
+    const indexValue = raidRankIndices[rank];
+
+    const baseline = Math.max(9, Math.floor(indexValue / 3) * 3);
+    const offset = indexValue % 3;
+
+    // Copy the pool
+    const rewardPool = _.cloneDeep(raidRewards[raidRankLetters[baseline]]);
+
+    // Adjust the reward pool based on the number of participants
+    const multiplier = (1 + (0.15 * offset)) * (participants / 20) * sumOfShares;
+    for (const key in rewardPool) {
+        if (Object.prototype.hasOwnProperty.call(rewardPool, key)) {
+            const rawAmount = rewardPool[key as keyof typeof rewardPool] * multiplier;
+            rewardPool[key as keyof typeof rewardPool] = Math.floor(rawAmount + (((rawAmount % 1) > Math.random()) ? 1 : 0));
+        };
+    };
+
+    return rewardPool;
+};
+
 const endedRaids = new Set();
 
-function endRaid(raidId: number) {
+async function endRaid(raidId: number) {
 
     // Make sure to only send rewards once
     if (endedRaids.has(raidId)) return;
@@ -318,26 +423,93 @@ function endRaid(raidId: number) {
         endedRaids.delete(raidId);
     }, 10 * 60 * 1000);
 
+    // Fetch Raid
+    const raid = await getRaidByRaidId(raidId);
+    if (!raid) return;
 
-    // db.serialize(async () => {
-    //     const { 0: stampede } = await query(`SELECT rowid, * FROM stampedes ORDER BY rowid DESC LIMIT 1`);
-    //     stampede.participation = JSON.parse(stampede.participation);
+    // Distribute Rewards
+    const totalPoints = Object.values(raid.participation).reduce((acc, [points]) => acc + points, 0);
+    const players = Object.entries(raid.participation).map((e) => ({
+        id: e[0],
+        points: e[1][0],
+        rounds: e[1][1],
+        rank: 0,
+        /**
+         * Capped between 0.025 and 0.1
+         */
+        share: Math.min(Math.max(e[1][0] / totalPoints, 0.025), 0.1),
+        percentile: 0,
+        rewards: { coins: 0, guild_marks: 0, skill_points: 0, featured_ring: 0, glorious_chest: 0, luxurious_chest: 0, royal_chest: 0, deluxe_chest: 0 }
+    }));
 
-    //     let mailboxes = await query(`SELECT id, mailbox FROM users WHERE id IN (${Object.keys(stampede.participation).join(", ")})`);
+    // Calculate percentiles
+    players.sort((a, b) => b.points - a.points);
+    for (let i = 0; i < players.length; i++) {
+        players[i].percentile = (players[i - 1]?.percentile ?? 0) + players[i].share;
+        players[i].rank = i + 1;
+    };
 
-    //     const players = Object.entries(stampede.participation).map((e) => ({ id: e[0], points: e[1][0], rounds: e[1][1], mailbox: JSON.parse(mailboxes.find((mailbox) => mailbox.id === e[0])?.mailbox || "[]") }));
-    //     const playersWithPrizes = distributePrizes(players, prizePool);
+    // Const reward pool
+    const sumOfShares = players.reduce((acc, player) => acc + player.share, 0);
+    const rewardPool = getRaidRewardPool(raid.rank_letter, players.length, sumOfShares);
+    const remainingRewards = _.cloneDeep(rewardPool);
 
-    //     for (const player of playersWithPrizes) {
-    //         const paricipationRewards = participationPrize(stampede.participation[player.id]?.[1] ?? 0);
-    //         const mail = { "type": "2,4,8,9", "rewards": `coins|${paricipationRewards.coins + player.coins},gems|${paricipationRewards.gems + player.gems},item|458|${paricipationRewards.deluxe + player.deluxe},item|457|${paricipationRewards.royal + player.royal},item|454|${paricipationRewards.glorious + player.glorious},item|683|${paricipationRewards.kernel + player.kernel},ss ticket|${paricipationRewards.ssticket + player.ssticket},s ticket|${paricipationRewards.sticket + player.sticket},a ticket|${paricipationRewards.aticket + player.aticket}`, "message": "Stampede Rewards", "date": new Date().getTime() };
+    // Distribute rewards
+    for (const player of players) {
+        Object.entries(player.rewards).forEach(([key, value]) => {
+            const shareReward = Math.floor(player.share * (1 / sumOfShares) * rewardPool[key as keyof typeof rewardPool]);
+            if (shareReward) {
+                player.rewards[key as keyof typeof player.rewards] += shareReward;
+                remainingRewards[key as keyof typeof remainingRewards] -= shareReward;
+            };
+        });
+    };
 
-    //         player.mailbox.push(mail);
-    //         await query(`UPDATE users SET mailbox = '${JSON.stringify(player.mailbox)}' WHERE id = ${player.id}`);
-    //     };
+    // Distribute remaining rewards
+    for (let [key, value] of Object.entries(remainingRewards)) {
+        if (value >= 1) {
+            let maxIterations = players.length;
+            while (value >= 1 && maxIterations > 0) {
+                const weightedRandomNumber = Math.random() * sumOfShares;
+                const weightedRandomPlayer = players.find((player) => weightedRandomNumber <= player.percentile);
+                if (weightedRandomPlayer) {
+                    weightedRandomPlayer.rewards[key as keyof typeof weightedRandomPlayer.rewards] += 1;
+                };
+                value--;
+                maxIterations--;
+            };
+        };
+    };
 
-    //     console.log("Rewards sent successfully!");
-    // });
+    // Send mails
+    for (const player of players) {
+        const mail = {
+            "type": "2,8",
+            "rewards":
+                `coins|${player.rewards.coins},` +
+                `marks|${player.rewards.guild_marks},` +
+                `skillpts|${player.rewards.skill_points},` +
+                `item|458|${player.rewards.deluxe_chest},` +
+                `item|457|${player.rewards.royal_chest},` +
+                `item|456|${player.rewards.luxurious_chest},` +
+                `item|454|${player.rewards.glorious_chest}`,
+            "message":
+                `## Raid Rewards\n\n` +
+                `You have ranked **#${player.rank}** out of **${players.length}** participants during this raid, dealing **${player.points}** damage over **${player.rounds}** attempts <:Woah:928370799965003826>\n` +
+                `You have contributed **${((player.points / totalPoints) * 100).toFixed(2)}%** of the total damage to the boss, and received **${(player.share * 100).toFixed(2)}%** of the rewards`,
+            "date": Date.now()
+        };
+
+        // Update users table
+        await updateUsers(player.id, {
+            mailbox: { type: "append", value: [mail] },
+        });
+
+        // // wait for 100ms
+        // await new Promise(resolve => setTimeout(resolve, 100));
+    };
+
+    console.log(`Raid Rewards for ${raid.raidid} sent successfully!`);
 };
 
 const exportCommand: SlashCommand = {
@@ -540,6 +712,17 @@ const exportCommand: SlashCommand = {
                 skill_points: { type: 'increment', value: skillPoints }
             });
 
+
+            // Check if the raid is over
+            const raidCheck = guild ? await getLatestRaid(guild.id) : undefined;
+            if (raidCheck && raidCheck.enemy_hp <= 0) {
+                const nextPhase = raids[raidCheck.raidid].nextPhase;
+                if (nextPhase) {
+                    await updateRaidPhase(raidCheck.rowid, nextPhase, 1240800);
+                } else {
+                    endRaid(raidCheck.rowid);
+                };
+            };
 
             return new EmbedBuilder()
                 .setColor(currentRaid.accentColor as ColorResolvable)

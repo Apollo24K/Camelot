@@ -842,7 +842,7 @@ export const abilities: Record<number, Ability> = {
                 const stampede = await getLatestStampede();
 
                 myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                    if (Math.random() < Math.min(125, stampede?.participation[matchStats.interaction.user.id]?.[1] || 0) / 500) {
+                    if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0) / 500) {
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
                     };
 
@@ -2370,7 +2370,7 @@ export const abilities: Record<number, Ability> = {
                 } else {
                     const stampede = await getLatestStampede();
 
-                    const points = Math.min(200, stampede?.participation[matchStats.interaction.user.id][1] || 0);
+                    const points = Math.min(200, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0);
 
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.002 * points)), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.002 * points)), 9999));

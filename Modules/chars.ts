@@ -3510,7 +3510,7 @@ export const characters: charInfo[] = [
     new charInfo("Renren Tomaru", [], anime[105], "F", "https://i.ibb.co/rFV8Fv5/c.png", 3405, "D"),
     new charInfo("Nangou Torajirou", [], anime[105], "M", "https://i.ibb.co/kGbBH2Y/c.png", 3406, "D"),
     new charInfo("Yakin", [], anime[105], "M", "https://i.ibb.co/Dg220FP/c.png", 3407, "D"),
-    new charInfo("Endorsi Jahad", ["Endorsi Zahard", "Androssi Zahard", "Androssi Jahad"], anime[106], "M", "https://i.ibb.co/cCwNzb3/c.png", 3408, "SS"),
+    new charInfo("Endorsi Jahad", ["Endorsi Zahard", "Androssi Zahard", "Androssi Jahad"], anime[106], "F", "https://i.ibb.co/cCwNzb3/c.png", 3408, "SS"),
     new charInfo("Ha Yuri Jahad", ["Ha Yuri Zahard", "Yuri Zahard", "Yuri Jahad"], anime[106], "F", "https://i.ibb.co/MSNsDDx/c.png", 3409, "SS"),
     new charInfo("Khun Aguero Agnis", [], anime[106], "M", "https://i.ibb.co/TvpH1J8/c.png", 3410, "S"),
     new charInfo("Bam", ["Baam", "Twenty-Fifth Bam", "Jue Viole Grace"], anime[106], "M", "https://i.ibb.co/Z1WwxZv/c.png", 3411, "SS"),

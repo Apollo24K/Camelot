@@ -82,7 +82,7 @@ const exportCommand: SlashCommand = {
                         .setLabel(isSummary ? "Full" : "Compact")
                         .setStyle(ButtonStyle.Primary),
                     new ButtonBuilder()
-                        .setURL(`https://sites.google.com/view/camelotbuilds/abilities/characters/${fArray.name.toLowerCase().replace(/[.'()]/g, '').replace(/ /g, '-')}`)
+                        .setURL(`https://sites.google.com/view/camelotbuilds/abilities/characters/${fArray.name.toLowerCase().replace(/[.'()&]/g, '').replace(/ /g, '-').replace(/-+/g, '-')}`)
                         .setLabel("Community Builds")
                         .setStyle(ButtonStyle.Link)
                 );

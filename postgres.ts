@@ -279,6 +279,7 @@ async function createTables() {
         rowid BIGINT NOT NULL DEFAULT nextval('raids_rowid_seq'::regclass),
         guildid TEXT NOT NULL,
         raidid INT NOT NULL,
+        rank_letter TEXT NOT NULL DEFAULT 'A+',
         enemy_hp BIGINT NOT NULL,
         enemy_hpmax BIGINT NOT NULL,
         participation JSONB DEFAULT '{}' NOT NULL,
