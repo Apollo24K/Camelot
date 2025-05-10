@@ -1,5 +1,5 @@
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
-import { getDetailedStats, dealDamage, addHeal } from "./functions";
+import { getDetailedStats, dealDamage, addHeal, getDamage } from "./functions";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
@@ -5883,21 +5883,18 @@ export const abilities: Record<number, Ability> = {
             matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
 
                 if (caster === myStats) {
-                    // Reflecting 50% of incoming dmg
-                    const redirection =  Math.floor(Math.max(eStats.atk, eStats.md) * 0.5)
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { overwriteDamage: redirection });
-
-
+                   
                     if (matchStats.round > myStats.redirectionLastTriggered) {
                         myStats.redirectionLastTriggered = matchStats.round;
-                        // 25% CR increase for 2 rounds
-                        mybuff.cr.push(new buffInfo("+", 0.25, 2));
-
+                        
                         // Deal 30% DMG
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { atkMultiplier: 0.30 });
+                        getDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { atkMultiplier: 0.30 });
+                        notice.push(`\n✨ Garou redirected the attack!`)
+                        
+                        // 15% CR increase for 2 rounds
+                        mybuff.cr.push(new buffInfo("+", 0.15, 2));
 
-                        // Sluggish Enemy Movement
-                        ebuff.dodge.push(new buffInfo("=", 0, 5));
+                        
                     }
                 }
 
@@ -5910,35 +5907,20 @@ export const abilities: Record<number, Ability> = {
                         return;
                     }
 
-                    myStats.dodge += 1;
+                    // Set dodge to 100% 
+                    myStats.dodge += Math.floor(1 - myStats.dodge);
 
-                    // Handle excess dodge
-                    if (myStats.dodge > 1) {
-                        const excess = myStats.dodge - 1;
-                        mybuff.cd.push(new buffInfo("+", excess, 5));
-                    }
+                   
                     this.passivePause = matchStats.round + 5; // 5 round cooldown
 
                 }
             });
 
-            myStats.evadeDeathStrike ??= 0;
-            myStats.evadeDeathChance ??= 0;
-            myStats.evadeDeathStrike += 3;
-            myStats.evadeDeathChance += 3;
-
-            matchStats.on("deathEvade", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-                if (caster === myStats) {
-                    mybuff.cr.push(new buffInfo("+", 0.15, 9999));
-                    mybuff.cd.push(new buffInfo("+", 0.30, 9999));
-                    myStats.risingSurge += 1;
-                }
-            });
             return AbilityResponse.SUCCESS;
         },
         party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
 
-            myStats.garouAbsorbedHits ??= 0;
+            myStats.garouAbsorbedHits = 0; 
 
 
 
@@ -5947,27 +5929,25 @@ export const abilities: Record<number, Ability> = {
 
                 if (caster === eStats) {
 
-                    let prevReduction = myStats.damageReduction;
                     // Checks if cooldown is over to reactivate
                     if (matchStats.round >= this.partyPause) {
                         // Allies hp under 30%
                         if (myStats.hp / myStats.maxhp < 0.3) {
-                            myStats.garouAbsorbedHits = 3; // Absorbing incoming dmg
+                            myStats.garouAbsorbedHits = 0; // Reset hit counter
                             this.partyPause = matchStats.round + 5; // 5 round cooldown
                         }
 
                     }
 
                     // Absorbed DMG 
-                    if (myStats.garouAbsorbedHits > 0 && myStats.hp / myStats.maxhp < 0.3) {
-                        myStats.damageReduction = 1;
+                    if (myStats.garouAbsorbedHits < 3 && myStats.hp / myStats.maxhp < 0.3) {
+                        myStats.hp += options.damage;
+                        notice.push(`n✨ Garou absorbed the DMG!`)
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
                         myStats.sm += 5;
-                        myStats.garouAbsorbedHits--;
+                        myStats.garouAbsorbedHits++;
 
-                        if(myStats.garouAbsorbedHits <= 0){
-                            myStats.damageReduction = prevReduction;
-                        }
+                        
 
                     }
 
