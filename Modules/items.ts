@@ -5655,16 +5655,72 @@ export const items = [
     }, (level) => `Whenever the wearer receives a critical hit, the attacker suffers a **20%** ATK and **20%** MD reduction for **2** turns.`, "Forged in the smoldering shadows beneath the Obsidian Wastes, the Dread Crown is no mere ornament—it is a relic of ancient tyranny. Its band, wrought from blacksteel kissed by the breath of wraithfire, coils like a crown of thorns around the finger. At its heart lies a gem of voidglass, ever swirling with the whispers of the condemned, and said to house the final breath of a forgotten god. Blood-rubies encrust the ring's edges, each inscribed with runes long erased from mortal memory—sigils of dominion, despair, and death. To don this ring is to command fear itself. The air thickens around the wearer, dread bleeding into every glance and word. Spirits tremble, the living falter, and necromantic rites swell with newfound power, their bounds widened by the ring's malignant will. It is not worn—it claims its bearer, marking them as heir to an empire of shadow.", "legendary", 767),
     new ringInfo("Arcane Rebound", "ring", "ring", ["raid"], "<:arcane_rebound:1334246581679165572>", "https://i.ibb.co/RtCBGSG/Arcane-Rebound.png", 1, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Hammer
 
-        //! new ability
+
+        const etherealState = () => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if(target === myStats){
+                    // Heals if enemy md doesnt kill wielder
+                    if(myStats.hp > options.magicDamage){
+                        myStats.hp += options.magicDamage
+                    }
+                }
+            })
+        }
+        matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) {
+                let cooldown = 0
+
+                if(matchStats.round < cooldown){
+                    return
+                }
+
+                etherealState();
+
+                cooldown = [6, 5, 4][level - 1];
+
+            };
+        });
 
         return AbilityResponse.SUCCESS;
-    }, (level) => `Upon gaining a shield, enters the state of "Rebounce" for 1 turn, countering any damage taken.`, "The Arcane Rebound is a masterpiece of magical craftsmanship, adorned with intricate blue filigree that glimmers like stars against a dark backdrop. The ring is smooth and slightly curved, resembling a spellcaster's focus tool, with an ethereal light emanating from the core. Tiny arcs of electricity flicker around the band, forming patterns reminiscent of a magical glyph, enhancing the wielder's spell defense. When activated, it can absorb hostile magic and redirect it, turning an enemy's strength against them. The ring's unique design highlights its functionality, making it the ideal choice for scholars and sorcerers alike, ensuring that their arcane power never wavers.", "unique", 768),
+    }, (level) => `After using DEFEND, enters the Ethereal state. During this round, any magical damage that doesn't kill the wielder will instead restore HP for them. The Ethereal state has a **${[6, 5, 4][level - 1]}** round cooldown.`, "The Arcane Rebound is a masterpiece of magical craftsmanship, adorned with intricate blue filigree that glimmers like stars against a dark backdrop. The ring is smooth and slightly curved, resembling a spellcaster's focus tool, with an ethereal light emanating from the core. Tiny arcs of electricity flicker around the band, forming patterns reminiscent of a magical glyph, enhancing the wielder's spell defense. When activated, it can absorb hostile magic and redirect it, turning an enemy's strength against them. The ring's unique design highlights its functionality, making it the ideal choice for scholars and sorcerers alike, ensuring that their arcane power never wavers.", "unique", 768),
     new ringInfo("Gama's Awakening", "ring", "ring", ["raid"], "<:gamas_awakening:1334260075304321167>", "https://i.ibb.co/RTsBMw2m/Gama-s-Awakening.png", 2, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Drain
 
-        //! new ability
+        
+        const rounds = [5, 5, 4, 4][level - 1];
+
+        if(matchStats.round % rounds === 0){             
+            const consumedMana = myStats.sm
+            myStats.sm = 0 
+ 
+            const atkMultiplier = (consumedMana * [0.5, 1, 1.5, 2][level - 1] / 100)
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:gamas_awakening:1334260075304321167> **${char.name}**`, {atkMultiplier})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            
+        }
+
+
 
         return AbilityResponse.SUCCESS;
-    }, (level) => `If the wearer's HP falls below **${[15, 17.5][level - 1]}%** of their max HP in **${[4, 5][level - 1]}** rounds, the enemy will lose **20%** of their max HP and the wearer will heal for **40%** of their max HP.`, "The Gama's Awakening ring radiates an aura of transformation, carved from sapphire-blue stone and entwined with ethereal symbols that evoke nature's untamed splendor. Pinkish jewerly glisten like dewdrops around the central piece of a purplish gemstone, resembling a watchful eye, attuned to the energies of the world. Soft waves ripple across its surface, akin to tears from the breakthrough. When worn, this ring enhances the wearer's connection to the natural world, allowing them to understand and constantly evolve themselves. It's a perfect ally for druids and nature guardians, embodying the spirit of rebirth and awakening.", "legendary", 769),
+    }, (level) => `Every 5/5/4/4 rounds, casts forth a watchful eye, consuming all mana owned. For every 1 💧consumed, deals 0.5/1/1.5/2% damage.`, "The Gama's Awakening ring radiates an aura of transformation, carved from sapphire-blue stone and entwined with ethereal symbols that evoke nature's untamed splendor. Pinkish jewerly glisten like dewdrops around the central piece of a purplish gemstone, resembling a watchful eye, attuned to the energies of the world. Soft waves ripple across its surface, akin to tears from the breakthrough. When worn, this ring enhances the wearer's connection to the natural world, allowing them to understand and constantly evolve themselves. It's a perfect ally for druids and nature guardians, embodying the spirit of rebirth and awakening.", "legendary", 769),
     new ringInfo("Voltage Overload", "ring", "ring", ["guild"], "<:voltage_overload:1334325589242544269>", "https://i.ibb.co/PZfXXBLt/Voltage-Overload.png", 1, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         //! new ability
@@ -5685,10 +5741,18 @@ export const items = [
     }, (level) => ``, "Thalamir's Promise is forged from an alloy that shimmers between copper and twilight hues, centered by a deep emerald said to contain an ancient guardian's last breath. Silver spirals thread through the band like moonlight streams, bearing whispered enchantments of preservation. When death approaches, ethereal vines of pure energy emerge to anchor their bearer to the mortal realm, fulfilling Thalamir's ancient vow that life shall endure.", "legendary", 772),
     new ringInfo("Ferocious Overflow", "ring", "ring", ["raid"], "<:ferocious_overflow:1336068414015279124>", "https://i.ibb.co/JjHcKqZ2/Ferocious-Overflow.png", 4, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Mana
 
-        //! new ability
+        const excessDEF = Math.max(myStats.def - 2192, 0);
+        const excessMR  = Math.max(myStats.mr - 2192, 0); 
+
+        const defIncrements = Math.floor(excessDEF / 2);
+        const mrIncrements = Math.floor(excessMR / 2)
+
+        const hpIncrease = (defIncrements + mrIncrements) * [4, 5, 6][level - 1];
+        myStats.hp += hpIncrease;
+       
 
         return AbilityResponse.SUCCESS;
-    }, (level) => ``, "The Ferocious Overflow is a masterwork of muted olive and collards, embodying the essence of the ocean. Its smooth band twists and curls like crashing waves, shimmering under light. A rigorous outburst of elixir occurs at its zenith, akin to a seismic wave, yet glistening with the fluidity of water. The design evokes the tranquility of the sea, while also hinting at its enigmatic depths. This ring grants the ability to control and manipulate all types of emergencies, providing protection against fiery adversaries. Amidst the bearer’s physical and mental overloads, the sapphire glows brightly, summoning a protective wave that can shield the wearer from stress and harm momentarily. It is a favored ring among ocean mages and water elementals.", "legendary", 773),
+    }, (level) => `For every **2** DEF/MR above DMG mitigation limit (2192), increases HP by **${[4, 5, 6][level - 1]}**`, "The Ferocious Overflow is a masterwork of muted olive and collards, embodying the essence of the ocean. Its smooth band twists and curls like crashing waves, shimmering under light. A rigorous outburst of elixir occurs at its zenith, akin to a seismic wave, yet glistening with the fluidity of water. The design evokes the tranquility of the sea, while also hinting at its enigmatic depths. This ring grants the ability to control and manipulate all types of emergencies, providing protection against fiery adversaries. Amidst the bearer’s physical and mental overloads, the sapphire glows brightly, summoning a protective wave that can shield the wearer from stress and harm momentarily. It is a favored ring among ocean mages and water elementals.", "legendary", 773),
 
 ];
 

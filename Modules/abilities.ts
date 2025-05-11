@@ -100,7 +100,7 @@ export const abilities: Record<number, Ability> = {
             if (eStats.mr < eStats.def) {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, magicDamage: true, mdChance: -1, critChance: 0, dodge: false });
             } else {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, critChance: 0, dodge: false });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, critChance: 0, dodge: false                                          });
             };
 
             return AbilityResponse.SUCCESS;
@@ -5773,7 +5773,7 @@ export const abilities: Record<number, Ability> = {
     "23390": {
         usage: 5,
         used: 0,
-        cost: 90,
+        cost: 0,
         pause: 0,
         passivePause: 0,
         partyPause: 0,
@@ -5783,7 +5783,7 @@ export const abilities: Record<number, Ability> = {
             //Garou EX
 
             //Active (I) : Wild Instincts (Monster skin)
-            if (myStats.equippedSkin === "113") { // Random number for now until monster skin is added
+            if (myStats.equippedSkin === 113) { // Random number for now until monster skin is added
 
                 if (this.pause > matchStats.round) {
                     myStats.sm += this.cost;
@@ -5792,8 +5792,14 @@ export const abilities: Record<number, Ability> = {
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
+                if(myStats.sm < 90){
+                    matchStats.interaction.followUp({ content: "You don't have enough mana! (**${myStats.sm}**/90\\💧)", ephemeral: true });
+                    return AbilityResponse.FAILURE;
+                }
+                
+                myStats.sm -= 90;
                 this.pause = matchStats.round + 10;
-
+                
                 myStats.risingSurge += 1;
 
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { atkMultiplier: 1.5 + (Math.min(myStats.risingSurge * 0.05, 1)) });
@@ -5804,7 +5810,9 @@ export const abilities: Record<number, Ability> = {
                 }
             }
             //Active (II): God Killer (Cosmic skin)
-            if (myStats.equippedSkin === "112") {
+            console.log("Checking if equipped skin is 112:", myStats.equippedSkin === 112);
+            if (myStats.equippedSkin === 112) {
+                console.log("Cosmic Garou active")
                 if (this.pause > matchStats.round) {
                     myStats.sm += this.cost;
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -5814,7 +5822,7 @@ export const abilities: Record<number, Ability> = {
                 };
 
                 // Cost: times used * 10% of max hp
-                mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * (this.used * 0.10)), 9999));
+                console.log(`HP Cost Calculation: maxhp=${myStats.maxhp}, used=${this.used}, cost=${Math.floor(myStats.maxhp * (this.used * 0.10))}`);
                 myStats.hp -= Math.floor(myStats.maxhp * (this.used * 0.10));
 
                 this.pause = matchStats.round + 4;
@@ -5826,14 +5834,13 @@ export const abilities: Record<number, Ability> = {
 
                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, amountHealed, {});
 
-                    // DEF / MR shred
-                    mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * amountHealed), 9999));
-                    mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * amountHealed), 9999));
-                    myStats.def -= Math.floor(myStats.def * amountHealed);
-                    myStats.mr -= Math.floor(myStats.mr * amountHealed);
-
-                    if (myStats.def < 1000) myStats.def = 1000;
-                    if (myStats.mr < 1000) myStats.mr = 1000;
+                    // DEF / MR shred by amount healed
+                    mybuff.def.push(new buffInfo("+", -amountHealed, 9999));
+                    mybuff.mr.push(new buffInfo("+", -amountHealed, 9999));
+                    //
+                    myStats.def = Math.max(myStats.def - amountHealed, 1000);
+                    myStats.mr = Math.max(myStats.mr - amountHealed, 1000);
+                    
 
                 };
                 // First use
@@ -5880,16 +5887,16 @@ export const abilities: Record<number, Ability> = {
             }
             myStats.risingSurge ??= 0;
             myStats.redirectionLastTriggered ??= 0;
-            matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
 
-                if (caster === myStats) {
+                if (caster === eStats) {
                    
                     if (matchStats.round > myStats.redirectionLastTriggered) {
                         myStats.redirectionLastTriggered = matchStats.round;
-                        
+                        console.log("Redirection triggered")
                         // Deal 30% DMG
-                        getDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, { atkMultiplier: 0.30 });
-                        notice.push(`\n✨ Garou redirected the attack!`)
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨Garou`, { atkMultiplier: 0.30 });
+                       
                         
                         // 15% CR increase for 2 rounds
                         mybuff.cr.push(new buffInfo("+", 0.15, 2));
@@ -5900,7 +5907,7 @@ export const abilities: Record<number, Ability> = {
 
             });
 
-            matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
 
                     if (matchStats.round < this.passivePause) {
@@ -5908,7 +5915,7 @@ export const abilities: Record<number, Ability> = {
                     }
 
                     // Set dodge to 100% 
-                    myStats.dodge += Math.floor(1 - myStats.dodge);
+                    myStats.dodge = 1;
 
                    
                     this.passivePause = matchStats.round + 5; // 5 round cooldown
@@ -5925,7 +5932,7 @@ export const abilities: Record<number, Ability> = {
 
 
             // Absorbs enemy hits if allies under 30% hp 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
 
                 if (caster === eStats) {
 
@@ -5941,8 +5948,10 @@ export const abilities: Record<number, Ability> = {
 
                     // Absorbed DMG 
                     if (myStats.garouAbsorbedHits < 3 && myStats.hp / myStats.maxhp < 0.3) {
+                        console.log("HP before absorption:", myStats.hp, "Max HP:", myStats.maxhp, "HP/Max HP:", myStats.hp / myStats.maxhp);
+                        notice.push(`\n✨ Garou absorbed the DMG!`)
                         myStats.hp += options.damage;
-                        notice.push(`n✨ Garou absorbed the DMG!`)
+                        console.log("HP after absorption:", myStats.hp, "Max HP:", myStats.maxhp, "HP/Max HP:", myStats.hp / myStats.maxhp);
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
                         myStats.sm += 5;
                         myStats.garouAbsorbedHits++;
