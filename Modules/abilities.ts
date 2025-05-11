@@ -1,5 +1,5 @@
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
-import { getDetailedStats, dealDamage, addHeal, getDamage } from "./functions";
+import { getDetailedStats, dealDamage, addHeal } from "./functions";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
@@ -100,7 +100,7 @@ export const abilities: Record<number, Ability> = {
             if (eStats.mr < eStats.def) {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, magicDamage: true, mdChance: -1, critChance: 0, dodge: false });
             } else {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, critChance: 0, dodge: false                                          });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, critChance: 0, dodge: false });
             };
 
             return AbilityResponse.SUCCESS;
@@ -5837,7 +5837,7 @@ export const abilities: Record<number, Ability> = {
                     // DEF / MR shred by amount healed
                     mybuff.def.push(new buffInfo("+", -amountHealed, 9999));
                     mybuff.mr.push(new buffInfo("+", -amountHealed, 9999));
-                    //
+                    
                     myStats.def = Math.max(myStats.def - amountHealed, 1000);
                     myStats.mr = Math.max(myStats.mr - amountHealed, 1000);
                     

@@ -5694,33 +5694,13 @@ export const items = [
  
             const atkMultiplier = (consumedMana * [0.5, 1, 1.5, 2][level - 1] / 100)
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:gamas_awakening:1334260075304321167> **${char.name}**`, {atkMultiplier})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             
         }
 
 
 
         return AbilityResponse.SUCCESS;
-    }, (level) => `Every 5/5/4/4 rounds, casts forth a watchful eye, consuming all mana owned. For every 1 💧consumed, deals 0.5/1/1.5/2% damage.`, "The Gama's Awakening ring radiates an aura of transformation, carved from sapphire-blue stone and entwined with ethereal symbols that evoke nature's untamed splendor. Pinkish jewerly glisten like dewdrops around the central piece of a purplish gemstone, resembling a watchful eye, attuned to the energies of the world. Soft waves ripple across its surface, akin to tears from the breakthrough. When worn, this ring enhances the wearer's connection to the natural world, allowing them to understand and constantly evolve themselves. It's a perfect ally for druids and nature guardians, embodying the spirit of rebirth and awakening.", "legendary", 769),
+    }, (level) => `Every ${[5, 5, 4, 4][level - 1]} rounds, casts forth a watchful eye, consuming all mana owned. For every 1 💧consumed, deals ${[0.5, 1, 1.5, 2][level - 1]}% damage.`, "The Gama's Awakening ring radiates an aura of transformation, carved from sapphire-blue stone and entwined with ethereal symbols that evoke nature's untamed splendor. Pinkish jewerly glisten like dewdrops around the central piece of a purplish gemstone, resembling a watchful eye, attuned to the energies of the world. Soft waves ripple across its surface, akin to tears from the breakthrough. When worn, this ring enhances the wearer's connection to the natural world, allowing them to understand and constantly evolve themselves. It's a perfect ally for druids and nature guardians, embodying the spirit of rebirth and awakening.", "legendary", 769),
     new ringInfo("Voltage Overload", "ring", "ring", ["guild"], "<:voltage_overload:1334325589242544269>", "https://i.ibb.co/PZfXXBLt/Voltage-Overload.png", 1, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
         //! new ability
