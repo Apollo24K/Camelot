@@ -649,6 +649,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Selection Project", ['SelePro'], 614),
     new animeInfo("Sergeant Keroro", ['Keroro Gunsou', 'Sgt. Frog', 'Seargeant Frog', 'Sgt. Keroro', 'Sgt Frog'], 615),
     new animeInfo("Girls Band Cry", ['GBC', 'Garukura'], 616),
+    new animeInfo("High-Rise Invasion", ['Sky-High Survival ', 'Tenkuu Shinpan', 'Sky Survival',  'HRI'], 617),
+    new animeInfo("Full Metal Panic!", ['FMP', 'FMP!'], 618),
+    new animeInfo("Kiss Him, Not Me", ['Watashi ga Motete Dousunda', 'WatashiMote', 'WgMD', 'KHNM', 'Kiss Him Not Me'], 619),
+    new animeInfo("Cyborg 009", ['Cyborg 009 and the Monster Wars', 'Cyborg 009: Chou Ginga Densetsu', 'Cyborg 009: Kaijuu Sensou', 'Cyborg 009: Legend of the Super Galaxy', 'Cyborg 009: The Cyborg Soldier', 'Cyborg Soldier 009', 'Defenders of The Vortex', 'CB009', 'Cyborg 009: Call of Justice'], 620),
 
 ];
 
