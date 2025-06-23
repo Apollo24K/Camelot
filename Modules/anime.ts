@@ -653,6 +653,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Full Metal Panic!", ['FMP', 'FMP!'], 618),
     new animeInfo("Kiss Him, Not Me", ['Watashi ga Motete Dousunda', 'WatashiMote', 'WgMD', 'KHNM', 'Kiss Him Not Me'], 619),
     new animeInfo("Cyborg 009", ['Cyborg 009 and the Monster Wars', 'Cyborg 009: Chou Ginga Densetsu', 'Cyborg 009: Kaijuu Sensou', 'Cyborg 009: Legend of the Super Galaxy', 'Cyborg 009: The Cyborg Soldier', 'Cyborg Soldier 009', 'Defenders of The Vortex', 'CB009', 'Cyborg 009: Call of Justice'], 620),
+    new animeInfo("YuYu Hakusho", ["Yu Yu Hakusho", "Ghost Files", "Ghost Fighter", "Poltergeist Report", "YYH"], 621),
+    new animeInfo("ReLife", ["Re:Life", "Riraifu"], 622),
+    new animeInfo("Wistoria: Wand and Sword", ["Tsue to Tsurugi no Wistoria", ], 623),    
+
 
 ];
 
