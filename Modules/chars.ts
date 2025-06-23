@@ -23711,8 +23711,6 @@ export const characters: charInfo[] = [
     new charInfo("Cathy", [], anime[620], "F", "https://i.ibb.co/mrk3NJRf/c.png", 23606, "D"),
     new charInfo("Apollo (CB009)", [], anime[620], "M", "https://i.ibb.co/7JW7Ffkq/c.png", 23607, "D"),
     new charInfo("Dr. Cosmo", [], anime[620], "M", "https://i.ibb.co/RJyLtY2/c.png", 23608, "D"),
-
-
     new charInfo("Yuusuke Urameshi", ["Yusuke Urameshi"], anime[621], "M", "https://i.ibb.co/N6WJjqkY/image1.png", 23609, "SS"),
     new charInfo("Kazuma Kuwabara", [], anime[621], "M", "https://i.ibb.co/7JFZ810L/image2.png", 23610, "S"),
     new charInfo("Kurama", [], anime[621], "M", "https://i.ibb.co/kZFQw2g/Image3.png", 23611, "S"),
