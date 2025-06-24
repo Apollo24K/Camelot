@@ -23974,11 +23974,6 @@ export const characters: charInfo[] = [
     new charInfo("Sakuraba Momo", ["Momo Sakuraba"], anime[626], "F", "https://i.ibb.co/23s02rnk/c.png", 23869, "D"),
     new charInfo("Kisaragi Keiki", ["Keiki Kisaragi"], anime[626], "F", "https://i.ibb.co/BVX8mvSf/c.png", 23870, "D"),
 
-
-
-
-
-
 ];
 
 
