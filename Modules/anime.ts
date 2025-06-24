@@ -655,8 +655,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Cyborg 009", ['Cyborg 009 and the Monster Wars', 'Cyborg 009: Chou Ginga Densetsu', 'Cyborg 009: Kaijuu Sensou', 'Cyborg 009: Legend of the Super Galaxy', 'Cyborg 009: The Cyborg Soldier', 'Cyborg Soldier 009', 'Defenders of The Vortex', 'CB009', 'Cyborg 009: Call of Justice'], 620),
     new animeInfo("YuYu Hakusho", ["Yu Yu Hakusho", "Ghost Files", "Ghost Fighter", "Poltergeist Report", "YYH"], 621),
     new animeInfo("ReLife", ["Re:Life", "Riraifu"], 622),
-    new animeInfo("Wistoria: Wand and Sword", ["Tsue to Tsurugi no Wistoria", ], 623),    
-
+    new animeInfo("Wistoria: Wand and Sword", ["Tsue to Tsurugi no Wistoria"], 623),    
+    new animeInfo("Blue Box", ["Ao no Hako"], 624),
+    new animeInfo("Kekkai Sensen", ["Blood Blockade Battlefront", "BBS", "KKSS"], 625),
+    new animeInfo("Ore wo Suki nano wa Omae dake ka yo", ["Oresuki", "Are you the only one who loves me?"], 626),
 
 ];
 
