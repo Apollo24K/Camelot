@@ -994,6 +994,11 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('nightmare')
+			.setDescription('Nightmare related commands')
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('open')
 			.setDescription('Open a lootbox')
 			.addStringOption(option =>

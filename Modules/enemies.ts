@@ -1347,6 +1347,57 @@ export const raidBosses: enemyInfo[] = [
         }, [["Gains **6x** of the player's max HP as a shield at the start of battle", "Stores **2%** of his shield for his Void Orb every round, decreases his shield by **5%** each time", "On shield break, reverses the player's damage type for **5** rounds", "Has a **50%** chance to deal magical damage", "Every **6th** round, he uses Void Orb, dealing the stored amount of shield as damage", "**Active**: Enters a domain which lasts **5** rounds, in which he increases his crit rate by **70%**, sets his crit damage to **175%**, and deals **50%** lightning damage (**90** <:mana:1047269152957661255>)"]])
     ),
 ];
+export const nightmareMobs: enemyInfo[] = [
+    new enemyInfo("Fish of the Tidal", "Tidal Fish", "Tidecaller", "F", true, {}, {}, { mana: 360 }, [], ["https://i.ibb.co/KpyGDfrX/tidecaller.png"], [], 25,
+        new skillInfo(25, 120, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.tidalMeter += 20;
+            notice.push(`\n✨ Heed my call! **${enemy.name}** raised Tidal Meter to **${myStats.tidalMeter}**`);
+            if (eStats.tidalMeter > 50) {
+                addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((eStats.maxhp - eStats.hp) * 0.2), {});
+            } else dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🐟 **${enemy.name}** dived through! **${enemy.name}**`, 1.3 );
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const tidalStart = myStats.tidalfish1 ? 60 : 0;
+            eStats.tidalMeter = tidalStart;
+
+            const tidalmgBoost = myStats.tidalfish2 ? 10 : 0;
+            eStats.mg += tidalmgBoost;
+            ebuff.mg.push(new buffInfo("+", tidalmgBoost, 9999));
+
+            const tidalBuff = myStats.tidalfish1 ? 0.9 : 0.4;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.tidalMeter > 50) {
+                    eStats.atk += Math.floor(eStats.atk * tidalBuff);
+                    eStats.md += Math.floor(eStats.md * tidalBuff);
+                } else {
+                    eStats.def += Math.floor(eStats.def * tidalBuff);
+                    eStats.mr += Math.floor(eStats.def * tidalBuff);
+                };
+
+                if (eStats.tidalMeter >= 100) {
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌊 **${enemy.name}** summoned a Tsunami! **${enemy.name}**`, 1.3 );
+                    eStats.tidalMeter = 50;
+                }
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (caster === myStats) {
+                    eStats.tidalMeter += 5;
+                };
+            });
+
+            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (caster === eStats) {
+                    eStats.tidalMeter -= 5;
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["Enters battle with **0** `Tidal Meter`. After receiving an attack, increases `Tidal Meter` by **5**. After missing an attack, lowers `Tidal Meter` by **5**.","When `Tidal Meter` is above **50**, the fish has **+40%** ATK/MD. Else, the fish has **+40%** DEF/MR", "At the start of every round, if `Tidal Meter` is at **100** or more, summons a Tsunami, dealing **150%** DMG to the player, before resetting `Tidal Meter` to **50**", "**Active**: Chants the tides, increasing `Tidal Meter` by **20**. If `Tidal Meter` is above **50**, additionally recovers **20%** missing HP. Else, dives through and deals **130%** DMG to the player (**120** <:mana:1047269152957661255>)"]])
+    ),
+];
 
 export class floorInfo {
     private _floor: number;
