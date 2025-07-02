@@ -41,12 +41,18 @@ const exportCommand: SlashCommand = {
             }
             // Weekly
             if (stats.weeklyclaimed) {
-                let s = (7 * 24 * 60 * 60000) - (new Date().getTime() % (7 * 24 * 60 * 60000));
-                let dLeft = Math.floor(s / (24 * 60 * 60000));
-                s -= dLeft * 24 * 60 * 60000;
-                let hLeft = Math.floor(s / (60 * 60000));
-                s -= hLeft * 60 * 60000;
-                let mLeft = Math.floor(s / 60000);
+                const now = new Date();
+                const dayOfWeek = now.getDay();
+                const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+                const nextSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 0, 0, 0);
+
+                let s = nextSunday.getTime() - now.getTime();
+                let dLeft = Math.floor(s / (1000 * 60 * 60 * 24));
+                s %= (1000 * 60 * 60 * 24);
+                let hLeft = Math.floor(s / (1000 * 60 * 60));
+                s %= (1000 * 60 * 60);
+                let mLeft = Math.floor(s / (1000 * 60));
+
                 weeklymsg = `${dLeft ? `**${dLeft}**d ` : ""}${hLeft ? `**${hLeft}**h ` : ""}**${mLeft + 1}**min left`;
             } else {
                 weeklymsg = `Your weekly is ready! => \`/weekly\``;

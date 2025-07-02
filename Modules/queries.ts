@@ -260,9 +260,9 @@ export const getPastStampedes = async (past: number): Promise<StampedeSchema[]> 
     return stampedes;
 };
 
-export const getUserRanking = async (scope: "server" | "global", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event"): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
+export const getUserRanking = async (scope: "server" | "global", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation"): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
     let orderByClause: string;
-    let selectClause = "name, id, xp, coins, lilies, pullstotal, favchar, premium, chars, char_skin, battlechar, dungeon_classlevels, achievements, dungeon_floors, eventpts";
+    let selectClause = "name, id, xp, coins, lilies, pullstotal, favchar, premium, chars, char_skin, battlechar, dungeon_classlevels, achievements, dungeon_floors, eventpts, cow_participation";
     let whereClause = "";
 
     switch (orderBy) {
@@ -315,6 +315,10 @@ export const getUserRanking = async (scope: "server" | "global", user_ids: strin
             whereClause = "AND eventpts > 0";
             orderByClause = "eventpts DESC";
             break;
+        case "cow_participation":
+            whereClause = "AND cow_participation IS NOT NULL AND cow_participation > 0";
+            orderByClause = "cow_participation DESC";
+            break;
         default:
             orderByClause = `${orderBy} DESC`;
             break;
@@ -327,7 +331,7 @@ export const getUserRanking = async (scope: "server" | "global", user_ids: strin
     const result = await query(
         `SELECT ${selectClause} FROM users ${scope === "server" ? `WHERE id = ANY($1)` : "WHERE 1=1"} ${whereClause} ORDER BY ${orderByClause} LIMIT 1501`,
         scope === "server" ? [user_ids] : []
-    ) as (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[];
+    ) as (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[];
     return result ?? [];
 };
 
@@ -710,8 +714,7 @@ export const resetDailyResponses = async (): Promise<void> => {
 };
 
 export const resetDungeonLimit = async (): Promise<void> => {
-    await query(`
-        UPDATE users
+    await query(`UPDATE users
         SET dungeon_limit = CASE
             WHEN premium = 7 THEN 
                 CASE 

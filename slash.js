@@ -1165,6 +1165,7 @@ const commands = [
 			.setName('raid')
 			.setDescription('Raid overview')
 			.addBooleanOption(option => option.setName('test').setDescription('Do a test run').setRequired(false))
+			.addStringOption(option => option.setName('boss').setDescription('Select a boss for test runs').setRequired(false).setAutocomplete(true))
 		// .addBooleanOption(option => option.setName('cancel').setDescription('Cancel the raid').setRequired(false))
 	}.data.toJSON(),
 	{
@@ -1578,6 +1579,7 @@ const commands = [
 						{ name: 'stampede', value: 'stampede' },
 						{ name: 'referrals', value: 'referrals' },
 						{ name: 'event', value: 'event' },
+						{ name: 'rolling cow', value: 'cow' },
 					)
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))

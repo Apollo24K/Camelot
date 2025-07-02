@@ -178,4 +178,11 @@ export const profileSets = [
         new Background("Neco-Army", { gems: 200, coins: 300000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-army.gif", url: "https://i.ibb.co/t3zrKKW/neco-army.gif" }), { delay: 100 }),
     ]),
 
+    new ProfileSet("Genshin Impact Bursts", 6, { jades: 600, gems: 900, coins: 1_750_000 }, [
+        new Background("Raiden Shogun", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/raiden-shogun.gif", url: "https://i.ibb.co/B5zk4bkM/raiden-shogun.gif" }), { delay: 60 }),
+        new Background("Arlecchino", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/arlecchino.gif", url: "https://i.ibb.co/BHjQMpFD/arlecchino.gif" }), { delay: 60 }),
+        new Background("Kinich", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/kinich.gif", url: "https://i.ibb.co/xS3T021D/kinich.gif" }), { delay: 30 }),
+        new Background("Varesa", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/varesa.gif", url: "https://i.ibb.co/99VrRhv6/varesa.gif" }), { delay: 50 }),
+    ]),
+
 ];
