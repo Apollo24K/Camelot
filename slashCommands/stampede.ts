@@ -911,7 +911,7 @@ const exportCommand: SlashCommand = {
                             else {
                                 if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
                                 if (matchStats.defUsed > 10) {
-                                    notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
+                                    // notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
                                 } else {
                                     let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
                                     let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed - 1) * 5);

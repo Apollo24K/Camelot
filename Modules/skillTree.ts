@@ -285,8 +285,8 @@ export const skillTree: SkillPath[] = [
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if ((eStats.hp / eStats.maxhp) < healthThreshold) {
-                mybuff.atk.push(new buffInfo("*", bonusDamagePercent, 9999));
-                mybuff.md.push(new buffInfo("*", bonusDamagePercent, 9999));
+                mybuff.atk.push(new buffInfo("*", 1 + bonusDamagePercent, 9999));
+                mybuff.md.push(new buffInfo("*", 1 + bonusDamagePercent, 9999));
 
                 //@ts-ignore
                 this._used++;
