@@ -283,8 +283,8 @@ export const raidBosses: enemyInfo[] = [
 
             const retaliationChance = 0.4;
 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
-                if (caster === myStats && Math.random() < retaliationChance && matchStats.round % 2 === 0) {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && !options.preventRetaliation && Math.random() < retaliationChance && matchStats.round % 2 === 0) {
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliates! She`, { atkMultiplier: eStats.retaliationDamage });
                 };
             });
@@ -304,8 +304,8 @@ export const raidBosses: enemyInfo[] = [
 
             const retaliationChance = 0.4;
 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
-                if (caster === myStats && Math.random() < retaliationChance) {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && !options.preventRetaliation && Math.random() < retaliationChance) {
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliates! She`, { atkMultiplier: eStats.retaliationDamage });
                 };
             });
@@ -325,8 +325,8 @@ export const raidBosses: enemyInfo[] = [
 
             const retaliationChance = 0.4;
 
-            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
-                if (caster === myStats && Math.random() < retaliationChance) {
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && !options.preventRetaliation && Math.random() < retaliationChance) {
                     dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:retaliation_attack:1340455894701576213> **${enemy.name}** retaliates! She`, { atkMultiplier: eStats.retaliationDamage });
                 };
             });
@@ -928,7 +928,7 @@ export const raidBosses: enemyInfo[] = [
             const damage = dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:bleeding_attack:1340697423793754134> **${enemy.name}**`, { atkMultiplier: 1.2, magicDamage: true });
 
             if (damage > 0) {
-                mybuff.hp.push(new buffInfo("+", -Math.floor(damage * 0.1), 9999));
+                mybuff.hp.push(new buffInfo("+", -Math.floor(damage * 0.25), 9999));
             };
 
             return AbilityResponse.SUCCESS;
@@ -961,7 +961,7 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
 
             return AbilityResponse.SUCCESS;
-        }, [["Dots applied to the Hooded Hopper are applied to the player as well", "After every **10th** round, removes debuffs afflicting itself", "**Active**: Deals **120%** damage and applies bleeding equal to **10%** the damage caused, lasting until the end of the fight (**40** <:mana:1047269152957661255>)"]])
+        }, [["Dots applied to the Hooded Hopper are applied to the player as well", "After every **10th** round, removes debuffs afflicting itself", "**Active**: Deals **120%** damage and applies bleeding equal to **25%** the damage caused, lasting until the end of the fight (**40** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Hooded Striker", "Bunny", "the Shadow Hare", "M", true, {}, {}, { mana: 120 }, [708, 774, 775, 776], ["https://i.ibb.co/v6w1Z8g4/hooded-striker.png"], [], 20,
         new skillInfo(20, 55, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -969,7 +969,7 @@ export const raidBosses: enemyInfo[] = [
             const damage = dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:bleeding_attack:1340697423793754134> **${enemy.name}**`, { atkMultiplier: 1.5, magicDamage: true });
 
             if (damage > 0) {
-                mybuff.hp.push(new buffInfo("+", -Math.floor(damage * 0.1), 9999));
+                mybuff.hp.push(new buffInfo("+", -Math.floor(damage * 0.25), 9999));
             };
 
             // const randomBuff = Math.floor(Math.random() * 3);
@@ -1022,7 +1022,7 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
 
             return AbilityResponse.SUCCESS;
-        }, [["Dots applied to the Hooded Hopper are applied to the player as well", "After every **8th** round, removes debuffs afflicting itself", "**Active**: Deals **150%** damage and applies bleeding equal to **10%** the damage caused, lasting until the end of the fight (**55** <:mana:1047269152957661255>)"]])
+        }, [["Dots applied to the Hooded Hopper are applied to the player as well", "After every **8th** round, removes debuffs afflicting itself", "**Active**: Deals **150%** damage and applies bleeding equal to **25%** the damage caused, lasting until the end of the fight (**55** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("POSTMASTER MALEDICT", "M", "the Postmaster", "M", true, {}, {}, { mana: 120 }, [735, 736, 737, 738], ["https://i.ibb.co/DHk8Nfyz/POSTMASTER-MALEDICT.png"], [], 21,

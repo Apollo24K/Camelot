@@ -306,7 +306,7 @@ export const skillTree: SkillPath[] = [
             if (target === myStats && options.damage > 0 && caster !== target) {
                 const reflectedDamage = Math.floor(options.damage * reflectPercent);
                 if (reflectedDamage > 0) {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🛡️ **${myStats.name}**`, { overwriteDamage: reflectedDamage, magicDamage: true, canCrit: false });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🛡️ **${myStats.name}**`, { overwriteDamage: reflectedDamage, magicDamage: true, canCrit: false, preventRetaliation: true });
                 };
             };
         });

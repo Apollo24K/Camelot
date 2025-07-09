@@ -894,7 +894,7 @@ export const items = [
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.cr = 0.05 * (20 - matchStats.round);
-            
+
             return AbilityResponse.SUCCESS;
         }, 9999));
 
@@ -930,7 +930,7 @@ export const items = [
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.atk += Math.floor(myStats.atk * Math.min(0.03 * Math.floor(matchStats.round - 1), 0.15));
             if (Math.random() > 0.5) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
-            
+
             return AbilityResponse.SUCCESS;
         }, 9999));
 
@@ -1091,7 +1091,7 @@ export const items = [
         mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.16), 9999));
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (Math.random() > 0.5) myStats.md += Math.floor(myStats.md * 0.1);
-            
+
             return AbilityResponse.SUCCESS;
         }, 9999));
 
@@ -1930,9 +1930,16 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Executes the enemy when below **20%** HP. The enemy starts with **12.5%** less HP. If the enemy has more than twice as much HP than the wielder, it starts with **25%** less HP of the wielder instead.", "Calcifer's Edge of Annihilation is a legendary sword that was forged by the flames of a thousand suns. It glows with an otherworldly heat and has the power to cut through even the hardest of metals like a hot knife through butter. Those who wield it are said to be unstoppable in battle, their enemies falling before them like wheat before the scythe. The sword is named after the ancient fire demon Calcifer, who is said to have imbued the weapon with its incredible power. Only the bravest of warriors dare to wield Calcifer's Edge of Annihilation, for its flames can burn as hot as the depths of hell itself.", "legendary", 287),
     new weaponInfo("Draiocht", "weapon", "sword", ["crafting", "chest"], "<:draiocht:1068510723136823306>", "https://i.imgur.com/hkO7TM7.png", "atk", 47, 768, "hp", 122, 645, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
-        ebuff.hp.push(new buffInfo("+", -drain, 9999));
-        mybuff.hp.push(new buffInfo("+", drain, 9999));
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
+
+            eStats.hp -= drain;
+            if (eStats.hp < 0) eStats.hp = 0;
+
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "Drains **2.5%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **5%** of the wielders HP instead.", "The legendary sword known as the Draiocht is said to have been forged by the ancient vampire lords, imbued with the power to drain the life force of its victims. Its razor-sharp blade, forged from the purest silver, is capable of slicing through flesh and bone with ease. Those who wield it are said to be blessed with the strength and immortality of the vampire race, but beware, for the sword's thirst for blood is insatiable.", "legendary", 288),
@@ -3055,26 +3062,33 @@ export const items = [
             maxUsage: 5,
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 myStats.mysticMoon++;
-                    if (myStats.mysticMoon === 5) {
-                        // Full Moon effect
-                        myStats.hp -= Math.floor(myStats.hp * 0.03);
-                        mybuff.hp.push(new buffInfo("+", -myStats.hp * 0.03, 9999));
-                        eStats.dodge -= 0.16;
-                        if (eStats.dodge < 0) eStats.dodge = 0;
-                        ebuff.dodge.push(new buffInfo("+", -0.16, 9999));
-                        eStats.def -= Math.floor(eStats.def * 0.4);
-                        ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.4), 9999));
-                        notice.push(`\n<:mystic_moon:1069016606199533578> The full moon is in effect.`);
-                        return true;
-                    };       
+                if (myStats.mysticMoon === 5) {
+                    // Full Moon effect
+                    myStats.hp -= Math.floor(myStats.hp * 0.03);
+                    mybuff.hp.push(new buffInfo("+", -myStats.hp * 0.03, 9999));
+                    eStats.dodge -= 0.16;
+                    if (eStats.dodge < 0) eStats.dodge = 0;
+                    ebuff.dodge.push(new buffInfo("+", -0.16, 9999));
+                    eStats.def -= Math.floor(eStats.def * 0.4);
+                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.4), 9999));
+                    notice.push(`\n<:mystic_moon:1069016606199533578> The full moon is in effect.`);
+                    return true;
+                };
             },
         });
         return AbilityResponse.SUCCESS;
     }, "After **5** critical strikes, the full moon rises, causing the wielder to lose **3%** current HP every round. However, the enemy has **-40%** DEF and **-16%** dodge rate. This can only be triggered once.", "The Mystic Moon bow is said to have been crafted by a reclusive group of elven magic-users, its graceful curves imbued with the power of the lunar cycle. As the full moon rises, the bow's strings hum with otherworldly energy, empowering its arrows to strike with unerring accuracy and devastating force. Those who wield the Mystic Moon bow are said to be guided by the subtle whispers of the moon, imbued with a hunter's instinct and a deadly precision.", "mythical", 412),
     new weaponInfo("Nightwing Myst", "weapon", "bow", ["chest"], "<:nightwing_myst:1069016609013903431>", "https://i.imgur.com/TKs4wkG.png", "atk", 106, 1033, "cr", 0.08, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03);
-        ebuff.hp.push(new buffInfo("+", -drain, 9999));
-        mybuff.hp.push(new buffInfo("+", drain, 9999));
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03);
+
+            eStats.hp -= drain;
+            if (eStats.hp < 0) eStats.hp = 0;
+
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "Drains **3%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **6%** of the wielders HP instead.", "The Nightwing Myst bow is a sleek and deadly weapon, perfectly balanced and designed for speed and accuracy. Its dark finish is nearly impossible to see in the shadows, making it the perfect tool for stealthy and deadly archery. The Nightwing Myst is a favorite among assassins and other shadowy figures, who rely on its quick strike and silent power to eliminate their targets without being detected. With the Nightwing Myst in hand, you can strike fear into the hearts of your enemies and leave them trembling in the darkness.", "mythical", 413),
@@ -3352,12 +3366,12 @@ export const items = [
 
     // Weapons - Genesis Staff
     new weaponInfo("Sacred Lifemender", "weapon", "staff", ["chest"], "<:sacred_lifemender:1069025798440362084>", "https://i.imgur.com/1nemsJt.png", "md", 171, 970, "md", 86, 594, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.mr -= Math.min(eStats.mr * Math.min(Math.floor(myStats.cr /2), 0.45), 1055);
+        eStats.mr -= Math.min(eStats.mr * Math.min(Math.floor(myStats.cr / 2), 0.45), 1055);
         myStats.selfhealChance.push(1);
         myStats.selfheal.push(0.08);
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.mr -= Math.min(eStats.mr * Math.min(Math.floor(myStats.cr /2), 0.45), 1055);
+            eStats.mr -= Math.min(eStats.mr * Math.min(Math.floor(myStats.cr / 2), 0.45), 1055);
             return AbilityResponse.SUCCESS;
         }, 9999));
 
@@ -3490,7 +3504,7 @@ export const items = [
                 myStats.cr = 1;
                 myStats.hp -= Math.floor(myStats.hp * 0.07);
             } else {
-                const heal = Math.floor((myStats.maxhp - myStats.hp) * Math.min((1- myStats.cr) / 5, 0.12));
+                const heal = Math.floor((myStats.maxhp - myStats.hp) * Math.min((1 - myStats.cr) / 5, 0.12));
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
             };
             return AbilityResponse.SUCCESS;
@@ -3861,9 +3875,16 @@ export const items = [
     new armorInfo("Robe of Divine Aspect", "armor", "cuirass", "Set of Divine Aspect", ["crafting", "chest"], "<:robe_of_divine_aspect:1081546631029211267>", "https://i.imgur.com/LGFZrAs.png", "hp", 51, 1654, "legendary", 564),
     new armorInfo("Gloves of Divine Aspect", "armor", "gloves", "Set of Divine Aspect", ["crafting", "chest"], "<:gloves_of_divine_aspect:1081547383659307078>", "https://i.imgur.com/dNndcaj.png", "hp", 52, 1660, "legendary", 565),
     new armorInfo("Boots of Divine Aspect", "armor", "boots", "Set of Divine Aspect", ["crafting", "chest"], "<:boots_of_divine_aspect:1081548150264844350>", "https://i.imgur.com/nHGVOHF.png", "def", 11, 126, "legendary", 566, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
-        ebuff.hp.push(new buffInfo("+", -drain, 9999));
-        mybuff.hp.push(new buffInfo("+", drain, 9999));
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.025);
+
+            eStats.hp -= drain;
+            if (eStats.hp < 0) eStats.hp = 0;
+
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "Drains **2.5%** HP from the enemy and adds it to the wearer every round. If enemy HP is more than twice of the wearers HP, it drains the equivalent of **5%** of the wearers HP instead."),
@@ -4162,10 +4183,13 @@ export const items = [
     new armorInfo("Jade Long Chestplate", "armor", "cuirass", "Jade Long Set", ["chest"], "<:jade_long_chestplate:1081565485696569344>", "https://i.imgur.com/E3UsKOC.png", "hp", 337, 3428, "genesis", 656),
     new armorInfo("Jade Long Vambrace", "armor", "gloves", "Jade Long Set", ["chest"], "<:jade_long_vambrace:1081565735639339129>", "https://i.imgur.com/vjqtUCE.png", "hp", 329, 3322, "genesis", 657),
     new armorInfo("Jade Long Boots", "armor", "boots", "Jade Long Set", ["chest"], "<:jade_long_boots:1081566342932602990>", "https://i.imgur.com/2Kx4wqU.png", "mr", 47, 184, "genesis", 658, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.035);
-        ebuff.hp.push(new buffInfo("+", -drain, 9999));
-        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
+
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const drain = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.035);
+
+            eStats.hp -= drain;
+            if (eStats.hp < 0) eStats.hp = 0;
+
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, drain, {});
 
             return AbilityResponse.SUCCESS;
