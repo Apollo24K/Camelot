@@ -20,6 +20,21 @@ const dungeonInProgress = new Map();
 const crazeLevelSelected = new Map();
 const embedColor = 0x034f20;
 
+
+interface BuffInfo{
+    id: string;
+    name: string;
+    description: string;
+    type: "positive" | "negative"; 
+}
+
+interface UserRunInfo{
+    level: number;
+    buffPool: Record<string, BuffInfo>;
+    appliedBuffs: BuffInfo[];
+}
+
+const userRuns = new Map<string, UserRunInfo>();
 const startDate = new Date('2024-12-22T00:00:00');
 
 const getNightmareMobCurse = {
@@ -44,11 +59,39 @@ const nightmareLore = {
     },
 };
 
-const randomBuffs = {
-
+const randomBuffs: Record<string, BuffInfo> = {
+     // Positive buffs
+     "atk_boost": {
+        id: "atk_boost",
+        name: "Warrior's Strength",
+        description: "Increase ATK by 25%",
+        type: "positive",
+        
+    },
+    "def_boost": {
+        id: "def_boost", 
+        name: "Iron Will",
+        description: "Increase DEF by 30%",
+        type: "positive",
+        
+    },
+    "hp_boost": {
+        id: "hp_boost",
+        name: "Vitality Surge",
+        description: "Increase HP by 40%",
+        type: "positive", 
+       
+    },
+    // Negative buffs (debuffs)
+    "fragile": {
+        id: "fragile",
+        name: "Glass Cannon",
+        description: "Deal 50% more damage but take 25% more damage",
+        type: "negative",
+    },
 };
 
-function getNightmareButtonRow(tab: string, level: number): ActionRowBuilder<ButtonBuilder> {
+function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
     const buttons = [
         new ButtonBuilder()
             .setCustomId('play')
@@ -131,7 +174,67 @@ function getModal(uid: string) {
             )
         );
 };
+function buffSelection(interaction: ChatInputCommandInteraction): Promise<number> {
+    return new Promise((resolve, reject) => {
+        let runData: UserRunInfo = userRuns.get(interaction.user.id) ?? {
+            level: 0,
+            buffPool: _.cloneDeep(randomBuffs),
+            appliedBuffs: [],
+        }
+        userRuns.set(interaction.user.id, runData);
 
+        const currentBuffs = Object.values(runData.buffPool);
+        const selectedBuffs = _.sampleSize(currentBuffs, 3); // Select 3 random buffs
+
+        const buffEmbed = new EmbedBuilder()
+            .setTitle(`🎉 Level ${runData.level + 1} Cleared!`)
+            .setDescription(
+                "Choose your reward:\n\n" +
+                selectedBuffs.map((buff, index) => 
+                    `**${index + 1}.** ${buff.name}\n*${buff.description}*`
+                ).join("\n\n")
+            )
+            .setColor(embedColor)
+        const buffRow = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(
+                ...selectedBuffs.map((buff) =>
+                    new ButtonBuilder()
+                        .setCustomId(`buff_${buff.id}`)
+                        .setLabel(buff.name)
+                        .setStyle(ButtonStyle.Primary)
+
+            )
+            )
+        interaction.followUp({embeds: [buffEmbed], components: [buffRow], fetchReply: true}).then((msg) => {
+            const buff = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId.startsWith("buff_"), componentType: ComponentType.Button, time: 90000, max: 1 });
+
+            buff.on('collect', (r) => {
+                console.log("Button clicked at", Date.now());
+                r.deferUpdate().catch(() => {
+                    console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
+                });
+                const buffId = r.customId.substring("buff_".length);
+                const selectedBuff = runData.buffPool[buffId];
+                console.log(selectedBuff)
+                
+                if (!selectedBuff) {
+                    r.followUp({ content: "❌ Invalid buff selection!", ephemeral: true });
+                    return;
+                }
+
+                // Removed buff from buff pool and add to applied buffs
+                delete runData.buffPool[buffId];
+                runData.appliedBuffs.push(selectedBuff)
+                
+                msg.edit({embeds: [buffEmbed.setDescription(`✅ **${selectedBuff.name}** selected!`)],components: []})
+                console.log("r.update() succeeded at", Date.now());
+                resolve(runData.level + 1);
+
+            })
+        })
+
+    });
+};
 function levelSelection(interaction: ChatInputCommandInteraction, stats: CompactUserSchema): Promise<number> {
     return new Promise((resolve) => {
         let level = crazeLevelSelected.get(interaction.user.id) ?? 0;
@@ -152,32 +255,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             });
         });
         let tab: "overview" | "lore" = "overview";
-        // const selectionRow = new ActionRowBuilder<StringSelectMenuBuilder>()
-        //     .addComponents(
-        //         new StringSelectMenuBuilder()
-        //             .setCustomId('nightmare_selection')
-        //             .setPlaceholder('Select your nightmare...')
-        //             .addOptions(options),
-        //     );
 
-        // const getButtonRow = () => {
-        //     return new ActionRowBuilder<ButtonBuilder>()
-        //         .addComponents(
-        //             new ButtonBuilder()
-        //                 .setCustomId('play')
-        //                 .setLabel("Start Nightmare")
-        //                 .setStyle(ButtonStyle.Success),
-        //             // .setDisabled(level < 13),
-        //             new ButtonBuilder()
-        //                 .setCustomId('ignore_defer-edit')
-        //                 .setLabel(`Edit Build`)
-        //                 .setStyle(ButtonStyle.Primary),
-        //             new ButtonBuilder()
-        //                 .setCustomId('lore')
-        //                 .setLabel(`Lore`)
-        //                 .setStyle(ButtonStyle.Primary),
-        //         );
-        // };
         console.log(characters[preselectedChar].name)
         const getDesc = () => {
             if (tab === "overview") {
@@ -195,10 +273,9 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             .setThumbnail("https://i.ibb.co/HxQCPq9/image.png")
             .setDescription(getDesc())
             .setFooter({ text: levelsUnlocked > nightmares.length - 1 ? `All levels have been unlocked!` : `Next level unlocks in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min` });
-        interaction.reply({ embeds: [Embed], components: [getNightmareButtonRow("overview", level)] }).then((msg) => {
+        interaction.reply({ embeds: [Embed], components: [getNightmareButtonRow(tab)] }).then((msg) => {
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "play", componentType: ComponentType.Button, time: 90000 });
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
-            // const select = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "nightmare_selection", componentType: ComponentType.StringSelect, time: 90000 });
             const lore = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "lore", componentType: ComponentType.Button, time: 90000 });
 
             play.on('collect', () => {
@@ -302,23 +379,9 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 });
             });
 
-            // select.on('collect', r => {
-            //     r.deferUpdate().catch(() => {
-            //         console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-            //     });
-
-            //     let readVal = parseInt(r.values[0]);
-            //     if (readVal >= levelsUnlocked) readVal = 0;
-
-            //     level = readVal;
-            //     crazeLevelSelected.set(interaction.user.id, level);
-
-            //     interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [selectionRow, getButtonRow()] });
-            // });
-
             lore.on('collect', () => {
                 tab = (tab === "overview") ? "lore" : "overview";
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getNightmareButtonRow(tab, level)] })
+                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getNightmareButtonRow(tab)] })
             });
 
             play.on('end', () => {
@@ -352,8 +415,10 @@ const exportCommand: SlashCommand = {
         //     // interaction.channel.send(`${interaction.user.toString()} is off </stampede:1111044852679979019> cooldown!`);
         // }, cd);
 
+        const currentNightmare = nightmares[level];
+        const preselectedChar = currentNightmare.preSelectedChar;
         // Equip Craze Build
-        stats.battlechar = stats.craze_equipment.char as number;
+        stats.battlechar = preselectedChar;
         stats.char_ref[stats.battlechar] = 5;
         stats.shield_slot = 1;
         stats.level = 70;
@@ -431,7 +496,13 @@ const exportCommand: SlashCommand = {
                         craze_levels: { type: "set", value: stats.craze_levels },
                     });
                 };
-                return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
+
+
+                await interaction.followUp({embeds: [Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`)]})
+
+                // just for testing purposes
+                await buffSelection(interaction);
+                return;
             };
 
             stats.craze_levels[level] ||= 0;
@@ -456,9 +527,14 @@ const exportCommand: SlashCommand = {
             //     .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n\`disabled\`: The christmas craze event has long ended. It's been kept open by the request of players to use it as a trial substitude until that gets a better rework <:ThumbsUp:1020442047712350298>`)
             //     .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
 
+
+
+            // await buffSelection(interaction, stats);
             return Embed
                 .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n${stats.craze_levels[level] === 1 ? "1x <a:EXTRA:1138530846144462968>, " : ""}${loot ? `${loot}<:coins:872926669055356939>, ` : ""}`)
                 .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+
+
         };
 
         let matchStats = Avalon.getMatchStats(interaction);

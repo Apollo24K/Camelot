@@ -2,7 +2,7 @@ import { enemyInfo, nightmareMobs } from "./enemies";
 
 type NightmareOptions = {
     accentColor?: string;
-    preSelectedChar?: number;
+    preSelectedChar: number;
 };
 
 export default class NightmareInfo {
@@ -13,7 +13,7 @@ export default class NightmareInfo {
     private _enemy: enemyInfo;
     private _options: NightmareOptions;
 
-    constructor(id: number, name: string, occassion: string, minHp: number, enemy: enemyInfo, options: NightmareOptions = {}) {
+    constructor(id: number, name: string, occassion: string, minHp: number, enemy: enemyInfo, options: NightmareOptions) {
         this._id = id;
         this._name = name;
         this._occassion = occassion;
@@ -46,8 +46,8 @@ export default class NightmareInfo {
     get accentColor() {
         return this.options.accentColor ?? "#ff3838";
     };
-    get preSelectedChar(){
-        return this.options.preSelectedChar ?? 0;
+    get preSelectedChar() {
+        return this.options.preSelectedChar;
     }
 
 };
