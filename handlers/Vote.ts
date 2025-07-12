@@ -60,7 +60,11 @@ const handler: BotHandler = {
         // Rank.top Webhook
         app.post('/rankvote', async (req, res) => {
             const vote = req.body;
-            if (vote.authorization !== config.rank.auth) return;
+
+            // Check if authorization is valid
+            if (req.headers.authorization !== config.rank.auth && vote.authorization !== config.rank.auth) {
+                return res.status(401).send('Unauthorized');
+            };
 
             // Send a response back to acknowledge receipt
             res.status(200).send('received');

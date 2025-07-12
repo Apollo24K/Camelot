@@ -6,10 +6,10 @@ import { RankTopClient } from '@rank-top/sdk';
 
 const handler: BotHandler = {
     name: "Autoposter",
-    execute: (client: Client) => {
+    execute: async (client: Client) => {
 
         // Only if Camelot
-        if (client.user?.id === "706183309943767112") {
+        if (config.clientId.active === "706183309943767112") {
 
             // POST bot stats to top.gg
             const ap = AutoPoster(config.topgg.token, client);

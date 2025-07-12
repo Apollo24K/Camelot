@@ -127,7 +127,13 @@ const exportCommand: SlashCommand = {
                     .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
                     .setImage(img)
                     .setThumbnail(rarity(char.rarity))
-                    .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`)
+                    .setDescription(
+                        `**${char.name}**\n${splitTitle(char.anime)}\n\n` +
+                        `**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n` +
+                        `**Class**: ${cls}\n` +
+                        `**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n` +
+                        `**Items**: <:rune_empty:1034507494539669635> ${charstats.ring1icon}${charstats.ring2icon}${charstats.ring3icon}`
+                    )
                     .addFields(
                         { name: `HP ${customEmojis.hp}`, value: "" + charstats.hp, inline: true },
                         { name: `ATK ${customEmojis.atk}`, value: "" + charstats.atk, inline: true },

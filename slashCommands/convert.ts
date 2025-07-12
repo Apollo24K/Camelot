@@ -119,7 +119,7 @@ const exportCommand: SlashCommand = {
                         [50, 52, 54].forEach((e) => {
                             if (e + type < to) {
                                 arg = Math.floor((stats.items[e + type] || 0) / 5);
-                                newItems[e + type] = -(5 * arg);
+                                newItems[e + type] = (newItems[e + type] || 0) - (5 * arg);
                                 newItems[e + type + 2] = arg;
                             };
                         });
@@ -132,6 +132,8 @@ const exportCommand: SlashCommand = {
                         newItems[from] = -(Math.pow(5, dif) * arg);
                         newItems[to] = arg;
                     };
+
+                    console.log(newItems);
 
                     // Update users table
                     await updateUsers(interaction.user.id, {

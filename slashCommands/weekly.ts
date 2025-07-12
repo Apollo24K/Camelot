@@ -8,12 +8,18 @@ const exportCommand: SlashCommand = {
         if (!author.schema.premium) return interaction.reply("This is a `/premium` feature. If you like the bot we'd appreciate your support <:RaphiSmile:868998036645380197>");
 
         if (author.schema.weeklyclaimed) {
-            let s = (7 * 24 * 60 * 60000) - (new Date().getTime() % (7 * 24 * 60 * 60000));
-            let dLeft = Math.floor(s / (24 * 60 * 60000));
-            s -= dLeft * 24 * 60 * 60000;
-            let hLeft = Math.floor(s / (60 * 60000));
-            s -= hLeft * 60 * 60000;
-            let mLeft = Math.floor(s / 60000);
+            const now = new Date();
+            const dayOfWeek = now.getDay();
+            const daysUntilSunday = dayOfWeek === 0 ? 7 : 7 - dayOfWeek;
+            const nextSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 0, 0, 0);
+
+            let s = nextSunday.getTime() - now.getTime();
+            let dLeft = Math.floor(s / (1000 * 60 * 60 * 24));
+            s %= (1000 * 60 * 60 * 24);
+            let hLeft = Math.floor(s / (1000 * 60 * 60));
+            s %= (1000 * 60 * 60);
+            let mLeft = Math.floor(s / (1000 * 60));
+
             return interaction.reply("You have already used your weekly this week. Come back in " + `${dLeft ? `**${dLeft}**d ` : ""}${hLeft ? `**${hLeft}**h ` : ""}**${mLeft + 1}**min`);
         };
 

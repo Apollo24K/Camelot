@@ -285,8 +285,8 @@ export const skillTree: SkillPath[] = [
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if ((eStats.hp / eStats.maxhp) < healthThreshold) {
-                mybuff.atk.push(new buffInfo("*", bonusDamagePercent, 9999));
-                mybuff.md.push(new buffInfo("*", bonusDamagePercent, 9999));
+                mybuff.atk.push(new buffInfo("*", 1 + bonusDamagePercent, 9999));
+                mybuff.md.push(new buffInfo("*", 1 + bonusDamagePercent, 9999));
 
                 //@ts-ignore
                 this._used++;
@@ -306,7 +306,7 @@ export const skillTree: SkillPath[] = [
             if (target === myStats && options.damage > 0 && caster !== target) {
                 const reflectedDamage = Math.floor(options.damage * reflectPercent);
                 if (reflectedDamage > 0) {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🛡️ **${myStats.name}**`, { overwriteDamage: reflectedDamage, magicDamage: true, canCrit: false });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🛡️ **${myStats.name}**`, { overwriteDamage: reflectedDamage, magicDamage: true, canCrit: false, preventRetaliation: true });
                 };
             };
         });

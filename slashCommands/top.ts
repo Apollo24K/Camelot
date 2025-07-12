@@ -1,11 +1,11 @@
 import { EmbedBuilder, ComponentType, ButtonInteraction, Message } from "discord.js";
 import fs from 'fs';
-import { auniq, characters } from "../Modules/chars.js";
-import { userLevel, getClassLvl, showPage, formatNumberWithQuotes } from "../Modules/functions.js";
-import { classes } from "../Modules/classes.js";
-import { PageRow } from "../Modules/components.js";
-import { SlashCommand, UserSchema } from "../types.js";
-import { getLatestStampede, getReferralLeaderboard, getServerSchema, getUserRanking } from "../Modules/queries.js";
+import { auniq, characters } from "../Modules/chars";
+import { userLevel, getClassLvl, showPage, formatNumberWithQuotes } from "../Modules/functions";
+import { classes } from "../Modules/classes";
+import { PageRow } from "../Modules/components";
+import { SlashCommand, UserSchema } from "../types";
+import { getLatestStampede, getReferralLeaderboard, getServerSchema, getUserRanking } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'top',
@@ -26,7 +26,7 @@ const exportCommand: SlashCommand = {
         const servers = await getServerSchema(interaction.guild.id);
         const user_ids = servers?.user_ids ?? [];
 
-        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
+        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
         let count = 1, showUsers: string[] = [];
         switch (flag) {
             case "level":
@@ -160,6 +160,11 @@ const exportCommand: SlashCommand = {
             //     stats = stats.filter((e) => !(e.id in blacklist));
             //     showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.referral_count || 0}** referrals`);
             //     break;
+            case "cow":
+                stats = await getUserRanking(scope, user_ids, "cow_participation");
+                stats = stats.filter((e) => !(e.id in blacklist));
+                showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.cow_participation}** points`);
+                break;
             case "event":
                 stats = await getUserRanking(scope, user_ids, "event");
                 stats = stats.filter((e) => !(e.id in blacklist));

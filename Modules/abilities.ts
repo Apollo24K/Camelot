@@ -971,7 +971,7 @@ export const abilities: Record<number, Ability> = {
             if (this.roundUsed === -1) {
                 this.used--;
                 if (myStats.sm < 20) {
-                    matchStats.interaction.followUp({ content: "You don't have enough mana! (**${myStats.sm}**/20\\💧)", ephemeral: true });
+                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/20\\💧)`, ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 myStats.sm -= 20; this.roundUsed = matchStats.round;
@@ -1992,6 +1992,360 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
+    //"10528": {
+    //    usage: 9999,
+    //    used: 0,
+    //    cost: 0,
+    //    pause: 0,
+    //    desc: "**Total Usage**: `1 + Unlimited (CD: 5)`\n**Cost**: `50% HP, and 5% current HP per turn | 20% HP`\n**Timeout**: `No`\n**Role**: `DPS`\n\n*Knock knock~ are you seeking eternal slumber?*\nDalus has **2** states : PAST & PRIME. He may equip “Broken shell” to convert to his PAST state, else he always fights in his PRIME state. To equip the shell, do `/item equip item:broken shell`. To remove the shell, do `/item equip item:remove shell`\n\nWhen Dalus is in his PRIME state, his active has enhanced effects, but is faced by Kisogi’s intervention every **3rd** turn, reminding the target of dreams lost on their way, eager to find the way out. This strengthens them by boosting their ATK & MD by **2.5%**, and mana regen by **1** 💦.\n\n*The show… must go on. Graceful with impish glee.*\n\nHe evades the **1st** lethal hit (stackable), and afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**. For the next **5** turns, his mana regeneration is boosted by **20** 💦.\n\n*A sharp blade pierces through the blossoming rose, delivering the anguish of a hunter. [Rosie], Dalus’ trusted nightmare emerges to drag the enemy into his carnival of nightmares for the rest of the fight*.\nDalus will now expend **all** mana at the start of every turn, gaining a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25 💧), lasting for that turn.\n\nFollowing the mana consumption, [Rosie] tears open the enemy’s mental lines of weakness, dealing **10%** of their max hp (capped at **20**/**30%** of Dalus ATK) as undodgeable absolute DMG (Ignores all DEF/MR). Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **9**/**15%** of his max HP.\n\nIf he is in his PRIME state, he may use his ability again with no timeout, sacrificing **20%** of his current HP before boosting his mana regeneration by **20** 💦 for the next **3** turns.\n\nWhen in a party, Dalus casts a nightmare on both the ally and the enemy, decreasing their DEF/MR by **20%** and summoning [Rosie] every turn, dealing **10%** undodgeable ATK to the enemy as absolute DMG.\n\nIf Kisogi is in the party, the nightmare is resolved, disabling the previous party effect. Now, the ally will deal **15%** ATK as absolute DMG with **100%** critical rate to the enemy every round.",
+    //    shortdesc: "Uses: `1 + Unlimited (CD: 5)`\nCost: `50% HP, 5% current hp per round | 20% HP`\nTimeout: `No`\nTags: `DPS (Mana burn, Absolute DMG, Burst survival)`\n\n__**Passive**__:\n- Dalus has **2** states : PAST & PRIME.\n- To equip the shell, do `/item equip item:broken shell` (PAST state)\n- To remove the shell, do `/item equip item:remove shell` (PRIME state)\n\nIf in PRIME state:\n- Enhances active (✨) effects\n- Faced by Kisogi’s intervention every **3rd** turn (boosting enemy’s ATK & MD by **2.5%** & mana regen by **1** 💦)\n\n”Impish Glee”:\n- Evades the **1st** lethal hit (stackable)\n- Afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**\n- For the next **5** turns: Mana regeneration **+20** 💦.\n\n__**Active**__ (✨):\n- Summons [Rosie] for the rest of the fight.\n- Will now expend all mana at the start of every round\n- In return gain a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25💧), lasting for that round.\n\n- Following the mana consumption, [Rosie] deals **10%** of their max HP (capped at 20/30% of Dalus ATK) as absolute DMG (Ignores all DEF/MR).\n- Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **9**/**15%** of his max HP.\n\nIf he is in his PRIME state:\n- May use his ability again with no timeout\n- Sacrifices **20%** of his current HP\n- Mana regeneration **+20** 💦 for the next **3** rounds\n\n__**Party Ability**__ (👥):\n- **-20%** DEF & MR for both ally & enemy\n- Summons [Rosie] every turn: Deals **10%** ATK to the enemy as undodgeable absolute DMG.\n\nIf Kisogi is in the party: previous party effect disabled. Instead:\n- The ally will deal **15%** ATK to the enemy as undodgeable absolute dmg with **100%** critical rate every round.",
+    //    ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+    //        // Dalus
+    //        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //
+    //        // Active (I)
+    //        if (this.used === 1) {
+    //            // Lose 50% current HP instantly & 5% current HP every round
+    //            myStats.hp -= Math.floor(myStats.hp * 0.5);
+    //            mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * 0.05), 9999));
+    //            notice.push(`\n<:dalusrose:1387007950601719908> Dalus summoned **Rosie** for the rest of the fight`);
+    //
+    //                // Permanent mana loss & dmg boost effect
+    //                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                // Gain 1/2% ATK for every 1 💧consumed
+    //                const atkScale = myStats.dalusPrime ? 0.02 : 0.01;
+    //                const atkBuff = Math.floor(myStats.atk * Math.min(myStats.sm, 25) * atkScale);
+    //                myStats.atk += atkBuff;
+    //                myStats.sm -= Math.min(myStats.sm, 25);
+    //
+    //                // Lines of weakness + Heal
+    //                const dmgLimit = myStats.dalusPrime ? 0.3 : 0.2
+    //                const dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(Math.min(eStats.maxhp * 0.1, dmgLimit)) : 0;
+    //                // Overflow?
+    //                if (dmg > dmgLimit) {
+    //                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(Math.min(dmg - dmgLimit, myStats.maxhp * myStats.dalusPrime ? 0.15 : 0.9)), {});
+    //                };
+    //                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:rosie:1387006066566627328> **Rosie**`, { overwriteDamage: dmg, magicDamage: true, dodge: false });
+    //
+    //                return AbilityResponse.SUCCESS;
+    //            }, 9999));
+    //        } else {
+    //            // Active (II)
+    //            // 5 round cd
+    //            if (this.pause > matchStats.round) {
+    //                matchStats.interaction.followUp({ content: `**Dalus** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+    //                this.used--;
+    //                return AbilityResponse.FAILURE;
+    //            } else {
+    //                myStats.hp -= Math.floor(myStats.hp * 0.2);
+    //                this.pause = matchStats.round + 5;
+    //                mybuff.mg.push(new buffInfo("+", 20, 4));
+    //                notice.push("\n✨ **Dalus** further increased their mana regeneration by **20** 💦");
+    //            };
+    //        };
+    //        return AbilityResponse.SUCCESS;
+    //    },
+    //    passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+    //        myStats.dalusPrime = (myStats.shell === "broken") ? false : true; // false = Past, true = Prime
+    //        const msg = (!myStats.dalusPrime) ? `\n<:brokenshell:1387074948815781918> **${char.name}** decides to hold onto the last bit of memories left...` : `\n<:dalusrose:1387007950601719908> The nightmare has given an impetus to **${char.name}**. Havoc shall wreck.`;
+    //        notice.push(msg);
+    //        myStats.evadeDeathStrike ??= 0;
+    //        myStats.evadeDeathChance ??= 0;
+    //        
+    //        myStats.evadeDeathStrike += 1;
+    //        myStats.evadeDeathChance += 1;
+    //
+    //        // Burst shield gain and stuff upon first death evasion
+    //            matchStats.on("deathEvade", {
+    //                maxUsage: 1,
+    //                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+    //                    if (caster == myStats) {
+    //                        const shgain = myStats.maxhp
+    //                        myStats.shield += myStats.maxhp;
+    //                            myStatsFixed.maxhp = 1;
+    //                        myStatsFixed.hp = 1;
+    //                        myStats.maxhp = 1;
+    //                        mybuff.mg.push(new buffInfo("+", 20, 5));
+    //                        notice.push(`\n<:dalusrose:1387007950601719908> The show must... go on. **Dalus** gained a **${shgain}** HP shield`);
+    //                        return AbilityResponse.SUCCESS;
+    //                    };
+    //                }
+    //            });
+    //        if (myStats.dalusPrime) {
+    //            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                if (matchStats.round % 3 === 0) {
+    //                    // Restart by Kisogi
+    //                    const buffScale = 0.025;
+    //                    eStats.atk += Math.floor(eStats.atk * buffScale);
+    //                    eStats.md += Math.floor(eStats.md * buffScale);
+    //                    ebuff.mg.push(new buffInfo("+", 1, 9999));
+    //                    ebuff.atk.push(new buffInfo("+", Math.floor(eStats.atk * buffScale), 9999));
+    //                    ebuff.md.push(new buffInfo("+", Math.floor(eStats.md * buffScale), 9999));
+    //                };
+    //               return AbilityResponse.SUCCESS;
+    //            }, 9999));
+    //        }
+    //        return AbilityResponse.SUCCESS;
+    //    },
+    //    party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //        const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
+    //        const dmgScale = names.includes("Kisogi") ? 0.15 : 0.1, critChance = names.includes("Kisogi") ? 1 : Math.random(), dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(myStats.atk * dmgScale) : 0, desc = names.includes("Kisogi") ? `<:rosie:1387006066566627328> **Rosie**` : `**✨ Kisogi**;`;
+    //        // Dalus unique effects
+    //        if (!names.includes("Kisogi")) {
+    //            eStats.def -= Math.floor(eStats.def * 0.2);
+    //            myStats.def -= Math.floor(myStats.def * 0.2);
+    //            ebuff.def.push(new buffInfo("+", -eStats.def * 0.2, 9999));
+    //            mybuff.def.push(new buffInfo("+", -myStats.def * 0.2, 9999));
+    //        };
+    //        
+    //        // Common DMG
+    //        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, desc, { overwriteDamage: dmg, magicDamage: true, dodge: false, critChance: critChance });
+    //            
+    //        // Permanent effects
+    //        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, desc, { overwriteDamage: dmg, magicDamage: true, dodge: false, critChance: critChance });
+    //            
+    //            return AbilityResponse.SUCCESS;
+    //        }, 9999));
+    //        return AbilityResponse.SUCCESS;
+    //    },
+    //},
+    // "12398": {
+    //     usage: 3,
+    //     used: 0,
+    //     cost: 0,
+    //     buffID: 0,
+    //     desc: "__**Total Usage**__: `2 (3 if in Prime state)`\n__**Cost**__: `18% current HP 🩸`\n__**Timeout**__: `No`\n__**Roles**__: `Support`\n\n*Peeeekaboo~ W- Why are you crying? My dear… want to see some magic tricks?*\n\nKisogi has **2** states : PAST & PRIME. He may equip “Broken shell” to convert to his PAST state, else he always fights in his PRIME state. To equip the shell, do `/item equip item:broken shell`. To remove the shell, do `/item equip item:remove shell`\n\nWhen Kisogi is in his prime state, his normal ATTACK and active have *enhanced effects*, but is faced by Dalus’ intervention, reducing his max HP by **20%**.\n\nKisogi’s attack causes the enemy to fall into a slumber, dealing **80%**/**100%** MD to the foe. This attack has a **50%** chance (**75%** chance instead when in [Wild Dream], **100%** chance instead when in [??? Dream]) to activate ”Fantasy”…\n\n*Hey! Why are you hitting me! Hold on… Tada! How does this look?*\n\n“Fantasy” applies **1**/**2** random effect(s) from `Trick` to the enemy, then applies **1**/**2** random effect(s) from `Treat` to himself. Non-stat buffs last for **2** rounds, while immediate effects only last for that round.\n\n`Trick` : **-12%** ATK/MD , **-12%** DEF/MR, **-25%** critical rate, lose **10** 💧, Loses **2%** of max HP (Up to 4% of Kisogi’s max HP)\n`Treat` : **+12%** ATK/MD , **+12%** DEF/MR , **+25%** critical rate, steals **10** 💧, restores **6%** missing HP.\n\n*Fret not... in a dream, all the power lies in you.*\n\nThe first use of his active (✨) leads him into a [Light Dream]. At the start of every round, Kisogi loses **50%** of total 💧owned, but increases MD and critical damage by **1**/**2%**, lasting for the rest of the battle.\n\nUpon using ✨ again, or after **15** rounds, exits the [Light Dream], and enters a [Wild Dream], where he decreases the enemy’s MR by **14%**/**28%**, then deals **5%**/**7%** undodgeable DMG for every **1%** of mana missing from the mana pool. His attack’s chance to activate “Fantasy” is increased to **75%**.\n\nUpon using ✨ afterwards, and if he is in his PRIME state, he enters a [??? Dream], immediately restoring all missing HP. However, the commotion causes Dalus to enter the battlefield, causing Kisogi to lose **5%** max HP every round. Kisogi also grows stronger, as his chance of activating “Fantasy” is increased to **100%** for **10** rounds. The total damage dealt by Kisogi and the enemy are tallied every round. After **10** rounds, if Kisogi dealt more damage, the increased chance of activating “Fantasy” is kept permanently. Else, his max HP is set to **1** permanently, and the max HP DoT is removed.\n\nIn a party, starting from the 6th round, Kisogi intervenes every round to apply **1** effect from `Treat` to the ally, lasting for **1** round.\n\nIf Dalus is in the party, he additionally reminds allies their lost dreams on their way, urging them to find a way out. This strengthens them by boosting their ATK & MD by **10%** and mana regen by **7**.",
+    //     shortdesc: "__**Uses**__: `2 (3 if in Prime state)`\n__**Cost**__: `18% current HP (🩸)`\n__**Timeout**__: `No`\n__**Tags**__: `DPS (Progressive, RNG, )`\n\n__**Passive**__:\n\- He may equip “Broken shell” to convert to his PAST state, else he always fights in his PRIME state.\n-  To equip the shell, do `/item equip item:broken shell`. To remove the shell, do `/item equip item:remove shell`\n\nWhen in his PRIME state: His normal attack and active have *enhanced* effects, but he has **-20%** max HP\n\nATTACK is altered:\n> - Deals **80%**/**100%** MD to the foe.\n> - Has a **50%** chance (**75%** chance instead when in [Wild Dream], **100%** chance instead when in [??? Dream]) to activate ”Fantasy”\n\n”Fantasy”:\n- Applies **1**/**2** random effect(s) from `Trick` to the enemy\n- Applies **1**/**2** random effect(s) from `Treat` to himself.\n- Non-stat buffs last for 2 rounds, while immediate effects only last for that round.\n- `Trick` : **-12%** ATK/MD , **-12%** DEF/MR, **-25%** critical rate, lose **10** 💧, Loses **2%** of max HP (Up to 4% of Kisogi’s max HP)\n- `Treat` : **+12%** ATK/MD , **+12%** DEF/MR , **+25%** critical rate, steals **10** 💧, restores **6%** missing HP.\n\n__**Active (✨)**__:\n__Core Mechanic__: Kisogi has **3** Dream states.\n\n`1.` [Light Dream (1st use of ✨) ] :\nAt the start of every round: Loses **50%** of total 💧 owned, but increases MD and critical damage by **1**/**2%**, lasting for the rest of the battle.\nUpon using ✨again, or after **15** rounds:\n- Exits the [Light Dream], and enters a [Wild Dream].\n\n`2.` [Wild Dream] :\n- **-14%**/**-28%** enemy’s MR permanently\n- Deals **5%**/**7%** undodgeable DMG for every **1%** of mana missing from the mana pool.\n- His attack’s chance to activate “Fantasy” is increased to **75%**.\n\n`3.` [??? Dream (3rd ✨) ] :\nRequirement: In PRIME state\n- Restore all missing HP\n- Lose **5%** max HP every round\n- Chance of activating “Fantasy” is increased to **100%** for **10** rounds\n- The total damage dealt by Kisogi and the enemy are tallied every round\n\nAfter **10** rounds:\n- If Kisogi dealt more damage: the increased chance of activating “Fantasy” is kept permanently.\n- Else: His max HP is set to **1** permanently, and the max HP DoT is removed.\n\n__**Party Ability (👥)**__: \n- Starting from the **6th** round: Apply **1** effect from `Treat` to the ally every round, lasting for **1** round.\n\nIf Dalus is in the party:- Allies have **+10%** and **+7** mana regeneration.",
+    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+    //         // Kisogi
+    //         matchStats.turn = matchStats.turnSkill ? 0 : 1;
+
+    //         // dreamState: 0 = Light ; 1 = Wild ; 2 = ???
+    //         // Active (I)
+    //         if (this.used === 1) {
+    //             myStats.hp -= Math.floor(myStats.hp * 0.18);
+    //             // Last up to 15 rounds
+    //             myStats.dreamState = 0;
+
+    //             // Buff effects
+    //             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             if (myStats.dreamState === 0) {
+    //                 // Loses 50% mana owned every round, but increases MD & CD by 1/2%.
+    //                 const buffScale = myStats.kisogiPrime ? 0.02 : 0.01
+    //                 myStats.sm -= Math.floor(myStats.sm / 2);
+    //                 myStats.cd += Math.floor(buffScale);
+    //                 myStats.md += Math.floor(myStats.md * buffScale);
+    //                 mybuff.cd.push(new buffInfo("+", buffScale, 9999));
+    //                 mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * buffScale), 9999));
+    //             };
+    //                return AbilityResponse.SUCCESS;
+    //             }, 15));
+
+    //             // End buffs
+    //             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                 // Forcibly enter Wild Dream
+    //                 if (myStats.dreamState === 1) myStats.dreamState = 2;
+    //                 this.used++
+    //                 return AbilityResponse.SUCCESS;
+    //             }));
+                
+    //             notice.push(`\n💤 ${char.name} entered a __Light Dream__`);
+    //         };
+            
+    //         // Active (II)
+    //         if (this.used === 2) {
+    //             myStats.hp -= Math.floor(myStats.hp * 0.18);
+    //             myStats.dreamState = 1;
+    //             const defShred = myStats.kisogiPrime ? 0.3 : 0.15, dmgScale = myStats.kisogiPrime ? 7 : 5 * (1 - myStats.sm / myStats.mana);
+    //             eStats.mr -= Math.floor(eStats.mr * defShred);
+    //             ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * defShred), 9999));
+    //             notice.push(`\n💤 ${char.name} entered a __Wild Dream__`);
+    //             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `💦 **Kisogi**`, { atkMultiplier: dmgScale, magicDamage: true, dodge: false });
+    //         };
+
+    //         // Active (III)
+    //         if (this.used === 3) {
+    //             if (!myStats.kisogiPrime) {
+    //                 matchStats.interaction.followUp({ content: `**Kisogi** needs to be in his Prime form in order to use this active.`, ephemeral: true });
+    //                 return AbilityResponse.FAILURE;
+    //             } else {
+    //                 notice.push(`\n❔${char.name} entered a __??? Dream__ for **10** rounds`);
+    //                 myStats.hp -= Math.floor(myStats.hp * 0.18);
+    //                 myStats.dreamState = 2;
+    //                 myStats.hp = myStats.maxhp;
+    //                 const dalusDoT = new buffInfo("+", -Math.floor(myStats.maxhp * 0.05), 9999);
+    //                 this.buffID = dalusDoT.id;
+    //                 mybuff.hp.push(dalusDoT);
+
+    //                 // Tally DMG
+    //                 matchStats.on("attack", {
+    //                     maxRound: 10,
+    //                     callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+    //                         if (caster === eStats) {
+    //                             eStats.recordDamageDealt += options.damage;
+    //                         } else {
+    //                         myStats.recordDamageDealt += options.damage;
+    //                         };
+    //                     },
+    //                 });
+
+    //                 // After 10 rounds, see if exit mode
+    //                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 10, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                     if (eStats.recordDamageDealt > myStats.recordDamageDealt) {
+    //                         myStats.dreamState = 1;
+    //                         // Dalus leaves
+    //                         myStats.maxhp = 1;
+    //                         myStats.hp = 1;
+    //                         myStatsFixed.maxhp = 1;
+    //                         myStatsFixed.hp = 1;
+    //                         if (mybuff.hp.findIndex((e) => e.id === this.buffID) !== -1) mybuff.hp.splice(mybuff.hp.findIndex((e) => e.id === this.buffID), 1);
+    //                         notice.push(`\n✨ **Kisogi** dealt less damage than the enemy and reverted back to the __Wild Dream__ state.`);
+    //                     } else {
+    //                         notice.push(`\n💦 **Kisogi** dealt more damage than the enemy, and will stay in __??? Dream__ permanently.`);
+    //                     }
+    //                     return AbilityResponse.SUCCESS;
+    //                 })); 
+    //             }
+    //         };
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    //     passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+    //         myStats.dreamState = 0;
+    //         myStats.kisogiPrime = (myStats.shell === "broken") ? false : true; // false = Past, true = Prime
+    //         const msg = (!myStats.kisogiPrime) ? `\n<:brokenshell:1387074948815781918> **${char.name}** decides to hold onto the last bit of memories left...` : `\n✨ The fantasy has given an impetus to **${char.name}**. It shall reach faraway.`;
+    //         notice.push(msg);
+
+    //         if (myStats.kisogiPrime) {
+    //             // -20% max HP
+    //             const hpreduction = Math.floor(myStats.maxhp * 0.2);
+    //             myStats.maxhp -= hpreduction;
+    //             myStatsFixed.maxhp -= hpreduction;
+    //             myStats.hp -= hpreduction;
+    //             myStatsFixed.hp -= hpreduction;
+    //         };
+
+    //         const fantasyBuff = myStats.kisogiPrime ? 2 : 1, fantasyDamage = myStats.kisogiPrime ? 1 : 0.8;
+    //         myStats.replaceButton.atk = {
+    //             emoji: "🪄",
+    //             run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🪄 **${char.name}**`, { atkMultiplier: fantasyDamage, magicDamage: true, combodmg: true, mdChance: -1 });
+                    
+    //                 if (Math.random() <= 0.5 + 0.25 * myStats.dreamState) {
+    //                     for (let i = 0; i < fantasyBuff; i++) {
+    //                         // Trick
+    //                         let effectIndex = Math.floor(Math.random() * 5);
+    //                         switch (effectIndex) {
+    //                             case 1:
+    //                                 eStats.atk -= Math.floor(eStats.atk * 0.12);
+    //                                 eStats.md -= Math.floor(eStats.md * 0.12);
+    //                                 ebuff.atk.push(new buffInfo("+", -Math.floor(eStats.atk * 0.12), 2));
+    //                                 ebuff.md.push(new buffInfo("+", -Math.floor(eStats.md * 0.12), 2));
+    //                                 break;
+    //                             case 2:
+    //                                 eStats.def -= Math.floor(eStats.def * 0.12);
+    //                                 eStats.mr -= Math.floor(eStats.mr * 0.12);
+    //                                 ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * 0.12), 2));
+    //                                 ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.12), 2));
+    //                                 break;
+    //                             case 3:
+    //                                 eStats.cr -= 0.25;
+    //                                 ebuff.cr.push(new buffInfo("+", -0.25, 2));
+    //                                 if (eStats.cr < 0) eStats.cr = 0;
+    //                                 break;
+    //                             case 4:
+    //                                 eStats.sm -= 10;
+    //                                 if (eStats.sm < 0) eStats.sm = 0;
+    //                                 break;
+    //                             case 5:
+    //                                 const hpLoss = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.02);
+    //                                 eStats.maxhp -= hpLoss;
+    //                                 break;
+    //                         };
+
+    //                         // Treat
+    //                         let effectIndex2 = Math.floor(Math.random() * 5);
+    //                         switch (effectIndex2) {
+    //                             case 1:
+    //                                 myStats.atk += Math.floor(myStats.atk * 0.12);
+    //                                 myStats.md += Math.floor(myStats.md * 0.12);
+    //                                 mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.12), 2));
+    //                                 mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.12), 2));
+    //                                 break;
+    //                             case 2:
+    //                                 myStats.def += Math.floor(myStats.def * 0.12);
+    //                                 myStats.mr += Math.floor(myStats.mr * 0.12);
+    //                                 mybuff.def.push(new buffInfo("+", Math.floor(myStats.def * 0.12), 2));
+    //                                 mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr * 0.12), 2));
+    //                                 break;
+    //                             case 3:
+    //                                 myStats.cr += 0.25;
+    //                                 mybuff.cr.push(new buffInfo("+", 0.25, 2));
+    //                                 if (myStats.cr > 1) myStats.cr = 1;
+    //                                 break;
+    //                             case 4:
+    //                                 eStats.sm -= 10;
+    //                                 if (eStats.sm < 0) eStats.sm = 0;
+    //                                 myStats.sm += 10;
+    //                                 if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+    //                                 break;
+    //                             case 5:
+    //                                 const heal = Math.floor((myStats.maxhp - myStats.hp) * 0.06);
+    //                                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
+    //                                 break;
+    //                         };
+    //                     };
+    //                 };
+    //                 return AbilityResponse.SUCCESS;
+    //             },
+    //         };
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //         const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
+    //         if (names.includes("Dalus")) {
+    //             // Restart
+    //             myStats.atk += Math.floor(myStats.atk * 0.1);
+    //             myStats.md += Math.floor(myStats.md * 0.1);
+    //             myStats.mg += 7;
+
+    //             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999));
+    //             mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.1), 9999));
+    //             mybuff.mg.push(new buffInfo("+", 7, 9999));
+    //         }; 
+            
+    //         // Permanent effects
+    //         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             const effectIndex = Math.floor(Math.random() * 5);
+    //             switch (effectIndex) {
+    //                 case 1:
+    //                     myStats.atk += Math.floor(myStats.atk * 0.12);
+    //                     myStats.md += Math.floor(myStats.md * 0.12);
+//                        break;
+//                    case 2:
+//                        myStats.def += Math.floor(myStats.def * 0.12);
+//                        myStats.mr += Math.floor(myStats.mr * 0.12);
+//                        break;
+//                    case 3:
+//                        myStats.cr += 0.25;
+//                        if (myStats.cr > 1) myStats.cr = 1;
+//                        break;
+//                    case 4:
+//                        eStats.sm -= 10;
+//                        if (eStats.sm < 0) eStats.sm = 0;
+//                        myStats.sm += 10;
+//                        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+//                        break;
+//                    case 5:
+//                        const heal = Math.floor((myStats.maxhp - myStats.hp) * 0.06);
+//                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
+//                        break;
+//                };                
+//                return AbilityResponse.SUCCESS;
+//            }, 9999));
+//            return AbilityResponse.SUCCESS;
+//        },
+//    },
     "12093": {
         usage: 3,
         used: 0,
@@ -3359,8 +3713,8 @@ export const abilities: Record<number, Ability> = {
         usage: 4,
         used: 0,
         cost: 0,
-        desc: "**Total Usage**: `4`\n**Mana**: `50`\\💧 on first 2 usages, `80`\\💧 on 3rd usage, `0` on 4th usage\n**Timeout**: `Yes // No (on 4th usage)`\n**Role**: `DPS/Support`\n\nEscanor, known as the Lion's Sin of Pride, offers a gameplay style tied to a day-night cycle which changes every **3** rounds. Escanor's power dramatically shifts with the day-night cycle. During the day, he gains a **20%** boost to attack, magic damage, defense, and magic resistance, but loses **4%** of his max HP per round due to the strain to his body.\n\nMoreover, the last day in the cycle is regarded as Noon, where he unleashes his `The One` power, gaining **35%** stat boosts instead of 20%. normal day cycles. In addition, his DEFEND that round is altered to a Divine Attack, removing all of their counter attempts, before dealing **130%** DMG and granting himself 10x `Heat`. At last, after every round in Daytime, he gains 1x `Heat`.\n\nAs the night falls, he loses **20%** of attack, magic damage, defense, and magic resistance instead, but gains **20%** dodge chance as his power is so insignificant that he's barely sensable.\n\nEscanor's sunshine allows him to scorch the enemy for **2** rounds whenever they dare inflict an attack on Escanor. Scorch is a stackable DoT that deals his current HP to the enemy every round, **1%** for every 10x `Heat` owned, up to **4%**.\n\nMoving onto his active. During daytime rounds, Escanor can use `Crazy Prominence` with his first two usages, dealing additional damage based on the percentage of his remaining health (**100%** + **1%** damage for every **2%** remaining HP).\nWith his 3rd usage, Escanor unleashes `Final Prominence`, which significantly enhances his damage output based on the percentage of his missing health (**100%** + **1%** damage for every **1%** missing HP).\n\nEscanor's final usage summons a miniature Sun on the sky, raising his critical rate by **2%** for every `Heat` owned, up to 100% maximum crit rate. Any overflowing critical rate this way will be converted into **1%** Defense reduction on the enemy (up to 30%) and **1%** critical DMG for Escanor (up to 30%).",
-        shortdesc: "**Uses**: `4`\n**Cost**: `50 💧 (first 2 usages), 80 💧 (3rd usage), 0 💧 (4th usage)`\n**Timeout**: `Yes/ No (4th usage)`\n**Role**: `DPS (Progressive, DoT, Burst, Anti-counter)`\n\n__**Passive**__\nWhenever receives an attack -> Inflicts Scorch for **2** rounds:\n- Deals his current HP to the enemy every round (**1%** for every **10x** `Heat` owned, up to **4%**)\n\nShifts Day and Night cycle every **3** rounds ; The last turn of Day is regarded as *Noon*\n\nDay :\n- **+20%** ATK/MD & DEF/MR\n- Lose **4%** max HP every round\n- Gain **1x** `Heat`\n\nNoon:\n- **+35%** ATK/MD & DEF/MR\n- Lose **4%** max HP\n- Gain **1x** `Heat`\n- DEFEND is altered to Divine Attack\n> Removes any counter attempts (Counter next hit effects), before dealing **130%** DMG and gaining **10x** `Heat`)\n\nNight:\n- **-20%** ATK/MD & DEF/MR\n- **+20%** dodge chance \n\n__**Active**__ (✨)\nFirst TWO activations: *Crazy Prominence*\nCondition: `During Day/Noon`\n- Deals **100%** MD, **+1%** MD for every **2%** HP remaining\n\nTHIRD activation: *Final Prominence*\n- Deals **100%** MD, **+1%** MD for every **1%** HP missing\n\nFOURTH activation: *Miniature Sun*\n- Increases critical rate by **2%** for every `Heat` owned, up to 100%\n\nEvery overflowing critical rate this way will be converted into:\n- Enemy DEF/MR **-1%** (max: 30%)\n- Own critical DMG **+1%** (max: 30%)",
+        desc: "**Total Usage**: `4`\n**Mana**: `50`\\💧 on first 2 usages, `80`\\💧 on 3rd usage, `0` on 4th usage\n**Timeout**: `Yes // No (on 4th usage)`\n**Role**: `DPS/Support`\n\nEscanor, known as the Lion's Sin of Pride, offers a gameplay style tied to a day-night cycle which changes every **3** rounds. Escanor's power dramatically shifts with the day-night cycle. During the day, he gains a **20%** boost to attack, magic damage, defense, and magic resistance, but loses **4%** of his max HP per round due to the strain to his body.\n\nMoreover, the last day in the cycle is regarded as Noon, where he unleashes his `The One` power, gaining **35%** stat boosts instead of 20% during his normal day cycles. In addition, his DEFEND that round is altered to a Divine Attack, removing all of the enemy's counter attempts, before dealing **140%** DMG and granting himself 10x `Heat`. At last, after every round in Daytime, he gains 1x `Heat`.\n\nAs the night falls, he loses **20%** of attack, magic damage, defense, and magic resistance instead, but gains **20%** dodge chance as his power is so insignificant that he's barely sensable.\n\nEscanor's sunshine allows him to scorch the enemy for **2** rounds whenever they dare inflict an attack on Escanor. Scorch is a stackable DoT that deals his current HP to the enemy every round, **0.75%** for every 10x `Heat` owned, up to **3%**.\n\nMoving onto his active. During daytime rounds, Escanor can use `Crazy Prominence` with his first two usages, dealing additional damage based on the percentage of his remaining health (**100%** + **1%** damage for every **2%** remaining HP).\nWith his 3rd usage, Escanor unleashes `Final Prominence`, which significantly enhances his damage output based on the percentage of his missing health (**100%** + **1%** damage for every **1%** missing HP).\n\nEscanor's final usage summons a miniature Sun on the sky, raising his critical rate by **1%** for every `Heat` owned, up to 100% maximum crit rate. Any overflowing critical rate this way will be converted into **1%** Defense reduction on the enemy (up to 30%). If there is still overflowing critical rate left, converts them to **+1%** critical DMG (up to 30%).",
+        shortdesc: "**Uses**: `4`\n**Cost**: `50 💧 (first 2 usages), 80 💧 (3rd usage), 0 💧 (4th usage)`\n**Timeout**: `Yes/ No (4th usage)`\n**Role**: `DPS (Progressive, DoT, Burst, Anti-counter)`\n\n__**Passive**__\nWhenever receives an attack -> Inflicts Scorch for **2** rounds:\n- Deals his current HP to the enemy every round (**0.75%** for every **10x** `Heat` owned, up to **3%**)\n\nShifts Day and Night cycle every **3** rounds ; The last turn of Day is regarded as *Noon*\n\nDay :\n- **+20%** ATK/MD & DEF/MR\n- Lose **4%** max HP every round\n- Gain **1x** `Heat`\n\nNoon:\n- **+35%** ATK/MD & DEF/MR\n- Lose **4%** max HP\n- Gain **1x** `Heat`\n- DEFEND is altered to Divine Attack\n> Removes any counter attempts (Counter next hit effects), before dealing **140%** DMG and gaining **10x** `Heat`)\n\nNight:\n- **-20%** ATK/MD & DEF/MR\n- **+20%** dodge chance \n\n__**Active**__ (✨)\nFirst TWO activations: *Crazy Prominence*\nCondition: `During Day/Noon`\n- Deals **100%** MD, **+1%** MD for every **2%** HP remaining\n\nTHIRD activation: *Final Prominence*\n- Deals **100%** MD, **+1%** MD for every **1%** HP missing\n\nFOURTH activation: *Miniature Sun*\n- Increases critical rate by **1%** for every `Heat` owned, up to 100%\n\nEvery overflowing critical rate this way will be converted into:\n- Enemy DEF/MR **-1%** (max: 30%)\n- If there is still overflowing critical rate left, converts them to **+1%** critical DMG (max: 30%)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Escanor EX
             let roundTime = (matchStats.round - 1) % 6; // day: [0, 1], noon: [2], night: [3, 4, 5];
@@ -3401,15 +3755,20 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${buffpercent * 100}%**`);
                     mybuff.cr.push(new buffInfo("+", buffpercent, 9999));
                 } else {
-                    const overflowingpercent = Math.floor((myStats.cr - 1) * 100) / 100;
-                    //Overflowing critical rate -> 1% DEF shred & Crit DMG up to 30%
+                    //Overflowing critical rate -> 1% DEF shred . then Crit DMG up to 30%
+                    let overflowingpercent = Math.floor((myStats.cr - 1) * 100) / 100;
+                    let overflowingpercent2 = 0;
+                    if (overflowingpercent > 0.3) {
+                        overflowingpercent2 = Math.min(overflowingpercent - 0.3, 0.3);
+                        overflowingpercent = 0.3;
+                        myStats.cd += overflowingpercent2;
+                    };
                     myStats.cr = 1;
-                    eStats.def -= Math.floor(eStats.def * Math.min(0.3, overflowingpercent));
-                    myStats.cd += Math.min(overflowingpercent, 0.3);
-                    notice.push(`\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${Math.floor((buffpercent - overflowingpercent) * 100)}%**. Overflowing heat additionally decreased the enemy's DEF and increased his critical damage by **${Math.min(overflowingpercent, 0.3) * 100}%**!`);
+                    eStats.def -= Math.floor(eStats.def * overflowingpercent);
+                    notice.push(overflowingpercent2 > 0 ? `\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${Math.floor((buffpercent - overflowingpercent - overflowingpercent2) * 100)}%**. Overflowing heat additionally decreased the enemy's DEF by **30%** and increased his critical damage by **${overflowingpercent2}%**!` : `\n☀️**${char.name}** used Cruel Sun! Increased his critical rate by **${Math.floor((buffpercent - overflowingpercent) * 100)}%**. Overflowing heat additionally decreased the enemy's DEF by **${overflowingpercent * 100}%**!`);
                     mybuff.cr.push(new buffInfo("+", buffpercent - overflowingpercent, 9999));
-                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * Math.min(0.3, overflowingpercent)), 9999));
-                    mybuff.cd.push(new buffInfo("+", Math.min(overflowingpercent, 0.3), 9999));
+                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * overflowingpercent), 9999));
+                    mybuff.cd.push(new buffInfo("+", overflowingpercent2, 9999));
                 };
 
                 return AbilityResponse.SUCCESS;
@@ -3434,14 +3793,14 @@ export const abilities: Record<number, Ability> = {
             myStats.heat ??= 0;
             notice.push(`\n⛅ It's Daytime!`);
 
-            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                // Scorch Effect
-                matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-                    if (caster === eStats) {
-                        ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * Math.min(0.01 * Math.floor(myStats.heat / 10), 0.04)), 2));
-                    };
-                });
+            // Scorch Effect
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === eStats) {
+                    ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * Math.min(0.075 * Math.floor(myStats.heat / 10), 0.03)), 2));
+                };
+            });
 
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 let roundTime = (matchStats.round - 1) % 6; // day: [0, 1], noon: [2], night: [3, 4, 5];
                 if (roundTime == 2) { // Noon : The One
                     notice.push(`\n☀️ It's Noon!`);
@@ -3454,7 +3813,7 @@ export const abilities: Record<number, Ability> = {
                     myStats.replaceButton.def = { // Divine Attack
                         "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                             eStats.counter = eStats.counter ?? 0;
-                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 **${char.name}** released his Divine Attack! He`, { atkMultiplier: 1.3, dodge: false, block: false });
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 **${char.name}** released his Divine Attack! He`, { atkMultiplier: 1.4, dodge: false, block: false });
                             myStats.heat += 10;
 
                             return AbilityResponse.SUCCESS;
@@ -3675,10 +4034,10 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `150 💧`\n**Timeout**: `No`\n**Role**: `Support/Tank (Burst, Mana-reset, Freeze, Healing, Revive)`\n\n__**Passive**__\n- Every round: Restores **5%** max HP , steals **3** 💧 from enemy\n- Upon death, revives with **40%** HP\n- ATTACK is altered to deal **60%** ATK & **60%** MD, each has a **33%** chance (**66%** if domain is active) of inflicting a debuff\n> List of debuffs: `Burn` dealing **3%** of max HP as damage (Caps at **6%** of Artemis' current HP) // `Impair` (**-15%** DEF & MR) // `Poison` (**-15%** ATK & MD) // `Paralyse` (Prevents enemy from attacking that round, functions as timeout false)\n- Gains **+20%** class XP\n\n__**Active**__ (✨)\nEnters domain for **5** rounds with the following effects:\n- Enemy frozen (cannot make actions)\n- Applies **20%** vulnerability to the enemy (20% more damage)\n- Doubled chances of debuffing from passive ATTACK\n- DEFEND is altered to extend all debuffs on the enemy by **1** round\n- ACTIVE (✨) deals **130%** DMG with no cost. If Apollo EX is owned, deals **140%** DMG instead and applies bleed (**2%** of the enemy's current HP, up to **4%** of her current HP), lasting until the end of the domain\nUpon exiting domain:\n- Depletes all enemy mana\n- Blocks enemy's mana regeneration for **5** rounds",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Artemis EX
-            const domainLast = 5, mana_cost = 150;
+            const domainLast = 5, mana_cost = (this.used === 1) ? 150 : 0;
 
             // Check if enough mana
-            if (mana_cost > myStats.sm && this.used < 1) {
+            if (mana_cost > myStats.sm) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 this.used--;
@@ -4121,6 +4480,7 @@ export const abilities: Record<number, Ability> = {
 
                 myStats.selfhealChance.push(1);
                 myStats.selfheal.push(0.1);
+                notice.push(`\n✨ Equipped buffs from __Phantasmal Mask__.` + names.includes("Artemis EX") ? ` Additional effects from Artemis EX applied` : ``);
             } else if (mask === "verdant") { // Verdant Guardian Mask
                 const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
                 if (names.includes("Apollo EX")) {
@@ -4135,7 +4495,7 @@ export const abilities: Record<number, Ability> = {
                 myStats.def += Math.floor(myStats.def * 0.2);
                 mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr * 0.2), 3));
                 myStats.mr += Math.floor(myStats.mr * 0.2);
-
+                notice.push(`\n✨ Equipped buffs from __Verdant Mask__.` + names.includes("Apollo EX") ? ` Additional effects from Apollo EX applied` : ``);
             } else if (mask === "valkyrie") { // Valkyrie's Battle Mask
                 const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
                 if (!names.includes("Apollo EX") && !names.includes("Artemis EX")) {
@@ -4148,6 +4508,7 @@ export const abilities: Record<number, Ability> = {
 
                 mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999));
                 myStats.atk += Math.floor(myStats.atk * 0.25);
+                notice.push(`\n✨ Equipped buffs from __Valkyrie Mask__.` + (!names.includes("Apollo EX") && !names.includes("Artemis EX")) ? ` Additional effects from the absence of Apollo EX & Artemis EX applied` : ``);
             };
 
             return AbilityResponse.SUCCESS;
@@ -5502,8 +5863,8 @@ export const abilities: Record<number, Ability> = {
         cost: 20,
         pause: 0,
         selfhealidx: 0,
-        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+30%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To view programmes, do `item equip item:prog info`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **80%** DMG, before slamming them in a strike, dealing an additional instance of **10%** DMG, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+3%** ATK/MD, up to **+24%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**. Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **2%** permanently (Up to 20%). After using DEFEND, activates “Boost”, increasing dodge rate by **30%** for **2** rounds and decreases enemy’s DEF by **2%** permanently (Up to 20%). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **2%** permanently (Up to 20%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of [ɪɴꜱɪɢʜᴛ] instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
-        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+30%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`. To reset, do `/item equip item:prog remove`.\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **80%** DMG, before dealing another instance of **10%**, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+3%** ATK. Cannot have more than **8** stacks at all time.\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **25%** chance to counter the next hit (stackable)\n- **-2%** enemy's ATK permanently (Up to 20%)\n\nAfter using DEFEND:\n- **+30%** dodge rate for **2** rounds\n- **-2%** enemy's DEF permanently (Up to 20%)\n\nAfter using CLASS SKILL:\n- **+2%** DMG mitigation permanently (Up to 20%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\nWhen 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\n- Shares equipped pod passive with entire party\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, has **+2%** ATK, up to 16%",
+        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+15%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To view programmes, do `item equip item:prog info`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **80%** DMG, before slamming them in a strike, dealing an additional instance of **10%** DMG, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+3%** ATK/MD, up to **+24%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**. Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **2%** permanently (Up to 20%). After using DEFEND, activates “Boost”, increasing dodge rate by **30%** for **2** rounds and decreases enemy’s DEF by **2%** permanently (Up to 20%). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **2%** permanently (Up to 20%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of [ɪɴꜱɪɢʜᴛ] instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
+        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+15%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`. To reset, do `/item equip item:prog remove`.\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **80%** DMG, before dealing another instance of **10%**, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+3%** ATK. Cannot have more than **8** stacks at all time.\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **20%** chance to counter the next hit (stackable)\n- **-2%** enemy's ATK permanently (Up to 20%)\n\nAfter using DEFEND:\n- **+30%** dodge rate for **2** rounds\n- **-2%** enemy's DEF permanently (Up to 20%)\n\nAfter using CLASS SKILL:\n- **+2%** DMG mitigation permanently (Up to 20%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\nWhen 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\n- Shares equipped pod passive with entire party\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, has **+2%** ATK, up to 16%",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // 2B & 9S EX | 2B&9S EX
 
@@ -5531,8 +5892,8 @@ export const abilities: Record<number, Ability> = {
                     maxUsage: 10,
                     callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                         if (caster === myStats) {
-                            // 25% chance to gain 1x Counter. Enemy ATK/MD -2% permanently
-                            if (Math.random() < 0.25) {
+                            // 20% chance to gain 1x Counter. Enemy ATK/MD -2% permanently
+                            if (Math.random() < 0.20) {
                                 myStats.counter += 1;
                                 notice.push(`\n⚜️ **${char.name}** prepares to counter the next attack`);
                             };
@@ -5604,7 +5965,7 @@ export const abilities: Record<number, Ability> = {
                             myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                                 if (matchStats.round % 2 === 0) {
                                     if (myStats.dodge < 0) myStats.dodge = 0;
-                                    myStats.dodge += Math.min(0.2, 0.1 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
+                                    myStats.dodge += Math.min(0.2, Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -5613,7 +5974,7 @@ export const abilities: Record<number, Ability> = {
                         case "a120":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Repair**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if (matchStats.round % 3 === 0) {
+                                if (matchStats.round % 4 === 0) {
                                     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                                         const heal = Math.floor(myStats.maxhp * 0.05);
                                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
@@ -5628,7 +5989,7 @@ export const abilities: Record<number, Ability> = {
                         case "a140":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Gravity**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if (matchStats.round % 3 === 0) {
+                                if (matchStats.round % 4 === 0) {
                                     eStats.atk -= Math.floor(eStats.atk * 0.25);
                                     eStats.md -= Math.floor(eStats.md * 0.25);
                                     eStats.def -= Math.floor(eStats.def * 0.25);
@@ -5653,7 +6014,7 @@ export const abilities: Record<number, Ability> = {
                         case "r020":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Mirage**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if (matchStats.round % 3 === 0) {
+                                if (matchStats.round % 4 === 0) {
                                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, "`⚙️` Pod analyzed the foe! **Pod**", { atkMultiplier: 0.2, dodge: 0 });
                                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, "`⚙️` Pod analyzed the foe! **Pod**", { atkMultiplier: 0.2, dodge: 0 });
                                 };
@@ -5679,7 +6040,7 @@ export const abilities: Record<number, Ability> = {
 
             myStats.rev = 1;
             myStats.maxRevivals += 1;
-            const maxhpbuff = Math.floor(myStats.maxhp * 0.3);
+            const maxhpbuff = Math.floor(myStats.maxhp * 0.15);
             myStats.maxhp += maxhpbuff;
             myStats.hp += maxhpbuff;
 
@@ -5773,10 +6134,10 @@ export const abilities: Record<number, Ability> = {
             }, 9999));
 
             matchStats.on("noncrit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                        if (caster === myStats && myStats.hacking === true) { // Lose 7% current HP when non-crit during hacking
-                            myStats.hp -= Math.floor(myStats.hp * 0.07);
-                        };
-                    });
+                if (caster === myStats && myStats.hacking === true) { // Lose 7% current HP when non-crit during hacking
+                    myStats.hp -= Math.floor(myStats.hp * 0.07);
+                };
+            });
 
             return AbilityResponse.SUCCESS;
         },
@@ -5793,7 +6154,7 @@ export const abilities: Record<number, Ability> = {
                             myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                                 if (matchStats.round % 2 === 0) {
                                     if (myStats.dodge < 0) myStats.dodge = 0;
-                                    myStats.dodge += Math.min(0.2, 0.1 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
+                                    myStats.dodge += Math.min(0.2, Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp * 100) / 100);
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -5802,7 +6163,7 @@ export const abilities: Record<number, Ability> = {
                         case "a120":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Repair**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if (matchStats.round % 3 === 0) {
+                                if (matchStats.round % 4 === 0) {
                                     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                                         const heal = Math.floor(myStats.maxhp * 0.05);
                                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
@@ -5817,7 +6178,7 @@ export const abilities: Record<number, Ability> = {
                         case "a140":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Gravity**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if (matchStats.round % 3 === 0) {
+                                if (matchStats.round % 4 === 0) {
                                     eStats.atk -= Math.floor(eStats.atk * 0.25);
                                     eStats.md -= Math.floor(eStats.md * 0.25);
                                     eStats.def -= Math.floor(eStats.def * 0.25);
@@ -5842,7 +6203,7 @@ export const abilities: Record<number, Ability> = {
                         case "r020":
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Mirage**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if (matchStats.round % 3 === 0) {
+                                if (matchStats.round % 4 === 0) {
                                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, "`⚙️` Pod analyzed the foe! **Pod**", { atkMultiplier: 0.2, dodge: 0 });
                                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, "`⚙️` Pod analyzed the foe! **Pod**", { atkMultiplier: 0.2, dodge: 0 });
                                 };
@@ -6054,7 +6415,7 @@ export const abilities: Record<number, Ability> = {
     //         };
     //         this.pause = matchStats.round + 10;
 
-    //         const domainLast = 10;
+    //         const domainLast = 6;
 
     //         myStats.shorekeeperUsedActive = true;
     //         myStats.hp -= Math.floor(myStats.hp * 0.25);
@@ -6101,15 +6462,15 @@ export const abilities: Record<number, Ability> = {
     //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //         myStats.core ??= 0;
     //         myStats.butterfly ??= 0;
-    //         myStats.astraldefcap = 750;
+    //         myStats.astraldefcap = 200;
     //         myStats.shorekeeperUsedActive = false;
 
     //         // Alter DEFEND
     //         const astralchord = () => {
 
     //             // Transform Core -> Butterfly (Up to 10)
-    //             while (myStats.core >= 5) {
-    //                 myStats.core -= 5;
+    //             while (myStats.core >= 7) {
+    //                 myStats.core -= 7;
     //                 if (myStats.butterfly < 10) {
     //                     myStats.butterfly += 1;
     //                 }
@@ -6125,9 +6486,9 @@ export const abilities: Record<number, Ability> = {
     //             ebuff.mr.push(new buffInfo("+", Math.floor(eStats.mr * def_debuff), 2));
     //             ebuff.cr.push(new buffInfo("=", Math.min(0, eStats.cr - def_debuff), 2));
 
-    //             // Increase DEF/MR up to 750
+    //             // Increase DEF/MR up to 200
     //             if (myStats.astraldefcap > 0) {
-    //                 const defmrboost = Math.min(5 * myStats.butterfly, myStats.astraldefcap);
+    //                 const defmrboost = Math.min(20 * myStats.butterfly, myStats.astraldefcap);
     //                 myStats.def += defmrboost;
     //                 myStats.mr += defmrboost;
     //                 mybuff.def.push(new buffInfo("+", defmrboost, 2));
@@ -6148,7 +6509,7 @@ export const abilities: Record<number, Ability> = {
     //             },
     //         };
 
-    //         // Gain 1x Core when ATTACK doesn't crit
+    //         // Gain 3x Core when ATTACK doesn't crit
     //         matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
     //             if (caster === myStats && !(options.canCrit && (options.critChance < (caster.cr + options.critBuff)))) myStats.core += 3;
     //             if (myStats.core >= 5) astralchord();
@@ -6166,31 +6527,42 @@ export const abilities: Record<number, Ability> = {
     //         myStats.evadeDeathStrike ??= 0;
     //         myStats.evadeDeathStrike += 3;
 
-    //         // Upon death evasion, restores 10% max HP (up to 3 times)
+    //         // Upon death evasion, restores 15% max HP (up to 2 times)
     //         matchStats.on("deathEvade", {
-    //             maxUsage: 3,
+    //             maxUsage: 2,
     //             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
     //                 if (caster === myStats) {
-    //                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});
+    //                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15), {});
     //                     return true;
     //                 }
     //             },
     //         });
 
+    //            matchStats.on("noncrit", {
+    //                maxUsage: 10,
+    //                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+    //                    if (caster == myStats) {
+    //                        myStats.dodge += 0.015;
+    //                        mybuff.dodge.push(new buffInfo("+", 0.015, 9999));
+    //                        if (myStats.dodge > 1) myStats.dodge = 1;
+    //                    }
+    //                }
+    //            });
+                // Removed party ability after discussion with Taskalot:
     //         // Allies cannot fall below 0% dodge rate. Increases dodge rate by 2% for every 5% missing HP, up to 20%
-    //         if (myStats.dodge < 0) myStats.dodge = 0;
-    //         const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);
-    //         myStats.dodge += Math.min(dodgebuff, 0.2);
+    //         // if (myStats.dodge < 0) myStats.dodge = 0;
+    //         // const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);
+    //         // myStats.dodge += Math.min(dodgebuff, 0.2);
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (myStats.dodge < 0) myStats.dodge = 0;
-    //             const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);
-    //             myStats.dodge += Math.min(dodgebuff, 0.2);
+    //         // myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             // if (myStats.dodge < 0) myStats.dodge = 0;
+    //             // const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);
+    //             // myStats.dodge += Math.min(dodgebuff, 0.2);
 
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+    //             // return AbilityResponse.SUCCESS;
+    //         // }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
+    //         // return AbilityResponse.SUCCESS;
     //     },
     // },
 };

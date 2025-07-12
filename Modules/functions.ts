@@ -623,6 +623,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         canTwinshot: false,
         isLightning: false,
         canCounter: true,
+        preventRetaliation: false,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
@@ -879,7 +880,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
 
     // Event Triggers
-    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isCrit, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning });
+    matchStats.trigger("attack", attacker, target, attackerBuff, targetBuff, { damage, isCrit, magicDamage: (options.magicDamage && options.mdChance < attacker.mdChance), isLightning: options.isLightning, preventRetaliation: options.preventRetaliation });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
     else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage });
 

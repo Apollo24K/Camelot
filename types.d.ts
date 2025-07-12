@@ -555,6 +555,7 @@ export type RankShopTransaction = {
     buyer_email: string;
     buyer_id?: string;
     product_id: string;
+    amount: number;
     recurring: boolean;
     price: string;
     price_in_cents: number;

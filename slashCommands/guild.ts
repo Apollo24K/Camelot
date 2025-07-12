@@ -461,18 +461,30 @@ const exportCommand: SlashCommand = {
                 });
             };
 
-            // Update users table
-            await updateUsers(interaction.user.id, {
-                guild: { type: "set", value: null },
-            });
+            return interaction.reply({ content: `Are you sure you want to leave **${guild.name}**?`, components: [OfferRow] }).then(msg => {
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 
-            // Update guilds table
-            await updateGuilds(guild.id, {
-                members: { type: "remove_all", value: [interaction.user.id] },
-                elders: { type: "remove_all", value: [interaction.user.id] },
-            });
+                collector.on('collect', async r => {
+                    collector.stop();
+                    if (r.customId === "cancel") {
+                        if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
+                        return;
+                    };
 
-            return interaction.reply(`You have left **${guild.name}**`);
+                    // Update users table
+                    await updateUsers(interaction.user.id, {
+                        guild: { type: "set", value: null },
+                    });
+
+                    // Update guilds table
+                    await updateGuilds(guild.id, {
+                        members: { type: "remove_all", value: [interaction.user.id] },
+                        elders: { type: "remove_all", value: [interaction.user.id] },
+                    });
+
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`You have left **${guild.name}**.`);
+                });
+            });
         } else if (subcommand === "kick") {
             const user = interaction.options.getUser('user', true);
             if (user.id === interaction.user.id) return interaction.reply(`You can't kick yourself`);

@@ -14,22 +14,22 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, RaidRank, RaidSchema, SlashCommand } from '../types';
-import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
+import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateGuilds, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
 
-//! FOR THE BETA ONLY
+//! FOR THE BETA ONLY: 20
 const DAILY_RAID_ATTEMPTS = 4 as const;
-//! FOR THE BETA ONLY
+//! FOR THE BETA ONLY: 20
 
 function getRaidButtonRow(tab: string, canPlay: boolean, raidHasEnded: boolean, isTestRun: boolean): ActionRowBuilder<ButtonBuilder> {
     const buttons = [
         new ButtonBuilder()
             .setCustomId('play')
-            .setLabel(raidHasEnded ? "Raid has Ended!" : (isTestRun ? "Test Run" : "Start Battle"))
+            .setLabel(isTestRun ? "Test Run" : (raidHasEnded ? "Raid has Ended!" : "Start Battle"))
             .setStyle(ButtonStyle.Danger)
-            .setDisabled(!canPlay || raidHasEnded),
+            .setDisabled(isTestRun === false && (!canPlay || raidHasEnded)),
         new ButtonBuilder()
             .setCustomId('ranking')
             .setLabel(tab === "overview" ? "Show Ranking" : "Show Overview")
@@ -204,10 +204,12 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
     });
 };
 
-function rankupOverview(interaction: ChatInputCommandInteraction, stats: CompactUserSchema, guild: GuildSchema, raid: RaidSchema, userItems: itemInfo[], isTestRun: boolean): Promise<number> {
+function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, testBoss }: { interaction: ChatInputCommandInteraction, stats: CompactUserSchema, guild: GuildSchema, raid: RaidSchema, userItems: itemInfo[], isTestRun: boolean, testBoss: string | null; }): Promise<number> {
     return new Promise((resolve) => {
 
-        const currentRaid = raids[raid.raidid];
+        const isTestBoss = isTestRun && testBoss !== null;
+
+        const currentRaid = isTestBoss ? raids[parseInt(testBoss)] : raids[raid.raidid];
         if (!currentRaid) return interaction.reply("Unexpected Error: Raid not found\nPlease open a ticket in our `/support` server if you encounter this error.");
 
         const startDate = new Date(raid.start_date);
@@ -228,7 +230,7 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
             if (tab === "overview") {
                 return `### Raid Overview`
                     // + `\nAfter the exam you will be assigned a rank based on your performance.`
-                    + `\n**Enemy**: ${currentRaid.enemy.name} [${raid.rank_letter}] (phase ${currentRaid.phase}/${currentRaid.phasesTotal})\n**Progress**: **${formatNumberWithQuotes(Math.max(0, raid.enemy_hp))}**/${formatNumberWithQuotes(raid.enemy_hpmax)} <:HP:1062043800979116143> (${timeLeft(endDate)} left)`
+                    + `\n**Enemy**: ${currentRaid.enemy.name} [${isTestBoss ? "EX+" : raid.rank_letter}] (phase ${currentRaid.phase}/${currentRaid.phasesTotal})\n**Progress**: **${formatNumberWithQuotes(Math.max(0, isTestBoss ? currentRaid.getRankHp("EX+") : raid.enemy_hp))}**/${formatNumberWithQuotes(isTestBoss ? currentRaid.getRankHp("EX+") : raid.enemy_hpmax)} <:HP:1062043800979116143> (${timeLeft(endDate)} left)`
                     + `\n\n**Traits**\n- ${currentRaid.enemy.ability?.list[0].join("\n- ")}`
                     // + `\n\n**Stats**\n**Current Rank**: ${stats.rank}\n**Highest Score**: ${stats.rankscore ? formatNumberWithQuotes(stats.rankscore) : "--"}`
                     + `\n\n**Build**\n**Character**: ${characters[stats.battlechar ?? -1].name} Lvl. ${stats.level}\n**Class**: ${stats.class !== null ? classes[stats.class].name + classes[stats.class].emblem + `Lvl. ${getClassLvl(stats.class, stats.dungeon_classlevels)}` : "`None`"}`
@@ -531,6 +533,11 @@ async function endRaid(raidRowId: number) {
         // await new Promise(resolve => setTimeout(resolve, 100));
     };
 
+    // Update guild treasury
+    await updateGuilds(raid.guildid, {
+        treasury: { type: "increment", value: Math.floor(3 * rewardPool.coins) },
+    });
+
     // console.log(`Raid Rewards for ${raid.rowid} sent successfully!`);
 };
 
@@ -541,7 +548,9 @@ const exportCommand: SlashCommand = {
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         const cancelOption = interaction.options.getBoolean('cancel') ?? false;
-        const isTestRun = interaction.options.getBoolean('test') ?? false;
+        const testBoss = interaction.options.getString('boss') ?? null;
+        const isTestRun = (testBoss !== null) || (interaction.options.getBoolean('test') ?? false);
+        const isTestBoss = isTestRun && testBoss !== null;
 
         const stats = author.schema;
         if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
@@ -572,6 +581,13 @@ const exportCommand: SlashCommand = {
             };
         };
 
+        if (isTestBoss) {
+            raid.raidid = parseInt(testBoss);
+            raid.enemy_hp = raids[raid.raidid].getRankHp("EX+");
+            raid.enemy_hpmax = raids[raid.raidid].getRankHp("EX+");
+            raid.rank_letter = "EX+";
+        };
+
         if (cancelOption) {
             if ([guild.master, ...guild.elders].includes(interaction.user.id)) {
                 const result = await cancelRaid(raid.rowid);
@@ -593,8 +609,27 @@ const exportCommand: SlashCommand = {
         stats.dungeon_classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, Math.max(0, ...Object.values(stats.dungeon_classlevels))]));
 
         // Overview
-        let start = await rankupOverview(interaction, stats, guild, raid, userItems, isTestRun);
+        let start = await raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, testBoss });
         if (start === -1) return;
+
+        // User must've been a member for at least 7 days
+        if (!isTestRun && stats.lastguildjoin) {
+            const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+            const timeSinceLastJoin = Date.now() - new Date(stats.lastguildjoin).getTime();
+            if (timeSinceLastJoin < sevenDaysInMs) {
+                const timeLeft = sevenDaysInMs - timeSinceLastJoin;
+                const daysLeft = Math.floor(timeLeft / (24 * 60 * 60 * 1000));
+                const hoursLeft = Math.floor((timeLeft % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                const minutesLeft = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
+
+                let timeString = "";
+                if (daysLeft > 0) timeString += `**${daysLeft}** days`;
+                if (hoursLeft > 0) timeString += `${timeString ? " " : ""}**${hoursLeft}** hours`;
+                if (minutesLeft > 0) timeString += `${timeString ? " " : ""}**${minutesLeft}** minutes`;
+
+                return interaction.followUp(`You have to wait **7** days after joining a guild before you can participate in a raid.\nTime left: ${timeString}`);
+            };
+        };
 
         // Return if no attempts left
         const raidCheck = await getLatestRaid(guild.id);
@@ -782,19 +817,20 @@ const exportCommand: SlashCommand = {
         if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.helmet && (items[myStats.helmet] as armorInfo).setname === (items[myStats.cuirass] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.gloves] as armorInfo)?.setname && (items[myStats.helmet] as armorInfo).setname === (items[myStats.boots] as armorInfo)?.setname) await (items[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-        await eAbility?.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
 
         if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-        for (const sid of stats.raid_supports) {
+        for (const sid of new Set(stats.raid_supports)) {
             if (sid !== undefined && sid !== null && sid !== stats.battlechar) {
                 const myStatsP = { ...myStatsC };
                 myStatsP.name = characters[sid].name;
                 await abilities[sid]?.party?.(myStatsP, myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             };
         };
+
+        await eAbility?.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
 
         const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
@@ -1033,7 +1069,7 @@ const exportCommand: SlashCommand = {
                             else {
                                 if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
                                 if (matchStats.defUsed > 10) {
-                                    notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
+                                    // notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
                                 } else {
                                     let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
                                     let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
@@ -1170,6 +1206,10 @@ const exportCommand: SlashCommand = {
         };
 
         newFight();
+    },
+    async autocomplete({ interaction }) {
+        // Raid boss selection for test runs
+        return raids.map((e) => ({ name: `${e.name}`, value: e.id.toString() })).filter((e) => e.name.toLowerCase().includes(interaction.options.getFocused().toLowerCase()));
     },
 };
 
