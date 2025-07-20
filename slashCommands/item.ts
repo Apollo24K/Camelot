@@ -453,16 +453,68 @@ const exportCommand: SlashCommand = {
                 let xpSelected = totalXP(matsToUse);
 
                 if (flag === "max") {
+                    // Enhanced max flag - automatically level and ascend up to level 120
+                    const targetLevel = 120;
+                    let effectiveLimit = limit;
+                    let autoAscensions: Array<{
+                        ascItem: any;
+                        craftItem: any;
+                        awakenItem: any;
+                        ascMatsNeeded: number;
+                        craftMatsNeeded: number;
+                        awakenItemNeeded: number;
+                    }> = [];
+
+                    // Plan ascensions to reach target level
+                    let tempAscension = item.ascension;
+                    while (tempAscension < 10 && ((tempAscension * 10) + 20) < targetLevel) {
+                        const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
+                        const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade) as lootInfo;
+                        const awakenItem = items[683];
+
+                        const ascMatsNeeded = (tempAscension + 4) * 12;
+                        const craftMatsNeeded = (tempAscension + 4) * 8;
+                        const nextLimit = ((tempAscension + 1) * 10) + 20;
+                        const awakenItemNeeded = 0; // nextLimit < 120 ? 0 : (tempAscension + 1 - 9) * 16;
+
+                        // Calculate total materials including previous ascensions
+                        const totalAscMats = autoAscensions.reduce((sum, asc) => sum + asc.ascMatsNeeded, 0) + ascMatsNeeded;
+                        const totalCraftMats = autoAscensions.reduce((sum, asc) => sum + asc.craftMatsNeeded, 0) + craftMatsNeeded;
+                        const totalAwakenMats = autoAscensions.reduce((sum, asc) => sum + asc.awakenItemNeeded, 0) + awakenItemNeeded;
+
+                        // Check if user has enough materials
+                        if ((stats.items[ascItem.id] || 0) >= totalAscMats &&
+                            (stats.items[craftItem.id] || 0) >= totalCraftMats &&
+                            (stats.items[awakenItem.id] || 0) >= totalAwakenMats) {
+
+                            autoAscensions.push({
+                                ascItem, craftItem, awakenItem,
+                                ascMatsNeeded, craftMatsNeeded, awakenItemNeeded
+                            });
+                            tempAscension++;
+                            effectiveLimit = Math.min(nextLimit, targetLevel);
+                        } else {
+                            break; // Can't afford more ascensions
+                        }
+                    }
+
+                    // Level up to the effective limit
                     const corners = ['2500', '500', '100', '20'] as const;
                     corners.forEach((r) => {
-                        while (!((!(stats.items[matsToUse[r].id] > 0 + matsToUse[r].use)) || missingXP(item.level + xpSelected, limit) === 0)) {
+                        while (!((!(stats.items[matsToUse[r].id] > 0 + matsToUse[r].use)) || missingXP(item.level + xpSelected, effectiveLimit) === 0)) {
                             matsToUse[r].use++;
                             xpSelected = totalXP(matsToUse);
-                            if (missingXP(item.level + xpSelected, limit) < 0) xpSelected += missingXP(item.level + xpSelected, limit);
+                            if (missingXP(item.level + xpSelected, effectiveLimit) < 0) {
+                                xpSelected += missingXP(item.level + xpSelected, effectiveLimit);
+                            }
                             currLevel = getItemLevel(item.level + xpSelected);
-                        };
+                        }
                     });
-                };
+
+                    // Store auto-ascension data for the confirm handler
+                    (matsToUse as any).autoAscensions = autoAscensions;
+                    (matsToUse as any).effectiveLimit = effectiveLimit;
+                }
 
                 const rowComponents = [
                     new ButtonBuilder()
@@ -470,25 +522,25 @@ const exportCommand: SlashCommand = {
                         .setEmoji(fItem.category === "weapon" ? '<:common_weapon_levelup_material:1047535549814165535>' : '<:common_armor_levelup_material:1047535557204508803>')
                         .setLabel('+20xp')
                         .setStyle(ButtonStyle.Primary)
-                        .setDisabled((!(stats.items[matsToUse['20'].id] > 0 + matsToUse['20'].use)) || missingXP(item.level + xpSelected, limit) === 0),
+                        .setDisabled((!(stats.items[matsToUse['20'].id] > 0 + matsToUse['20'].use)) || missingXP(item.level + xpSelected, (matsToUse as any).effectiveLimit || limit) === 0),
                     new ButtonBuilder()
                         .setCustomId('100')
                         .setEmoji(fItem.category === "weapon" ? '<:rare_weapon_levelup_material:1047535563525328946>' : '<:rare_armor_levelup_material:1047535578855522444>')
                         .setLabel('+100xp')
                         .setStyle(ButtonStyle.Primary)
-                        .setDisabled((!(stats.items[matsToUse['100'].id] > 0 + matsToUse['100'].use)) || missingXP(item.level + xpSelected, limit) === 0),
+                        .setDisabled((!(stats.items[matsToUse['100'].id] > 0 + matsToUse['100'].use)) || missingXP(item.level + xpSelected, (matsToUse as any).effectiveLimit || limit) === 0),
                     new ButtonBuilder()
                         .setCustomId('500')
                         .setEmoji(fItem.category === "weapon" ? '<:mythical_weapon_levelup_material:1047535585117618196>' : '<:mythical_armor_levelup_material:1047535597180432485>')
                         .setLabel('+500xp')
                         .setStyle(ButtonStyle.Primary)
-                        .setDisabled((!(stats.items[matsToUse['500'].id] > 0 + matsToUse['500'].use)) || missingXP(item.level + xpSelected, limit) === 0),
+                        .setDisabled((!(stats.items[matsToUse['500'].id] > 0 + matsToUse['500'].use)) || missingXP(item.level + xpSelected, (matsToUse as any).effectiveLimit || limit) === 0),
                     new ButtonBuilder()
                         .setCustomId('2500')
                         .setEmoji(fItem.category === "weapon" ? '<:divine_weapon_levelup_material:1047535604403015700>' : '<:divine_armor_levelup_material:1047535613487890483>')
                         .setLabel('+2500xp')
                         .setStyle(ButtonStyle.Primary)
-                        .setDisabled((!(stats.items[matsToUse['2500'].id] > 0 + matsToUse['2500'].use)) || missingXP(item.level + xpSelected, limit) === 0),
+                        .setDisabled((!(stats.items[matsToUse['2500'].id] > 0 + matsToUse['2500'].use)) || missingXP(item.level + xpSelected, (matsToUse as any).effectiveLimit || limit) === 0),
                 ];
 
                 const row = new ActionRowBuilder<ButtonBuilder>().addComponents(...rowComponents);
@@ -507,10 +559,31 @@ const exportCommand: SlashCommand = {
                             .setStyle(ButtonStyle.Danger),
                     );
 
+                // Enhanced embed description to show auto-ascension info
+                const displayLimit = (matsToUse as any).effectiveLimit || limit;
+                const autoAscensions = (matsToUse as any).autoAscensions || [];
+
+                let embedDesc = `**Current Level**: **${currLevel}**/${displayLimit} ➜ ${getAscension(item.ascension)}`;
+
+                if (autoAscensions.length > 0) {
+                    embedDesc += `\n**Auto-Ascensions Planned**: ${autoAscensions.length}`;
+                    const totalAscMats = autoAscensions.reduce((sum: number, asc: any) => sum + asc.ascMatsNeeded, 0);
+                    const totalCraftMats = autoAscensions.reduce((sum: number, asc: any) => sum + asc.craftMatsNeeded, 0);
+                    const totalAwakenMats = autoAscensions.reduce((sum: number, asc: any) => sum + asc.awakenItemNeeded, 0);
+
+                    embedDesc += `\n**Ascension Materials**: `;
+                    if (totalAscMats > 0) embedDesc += `${autoAscensions[0].ascItem.emoji}x${totalAscMats} `;
+                    if (totalCraftMats > 0) embedDesc += `${autoAscensions[0].craftItem.emoji}x${totalCraftMats} `;
+                    if (totalAwakenMats > 0) embedDesc += `${autoAscensions[0].awakenItem.emoji}x${totalAwakenMats}`;
+                }
+
+                embedDesc += `\n**XP selected**: ${xpSelected}`;
+                embedDesc += `\n**XP left**: ${currLevel + 1 >= displayLimit ? "" : `__${missingXP(item.level + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(item.level + xpSelected, displayLimit)}__ for level ${displayLimit}`;
+
                 const Embed = new EmbedBuilder()
                     .setTitle(fItem.name)
                     .setColor(0xbbffff)
-                    .setDescription(`**Current Level**: **${currLevel}**/${limit} ➜ ${getAscension(item.ascension)}\n**XP selected**: ${xpSelected}\n**XP left**: ${currLevel + 1 >= limit ? "" : `__${missingXP(item.level + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(item.level + xpSelected, limit)}__ for level ${limit}`)
+                    .setDescription(embedDesc)
                     .setThumbnail(fItem.image);
                 interaction.reply({ embeds: [Embed], components: [row, row2] }).then(msg => {
 
@@ -521,18 +594,30 @@ const exportCommand: SlashCommand = {
                     addXP.on('collect', r => {
                         matsToUse[r.customId as keyof typeof matsToUse].use++;
                         xpSelected = totalXP(matsToUse);
-                        if (missingXP(item.level + xpSelected, limit) < 0) xpSelected += missingXP(item.level + xpSelected, limit);
+                        const displayLimit = (matsToUse as any).effectiveLimit || limit;
+                        if (missingXP(item.level + xpSelected, displayLimit) < 0) xpSelected += missingXP(item.level + xpSelected, displayLimit);
                         currLevel = getItemLevel(item.level + xpSelected);
 
-                        // Disable Buttons
-                        rowComponents[0].setDisabled((!(stats.items[matsToUse['20'].id] > 0 + matsToUse['20'].use)) || missingXP(item.level + xpSelected, limit) === 0);
-                        rowComponents[1].setDisabled((!(stats.items[matsToUse['100'].id] > 0 + matsToUse['100'].use)) || missingXP(item.level + xpSelected, limit) === 0);
-                        rowComponents[2].setDisabled((!(stats.items[matsToUse['500'].id] > 0 + matsToUse['500'].use)) || missingXP(item.level + xpSelected, limit) === 0);
-                        rowComponents[3].setDisabled((!(stats.items[matsToUse['2500'].id] > 0 + matsToUse['2500'].use)) || missingXP(item.level + xpSelected, limit) === 0);
+                        // Disable Buttons using the correct limit
+                        rowComponents[0].setDisabled((!(stats.items[matsToUse['20'].id] > 0 + matsToUse['20'].use)) || missingXP(item.level + xpSelected, displayLimit) === 0);
+                        rowComponents[1].setDisabled((!(stats.items[matsToUse['100'].id] > 0 + matsToUse['100'].use)) || missingXP(item.level + xpSelected, displayLimit) === 0);
+                        rowComponents[2].setDisabled((!(stats.items[matsToUse['500'].id] > 0 + matsToUse['500'].use)) || missingXP(item.level + xpSelected, displayLimit) === 0);
+                        rowComponents[3].setDisabled((!(stats.items[matsToUse['2500'].id] > 0 + matsToUse['2500'].use)) || missingXP(item.level + xpSelected, displayLimit) === 0);
 
                         const row = new ActionRowBuilder<ButtonBuilder>().addComponents(...rowComponents);
 
-                        Embed.setDescription(`**Current Level**: **${currLevel}**/${limit} ➜ ${getAscension(item.ascension)}\n**XP selected**: ${xpSelected}\n**XP left**: ${currLevel + 1 >= limit ? "" : `__${missingXP(item.level + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(item.level + xpSelected, limit)}__ for level ${limit}`);
+                        // Update embed description with correct limit
+                        const autoAscensions = (matsToUse as any).autoAscensions || [];
+                        let embedDesc = `**Current Level**: **${currLevel}**/${displayLimit} ➜ ${getAscension(item.ascension)}`;
+
+                        if (autoAscensions.length > 0) {
+                            embedDesc += `\n**Auto-Ascensions Planned**: ${autoAscensions.length}`;
+                        }
+
+                        embedDesc += `\n**XP selected**: ${xpSelected}`;
+                        embedDesc += `\n**XP left**: ${currLevel + 1 >= displayLimit ? "" : `__${missingXP(item.level + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(item.level + xpSelected, displayLimit)}__ for level ${displayLimit}`;
+
+                        Embed.setDescription(embedDesc);
                         interaction.editReply({ embeds: [Embed], components: [row, OfferRow] });
                     });
 
@@ -542,47 +627,101 @@ const exportCommand: SlashCommand = {
                         const stats = await getUserSchema(interaction.user.id);
                         if (!stats) return;
 
+                        // Check levelup materials
                         if (stats.items[matsToUse['20'].id] < matsToUse['20'].use || stats.items[matsToUse['100'].id] < matsToUse['100'].use || stats.items[matsToUse['500'].id] < matsToUse['500'].use || stats.items[matsToUse['2500'].id] < matsToUse['2500'].use) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough levelup materials.`);
                             return;
-                        };
+                        }
+
+                        // Check ascension materials if auto-ascensions are planned
+                        const autoAscensions = (matsToUse as any).autoAscensions || [];
+                        if (autoAscensions.length > 0) {
+                            const totalAscMats = autoAscensions.reduce((sum: number, asc: any) => sum + asc.ascMatsNeeded, 0);
+                            const totalCraftMats = autoAscensions.reduce((sum: number, asc: any) => sum + asc.craftMatsNeeded, 0);
+                            const totalAwakenMats = autoAscensions.reduce((sum: number, asc: any) => sum + asc.awakenItemNeeded, 0);
+
+                            const firstAsc = autoAscensions[0];
+                            if ((stats.items[firstAsc.ascItem.id] || 0) < totalAscMats) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${firstAsc.ascItem.emoji} **${firstAsc.ascItem.name}** for auto-ascensions.`);
+                                return;
+                            }
+                            if ((stats.items[firstAsc.craftItem.id] || 0) < totalCraftMats) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${firstAsc.craftItem.emoji} **${firstAsc.craftItem.name}** for auto-ascensions.`);
+                                return;
+                            }
+                            if (totalAwakenMats > 0 && (stats.items[firstAsc.awakenItem.id] || 0) < totalAwakenMats) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${firstAsc.awakenItem.emoji} **${firstAsc.awakenItem.name}** for auto-ascensions.`);
+                                return;
+                            }
+                        }
 
                         const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
                         if (!item) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`Couldn't find item with id \`${itemChoice}\``);
                             return;
-                        };
+                        }
 
-                        const limit = (item.ascension * 10) + 20;
+                        const currentLimit = (item.ascension * 10) + 20;
                         let newCurrLevel = getItemLevel(item.level);
                         if (newCurrLevel === 170) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`You have reached the maximum level.`);
                             return;
-                        };
-                        if (newCurrLevel >= limit) {
+                        }
+
+                        // For auto-ascensions, we don't check the current limit since we're ascending
+                        if (newCurrLevel >= currentLimit && autoAscensions.length === 0) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`You have reached the current level cap, please ascend your item first if possible.`);
                             return;
+                        }
+
+                        // Prepare material updates
+                        const materialUpdates: { [key: number]: number; } = {
+                            [matsToUse['20'].id]: -matsToUse['20'].use,
+                            [matsToUse['100'].id]: -matsToUse['100'].use,
+                            [matsToUse['500'].id]: -matsToUse['500'].use,
+                            [matsToUse['2500'].id]: -matsToUse['2500'].use,
                         };
 
-                        // Update users table
+                        // Add ascension materials to updates if auto-ascensions are planned
+                        if (autoAscensions.length > 0) {
+                            for (const asc of autoAscensions) {
+                                materialUpdates[asc.ascItem.id] = (materialUpdates[asc.ascItem.id] || 0) - asc.ascMatsNeeded;
+                                materialUpdates[asc.craftItem.id] = (materialUpdates[asc.craftItem.id] || 0) - asc.craftMatsNeeded;
+                                if (asc.awakenItemNeeded > 0) {
+                                    materialUpdates[asc.awakenItem.id] = (materialUpdates[asc.awakenItem.id] || 0) - asc.awakenItemNeeded;
+                                }
+                            }
+                        }
+
+                        // Update user materials
                         await updateUsers(interaction.user.id, {
                             items: {
-                                type: "merge_json", value: {
-                                    [matsToUse['20'].id]: -matsToUse['20'].use,
-                                    [matsToUse['100'].id]: -matsToUse['100'].use,
-                                    [matsToUse['500'].id]: -matsToUse['500'].use,
-                                    [matsToUse['2500'].id]: -matsToUse['2500'].use,
-                                },
+                                type: "merge_json",
+                                value: materialUpdates
                             },
                         });
 
-                        // Update weapons table
+                        // Update weapon level
                         await updateWeapons(`${itemChoice}:${interaction.user.id}`, {
                             level: { type: "increment", value: xpSelected },
                         });
 
+                        // Update weapon ascension if auto-ascensions were planned
+                        if (autoAscensions.length > 0) {
+                            await updateWeapons(`${itemChoice}:${interaction.user.id}`, {
+                                ascension: { type: "increment", value: autoAscensions.length },
+                            });
+                        }
+
                         interaction.editReply({ components: [] });
-                        if (interaction.channel?.isSendable()) interaction.channel.send(`Leveled ${fItem.emoji} __**${fItem.name}**__ up to level **${currLevel}**!`);
+
+                        const finalLevel = getItemLevel(item.level + xpSelected);
+                        let successMessage = `Leveled ${fItem.emoji} __**${fItem.name}**__ up to level **${finalLevel}**!`;
+                        if (autoAscensions.length > 0) {
+                            successMessage += ` (with ${autoAscensions.length} auto-ascension${autoAscensions.length > 1 ? 's' : ''})`;
+                        }
+
+                        if (interaction.channel?.isSendable()) interaction.channel.send(successMessage);
 
                         //* Achievements
                         // Veteran in the Making

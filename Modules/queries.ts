@@ -415,12 +415,12 @@ export const getUsersByName = async (name: string): Promise<Pick<UserSchema, "id
         WHERE LOWER(name) LIKE LOWER($1)
         ORDER BY 
             CASE 
-                WHEN LOWER(name) = LOWER($1) THEN 0
-                WHEN LOWER(name) LIKE LOWER($1 || '%') THEN 1
+                WHEN LOWER(name) = LOWER($2) THEN 0
+                WHEN LOWER(name) LIKE LOWER($2 || '%') THEN 1
                 ELSE 2
             END,
             name
-    `, [`%${name}%`]) as Pick<UserSchema, "id" | "name">[];
+    `, [`%${name}%`, name]) as Pick<UserSchema, "id" | "name">[];
 
     return users;
 };

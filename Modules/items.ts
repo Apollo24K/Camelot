@@ -1948,7 +1948,7 @@ export const items = [
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Fafnir's Breath was a powerful sword crafted by the dwarves during the height of their civilization. It is a powerful sword imbued with the fiery breath of the great dragon Fafnir. In battle, it is said to emit a fierce heat that can scorch enemies with the mere touch of its blade.", "legendary", 289),
+    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielder's HP, it burns the equivalent of **8%** of the wielders HP instead.", "Fafnir's Breath was a powerful sword crafted by the dwarves during the height of their civilization. It is a powerful sword imbued with the fiery breath of the great dragon Fafnir. In battle, it is said to emit a fierce heat that can scorch enemies with the mere touch of its blade.", "legendary", 289),
     new weaponInfo("Galatine", "weapon", "sword", ["chest"], "<:galatine:1068514102261055508>", "https://i.imgur.com/h7EPRDr.png", "atk", 48, 800, "md", 48, 800, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const atk = eStats.atk, md = eStats.md;
         eStats.atk = md, eStats.md = atk;
@@ -4719,7 +4719,7 @@ export const items = [
         const hpBuff = [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
         myStats.myStatsFixed += Math.floor(myStats.myStatsFixed * hpBuff);
         myStats.maxhp += Math.floor(myStats.maxhp * hpBuff);
-        myStats.hp += Math.floor(myStats.maxhp * hpBuff);
+        if (myStats.hp > 0) myStats.hp += Math.floor(myStats.maxhp * hpBuff);
 
         // 0% Dodge
         mybuff.dodge.push(new buffInfo("=", 0, 9999));
@@ -4940,7 +4940,7 @@ export const items = [
         // +8/9/10/11/12/13/14/15/16% max HP, 0% Dodge
         myStatsFixed.maxhp += Math.floor(myStatsFixed.maxhp * increase);
         myStats.maxhp += Math.floor(myStats.maxhp * increase);
-        myStats.hp += Math.floor(myStats.maxhp * increase);
+        if (myStats.hp > 0) myStats.hp += Math.floor(myStats.maxhp * increase);
 
         myStats.dodge = 0;
         mybuff.dodge.push(new buffInfo("=", 0, 9999));

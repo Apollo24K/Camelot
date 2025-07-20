@@ -376,7 +376,7 @@ const raidRewards: Record<string, RaidRewards> = {
         coins: 500000,
         guild_marks: 2500,
         skill_points: 100,
-        featured_ring: 7.5,
+        featured_ring: 9,
         glorious_chest: 150,
         luxurious_chest: 50,
         royal_chest: 15,
@@ -386,7 +386,7 @@ const raidRewards: Record<string, RaidRewards> = {
         coins: 600000,
         guild_marks: 3000,
         skill_points: 120,
-        featured_ring: 9,
+        featured_ring: 12,
         glorious_chest: 180,
         luxurious_chest: 60,
         royal_chest: 18,
@@ -396,7 +396,7 @@ const raidRewards: Record<string, RaidRewards> = {
         coins: 700000,
         guild_marks: 3500,
         skill_points: 140,
-        featured_ring: 10.5,
+        featured_ring: 15,
         glorious_chest: 210,
         luxurious_chest: 70,
         royal_chest: 21,
@@ -406,7 +406,7 @@ const raidRewards: Record<string, RaidRewards> = {
         coins: 800000,
         guild_marks: 4000,
         skill_points: 160,
-        featured_ring: 12,
+        featured_ring: 18,
         glorious_chest: 240,
         luxurious_chest: 80,
         royal_chest: 24,
@@ -822,7 +822,7 @@ const exportCommand: SlashCommand = {
         if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-        for (const sid of stats.raid_supports) {
+        for (const sid of new Set(stats.raid_supports)) {
             if (sid !== undefined && sid !== null && sid !== stats.battlechar) {
                 const myStatsP = { ...myStatsC };
                 myStatsP.name = characters[sid].name;

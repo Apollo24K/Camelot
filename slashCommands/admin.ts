@@ -485,6 +485,12 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: "Action Successful", ephemeral });
         };
 
+        // Get DB Size
+        if (cmd === "db_size") {
+            const [res] = await query(`SELECT pg_size_pretty(pg_database_size($1)) as size`, ["earnalot"]) as any[];
+            return interaction.reply({ content: `DB size: ${res.size}`, ephemeral });
+        };
+
         // See transactions
         if (action === "transactions" || action === "purchased" || action === "paid") {
             if (user) {
