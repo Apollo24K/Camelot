@@ -55,7 +55,7 @@ export default class NightmareInfo {
 export const nightmares: NightmareInfo[] = [
     // Summer2025
     // preSelectedChar has random char ids until we figure out the actual pre-selected characters
-    new NightmareInfo(0, "Tidalfish", "summer2025", 30_000, nightmareMobs[0], { accentColor: "#bb3838", preSelectedChar: 1  }),
+    new NightmareInfo(0, "Tidalfish", "summer2025", 30_000, nightmareMobs[0], { accentColor: "#bb3838", preSelectedChar: 17689  }),
     new NightmareInfo(1, "Sandy", "summer2025", 40_000, nightmareMobs[1], { accentColor: "#bb3838", preSelectedChar: 2 }),
     new NightmareInfo(2, "Bubblium", "summer2025", 4_049_010, nightmareMobs[2], { accentColor: "#42218f", preSelectedChar: 3 }),
     new NightmareInfo(3, "Iscream", "summer2025", 4_304_130, nightmareMobs[3], { accentColor: "#42218f", preSelectedChar: 4 }),
