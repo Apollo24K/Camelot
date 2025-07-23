@@ -302,8 +302,7 @@ export const skillTree: SkillPath[] = [
     new SkillPath("Thorned Armor", "extra", "Reflects **+2%** of damage taken back to the attacker.", 3, 5, "defense", (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const reflectPercent = 0.02 * level;
         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            // Only reflect if damage was taken from an enemy
-            if (target === myStats && options.damage > 0 && caster !== target) {
+            if (target === myStats && caster !== target && options.damage > 0) {
                 const reflectedDamage = Math.floor(options.damage * reflectPercent);
                 if (reflectedDamage > 0) {
                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🛡️ **${myStats.name}**`, { overwriteDamage: reflectedDamage, magicDamage: true, canCrit: false, preventRetaliation: true });

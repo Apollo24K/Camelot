@@ -703,7 +703,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.ignoreShield = true;
 
             // +0.025% of shield as atk and md (max 250%) //* 10k shield = 250% atk
-            const buffMax = 2.5, buffScale = 0.00025;
+            const buffMax = 2.0, buffScale = 0.00025;
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 myStats.atk += Math.floor(myStats.atk * Math.min(myStats.shield * buffScale, buffMax));
                 myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax));
@@ -712,7 +712,7 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
 
             return AbilityResponse.SUCCESS;
-        }, [["Only deals true damage (ignores shield)", "The player receives ATK & MD equal to **0.025%** of their shield, up to **250%**", "**Active**: Breaks the player's shield (**120** <:mana:1047269152957661255>)"]])
+        }, [["Only deals true damage (ignores shield)", "The player receives ATK & MD equal to **0.025%** of their shield, up to **200%**", "**Active**: Breaks the player's shield (**120** <:mana:1047269152957661255>)"]])
     ),
     new enemyInfo("Kraghammer", "Golem", "the Warbreaker", "M", true, {}, {}, { mana: 120 }, [705, 707, 709, 768], ["https://i.ibb.co/5gknttwn/kraghammer.png"], [], 16,
         new skillInfo(16, 150, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -729,7 +729,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.ignoreShield = true;
 
             // +0.025% of shield as atk and md (max 250%) //* 10k shield = 250% atk
-            const buffMax = 2.5, buffScale = 0.00025;
+            const buffMax = 2.0, buffScale = 0.00025;
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 myStats.atk += Math.floor(myStats.atk * Math.min(myStats.shield * buffScale, buffMax));
                 myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax));
@@ -738,7 +738,7 @@ export const raidBosses: enemyInfo[] = [
             }, 9999));
 
             return AbilityResponse.SUCCESS;
-        }, [["Only deals true damage (ignores shield)", "The player receives ATK & MD equal to **0.025%** of their shield, up to **250%**", "**Active**: Steals **50%** of the player's shield, then deals damage equal to his available shield (**150** <:mana:1047269152957661255>)"]])
+        }, [["Only deals true damage (ignores shield)", "The player receives ATK & MD equal to **0.025%** of their shield, up to **200%**", "**Active**: Steals **50%** of the player's shield, then deals damage equal to his available shield (**150** <:mana:1047269152957661255>)"]])
     ),
 
     new enemyInfo("Cake Witch", "Witch", "the Baking Bad", "F", true, { mdChance: 1 }, {}, { mana: 120 }, [712, 742, 743], ["https://i.ibb.co/ccCZfzfk/cake-witch.png"], [], 17,

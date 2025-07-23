@@ -659,6 +659,14 @@ export const anime: animeInfo[] = [
     new animeInfo("Blue Box", ["Ao no Hako"], 624),
     new animeInfo("Kekkai Sensen", ["Blood Blockade Battlefront", "BBS", "KKSS"], 625),
     new animeInfo("Ore wo Suki nano wa Omae dake ka yo", ["Oresuki", "Are you the only one who loves me?"], 626),
+    new animeInfo("A Galaxy Next Door", ["Otonari ni Ginga"], 627),
+    new animeInfo("Shoshimin: How to Become Ordinary", ["Shōshimin", "Shoushimin", "Shoshimin Series"], 628), 
+    new animeInfo("Saijaku Tamer wa Gomi Hiroi no Tabi wo Hajimemashita", ["The Weakest Tamer Began a Journey to Pick Up Trash", "Saijaku Tamer wa Gomihiroi no Tabi wo Hajimemashita", "Saijaku Tamer"], 629),
+    new animeInfo("Interviews with Monster Girls", ["Demi-chan wa Kataritai", "Demi Wants to Talk"], 630),
+    new animeInfo("Zatch Bell!", ["Konjiki no Gash Bell!!", "KnGB", "ZB"], 631),
+    new animeInfo("Samurai Champloo", ["SamCham"], 632),
+    new animeInfo("Princess Jellyfish", ["Kuragehime"], 633),
+    new animeInfo("Orb: On the Movements of the Earth", ["About the Movement of the Earth", "Chi. Chikyuu no Undou ni Tsuite", "Chi - Chikyuu no Undou ni Tsuite", "Earth - On the Movements of the Planet Earth", "Chi.: Chikyuu no Undou ni Tsuite"], 634),
 
 ];
 

@@ -192,8 +192,8 @@ export const abilities: Record<number, Ability> = {
                     myStats.sm -= 35;
                     let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.4, magicDamage: true });
                     if (dmg) {
-                        mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.02), 9999));
-                        mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.02), 9999));
+                        mybuff.atk.push(new buffInfo("*", 1.02, 9999));
+                        mybuff.md.push(new buffInfo("*", 1.02, 9999));
                     };
                 };
 
@@ -1563,6 +1563,18 @@ export const abilities: Record<number, Ability> = {
                 return AbilityResponse.SUCCESS;
             }, 9999));
 
+            // If Ichigo Kurosaki / Byakuya Kuchiki in party = evade 3 lethal strikes
+            const isParty = matchStats.interaction.commandName === "stampede" || matchStats.interaction.commandName === "raid";
+
+            if (isParty) {
+                const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
+                if (names.includes("Ichigo Kurosaki") || names.includes("Byakuya Kuchiki")) {
+                    myStats.evadeDeathStrike ??= 0;
+                    myStats.evadeDeathChance ??= 0;
+                    myStats.evadeDeathChance += 3;
+                    myStats.evadeDeathStrike += 3;
+                };
+            };
             return AbilityResponse.SUCCESS;
         },
         party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1997,8 +2009,8 @@ export const abilities: Record<number, Ability> = {
     //    used: 0,
     //    cost: 0,
     //    pause: 0,
-    //    desc: "**Total Usage**: `1 + Unlimited (CD: 5)`\n**Cost**: `50% HP, and 5% current HP per turn | 20% HP`\n**Timeout**: `No`\n**Role**: `DPS`\n\n*Knock knock~ are you seeking eternal slumber?*\nDalus has **2** states : PAST & PRIME. He may equip “Broken shell” to convert to his PAST state, else he always fights in his PRIME state. To equip the shell, do `/item equip item:broken shell`. To remove the shell, do `/item equip item:remove shell`\n\nWhen Dalus is in his PRIME state, his active has enhanced effects, but is faced by Kisogi’s intervention every **3rd** turn, reminding the target of dreams lost on their way, eager to find the way out. This strengthens them by boosting their ATK & MD by **2.5%**, and mana regen by **1** 💦.\n\n*The show… must go on. Graceful with impish glee.*\n\nHe evades the **1st** lethal hit (stackable), and afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**. For the next **5** turns, his mana regeneration is boosted by **20** 💦.\n\n*A sharp blade pierces through the blossoming rose, delivering the anguish of a hunter. [Rosie], Dalus’ trusted nightmare emerges to drag the enemy into his carnival of nightmares for the rest of the fight*.\nDalus will now expend **all** mana at the start of every turn, gaining a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25 💧), lasting for that turn.\n\nFollowing the mana consumption, [Rosie] tears open the enemy’s mental lines of weakness, dealing **10%** of their max hp (capped at **20**/**30%** of Dalus ATK) as undodgeable absolute DMG (Ignores all DEF/MR). Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **9**/**15%** of his max HP.\n\nIf he is in his PRIME state, he may use his ability again with no timeout, sacrificing **20%** of his current HP before boosting his mana regeneration by **20** 💦 for the next **3** turns.\n\nWhen in a party, Dalus casts a nightmare on both the ally and the enemy, decreasing their DEF/MR by **20%** and summoning [Rosie] every turn, dealing **10%** undodgeable ATK to the enemy as absolute DMG.\n\nIf Kisogi is in the party, the nightmare is resolved, disabling the previous party effect. Now, the ally will deal **15%** ATK as absolute DMG with **100%** critical rate to the enemy every round.",
-    //    shortdesc: "Uses: `1 + Unlimited (CD: 5)`\nCost: `50% HP, 5% current hp per round | 20% HP`\nTimeout: `No`\nTags: `DPS (Mana burn, Absolute DMG, Burst survival)`\n\n__**Passive**__:\n- Dalus has **2** states : PAST & PRIME.\n- To equip the shell, do `/item equip item:broken shell` (PAST state)\n- To remove the shell, do `/item equip item:remove shell` (PRIME state)\n\nIf in PRIME state:\n- Enhances active (✨) effects\n- Faced by Kisogi’s intervention every **3rd** turn (boosting enemy’s ATK & MD by **2.5%** & mana regen by **1** 💦)\n\n”Impish Glee”:\n- Evades the **1st** lethal hit (stackable)\n- Afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**\n- For the next **5** turns: Mana regeneration **+20** 💦.\n\n__**Active**__ (✨):\n- Summons [Rosie] for the rest of the fight.\n- Will now expend all mana at the start of every round\n- In return gain a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25💧), lasting for that round.\n\n- Following the mana consumption, [Rosie] deals **10%** of their max HP (capped at 20/30% of Dalus ATK) as absolute DMG (Ignores all DEF/MR).\n- Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **9**/**15%** of his max HP.\n\nIf he is in his PRIME state:\n- May use his ability again with no timeout\n- Sacrifices **20%** of his current HP\n- Mana regeneration **+20** 💦 for the next **3** rounds\n\n__**Party Ability**__ (👥):\n- **-20%** DEF & MR for both ally & enemy\n- Summons [Rosie] every turn: Deals **10%** ATK to the enemy as undodgeable absolute DMG.\n\nIf Kisogi is in the party: previous party effect disabled. Instead:\n- The ally will deal **15%** ATK to the enemy as undodgeable absolute dmg with **100%** critical rate every round.",
+    //    desc: "**Total Usage**: `1 + Unlimited (CD: 5)`\n**Cost**: `50% HP, and 5% current HP per turn | 20% HP`\n**Timeout**: `No`\n**Role**: `DPS`\n\n*Knock knock~ are you seeking eternal slumber?*\nDalus has **2** states : PAST & PRIME. He may equip “Broken shell” to convert to his PAST state, else he always fights in his PRIME state. To equip the shell, do `/item equip item:broken shell`. To remove the shell, do `/item equip item:remove shell`\n\nWhen Dalus is in his PRIME state, his active has enhanced effects, but is faced by Kisogi’s intervention every **3rd** turn, reminding the target of dreams lost on their way, eager to find the way out. This strengthens them by boosting their ATK & MD by **2.5%**, and mana regen by **1** 💦.\n\n*The show… must go on. Graceful with impish glee.*\n\nHe evades the **1st** lethal hit (stackable), and afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**. For the next **5** turns, his mana regeneration is boosted by **20** 💦.\n\n*A sharp blade pierces through the blossoming rose, delivering the anguish of a hunter. [Rosie], Dalus’ trusted nightmare emerges to drag the enemy into his carnival of nightmares for the rest of the fight*.\nDalus will now expend **all** mana at the start of every turn, gaining a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25 💧), lasting for that turn.\n\nFollowing the mana consumption, [Rosie] tears open the enemy’s mental lines of weakness, dealing **5%** of their max hp (capped at **20**/**30%** of Dalus ATK) as undodgeable absolute DMG (Ignores all DEF/MR). Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **9**/**15%** of his max HP.\n\nIf he is in his PRIME state, he may use his ability again with no timeout, sacrificing **20%** of his current HP before boosting his mana regeneration by **20** 💦 for the next **3** turns.\n\nWhen in a party, Dalus casts a nightmare on both the ally and the enemy, decreasing their DEF/MR by **20%** and summoning [Rosie] every turn, dealing **10%** undodgeable ATK to the enemy as absolute DMG.\n\nIf Kisogi is in the party, the nightmare is resolved, disabling the previous party effect. Now, the ally will deal **15%** ATK as absolute DMG with **100%** critical rate to the enemy every round.",
+    //    shortdesc: "Uses: `1 + Unlimited (CD: 5)`\nCost: `50% HP, 5% current hp per round | 20% HP`\nTimeout: `No`\nTags: `DPS (Mana burn, Absolute DMG, Burst survival)`\n\n__**Passive**__:\n- Dalus has **2** states : PAST & PRIME.\n- To equip the shell, do `/item equip item:broken shell` (PAST state)\n- To remove the shell, do `/item equip item:remove shell` (PRIME state)\n\nIf in PRIME state:\n- Enhances active (✨) effects\n- Faced by Kisogi’s intervention every **3rd** turn (boosting enemy’s ATK & MD by **2.5%** & mana regen by **1** 💦)\n\n”Impish Glee”:\n- Evades the **1st** lethal hit (stackable)\n- Afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**\n- For the next **5** turns: Mana regeneration **+20** 💦.\n\n__**Active**__ (✨):\n- Summons [Rosie] for the rest of the fight.\n- Will now expend all mana at the start of every round\n- In return gain a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25💧), lasting for that round.\n\n- Following the mana consumption, [Rosie] deals **5%** of their max HP (capped at 20/30% of Dalus ATK) as absolute DMG (Ignores all DEF/MR).\n- Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **9**/**15%** of his max HP.\n\nIf he is in his PRIME state:\n- May use his ability again with no timeout\n- Sacrifices **20%** of his current HP\n- Mana regeneration **+20** 💦 for the next **3** rounds\n\n__**Party Ability**__ (👥):\n- **-20%** DEF & MR for both ally & enemy\n- Summons [Rosie] every turn: Deals **10%** ATK to the enemy as undodgeable absolute DMG.\n\nIf Kisogi is in the party: previous party effect disabled. Instead:\n- The ally will deal **15%** ATK to the enemy as undodgeable absolute dmg with **100%** critical rate every round.",
     //    ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
     //        // Dalus
     //        matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -2020,7 +2032,7 @@ export const abilities: Record<number, Ability> = {
     //
     //                // Lines of weakness + Heal
     //                const dmgLimit = myStats.dalusPrime ? 0.3 : 0.2
-    //                const dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(Math.min(eStats.maxhp * 0.1, dmgLimit)) : 0;
+    //                const dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(Math.min(eStats.maxhp * 0.05, dmgLimit)) : 0;
     //                // Overflow?
     //                if (dmg > dmgLimit) {
     //                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(Math.min(dmg - dmgLimit, myStats.maxhp * myStats.dalusPrime ? 0.15 : 0.9)), {});
@@ -2149,10 +2161,10 @@ export const abilities: Record<number, Ability> = {
     //                 this.used++
     //                 return AbilityResponse.SUCCESS;
     //             }));
-                
+
     //             notice.push(`\n💤 ${char.name} entered a __Light Dream__`);
     //         };
-            
+
     //         // Active (II)
     //         if (this.used === 2) {
     //             myStats.hp -= Math.floor(myStats.hp * 0.18);
@@ -2230,7 +2242,7 @@ export const abilities: Record<number, Ability> = {
     //             emoji: "🪄",
     //             run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🪄 **${char.name}**`, { atkMultiplier: fantasyDamage, magicDamage: true, combodmg: true, mdChance: -1 });
-                    
+
     //                 if (Math.random() <= 0.5 + 0.25 * myStats.dreamState) {
     //                     for (let i = 0; i < fantasyBuff; i++) {
     //                         // Trick
@@ -2313,7 +2325,7 @@ export const abilities: Record<number, Ability> = {
     //             mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.1), 9999));
     //             mybuff.mg.push(new buffInfo("+", 7, 9999));
     //         }; 
-            
+
     //         // Permanent effects
     //         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //             const effectIndex = Math.floor(Math.random() * 5);
@@ -2321,31 +2333,31 @@ export const abilities: Record<number, Ability> = {
     //                 case 1:
     //                     myStats.atk += Math.floor(myStats.atk * 0.12);
     //                     myStats.md += Math.floor(myStats.md * 0.12);
-//                        break;
-//                    case 2:
-//                        myStats.def += Math.floor(myStats.def * 0.12);
-//                        myStats.mr += Math.floor(myStats.mr * 0.12);
-//                        break;
-//                    case 3:
-//                        myStats.cr += 0.25;
-//                        if (myStats.cr > 1) myStats.cr = 1;
-//                        break;
-//                    case 4:
-//                        eStats.sm -= 10;
-//                        if (eStats.sm < 0) eStats.sm = 0;
-//                        myStats.sm += 10;
-//                        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
-//                        break;
-//                    case 5:
-//                        const heal = Math.floor((myStats.maxhp - myStats.hp) * 0.06);
-//                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
-//                        break;
-//                };                
-//                return AbilityResponse.SUCCESS;
-//            }, 9999));
-//            return AbilityResponse.SUCCESS;
-//        },
-//    },
+    //                        break;
+    //                    case 2:
+    //                        myStats.def += Math.floor(myStats.def * 0.12);
+    //                        myStats.mr += Math.floor(myStats.mr * 0.12);
+    //                        break;
+    //                    case 3:
+    //                        myStats.cr += 0.25;
+    //                        if (myStats.cr > 1) myStats.cr = 1;
+    //                        break;
+    //                    case 4:
+    //                        eStats.sm -= 10;
+    //                        if (eStats.sm < 0) eStats.sm = 0;
+    //                        myStats.sm += 10;
+    //                        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+    //                        break;
+    //                    case 5:
+    //                        const heal = Math.floor((myStats.maxhp - myStats.hp) * 0.06);
+    //                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
+    //                        break;
+    //                };                
+    //                return AbilityResponse.SUCCESS;
+    //            }, 9999));
+    //            return AbilityResponse.SUCCESS;
+    //        },
+    //    },
     "12093": {
         usage: 3,
         used: 0,
@@ -6512,7 +6524,7 @@ export const abilities: Record<number, Ability> = {
     //         // Gain 3x Core when ATTACK doesn't crit
     //         matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
     //             if (caster === myStats && !(options.canCrit && (options.critChance < (caster.cr + options.critBuff)))) myStats.core += 3;
-    //             if (myStats.core >= 5) astralchord();
+    //             if (myStats.core >= 7) astralchord();
     //         });
 
     //         // After DEFEND, uses astralchord
@@ -6548,7 +6560,7 @@ export const abilities: Record<number, Ability> = {
     //                    }
     //                }
     //            });
-                // Removed party ability after discussion with Taskalot:
+    // Removed party ability after discussion with Taskalot:
     //         // Allies cannot fall below 0% dodge rate. Increases dodge rate by 2% for every 5% missing HP, up to 20%
     //         // if (myStats.dodge < 0) myStats.dodge = 0;
     //         // const dodgebuff = 0.02 * Math.floor((myStats.maxhp - myStats.hp) / myStats.maxhp);

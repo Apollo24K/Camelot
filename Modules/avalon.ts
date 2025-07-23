@@ -3,7 +3,7 @@ import { achievements } from "./achievements";
 import { customEmojis, addHeal } from "./functions";
 import Trigger from "./trigger";
 import { Buffs, DetailedStats, MatchStats, TriggerEvents, TriggerOptions } from "../types";
-import buffInfo from "./buffs";
+import { customHpBars } from "./customHpBars";
 
 export default class Avalon {
     constructor({ myStats, eStats }: { myStats: any, eStats: any; }) {
@@ -50,29 +50,34 @@ export default class Avalon {
     };
 
     static hpbar(hp: number, mana: number) {
-        let bar = "";
-        if (hp > 0 && mana > 0) bar += "<:dblhm:944322994749210735>";
-        else if (hp > 0) bar += "<:dblh:944322994895990855>";
-        else if (mana > 0) bar += "<:dblm:944322994971476038>";
-        else return "<:dbl:944322994585612319><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:dbr:944322994778554400>";
 
-        hp > 0.1 ? hp -= 0.1 : hp = 0;
-        mana > 0.1 ? mana -= 0.1 : mana = 0;
-        let ret = 8;
-        while (ret--) {
-            if (hp && mana) bar += "<:dbhm:944322994942144542>";
-            else if (hp) bar += "<:dbh:944322995336409128>";
-            else if (mana) bar += "<:dbm:944322995088916541>";
-            else bar += "<:db:944322995067957288>";
-            hp > 0.1 ? hp -= 0.1 : hp = 0;
-            mana > 0.1 ? mana -= 0.1 : mana = 0;
-        };
+        const hpBarTheme = customHpBars[0];
 
-        if (hp && mana) bar += "<:dbrhm:944322997144158318>";
-        else if (hp) bar += "<:dbrh:944322995122503750>";
-        else if (mana) bar += "<:dbrm:944322995135086602>";
-        else bar += "<:dbr:944322994778554400>";
-        return bar;
+        return hpBarTheme.getHpBar(hp, mana);
+
+        // let bar = "";
+        // if (hp > 0 && mana > 0) bar += "<:dblhm:944322994749210735>";
+        // else if (hp > 0) bar += "<:dblh:944322994895990855>";
+        // else if (mana > 0) bar += "<:dblm:944322994971476038>";
+        // else return "<:dbl:944322994585612319><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:db:944322995067957288><:dbr:944322994778554400>";
+
+        // hp > 0.1 ? hp -= 0.1 : hp = 0;
+        // mana > 0.1 ? mana -= 0.1 : mana = 0;
+        // let ret = 8;
+        // while (ret--) {
+        //     if (hp && mana) bar += "<:dbhm:944322994942144542>";
+        //     else if (hp) bar += "<:dbh:944322995336409128>";
+        //     else if (mana) bar += "<:dbm:944322995088916541>";
+        //     else bar += "<:db:944322995067957288>";
+        //     hp > 0.1 ? hp -= 0.1 : hp = 0;
+        //     mana > 0.1 ? mana -= 0.1 : mana = 0;
+        // };
+
+        // if (hp && mana) bar += "<:dbrhm:944322997144158318>";
+        // else if (hp) bar += "<:dbrh:944322995122503750>";
+        // else if (mana) bar += "<:dbrm:944322995135086602>";
+        // else bar += "<:dbr:944322994778554400>";
+        // return bar;
     };
 
     static padStats(stats: DetailedStats) {

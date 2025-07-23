@@ -4574,6 +4574,7 @@ export const items = [
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats) {
                     myStats.maxhp += Math.floor(myStats.maxhp * [0.04, 0.04, 0.05, 0.05, 0.05][level - 1]);
+                    myStatsFixed.maxhp += Math.floor(myStats.maxhp * [0.04, 0.04, 0.05, 0.05, 0.05][level - 1]);
                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * [0.04, 0.04, 0.05, 0.05, 0.05][level - 1]));
                     return true;
                 };
@@ -5721,7 +5722,9 @@ export const items = [
             maxUsage: 1,
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
-                    myStats.cd += [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
+                    const cdBuff = [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
+                    myStats.cd += cdBuff
+                    mybuff.cd.push(new buffInfo("+", cdBuff, 9999));
                     return true;
                 };
             },
@@ -5739,6 +5742,7 @@ export const items = [
                     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         if (myStats.atk < myStats.md) {
                             myStats.atk = myStats.md;
+                            
                         } else {
                             myStats.md = myStats.atk;
                         };
