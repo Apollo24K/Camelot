@@ -516,7 +516,9 @@ async function endRaid(raidRowId: number) {
                 (player.rewards.royal_chest > 0 ? `,item|457|${player.rewards.royal_chest}` : "") +
                 (player.rewards.luxurious_chest > 0 ? `,item|456|${player.rewards.luxurious_chest}` : "") +
                 (player.rewards.glorious_chest > 0 ? `,item|454|${player.rewards.glorious_chest}` : "") +
-                (player.rewards.featured_ring > 0 ? `,item|${raids[raid.raidid].loot[Math.floor(Math.random() * raids[raid.raidid].loot.length)]}` : ""),
+                (player.rewards.featured_ring > 0 ? `,item|${raids[raid.raidid].loot[Math.floor(Math.random() * raids[raid.raidid].loot.length)]}` : "") +
+                (player.rewards.featured_ring > 1 ? `,item|${raids[raid.raidid].loot[Math.floor(Math.random() * raids[raid.raidid].loot.length)]}` : "") +
+                (player.rewards.featured_ring > 2 ? `,item|${raids[raid.raidid].loot[Math.floor(Math.random() * raids[raid.raidid].loot.length)]}` : ""),
             "message":
                 `## Raid Rewards\n\n` +
                 `You have ranked **#${player.rank}** out of **${players.length}** participants during this raid, dealing **${formatNumberWithQuotes(player.points)}** damage over **${player.rounds}** attempts <:Woah:928370799965003826>\n` +

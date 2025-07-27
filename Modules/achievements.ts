@@ -298,7 +298,7 @@ export default class achievInfo {
     };
 };
 
-export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbox
+export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5: lootbox, 6: shield slot
     new achievInfo("First Character", "Pull your first character", 0, 0, "1,2", "xp|10", "coins|100"),
 
     new achievInfo("Collector", "Collect 500 characters", 1, 1, "4", "ss ticket|1", "s ticket|3"),

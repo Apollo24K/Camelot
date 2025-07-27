@@ -3366,12 +3366,12 @@ export const items = [
 
     // Weapons - Genesis Staff
     new weaponInfo("Sacred Lifemender", "weapon", "staff", ["chest"], "<:sacred_lifemender:1069025798440362084>", "https://i.imgur.com/1nemsJt.png", "md", 171, 970, "md", 86, 594, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.mr -= Math.min(eStats.mr * Math.min(Math.floor(myStats.cr / 2), 0.45), 1055);
+        eStats.mr -= Math.min(eStats.mr * Math.min(myStats.cr / 2, 0.45), 1055);
         myStats.selfhealChance.push(1);
         myStats.selfheal.push(0.08);
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.mr -= Math.min(eStats.mr * Math.min(Math.floor(myStats.cr / 2), 0.45), 1055);
+            eStats.mr -= Math.min(eStats.mr * Math.min(myStats.cr / 2, 0.45), 1055);
             return AbilityResponse.SUCCESS;
         }, 9999));
 
