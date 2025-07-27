@@ -668,6 +668,7 @@ export const anime: animeInfo[] = [
     new animeInfo("Princess Jellyfish", ["Kuragehime"], 633),
     new animeInfo("Orb: On the Movements of the Earth", ["About the Movement of the Earth", "Chi. Chikyuu no Undou ni Tsuite", "Chi - Chikyuu no Undou ni Tsuite", "Earth - On the Movements of the Planet Earth", "Chi.: Chikyuu no Undou ni Tsuite"], 634),
     new animeInfo("To Be Hero X", ["TBHX", "To Be Hero X: The Hero's Journey", "Tu Bian Yingxiong X"], 635),
+    new animeInfo("Makeine: Too Many Losing Heroines!", ["Make Heroine ga Oosugiru!", "Makeine", "Too Many Losing Heroines"], 636)
 
 ];
 
