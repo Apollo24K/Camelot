@@ -668,8 +668,12 @@ export const anime: animeInfo[] = [
     new animeInfo("Princess Jellyfish", ["Kuragehime"], 633),
     new animeInfo("Orb: On the Movements of the Earth", ["About the Movement of the Earth", "Chi. Chikyuu no Undou ni Tsuite", "Chi - Chikyuu no Undou ni Tsuite", "Earth - On the Movements of the Planet Earth", "Chi.: Chikyuu no Undou ni Tsuite"], 634),
     new animeInfo("To Be Hero X", ["TBHX", "To Be Hero X: The Hero's Journey", "Tu Bian Yingxiong X"], 635),
-    new animeInfo("Makeine: Too Many Losing Heroines!", ["Make Heroine ga Oosugiru!", "Makeine", "Too Many Losing Heroines"], 636)
-
+    new animeInfo("Makeine: Too Many Losing Heroines!", ["Make Heroine ga Oosugiru!", "Makeine", "Too Many Losing Heroines"], 636),
+    new animeInfo("The Fragrant Flower Blooms with Dignity", ["Kaoru Hana wa Rin to Saku"], 637),
+    new animeInfo("Tomorrow's Joe", ['Ashita no Joe', 'Champion Joe', 'Rocky Joe', 'AnJ', 'Joe'], 638),
+    new animeInfo("Wind Breaker (Manhwa)", ["Wind Breaker (Webtoon)", "Wind Breaker (KR)", "Wind Breaker (WB)", "Wind Breaker (Cycling)", "WB (Manhwa)", "WB (Webtoon)", "WBK (Manhwa)", "WBK (Webtoon)"], 639),
+    new animeInfo("High School of the Dead", ['Gakuen Mokushiroku: HIGHSCHOOL OF THE DEAD', 'HOTD', 'HSOTD', 'High School of the Dead: Drifters of the Dead', 'Highschool of the Dead'], 640),
+    new animeInfo("NEW GAME!", ['NEW GAME!!', 'NEW GAME!: Watashi, Shainryokoutte Hajimete na no de...', 'NG!', 'NG', 'New Game'], 641),
 ];
 
 
