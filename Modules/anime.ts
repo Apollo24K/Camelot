@@ -674,6 +674,11 @@ export const anime: animeInfo[] = [
     new animeInfo("Wind Breaker (Manhwa)", ["Wind Breaker (Webtoon)", "Wind Breaker (KR)", "Wind Breaker (WB)", "Wind Breaker (Cycling)", "WB (Manhwa)", "WB (Webtoon)", "WBK (Manhwa)", "WBK (Webtoon)"], 639),
     new animeInfo("High School of the Dead", ['Gakuen Mokushiroku: HIGHSCHOOL OF THE DEAD', 'HOTD', 'HSOTD', 'High School of the Dead: Drifters of the Dead', 'Highschool of the Dead'], 640),
     new animeInfo("NEW GAME!", ['NEW GAME!!', 'NEW GAME!: Watashi, Shainryokoutte Hajimete na no de...', 'NG!', 'NG', 'New Game'], 641),
+    new animeInfo("Pick Me Up", ['Pick Me Up!', 'Pick Me Up, Infinite Gacha', 'PMU', 'Pick Me Up: Infinite Gacha'], 642),
+    new animeInfo("Scissor Seven", ['Assassin Seven', 'Ci Ke Wu Liu Qi', 'Ci Ke Wu Liu Qi: Fan Wai', 'Cike Wu Liuqi', 'Cike Wu Liuqi Fanwai', 'Cike WuLiuqi', 'Cike Wuliuqi Fanwai', 'Killer Seven', 'Scissor 7', 'S7', 'K7'], 643),
+    new animeInfo("Nano Machine", ['Nano Mashin', 'Descent of the Demon God'], 644),
+    new animeInfo("The Devil Butler", ['Demon King Steward', 'Demonic Emperor', "Devil's Butler", 'Housekeeper is the Magic Emperor', 'Magic Emperor', 'Mo Huang Da Guanjia', 'The Demon King Butler', 'The Servant Is the Demon King?!'], 645),
+    new animeInfo("Mission: Yozakura Family", ['Yozakura-san Chi no Daisakusen', 'Mission of Yozakura Family', 'MYF', 'Mission Yozakura Family'], 646),
 ];
 
 
