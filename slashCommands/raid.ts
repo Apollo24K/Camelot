@@ -566,11 +566,11 @@ const exportCommand: SlashCommand = {
 
 
         const actionMapping = {
-            "atk": ["0", "atk", "attack", "a"],
-            "def": ["1", "def", "defense", "d"],
-            "ability": ["2", "ability", "abil", "ab"],
-            "skill": ["3", "skill", "sk", "s", "class", "cl", "c"],
-            "skip": ["4", "skip", "flee", "escape", "esc"],
+            "atk": ["1", "atk", "attack", "a"],
+            "def": ["2", "def", "defense", "d"],
+            "ability": ["3", "ability", "abil", "ab"],
+            "skill": ["4", "skill", "sk", "s", "class", "cl", "c"],
+            "skip": ["5", "skip", "flee", "escape", "esc"],
         };
 
         // Action Sequence
