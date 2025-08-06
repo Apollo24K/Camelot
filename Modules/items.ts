@@ -3366,12 +3366,12 @@ export const items = [
 
     // Weapons - Genesis Staff
     new weaponInfo("Sacred Lifemender", "weapon", "staff", ["chest"], "<:sacred_lifemender:1069025798440362084>", "https://i.imgur.com/1nemsJt.png", "md", 171, 970, "md", 86, 594, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.mr -= Math.min(eStats.mr * Math.min(myStats.cr / 2, 0.45), 1055);
+        eStats.mr -= Math.floor(Math.min(eStats.mr * Math.min(myStats.cr / 2, 0.45), 1055));
         myStats.selfhealChance.push(1);
         myStats.selfheal.push(0.08);
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.mr -= Math.min(eStats.mr * Math.min(myStats.cr / 2, 0.45), 1055);
+            eStats.mr -= Math.floor(Math.min(eStats.mr * Math.min(myStats.cr / 2, 0.45), 1055));
             return AbilityResponse.SUCCESS;
         }, 9999));
 
@@ -5075,6 +5075,8 @@ export const items = [
     }, (level) => `After using Defense, reduces incoming damage by **${[30, 35, 40][level - 1]}%** (stackable) for **1** turn`, "The Defender's Signet stands as a symbol of strength and protection, made of rugged iron with a broad, flat surface. It boasts a brilliant sapphire at its center, set within a circular shield-like design. Intricate engravings of armor and swords embellish the band, depicting tales of glorious battles fought by great heroes. This ring enhances the wearer's defense, creating a palpable energy that can absorb damage. When activated, glowing runes rise from the gem, encasing the wearer in a glimmering shield of ethereal light. It is favored by paladins and guardians who uphold justice and valor, making them an indomitable force against darkness.", "mythical", 732),
     new ringInfo("Glyph of Growth", "ring", "ring", ["chest"], "<:glyph_of_growth:1338654486067019827>", "https://i.ibb.co/JwKymcMJ/Glyph-of-Growth.png", 5, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
+        myStats.counter ??= 0;
+
         // 20/22.5/25/27.5/30% counter chance on crit received
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             const counterChance = [20, 22.5, 25, 27.5, 30][level - 1] / 100;
@@ -5723,7 +5725,7 @@ export const items = [
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
                     const cdBuff = [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
-                    myStats.cd += cdBuff
+                    myStats.cd += cdBuff;
                     mybuff.cd.push(new buffInfo("+", cdBuff, 9999));
                     return true;
                 };
@@ -5742,7 +5744,7 @@ export const items = [
                     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         if (myStats.atk < myStats.md) {
                             myStats.atk = myStats.md;
-                            
+
                         } else {
                             myStats.md = myStats.atk;
                         };

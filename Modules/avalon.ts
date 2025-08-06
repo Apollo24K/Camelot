@@ -116,6 +116,7 @@ export default class Avalon {
             roundCheck: 1,
             ended: false,
             interaction: interaction,
+            actionSequence: flags.actionSequence ?? [],
             turnSkill: 0,
             timeout: 0,
             defUsed: 0,
@@ -149,6 +150,13 @@ export default class Avalon {
             lightningMultiplier: 0,
             dodgebuff: 0,
             heap1: 0,
+
+            sendWarning: function ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) {
+                // Suppress warning if action sequence is active
+                if (this.actionSequence.length > 0) return;
+
+                this.interaction.followUp({ content, ephemeral });
+            },
 
             listeners: {} as Record<TriggerEvents, Trigger[]>,
             on: function (event: TriggerEvents, options: TriggerOptions | ((...args: any[]) => any)): () => void {

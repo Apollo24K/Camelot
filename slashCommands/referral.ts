@@ -52,7 +52,7 @@ const exportCommand: SlashCommand = {
         const user = interaction.options.getUser('user') ?? interaction.user;
 
         const stats = author.schema;
-        const myAccAge = (Date.now() - (new Date(stats.created)).getTime()) / (86400 * 1000);
+        const myAccAge = Math.floor((Date.now() - (new Date(stats.created)).getTime()) / (86400 * 1000));
 
         // const { 0: stats } = await query(`SELECT xp, referred_by, referred_gems, referrals_claimed, (strftime('%s', datetime('now')) - strftime('%s', created)) / 86400 AS age FROM users WHERE id = ${interaction.user.id}`);
 

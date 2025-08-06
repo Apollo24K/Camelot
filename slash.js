@@ -1167,6 +1167,8 @@ const commands = [
 			.setDescription('Raid overview')
 			.addBooleanOption(option => option.setName('test').setDescription('Do a test run').setRequired(false))
 			.addStringOption(option => option.setName('boss').setDescription('Select a boss for test runs').setRequired(false).setAutocomplete(true))
+			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the raid overview and go directly to battle').setRequired(false))
+			.addStringOption(option => option.setName('sequence').setDescription('Pre-select an action sequence, separated by comma (,)').setRequired(false))
 		// .addBooleanOption(option => option.setName('cancel').setDescription('Cancel the raid').setRequired(false))
 	}.data.toJSON(),
 	{
@@ -1510,7 +1512,8 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 			.setName('stampede')
-			.setDescription('A recurring special battle event'),
+			.setDescription('A recurring special battle event')
+			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the stampede overview and go directly into battle').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

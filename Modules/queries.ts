@@ -410,8 +410,8 @@ export const getReferralLeaderboard = async (type: "weekly" | "monthly" | "allti
 };
 
 export const getUsersByName = async (name: string): Promise<Pick<UserSchema, "id" | "name">[]> => {
-    const users = await query(`
-        SELECT id, name FROM users
+    const users = await query(
+        `SELECT id, name FROM users
         WHERE LOWER(name) LIKE LOWER($1)
         ORDER BY 
             CASE 

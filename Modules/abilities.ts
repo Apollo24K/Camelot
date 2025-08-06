@@ -37,12 +37,12 @@ export const abilities: Record<number, Ability> = {
             // Fushi transforms randomly in one of 3 characters who each have their own stats.
             const inv = await getUserSchema(matchStats.interaction.user.id);
             if (!inv) {
-                matchStats.interaction.followUp({ content: "You don't have any characters to transform into", ephemeral: true });
+                matchStats.sendWarning({ content: "You don't have any characters to transform into", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
             if (!(inv.chars.includes(65) || inv.chars.includes(66) || inv.chars.includes(67))) {
-                matchStats.interaction.followUp({ content: "You don't have any of the characters **Parona**, **Gugu** or **March** to transform into", ephemeral: true });
+                matchStats.sendWarning({ content: "You don't have any of the characters **Parona**, **Gugu** or **March** to transform into", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
@@ -117,7 +117,7 @@ export const abilities: Record<number, Ability> = {
             if (matchStats.interaction.commandName === "stampede") {
                 matchStats.turn = 0;
                 myStats.sm += 20;
-                matchStats.interaction.followUp({ content: "Rimuru can't be used in this game mode.", ephemeral: true });
+                matchStats.sendWarning({ content: "Rimuru can't be used in this game mode.", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
@@ -269,7 +269,7 @@ export const abilities: Record<number, Ability> = {
             if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 200% damage if used again.
                 if (myStats.sm < 50) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: "You need at least **50**\\💧 for this attack.", ephemeral: true });
+                    matchStats.sendWarning({ content: "You need at least **50**\\💧 for this attack.", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 myStats.sm -= 50;
@@ -277,7 +277,7 @@ export const abilities: Record<number, Ability> = {
             } else {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (myStats.sm < 10) {
-                    matchStats.interaction.followUp({ content: "You need at least **10**\\💧 to sustain this form", ephemeral: true });
+                    matchStats.sendWarning({ content: "You need at least **10**\\💧 to sustain this form", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 matchStats.consumeMana = 10;
@@ -495,7 +495,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
                 myStats.sm += 60;
-                matchStats.interaction.followUp({ content: `Zoro needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Zoro needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.SUCCESS;
             };
             this.pause = matchStats.round + 6;
@@ -643,7 +643,7 @@ export const abilities: Record<number, Ability> = {
             if (myStats.hp / myStats.maxhp > 0.25) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
-                matchStats.interaction.followUp({ content: `Self destruct can only be used once your hp is below **25%** of your max HP (${Math.floor(myStats.maxhp * 0.15)})`, ephemeral: true });
+                matchStats.sendWarning({ content: `Self destruct can only be used once your hp is below **25%** of your max HP (${Math.floor(myStats.maxhp * 0.15)})`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used self destruct! She`, { atkMultiplier: 3, magicDamage: true, dodge: false });
@@ -725,7 +725,7 @@ export const abilities: Record<number, Ability> = {
 
     //         // Active: Sung Jin Woo summons either Igris, Beru or Iron (SL) from the users inventory. Passive:
     //         const inv = await getUserSchema(matchStats.interaction.user.id);
-    //         if (!inv || !inv.chars.filter((e) => e === 3156 || e === 3159 || e === 3174).length) return matchStats.interaction.followUp({ content: "You don't have any of the characters **Igris**, **Beru** or **Iron (SL)** to summon.", ephemeral: true });
+    //         if (!inv || !inv.chars.filter((e) => e === 3156 || e === 3159 || e === 3174).length) return matchStats.sendWarning({ content: "You don't have any of the characters **Igris**, **Beru** or **Iron (SL)** to summon.", ephemeral: true });
 
     //         myStats.sm -= this.cost;
     //         matchStats.myStatsCC = { ...myStats };
@@ -735,7 +735,7 @@ export const abilities: Record<number, Ability> = {
     //         if (inv.chars.includes(3156) && !this.summoned.includes(3156)) obtained.push(3156);
     //         if (inv.chars.includes(3159) && !this.summoned.includes(3159)) obtained.push(3159);
     //         if (inv.chars.includes(3174) && !this.summoned.includes(3174)) obtained.push(3174);
-    //         if (!obtained.length) return matchStats.interaction.followUp({ content: "All your shadow soldiers have been defeated.", ephemeral: true });
+    //         if (!obtained.length) return matchStats.sendWarning({ content: "All your shadow soldiers have been defeated.", ephemeral: true });
 
     //         let pick = obtained[Math.floor(Math.random() * obtained.length)];
     //         this.summoned.push(pick);
@@ -797,7 +797,7 @@ export const abilities: Record<number, Ability> = {
             if (this.pause > matchStats.round) {
                 this.used--;
                 myStats.sm += this.cost;
-                matchStats.interaction.followUp({ content: `Tetsuya Kuroko needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Tetsuya Kuroko needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             this.pause = matchStats.round + 4;
@@ -971,7 +971,7 @@ export const abilities: Record<number, Ability> = {
             if (this.roundUsed === -1) {
                 this.used--;
                 if (myStats.sm < 20) {
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/20\\💧)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/20\\💧)`, ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 myStats.sm -= 20; this.roundUsed = matchStats.round;
@@ -1207,7 +1207,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             matchStats.turn = matchStats.turnSkill ? 0 : 1; // Erza Scarlet can change between 5 different equipment
             if (myStats.sm < 15) {
-                matchStats.interaction.followUp({ content: "You need at least **15**\\💧 to sustain this form", ephemeral: true });
+                matchStats.sendWarning({ content: "You need at least **15**\\💧 to sustain this form", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             matchStats.consumeMana = 15;
@@ -1253,7 +1253,7 @@ export const abilities: Record<number, Ability> = {
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Zeref needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Zeref needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -1378,7 +1378,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (matchStats.round === this.roundUsed) {
                 myStats.sm += this.cost;
-                matchStats.interaction.followUp({ content: "You can't stack Tatsumaki's ability", ephemeral: true });
+                matchStats.sendWarning({ content: "You can't stack Tatsumaki's ability", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             this.roundUsed = matchStats.round;
@@ -1413,7 +1413,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
                 myStats.sm += 25;
-                matchStats.interaction.followUp({ content: `Ichigo Kurosaki needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Ichigo Kurosaki needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
@@ -1440,7 +1440,7 @@ export const abilities: Record<number, Ability> = {
             } else {
                 // if (this.usedFinal) {
                 //     myStats.sm += 25;
-                //     return matchStats.interaction.followUp({ content: "Final Getsuga Tensho can only be used once", ephemeral: true });
+                //     return matchStats.sendWarning({ content: "Final Getsuga Tensho can only be used once", ephemeral: true });
                 // };
                 // this.usedFinal = true;
                 this.pause = matchStats.round + 5;
@@ -1469,7 +1469,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
 
             if (this.pause > matchStats.round) {
-                matchStats.interaction.followUp({ content: `Rukia needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Rukia needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 myStats.sm += this.cost;
                 return AbilityResponse.FAILURE;
@@ -1620,7 +1620,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
+                matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -1744,7 +1744,7 @@ export const abilities: Record<number, Ability> = {
             // David Martinez 
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `David needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
+                matchStats.sendWarning({ content: `David needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -1884,7 +1884,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (matchStats.round < this.roundUsed + 3) {
                 myStats.sm += this.cost;
-                matchStats.interaction.followUp({ content: "You can't stack Luminous' ability", ephemeral: true });
+                matchStats.sendWarning({ content: "You can't stack Luminous' ability", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
@@ -1949,7 +1949,7 @@ export const abilities: Record<number, Ability> = {
                 this.usedThisRound++;
                 if (this.usedThisRound >= 3) {
                     myStats.sm += this.cost;
-                    matchStats.interaction.followUp({ content: "You can stack Victorias's ability up to 3 times max.", ephemeral: true });
+                    matchStats.sendWarning({ content: "You can stack Victorias's ability up to 3 times max.", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
             } else {
@@ -2024,13 +2024,13 @@ export const abilities: Record<number, Ability> = {
             cost -= stealMana;
             if (myStats.sm < cost) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${cost}\\💧)`, ephemeral: true });
+                matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${cost}\\💧)`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             }
             // if (eStats.sm < 20) {
             //     matchStats.turn = matchStats.turnSkill ? 0 : 1;
             //     myStats.sm += 30;
-            //     matchStats.interaction.followUp({ content: "Your enemy needs **20**💧 to activate", ephemeral: true });
+            //     matchStats.sendWarning({ content: "Your enemy needs **20**💧 to activate", ephemeral: true });
             //     return AbilityResponse.FAILURE;
             // };
             myStats.sm -= cost;
@@ -2463,7 +2463,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (matchStats.round === this.roundUsed) {
                 myStats.sm += this.cost;
-                matchStats.interaction.followUp({ content: "You can't stack All Might's ability", ephemeral: true });
+                matchStats.sendWarning({ content: "You can't stack All Might's ability", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             if (Math.random() < 0.1) {
@@ -2505,7 +2505,7 @@ export const abilities: Record<number, Ability> = {
 
             if (matchStats.round === this.roundUsed) {
                 if (++this.usedThisRound >= 3) {
-                    matchStats.interaction.followUp({ content: "You can stack **Eliza**'s ability up to **3** times max.", ephemeral: true });
+                    matchStats.sendWarning({ content: "You can stack **Eliza**'s ability up to **3** times max.", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 }
             } else this.usedThisRound = 0;
@@ -2514,7 +2514,7 @@ export const abilities: Record<number, Ability> = {
             switch (this.usedThisRound) {
                 case 0:
                     if (myStats.sm < 70) {
-                        matchStats.interaction.followUp({ content: `You don't have enough mana (**${myStats.sm}**/70).`, ephemeral: true });
+                        matchStats.sendWarning({ content: `You don't have enough mana (**${myStats.sm}**/70).`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
                     myStats.sm -= 70;
@@ -2524,7 +2524,7 @@ export const abilities: Record<number, Ability> = {
                     break;
                 case 1:
                     if (coins < 250) {
-                        matchStats.interaction.followUp({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
+                        matchStats.sendWarning({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
                     atkbuff = Math.floor(myStats.atk * (0.1 * (coins / 100000)));
@@ -2539,7 +2539,7 @@ export const abilities: Record<number, Ability> = {
                     break;
                 case 2:
                     if (coins < 250) {
-                        matchStats.interaction.followUp({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
+                        matchStats.sendWarning({ content: "You don't have enough coins to activate **Eliza**'s ability.", ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
                     atkbuff = Math.floor(myStats.atk * (0.1 * (coins / 100000)));
@@ -2663,7 +2663,7 @@ export const abilities: Record<number, Ability> = {
             // Juliette
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Juliette needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Juliette needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -2673,7 +2673,7 @@ export const abilities: Record<number, Ability> = {
             const inv = await getUserSchema(matchStats.interaction.user.id);
             if (!inv) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: "You don't have any fish in your inventory.", ephemeral: true });
+                matchStats.sendWarning({ content: "You don't have any fish in your inventory.", ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -2694,7 +2694,7 @@ export const abilities: Record<number, Ability> = {
             // Return if not enough fish (10 cost)
             if (remainingFishCost > 0) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Not enough fish in your inventory **${10 - remainingFishCost}**/10`, ephemeral: true });
+                matchStats.sendWarning({ content: `Not enough fish in your inventory **${10 - remainingFishCost}**/10`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -2780,7 +2780,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (matchStats.round === this.roundUsed) {
                 if (++this.usedThisRound >= 1) {
-                    matchStats.interaction.followUp({ content: "You can use Luminous (alter)'s ability only once per round.", ephemeral: true });
+                    matchStats.sendWarning({ content: "You can use Luminous (alter)'s ability only once per round.", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
             } else {
@@ -2790,7 +2790,7 @@ export const abilities: Record<number, Ability> = {
 
             const sacrifice = Math.ceil(myStats.maxhp * 0.33);
             if (myStats.hp <= sacrifice) {
-                matchStats.interaction.followUp({ content: "You don't have enough HP left", ephemeral: true });
+                matchStats.sendWarning({ content: "You don't have enough HP left", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -sacrifice, {});
@@ -2844,7 +2844,7 @@ export const abilities: Record<number, Ability> = {
                 myStats.sm += this.cost;
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
-                matchStats.interaction.followUp({ content: `Nao Tomori needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Nao Tomori needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             this.pause = matchStats.round + 6;
@@ -3122,7 +3122,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
                 myStats.sm += this.cost;
-                matchStats.interaction.followUp({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             this.pause = matchStats.round + 5;
@@ -3191,7 +3191,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
-                matchStats.interaction.followUp({ content: `Kafka needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Kafka needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
             this.pause = matchStats.round + 5;
@@ -3614,7 +3614,7 @@ export const abilities: Record<number, Ability> = {
             };
 
             // If not enough mana
-            matchStats.interaction.followUp({ content: `**${char.name}** does not have sufficient mana to use any of her active abilities`, ephemeral: true });
+            matchStats.sendWarning({ content: `**${char.name}** does not have sufficient mana to use any of her active abilities`, ephemeral: true });
             return AbilityResponse.FAILURE;
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
@@ -3811,7 +3811,7 @@ export const abilities: Record<number, Ability> = {
             else if (matchStats.round > 5) atkbuff = 1.75, mana_cost = 10;
 
             if (this.cost + mana_cost > myStats.sm) {
-                matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 myStats.sm += this.cost;
                 return AbilityResponse.FAILURE;
             };
@@ -3857,7 +3857,7 @@ export const abilities: Record<number, Ability> = {
                     if (matchStats.round > 10) mana_cost = 30, dodge_buff = 0.75, def_debuff = 0.25;
                     else if (matchStats.round > 5) mana_cost = 25, dodge_buff = 0.625, def_debuff = 0.2;
 
-                    if (mana_cost > myStats.sm) matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                    if (mana_cost > myStats.sm) matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
 
                     myStats.sm -= mana_cost;
                     myStats.dodge = dodge_buff;
@@ -3930,7 +3930,7 @@ export const abilities: Record<number, Ability> = {
             // Check if day time for the first 3 skill uses
             if (roundTime > 2 && this.used <= 3) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `${this.used === 3 ? "Final Prominence" : "Crazy Prominence"} can only be used during day time (in ${6 - roundTime} rounds)`, ephemeral: true });
+                matchStats.sendWarning({ content: `${this.used === 3 ? "Final Prominence" : "Crazy Prominence"} can only be used during day time (in ${6 - roundTime} rounds)`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -3941,7 +3941,7 @@ export const abilities: Record<number, Ability> = {
                 let mana_cost = (this.used === 3) ? 80 : 50;
                 if (this.cost + mana_cost > myStats.sm) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                     myStats.sm += this.cost;
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -3954,7 +3954,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (myStats.heat < 0) {
                     this.used--;
-                    matchStats.interaction.followUp({ content: `**${char.name}** has no heat to summon a miniature sun!`, ephemeral: true });
+                    matchStats.sendWarning({ content: `**${char.name}** has no heat to summon a miniature sun!`, ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 let buffpercent = myStats.heat * 0.01;
@@ -4077,7 +4077,7 @@ export const abilities: Record<number, Ability> = {
             // Check if enough mana
             if (mana_cost > myStats.sm) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -4090,7 +4090,7 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n✨ **${this.hasArtemis ? "Artemis" : char.name}** applied vulnerability, **${enemy.name}** will now take **${Math.round((eStats.vulnerability - 1) * 100)}%** more damage for the duration of the domain`);
                 } else {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: "Domain of Ascendancy can only be used once", ephemeral: true });
+                    matchStats.sendWarning({ content: "Domain of Ascendancy can only be used once", ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4247,7 +4247,7 @@ export const abilities: Record<number, Ability> = {
             // Check if enough mana
             if (mana_cost > myStats.sm) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -4267,7 +4267,7 @@ export const abilities: Record<number, Ability> = {
                     };
                 } else {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: "Domain of Sanction can only be used once", ephemeral: true });
+                    matchStats.sendWarning({ content: "Domain of Sanction can only be used once", ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4409,7 +4409,7 @@ export const abilities: Record<number, Ability> = {
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Gintoki needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Gintoki needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -4512,14 +4512,14 @@ export const abilities: Record<number, Ability> = {
             if (mask === undefined) { // Maskless
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (this.used > 5) {
-                    matchStats.interaction.followUp({ content: `You can use **${char.name}**'s ability only **5** times per fight.`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **5** times per fight.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
 
                 let activeCost = 30;
                 if (myStats.sm < activeCost) {
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4543,7 +4543,7 @@ export const abilities: Record<number, Ability> = {
             } else if (mask === "phantasmal") { // Phantasmal Deathmask
                 if (this.used > 3) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `You can use **${char.name}**'s ability only **3** times per fight.`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **3** times per fight.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4551,7 +4551,7 @@ export const abilities: Record<number, Ability> = {
                 let activeCost = 60;
                 if (myStats.sm < activeCost) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4564,14 +4564,14 @@ export const abilities: Record<number, Ability> = {
             } else if (mask === "verdant") { // Verdant Guardian Mask
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 if (this.used > 2) {
-                    matchStats.interaction.followUp({ content: `You can use **${char.name}**'s ability only **2** times per fight.`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **2** times per fight.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
 
                 let activeCost = 50;
                 if (myStats.sm < activeCost) {
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4592,7 +4592,7 @@ export const abilities: Record<number, Ability> = {
             } else if (mask === "valkyrie") { // Valkyrie's Battle Mask
                 if (this.used > 3) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `You can use **${char.name}**'s ability only **3** times per fight.`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **3** times per fight.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4600,7 +4600,7 @@ export const abilities: Record<number, Ability> = {
                 let activeCost = 70;
                 if (myStats.sm < activeCost) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -4735,7 +4735,7 @@ export const abilities: Record<number, Ability> = {
             if (myStats.hp >= maxHealth) {
                 this.used--;
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You need to have less than **${maxHealth}** HP to use Infinite Void.`, ephemeral: true });
+                matchStats.sendWarning({ content: `You need to have less than **${maxHealth}** HP to use Infinite Void.`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
@@ -4820,7 +4820,7 @@ export const abilities: Record<number, Ability> = {
                     let activeCost = 20;
                     if (myStats.sm < activeCost) {
                         matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                        matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
+                        matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
                     myStats.sm -= activeCost;
@@ -4841,7 +4841,7 @@ export const abilities: Record<number, Ability> = {
                     let activeCost = (myStats.gojoClassUsed % 3) === 0 ? 40 : ((myStats.gojoClassUsed % 3) === 1 ? 50 : 80);
                     if (myStats.sm < activeCost) {
                         matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                        matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
+                        matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
                     myStats.sm -= activeCost;
@@ -4917,7 +4917,7 @@ export const abilities: Record<number, Ability> = {
                     if (myStats.sm < 100) {
                         this.used--;
                         matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                        matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${100}\\💧)`, ephemeral: true });
+                        matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${100}\\💧)`, ephemeral: true });
                         myStats.sm += 60;
                         return AbilityResponse.FAILURE;
                     };
@@ -4944,14 +4944,14 @@ export const abilities: Record<number, Ability> = {
                         this.used--;
                         myStats.sm += 60;
                         matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                        matchStats.interaction.followUp({ content: `You need to have less than **${maxHealth}** HP.`, ephemeral: true });
+                        matchStats.sendWarning({ content: `You need to have less than **${maxHealth}** HP.`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
 
                     if (myStats.sm < 90) {
                         this.used--;
                         matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                        matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${90}\\💧)`, ephemeral: true });
+                        matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${90}\\💧)`, ephemeral: true });
                         myStats.sm += 60;
                         return AbilityResponse.FAILURE;
                     };
@@ -5191,7 +5191,7 @@ export const abilities: Record<number, Ability> = {
             // Boa Hancock EX
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Boa Hancock needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Boa Hancock needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -5295,13 +5295,13 @@ export const abilities: Record<number, Ability> = {
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
 
             if (this.lockedWisps.length > 1) {
-                matchStats.interaction.followUp({ content: `You have already locked **2** wisps.`, ephemeral: true });
+                matchStats.sendWarning({ content: `You have already locked **2** wisps.`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
 
             if (this.roundActivated === matchStats.round) {
-                matchStats.interaction.followUp({ content: `You have already summoned a wisp this round, try again next round.`, ephemeral: true });
+                matchStats.sendWarning({ content: `You have already summoned a wisp this round, try again next round.`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -5312,7 +5312,7 @@ export const abilities: Record<number, Ability> = {
                 this.roundUsed = matchStats.round;
 
                 if (myStats.sm < 5) {
-                    matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/20\\💧)`, ephemeral: true });
+                    matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/20\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -5327,7 +5327,7 @@ export const abilities: Record<number, Ability> = {
 
             // Return if no wisp
             if (this.rolledWisp === -1) {
-                matchStats.interaction.followUp({ content: `You have already locked the wisp`, ephemeral: true });
+                matchStats.sendWarning({ content: `You have already locked the wisp`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
 
@@ -5575,7 +5575,7 @@ export const abilities: Record<number, Ability> = {
             // Lucy EX / Lucyna EX
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Lucy needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Lucy needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -5646,14 +5646,14 @@ export const abilities: Record<number, Ability> = {
             // Acheron EX
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `Acheron needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Acheron needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
 
             if (this.lotus < 9) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You need 9 stacks of 🪷 (current: **${this.lotus}**🪷)`, ephemeral: true });
+                matchStats.sendWarning({ content: `You need 9 stacks of 🪷 (current: **${this.lotus}**🪷)`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
@@ -5842,7 +5842,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.used--;
                 myStats.sm += 20;
-                matchStats.interaction.followUp({ content: `Frieren needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `Frieren needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };*/
 
@@ -5937,7 +5937,7 @@ export const abilities: Record<number, Ability> = {
                 // Tsukuyomi
                 if (this.used > 1) {
                     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                    matchStats.interaction.followUp({ content: `Tsukuyomi can only be used once per battle.`, ephemeral: true });
+                    matchStats.sendWarning({ content: `Tsukuyomi can only be used once per battle.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
                 };
@@ -5964,7 +5964,7 @@ export const abilities: Record<number, Ability> = {
 
                 // Mangekyo Sharingan; Kotoamatsukami
                 if (this.tsukuyomiUsed > 0) {
-                    matchStats.interaction.followUp({ content: `Kotoamatsukami can only be used once per battle.`, ephemeral: true });
+                    matchStats.sendWarning({ content: `Kotoamatsukami can only be used once per battle.`, ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 this.tsukuyomiUsed++;
@@ -6071,8 +6071,8 @@ export const abilities: Record<number, Ability> = {
         cost: 20,
         pause: 0,
         selfhealidx: 0,
-        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+15%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To view programmes, do `item equip item:prog info`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **80%** DMG, before slamming them in a strike, dealing an additional instance of **10%** DMG, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+3%** ATK/MD, up to **+24%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**. Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **2%** permanently (Up to 20%). After using DEFEND, activates “Boost”, increasing dodge rate by **30%** for **2** rounds and decreases enemy’s DEF by **2%** permanently (Up to 20%). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **2%** permanently (Up to 20%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of [ɪɴꜱɪɢʜᴛ] instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
-        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+15%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`. To reset, do `/item equip item:prog remove`.\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **80%** DMG, before dealing another instance of **10%**, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+3%** ATK. Cannot have more than **8** stacks at all time.\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%**\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **20%** chance to counter the next hit (stackable)\n- **-2%** enemy's ATK permanently (Up to 20%)\n\nAfter using DEFEND:\n- **+30%** dodge rate for **2** rounds\n- **-2%** enemy's DEF permanently (Up to 20%)\n\nAfter using CLASS SKILL:\n- **+2%** DMG mitigation permanently (Up to 20%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\nWhen 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\n- Shares equipped pod passive with entire party\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, has **+2%** ATK, up to 16%",
+        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+15%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To view programmes, do `item equip item:prog info`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **80%** DMG, before slamming them in a strike, dealing an additional instance of **10%** DMG, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+3%** ATK/MD, up to **+24%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy's DEF by **25%** (up to **2x** damage). Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **2%** permanently (Up to 20%). After using DEFEND, activates “Boost”, increasing dodge rate by **30%** for **2** rounds and decreases enemy’s DEF by **2%** permanently (Up to 20%). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **2%** permanently (Up to 20%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of [ɪɴꜱɪɢʜᴛ] instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
+        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+15%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`. To reset, do `/item equip item:prog remove`.\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **80%** DMG, before dealing another instance of **10%**, further increased by **1%** for every **1%** HP missing from the enemy (Up to 60%).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+3%** ATK. Cannot have more than **8** stacks at all time.\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%** (up to **2x** damage)\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **20%** chance to counter the next hit (stackable)\n- **-2%** enemy's ATK permanently (Up to 20%)\n\nAfter using DEFEND:\n- **+30%** dodge rate for **2** rounds\n- **-2%** enemy's DEF permanently (Up to 20%)\n\nAfter using CLASS SKILL:\n- **+2%** DMG mitigation permanently (Up to 20%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\nWhen 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\n- Shares equipped pod passive with entire party\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, has **+2%** ATK, up to 16%",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // 2B & 9S EX | 2B&9S EX
 
@@ -6080,11 +6080,11 @@ export const abilities: Record<number, Ability> = {
 
             if (this.used === 1 && myStats.sm < 20) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/${20}\\💧)`, ephemeral: true });
+                matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${20}\\💧)`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             } else if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                matchStats.interaction.followUp({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -6200,8 +6200,8 @@ export const abilities: Record<number, Ability> = {
                                 if (matchStats.round % 4 === 0) {
                                     eStats.atk -= Math.floor(eStats.atk * 0.25);
                                     eStats.md -= Math.floor(eStats.md * 0.25);
-                                    eStats.def -= Math.floor(eStats.def * 0.25);
-                                    eStats.mr -= Math.floor(eStats.mr * 0.25);
+                                    eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
+                                    eStats.mr -= Math.floor(Math.min(eStats.mr * 0.25, 660));
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -6310,24 +6310,24 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n<:9SHack:1373261619924172940> 9S initiated hacking for **4** rounds`);
                     myStats.insight -= 8;
                     myStats.hacking = true;
-                    if (eStats.hp / eStats.maxhp > 0.5) {
-                        let bonus = Math.floor(Math.abs(myStats.hp / myStats.maxhp - eStats.hp / eStats.maxhp) * 100) / 100;
-                        myStats.critbonus = Math.max(myStats.critbonus, bonus, 0.3);
+                    if ((eStats.hp / eStats.maxhp) > 0.5) {
+                        let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
+                        myStats.critbonus = Math.max(myStats.critbonus, bonus);
                     } else {
-                        eStats.def *= 0.75;
+                        eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
                     };
 
                     // Hacking long term effects
                     myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                        if (eStats.hp / eStats.maxhp > 0.5) {
-                            let bonus = Math.floor(Math.abs(myStats.hp / myStats.maxhp - eStats.hp / eStats.maxhp) * 100) / 100;
-                            myStats.critbonus = Math.max(myStats.critbonus, bonus, 0.3);
+                        if ((eStats.hp / eStats.maxhp) > 0.5) {
+                            let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
+                            myStats.critbonus = Math.max(myStats.critbonus, bonus);
                         } else {
-                            eStats.def *= 0.75;
+                            eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
                         };
 
                         return AbilityResponse.SUCCESS;
-                    }, matchStats.round + domainLast));
+                    }, domainLast));
 
                     // Exit HACKING mode
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
@@ -6389,8 +6389,8 @@ export const abilities: Record<number, Ability> = {
                                 if (matchStats.round % 4 === 0) {
                                     eStats.atk -= Math.floor(eStats.atk * 0.25);
                                     eStats.md -= Math.floor(eStats.md * 0.25);
-                                    eStats.def -= Math.floor(eStats.def * 0.25);
-                                    eStats.mr -= Math.floor(eStats.mr * 0.25);
+                                    eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
+                                    eStats.mr -= Math.floor(Math.min(eStats.mr * 0.25, 660));
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -6447,12 +6447,12 @@ export const abilities: Record<number, Ability> = {
     //             if (this.pause > matchStats.round) {
     //                 myStats.sm += this.cost;
     //                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //                 matchStats.interaction.followUp({ content: `Monster Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+    //                 matchStats.sendWarning({ content: `Monster Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
     //                 this.used--;
     //                 return AbilityResponse.FAILURE;
     //             };
     //             if (myStats.sm < 90) {
-    //                 matchStats.interaction.followUp({ content: `You don't have enough mana! (**${myStats.sm}**/90\\💧)`, ephemeral: true });
+    //                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/90\\💧)`, ephemeral: true });
     //                 return AbilityResponse.FAILURE;
     //             };
 
@@ -6474,7 +6474,7 @@ export const abilities: Record<number, Ability> = {
     //             if (this.pause > matchStats.round) {
     //                 myStats.sm += this.cost;
     //                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //                 matchStats.interaction.followUp({ content: `Cosmic Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+    //                 matchStats.sendWarning({ content: `Cosmic Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
     //                 this.used--;
     //                 return AbilityResponse.FAILURE;
     //             };

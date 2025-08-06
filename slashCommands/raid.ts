@@ -23,6 +23,10 @@ const dungeonInProgress = new Set();
 const DAILY_RAID_ATTEMPTS = 4 as const;
 //! FOR THE BETA ONLY: 20
 
+const FIGHT_DURATION = 240; // in seconds
+const MAX_ROUNDS = 120; // max rounds per fight
+
+
 function getRaidButtonRow(tab: string, canPlay: boolean, raidHasEnded: boolean, isTestRun: boolean): ActionRowBuilder<ButtonBuilder> {
     const buttons = [
         new ButtonBuilder()
@@ -549,11 +553,66 @@ const exportCommand: SlashCommand = {
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
+        // Deprecated
         const cancelOption = interaction.options.getBoolean('cancel') ?? false;
+
+        // Test Boss
         const testBoss = interaction.options.getString('boss') ?? null;
         const isTestRun = (testBoss !== null) || (interaction.options.getBoolean('test') ?? false);
         const isTestBoss = isTestRun && testBoss !== null;
 
+        // Skip Overview
+        const skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
+
+
+        const actionMapping = {
+            "atk": ["1", "atk", "attack", "a"],
+            "def": ["2", "def", "defense", "d"],
+            "ability": ["3", "ability", "abil", "ab"],
+            "skill": ["4", "skill", "sk", "s", "class", "cl", "c"],
+            "skip": ["5", "skip", "flee", "escape", "esc"],
+        };
+
+        // Action Sequence
+        const sequence = interaction.options.getString('sequence') ?? null;
+        const actionSequence = sequence ? sequence.split(',').map((e) => e.trim().toLowerCase()).flatMap((e) => {
+            const trimmed = e.trim().toLowerCase();
+
+            // Check if it has a repeat notation like "atk:3"
+            if (trimmed.includes(':')) {
+                const [action, countStr] = trimmed.split(':');
+                const count = parseInt(countStr);
+
+                // Validate count
+                if (isNaN(count) || count <= 0) return [null];
+
+                // Find the action key
+                let actionKey = null;
+                for (const [key, value] of Object.entries(actionMapping)) {
+                    if (value.includes(action)) {
+                        actionKey = key;
+                        break;
+                    }
+                }
+
+                // Return the action repeated count times
+                return Array(count).fill(actionKey);
+            } else {
+                // Normal single action
+                for (const [key, value] of Object.entries(actionMapping)) {
+                    if (value.includes(trimmed)) return [key];
+                }
+                return [null];
+            };
+        }) : [];
+        if (actionSequence.includes(null)) return interaction.reply("Error in action sequence. Please use the format `atk:3,def,ability,skill,skip`.");
+
+        // Experimental
+        if (!isTestRun && actionSequence.length > 0) {
+            return interaction.reply("Experimental action sequences are currently only available in test runs. Please use it at your own risk.");
+        };
+
+        // Check if user has a battle character
         const stats = author.schema;
         if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
 
@@ -611,8 +670,17 @@ const exportCommand: SlashCommand = {
         stats.dungeon_classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, Math.max(0, ...Object.values(stats.dungeon_classlevels))]));
 
         // Overview
-        let start = await raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, testBoss });
+        let start = skipOverview ? 1 : await raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, testBoss });
         if (start === -1) return;
+
+        // Defer reply if overview is skipped
+        if (skipOverview) {
+            try {
+                await interaction.deferReply();
+            } catch (err) {
+                return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
+            };
+        };
 
         // User must've been a member for at least 7 days
         if (!isTestRun && stats.lastguildjoin) {
@@ -647,10 +715,10 @@ const exportCommand: SlashCommand = {
 
 
         // Set up restrictions
-        if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply(`You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`);
-        if (dungeonInProgress.has(stats.id)) return interaction.editReply("You already have a run in progress, please finish it before attempting to start a new round.");
+        if (dungeonTempBan.has(interaction.user.id)) return interaction.followUp(`You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`);
+        if (dungeonInProgress.has(stats.id)) return interaction.followUp("You already have a run in progress, please finish it before attempting to start a new round.");
         dungeonInProgress.add(stats.id);
-        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
+        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), FIGHT_DURATION * 1000);
 
         // User stats
         let myChar = characters[stats.battlechar];
@@ -803,7 +871,7 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins)} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         };
 
-        let matchStats = Avalon.getMatchStats(interaction, { allowExecution: false, allowSelfheal: false });
+        let matchStats = Avalon.getMatchStats(interaction, { allowExecution: false, allowSelfheal: false, actionSequence });
         let notice = ["", "", "", ""];
         matchStats.partyChars = stats.raid_supports.filter((sid) => sid !== null && sid !== undefined && sid !== stats.battlechar).map((sid) => characters[sid]);
         // matchStats.partyStats = partyStatsC;
@@ -858,17 +926,17 @@ const exportCommand: SlashCommand = {
                 const Embed = new EmbedBuilder()
                     .setColor(currentRaid.accentColor as ColorResolvable)
                     .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
-                    .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
+                    .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${FIGHT_DURATION}s` })
                     .setTitle(`Guild Raid ${isTestRun ? "(TEST RUN)" : ""}  `)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eImage);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
-                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
-                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
-                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 120000 });
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
 
 
@@ -878,7 +946,7 @@ const exportCommand: SlashCommand = {
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
-                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         // await msg.edit({ embeds: [Embed] });
 
                         // Debounce
@@ -915,6 +983,12 @@ const exportCommand: SlashCommand = {
                     };
 
                     function startNextRound() {
+                        // Force end at MAX_ROUNDS
+                        if (matchStats.round === MAX_ROUNDS) {
+                            notice.push(`\n🕗 You've reached the end`);
+                            endMatch("l");
+                        };
+
                         if (matchStats.ended) return;
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
@@ -958,6 +1032,9 @@ const exportCommand: SlashCommand = {
                         };
 
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                        // Auto apply action sequence
+                        if (actionSequence.length > 0) autoApply();
                     };
 
                     function attack() {
@@ -1001,7 +1078,7 @@ const exportCommand: SlashCommand = {
                                     };
                                 };
                                 if (matchStats.counter > 0) matchStats.counter--;
-                            }, aDelay);
+                            }, actionSequence.length > 0 ? 0 : aDelay);
                         };
                     };
 
@@ -1011,7 +1088,7 @@ const exportCommand: SlashCommand = {
                         editEmbed();
                     };
 
-                    atk.on('collect', async () => {
+                    const userAttack = async () => {
                         if (matchStats.turn === 1) {
                             matchStats.turn = 0;
 
@@ -1042,15 +1119,19 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                }, aDelay);
+                                }, actionSequence.length > 0 ? 0 : aDelay);
 
                                 else attack();
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                    };
+                    atk.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        await userAttack();
                     });
 
-                    def.on('collect', async () => {
+                    const userDefense = async () => {
                         if (matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
@@ -1069,7 +1150,7 @@ const exportCommand: SlashCommand = {
 
                             // Use defense
                             else {
-                                if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
+                                if (++matchStats.defUsed === 10) matchStats.sendWarning({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
                                 if (matchStats.defUsed > 10) {
                                     // notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
                                 } else {
@@ -1091,11 +1172,15 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                    };
+                    def.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        await userDefense();
                     });
 
-                    ability.on('collect', async () => {
-                        if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+                    const userAbility = async () => {
+                        if (myStatsC.isAbilityBlocked) return matchStats.sendWarning({ content: `You currently can't use your character ability`, ephemeral: true });
 
                         // If ability was replaced
                         if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
@@ -1114,10 +1199,10 @@ const exportCommand: SlashCommand = {
                         }
 
                         else {
-                            if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
+                            if (!myAbility?.ability) return matchStats.sendWarning({ content: `You don't have an ability`, ephemeral: true });
                             if (myAbility.used < myAbility.usage) {
                                 if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                    if (myAbility.cost > myStatsC.sm) matchStats.sendWarning({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
                                     else {
                                         matchStats.turn = 0;
                                         myStatsC.attackStreak = 0;
@@ -1134,12 +1219,16 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                            } else matchStats.sendWarning({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
+                    };
+                    ability.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        await userAbility();
                     });
 
-                    cskill.on('collect', async () => {
+                    const userSkill = async () => {
 
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
@@ -1159,9 +1248,9 @@ const exportCommand: SlashCommand = {
 
                         // Class active
                         else {
-                            if (!skill) return interaction.followUp({ content: `You don't have a class skill`, ephemeral: true });
-                            if (myChar.id === 4767) return interaction.followUp({ content: "Asta can't use any abilities", ephemeral: true });
-                            if (skill.cost > myStatsC.sm) return interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
+                            if (!skill) return matchStats.sendWarning({ content: `You don't have a class skill`, ephemeral: true });
+                            if (myChar.id === 4767) return matchStats.sendWarning({ content: "Asta can't use any abilities", ephemeral: true });
+                            if (skill.cost > myStatsC.sm) return matchStats.sendWarning({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
                             else {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
@@ -1176,30 +1265,55 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
                             };
                         };
+                    };
+                    cskill.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        await userSkill();
                     });
 
-                    skip.on('collect', () => {
+                    const userSkip = async () => {
                         if (matchStats.turn == 1) {
                             notice.push(`\n<:dodge_chance:1047269150948606063> ${myChar.name} fled the fight`);
                             endMatch("l");
                             editEmbed();
                         } else {
                             matchStats.turn = 1;
-                            interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
                         };
+                    };
+                    skip.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        await userSkip();
                     });
 
                     atk.on('end', () => {
-                        if (120 + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
+                        if (FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
                             atk.stop(), def.stop(), ability.stop(), cskill.stop(), skip.stop();
                             if (resolved) return;
                             endMatch("l");
                             editEmbed();
                         };
                     });
+
+                    // Auto apply existing action sequence
+                    const autoApply = async () => {
+                        while (actionSequence.length > 0) {
+                            const action = actionSequence.shift();
+                            switch (action) {
+                                case "atk": await userAttack(); break;
+                                case "def": await userDefense(); break;
+                                case "ability": await userAbility(); break;
+                                case "skill": await userSkill(); break;
+                                case "skip": await userSkip(); break;
+                            };
+
+                            if (matchStats.turn === 0) break;
+                        };
+                    };
+                    autoApply();
 
                 });
 

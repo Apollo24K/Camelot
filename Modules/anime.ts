@@ -660,14 +660,25 @@ export const anime: animeInfo[] = [
     new animeInfo("Kekkai Sensen", ["Blood Blockade Battlefront", "BBS", "KKSS"], 625),
     new animeInfo("Ore wo Suki nano wa Omae dake ka yo", ["Oresuki", "Are you the only one who loves me?"], 626),
     new animeInfo("A Galaxy Next Door", ["Otonari ni Ginga"], 627),
-    new animeInfo("Shoshimin: How to Become Ordinary", ["Shōshimin", "Shoushimin", "Shoshimin Series"], 628), 
+    new animeInfo("Shoshimin: How to Become Ordinary", ["Shōshimin", "Shoushimin", "Shoshimin Series"], 628),
     new animeInfo("Saijaku Tamer wa Gomi Hiroi no Tabi wo Hajimemashita", ["The Weakest Tamer Began a Journey to Pick Up Trash", "Saijaku Tamer wa Gomihiroi no Tabi wo Hajimemashita", "Saijaku Tamer"], 629),
     new animeInfo("Interviews with Monster Girls", ["Demi-chan wa Kataritai", "Demi Wants to Talk"], 630),
     new animeInfo("Zatch Bell!", ["Konjiki no Gash Bell!!", "KnGB", "ZB"], 631),
     new animeInfo("Samurai Champloo", ["SamCham"], 632),
     new animeInfo("Princess Jellyfish", ["Kuragehime"], 633),
     new animeInfo("Orb: On the Movements of the Earth", ["About the Movement of the Earth", "Chi. Chikyuu no Undou ni Tsuite", "Chi - Chikyuu no Undou ni Tsuite", "Earth - On the Movements of the Planet Earth", "Chi.: Chikyuu no Undou ni Tsuite"], 634),
-
+    new animeInfo("To Be Hero X", ["TBHX", "To Be Hero X: The Hero's Journey", "Tu Bian Yingxiong X"], 635),
+    new animeInfo("Makeine: Too Many Losing Heroines!", ["Make Heroine ga Oosugiru!", "Makeine", "Too Many Losing Heroines"], 636),
+    new animeInfo("The Fragrant Flower Blooms with Dignity", ["Kaoru Hana wa Rin to Saku"], 637),
+    new animeInfo("Tomorrow's Joe", ['Ashita no Joe', 'Champion Joe', 'Rocky Joe', 'AnJ', 'Joe'], 638),
+    new animeInfo("Wind Breaker (Manhwa)", ["Wind Breaker (Webtoon)", "Wind Breaker (KR)", "Wind Breaker (WB)", "Wind Breaker (Cycling)", "WB (Manhwa)", "WB (Webtoon)", "WBK (Manhwa)", "WBK (Webtoon)"], 639),
+    new animeInfo("High School of the Dead", ['Gakuen Mokushiroku: HIGHSCHOOL OF THE DEAD', 'HOTD', 'HSOTD', 'High School of the Dead: Drifters of the Dead', 'Highschool of the Dead'], 640),
+    new animeInfo("NEW GAME!", ['NEW GAME!!', 'NEW GAME!: Watashi, Shainryokoutte Hajimete na no de...', 'NG!', 'NG', 'New Game'], 641),
+    new animeInfo("Pick Me Up", ['Pick Me Up!', 'Pick Me Up, Infinite Gacha', 'PMU', 'Pick Me Up: Infinite Gacha'], 642),
+    new animeInfo("Scissor Seven", ['Assassin Seven', 'Ci Ke Wu Liu Qi', 'Ci Ke Wu Liu Qi: Fan Wai', 'Cike Wu Liuqi', 'Cike Wu Liuqi Fanwai', 'Cike WuLiuqi', 'Cike Wuliuqi Fanwai', 'Killer Seven', 'Scissor 7', 'S7', 'K7'], 643),
+    new animeInfo("Nano Machine", ['Nano Mashin', 'Descent of the Demon God'], 644),
+    new animeInfo("The Devil Butler", ['Demon King Steward', 'Demonic Emperor', "Devil's Butler", 'Housekeeper is the Magic Emperor', 'Magic Emperor', 'Mo Huang Da Guanjia', 'The Demon King Butler', 'The Servant Is the Demon King?!'], 645),
+    new animeInfo("Mission: Yozakura Family", ['Yozakura-san Chi no Daisakusen', 'Mission of Yozakura Family', 'MYF', 'Mission Yozakura Family'], 646),
 ];
 
 

@@ -28,7 +28,7 @@ const exportCommand: SlashCommand = {
         };
 
         // List all actions
-        if (action === "list") {
+        if (action === "list" || action === "ls") {
             return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`guilds`\n`add vote`\n`set <key> <value>`\n`did`", ephemeral });
         };
 

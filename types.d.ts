@@ -632,6 +632,7 @@ export type MatchStats = {
     roundCheck: number;
     ended: boolean;
     interaction: ChatInputCommandInteraction;
+    actionSequence: string[];
     turnSkill: number;
     timeout: number;
     defUsed: number;
@@ -667,6 +668,9 @@ export type MatchStats = {
     dodgebuff?: number;
     allowSelfheal?: boolean;
     heap1: any;
+
+    sendWarning: ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) => void;
+
     listeners: Record<TriggerEvents, ITrigger[]>;
     on(event: TriggerEvents, options: PartialBy<TriggerOptions, "event"> | TriggerCallback): () => void;
     off(event: TriggerEvents, trigger: ITrigger | number): void;
