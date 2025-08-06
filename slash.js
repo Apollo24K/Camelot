@@ -929,6 +929,12 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('liminal')
+			.setDescription('liminal descent')
+			.addSubcommand((subcommand) => subcommand.setName('descent').setDescription('Challenge yourself against bosses with increasing difficulty!'))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('lock')
 			.setDescription('Lock characters')
 			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Lock characters')
@@ -991,11 +997,6 @@ const commands = [
 			.setName('monthly')
 			.setDescription('View the monthly shop for limited resources')
 			.addSubcommand((subcommand) => subcommand.setName('shop').setDescription('View the monthly shop for limited resources')),
-	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
-			.setName('nightmare')
-			.setDescription('Nightmare related commands')
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

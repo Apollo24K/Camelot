@@ -13,7 +13,7 @@ import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, UpdateUserOptions } from '../types';
 import { getPartyMembers, getWeaponSchemas, updateUsers } from '../Modules/queries';
 import { AbilityResponse } from '../Modules/components';
-import { nightmares } from '../Modules/nightmare';
+import { nightmares } from '../Modules/liminal';
 import delayedBuffs from "../Modules/delayedBuffs";
 
 const dungeonInProgress = new Map();
@@ -46,13 +46,15 @@ const nightmareLore = {
         "Mari the poisonbearer": ["The tidalfish gently waddles her tail, shooting past the stagnant water, lighting it with a trail of cyan, glittering with gold. Behind you, ominous mumurs grow louder-\n\nSave us- save us- from the impending doom, the repeating circle...\n\nYou look back, but there's nothing but pitch darkness. You look in more detail, but there is still nothing, pure darkness. Perhaps it's the amplification of volume, or the nihility of the realm, you follow the trail of cyan, warming you and propelling your movement, like a mother's warm embrace- where you lose the aspect of time, and self.\n\nA ray of light blinds you, yet it grows in intensity, forcing you to hide your face behind your pale arms. A moment later, the scene is nothing but pure blueness, like the deepest part of glaciers. The temperature is freezing, as you shiver, wandering through the narrow hallway ahead of you with no end. Just before the awfully dull blue engulfs you, a lady in pink appears, her fingers lightly tapping on the walls of blue, releasing a mist of coral, scented as roses. You step backwards, as she turns to you, eyes lit red, horrifying yet hypnotizing."],
 
         "Sand Golem": ["The lady in pink pants, as she falls to her knees, her hand lightly placed on her chest. The floors of blue weaken, then collapse like structureless tiles. Walls fall and pile, as you run away from causation and effect, from becoming a part of the dominos.\n\n An EXIT door! Euphoria fills you, that's the way out, surely! You leap with glee, eyes locked onto the door of finality, of escape.\n\n But it's all too late, the floor below you fades into countless dust. Your hand reaches out to grab onto the door, but you are a feet away, as you fall once more- It didn't take long this time, as you land onto a field of golden, the sudden jolt immobilizing you for a moment. Your body eases and relaxes, as you gaze at the fluffy clouds in the sky, freely drifting as how the wind ran across the blue sky.\n\n Yet something is off.\n\n The clouds dramatically shift in shape,  distorting, then rise upwards. You feel a sensation of discomfort, as if in a rapidly climbing balloon.\n\n \"Rhu... Rhu...\"\n\nA pair of golden eyes envelop your view, steaming with heat. You scream, turning aback to run, just to see the very platform you are standing on is folding up, causing you to lose balance. It becomes clear to you, that you are on a golem's hand."],
+
         "Luminous (alter)": ["The golem breaks, but regenerates in quick succession. Sandstorms break from all sides, whirling up heaps of dust You instinctively raise your arm to block the raging wind, scratched by millions of fleeing rocks. You stumble your steps, directionless through the field of grit- then you hear a loud thud, as a gigantic hourglass falls onto the field, shattering into pieces of flying blades, while emptying its interiors of particulate matter.\n\n Through the dense fog, you can barely make out a finger from the sky, snapping the golem that was just standing so victoriously- into half. The finger fiddles with the field of sand, as darkness infiltrates the scene, breaking all matter from within. You let out a feeble scream, as you muster up the courage to run- yet quickly loomed over by the finger, obscuring your path with its enormous shadow, as countless hands submerge from the ground. You turn, just to realize the fingers all pointing at you- you're encircled.\n\n  You look down at your body, as pitch black erodes it into the void. Internal organs twist, joints melt, bones crack, all returning to the void. You feel the power of erasure running up your spine, dancing around your mind as the final ritual. Your consciousness destabilizes- who are you? why are you here? why should you fight the void? As your eyes are overtaken by the void, you let out one last thought.\n\n Yet, just as you are about to disappear, a faint chime pierces through the sandy landscape, soft, melodic, and impossibly distant. From the now void-infested sky that lies before you, you begin to feel a subtle warmth which pulses like a heartbeat, and from that pulse, light emerges. Not like sunlight, but something, purer, more gentle. Suddenly, you spot another being tearing through the void in the sky, lighting it up as they descend.\n\n  And then, the finger falters.\n\n A silhouette of radiance appears in front of the cause of the fog, at the opposite side of the sky. From there, everything seems like a blur to you. One trail of pitch black darkness, and another of blinding light converge at the center of the battlefield. Then, at the center, a massive sphere of light and darkness swirls with two types of energy. One sinister, and the other protective"],
-        "Bubble Captain": [""],
-        "Dalus the nightmare": [""],
+        "Bubble Captain": ["The streaks of black and white tear your vision, leaving behind trails of void and grace, frozen in time and space. Your weak legs barely carry you away from the battlefield, but the attacks leave you directionless...\n\nA pink dot appears in your sight, at first blurry, but rapidly expanding, consolidating, into a magnificent bubble, bursting with energy. You feel its warmth, alleviating you from the pain and sore in your joints and muscle, you regain the agility, as you leap to the bubble, it wraps around you, like a mother's loving hand caressing her baby. Scenes of purity flash past you, emotions of gratitude and amazement, as you drown in euphoria, as if praised by millions.\n\nTime is an unreal concept. You twiddle with the golden mist, as you fall flat in the fluff. The place of utter perfection becomes your world- and confines you. You run in circles, as your boredom sends cracks around the fuming world- The cracks grow larger- and you cry, as the familiar streaks of black and white reappear in your view. You wonder whether escape is futile, whether you should just give up, and forever rest in the bubble-\n\nThe cracks widen and connect- The bubble pops in a sudden, as you are sent into a burst of white, contorting to the thrust- you instinctively grab hold of the nearest object- in blindness, you feel a wet gel, gooey- then solid, hard, somewhat cooling... You grab onto the angular object and pull yourself closer, water quickly fills the surrounding, as a pair of cyan eyes stare right into your chest. Frightened, you look downwards, as you realize countless wounds and scratches on your skin, blood oozing out fiercely, as sharks turn their head to you. Panicked, you freeze, as countless bubbles float across the ocean near you. Inside nothing remains, but detached flesh from the skeleton, all the visitors falling prey to the illusion. The shark's metal armor grazes your back, as your hands waddle with great force in the water. You hear the rubbing of their teeth, the aggressive tail wags- Maybe getting lost forever in the bubble was the better option."],
+
+        "Dalus the nightmare": ["The floor below you crumbles, turning into matter of darkness. The topview shrinks as you fall into the dread. Your screams echo within the chamber, overlapping, amplifying, and irritating. Air gushes past your aching back and feeble arms, violently crashing onto your flailing body. As the visible light atop dims and integrates into the darkness, your close your dry eyes and brace for the fall, the fall that will pave the way for escape once and for all.\n\nA soft ray of light permeates the thick walls of desolation,  levitating you amidst the gushing air. You look in the direction of light, just to meet a man's icy blue gaze, piercing through the mist. A broken shell dangles from his necklace, as he blinks, blue petals drift in your direction, the accompanying flora and fauna ever so calming your nerves.\n\nThe light grows stronger, illuminating the darkness in ethereal sky blue, intertwined with threads of golden leaves, as your injuries cure, as strength returns to every action you make... Yet the light returns to darkness, as the gloom of crimson petals rises, bring forth the aroma of roses, but also their thorns. You shiver in place, as thorns inch nearer to you, their sharp edges itching for the taste of blood. Another broken shell hangs from a necklace, this time from another man, fury and decay overflowing from his eyes, as muted grey slide down his cheek, dripping into the abyss. \n\nThe broken shells hum, resonating with each other's presence. Blue petals reenter the thorned land, propelling the blood red's advances. The field crashes into a blur of ocean and the sun's skyline, breaking into astonishing, yet brutal screeches of magical attacks. Yet you can see a tiny bit of softness within the wave of swiftly cast magic attacks, as the broken shells hum with increasing volume, harmonizing the angst and disappointment. You hang onto shredded petals with all your might, as the exploding attacks swing you nauseous..."],
         "Solarion": [""],
         "Victoria the Dragonslayer": [""],
         "Anastasia": [""],
-        "Espathera": [""],
+        "Espathera": ["The ice-cold floor sends pure chill up your spine, piercing through your heart, forcing you to get up from the metal floor. Tall columns rise up to the sky, as the moonlight streams through the enormous stained glass window, casting magnified pale patterns on the marble floor beneath you.. A wave of panic snaps in, as your movements are slowed by the weight of armor -- the typical guard attire of Camelot. You try to look for the exit, but you see the line of guards walking in -- It's not the time yet, you'll get caught. You join in the line of guards, steadying your sight as you watch over the silent corridors of the castle of Camelot, blending in with the oblivious group in eerie silence.\n\nThen, a piece of glass shatters.\n\nFollowed by a scream, the agony tearing the solace apart. Sharp clatters of armor follows, the shrill paining your ear, as it echoes through the hallways. You tighten your first, forcing yourself to straighten up and leave the castle. You run into an empty room, but the noise comes to a sudden halt. You tremble, looking out the room. The halls are deserted -- No patrols. No footsteps, but filled with the scent of blood. You feel your ear ringing, as the heavy, cluttered air extend their invisible hands,  suffocating you with every step.\n\nYou unlatch the door to the throne room, half-expecting to find the other guards stationed nearby. That’s when you see her, striding towards the monarch of Camelot. You try to flee, but your legs give in. You lose balance and fall on the floor, causing a loud crash.\n\nThe woman cloaked in shifting shadows strides the hallway, her eyes fixate on the monarch, casually looking over her shoulder in ethereal radiance. The woman turns her head and extends her hand with elegance, as a massive, dark lance materializes from the void, its edges pulsing with a faint, malevolent glow. Behind her, clattering can once again be heard, as a hoard of guards hover, their eyes filled with dread and a shady smile.\n\nShe chuckles, confident and cruel. You hide under the table, it is evident that only one of them will leave this room alive."],
         "Icecream": [""],
         "Juliette": [""],
     },
@@ -238,7 +240,7 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
     const buttons = [
         new ButtonBuilder()
             .setCustomId('play')
-            .setLabel("Start Nightmare")
+            .setLabel("Descend")
             .setStyle(ButtonStyle.Success)
             .setDisabled(tab === "lore" || tab === "tutorial"),
     ];
@@ -310,23 +312,23 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
     if (selectedBuffs.length === 0) {
         setTimeout(() => {
             interaction.followUp({
-                content: `🏔️ **No more buffs available!** Continuing Stage ${level + 1} (Level ${runData.level + 1})...\n\nUse \`/nightmare\` to continue your fight!`
+                content: `:grey_exclamation: **No more add-on effects available!** Continuing Stage ${level + 1} (Level ${runData.level + 1})...\n\nUse \`/liminal descent\` to continue your fight!`
             });
         }, 2000);
         return;
     }
 
     const buffEmbed = new EmbedBuilder()
-        .setTitle(`🎉 Stage ${level + 1} (Level ${runData.level}) Cleared!`)
+        .setTitle(`<:tada:1402572115282231369> Stage ${level + 1} (Level ${runData.level}) Cleared!`)
         .setDescription(
             `Pick your poison:\n\n` +
             selectedBuffs.map((buff, index) =>
-                `**${index + 1}.** ${buff.name} ${buff.type === "enemy" ? "🔴 **[Enemy Buff]**" : "🟢 **[Player Debuff]**"}\n*${buff.description}*`
+                `**${index + 1}.** ${buff.name} ${buff.type === "enemy" ? "⚫ **[Enemy Buff]**" : "🟡 **[Player Debuff]**"}\n*${buff.description}*`
             ).join("\n\n") +
             `\n\n**Next**: Continue Stage ${level + 1} (Level ${runData.level + 1})`
         )
         .setColor(embedColor)
-        .setFooter({ text: `Active Buffs: ${runData.appliedBuffs.length} | Available Buffs: ${currentBuffs.length}` });
+        .setFooter({ text: `Active add-on effects: ${runData.appliedBuffs.length} | Available add-on effects: ${currentBuffs.length}` });
 
     const buffRow = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
@@ -376,16 +378,16 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
 
         // Update the embed to show selection
         const updatedEmbed = buffEmbed
-            .setTitle(`✅ Buff Selected!`)
+            .setTitle(`<:checkmark:1402570453184286750> Add-on effect Selected!`)
             .setDescription(`**${selectedBuff.name}** has been added to your arsenal!\n\n*${selectedBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
-            .setFooter({ text: `Total Active Buffs: ${runData.appliedBuffs.length}` });
+            .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` });
 
         await buffMessage.edit({ embeds: [updatedEmbed], components: [] });
 
         // Auto-proceed to next level after a short delay
         setTimeout(async () => {
             if (buttonInteraction.channel?.isSendable()) {
-                await buttonInteraction.channel?.send({ content: `✨ **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/nightmare\` to continue your fight!` });
+                await buttonInteraction.channel?.send({ content: `🌠 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/liminal descent\` to continue your fight!` });
             }
         }, 500);
     });
@@ -402,9 +404,9 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
 
                 await buffMessage.edit({
                     embeds: [buffEmbed
-                        .setTitle(`⏰ Time's Up!`)
+                        .setTitle(`⏱️ Time's Up!`)
                         .setDescription(`**${firstBuff.name}** was automatically selected.\n\n*${firstBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
-                        .setFooter({ text: `Total Active Buffs: ${runData.appliedBuffs.length}` })
+                        .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` })
                     ],
                     components: []
                 });
@@ -412,7 +414,7 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
                 // Auto-proceed after timeout
                 setTimeout(async () => {
                     if (interaction.channel?.isSendable()) {
-                        await interaction.channel?.send({ content: `🚀 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/nightmare\` to continue your fight!` });
+                        await interaction.channel?.send({ content: `🌠 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/liminal descent\` to continue your fight!` });
                     }
                 }, 1000);
             }
@@ -464,36 +466,36 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
 
         let tab: "overview" | "lore" | "tutorial" = "overview";
 
-        console.log(characters[preselectedChar].name);
+        // console.log(characters[preselectedChar].name);
         const getDesc = () => {
             if (tab === "overview") {
-                return `### 🌙 Nightmare\nPush your limits in a new survival mode where the challenge never stops growing!\nAfter each win, you pick one of three random buffs that will stack for the rest of your run until you lose. Get an <a:EXTRA:1138530846144462968> pull for successfully clearing a level! You can use any class and items you want! A new level unlocks daily.`
-                    + `\n\n**Enemy**: ${currentNightmare.name}`
-                    + `\n\n**Traits**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
-                    + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
+                return `### :crescent_moon: 𝐋𝐢𝐦𝐢𝐧𝐚𝐥 𝐃𝐞𝐬𝐜𝐞𝐧𝐭   ྀིྀ ♁ ₊ :wing:｡˚ ₊ +\n-# ✧ Strategize and plan your battle against unknown entities, where the difficulty amplifies!\n-# ✧ After each win, you may pick one of three random add-on effects that will stack for the rest of your run until you are defeated!\n-# ✧ You can use any class you want. A new level unlocks daily.`
+                    + `\n\n**𝐄𝐧𝐞𝐦𝐲**: __${currentNightmare.name}__`
+                    + `\n\n**𝐓𝐫𝐚𝐢𝐭𝐬**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
+                    + `\n### 𝐘𝐨𝐮𝐫 𝐜𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫\n**𝐍𝐚𝐦𝐞**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**𝐂𝐥𝐚𝐬𝐬**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**𝐄𝐪𝐮𝐢𝐩𝐦𝐞𝐧𝐭**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
 
-                    + `\n**Items**: <:rune_empty:1034507494539669635> `
+                    + `\n**𝐈𝐭𝐞𝐦𝐬**: <:rune_empty:1034507494539669635> `
                     + userItems.filter((e) => e.category === "ring").map((e) => e.emoji).concat(
                         Array(Math.max(0, getRingSlotsTotal(stats) - userItems.filter((e) => e.category === "ring").length)).fill("<:ring_empty:1034509903886299136>")
                     ).concat(["<:locked:1034511902417621002>", "<:locked:1034511902417621002>", "<:locked:1034511902417621002>"]).slice(0, 3).join("");
             } else if (tab === "lore") {
                 return `### ${currentNightmare.name}'s Lore\n${nightmareLore["summer2025"]?.[currentNightmare.name as keyof typeof nightmareLore["summer2025"]]?.join("\n")}`;
             } else if (tab === "tutorial"){
-                return `### 🎓 Tutorial\n\n` +
-                `**🎯 Objective:** Progress as far as possible without losing to maximize your rewards!\n\n` +
+                return `### 🎓 𝐓𝐮𝐭𝐨𝐫𝐢𝐚𝐥\n\n` +
+                `**<:target1:1402578880291930154> Objective:** Progress as far as possible without losing to maximize your rewards!\n\n` +
                 
-                `**🎮 How to Play:**\n` +
-                `1️⃣ **Select a Stage** - Choose from unlocked nightmare stages (1 new stage unlocks daily)\n` +
-                `2️⃣ **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
-                `3️⃣ **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen your next attempt\n` +
-                `4️⃣ **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
-                `5️⃣ **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
+                `**𝐇𝐨𝐰 𝐭𝐨 𝐏𝐥𝐚𝐲:**\n` +
+                `<:one:1402575947928043591> **Select a Stage** - Choose from unlocked liminal stages (1 new stage unlocks daily)\n` +
+                `<:two:1402576432927866880> **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
+                `<:three:1402576800651149362> **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen the difficulty\n` +
+                `<:four:1402577136925147217> **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
+                `<:five:1402577393285070968> **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
                 
-                `**💪 Effect System:**\n` +
-                `🟢 **Player Debuffs** - Weaken your character's abilities\n` +
-                `🔴 **Enemy Buffs** - Enhance the boss's abilities\n` +
-                `📈 **Stacking** - All chosen buffs remain active throughout your run\n` +
-                `🎲 **Random Selection** - Different buff options each time\n\n` 
+                `**𝐄𝐟𝐟𝐞𝐜𝐭 𝐒𝐲𝐬𝐭𝐞𝐦:**\n` +
+                `🟡 **Player Debuffs** - Weaken your character's abilities\n` +
+                `⚫ **Enemy Buffs** - Enhance the boss's abilities\n` +
+                `<:streak:1402579502470795264> **Stacking** - All chosen buffs remain active throughout your run\n` +
+                `<:dice:1402580409103028325> **Random Selection** - Different buff options each time\n\n` 
 
             }         
             return "";
@@ -503,7 +505,9 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
             .setColor(embedColor)
             .setThumbnail(nightmareImage)
             .setDescription(getDesc())
-            .setFooter({ text: levelsUnlocked > nightmares.length - 1 ? `All levels have been unlocked!` : `Next level unlocks in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min` });
+            .setFooter({ 
+                text: `✯ Repeating routes, chilling circles, you wander in the middle of familiarity, yet plagued by the gloom of strangeness and oddity. How far can you survive and forge a path out, before the darkness consumes you whole? ✯\n\n${levelsUnlocked > nightmares.length - 1 ? `All levels have been unlocked!` : `Next level unlocks in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min`}` 
+            })
         interaction.reply({ embeds: [Embed], components: [selectionRow, getNightmareButtonRow(tab)] }).then((msg) => {
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "play", componentType: ComponentType.Button, time: 90000 });
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
@@ -549,7 +553,7 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
 
             lore.on('collect', () => {
                 tab = (tab === "overview") ? "lore" : "overview";
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getNightmareButtonRow(tab)] });
+                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [ selectionRow, getNightmareButtonRow(tab)] });
             });
 
             select.on('collect', r => {
@@ -583,7 +587,7 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
 
             tutorial.on('collect', () => {
                 tab = (tab === "overview") ? "tutorial" : "overview";
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getNightmareButtonRow(tab)] });
+                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [selectionRow, getNightmareButtonRow(tab)] });
             });
 
             play.on('end', () => {
@@ -597,7 +601,7 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
 };
 
 const exportCommand: SlashCommand = {
-    name: 'nightmare',
+    name: 'liminal',
     async execute({ interaction, author }) {
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
@@ -698,7 +702,7 @@ const exportCommand: SlashCommand = {
         let buffs = Avalon.getBuffs();
         let eBuffs = Avalon.getBuffs();
 
-        const lootFloor = 80;
+        
         let resolved = false;
         async function matchResult(r: "w" | "l") {
             if (resolved) return;
@@ -708,8 +712,8 @@ const exportCommand: SlashCommand = {
             const Embed = new EmbedBuilder()
                 .setColor(embedColor)
                 .setThumbnail(myStatsC.thumbnail)
-                .setTitle(`🌙 Nightmare Stage ${level + 1} (Level ${runData ? runData.level + 1 : 1})`)
-                .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+                .setTitle(`🌙 𝐋𝐢𝐦𝐢𝐧𝐚𝐥 𝐒𝐭𝐚𝐠𝐞 ${level + 1} (𝐋𝐞𝐯𝐞𝐥 ${runData ? runData.level + 1 : 1})`)
+                .setFooter({ text: `𝐁𝐚𝐥𝐚𝐧𝐜𝐞: ${stats.coins} 𝐜𝐨𝐢𝐧𝐬`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
 
             if (r === "l") {
                 // Calculate score
@@ -738,9 +742,9 @@ const exportCommand: SlashCommand = {
                 }
 
                 return Embed.setDescription(
-                    `💀 **${myChar.name}** was defeated! 💀\n\n` +
-                    `📊 **Final Score: ${finalScore} points**\n\n` +
-                    `🔄 **Run Reset** - Starting over at Level 1\n\n` 
+                    `💀 **${myChar.name}** 𝐠𝐨𝐭 𝐥𝐨𝐬𝐭 𝐢𝐧 𝐥𝐢𝐦𝐢𝐧𝐚𝐥𝐢𝐭𝐲... 💀\n\n` +
+                    `<:tally:1402566927079051266> **𝐅𝐢𝐧𝐚𝐥 𝐒𝐜𝐨𝐫𝐞: ${finalScore} 𝐩𝐨𝐢𝐧𝐭𝐬**\n\n` +
+                    `<:repeat1:1402565846433402960> **𝐑𝐮𝐧 𝐑𝐞𝐬𝐞𝐭** - 𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐨𝐯𝐞𝐫 𝐚𝐭 𝐋𝐞𝐯𝐞𝐥 𝟏\n\n` 
                 );
             }
 
@@ -755,17 +759,17 @@ const exportCommand: SlashCommand = {
             }
 
             // Coins
-            let loot = 0;
-            if (stats.craze_levels[level] < 30) {
-                loot = 40 + Math.floor(Math.random() * 30) + (lootFloor < 100 ? lootFloor * 3 : 300 + (lootFloor * 1.5));
-            }
+            // let loot = 0;
+            // if (stats.craze_levels[level] < 30) {
+            //     loot = 40 + Math.floor(Math.random() * 30) + (lootFloor < 100 ? lootFloor * 3 : 300 + (lootFloor * 1.5));
+            // }
 
             // Update users table
             const newUpdates: UpdateUserOptions = {
                 craze_levels: { type: "set", value: stats.craze_levels },
             };
-            if (stats.craze_levels[level] === 1) newUpdates.expulls = { type: "increment", value: 1 };
-            if (loot) newUpdates.coins = { type: "increment", value: loot };
+            // if (stats.craze_levels[level] === 1) newUpdates.expulls = { type: "increment", value: 1 };
+            // if (loot) newUpdates.coins = { type: "increment", value: loot };
             await updateUsers(interaction.user.id, newUpdates);
 
 
@@ -773,8 +777,8 @@ const exportCommand: SlashCommand = {
             await buffSelection(interaction, level);
 
             return Embed
-                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n${stats.craze_levels[level] === 1 ? "1x <a:EXTRA:1138530846144462968>, " : ""}${loot ? `${loot}<:coins:872926669055356939>, ` : ""}`)
-                .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** 𝐰𝐨𝐧! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}`)
+                .setFooter({ text: `𝐁𝐚𝐥𝐚𝐧𝐜𝐞: ${stats.coins} 𝐜𝐨𝐢𝐧𝐬`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         };
 
         let matchStats = Avalon.getMatchStats(interaction);
@@ -795,209 +799,154 @@ const exportCommand: SlashCommand = {
 
         if (runData && runData.appliedBuffs.length > 0) {
             runData.appliedBuffs.forEach(buff => {
-                console.log(`\n--- APPLYING BUFF: ${buff.name} ---`);
+               
 
                 switch (buff.id) {
                     //+20% enemy's ATK & MD
                     case "berserk_fury":
-                        console.log(`BEFORE: Enemy ATK=${eStatsC.atk}, MD=${eStatsC.md}`);
                         eStatsC.atk = Math.floor(eStatsC.atk * 1.2);
                         eStatsC.md = Math.floor(eStatsC.md * 1.2);
                         eBuffs.atk.push(new buffInfo("*", 1.2, 9999));
                         eBuffs.md.push(new buffInfo("*", 1.2, 9999));
-                        console.log(`AFTER: Enemy ATK=${eStatsC.atk}, MD=${eStatsC.md}`);
                         break;
                     //+20% enemy's DEF & MR
                     case "iron_bastion":
-                        console.log(`BEFORE: Enemy DEF=${eStatsC.def}, MR=${eStatsC.mr}`);
                         eStatsC.def = Math.floor(eStatsC.def * 1.2);
                         eStatsC.mr = Math.floor(eStatsC.mr * 1.2);
                         eBuffs.def.push(new buffInfo("*", 1.2, 9999));
                         eBuffs.mr.push(new buffInfo("*", 1.2, 9999));
-                        console.log(`AFTER: Enemy DEF=${eStatsC.def}, MR=${eStatsC.mr}`);
                         break;
                     //+25% enemy's critical rate
                     case "death_eye":
-                        console.log(`BEFORE: Enemy CR=${eStatsC.cr}`);
                         eStatsC.cr += 0.25;
                         eBuffs.cr.push(new buffInfo("+", 0.25, 9999));
-                        console.log(`AFTER: Enemy CR=${eStatsC.cr}`);
                         break;
                     //+50% enemy's critical damage
                     case "ruthless_precision":
-                        console.log(`BEFORE: Enemy CD=${eStatsC.cd}`);
                         eStatsC.cd += 0.5;
                         eBuffs.cd.push(new buffInfo("+", 0.5, 9999));
-                        console.log(`AFTER: Enemy CD=${eStatsC.cd}`);
                         break;
                     //+20% enemy's DMG Reduction
                     case "arcane_barrier":
-                        console.log(`BEFORE: Enemy damageReduction=${eStatsC.damageReduction || 0}`);
                         eStatsC.damageReduction = 0.2;
-                        console.log(`AFTER: Enemy damageReduction=${eStatsC.damageReduction}`);
                         break;
                     //+20% enemy's counter chance
                     case "counter_instinct":
-                        console.log(`BEFORE: Enemy counter=${eStatsC.counter || 0}`);
                         eStatsC.counter ??= 0;
 
                         myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                             if(Math.random() < 0.2) eStatsC.counter++;
-                            console.log(`AFTER: Enemy counter=${eStatsC.counter}`);
                             return AbilityResponse.SUCCESS;
                         }, 9999));
                         
-                        console.log(`AFTER: Enemy counter=${eStatsC.counter}`);
                         break;
                     //+20% enemy's max HP
                     case "titan_blood":
-                        console.log(`BEFORE: Enemy HP=${eStatsC.hp}, maxHP=${eStatsC.maxhp}`);
                         eStatsC.maxhp = Math.floor(eStatsC.maxhp * 1.2);
                         eStatsC.hp = Math.floor(eStatsC.hp * 1.2);
-                        
-                        console.log(`AFTER: Enemy HP=${eStatsC.hp}, maxHP=${eStatsC.maxhp}`);
                         break;
                     //+20% enemy dodge rate
                     case "phantom_step":
-                        console.log(`BEFORE: Enemy dodge=${eStatsC.dodge}`);
                         eStatsC.dodge += 0.2;
                         if (eStatsC.dodge > 1) eStatsC.dodge = 1;
                         eBuffs.dodge.push(new buffInfo("+", 0.2, 9999));
-                        console.log(`AFTER: Enemy dodge=${eStatsC.dodge}`);
                         break;
                     //+10% enemy's mana regeneration
                     case "mana_surge":
-                        console.log(`BEFORE: Enemy MG=${eStatsC.mg}`);
                         eStatsC.mg += 10;
                         eBuffs.mg.push(new buffInfo("+", 10, 9999));
-                        console.log(`AFTER: Enemy MG=${eStatsC.mg}`);
                         break;
                     //Recovers 4% max HP every round
                     case "regenerative_aura":
-                        const regenAmount = Math.floor(eStatsC.maxhp * 0.04);
-                        console.log(`BEFORE: Enemy regen buff count=${eBuffs.hp.length}`);
                         eBuffs.hp.push(new buffInfo("+", Math.floor(eStatsC.maxhp * 0.04), 9999));
-                        console.log(`AFTER: Enemy regen buff count=${eBuffs.hp.length}, regen=${regenAmount}/round`);
                         break;
                     //Begins battles with a shield of **25%** max HP
                     case "shielded_spawn":
                         const shieldAmount = Math.floor(eStatsC.maxhp * 0.25);
-                        console.log(`BEFORE: Enemy shield=${eStatsC.shield}`);
                         eStatsC.shield += shieldAmount;
-                        console.log(`AFTER: Enemy shield=${eStatsC.shield}`);
                         break;
                     //Doubles ATK, MD, DEF & MR during the first 2 rounds
                     case "war_frenzy":
-                        console.log(`BEFORE: Enemy buff counts - ATK:${eBuffs.atk.length}, MD:${eBuffs.md.length}, DEF:${eBuffs.def.length}, MR:${eBuffs.mr.length}`);
                         eBuffs.atk.push(new buffInfo("*", 2, 2));
                         eBuffs.md.push(new buffInfo("*", 2, 2));
                         eBuffs.def.push(new buffInfo("*", 2, 2));
                         eBuffs.mr.push(new buffInfo("*", 2, 2));
-                        console.log(`AFTER: Enemy buff counts - ATK:${eBuffs.atk.length}, MD:${eBuffs.md.length}, DEF:${eBuffs.def.length}, MR:${eBuffs.mr.length} (2x for 2 rounds)`);
                         break;
                     //-20% ATK & MD
                     case "shattered_might":
-                        console.log(`BEFORE: Player ATK=${myStatsC.atk}, MD=${myStatsC.md}`);
                         myStatsC.atk = Math.floor(myStatsC.atk * 0.8);
                         myStatsC.md = Math.floor(myStatsC.md * 0.8);
                         buffs.atk.push(new buffInfo("*", 0.8, 9999));
                         buffs.md.push(new buffInfo("*", 0.8, 9999));
-                        console.log(`AFTER: Player ATK=${myStatsC.atk}, MD=${myStatsC.md}`);
                         break;
                     //-20% DEF & MR
                     case "brittle_guard":
-                        console.log(`BEFORE: Player DEF=${myStatsC.def}, MR=${myStatsC.mr}`);
                         myStatsC.def = Math.floor(myStatsC.def * 0.8);
                         myStatsC.mr = Math.floor(myStatsC.mr * 0.8);
                         buffs.def.push(new buffInfo("*", 0.8, 9999));
                         buffs.mr.push(new buffInfo("*", 0.8, 9999));
-                        console.log(`AFTER: Player DEF=${myStatsC.def}, MR=${myStatsC.mr}`);
                         break;
                     //-25% critical rate
                     case "dulled_edge":
-                        console.log(`BEFORE: Player CR=${myStatsC.cr}`);
                         myStatsC.cr -= 0.25;
                         if (myStatsC.cr < 0) myStatsC.cr = 0;
                         buffs.cr.push(new buffInfo("+", -0.25, 9999));
-                        
-                        console.log(`AFTER: Player CR=${myStatsC.cr}`);
                         break;
                     //-50% critical damage
                     case "cracked_focus":
-                        console.log(`BEFORE: Player CD=${myStatsC.cd}`);
                         myStatsC.cd -= 0.5;
                         if (myStatsC.cd < 0) myStatsC.cd = 0;
                         buffs.cd.push(new buffInfo("+", -0.5, 9999));
-                        console.log(`AFTER: Player CD=${myStatsC.cd}`);
                         break;
                     //Takes +15% damage
                     case "marked_target":
-                        console.log(`BEFORE: Player vulnerability=${myStatsC.vulnerability || 1}`);
                         myStatsC.vulnerability ??= 1;
                         myStatsC.vulnerability += 0.15;
-                        console.log(`AFTER: Player vulnerability=${myStatsC.vulnerability}`);
                         break;
                     //-20% max HP
                     case "cursed_vitality":
-                        console.log(`BEFORE: Player HP=${myStatsC.hp}, maxHP=${myStatsC.maxhp}`);
                         myStatsC.maxhp = Math.floor(myStatsC.maxhp * 0.8);
                         myStatsC.hp = Math.floor(myStatsC.hp * 0.8);
-                        console.log(`AFTER: Player HP=${myStatsC.hp}, maxHP=${myStatsC.maxhp}`);
                         break;
                     //-20% dodge rate
                     case "slipping_shadow":
-                        console.log(`BEFORE: Player dodge=${myStatsC.dodge}`);
                         myStatsC.dodge -= 0.2;
                         if (myStatsC.dodge < 0) myStatsC.dodge = 0;
                         buffs.dodge.push(new buffInfo("+", -0.2, 9999));
-                        console.log(`AFTER: Player dodge=${myStatsC.dodge}`);
                         break;
                     //-10 mana regeneration
                     case "mana_drought":
-                        console.log(`BEFORE: Player MG=${myStatsC.mg}`);
                         myStatsC.mg -= 10;
                         buffs.mg.push(new buffInfo("+", -10, 9999));
-                        console.log(`AFTER: Player MG=${myStatsC.mg}`);
                         break;
                     //HP can never be more than 50% at the start of the round
                     case "half_life":
-                        console.log(`BEFORE: Player HP=${myStatsC.hp} (${Math.round(myStatsC.hp / myStatsC.maxhp * 100)}%)`);
                         if(myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
                             myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                
                                 if(myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
-                                console.log("half_life")
 
                             return AbilityResponse.SUCCESS;
                         }, 9999));
-                        console.log(`AFTER: Player HP=${myStatsC.hp} (capped at 50%)`);
                         break;
                     //Takes 12% of DMG dealt
                     case "retributive_pain":
                         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                             if (caster === myStatsC) {
                                 myStatsC.hp -= Math.floor(options.damage * 0.12)
-                                console.log(`${myStatsC.name} took 12% of the damage dealt to them.`)
                             };
                         });
-                        
                         break;
                     //The player's ATK,MD,Block rate is reduced to 0 every 5 rounds
                     case "cycle_of_exhaustion":
-                        console.log(`Applied: Player frozen every 5 rounds (delayedBuff added)`);
                         myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                             if (matchStats.round % 5 === 0) {
-                                
                                 myStatsC.atk = 0;
                                 myStatsC.md = 0;
                                 myStatsC.br = 0;
-                                
-                                
                             };
             
                             return AbilityResponse.SUCCESS;
                         }, 9999));
-
                         break;
                     //Removes shield at the start of the round and reduces max HP by 8%
                     case "exposed":
@@ -1045,7 +994,7 @@ const exportCommand: SlashCommand = {
                     .setColor(embedColor)
                     .setThumbnail(myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${fightDuration}s` })
-                    .setTitle(`Nightmare Stage ${level + 1} (Level ${runData ? runData.level + 1 : 1})`)
+                    .setTitle(`𝐋𝐢𝐦𝐢𝐧𝐚𝐥 𝐒𝐭𝐚𝐠𝐞 ${level + 1} (𝐋𝐞𝐯𝐞𝐥 ${runData ? runData.level + 1 : 1})`)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
@@ -1063,7 +1012,7 @@ const exportCommand: SlashCommand = {
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}\\💖${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}\\💖${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
-                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${fightDuration + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} ‖ round ${matchStats.round} ‖ time left: ${fightDuration + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         // await msg.edit({ embeds: [Embed] });
 
                         // Debounce
@@ -1156,7 +1105,7 @@ const exportCommand: SlashCommand = {
 
                     let forcedSkillUse = 0;
                     function attack() {
-                        if (matchStats.turn === 1) return;                       
+                        if (matchStats.turn === 1) return;                     
                         if (eStatsC.timeFrozen) {
                             if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
                             if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
@@ -1184,6 +1133,8 @@ const exportCommand: SlashCommand = {
                                 //     return;
                                 // };
 
+                               
+
                                 if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767  && Math.random() < 0.3) {
                                     // curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                     // eStatsC.sm -= curse.cost;
@@ -1197,6 +1148,7 @@ const exportCommand: SlashCommand = {
                                     attack();
                                 } else {
                                     dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                                    matchStats.trigger("ATK", eStatsC, myStatsC, eBuffs, buffs);
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
                                     matchStats.turn = 1;
