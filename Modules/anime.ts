@@ -680,6 +680,7 @@ export const anime: animeInfo[] = [
     new animeInfo("The Devil Butler", ['Demon King Steward', 'Demonic Emperor', "Devil's Butler", 'Housekeeper is the Magic Emperor', 'Magic Emperor', 'Mo Huang Da Guanjia', 'The Demon King Butler', 'The Servant Is the Demon King?!'], 645),
     new animeInfo("Mission: Yozakura Family", ['Yozakura-san Chi no Daisakusen', 'Mission of Yozakura Family', 'MYF', 'Mission Yozakura Family'], 646),
     new animeInfo("Natsume's Book of Friends", ["Natsume Yuujinchou", 'NY'], 647),
+    new animeInfo("Masamune-kun's Revenge ", [" Masamune-kun no Revenge"], 648),
 ];
 
 
