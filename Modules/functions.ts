@@ -657,7 +657,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         attacker.attackStreak = 0;
         target.dodgeStreak++;
         if (target.dodgeHeal) {
-            target.hp += Math.floor(target.maxhp * target.dodgeHeal);
+            addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(target.maxhp * target.dodgeHeal), {});
             if (target.hp > target.maxhp) target.hp = target.maxhp;
         };
         if (matchStats.dodgebuff) {
@@ -855,7 +855,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         };
 
         const healCap = attacker.maxhp * 0.2;
-        attacker.hp += Math.floor(Math.min(selfHealedTotal, healCap));
+        addHeal(attacker, target, attacker, attackerBuff, targetBuff, matchStats, notice, ``, Math.floor(Math.min(selfHealedTotal, healCap)), {});
         if (selfHealedTotal >= healCap) attacker.lastSelfHealRoundCapped = matchStats.round;
     };
     if (options.selfdmg && Math.random() < matchStats.selfdmg) attacker.hp -= damage;
@@ -898,14 +898,25 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
 export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], log: string, amount: number, flags = {}) => {
     const options = { // true = enabled, false = disabled
-
+        bypassBoL: false,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
     if (attacker.negateHeal && amount > 0 && target === caster && attacker !== caster) {
         // notice.push(`\n<:negated_heal:1341346312699904044> **${attacker.name}** has negated the heal!`);
     } else {
-        target.hp += Math.floor(amount);
+        // Check for any heal reduction
+        // 1: Bond of Life
+        if (!options.bypassBoL) {
+            if (target.bondOfLife > 0) {
+                amount -= target.bondOfLife;
+                if (amount < 0) amount = 0;
+            };
+        };
+        
+        // 2: General Heal reduction
+        if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
+        if (amount > 0) target.hp += Math.floor(amount);
         if (target.hp > target.maxhp) target.hp = target.maxhp;
         if (target.hp < 0) target.hp = 0;
     };

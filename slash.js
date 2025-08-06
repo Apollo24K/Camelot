@@ -929,6 +929,12 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('liminal')
+			.setDescription('liminal descent')
+			.addSubcommand((subcommand) => subcommand.setName('descent').setDescription('Challenge yourself against bosses with increasing difficulty!'))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('lock')
 			.setDescription('Lock characters')
 			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Lock characters')
@@ -1506,7 +1512,8 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 			.setName('stampede')
-			.setDescription('A recurring special battle event'),
+			.setDescription('A recurring special battle event')
+			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the stampede overview and go directly into battle').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

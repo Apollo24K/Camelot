@@ -202,7 +202,15 @@ const monsterRow = new ActionRowBuilder<ButtonBuilder>()
             .setCustomId('4')
             .setLabel("Boss")
             .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+            .setCustomId('5')
+            .setLabel("Boss (Phase 2)")
+            .setStyle(ButtonStyle.Danger),
     );
+
+const isStampedeDisabled = (stampede: StampedeSchema) => {
+    return (stampede.bosshp < 1 || new Date().getDate() > 7 || !isStampedeMonth());
+};
 
 function bossSelection(interaction: ChatInputCommandInteraction, stampede: StampedeSchema, myChar: charInfo, partyQuery: CompactUserSchema[], stats: CompactUserSchema): Promise<number> {
     return new Promise((resolve) => {
@@ -212,7 +220,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stampede: Stamp
                     .setCustomId('0')
                     .setLabel("I'm ready, let me fight!")
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(stampede.bosshp < 1 || new Date().getDate() > 7 || !isStampedeMonth()),
+                    .setDisabled(isStampedeDisabled(stampede)),
                 new ButtonBuilder()
                     .setCustomId('test')
                     .setLabel("Let's try a test run first!")
@@ -294,6 +302,9 @@ const exportCommand: SlashCommand = {
 
         const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
+        // Skip Overview
+        const skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
+
         const stats = author.schema;
         if (stats.stampedechar === null || !stats.chars.includes(stats.stampedechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name> mode:stampede` to choose one.");
 
@@ -333,8 +344,17 @@ const exportCommand: SlashCommand = {
         const partyAbility: (Ability | undefined)[] = []; // partyChars.map((e) => e.id in abilities ? _.cloneDeep(abilities[e.id]) : undefined).filter((e) => e !== undefined);
 
         // Menu
-        const boss = await bossSelection(interaction, stampede, myChar, partySchema, stats);
+        const boss = skipOverview ? 1 : await bossSelection(interaction, stampede, myChar, partySchema, stats);
         if (boss === 0) return;
+
+        // Check if stampede is disabled
+        if (isStampedeDisabled(stampede)) return interaction.editReply("Stampede is currently unavailable. Please try again later!");
+
+        // Check if user is on cooldown
+        if (dungeonInProgress.has(interaction.user.id)) {
+            if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(interaction.user.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(interaction.user.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(interaction.user.id) - new Date().getTime()) / 1000) % 60}**s`);
+            return;
+        };
 
         // Enemy Stats
         let enemyType: "monster" | "general" | "boss", curseId: number;
@@ -453,7 +473,7 @@ const exportCommand: SlashCommand = {
 
         // Set Stats
         if (enemyType === "boss") {
-            eStats.hp = (boss === 1) ? stampede.bosshp : stampede.bosshpmax;
+            eStats.hp = (boss === 1) ? stampede.bosshp : (boss === 5 ? Math.floor(stampede.bosshpmax * 0.4) : stampede.bosshpmax);
             eStats.maxhp = stampede.bosshpmax;
             eStats.atk = Math.floor(myStatsC.hp * 0.18);
             eStats.md = Math.floor(myStatsC.hp * 0.18);
@@ -511,12 +531,12 @@ const exportCommand: SlashCommand = {
                 const damageDealt = enemyType === "monster" ? eStatsC.maxhp - eStatsC.hp : eStats.hp - eStatsC.hp;
 
                 // Log damage
-                if (damageDealt > (enemyType === "general" ? 600000 : 450000)) {
+                if (damageDealt > (enemyType === "general" ? 1_200_000 : 800_000)) {
                     const chnl = interaction.client.channels.cache.find(channel => channel.id === "1147984366211973280");
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
                         .setThumbnail(myChar.image)
-                        .setDescription(`**Character**: ${myChar.name} Lvl. ${myStats.lvl}\n**Class**: ${myClass ? `${myClass.name} ${myClass.emblem} Lvl. ${myStats.clvl}` : "`none`"}\n**Equipment**: ${myStats.weaponicon}${stats.premium > 3 && myStats.shieldicon ? myStats.shieldicon : ""} ${myStats.helmeticon || "<:helmet_empty:1034499888878198885>"}${myStats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${myStats.glovesicon || "<:gloves_empty:1034499892409794570>"}${myStats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Damage**: ${damageDealt} to ${enemyType}\n\n**Action Sequence**\n> ${matchStats.actionSequence.join(", ")}`)
+                        .setDescription(`**Character**: ${myChar.name} Lvl. ${myStats.lvl}\n**Class**: ${myClass ? `${myClass.name} ${myClass.emblem} Lvl. ${myStats.clvl}` : "`none`"}\n**Equipment**: ${myStats.weaponicon}${stats.premium > 3 && myStats.shieldicon ? myStats.shieldicon : ""} ${myStats.helmeticon || "<:helmet_empty:1034499888878198885>"}${myStats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${myStats.glovesicon || "<:gloves_empty:1034499892409794570>"}${myStats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Damage**: ${damageDealt} to ${enemyType}${boss === 5 ? " (Phase 2)" : ""}\n\n**Action Sequence**\n> ${matchStats.actionSequence.join(", ")}`)
                         .setAuthor({ name: interaction.user.username, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
                     if (chnl?.isSendable()) chnl.send({ embeds: [Embed] });
                 };

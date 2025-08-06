@@ -1347,6 +1347,830 @@ export const raidBosses: enemyInfo[] = [
         }, [["Gains **6x** of the player's max HP as a shield at the start of battle", "Stores **2%** of his shield for his Void Orb every round, decreases his shield by **5%** each time", "On shield break, reverses the player's damage type for **5** rounds", "Has a **50%** chance to deal magical damage", "Every **6th** round, he uses Void Orb, dealing the stored amount of shield as damage", "**Active**: Enters a domain which lasts **5** rounds, in which he increases his crit rate by **70%**, sets his crit damage to **175%**, and deals **50%** lightning damage (**90** <:mana:1047269152957661255>)"]])
     ),
 ];
+export const nightmareMobs: enemyInfo[] = [
+    new enemyInfo("Fish of the Tidal", "Tidal Fish", "Tidecaller", "F", true, { hp: 30_000, atk: 10_000, md: 10_000, def: 1_000, mr: 1_000, mana: 160 }, {}, {}, [], ["https://i.ibb.co/4wkzc800/c.png"], [], 25,
+        new skillInfo(25, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.tidalMeter += 50;
+            notice.push(`\n✨ Heed my call! **${enemy.name}** raised Tidal Meter to **${eStats.tidalMeter}**`);
+            if (eStats.tidalMeter > 70) {
+                addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor((eStats.maxhp - eStats.hp) * 0.33), {});
+            } else dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🐟 **${enemy.name}** dived through! **${enemy.name}**`, 4);
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.tidalMeter = 0;
+            eStats.reduceHealing = 0.4;
+
+            const tidalBuff = 1.1;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.tidalMeter > 50) {
+                    eStats.atk += Math.floor(eStats.atk * tidalBuff);
+                    eStats.md += Math.floor(eStats.md * tidalBuff);
+                } else {
+                    eStats.def += Math.floor(eStats.def * tidalBuff);
+                    eStats.mr += Math.floor(eStats.def * tidalBuff);
+                };
+
+                if (eStats.tidalMeter >= 100) {
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌊 **${enemy.name}** summoned a Tsunami! **${enemy.name}**`, 2.5);
+                    eStats.tidalMeter = 50;
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (target === myStats) {
+                    eStats.tidalMeter += 25;
+                };
+            });
+
+            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (caster === eStats) {
+                    eStats.tidalMeter -= 10;
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["Enters battle with **0** `Tidal Meter`, the player recovers **40%** less HP. After receiving an attack, increases `Tidal Meter` by **25**. After missing an attack, lowers `Tidal Meter` by **10**.", "When `Tidal Meter` is above **50**, the fish has **+110%** ATK/MD. Else, the fish has **+110%** DEF/MR", "At the start of every round, if `Tidal Meter` is at **100** or more, summons a Tsunami, dealing **250%** DMG to the player, before resetting `Tidal Meter` to **50**", "**Active**: Chants the tides, increasing `Tidal Meter` by **50**. If `Tidal Meter` is above **70**, additionally recovers **33%** missing HP. Else, dives through and deals **400%** DMG to the player (**80** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Mari the poisonbearer", "Tainted keeper", "Poisonbearer", "F", true, { hp: 35_000, atk: 10_000, md: 10_000, def: 660, mr: 660, mana: 180 }, {}, {}, [], ["https://i.ibb.co/TqTcLbt4/c.png"], [], 26,
+        new skillInfo(26, 90, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.mariPoison++;
+            // Every 2 uses, boost ATK by 60% permanently
+            if (eStats.mariPoison === 2) {
+                eStats.atk += Math.floor(eStats.atk * 0.6);
+                ebuff.atk.push(new buffInfo("+", Math.floor(eStats.atk * 0.6), 9999));
+                eStats.mariPoison = 0;
+            };
+            // steals 20% of ATK, MD, DEF, MR
+            const satk = Math.floor(myStats.atk * 0.2);
+            const sdef = Math.floor(myStats.def * 0.2);
+            const smd = Math.floor(myStats.md * 0.2);
+            const smr = Math.floor(myStats.mr * 0.2);
+
+            ebuff.atk.push(new buffInfo("+", satk, 4)); mybuff.atk.push(new buffInfo("+", -satk, 4));
+            ebuff.def.push(new buffInfo("+", sdef, 4)); mybuff.def.push(new buffInfo("+", -sdef, 4));
+            ebuff.md.push(new buffInfo("+", smd, 4)); mybuff.md.push(new buffInfo("+", -smd, 4));
+            ebuff.mr.push(new buffInfo("+", smr, 4)); mybuff.mr.push(new buffInfo("+", -smr, 4));
+
+            eStats.atk += satk; myStats.atk -= satk;
+            eStats.def += sdef; myStats.def -= sdef;
+            eStats.md += smd; myStats.md -= smd;
+            eStats.mr += smr; myStats.mr -= smr;
+
+            // 1x Weaken
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.6), 9999));
+            notice.push(`\n**${enemy.name}** stole **20%** stats and weakened **${char.name}**.`);
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.mariPoison = 0;
+
+            // 4x Weaken (60% MD taken every round)
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.6), 9999));
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.6), 9999));
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.6), 9999));
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.6), 9999));
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 3 === 0) {
+                    Object.keys(ebuff).forEach((stat) => {
+                        ebuff[stat as keyof Buffs].forEach((buff) => {
+                            // Adds own debuffs x1.5 to enemy
+                            if (buff.isDebuff) {
+                                const debuff = new buffInfo(buff.type, buff.val * 1.5, buff.last, buff.change, buff.ctype, buff.cap);
+                                mybuff[stat as keyof Buffs].push(debuff);
+                            };
+                        });
+
+                        // Remove debuffs
+                        ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff) => !buff.isDebuff);
+                    });
+                }
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["Applies **4** `Weaken` (DoT) to the player at the start of the fight, each causing them to take **60%** MD every round.", "Transfers all debuffs on self to the player every **3** rounds with **50%** more effectiveness", "**Active**: Steals **20%** ATK, MD, DEF & MR from the player, then applies another `Weaken` to the player. After **2** uses, this will additionally boost ATK by **60%**. (**90** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Sand Golem", "Goliath of Dunes", "Titan of Dust", "M", true, { hp: 60_000, atk: 10_000, md: 10_000, def: 660, mr: 660, mana: 160 }, {}, {}, [], ["https://i.ibb.co/q3MLsBR8/c.png"], [], 27,
+        new skillInfo(27, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Remove player buffs
+            Object.keys(mybuff).forEach((e) => mybuff[e as keyof Buffs] = []);
+            eStats.dodge += 0.5;
+            if (eStats.dodge > 1) eStats.dodge = 1;
+            ebuff.dodge.push(new buffInfo("+", 0.5, 1));
+            myStats.dodge -= 0.5;
+            if (myStats.dodge < 0) myStats.dodge = 0;
+            mybuff.dodge.push(new buffInfo("+", -0.5, 1));
+            notice.push(`\n**${enemy.name}** removed all buffs from the player and stole **50%** dodge.`);
+
+            // Increase castle hp pool if it exists
+            if (eStats.golemCastle > 0) {
+                const castleHeal = Math.floor(eStats.maxhp * 0.15);
+                eStats.golemCastle += castleHeal;
+                notice.push(`\n**${enemy.name}** boosted \`Castle\`'s HP by **${castleHeal}** `);
+            };
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.golemCastle = Math.floor(eStats.maxhp * 0.5);
+
+            // If golemCastle active = Allieviate DMG & boost CR
+            if (eStats.golemCastle > 0) {
+                eStats.cr += 0.5;
+                eStats.cd += 0.7;
+                if (eStats.cr > 1) eStats.cr = 1;
+            };
+
+            // Redirect 80% of DMG when possible
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && eStats.golemCastle > 0) {
+                    const dmgRedirect = Math.floor(options.dmg * 0.8);
+                    if (dmgRedirect + target.hp > 0) {
+                        eStats.hp += dmgRedirect;
+                        if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
+                        eStats.golemCastle -= dmgRedirect;
+                        if (eStats.golemCastle < 0) eStats.golemCastle = 0;
+                        notice.push(`\n**${enemy.name}**'s castle collapsed and is no longer effective.`);
+                    }
+                };
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.golemCastle > 0) {
+                    eStats.cr += 0.5;
+                    eStats.cd += 0.7;
+                    if (eStats.cr > 1) eStats.cr = 1;
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["At the start of the fight, builds a `Castle`, having **50%** of its max HP", "When `Castle` is active, has **+50%** critical rate and **+70%** critical damage. Additionally, **80%** of damage taken is redirected to `Castle`", "Once `Castle` runs out of HP, it will break down and no longer be effective", "**Active**: Removes buffs from the player, then steals **50%** dodge rate from the player, lasting for **1** round. If `Castle` is still effective, increases `Castle`'s HP by **15%** of its max HP. (**80** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Luminous (alter)", "Solo hunter", "The cursed", "F", true, {hp: 30_000, atk: 13_000, md: 13_000, def: 660, mr: 660, mana: 180}, {}, {}, [], ["https://i.ibb.co/KpyGDfrX/tidecaller.png"], [], 28,
+        new skillInfo(28, 90, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Consume 15% of own missing HP from the player and deal 250% DMG
+            const hpDMG = Math.floor((eStats.maxhp - eStats.hp) * 0.15);
+            myStats.hp -= hpDMG;
+            if (myStats.hp < 0) myStats.hp = 0;
+            const dmg = (Math.random() < myStats.dodge) ? notice.push(`\n💨 **${char.name}** dodged the attack!`) : dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🖤 Ego consumed **${hpDMG}** HP from the player. **${enemy.name}**`, 2.5);
+            if (dmg) {
+                myStats.def -= Math.floor(myStats.def * 0.33);
+                myStats.mr -= Math.floor(myStats.mr * 0.33);
+                mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.33), 3));
+                mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.33), 3));
+            };
+
+            matchStats.blockAbilities = 3; // CD for 4 rounds
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Starts with 100% dodge rate, decreases by 2% every round.
+            eStats.dodge = 1;
+            ebuff.dodge.push(new buffInfo("=", Math.floor((myStats.dodge - 0.02 * matchStats.round) * 100) / 100, 9999));
+            myStats.atk += Math.floor(myStats.atk * (myStats.dodge));
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.atk += Math.floor(myStats.atk * (myStats.dodge));
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            // Has -7% MR after suffering a magical hit
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && options.magicDamage) {
+                    eStats.mr -= Math.floor(eStats.mr * 0.07);
+                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.07), 2));
+                };
+            });
+
+            // If not at 100% CR, sacrifices 5% current HP to increase CR by 5%
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.cr < 1) {
+                    eStats.hp -= Math.floor(eStats.hp * 0.05);
+                    eStats.cr += 0.05;
+                    ebuff.cr.push(new buffInfo("+", 0.05, 9999));
+                    if (eStats.cr > 1) eStats.cr = 1;
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["At the start of the battle, has **100%** dodge rate, which decreases by **4%** every round.", "Own ATK is increased by **1%** for every **1%** dodge rate", "After being hit by a magical attack, has **-7%** MR for **2** rounds", "When critical rate is not at **100%** at the start of a round, sacrifices **5%** current HP to increase critical rate by **5%** permanently", "**Active**: Consumes **15%** of missing HP from the player, then deals **250%** DMG to the player. If the hit connects, additionally decreases the player's DEF & MR by **33%** for **3** rounds. (**90** <:mana:1047269152957661255>, CD: 4)"]])
+    ),
+    new enemyInfo("Bubble Captain", "Commander of Froth", "Foaming Shark", "M", true, {hp: 40_000, atk: 13_000, md: 13_000, def: 660, mr: 660, mana: 180}, {}, {}, [], ["https://i.ibb.co/LDY9Sctj/c.webp"], [], 29,
+        new skillInfo(29, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Every 2 uses = set dodge to 0%
+            eStats.bubbleUsedActive++;
+            if (eStats.bubbleUsedActive % 2 === 0) myStats.dodge = 0;
+
+            // Consumes all Bubble, before restoring 2% max HP and dealing 10% ATK for every consumed as one single damage instance
+            const heal = Math.floor(eStats.maxhp * 0.02 * eStats.bubble), atkScale = Math.floor(eStats.atk * 0.05 * eStats.bubble);
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🫧 **${enemy.name}** consumed **${eStats.bubble}** ${eStats.bubble > 1 ? `bubbles` : `bubble`}. **${enemy.name}**`, atkScale);
+            addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, heal, {});
+            eStats.bubble = 0;
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.bubble = 0;
+            eStats.bubbleUsedActive = 0;
+            // Increases CR/Heals + Deals 30% DMG whenever attacked
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (target === eStats) {
+                    if (eStats.cr < 1) {
+                        eStats.cr += 0.1;
+                        if (eStats.cr > 1) {
+                            eStats.cr = 1;
+                            notice.push(`\n⚠️ **${enemy.name}** has reached **100%** critical rate.`);
+                        };
+                    } else {
+                        addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor((eStats.maxhp - eStats.hp) * 0.07), {});
+                    };
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🫧 **${enemy.name}**`, { atkMultiplier: 0.3, dodge: false });
+                } else if (caster === eStats && Math.random() < 0.33) {
+                    // 33% chance to apply dot and gain bubble when attacking
+                    mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.15), 9999));
+                    eStats.bubble += 4;
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["After receiving an attack, increases critical rate by **10%** permanently and deals **30%** undodgeable DMG. If critical rate is already at **100%**, instead recovers **7%** missing HP..", "The captain's attacks have a **33%** chance to trap the player every round, causing them to take **15%** ATK as DoT for the rest of the fight, and grant the captain **4x** `Bubble`", "**Active**: Consumes all `Bubble`, before restoring **2%** max HP and dealing **5%** ATK for every consumed as one single damage instance. Every **2** uses, additionally summons crewmates to target the player, where player has **0%** dodge before bubbles are consumed (**80** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Dalus the Nightmare", "Phantom Dreamer", "Twister", "M", true, {hp: 25_000, atk: 12_000, md: 12_000, def: 660, mr: 660, mana: 180}, {}, {}, [], ["https://i.ibb.co/V0FNnYMN/c.gif"], [], 30,
+        new skillInfo(30, 1000, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Do nothing
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Evades 1st lethal hit
+            eStats.evadeDeathStrike = 1;
+            eStats.evadeDeathChance = 1;
+
+            // Burst shield gain and vulnerability upon first death evasion
+            matchStats.on("deathEvade", {
+                maxUsage: 1,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (target == eStats) {
+                        const shgain = eStats.maxhp;
+                        eStats.shield += eStats.maxhp;
+                        eStats.maxhp = 1;
+                        eStats.hp = 1;
+                        if (!myStats.vulnerability || myStats.vulnerability < 2) myStats.vulnerability = 2;
+                        // Deal 10% max HP as absolute undodgeable DMG, and cleanses debuffs every 2 rounds
+                        notice.push(`\n<:dalusrose:1387007950601719908> The show must... go on. **${enemy.name}** gained a **${shgain}** HP shield`);
+                        Object.keys(ebuff).forEach((stat) => {
+                            ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff) => !buff.isDebuff);
+                        });
+                        return AbilityResponse.SUCCESS;
+                    };
+                }
+            });
+
+            // Lose mana for ATK boost
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Gain 2% ATK for every 1 💧consumed
+                const atkBuff = Math.floor(eStats.atk * eStats.sm * 0.02);
+                eStats.atk += atkBuff;
+                eStats.sm = 0;
+
+                if (matchStats.round % 2 === 0) {
+                    const dmg = Math.floor(eStats.maxhp * 0.1);
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:rosie:1387006066566627328> **Rosie**`, { overwriteDamage: dmg, ignoreShield: true, dodge: false });
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            // Mana Regen boost
+            eStats.mg += 30;
+            ebuff.mg.push(new buffInfo("+", 30, 9999));
+
+            // Reduce player's healing by 70%
+            eStats.reduceHealing = 0.7;
+
+            return AbilityResponse.SUCCESS;
+        }, [["Evades the **1st** lethal hit, and immediately gains a shield with **100%** max HP, before setting his max HP to **1**. This also causes the player to panic and take **+100%** DMG from then on (only the highest effect takes place)", "Consumes all 💧 at the start of every round, before gaining **5%** ATK & MD for every **1** 💧 consumed at the start of every round.", "Increases mana regeneration by **30**", "Deals **10%** max HP as undodgeable absolute DMG (ignores DEF/MR) every **2** rounds","The player receives **70%** less healing"]])
+    ),
+    new enemyInfo("Solarion", "The Radiant", "The Lightbringer", "F", true, {hp: 40_000, atk: 12_000, md: 12_000, def: 660, mr: 660, mana: 120}, {}, {}, [], ["https://i.ibb.co/0j488wGx/c.png"], [], 31,
+        new skillInfo(31, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // 5% max HP DoT on player + 100% DMG
+            mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.05), 9999));
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `☀️ **${enemy.name}**`, { atkMultiplier: 1, mdChance: 1 });
+
+            if (eStats.heat > myStats.heat) {
+                // More heat than player = Deal another 200% MD
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `☀️ **${enemy.name}**`, { atkMultiplier: 2, mdChance: 1 });
+            } else {
+                // Gain 3 Heat
+                eStats.heat += 3;
+            };
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.heat ??= 0;
+            eStats.heat ??= 0;
+
+            // Upon entrance deal 300% MD and proc aftereffects
+            const dmg = (Math.random() < myStats.dodge) ? notice.push(`\n💨 **${char.name}** dodged the attack!`) : dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `☀️ The blazing heat shines down... **${enemy.name}**`, 3);
+            if (dmg) {
+                eStats.md += Math.floor(eStats.md * 1);
+                notice.push(`\n${enemy.name} gained **+100%** MD.`);
+            } else {
+                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `☀️ **${enemy.name}**`, { atkMultiplier: 1.5, mdChance: 1 });
+                    return AbilityResponse.SUCCESS;
+                }, 9999));
+            };
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Gain 1 heat every round
+                eStats.heat++;
+                if (eStats.heat > myStats.heat) {
+                    // More heat than player = increase MD by 10% and deal 80% MD
+                    eStats.md += Math.floor(eStats.md * 0.1);
+                    ebuff.md.push(new buffInfo("+", Math.floor(eStats.md * 0.1), 9999));
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `☀️ **${enemy.name}**`, { atkMultiplier: 0.8, mdChance: 1 });
+                } else {
+                    // Less heat than player = gain 40 💧 & deal 20% MD
+                    eStats.sm += 40;
+                    if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `☀️ **${enemy.name}**`, { atkMultiplier: 0.2, mdChance: 1 });
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["Upon entering battle, deals **300%** MD to the user. If the attack is avoided, deals **150%** MD as an additional attack every round. Else, increases MD by **100%**", "Gains **1x** `Heat` every round. At the start of the round, if Solarion has more `Heat` than the player, increases MD by **10%** permanently and deals **80%** MD. Else, restores **40** 💧 and deals *20%** MD.", "**Active**: Inflicts a **5%** max HP DoT on the enemy, before dealing **100%** MD to the player. If she has more `Heat` than the player, deals another instance of **200%** MD. Else, restores **20%** max HP and gains **3x** `Heat`. (**60** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Victoria the Dragonslayer", "Bane of Wyvern", "Endcaller", "F", true, {hp: 30_000, atk: 10_000, md: 10_000, def: 660, mr: 660, mana: 180}, {}, {}, [], ["https://i.ibb.co/0j488wGx/c.png"], [], 32,
+        new skillInfo(32, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Boost player's CR to 100%
+            mybuff.cr.push(new buffInfo("=", 1, 1));
+            notice.push(`\n🐲 **${char.name}** will have **100%** critical rate the next round.`);
+            matchStats.blockAbilities = 3; // CD for 4 rounds
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.vigor = false;
+            eStats.empathy = false;
+            eStats.counter ??= 0;
+
+            matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                eStats.vigor = true;
+            });
+
+            matchStats.on("noncrit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (target === eStats) eStats.empathy = true;
+            });
+
+            matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (target === eStats) eStats.counter += 1;
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.vigor && eStats.empathy) {
+                    // Have both = Lose 8% max HP and immediately gain 15 mana
+                    eStats.hp -= Math.floor(eStats.maxhp * 0.08);
+                    if (eStats.hp < 0) eStats.hp = 0;
+                    eStats.sm += 15;
+                    if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
+                } else if (eStats.vigor) {
+                    // Vigor = +80% ATK
+                    eStats.atk += Math.floor(eStats.atk * 0.8);
+                } else if (eStats.empathy) {
+                    // Empathy = Restore 4% max HP
+                    addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor(eStats.maxhp * 0.04), {});
+                };
+                eStats.vigor = false;
+                eStats.empathy = false;
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["Counters the next hit upon receiving a critical hit", "Gains `Vigor` when anyone counters. Gains `Empathy` when receiving a non-critical hit.", "At the start of the round, if she has `Vigor`, consumes it to boost ATK by **80%** for **1** round. If she has `Empathy`, consumes it to recover **4%** max HP. If she has both, loses **8%** max HP and gains **15** 💧", "**Active**: Increases the player's critical rate to **100%** for the next round (**100** <:mana:1047269152957661255>, CD: 4)"]])
+    ),
+    new enemyInfo("Anastasia", "Crimson Veil", "Blood-drawer", "F", true, {hp: 40_000, atk: 10_000, md: 10_000, def: 660, mr: 660, mana: 260}, {}, {}, [], ["https://i.ibb.co/m5TDT2bB/c.png"], [], 33,
+        new skillInfo(33, 130, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Deal 10% of max HP as true dmg to the player
+            const dmg = (eStats.def + eStats.mr < 100000) ? Math.floor((eStats.maxhp - eStats.hp) * 0.1) : 0;
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { overwriteDamage: dmg });
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.anastasiaCleanse = false;
+            if (char.gender === "M") {
+                // If character is male = Loses 50% max HP upon entering battle
+                myStats.hp -= Math.floor(myStats.maxhp * 0.5);
+                if (myStats.hp < 0) myStats.hp = 0;
+
+                // Own dodge rate +35%
+                eStats.dodge += 0.35;
+                if (eStats.dodge > 1) eStats.dodge = 1;
+                ebuff.dodge.push(new buffInfo("+", 0.35, 9999));
+            };
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 5 === 0) {
+                    eStats.negateHeal = 1;
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        eStats.negateHeal = 0;
+                        return AbilityResponse.SUCCESS;
+                    }));
+
+                    if (myStats.hp / myStats.maxhp > 0.6) {
+                        // Under 60% HP = Charmed
+                        myStats.timeFrozen = true;
+                        if (myStats.vulnerability < 2) myStats.vulnerability = 2;
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.timeFrozen = false;
+                            myStats.vulnerability = 1;
+                            return AbilityResponse.SUCCESS;
+                        }));
+                        notice.push(`\n✨ **${char.name}** was charmed for **1** round!`);
+                    } else {
+                        // Else: +200% ATK
+                        eStats.atk *= 2;
+                    };
+                    // Takes 5% of her ATK as true absolute dmg
+                    myStats.hp -= Math.floor(eStats.atk * 0.05);
+                    if (myStats.hp < 1) myStats.hp = 1;
+
+                    // If the player has more than 100 mana: Mana Disorder
+                    if (myStats.sm >= 100) {
+                        // Steal all mana ; Heal 15% max HP ; +25% ATK for 3 rounds ; Player cannot regen mana for 2 rounds
+                        eStats.sm += myStats.sm;
+                        if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
+                        myStats.sm = 0;
+                        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.maxhp * 0.15), {});
+                        eStats.atk *= 1.25;
+                        ebuff.atk.push(new buffInfo("*", 1.5, 3));
+                        myStats.mg = 0;
+                        mybuff.mg.push(new buffInfo("=", 0, 9999));
+                        notice.push(`\n⁉️ Anastasia put forth the disorder of mana`);
+                    };
+
+                    // If below 25% HP the first time
+                    if ((eStats.hp / eStats.maxhp) < 0.25 && !eStats.anastasiaCleanse) {
+                        eStats.anastasiaCleanse = true;
+                        Object.keys(ebuff).forEach((stat) => {
+                            ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff) => !buff.isDebuff);
+                            eStats.sm += 130;
+                            if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
+                            eStats.dodge += 0.2;
+                            if (eStats.dodge > 1) eStats.dodge = 1;
+                            ebuff.dodge.push(new buffInfo("+", 0.2, 9999));
+                        });
+                        notice.push(`\n🌑 Anastasia usurped upon the moon and found renewed power`);
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            // Immortality mechanic: Player must have 0 mana when she dies
+            eStats.evadeDeathStrike ??= 0;
+            eStats.evadeDeathChance ??= 0;
+            eStats.evadeDeathChance += 99999;
+            eStats.evadeDeathStrike += 99999;
+
+            matchStats.on("deathEvade", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (target === eStats) {
+                    if (caster.sm > 0) {
+                        addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(eStats.maxhp * 0.3), {});
+                        eStats.atk *= 0.33;
+                        ebuff.atk.push(new buffInfo("*", 1.33, 9999));
+                        eStats.dodge += 0.1;
+                        if (eStats.dodge > 1) eStats.dodge = 1;
+                        ebuff.dodge.push(new buffInfo("+", 0.1, 9999));
+                        notice.push(`\n🩸 A lovely attempt. Now… my turn.`);
+                    } else {
+                        notice.push(`\n✨ So you did give everything... What a courageous fool.`);
+                        eStats.hp = 0;
+                    };
+                };
+            });
+            return AbilityResponse.SUCCESS;
+        }, [["If your character is male: The player loses **50%** max HP upon entering battle, she will have **+35%** dodge rate", "Every **5** rounds: She negates healing for **1** round. Then, if your HP is above **60%**, you become `Charmed` for **1** round (Cannot act this round and will take doubled the damage). Else she will have **+100%** ATK that round.", "The player takes **5%** of her ATK as absolute damage (bypasses DEF/MR) every round (cannot be cleansed, considered a passive damage instance)", "Mana Disorder (:interrobang:) is triggered at the start of the round if your Mana reaches **100** or more. She steals all of the player's mana, recovers **15%** of Max HP, and gains **+50%** ATK/MD for **3** rounds. The player also cannot generate mana for **2** rounds", "When falling below **25%** HP at the start of the round for the first time: She cleanses all debuffs, recovers **130** :droplet:, and gains **+20%** dodge rate permanently", "**Immortality Mechanic (:skull_crossbones:)** – [Crimson Rite]: Anastasia’s will successfully *evade all lethal strikes*, unless the player has **0** :droplet: when she evades. Whenever she successfully evades, she restores **30%** Max HP and gains permanent: **+33%** ATK, **+10%** dodge rate", "**Active**: Deals **10%** Max HP as True Damage (**130** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Espathera", "Shifting Shadows", "One from the Void", "F", true, {hp: 35_000, atk: 10_000, md: 10_000, def: 660, mr: 660, mana: 160}, {}, {}, [], ["https://i.ibb.co/M5QggLY2/c.jpg"], [], 34,
+        new skillInfo(34, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Increase ATK & MD by 3% for every PIERCE, then gains 2 PIERCE
+            const atkBuff = Math.floor(eStats.atk * 0.03 * eStats.espatheraPierce);
+            const mdBuff = Math.floor(eStats.md * 0.03 * eStats.espatheraPierce);
+            eStats.atk += atkBuff;
+            eStats.md += mdBuff;
+            ebuff.atk.push(new buffInfo("+", atkBuff, 9999));
+            ebuff.md.push(new buffInfo("+", mdBuff, 9999));
+            notice.push(`\n✨ **${enemy.name}** gained ATK, MD and pierce`);
+            // If player's HP is below 20% = Execute
+            if (myStats.hp / myStats.maxhp < 0.15) myStats.hp = 0;
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.espatheraPierce = 0;
+            mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * 0.08), 9999));
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 4 === 0) {
+                    // Every 4 rounds: Deal 15% true DMG for every PIERCE
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ Lances materialized behind your back... **${enemy.name}**`, { atkMultiplier: 0.15 * eStats.espatheraPierce, ignoreShield: true, dodge: false, block: false });
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === myStats) {
+                    mybuff.hp.push(new buffInfo("+", Math.floor(myStats.hp * 0.08), 9999));
+                    eStats.def *= 0.7;
+                    eStats.mr *= 0.7;
+                    ebuff.def.push(new buffInfo("*", 0.7, 2));
+                    ebuff.mr.push(new buffInfo("*", 0.7, 2));
+                };
+            });
+
+            matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                // Drain 8%/16% max HP after every player's ATK
+                if (caster === myStats) {
+                    const drain = (myStats.maxhp * 0.08 * matchStats.round > 15 ? 2 : 1);
+                    eStats.hp += drain;
+                    if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
+                    myStats.hp -= drain;
+                    if (myStats.hp < 0) myStats.hp = 0;
+                };
+            });
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                eStats.espatheraPierce++;
+            });
+            return AbilityResponse.SUCCESS;
+        }, [["Upon entering battle, inflicts a **8%** current HP DoT on the player", "After the player uses :sparkles:, inflicts another **8%** current HP DoT on the player, but reduces own DEF/MR by **30%** for **2** rounds", "After the player uses ATK, drains **8%** max HP from the player. After **15** rounds, drains **16%** max HP instead.", "Any hit by the player/herself grants self **1x** `Pierce`", "Every **4** rounds, she deals **15%** true DMG for every `Pierce` (does not reset stacks) the next round", "**Active**: Increases ATK & MD by **3%** for every `Pierce` permanently, then gains **2** `Pierce`. If the player's HP is below **15%**, instantly eliminates them (**80** <:mana:1047269152957661255>)"]])
+    ),
+    new enemyInfo("Icecream", "Scream Gatherer", "100% unnatural", "F", true, {hp: 30_000, atk: 10_000, md: 10_000, def: 660, mr: 660, mana: 300}, {}, {}, [], ["https://i.ibb.co/M5QggLY2/c.jpg"], [], 35,
+        new skillInfo(35, 200, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Release toppings to the player
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🍦 ${enemy.name} released all their toppings. **${enemy.name}**`, { overwriteDamage: Math.floor(eStats.toppings), ignoreShield: true, dodge: false });
+
+            if (eStats.icecreamField === 1) { // Switch battlefield
+                eStats.icecreamField = 2;
+                notice.push(`\n🍦 The battlefield is now __Iscream__`);
+            } else {
+                // Sets ATK & MD to 0 for 2 rounds
+                myStats.atk = 0;
+                myStats.md = 0;
+                mybuff.atk.push(new buffInfo("=", 0, 2));
+                mybuff.md.push(new buffInfo("=", 0, 2));
+            };
+
+            eStats.toppings = 0; // Reset toppings
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.icecreamField = 2; // 1 = Reality ; 2 = Iscream
+            eStats.atkCount = 0;
+            eStats.toppings = 0;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.icecreamField === 1) {
+                    // Reality
+                    myStats.atk += Math.floor(myStats.atk * 0.3);
+                    myStats.md += Math.floor(myStats.md * 0.3);
+                    eStats.atk += Math.floor(eStats.atk * 0.3);
+                    eStats.md += Math.floor(eStats.md * 0.3);
+                } else {
+                    // Iscream
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `**${enemy.name}**`, { atkMultiplier: 1 });
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                // Inflict Strawberry / Chocolate / Vanilla
+                if (caster === eStats) {
+                    let n = Math.floor(Math.random() * 3);
+                    switch (n) {
+                        case 0:
+                            // Strawberry
+                            let hpLoss = Math.floor(myStats.hp * 0.1);
+                            myStats.hp -= hpLoss;
+                            notice.push(`\n🍓 **${char.name}** lost **${hpLoss}** HP`);
+                            break;
+                        case 1:
+                            // Chocolate
+                            let manaLoss = Math.min(myStats.sm, 10);
+                            myStats.sm -= manaLoss;
+                            notice.push(`\n🍫 **${char.name}** lost **${manaLoss}** 💧`);
+                            break;
+                        case 2:
+                            // Vanilla
+                            myStats.maxhp -= Math.floor(myStats.maxhp * 0.03);
+                            notice.push(`\n🥛 **${char.name}** lost **3%** max HP permanently`);
+                            break;
+                        default:
+                            // Strawberry
+                            let hpLoss2 = Math.floor(myStats.hp * 0.1);
+                            myStats.hp -= hpLoss2;
+                            notice.push(`\n🍓 **${char.name}** lost **${hpLoss2}** HP`);
+                            break;
+                    };
+                };
+            });
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                eStats.atkCount++;
+                if (eStats.icecreamField === 2 && target === eStats) {
+                    if (eStats.hp > 0) addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(options.damage * 1.5), {});
+                };
+                if (eStats.atkCount % 5 === 0) {
+                    if (eStats.icecreamField === 1) {
+                        // If in Reality = Switch to Iscream
+                        eStats.icecreamField = 2;
+                        notice.push(`\n🍦 The battlefield is now __Iscream__`);
+                    } else {
+                        // If in Iscream = Swap to Reality
+                        eStats.icecreamField = 1;
+                        notice.push(`\n✨ The battlefield is now __Reality__`);
+                    };
+                };
+
+                if (target === eStats) eStats.toppings += options.damage;
+            });
+            return AbilityResponse.SUCCESS;
+        }, [["The battlefield is split into [Reality] and [Iscream]. The player starts off in [Iscream]. The battlefield switches every **5** attacks on-field. Damage taken by Icecream is recorded as `Toppings`.", "[Reality] : Both the player and Icecream has **+30%** ATK & MD.", "[Iscream] : The player takes **100%** DMG every round as an active damage instance. All non-lethal damage dealt on Icecream will be recovered with **+50%** efficiency.", "Icecream's attacks additionally inflict `Strawberry`, `Chocolate` or `Vanilla` on the player as an instant effect. (`Strawberry` : Lose **10%** current HP. `Chocolate` : Loses **10** :droplet: . `Vanilla` : Lower max HP by **3%**)","**Active**: If there are any `Toppings`, releases them to the player as undodgeable true damage. Then, resets `Toppings` and switches battlefield to [Iscream] and records damage taken as `Toppings`. (**200** <:mana:1047269152957661255>)","If the battlefield was already [Iscream], screams at the player, causing them to have **0** ATK & MD for **2** rounds"]])
+    ),
+    new enemyInfo("Juliette Mirage", "Twilight", "Abyssal Starfall", "F", true, {hp: 60_000, atk: 12_000, md: 12_000, def: 660, mr: 660, mana: 180}, {}, {}, [], ["https://i.ibb.co/VpLkBR52/c.gif"], [], 36,
+        new skillInfo(36, 200, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (eStats.julietteState === 1) { // Mermaid of Lament
+                eStats.reflectDamage += 0.15;
+                eStats.dodge += 0.35;
+                if (eStats.dodge > 1) eStats.dodge = 1;
+                ebuff.dodge.push(new buffInfo("+", 0.35, 3));
+                eStats.selfhealChance.push(1);
+                eStats.selfheal.push(0.25);
+                notice.push(`\n🌊 ${enemy.name} entered her Mermaid Form for **3** rounds`);
+
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.reflectDamage -= 0.15;
+                    eStats.selfhealChance.pop();
+                    eStats.selfheal.pop();
+                    return AbilityResponse.SUCCESS;
+                }));
+            } else {
+                // Twilight Juliette
+
+                matchStats.blockAbilities = 9; // Cooldown of 10 rounds
+
+                // Steals 28% of ATK, MD, DEF, MR
+                const satk = Math.floor(myStats.atk * 0.28);
+                const sdef = Math.floor(myStats.def * 0.28);
+                const smd = Math.floor(myStats.md * 0.28);
+                const smr = Math.floor(myStats.mr * 0.28);
+
+                ebuff.atk.push(new buffInfo("+", satk, 3)); mybuff.atk.push(new buffInfo("+", -satk, 3));
+                ebuff.def.push(new buffInfo("+", sdef, 3)); mybuff.def.push(new buffInfo("+", -sdef, 3));
+                ebuff.md.push(new buffInfo("+", smd, 3)); mybuff.md.push(new buffInfo("+", -smd, 3));
+                ebuff.mr.push(new buffInfo("+", smr, 3)); mybuff.mr.push(new buffInfo("+", -smr, 3));
+
+                eStats.atk += satk; myStats.atk -= satk;
+                eStats.def += sdef; myStats.def -= sdef;
+                eStats.md += smd; myStats.md -= smd;
+                eStats.mr += smr; myStats.mr -= smr;
+                notice.push(`\n🌠 ${enemy.name} used Starfall Reversal and stole **28%** ATK, MD, DEF and MR from ${char.name} for **3** rounds`)
+
+                // Lower healing
+                eStats.reduceHealing += 0.5;
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.reduceHealing -= 0.5;
+                    return AbilityResponse.SUCCESS;
+                }));
+
+                // Wisp dmg
+                if (eStats.wisp >= 2) dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🌠 ${enemy.name}`, { overwriteDamage: (eStats.maxhp - eStats.hp) * 0.33, magicDamage: true, dodge: false });
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.julietteState = 1; // 1 = Mermaid of Lament ; 2 = Twilight Juliette
+            eStats.oceanLament = 0;
+            eStats.roundCount = 0; // Every 3 rounds AFTER changing into Twilight Juliette
+            eStats.wisp = 0; // How many wisps does she have?
+
+            eStats.maxhp += Math.floor(eStats.maxhp * 0.2);
+            eStats.def += 200;
+            eStats.mr += 200;
+            ebuff.def.push(new buffInfo("+", 200, 9999));
+            ebuff.mr.push(new buffInfo("+", 200, 9999));
+            mybuff.mg.push(new buffInfo("+", -5, 9999));
+            eStats.counter ??= 0;
+            eStats.rev = 1;
+            eStats.revhp = 1;
+            eStats.maxRevivals = 1;
+            eStats.revivedTotal = 0;
+            eStats.reflectDamage ??= 0;
+            eStats.reduceHealing ??= 0;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.julietteState === 1) {
+                    // Mermaid of Lament
+                    if (Math.random() < 0.33) eStats.counter++; // 33% chance to counter the next hit
+                    if (matchStats.round % 5 === 0) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌊 **${enemy.name}** released the fury of the Ocean! **${enemy.name}**`, { atkMultiplier: 0.5 * eStats.oceanLament, selfheal: true, selfhealAmount: 0.15, selfhealChance: 1});
+                } else {
+                    // Twilight Juliette
+                    eStats.roundCount++;
+                    if (eStats.roundCount % 3 === 0 && eStats.wisp < 4) {
+                        eStats.wisp++
+                        let n = Math.floor(Math.random() * 4);
+                        switch (n) {
+                            case 0:
+                                // Ursae
+                                eStats.putDamageOnHold ??= 0;
+                                eStats.putDamageOnHold += 0.18;
+                                notice.push(`\n✨ **${enemy.name}** summoned __Ursae Majoris__`);
+                                break;
+                            case 1:
+                                // Draconis
+                                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    if (Math.random() < 0.1) eStats.counter++;
+                                    return AbilityResponse.SUCCESS;
+                                }, 9999));
+                                matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                                    if (target === eStats) {
+                                        eStats.cr += 0.03;
+                                        if (eStats.cr > 1) eStats.cr = 1;
+                                        ebuff.cr.push(new buffInfo("+", 0.03, 9999));
+                                    };
+                                });
+                                notice.push(`\n✨ **${enemy.name}** summoned __Draconis__`);
+                                break;
+                            case 2:
+                                // Phoenicis
+                                eStats.mr += 200;
+                                ebuff.mr.push(new buffInfo("+", 200, 9999));
+                                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    // Cleanse debuffs
+                                    Object.keys(ebuff).forEach((stat) => {
+                                        ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff) => !buff.isDebuff);
+                                    });
+                                    return AbilityResponse.SUCCESS;
+                                }, 9999));
+                                notice.push(`\n✨ **${enemy.name}** summoned __Phoenicis__`);
+                                break;
+                            case 3:
+                                // Andromedae
+                                eStats.br += 0.13;
+                                if (eStats.br > 1) eStats.br = 1;
+                                ebuff.br.push(new buffInfo("+", 0.13, 9999));
+                                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    // Passive block
+                                    eStats.usedBlockRound = matchStats.round;
+                                    return AbilityResponse.SUCCESS;
+                                }, 9999));
+                                matchStats.on("block", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                                    if (target === eStats) {
+                                        eStats.cd += 0.08;
+                                        ebuff.cd.push(new buffInfo("+", 0.08, 9999));
+                                    };
+                                });
+                                notice.push(`\n✨ **${enemy.name}** summoned __Andromedae__`);
+                                break;
+                            default:
+                                break;
+                        };
+                    };
+
+                    if (eStats.hp / eStats.maxhp <= 0.08) { // Final Sacrifice
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌠 ${enemy.name} weaved the stars. **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.maxhp * 0.2), ignoreShield: true, dodge: false });
+                        if (myStats.hp > 0) eStats.hp = 0;
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            matchStats.on("revival", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                // Phase change
+                if (target === eStats) {
+                    // Deal 20% of player's max HP as undodgeable true DMG
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌠 ${enemy.name} weaved the stars. **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.maxhp * 0.2), ignoreShield: true, dodge: false });
+                    
+                    // Cleanse debuffs
+                    Object.keys(ebuff).forEach((stat) => {
+                        ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff) => !buff.isDebuff);
+                    });
+
+                    // Enter Phase 2: Twilight Juliette
+                    eStats.julietteState = 2;
+                    eStats.reduceHealing = 0.7;
+                };
+            });
+
+            matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (target === eStats && eStats.julietteState === 1) {
+                    eStats.oceanLament++
+                };
+            });
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (target === eStats && eStats.julietteState === 2 && eStats.hp / eStats.maxhp <= 0.08) {
+                    // Final Sacrifice
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌠 ${enemy.name} weaved the stars. **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.maxhp * 0.2), ignoreShield: true, dodge: false });
+                    if (myStats.hp > 0) eStats.hp = 0;
+                };
+            });
+            return AbilityResponse.SUCCESS;
+        }, [["Juliette has **2** phases -- Mermaid of Lament & Twilight Juliette\n__Phase 1 - Mermaid of Lament__:", "Gains **+20%** Max HP, **+200** DEF/MR, lasting permanently", "Player regenerates **-5** 💧 permanently", "**33%** chance to counter the next hit at the start of every round. Each counter grants **1x** `Ocean’s Lament`", "Every **5** Rounds – Deals **50%** DMG for every `Ocean’s Lament`, and heals for **15%** of total damage dealt", "Upon death, deals **20%** of the player's max HP as undodgeable true Damage, before purging all debuffs, restoring all HP and entering __Phase 2__","**Active**: Transforms into Mermaid Form for **3** rounds, where she has **+35%** dodge, **25%** lifesteal, and reflects **15%** damage (**200** <:mana:1047269152957661255>)\n\n__Phase 2 – Twilight Juliette__:\nGains a random Celestial Wisp every **3** rounds (Up to **4**):","`Ursae Majoris` – Reduces all damage taken by **18%**\n- `Draconis` – **10%** counter chance; counters raise crit rate by **3%**\n- `Phoenicis` – **+200** MR, immune to HP debuffs\n- `Andromedae` – **+13%** passive block chance. A successful block increases critical damage by **8%**", "The player receives **70%** less healing", "After receiving an attack, or at the start of the round, if she has less than **8%** max HP, she sacrifices herself, dealing **20%** of the player's max HP as undodgeable true damage. If the player survives, she dies.", "**Active**: Steals **28%** ATK, MD, DEF, MR for **3** rounds, and lowers the player's healing by **50%** for **3** rounds. If **2** or more wisps are active: deals bonus damage based on **33%** of missing HP (**200** <:mana:1047269152957661255> , CD: 10 rounds)"]])
+    ),
+];
+
+
 
 export class floorInfo {
     private _floor: number;
