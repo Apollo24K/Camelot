@@ -3,21 +3,21 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonSty
 import { abilities } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
-import { floors } from "../Modules/enemies";
-import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
-import { skills, crazeBossAbilities } from "../Modules/skills";
+import { armorInfo, itemInfo, items, ringInfo, weaponInfo } from "../Modules/items";
+import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, customEmojis, dealDamage, search, searchClass, searchItem, classLevelToXP } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage, searchClass, classLevelToXP, getRingSlotsTotal, addHeal } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, UpdateUserOptions } from '../types';
-import { getPartyMembers, updateUsers } from '../Modules/queries';
+import { getPartyMembers, getWeaponSchemas, updateUsers } from '../Modules/queries';
 import { AbilityResponse } from '../Modules/components';
 import { nightmares } from '../Modules/nightmare';
+import delayedBuffs from "../Modules/delayedBuffs";
 
 const dungeonInProgress = new Map();
-const crazeLevelSelected = new Map();
+const nightmareSelected = new Map();
 const embedColor = 0x034f20;
 
 
@@ -32,30 +32,29 @@ interface UserRunInfo {
     level: number;
     buffPool: Record<string, BuffInfo>;
     appliedBuffs: BuffInfo[];
+    totalPoints: number;
 }
 
 const userRuns = new Map<string, UserRunInfo>();
 const startDate = new Date('2025-07-20T00:00:00');
 
-const getNightmareMobCurse = {
-    0: 8,
-
-    2: 12,
-
-    9: 4,
-
-    13: 8,
-
-    16: 11,
-} as const;
 
 const nightmareLore = {
     "summer2025": {
         "Tidalfish": ["You feel an infinite descend, as the void opens its great arms to welcome you. For a moment, you are weightless, as memories float past you like bokeh of lights, familiar yet uncertain.\n\nWithin seconds, water chaotically dashes past your cheek, as air bubbles snorkel up your nostrils, rinsing you anew. Your hands frantically sway through the muddy water, as you muster up your last bit of strength to ascend through the water- and finally reach the surface.\n\nAhead of you, a light shimmers, dimly lightning the stagnant water, expanding to a seemingly limitless horizon. A monstrous creature dives at the tail end, her eyes sharp, looking right through you as she levitates in the air briefly. You turn, but the paddling of fins enclose you..."],
-        "Sand Golem": ["Try dealing physical damage!"], // Infinite MR
-        "Bubble Captain": ["I wonder who it could be... <:Heh:928368727588757504>"], // Use luffy
-        "Icecream": ["Only those with a higher capacity for magic may stand before her"], // Have a larger mana pool than her
-        "Solarion": ["GMT+13"], // Fight him between 08:00-16:00
+
+        "Mari the poisonbearer": ["The tidalfish gently waddles her tail, shooting past the stagnant water, lighting it with a trail of cyan, glittering with gold. Behind you, ominous mumurs grow louder-\n\nSave us- save us- from the impending doom, the repeating circle...\n\nYou look back, but there's nothing but pitch darkness. You look in more detail, but there is still nothing, pure darkness. Perhaps it's the amplification of volume, or the nihility of the realm, you follow the trail of cyan, warming you and propelling your movement, like a mother's warm embrace- where you lose the aspect of time, and self.\n\nA ray of light blinds you, yet it grows in intensity, forcing you to hide your face behind your pale arms. A moment later, the scene is nothing but pure blueness, like the deepest part of glaciers. The temperature is freezing, as you shiver, wandering through the narrow hallway ahead of you with no end. Just before the awfully dull blue engulfs you, a lady in pink appears, her fingers lightly tapping on the walls of blue, releasing a mist of coral, scented as roses. You step backwards, as she turns to you, eyes lit red, horrifying yet hypnotizing."],
+
+        "Sand Golem": ["The lady in pink pants, as she falls to her knees, her hand lightly placed on her chest. The floors of blue weaken, then collapse like structureless tiles. Walls fall and pile, as you run away from causation and effect, from becoming a part of the dominos.\n\n An EXIT door! Euphoria fills you, that's the way out, surely! You leap with glee, eyes locked onto the door of finality, of escape.\n\n But it's all too late, the floor below you fades into countless dust. Your hand reaches out to grab onto the door, but you are a feet away, as you fall once more- It didn't take long this time, as you land onto a field of golden, the sudden jolt immobilizing you for a moment. Your body eases and relaxes, as you gaze at the fluffy clouds in the sky, freely drifting as how the wind ran across the blue sky.\n\n Yet something is off.\n\n The clouds dramatically shift in shape,  distorting, then rise upwards. You feel a sensation of discomfort, as if in a rapidly climbing balloon.\n\n \"Rhu... Rhu...\"\n\nA pair of golden eyes envelop your view, steaming with heat. You scream, turning aback to run, just to see the very platform you are standing on is folding up, causing you to lose balance. It becomes clear to you, that you are on a golem's hand."],
+        "Luminous (alter)": ["The golem breaks, but regenerates in quick succession. Sandstorms break from all sides, whirling up heaps of dust You instinctively raise your arm to block the raging wind, scratched by millions of fleeing rocks. You stumble your steps, directionless through the field of grit- then you hear a loud thud, as a gigantic hourglass falls onto the field, shattering into pieces of flying blades, while emptying its interiors of particulate matter.\n\n Through the dense fog, you can barely make out a finger from the sky, snapping the golem that was just standing so victoriously- into half. The finger fiddles with the field of sand, as darkness infiltrates the scene, breaking all matter from within. You let out a feeble scream, as you muster up the courage to run- yet quickly loomed over by the finger, obscuring your path with its enormous shadow, as countless hands submerge from the ground. You turn, just to realize the fingers all pointing at you- you're encircled.\n\n  You look down at your body, as pitch black erodes it into the void. Internal organs twist, joints melt, bones crack, all returning to the void. You feel the power of erasure running up your spine, dancing around your mind as the final ritual. Your consciousness destabilizes- who are you? why are you here? why should you fight the void? As your eyes are overtaken by the void, you let out one last thought.\n\n Yet, just as you are about to disappear, a faint chime pierces through the sandy landscape, soft, melodic, and impossibly distant. From the now void-infested sky that lies before you, you begin to feel a subtle warmth which pulses like a heartbeat, and from that pulse, light emerges. Not like sunlight, but something, purer, more gentle. Suddenly, you spot another being tearing through the void in the sky, lighting it up as they descend.\n\n  And then, the finger falters.\n\n A silhouette of radiance appears in front of the cause of the fog, at the opposite side of the sky. From there, everything seems like a blur to you. One trail of pitch black darkness, and another of blinding light converge at the center of the battlefield. Then, at the center, a massive sphere of light and darkness swirls with two types of energy. One sinister, and the other protective"],
+        "Bubble Captain": [""],
+        "Dalus the nightmare": [""],
+        "Solarion": [""],
+        "Victoria the Dragonslayer": [""],
+        "Anastasia": [""],
+        "Espathera": [""],
+        "Icecream": [""],
+        "Juliette": [""],
     },
 };
 
@@ -66,72 +65,84 @@ const randomBuffs: Record<string, BuffInfo> = {
         name: "Berserk Fury",
         description: "**+20%** enemy's ATK & MD",
         type: "enemy",
+        
     },
     iron_bastion: {
         id: "iron_bastion",
         name: "Iron Bastion",
         description: "**+20%** enemy's DEF & MR",
         type: "enemy",
+        
     },
     death_eye: {
         id: "death_eye",
         name: "Death Eye",
         description: "**+25%** critical rate",
         type: "enemy",
+        
     },
     ruthless_precision: {
         id: "ruthless_precision",
         name: "Ruthless Precision",
         description: "**+50%** critical damage",
         type: "enemy",
+        
     },
     arcane_barrier: {
         id: "arcane_barrier",
         name: "Arcane Barrier",
         description: "**+20%** enemy's DMG mitigation",
         type: "enemy",
+        
     },
     counter_instinct: {
         id: "counter_instinct",
         name: "Counter Instinct",
         description: "**+20%** enemy's counter chance",
         type: "enemy",
+        
     },
     titan_blood: {
         id: "titan_blood",
         name: "Titan Blood",
         description: "**+20%** enemy's max HP",
         type: "enemy",
+        
     },
     phantom_step: {
         id: "phantom_step",
         name: "Phantom Step",
         description: "**+20%** enemy's dodge rate",
         type: "enemy",
+        
     },
     mana_surge: {
         id: "mana_surge",
         name: "Mana Surge",
         description: "**+10** enemy's mana regeneration",
         type: "enemy",
+        
     },
     regenerative_aura: {
         id: "regenerative_aura",
         name: "Regenerative Aura",
         description: "Recovers **4%** max HP every round",
         type: "enemy",
+        
     },
     shielded_spawn: {
         id: "shielded_spawn",
         name: "Shielded Spawn",
         description: "Begins battles with a shield of **25%** max HP",
         type: "enemy",
+        
     },
     war_frenzy: {
         id: "war_frenzy",
         name: "War Frenzy",
         description: "Doubles ATK, MD, DEF & MR during the first **2** rounds",
         type: "enemy",
+        
     },
 
     // --- Player Debuffs ---
@@ -139,73 +150,85 @@ const randomBuffs: Record<string, BuffInfo> = {
         id: "shattered_might",
         name: "Shattered Might",
         description: "**-20%** ATK & MD",
-        type: "player",
+        type: "player", 
+        
     },
     brittle_guard: {
         id: "brittle_guard",
         name: "Brittle Guard",
         description: "**-20%** DEF & MR",
         type: "player",
+        
     },
     dulled_edge: {
         id: "dulled_edge",
         name: "Dulled Edge",
         description: "**-25%** critical rate",
         type: "player",
+        
     },
     cracked_focus: {
         id: "cracked_focus",
         name: "Cracked Focus",
         description: "**-50%** critical damage",
         type: "player",
+        
     },
     marked_target: {
         id: "marked_target",
         name: "Marked Target",
-        description: "Takes **+20%** damage",
+        description: "Takes **+15%** damage",
         type: "player",
+        
     },
     cursed_vitality: {
         id: "cursed_vitality",
         name: "Cursed Vitality",
         description: "**-20%** max HP",
         type: "player",
+        
     },
     slipping_shadow: {
         id: "slipping_shadow",
         name: "Slipping Shadow",
         description: "**-20%** dodge rate",
         type: "player",
+        
     },
     mana_drought: {
         id: "mana_drought",
         name: "Mana Drought",
         description: "**-10** mana regeneration",
         type: "player",
+        
     },
     half_life: {
         id: "half_life",
         name: "Half-Life",
-        description: "HP can never be more than **50%** at the start of the round",
+        description: "HP can never be more than **50%**",
         type: "player",
+        
     },
     retributive_pain: {
         id: "retributive_pain",
         name: "Retributive Pain",
         description: "Takes **12%** of DMG dealt",
         type: "player",
+        
     },
     cycle_of_exhaustion: {
         id: "cycle_of_exhaustion",
         name: "Cycle of Exhaustion",
-        description: "The player cannot act every **5** rounds",
+        description: "The player's ATK,MD,Block rate is reduced to **0** every **5** rounds",
         type: "player",
+        
     },
-    blood_rot: {
-        id: "blood_rot",
-        name: "Blood Rot",
-        description: "Loses **4%** max HP every round",
+    exposed: {
+        id: "exposed",
+        name: "Exposed",
+        description: "Removes shield at the start of the round and reduces max HP by **8%**",
         type: "player",
+        
     },
 };
 
@@ -217,19 +240,35 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
             .setCustomId('play')
             .setLabel("Start Nightmare")
             .setStyle(ButtonStyle.Success)
-            .setDisabled(tab === "lore"),
-        new ButtonBuilder()
-            .setCustomId('lore')
-            .setLabel(tab === "overview" ? "Show Lore" : "Show Overview")
-            .setStyle(ButtonStyle.Primary),
+            .setDisabled(tab === "lore" || tab === "tutorial"),
     ];
+
+     
+     if (tab === "overview" || tab === "lore") {
+        buttons.push(
+            new ButtonBuilder()
+                .setCustomId('lore')
+                .setLabel(tab === "lore" ? "Show Overview" : "Show Lore")
+                .setStyle(ButtonStyle.Primary)
+        );
+    }
+
+    if (tab === "overview" || tab === "tutorial") {
+        buttons.push(
+            new ButtonBuilder()
+                .setCustomId('tutorial')
+                .setLabel(tab === "tutorial" ? "Show Overview" : "How to play")
+                .setStyle(ButtonStyle.Primary)
+        );
+    }
 
     if (tab === "overview") {
         buttons.push(
             new ButtonBuilder()
                 .setCustomId('ignore_defer-edit')
-                .setLabel(`Edit Build`)
-                .setStyle(ButtonStyle.Secondary)
+                .setLabel(`Edit Class`)
+                .setStyle(ButtonStyle.Secondary),
+            
         );
     }
 
@@ -240,18 +279,8 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
 function getModal(uid: string) {
     return new ModalBuilder()
         .setCustomId('edit_nightmare_' + uid)
-        .setTitle('Edit Build')
+        .setTitle('Edit Class')
         .addComponents(
-            // new ActionRowBuilder<TextInputBuilder>().addComponents(
-            //     new TextInputBuilder()
-            //         .setCustomId('char')
-            //         .setLabel("Character name or ID")
-            //         .setStyle(TextInputStyle.Short)
-            //         // .setMinLength(16)
-            //         // .setMaxLength(20)
-            //         .setPlaceholder('E.g. Luminous EX (type "remove" to remove)')
-            //         .setRequired(false)
-            // ),
             new ActionRowBuilder<TextInputBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('class')
@@ -260,36 +289,6 @@ function getModal(uid: string) {
                     // .setMinLength(16)
                     // .setMaxLength(20)
                     .setPlaceholder('E.g. Paladin (type "remove" to remove)')
-                    .setRequired(false)
-            ),
-            new ActionRowBuilder<TextInputBuilder>().addComponents(
-                new TextInputBuilder()
-                    .setCustomId('weapon')
-                    .setLabel("Weapon name or ID")
-                    .setStyle(TextInputStyle.Short)
-                    // .setMinLength(16)
-                    // .setMaxLength(20)
-                    .setPlaceholder('E.g. Excalibur (type "remove" to remove)')
-                    .setRequired(false)
-            ),
-            new ActionRowBuilder<TextInputBuilder>().addComponents(
-                new TextInputBuilder()
-                    .setCustomId('shield')
-                    .setLabel("Shield name or ID")
-                    .setStyle(TextInputStyle.Short)
-                    // .setMinLength(16)
-                    // .setMaxLength(20)
-                    .setPlaceholder('E.g. Tyranny (type "remove" to remove)')
-                    .setRequired(false)
-            ),
-            new ActionRowBuilder<TextInputBuilder>().addComponents(
-                new TextInputBuilder()
-                    .setCustomId('set')
-                    .setLabel("Set name or ID")
-                    .setStyle(TextInputStyle.Short)
-                    // .setMinLength(16)
-                    // .setMaxLength(20)
-                    .setPlaceholder('E.g. Aureate (type "remove" to remove)')
                     .setRequired(false)
             )
         );
@@ -320,14 +319,14 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
     const buffEmbed = new EmbedBuilder()
         .setTitle(`🎉 Stage ${level + 1} (Level ${runData.level}) Cleared!`)
         .setDescription(
-            `Choose your buff:\n\n` +
+            `Pick your poison:\n\n` +
             selectedBuffs.map((buff, index) =>
-                `**${index + 1}.** ${buff.name} ${buff.type === "enemy" ? "⚠️" : "✨"}\n*${buff.description}*`
+                `**${index + 1}.** ${buff.name} ${buff.type === "enemy" ? "🔴 **[Enemy Buff]**" : "🟢 **[Player Debuff]**"}\n*${buff.description}*`
             ).join("\n\n") +
             `\n\n**Next**: Continue Stage ${level + 1} (Level ${runData.level + 1})`
         )
         .setColor(embedColor)
-        .setFooter({ text: `Active Buffs: ${runData.appliedBuffs.length} | Remaining Pool: ${currentBuffs.length - selectedBuffs.length}` });
+        .setFooter({ text: `Active Buffs: ${runData.appliedBuffs.length} | Available Buffs: ${currentBuffs.length}` });
 
     const buffRow = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
@@ -388,14 +387,14 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
             if (buttonInteraction.channel?.isSendable()) {
                 await buttonInteraction.channel?.send({ content: `✨ **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/nightmare\` to continue your fight!` });
             }
-        }, 2000);
+        }, 500);
     });
 
     buffCollector.on('end', async (collected) => {
         if (collected.size === 0) {
             // Timeout - auto selecting first buff
             const firstBuff = selectedBuffs[0];
-            
+
             if (firstBuff && runData) {
                 delete runData.buffPool[firstBuff.id];
                 runData.appliedBuffs.push(firstBuff);
@@ -415,27 +414,28 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
                     if (interaction.channel?.isSendable()) {
                         await interaction.channel?.send({ content: `🚀 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/nightmare\` to continue your fight!` });
                     }
-                }, 2000);
+                }, 1000);
             }
         }
     });
 
 }
-function levelSelection(interaction: ChatInputCommandInteraction, stats: CompactUserSchema): Promise<number> {
+function nightmareOverview(interaction: ChatInputCommandInteraction, stats: CompactUserSchema, userItems: itemInfo[]): Promise<number> {
     return new Promise((resolve) => {
-        let level = crazeLevelSelected.get(interaction.user.id) ?? 0;
+        let level = nightmareSelected.get(interaction.user.id) ?? 0;
 
         const lvlKey = `${interaction.user.id}_${level}`;
         let runData: UserRunInfo = userRuns.get(lvlKey) ?? {
             level: 0,
             buffPool: _.cloneDeep(randomBuffs),
             appliedBuffs: [],
+            totalPoints: 0,
         };
         userRuns.set(lvlKey, runData);
 
         let currentNightmare = nightmares[level];
         let preselectedChar = currentNightmare.preSelectedChar;
-        let nightmareImage = currentNightmare.enemy.image[0]
+        let nightmareImage = currentNightmare.enemy.image[0];
         // EDIT BACK LATER
         // let levelsUnlocked = 9999; startDate; // Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24));
         let levelsUnlocked = Math.floor((Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -449,7 +449,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             options.push({
                 label: `Stage ${e.id + 1}: ${e.name}`,
                 emoji: (e.id in stats.craze_levels) ? stats.craze_levels[e.id] ? '<:check_icon:683671903143067743>' : '<:stop_icon:683671917353369600>' : '<:pause:690939144225947668>',
-                description: `Level: ${progress} | Active Buffs: ${activeBuffs}`,
+                description: `Levels cleared: ${progress} | Active Buffs: ${activeBuffs}`,
                 value: `${e.id}`,
             });
         });
@@ -462,17 +462,40 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                     .addOptions(options),
             );
 
-        let tab: "overview" | "lore" = "overview";
+        let tab: "overview" | "lore" | "tutorial" = "overview";
 
         console.log(characters[preselectedChar].name);
         const getDesc = () => {
             if (tab === "overview") {
                 return `### 🌙 Nightmare\nPush your limits in a new survival mode where the challenge never stops growing!\nAfter each win, you pick one of three random buffs that will stack for the rest of your run until you lose. Get an <a:EXTRA:1138530846144462968> pull for successfully clearing a level! You can use any class and items you want! A new level unlocks daily.`
-                    // + "\n\n⚠️ The event has ended! Only level 14 will stay open for a while longer."
-                    + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 70" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 120" : "`None`"}\n**Equipment**: ${"weapon" in stats.craze_equipment ? (isNaN(stats.craze_equipment.weapon.split(":")[0]) ? stats.craze_equipment.weapon : items[stats.craze_equipment.weapon.split(":")[0]].emoji) : "<:sword_empty:1034502134474997790>"}${"shield" in stats.craze_equipment ? items[stats.craze_equipment.shield.split(":")[0]].emoji : "<:shield_empty:1087089686809415730>"} ${"helmet" in stats.craze_equipment ? items[stats.craze_equipment.helmet.split(":")[0]].emoji : "<:helmet_empty:1034499888878198885>"}${"cuirass" in stats.craze_equipment ? items[stats.craze_equipment.cuirass.split(":")[0]].emoji : "<:cuirass_empty:1034499890165858305>"}${"gloves" in stats.craze_equipment ? items[stats.craze_equipment.gloves.split(":")[0]].emoji : "<:gloves_empty:1034499892409794570>"}${"boots" in stats.craze_equipment ? items[stats.craze_equipment.boots.split(":")[0]].emoji : "<:boots_empty:1034499893919764480>"}${("weapon" in stats.craze_equipment || "shield" in stats.craze_equipment || "helmet" in stats.craze_equipment) ? " Lvl. 70/70" : ""}`;
+                    + `\n\n**Enemy**: ${currentNightmare.name}`
+                    + `\n\n**Traits**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
+                    + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
+
+                    + `\n**Items**: <:rune_empty:1034507494539669635> `
+                    + userItems.filter((e) => e.category === "ring").map((e) => e.emoji).concat(
+                        Array(Math.max(0, getRingSlotsTotal(stats) - userItems.filter((e) => e.category === "ring").length)).fill("<:ring_empty:1034509903886299136>")
+                    ).concat(["<:locked:1034511902417621002>", "<:locked:1034511902417621002>", "<:locked:1034511902417621002>"]).slice(0, 3).join("");
             } else if (tab === "lore") {
-                return `### ${currentNightmare.name}\n${nightmareLore["summer2025"]?.[currentNightmare.name as keyof typeof nightmareLore["summer2025"]]?.join("\n")}`;
-            }
+                return `### ${currentNightmare.name}'s Lore\n${nightmareLore["summer2025"]?.[currentNightmare.name as keyof typeof nightmareLore["summer2025"]]?.join("\n")}`;
+            } else if (tab === "tutorial"){
+                return `### 🎓 Tutorial\n\n` +
+                `**🎯 Objective:** Progress as far as possible without losing to maximize your rewards!\n\n` +
+                
+                `**🎮 How to Play:**\n` +
+                `1️⃣ **Select a Stage** - Choose from unlocked nightmare stages (1 new stage unlocks daily)\n` +
+                `2️⃣ **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
+                `3️⃣ **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen your next attempt\n` +
+                `4️⃣ **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
+                `5️⃣ **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
+                
+                `**💪 Effect System:**\n` +
+                `🟢 **Player Debuffs** - Weaken your character's abilities\n` +
+                `🔴 **Enemy Buffs** - Enhance the boss's abilities\n` +
+                `📈 **Stacking** - All chosen buffs remain active throughout your run\n` +
+                `🎲 **Random Selection** - Different buff options each time\n\n` 
+
+            }         
             return "";
         };
 
@@ -486,9 +509,9 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
             const lore = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "lore", componentType: ComponentType.Button, time: 90000 });
             const select = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "level_selection", componentType: ComponentType.StringSelect, time: 90000 });
+            const tutorial = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "tutorial", componentType: ComponentType.Button, time: 90000 });
 
             play.on('collect', () => {
-                if (!("char" in stats.craze_equipment)) return interaction.followUp({ content: `Please select a character using the \`Edit Build\` button before playing`, ephemeral: true });
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
                     return;
@@ -502,20 +525,8 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 rr.showModal(getModal(uid));
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_nightmare_' + uid), time: 90000 }).then(async (r) => {
-                    // const char = r.fields.getTextInputValue('char');
                     const cls = r.fields.getTextInputValue('class');
-                    const weapon = r.fields.getTextInputValue('weapon');
-                    const shield = r.fields.getTextInputValue('shield');
-                    const set = r.fields.getTextInputValue('set');
 
-                    // Match character
-                    // if (char) {
-                    //     let getChar = search(char, stats.chars, interaction, true);
-                    //     if (getChar?.name) {
-                    //         stats.craze_equipment.char = getChar.id;
-                    //     };
-                    //     if (char === "remove") delete stats.craze_equipment.char;
-                    // };
 
                     // Match class
                     if (cls) {
@@ -524,58 +535,6 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                             stats.craze_equipment.class = getClass.id;
                         };
                         if (cls === "remove") delete stats.craze_equipment.class;
-                    };
-
-                    // Match weapon
-                    if (weapon) {
-                        if (weapon === "<:GojoHeart:1194021178029920266>") {
-                            stats.craze_equipment.weapon = "<:GojoHeart:1194021178029920266>";
-                        } else {
-                            let getWeapon = searchItem(weapon, interaction, true);
-                            if (getWeapon?.name) { // && getWeapon.type !== "shield") {
-                                stats.craze_equipment.weapon = `${getWeapon.id}:706183309943767112`;
-                            };
-                            if (weapon === "remove") delete stats.craze_equipment.weapon;
-                        };
-                    };
-
-                    // Match shield
-                    if (shield) {
-                        let getShield = searchItem(shield, interaction, true);
-                        if (getShield?.name && getShield.type === "shield") {
-                            stats.craze_equipment.shield = `${getShield.id}:706183309943767112`;
-                        };
-                        if (shield === "remove") delete stats.craze_equipment.shield;
-                    };
-
-                    // Match set
-                    if (set) {
-                        let getSet = searchItem(set, interaction, true, { returnSet: true });
-                        if (getSet && getSet instanceof armorInfo) {
-                            let setItems = (items.filter((item) => (item instanceof armorInfo && getSet instanceof armorInfo && item.setname === getSet.setname)) ?? []) as armorInfo[];
-                            if (setItems.find((item) => item.type === "helmet")) {
-                                const helmet = setItems.find((item) => item.type === "helmet");
-                                if (helmet) stats.craze_equipment.helmet = `${helmet.id}:706183309943767112`;
-                            };
-                            if (setItems.find((item) => item.type === "cuirass")) {
-                                const cuirass = setItems.find((item) => item.type === "cuirass");
-                                if (cuirass) stats.craze_equipment.cuirass = `${cuirass.id}:706183309943767112`;
-                            };
-                            if (setItems.find((item) => item.type === "gloves")) {
-                                const gloves = setItems.find((item) => item.type === "gloves");
-                                if (gloves) stats.craze_equipment.gloves = `${gloves.id}:706183309943767112`;
-                            };
-                            if (setItems.find((item) => item.type === "boots")) {
-                                const boots = setItems.find((item) => item.type === "boots");
-                                if (boots) stats.craze_equipment.boots = `${boots.id}:706183309943767112`;
-                            };
-                        };
-                        if (set === "remove") {
-                            delete stats.craze_equipment.helmet;
-                            delete stats.craze_equipment.cuirass;
-                            delete stats.craze_equipment.gloves;
-                            delete stats.craze_equipment.boots;
-                        };
                     };
 
                     // Update users table
@@ -602,7 +561,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 if (readVal >= levelsUnlocked) readVal = 0;
 
                 level = readVal;
-                crazeLevelSelected.set(interaction.user.id, level);
+                nightmareSelected.set(interaction.user.id, level);
 
                 currentNightmare = nightmares[level];
                 preselectedChar = currentNightmare.preSelectedChar;
@@ -614,6 +573,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                         level: 0,
                         buffPool: _.cloneDeep(randomBuffs),
                         appliedBuffs: [],
+                        totalPoints: 0,
                     };
                     userRuns.set(newLvlKey, newRunData);
                 }
@@ -621,8 +581,13 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 interaction.editReply({ embeds: [Embed.setDescription(getDesc()).setThumbnail(nightmareImage)], components: [selectionRow, getNightmareButtonRow(tab)] });
             });
 
+            tutorial.on('collect', () => {
+                tab = (tab === "overview") ? "tutorial" : "overview";
+                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getNightmareButtonRow(tab)] });
+            });
+
             play.on('end', () => {
-                edit.stop(), lore.stop();
+                edit.stop(), lore.stop(), tutorial.stop();
                 resolve(-1);
             });
 
@@ -639,15 +604,16 @@ const exportCommand: SlashCommand = {
 
         const stats = author.schema;
 
+        const myWeapons = await getWeaponSchemas([stats.equipment.weapon, stats.equipment.shield, stats.equipment.helmet, stats.equipment.cuirass, stats.equipment.gloves, stats.equipment.boots, stats.equipment.ring1, stats.equipment.ring2, stats.equipment.ring3]);
+        const userItems = myWeapons.map((e) => items[e.itemid]);
         // Level Selection
-        let level = await levelSelection(interaction, stats);
+        let level = await nightmareOverview(interaction, stats, userItems);
         if (level === -1) return;
 
         let lvlKey = `${interaction.user.id}_${level}`;
-        console.log("Debug - lvlKey:", lvlKey);
-        console.log("Debug - userRuns keys:", Array.from(userRuns.keys()));
+     
         let runData: UserRunInfo | undefined = userRuns.get(lvlKey);
-        console.log("Debug - runData after retrieval:", runData);
+        
         // Set up restrictions
         // const cd = 8 * 60 * 1000;
         // if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
@@ -659,28 +625,16 @@ const exportCommand: SlashCommand = {
 
         const currentNightmare = nightmares[level];
         const preselectedChar = currentNightmare.preSelectedChar;
-        // Equip Craze Build
+        // Select Class
         stats.battlechar = preselectedChar;
         stats.char_ref[stats.battlechar] = 5;
         stats.shield_slot = 1;
-        stats.level = 70;
+        stats.level = 500;
         stats.bank = 1000000;
         if ("class" in stats.craze_equipment) {
             stats.class = stats.craze_equipment.class;
-            stats.dungeon_classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, classLevelToXP(120)]));
+            stats.dungeon_classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, classLevelToXP(1000)]));
         } else stats.class = null;
-        if ("weapon" in stats.craze_equipment) stats.equipment.weapon = stats.craze_equipment.weapon;
-        else delete stats.equipment.weapon;
-        if ("shield" in stats.craze_equipment) stats.equipment.shield = stats.craze_equipment.shield;
-        else delete stats.equipment.shield;
-        if ("helmet" in stats.craze_equipment) stats.equipment.helmet = stats.craze_equipment.helmet;
-        else delete stats.equipment.helmet;
-        if ("cuirass" in stats.craze_equipment) stats.equipment.cuirass = stats.craze_equipment.cuirass;
-        else delete stats.equipment.cuirass;
-        if ("gloves" in stats.craze_equipment) stats.equipment.gloves = stats.craze_equipment.gloves;
-        else delete stats.equipment.gloves;
-        if ("boots" in stats.craze_equipment) stats.equipment.boots = stats.craze_equipment.boots;
-        else delete stats.equipment.boots;
 
         // User stats
         let myChar = characters[stats.battlechar];
@@ -701,12 +655,41 @@ const exportCommand: SlashCommand = {
         let enemy = nightmares[level].enemy;
         const curse = curses[14];
         let eAbility = nightmares[level].enemy.ability;
-        // let eImage = enemy.image[Math.floor(Math.random() * enemy.image.length)];
+        let eImage = enemy.image[Math.floor(Math.random() * enemy.image.length)];
 
-        const lootFloor = 80; // 80
-        let eStats = floors[lootFloor].stats(enemy);
-        eStats.image = enemy.image[Math.floor(Math.random() * enemy.image.length)]; // eImage;
+        let eStats = {
+            "name": enemy.name,
+            "hp": (enemy.setStats as any).hp,
+            "maxhp": (enemy.setStats as any).hp,
+            "atk": (enemy.setStats as any).atk,
+            "md": (enemy.setStats as any).md,
+            "def": (enemy.setStats as any).def,
+            "mr": (enemy.setStats as any).mr,
+            "ep": Infinity,
+            "cr": 0.15,
+            "cd": 1.2,
+            "td": 10,
+            "br": 0.12,
+            "dodge": 0.1,
+            "mana": (enemy.setStats as any).mana,
+            "mg": 15,
+            "sm": 0,
+            "rev": 0,
+            "revhp": 0,
+            "shield": 0,
+            "mdChance": 0,
+            "removeDefCap": true,
+            "image": eImage,
+        } as any;
+
+        // console.log("Enemy Stats: ", eStats);
+        // Stat Adjustments
+        if (enemy.setStats) Object.entries(enemy.setStats).forEach((e) => eStats[e[0]] = e[1]);
+        if (enemy.multStats) Object.entries(enemy.multStats).forEach((e) => eStats[e[0]] = Math.floor(eStats[e[0]] * e[1]));
+        if (enemy.addStats) Object.entries(enemy.addStats).forEach((e) => eStats[e[0]] += e[1]);
+
         let eStatsC = { ...eStats };
+
 
         // Some match settings
         const difficulty = Avalon.getDifficulty(myStats.ep / eStats.ep);
@@ -715,19 +698,24 @@ const exportCommand: SlashCommand = {
         let buffs = Avalon.getBuffs();
         let eBuffs = Avalon.getBuffs();
 
+        const lootFloor = 80;
         let resolved = false;
         async function matchResult(r: "w" | "l") {
             if (resolved) return;
             resolved = true;
 
-            
+
             const Embed = new EmbedBuilder()
                 .setColor(embedColor)
                 .setThumbnail(myStatsC.thumbnail)
-                .setTitle(`🌙 Nightmare Stage ${level + 1} (Level ${runData ? runData.level + 1: 1})`)
+                .setTitle(`🌙 Nightmare Stage ${level + 1} (Level ${runData ? runData.level + 1 : 1})`)
                 .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
 
             if (r === "l") {
+                // Calculate score
+                let finalScore = 0;
+                if (runData && runData.appliedBuffs.length > 0) finalScore = runData.appliedBuffs.length ** 2;
+                
                 // Clear restrictions
                 dungeonInProgress.delete(stats.id);
 
@@ -736,9 +724,10 @@ const exportCommand: SlashCommand = {
                     runData.level = 0;
                     runData.buffPool = _.cloneDeep(randomBuffs);
                     runData.appliedBuffs = [];
+                    runData.totalPoints = 0;
                     userRuns.set(lvlKey, runData);
                 }
-                crazeLevelSelected.set(interaction.user.id, 0);
+                
 
                 // Update craze_levels for tracking
                 if (!(level in stats.craze_levels)) {
@@ -750,9 +739,8 @@ const exportCommand: SlashCommand = {
 
                 return Embed.setDescription(
                     `💀 **${myChar.name}** was defeated! 💀\n\n` +
-                    `🔄 **Run Reset** - Starting over at Level 1\n\n` +
-                    `💪 All buffs cleared\n\n` +
-                    `${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`
+                    `📊 **Final Score: ${finalScore} points**\n\n` +
+                    `🔄 **Run Reset** - Starting over at Level 1\n\n` 
                 );
             }
 
@@ -805,36 +793,228 @@ const exportCommand: SlashCommand = {
         if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-        // Cap mana to 150 if Artemis
-        if (myChar.id === 17689) {
-            myStats.mana = 149;
-            myStatsC.mana = 149;
-            if (myStatsC.sm > 149) {
-                myStatsC.sm = 149;
-                myStats.sm = myStatsC.sm;
-            };
-        };
+        if (runData && runData.appliedBuffs.length > 0) {
+            runData.appliedBuffs.forEach(buff => {
+                console.log(`\n--- APPLYING BUFF: ${buff.name} ---`);
 
-        // // Level 11 2023
-        // if (level === 10 && items[(stats.equipment.weapon ?? "").split(":")[0]].category === "fish") {
-        //     eBuffs.def.push(new buffInfo("=", 0, 9999));
-        //     eStatsC.def = 0;
-        //     eBuffs.mr.push(new buffInfo("=", 0, 9999));
-        //     eStatsC.mr = 0;
+                switch (buff.id) {
+                    //+20% enemy's ATK & MD
+                    case "berserk_fury":
+                        console.log(`BEFORE: Enemy ATK=${eStatsC.atk}, MD=${eStatsC.md}`);
+                        eStatsC.atk = Math.floor(eStatsC.atk * 1.2);
+                        eStatsC.md = Math.floor(eStatsC.md * 1.2);
+                        eBuffs.atk.push(new buffInfo("*", 1.2, 9999));
+                        eBuffs.md.push(new buffInfo("*", 1.2, 9999));
+                        console.log(`AFTER: Enemy ATK=${eStatsC.atk}, MD=${eStatsC.md}`);
+                        break;
+                    //+20% enemy's DEF & MR
+                    case "iron_bastion":
+                        console.log(`BEFORE: Enemy DEF=${eStatsC.def}, MR=${eStatsC.mr}`);
+                        eStatsC.def = Math.floor(eStatsC.def * 1.2);
+                        eStatsC.mr = Math.floor(eStatsC.mr * 1.2);
+                        eBuffs.def.push(new buffInfo("*", 1.2, 9999));
+                        eBuffs.mr.push(new buffInfo("*", 1.2, 9999));
+                        console.log(`AFTER: Enemy DEF=${eStatsC.def}, MR=${eStatsC.mr}`);
+                        break;
+                    //+25% enemy's critical rate
+                    case "death_eye":
+                        console.log(`BEFORE: Enemy CR=${eStatsC.cr}`);
+                        eStatsC.cr += 0.25;
+                        eBuffs.cr.push(new buffInfo("+", 0.25, 9999));
+                        console.log(`AFTER: Enemy CR=${eStatsC.cr}`);
+                        break;
+                    //+50% enemy's critical damage
+                    case "ruthless_precision":
+                        console.log(`BEFORE: Enemy CD=${eStatsC.cd}`);
+                        eStatsC.cd += 0.5;
+                        eBuffs.cd.push(new buffInfo("+", 0.5, 9999));
+                        console.log(`AFTER: Enemy CD=${eStatsC.cd}`);
+                        break;
+                    //+20% enemy's DMG Reduction
+                    case "arcane_barrier":
+                        console.log(`BEFORE: Enemy damageReduction=${eStatsC.damageReduction || 0}`);
+                        eStatsC.damageReduction = 0.2;
+                        console.log(`AFTER: Enemy damageReduction=${eStatsC.damageReduction}`);
+                        break;
+                    //+20% enemy's counter chance
+                    case "counter_instinct":
+                        console.log(`BEFORE: Enemy counter=${eStatsC.counter || 0}`);
+                        eStatsC.counter ??= 0;
 
-        //     buffs.atk.push(new buffInfo("+", Math.floor(myStats.atk * 2), 9999));
-        //     myStats.atk += Math.floor(myStats.atk * 2);
-        //     buffs.md.push(new buffInfo("+", Math.floor(myStats.md * 2), 9999));
-        //     myStats.md += Math.floor(myStats.md * 2);
-        // };
+                        myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            if(Math.random() < 0.2) eStatsC.counter++;
+                            console.log(`AFTER: Enemy counter=${eStatsC.counter}`);
+                            return AbilityResponse.SUCCESS;
+                        }, 9999));
+                        
+                        console.log(`AFTER: Enemy counter=${eStatsC.counter}`);
+                        break;
+                    //+20% enemy's max HP
+                    case "titan_blood":
+                        console.log(`BEFORE: Enemy HP=${eStatsC.hp}, maxHP=${eStatsC.maxhp}`);
+                        eStatsC.maxhp = Math.floor(eStatsC.maxhp * 1.2);
+                        eStatsC.hp = Math.floor(eStatsC.hp * 1.2);
+                        
+                        console.log(`AFTER: Enemy HP=${eStatsC.hp}, maxHP=${eStatsC.maxhp}`);
+                        break;
+                    //+20% enemy dodge rate
+                    case "phantom_step":
+                        console.log(`BEFORE: Enemy dodge=${eStatsC.dodge}`);
+                        eStatsC.dodge += 0.2;
+                        if (eStatsC.dodge > 1) eStatsC.dodge = 1;
+                        eBuffs.dodge.push(new buffInfo("+", 0.2, 9999));
+                        console.log(`AFTER: Enemy dodge=${eStatsC.dodge}`);
+                        break;
+                    //+10% enemy's mana regeneration
+                    case "mana_surge":
+                        console.log(`BEFORE: Enemy MG=${eStatsC.mg}`);
+                        eStatsC.mg += 10;
+                        eBuffs.mg.push(new buffInfo("+", 10, 9999));
+                        console.log(`AFTER: Enemy MG=${eStatsC.mg}`);
+                        break;
+                    //Recovers 4% max HP every round
+                    case "regenerative_aura":
+                        const regenAmount = Math.floor(eStatsC.maxhp * 0.04);
+                        console.log(`BEFORE: Enemy regen buff count=${eBuffs.hp.length}`);
+                        eBuffs.hp.push(new buffInfo("+", Math.floor(eStatsC.maxhp * 0.04), 9999));
+                        console.log(`AFTER: Enemy regen buff count=${eBuffs.hp.length}, regen=${regenAmount}/round`);
+                        break;
+                    //Begins battles with a shield of **25%** max HP
+                    case "shielded_spawn":
+                        const shieldAmount = Math.floor(eStatsC.maxhp * 0.25);
+                        console.log(`BEFORE: Enemy shield=${eStatsC.shield}`);
+                        eStatsC.shield += shieldAmount;
+                        console.log(`AFTER: Enemy shield=${eStatsC.shield}`);
+                        break;
+                    //Doubles ATK, MD, DEF & MR during the first 2 rounds
+                    case "war_frenzy":
+                        console.log(`BEFORE: Enemy buff counts - ATK:${eBuffs.atk.length}, MD:${eBuffs.md.length}, DEF:${eBuffs.def.length}, MR:${eBuffs.mr.length}`);
+                        eBuffs.atk.push(new buffInfo("*", 2, 2));
+                        eBuffs.md.push(new buffInfo("*", 2, 2));
+                        eBuffs.def.push(new buffInfo("*", 2, 2));
+                        eBuffs.mr.push(new buffInfo("*", 2, 2));
+                        console.log(`AFTER: Enemy buff counts - ATK:${eBuffs.atk.length}, MD:${eBuffs.md.length}, DEF:${eBuffs.def.length}, MR:${eBuffs.mr.length} (2x for 2 rounds)`);
+                        break;
+                    //-20% ATK & MD
+                    case "shattered_might":
+                        console.log(`BEFORE: Player ATK=${myStatsC.atk}, MD=${myStatsC.md}`);
+                        myStatsC.atk = Math.floor(myStatsC.atk * 0.8);
+                        myStatsC.md = Math.floor(myStatsC.md * 0.8);
+                        buffs.atk.push(new buffInfo("*", 0.8, 9999));
+                        buffs.md.push(new buffInfo("*", 0.8, 9999));
+                        console.log(`AFTER: Player ATK=${myStatsC.atk}, MD=${myStatsC.md}`);
+                        break;
+                    //-20% DEF & MR
+                    case "brittle_guard":
+                        console.log(`BEFORE: Player DEF=${myStatsC.def}, MR=${myStatsC.mr}`);
+                        myStatsC.def = Math.floor(myStatsC.def * 0.8);
+                        myStatsC.mr = Math.floor(myStatsC.mr * 0.8);
+                        buffs.def.push(new buffInfo("*", 0.8, 9999));
+                        buffs.mr.push(new buffInfo("*", 0.8, 9999));
+                        console.log(`AFTER: Player DEF=${myStatsC.def}, MR=${myStatsC.mr}`);
+                        break;
+                    //-25% critical rate
+                    case "dulled_edge":
+                        console.log(`BEFORE: Player CR=${myStatsC.cr}`);
+                        myStatsC.cr -= 0.25;
+                        if (myStatsC.cr < 0) myStatsC.cr = 0;
+                        buffs.cr.push(new buffInfo("+", -0.25, 9999));
+                        
+                        console.log(`AFTER: Player CR=${myStatsC.cr}`);
+                        break;
+                    //-50% critical damage
+                    case "cracked_focus":
+                        console.log(`BEFORE: Player CD=${myStatsC.cd}`);
+                        myStatsC.cd -= 0.5;
+                        if (myStatsC.cd < 0) myStatsC.cd = 0;
+                        buffs.cd.push(new buffInfo("+", -0.5, 9999));
+                        console.log(`AFTER: Player CD=${myStatsC.cd}`);
+                        break;
+                    //Takes +15% damage
+                    case "marked_target":
+                        console.log(`BEFORE: Player vulnerability=${myStatsC.vulnerability || 1}`);
+                        myStatsC.vulnerability ??= 1;
+                        myStatsC.vulnerability += 0.15;
+                        console.log(`AFTER: Player vulnerability=${myStatsC.vulnerability}`);
+                        break;
+                    //-20% max HP
+                    case "cursed_vitality":
+                        console.log(`BEFORE: Player HP=${myStatsC.hp}, maxHP=${myStatsC.maxhp}`);
+                        myStatsC.maxhp = Math.floor(myStatsC.maxhp * 0.8);
+                        myStatsC.hp = Math.floor(myStatsC.hp * 0.8);
+                        console.log(`AFTER: Player HP=${myStatsC.hp}, maxHP=${myStatsC.maxhp}`);
+                        break;
+                    //-20% dodge rate
+                    case "slipping_shadow":
+                        console.log(`BEFORE: Player dodge=${myStatsC.dodge}`);
+                        myStatsC.dodge -= 0.2;
+                        if (myStatsC.dodge < 0) myStatsC.dodge = 0;
+                        buffs.dodge.push(new buffInfo("+", -0.2, 9999));
+                        console.log(`AFTER: Player dodge=${myStatsC.dodge}`);
+                        break;
+                    //-10 mana regeneration
+                    case "mana_drought":
+                        console.log(`BEFORE: Player MG=${myStatsC.mg}`);
+                        myStatsC.mg -= 10;
+                        buffs.mg.push(new buffInfo("+", -10, 9999));
+                        console.log(`AFTER: Player MG=${myStatsC.mg}`);
+                        break;
+                    //HP can never be more than 50% at the start of the round
+                    case "half_life":
+                        console.log(`BEFORE: Player HP=${myStatsC.hp} (${Math.round(myStatsC.hp / myStatsC.maxhp * 100)}%)`);
+                        if(myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
+                            myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                
+                                if(myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
+                                console.log("half_life")
+
+                            return AbilityResponse.SUCCESS;
+                        }, 9999));
+                        console.log(`AFTER: Player HP=${myStatsC.hp} (capped at 50%)`);
+                        break;
+                    //Takes 12% of DMG dealt
+                    case "retributive_pain":
+                        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                            if (caster === myStatsC) {
+                                myStatsC.hp -= Math.floor(options.damage * 0.12)
+                                console.log(`${myStatsC.name} took 12% of the damage dealt to them.`)
+                            };
+                        });
+                        
+                        break;
+                    //The player's ATK,MD,Block rate is reduced to 0 every 5 rounds
+                    case "cycle_of_exhaustion":
+                        console.log(`Applied: Player frozen every 5 rounds (delayedBuff added)`);
+                        myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            if (matchStats.round % 5 === 0) {
+                                
+                                myStatsC.atk = 0;
+                                myStatsC.md = 0;
+                                myStatsC.br = 0;
+                                
+                                
+                            };
+            
+                            return AbilityResponse.SUCCESS;
+                        }, 9999));
+
+                        break;
+                    //Removes shield at the start of the round and reduces max HP by 8%
+                    case "exposed":
+                        myStatsC.shield = 0;
+                        myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                        break;
+                    default:
+                        break;
+                }
+            });
+        }
 
         let ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
             ABILITY_EMOJI = myStatsC.replaceButton?.ability?.emoji || '✨',
             SKILL_EMOJI = myStatsC.replaceButton?.cskill?.emoji || '⚜️',
             SKIP_EMOJI = myStatsC.replaceButton?.skip?.emoji || '<:dodge_chance:1047269150948606063>';
-
-        if (new Date().getMonth() === 11 || interaction) ATK_EMOJI = '<:sw:1030154812496560218>', DEF_EMOJI = '<:sh:1030154814652420127>', ABILITY_EMOJI = '<:sp:1030154816288198768>', SKILL_EMOJI = '<:fl:1030154818746069012>', SKIP_EMOJI = '<:da:1188275191135092766>';
 
         const row = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
@@ -853,26 +1033,21 @@ const exportCommand: SlashCommand = {
         };
 
         // Fight Duration
-        let fightDuration = 120;
+        let fightDuration = 180;
 
-        // Level 14 2024
-        if (level === 14) {
-            fightDuration = 300;
-        };
 
-        const isCompactEmbed = !!author.schema.user_settings.compact_battle_embeds;
-        const threatLevelWarning = isCompactEmbed ? "" : `You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n`;
+        const threatLevelWarning = `You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n`;
 
         async function newFight() {
             let timestart = new Date().getTime();
             let result = await new Promise<EmbedBuilder | undefined>((resolve) => {
                 const Embed = new EmbedBuilder()
                     .setColor(embedColor)
-                    .setThumbnail(isCompactEmbed ? eStatsC.image : myStatsC.thumbnail)
+                    .setThumbnail(myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${fightDuration}s` })
-                    .setTitle(`Nightmare Stage ${level + 1} (Level ${runData ? runData.level + 1: 1})`)
+                    .setTitle(`Nightmare Stage ${level + 1} (Level ${runData ? runData.level + 1 : 1})`)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
-                    .setImage(isCompactEmbed ? null : eStatsC.image);
+                    .setImage(eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: fightDuration * 1000 });
@@ -883,11 +1058,11 @@ const exportCommand: SlashCommand = {
                     matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
 
                     // Use passives
-                    if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                    // if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
-                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}\\💖${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}\\💖${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${fightDuration + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         // await msg.edit({ embeds: [Embed] });
 
@@ -925,22 +1100,18 @@ const exportCommand: SlashCommand = {
                         atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
                         if (wORl === "l") notice.push(`\n💀 **${myChar.name}** lost`);
                         else notice.push(`\n🎉 **${myChar.name}** won`);
-                        // else notice.push(`\n🎉 **${myChar.name}** won${level === 13 && stats.craze_equipment.weapon === "<:GojoHeart:1194021178029920266>" ? " <:GojoHeart:1194021178029920266>" : ""}`);
                         editEmbed();
                         matchStats.turn = 1;
                         resolve(matchResult(wORl));
                     };
 
-                    // // Level 14 2023
-                    // if (level === 13 && stats.craze_equipment.weapon === "<:GojoHeart:1194021178029920266>") {
-                    //     eStatsC.hp = 0;
-                    //     endMatch("w");
-                    // };
 
                     function startNextRound() {
                         if (matchStats.ended) return;
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
+
+                       
 
                         // Consume Mana
                         Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myStatsC.thumbnail);
@@ -977,13 +1148,15 @@ const exportCommand: SlashCommand = {
                                 };
                             };
                         };
-
+                        
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                     };
+                    
+                   
 
                     let forcedSkillUse = 0;
                     function attack() {
-                        if (matchStats.turn === 1) return;
+                        if (matchStats.turn === 1) return;                       
                         if (eStatsC.timeFrozen) {
                             if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
                             if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
@@ -998,23 +1171,23 @@ const exportCommand: SlashCommand = {
                         } else {
                             setTimeout(() => {
 
-                                // Level 14 2024
-                                if (level === 14) {
-                                    const availableEmojis = ['🌼', '🌻', '🌱', '🐝', '🪲', '🐞', '🦋', '🐛', '🐸', '🍡', '🎐'];
-                                    const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
-                                    if (notice[notice.length - 1].length > 5 && !(eStatsC.hp < eStatsC.maxhp)) notice.push(`\n ${randomEmoji}`);
+                                // // Level 14 2024
+                                // if (level === 14) {
+                                //     const availableEmojis = ['🌼', '🌻', '🌱', '🐝', '🪲', '🐞', '🦋', '🐛', '🐸', '🍡', '🎐'];
+                                //     const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
+                                //     if (notice[notice.length - 1].length > 5 && !(eStatsC.hp < eStatsC.maxhp)) notice.push(`\n ${randomEmoji}`);
 
-                                    matchStats.turn = 1;
-                                    matchStats.round++;
-                                    startNextRound();
-                                    editEmbed();
-                                    return;
-                                };
+                                //     matchStats.turn = 1;
+                                //     matchStats.round++;
+                                //     startNextRound();
+                                //     editEmbed();
+                                //     return;
+                                // };
 
-                                if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
-                                    curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                                    eStatsC.sm -= curse.cost;
-                                    editEmbed();
+                                if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767  && Math.random() < 0.3) {
+                                    // curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                    // eStatsC.sm -= curse.cost;
+                                    // editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
                                 } else if ((eStatsC.forceUseSkillOnRound === matchStats.round && forcedSkillUse++ === 0) || ("forceUseSkillOnRound" in eStatsC ? false : (matchStats.blockAbilities-- < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5))) {
@@ -1047,10 +1220,9 @@ const exportCommand: SlashCommand = {
                     };
 
                     atk.on('collect', async () => {
-                        if (matchStats.turn === 1) {
+                        if (matchStats.turn === 1)  {
                             matchStats.turn = 0;
                             matchStats.actionSequence.push("ATK");
-
                             // If attack was replaced
                             if (myStatsC.replaceButton.atk?.run) {
                                 myStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
@@ -1137,7 +1309,7 @@ const exportCommand: SlashCommand = {
                         if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
 
                         // If ability was replaced
-                        if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
+                        if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1)  {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
                             matchStats.actionSequence.push("ABILITY");
@@ -1157,7 +1329,7 @@ const exportCommand: SlashCommand = {
                         else {
                             if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
                             if (myAbility.used < myAbility.usage) {
-                                if (matchStats.turn === 1) {
+                                if (matchStats.turn === 1 && !myStatsC.timeFrozen) {
                                     if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
                                     else {
                                         matchStats.turn = 0;
@@ -1183,7 +1355,6 @@ const exportCommand: SlashCommand = {
                     });
 
                     cskill.on('collect', async () => {
-
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
@@ -1230,13 +1401,6 @@ const exportCommand: SlashCommand = {
                         if (matchStats.turn == 1) {
                             matchStats.actionSequence.push("SKIP");
 
-                            // Level 11 2024
-                            if (level === 11 && myChar.id === 14982 && partyChars.some((e) => e.name === "Smokey Brown")) {
-                                notice.push(`\n<:dodge_chance:1047269150948606063> NIGERUNDAYO, SMOKEY!`);
-                                endMatch("w");
-                                editEmbed();
-                                return;
-                            };
 
                             notice.push(`\n<:dodge_chance:1047269150948606063> ${myChar.name} fled the fight`);
                             endMatch("l");
@@ -1248,17 +1412,8 @@ const exportCommand: SlashCommand = {
 
                     atk.on('end', () => {
                         if (fightDuration + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
-                            atk.stop(), def.stop(), ability.stop(), cskill.stop();
+                            atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
                             if (resolved) return;
-
-                            // // Level 14 2023
-                            // if (level === 13 && myChar.name === "Suguru Getou" && partyChars.some((e) => e.name === "Prison Realm")) {
-                            //     notice.push(`\n🎉 **Satoru Gojo** was sealed!`);
-                            //     editEmbed();
-                            //     resolve(matchResult("w"));
-                            // } else {
-                            //     resolve(matchResult("l"));
-                            // };
 
                             resolve(matchResult("l"));
                         };

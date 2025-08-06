@@ -657,7 +657,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         attacker.attackStreak = 0;
         target.dodgeStreak++;
         if (target.dodgeHeal) {
-            target.hp += Math.floor(target.maxhp * target.dodgeHeal);
+            addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(target.maxhp * target.dodgeHeal), {});
             if (target.hp > target.maxhp) target.hp = target.maxhp;
         };
         if (matchStats.dodgebuff) {
@@ -855,7 +855,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         };
 
         const healCap = attacker.maxhp * 0.2;
-        attacker.hp += Math.floor(Math.min(selfHealedTotal, healCap));
+        addHeal(attacker, target, attacker, attackerBuff, targetBuff, matchStats, notice, ``, Math.floor(Math.min(selfHealedTotal, healCap)), {});
         if (selfHealedTotal >= healCap) attacker.lastSelfHealRoundCapped = matchStats.round;
     };
     if (options.selfdmg && Math.random() < matchStats.selfdmg) attacker.hp -= damage;
@@ -898,14 +898,25 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
 export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], log: string, amount: number, flags = {}) => {
     const options = { // true = enabled, false = disabled
-
+        bypassBoL: false,
     };
     Object.keys(flags).forEach((e) => (options as any)[e] = (flags as any)[e]);
 
     if (attacker.negateHeal && amount > 0 && target === caster && attacker !== caster) {
         // notice.push(`\n<:negated_heal:1341346312699904044> **${attacker.name}** has negated the heal!`);
     } else {
-        target.hp += Math.floor(amount);
+        // Check for any heal reduction
+        // 1: Bond of Life
+        if (!options.bypassBoL) {
+            if (target.bondOfLife > 0) {
+                amount -= target.bondOfLife;
+                if (amount < 0) amount = 0;
+            };
+        };
+        
+        // 2: General Heal reduction
+        if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
+        if (amount > 0) target.hp += Math.floor(amount);
         if (target.hp > target.maxhp) target.hp = target.maxhp;
         if (target.hp < 0) target.hp = 0;
     };
@@ -1586,23 +1597,23 @@ export const numberToRoman = (n: number): string => {
 };
 
 export const customEmojis: Record<PrimaryStat, string> = {
-    "hp": "<:HP:1062043800979116143>",
-    "hp%": "<:HP:1062043800979116143>",
-    "atk": "<:ATK:1063214925528440832>",
-    "atk%": "<:ATK:1063214925528440832>",
-    "def": "<:DEF:1047269141662417037>",
-    "def%": "<:DEF:1047269141662417037>",
-    "md": "<:magic_dmg:948568336621527040>",
-    "md%": "<:magic_dmg:948568336621527040>",
-    "mr": "<:magic_resistance:1047269149237334086>",
-    "cr": "<:crit_rate:1047269144195776512>",
-    "cd": "<:crit_damage:1047269146511016046>",
-    "dodge": "<:dodge_chance:1047269150948606063>",
+    "hp": "💖",
+    "hp%": "💖",
+    "atk": "⚔️",
+    "atk%": "⚔️",
+    "def": "🛡️",
+    "def%": "🛡️",
+    "md": "🪄",
+    "md%": "🪄",
+    "mr": "<:MR:1398501106467868784>",
+    "cr": "🎯",
+    "cd": "💥",
+    "dodge": "💨",
     "br": "<:block_rate:1217949026281066599>",
-    "mana": "<:mana:1047269152957661255>",
-    "sm": "<:mana:1047269152957661255>",
-    "mg": "<:mana_generation:1063215562349629570>",
-    "shield": "<:shield:1062050038211166310>",
+    "mana": "💧",
+    "sm": "💧",
+    "mg": "💦",
+    "shield": "💠",
 
     // "coins": "<:coins:872926669055356939>",
 };
