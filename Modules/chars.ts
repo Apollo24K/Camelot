@@ -10262,7 +10262,7 @@ export const characters: charInfo[] = [
     new charInfo("Ryuunosuke Akutagawa", [], anime[238], "M", "https://i.ibb.co/GTKX4Cx/c.png", 10157, "A"),
     new charInfo("Atsushi Nakajima", [], anime[238], "M", "https://i.ibb.co/m6L5v73/c.png", 10158, "A"),
     new charInfo("Lucy Montgomery", ["Lucy Maud Montgomery"], anime[238], "F", "https://i.ibb.co/jL04FF3/c.png", 10159, "A"),
-    new charInfo("Akiko Yosano", [], anime[238], "F", "https://i.ibb.co/VJ3gfkD/c.png", 10160, "A"),
+    new charInfo("Akiko Yosano", [], anime[238], "F", "https://i.ibb.co/6RbzDzZJ/c.png", 10160, "SS"),
     new charInfo("Kyouka Izumi", [], anime[238], "F", "https://i.ibb.co/j6V2gJv/c.png", 10161, "A"),
     new charInfo("Sakunosuke Oda", [], anime[238], "M", "https://i.ibb.co/N2jVNHd/c.png", 10162, "B"),
     new charInfo("Doppo Kunikida", [], anime[238], "M", "https://i.ibb.co/z2jrNwF/c.png", 10163, "B"),
@@ -16297,7 +16297,7 @@ export const characters: charInfo[] = [
     new charInfo("Alhaitham", [], anime[30], "M", "https://i.ibb.co/cQnNjhT/c.png", 16192, "B"),
     new charInfo("Gorou", [], anime[30], "M", "https://i.ibb.co/whjHVc6/c.png", 16193, "B"),
     new charInfo("Chen the Sharp", [], anime[30], "M", "https://i.ibb.co/PjKnfsW/c.png", 16194, "D"),
-    new charInfo("Arlecchino", [], anime[30], "F", "https://i.ibb.co/XLtQ7HX/c.png", 16195, "A"),
+    new charInfo("Arlecchino", [], anime[30], "F", "https://i.ibb.co/BK7VGzb5/c.png", 16195, "SS"),
     new charInfo("Tighnari", [], anime[30], "M", "https://i.ibb.co/HD3zQLB/c.png", 16196, "B"),
     new charInfo("Kuki Shinobu", [], anime[30], "F", "https://i.ibb.co/wwBCK6D/c.png", 16197, "C"),
     new charInfo("Nilou", [], anime[30], "F", "https://i.ibb.co/tQnC4N4/c.png", 16198, "C"),
@@ -24900,6 +24900,7 @@ export const characters: charInfo[] = [
     new charInfo("Mishima (Masamune-kun)", [], anime[648], "F", "https://i.ibb.co/fzNdHq2v/c.png", 24795, "D"),
     new charInfo("Yuriko", [], anime[648], "F", "https://i.ibb.co/0pqfVxTk/c.png", 24796, "D"),
     new charInfo("Sumire Gasou", [], anime[648], "F", "https://i.ibb.co/fztSSxG9/c.png", 24797, "D"),
+    new charInfo("Shorekeeper EX", ["Shore EX"], anime[560], "F", "https://i.ibb.co/Ps7gDBG8/Shorekeper-EX.gif", 24798, "EX"),
 
 
 

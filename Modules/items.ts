@@ -4244,6 +4244,7 @@ export const items = [
     new weaponInfo("Serket's Sting", "weapon", "dagger", ["chest"], "<:serkets_sting:1173987001444347964>", "https://i.imgur.com/C4BTUBk.png", "atk", 114, 1038, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         matchStats.critbleed = true;
         matchStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
         myStats.def += 155;
         myStats.mr += 155;
         mybuff.def.push(new buffInfo("+", 155, 9999));

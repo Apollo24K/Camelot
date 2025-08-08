@@ -841,7 +841,10 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     // Passives
     target.damageTaken += damage;
     if (options.combodmg && attacker.combodmg) attacker.attackStreak++;
-    if (options.critbleed && isCrit) targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * 0.05), matchStats.critbleedlast));
+    if (options.critbleed && isCrit) {
+        const bleedPercentage = attacker.critbleedAmount ?? 0.05;
+        targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * bleedPercentage), matchStats.critbleedlast));
+    };
     if (attacker.critmana && isCrit) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
     if (options.selfheal && attacker.selfheal && attacker.lastSelfHealRoundCapped !== matchStats.round) {
         let selfHealedTotal = 0;
@@ -913,7 +916,7 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
                 if (amount < 0) amount = 0;
             };
         };
-        
+
         // 2: General Heal reduction
         if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
         if (amount > 0) target.hp += Math.floor(amount);

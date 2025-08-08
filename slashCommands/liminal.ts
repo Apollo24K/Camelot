@@ -6,7 +6,7 @@ import { curses } from "../Modules/curses";
 import { armorInfo, itemInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, customEmojis, dealDamage, searchClass, classLevelToXP, getRingSlotsTotal, addHeal } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage, searchClass, classLevelToXP, getRingSlotsTotal } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
@@ -19,7 +19,6 @@ import delayedBuffs from "../Modules/delayedBuffs";
 const dungeonInProgress = new Map();
 const nightmareSelected = new Map();
 const embedColor = 0x034f20;
-
 
 interface BuffInfo {
     id: string;
@@ -67,84 +66,84 @@ const randomBuffs: Record<string, BuffInfo> = {
         name: "Berserk Fury",
         description: "**+20%** enemy's ATK & MD",
         type: "enemy",
-        
+
     },
     iron_bastion: {
         id: "iron_bastion",
         name: "Iron Bastion",
         description: "**+20%** enemy's DEF & MR",
         type: "enemy",
-        
+
     },
     death_eye: {
         id: "death_eye",
         name: "Death Eye",
         description: "**+25%** critical rate",
         type: "enemy",
-        
+
     },
     ruthless_precision: {
         id: "ruthless_precision",
         name: "Ruthless Precision",
         description: "**+50%** critical damage",
         type: "enemy",
-        
+
     },
     arcane_barrier: {
         id: "arcane_barrier",
         name: "Arcane Barrier",
         description: "**+20%** enemy's DMG mitigation",
         type: "enemy",
-        
+
     },
     counter_instinct: {
         id: "counter_instinct",
         name: "Counter Instinct",
         description: "**+20%** enemy's counter chance",
         type: "enemy",
-        
+
     },
     titan_blood: {
         id: "titan_blood",
         name: "Titan Blood",
         description: "**+20%** enemy's max HP",
         type: "enemy",
-        
+
     },
     phantom_step: {
         id: "phantom_step",
         name: "Phantom Step",
         description: "**+20%** enemy's dodge rate",
         type: "enemy",
-        
+
     },
     mana_surge: {
         id: "mana_surge",
         name: "Mana Surge",
         description: "**+10** enemy's mana regeneration",
         type: "enemy",
-        
+
     },
     regenerative_aura: {
         id: "regenerative_aura",
         name: "Regenerative Aura",
         description: "Recovers **4%** max HP every round",
         type: "enemy",
-        
+
     },
     shielded_spawn: {
         id: "shielded_spawn",
         name: "Shielded Spawn",
         description: "Begins battles with a shield of **25%** max HP",
         type: "enemy",
-        
+
     },
     war_frenzy: {
         id: "war_frenzy",
         name: "War Frenzy",
         description: "Doubles ATK, MD, DEF & MR during the first **2** rounds",
         type: "enemy",
-        
+
     },
 
     // --- Player Debuffs ---
@@ -152,88 +151,87 @@ const randomBuffs: Record<string, BuffInfo> = {
         id: "shattered_might",
         name: "Shattered Might",
         description: "**-20%** ATK & MD",
-        type: "player", 
-        
+        type: "player",
+
     },
     brittle_guard: {
         id: "brittle_guard",
         name: "Brittle Guard",
         description: "**-20%** DEF & MR",
         type: "player",
-        
+
     },
     dulled_edge: {
         id: "dulled_edge",
         name: "Dulled Edge",
         description: "**-25%** critical rate",
         type: "player",
-        
+
     },
     cracked_focus: {
         id: "cracked_focus",
         name: "Cracked Focus",
         description: "**-50%** critical damage",
         type: "player",
-        
+
     },
     marked_target: {
         id: "marked_target",
         name: "Marked Target",
         description: "Takes **+15%** damage",
         type: "player",
-        
+
     },
     cursed_vitality: {
         id: "cursed_vitality",
         name: "Cursed Vitality",
         description: "**-20%** max HP",
         type: "player",
-        
+
     },
     slipping_shadow: {
         id: "slipping_shadow",
         name: "Slipping Shadow",
         description: "**-20%** dodge rate",
         type: "player",
-        
+
     },
     mana_drought: {
         id: "mana_drought",
         name: "Mana Drought",
         description: "**-10** mana regeneration",
         type: "player",
-        
+
     },
     half_life: {
         id: "half_life",
         name: "Half-Life",
         description: "HP can never be more than **50%**",
         type: "player",
-        
+
     },
     retributive_pain: {
         id: "retributive_pain",
         name: "Retributive Pain",
         description: "Takes **12%** of DMG dealt",
         type: "player",
-        
+
     },
     cycle_of_exhaustion: {
         id: "cycle_of_exhaustion",
         name: "Cycle of Exhaustion",
         description: "The player's ATK,MD,Block rate is reduced to **0** every **5** rounds",
         type: "player",
-        
+
     },
     exposed: {
         id: "exposed",
         name: "Exposed",
         description: "Removes shield at the start of the round and reduces max HP by **8%**",
         type: "player",
-        
+
     },
 };
-
 
 
 function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
@@ -245,15 +243,15 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
             .setDisabled(tab === "lore" || tab === "tutorial"),
     ];
 
-     
-     if (tab === "overview" || tab === "lore") {
+
+    if (tab === "overview" || tab === "lore") {
         buttons.push(
             new ButtonBuilder()
                 .setCustomId('lore')
                 .setLabel(tab === "lore" ? "Show Overview" : "Show Lore")
                 .setStyle(ButtonStyle.Primary)
         );
-    }
+    };
 
     if (tab === "overview" || tab === "tutorial") {
         buttons.push(
@@ -262,7 +260,7 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
                 .setLabel(tab === "tutorial" ? "Show Overview" : "How to play")
                 .setStyle(ButtonStyle.Primary)
         );
-    }
+    };
 
     if (tab === "overview") {
         buttons.push(
@@ -270,13 +268,13 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
                 .setCustomId('ignore_defer-edit')
                 .setLabel(`Edit Class`)
                 .setStyle(ButtonStyle.Secondary),
-            
+
         );
-    }
+    };
 
     return new ActionRowBuilder<ButtonBuilder>()
         .addComponents(...buttons);
-}
+};
 
 function getModal(uid: string) {
     return new ModalBuilder()
@@ -295,15 +293,16 @@ function getModal(uid: string) {
             )
         );
 };
+
 async function buffSelection(interaction: ChatInputCommandInteraction, level: number): Promise<void> {
     const lvlKey = `${interaction.user.id}_${level}`;
     // Get existing run data
-    let runData: UserRunInfo | undefined = userRuns.get(lvlKey);
+    const runData = userRuns.get(lvlKey);
 
     if (!runData) {
         console.warn("buffSelection called without existing run data");
         return;
-    }
+    };
 
     let currentBuffs = Object.values(runData.buffPool);
     let selectedBuffs = _.sampleSize(currentBuffs, Math.min(3, currentBuffs.length));
@@ -316,7 +315,7 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
             });
         }, 2000);
         return;
-    }
+    };
 
     const buffEmbed = new EmbedBuilder()
         .setTitle(`<:tada:1402572115282231369> Stage ${level + 1} (Level ${runData.level}) Cleared!`)
@@ -340,88 +339,67 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
             )
         );
 
-    let buffMessage;
-    if (interaction.channel?.isSendable()) {
-        buffMessage = await interaction.channel.send({
-            embeds: [buffEmbed],
-            components: [buffRow]
+    if (interaction.channel?.isSendable()) await interaction.channel.send({ embeds: [buffEmbed], components: [buffRow] }).then(msg => {
+        const buffCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId.startsWith("buff_"), componentType: ComponentType.Button, time: 90000, max: 1 });
+
+        buffCollector.on('collect', async (buttonInteraction) => {
+
+            const buffId = buttonInteraction.customId.substring("buff_".length);
+            const selectedBuff = runData.buffPool[buffId];
+
+            if (!selectedBuff) {
+                if (buttonInteraction.channel?.isSendable()) await buttonInteraction.channel?.send({ content: "❌ Invalid buff selection!" });
+                return;
+            };
+
+            // Apply the buff
+            delete runData.buffPool[buffId];
+            runData.appliedBuffs.push(selectedBuff);
+            userRuns.set(lvlKey, runData);
+
+            // Update the embed to show selection
+            const updatedEmbed = buffEmbed
+                .setTitle(`<:checkmark:1402570453184286750> Add-on effect Selected!`)
+                .setDescription(`**${selectedBuff.name}** has been added to your arsenal!\n\n*${selectedBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
+                .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` });
+            await msg.edit({ embeds: [updatedEmbed], components: [] });
+
+            // Auto-proceed to next level after a short delay
+            setTimeout(async () => {
+                if (buttonInteraction.channel?.isSendable()) await buttonInteraction.channel?.send({ content: `🌠 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/liminal descent\` to continue your fight!` });
+            }, 500);
         });
-    } else {
-        console.error("Channel is not sendable");
-        return;
-    }
 
-    const buffCollector = buffMessage.createMessageComponentCollector({
-        filter: (r) => r.user.id === interaction.user.id && r.customId.startsWith("buff_"),
-        componentType: ComponentType.Button,
-        time: 90000,
-        max: 1
+        buffCollector.on('end', async (collected) => {
+            if (collected.size === 0) {
+                // Timeout - auto selecting first buff
+                const firstBuff = selectedBuffs[0];
+
+                if (firstBuff && runData) {
+                    delete runData.buffPool[firstBuff.id];
+                    runData.appliedBuffs.push(firstBuff);
+                    userRuns.set(lvlKey, runData);
+
+                    await msg.edit({
+                        embeds: [buffEmbed
+                            .setTitle(`⏱️ Time's Up!`)
+                            .setDescription(`**${firstBuff.name}** was automatically selected.\n\n*${firstBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
+                            .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` })
+                        ],
+                        components: []
+                    });
+
+                    // Auto-proceed after timeout
+                    setTimeout(async () => {
+                        if (interaction.channel?.isSendable()) await interaction.channel.send({ content: `🌠 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/liminal descent\` to continue your fight!` });
+                    }, 1000);
+                };
+            };
+        });
+
     });
+};
 
-    buffCollector.on('collect', async (buttonInteraction) => {
-
-        const buffId = buttonInteraction.customId.substring("buff_".length);
-        const selectedBuff = runData.buffPool[buffId];
-
-        if (!selectedBuff) {
-            if (buttonInteraction.channel?.isSendable()) {
-
-                await buttonInteraction.channel?.send({ content: "❌ Invalid buff selection!" });
-            }
-            return;
-        }
-
-        // Apply the buff
-        delete runData.buffPool[buffId];
-        runData.appliedBuffs.push(selectedBuff);
-        userRuns.set(lvlKey, runData);
-
-        // Update the embed to show selection
-        const updatedEmbed = buffEmbed
-            .setTitle(`<:checkmark:1402570453184286750> Add-on effect Selected!`)
-            .setDescription(`**${selectedBuff.name}** has been added to your arsenal!\n\n*${selectedBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
-            .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` });
-
-        await buffMessage.edit({ embeds: [updatedEmbed], components: [] });
-
-        // Auto-proceed to next level after a short delay
-        setTimeout(async () => {
-            if (buttonInteraction.channel?.isSendable()) {
-                await buttonInteraction.channel?.send({ content: `🌠 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/liminal descent\` to continue your fight!` });
-            }
-        }, 500);
-    });
-
-    buffCollector.on('end', async (collected) => {
-        if (collected.size === 0) {
-            // Timeout - auto selecting first buff
-            const firstBuff = selectedBuffs[0];
-
-            if (firstBuff && runData) {
-                delete runData.buffPool[firstBuff.id];
-                runData.appliedBuffs.push(firstBuff);
-                userRuns.set(lvlKey, runData);
-
-                await buffMessage.edit({
-                    embeds: [buffEmbed
-                        .setTitle(`⏱️ Time's Up!`)
-                        .setDescription(`**${firstBuff.name}** was automatically selected.\n\n*${firstBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
-                        .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` })
-                    ],
-                    components: []
-                });
-
-                // Auto-proceed after timeout
-                setTimeout(async () => {
-                    if (interaction.channel?.isSendable()) {
-                        await interaction.channel?.send({ content: `🌠 **Stage ${level + 1} (Level ${runData.level + 1}) is starting!**\n\nUse \`/liminal descent\` to continue your fight!` });
-                    }
-                }, 1000);
-            }
-        }
-    });
-
-}
 function nightmareOverview(interaction: ChatInputCommandInteraction, stats: CompactUserSchema, userItems: itemInfo[]): Promise<number> {
     return new Promise((resolve) => {
         let level = nightmareSelected.get(interaction.user.id) ?? 0;
@@ -469,35 +447,35 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
         // console.log(characters[preselectedChar].name);
         const getDesc = () => {
             if (tab === "overview") {
-                return `### :crescent_moon: 𝐋𝐢𝐦𝐢𝐧𝐚𝐥 𝐃𝐞𝐬𝐜𝐞𝐧𝐭   ྀིྀ ♁ ₊ :wing:｡˚ ₊ +\n-# ✧ Strategize and plan your battle against unknown entities, where the difficulty amplifies!\n-# ✧ After each win, you may pick one of three random add-on effects that will stack for the rest of your run until you are defeated!\n-# ✧ You can use any class you want. A new level unlocks daily.`
-                    + `\n\n**𝐄𝐧𝐞𝐦𝐲**: __${currentNightmare.name}__`
-                    + `\n\n**𝐓𝐫𝐚𝐢𝐭𝐬**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
-                    + `\n### 𝐘𝐨𝐮𝐫 𝐜𝐡𝐚𝐫𝐚𝐜𝐭𝐞𝐫\n**𝐍𝐚𝐦𝐞**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**𝐂𝐥𝐚𝐬𝐬**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**𝐄𝐪𝐮𝐢𝐩𝐦𝐞𝐧𝐭**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
+                return `### :crescent_moon: Liminal Descent    ྀིྀ ♁ ₊ :wing:｡˚ ₊ +\n-# ✧ Strategize and plan your battle against unknown entities, where the difficulty amplifies!\n-# ✧ After each win, you may pick one of three random add-on effects that will stack for the rest of your run until you are defeated!\n-# ✧ You can use any class you want. A new level unlocks daily.`
+                    + `\n\n**Enemy**: __${currentNightmare.name}__`
+                    + `\n\n**Traits**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
+                    + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
 
-                    + `\n**𝐈𝐭𝐞𝐦𝐬**: <:rune_empty:1034507494539669635> `
+                    + `\n**Items**: <:rune_empty:1034507494539669635> `
                     + userItems.filter((e) => e.category === "ring").map((e) => e.emoji).concat(
                         Array(Math.max(0, getRingSlotsTotal(stats) - userItems.filter((e) => e.category === "ring").length)).fill("<:ring_empty:1034509903886299136>")
                     ).concat(["<:locked:1034511902417621002>", "<:locked:1034511902417621002>", "<:locked:1034511902417621002>"]).slice(0, 3).join("");
             } else if (tab === "lore") {
                 return `### ${currentNightmare.name}'s Lore\n${nightmareLore["summer2025"]?.[currentNightmare.name as keyof typeof nightmareLore["summer2025"]]?.join("\n")}`;
-            } else if (tab === "tutorial"){
-                return `### 🎓 𝐓𝐮𝐭𝐨𝐫𝐢𝐚𝐥\n\n` +
-                `**<:target1:1402578880291930154> Objective:** Progress as far as possible without losing to maximize your rewards!\n\n` +
-                
-                `**𝐇𝐨𝐰 𝐭𝐨 𝐏𝐥𝐚𝐲:**\n` +
-                `<:one:1402575947928043591> **Select a Stage** - Choose from unlocked liminal stages (1 new stage unlocks daily)\n` +
-                `<:two:1402576432927866880> **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
-                `<:three:1402576800651149362> **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen the difficulty\n` +
-                `<:four:1402577136925147217> **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
-                `<:five:1402577393285070968> **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
-                
-                `**𝐄𝐟𝐟𝐞𝐜𝐭 𝐒𝐲𝐬𝐭𝐞𝐦:**\n` +
-                `🟡 **Player Debuffs** - Weaken your character's abilities\n` +
-                `⚫ **Enemy Buffs** - Enhance the boss's abilities\n` +
-                `<:streak:1402579502470795264> **Stacking** - All chosen buffs remain active throughout your run\n` +
-                `<:dice:1402580409103028325> **Random Selection** - Different buff options each time\n\n` 
+            } else if (tab === "tutorial") {
+                return `### 🎓 Tutorial\n\n` +
+                    `**<:target1:1402578880291930154> Objective:** Progress as far as possible without losing to maximize your rewards!\n\n` +
 
-            }         
+                    `**How to Play:**\n` +
+                    `<:one:1402575947928043591> **Select a Stage** - Choose from unlocked liminal stages (1 new stage unlocks daily)\n` +
+                    `<:two:1402576432927866880> **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
+                    `<:three:1402576800651149362> **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen the difficulty\n` +
+                    `<:four:1402577136925147217> **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
+                    `<:five:1402577393285070968> **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
+
+                    `**Effect System:**\n` +
+                    `🟡 **Player Debuffs** - Weaken your character's abilities\n` +
+                    `⚫ **Enemy Buffs** - Enhance the boss's abilities\n` +
+                    `<:streak:1402579502470795264> **Stacking** - All chosen buffs remain active throughout your run\n` +
+                    `<:dice:1402580409103028325> **Random Selection** - Different buff options each time\n\n`;
+
+            }
             return "";
         };
 
@@ -505,9 +483,9 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
             .setColor(embedColor)
             .setThumbnail(nightmareImage)
             .setDescription(getDesc())
-            .setFooter({ 
-                text: `✯ Repeating routes, chilling circles, you wander in the middle of familiarity, yet plagued by the gloom of strangeness and oddity. How far can you survive and forge a path out, before the darkness consumes you whole? ✯\n\n${levelsUnlocked > nightmares.length - 1 ? `All levels have been unlocked!` : `Next level unlocks in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min`}` 
-            })
+            .setFooter({
+                text: `${levelsUnlocked > nightmares.length - 1 ? `All levels have been unlocked!` : `Next level unlocks in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min`}`
+            });
         interaction.reply({ embeds: [Embed], components: [selectionRow, getNightmareButtonRow(tab)] }).then((msg) => {
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "play", componentType: ComponentType.Button, time: 90000 });
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
@@ -553,7 +531,7 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
 
             lore.on('collect', () => {
                 tab = (tab === "overview") ? "lore" : "overview";
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [ selectionRow, getNightmareButtonRow(tab)] });
+                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [selectionRow, getNightmareButtonRow(tab)] });
             });
 
             select.on('collect', r => {
@@ -615,9 +593,9 @@ const exportCommand: SlashCommand = {
         if (level === -1) return;
 
         let lvlKey = `${interaction.user.id}_${level}`;
-     
+
         let runData: UserRunInfo | undefined = userRuns.get(lvlKey);
-        
+
         // Set up restrictions
         // const cd = 8 * 60 * 1000;
         // if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
@@ -702,7 +680,7 @@ const exportCommand: SlashCommand = {
         let buffs = Avalon.getBuffs();
         let eBuffs = Avalon.getBuffs();
 
-        
+
         let resolved = false;
         async function matchResult(r: "w" | "l") {
             if (resolved) return;
@@ -712,14 +690,14 @@ const exportCommand: SlashCommand = {
             const Embed = new EmbedBuilder()
                 .setColor(embedColor)
                 .setThumbnail(myStatsC.thumbnail)
-                .setTitle(`🌙 𝐋𝐢𝐦𝐢𝐧𝐚𝐥 𝐒𝐭𝐚𝐠𝐞 ${level + 1} (𝐋𝐞𝐯𝐞𝐥 ${runData ? runData.level + 1 : 1})`)
-                .setFooter({ text: `𝐁𝐚𝐥𝐚𝐧𝐜𝐞: ${stats.coins} 𝐜𝐨𝐢𝐧𝐬`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+                .setTitle(`🌙 Liminal Stage ${level + 1} (Level ${runData ? runData.level + 1 : 1})`)
+                .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
 
             if (r === "l") {
                 // Calculate score
                 let finalScore = 0;
                 if (runData && runData.appliedBuffs.length > 0) finalScore = runData.appliedBuffs.length ** 2;
-                
+
                 // Clear restrictions
                 dungeonInProgress.delete(stats.id);
 
@@ -731,7 +709,7 @@ const exportCommand: SlashCommand = {
                     runData.totalPoints = 0;
                     userRuns.set(lvlKey, runData);
                 }
-                
+
 
                 // Update craze_levels for tracking
                 if (!(level in stats.craze_levels)) {
@@ -742,11 +720,11 @@ const exportCommand: SlashCommand = {
                 }
 
                 return Embed.setDescription(
-                    `💀 **${myChar.name}** 𝐠𝐨𝐭 𝐥𝐨𝐬𝐭 𝐢𝐧 𝐥𝐢𝐦𝐢𝐧𝐚𝐥𝐢𝐭𝐲... 💀\n\n` +
-                    `<:tally:1402566927079051266> **𝐅𝐢𝐧𝐚𝐥 𝐒𝐜𝐨𝐫𝐞: ${finalScore} 𝐩𝐨𝐢𝐧𝐭𝐬**\n\n` +
-                    `<:repeat1:1402565846433402960> **𝐑𝐮𝐧 𝐑𝐞𝐬𝐞𝐭** - 𝐒𝐭𝐚𝐫𝐭𝐢𝐧𝐠 𝐨𝐯𝐞𝐫 𝐚𝐭 𝐋𝐞𝐯𝐞𝐥 𝟏\n\n` 
+                    `💀 **${myChar.name}** got lost in Liminality... 💀\n\n` +
+                    `<:tally:1402566927079051266> **Final Score: ${finalScore} points**\n\n` +
+                    `<:repeat1:1402565846433402960> **Run Reset** - Starting over at Level 1\n\n`
                 );
-            }
+            };
 
 
             stats.craze_levels[level] ||= 0;
@@ -756,7 +734,7 @@ const exportCommand: SlashCommand = {
             if (runData) {
                 runData.level++;
                 userRuns.set(lvlKey, runData);
-            }
+            };
 
             // Coins
             // let loot = 0;
@@ -777,8 +755,8 @@ const exportCommand: SlashCommand = {
             await buffSelection(interaction, level);
 
             return Embed
-                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** 𝐰𝐨𝐧! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}`)
-                .setFooter({ text: `𝐁𝐚𝐥𝐚𝐧𝐜𝐞: ${stats.coins} 𝐜𝐨𝐢𝐧𝐬`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}`)
+                .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         };
 
         let matchStats = Avalon.getMatchStats(interaction);
@@ -799,7 +777,7 @@ const exportCommand: SlashCommand = {
 
         if (runData && runData.appliedBuffs.length > 0) {
             runData.appliedBuffs.forEach(buff => {
-               
+
 
                 switch (buff.id) {
                     //+20% enemy's ATK & MD
@@ -835,10 +813,10 @@ const exportCommand: SlashCommand = {
                         eStatsC.counter ??= 0;
 
                         myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                            if(Math.random() < 0.2) eStatsC.counter++;
+                            if (Math.random() < 0.2) eStatsC.counter++;
                             return AbilityResponse.SUCCESS;
                         }, 9999));
-                        
+
                         break;
                     //+20% enemy's max HP
                     case "titan_blood":
@@ -921,9 +899,9 @@ const exportCommand: SlashCommand = {
                         break;
                     //HP can never be more than 50% at the start of the round
                     case "half_life":
-                        if(myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
-                            myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                                if(myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
+                        if (myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
+                        myStatsC.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            if (myStatsC.hp / myStatsC.maxhp > 0.5) myStatsC.hp = Math.floor(myStatsC.maxhp * 0.5);
 
                             return AbilityResponse.SUCCESS;
                         }, 9999));
@@ -932,7 +910,7 @@ const exportCommand: SlashCommand = {
                     case "retributive_pain":
                         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                             if (caster === myStatsC) {
-                                myStatsC.hp -= Math.floor(options.damage * 0.12)
+                                myStatsC.hp -= Math.floor(options.damage * 0.12);
                             };
                         });
                         break;
@@ -944,7 +922,7 @@ const exportCommand: SlashCommand = {
                                 myStatsC.md = 0;
                                 myStatsC.br = 0;
                             };
-            
+
                             return AbilityResponse.SUCCESS;
                         }, 9999));
                         break;
@@ -994,7 +972,7 @@ const exportCommand: SlashCommand = {
                     .setColor(embedColor)
                     .setThumbnail(myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${fightDuration}s` })
-                    .setTitle(`𝐋𝐢𝐦𝐢𝐧𝐚𝐥 𝐒𝐭𝐚𝐠𝐞 ${level + 1} (𝐋𝐞𝐯𝐞𝐥 ${runData ? runData.level + 1 : 1})`)
+                    .setTitle(`Liminal Stage ${level + 1} (Level ${runData ? runData.level + 1 : 1})`)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
@@ -1060,7 +1038,7 @@ const exportCommand: SlashCommand = {
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
 
-                       
+
 
                         // Consume Mana
                         Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myStatsC.thumbnail);
@@ -1097,15 +1075,13 @@ const exportCommand: SlashCommand = {
                                 };
                             };
                         };
-                        
+
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                     };
-                    
-                   
 
                     let forcedSkillUse = 0;
                     function attack() {
-                        if (matchStats.turn === 1) return;                     
+                        if (matchStats.turn === 1) return;
                         if (eStatsC.timeFrozen) {
                             if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
                             if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
@@ -1133,9 +1109,9 @@ const exportCommand: SlashCommand = {
                                 //     return;
                                 // };
 
-                               
 
-                                if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767  && Math.random() < 0.3) {
+
+                                if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && Math.random() < 0.3) {
                                     // curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                     // eStatsC.sm -= curse.cost;
                                     // editEmbed();
@@ -1172,7 +1148,7 @@ const exportCommand: SlashCommand = {
                     };
 
                     atk.on('collect', async () => {
-                        if (matchStats.turn === 1)  {
+                        if (matchStats.turn === 1) {
                             matchStats.turn = 0;
                             matchStats.actionSequence.push("ATK");
                             // If attack was replaced
@@ -1261,7 +1237,7 @@ const exportCommand: SlashCommand = {
                         if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
 
                         // If ability was replaced
-                        if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1)  {
+                        if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
                             matchStats.actionSequence.push("ABILITY");
