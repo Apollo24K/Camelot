@@ -22411,7 +22411,7 @@ export const characters: charInfo[] = [
     new charInfo("Encore", [], anime[560], "F", "https://i.ibb.co/Ld9b0sJ/c.png", 22306, "B"),
     new charInfo("Chixia", [], anime[560], "F", "https://i.ibb.co/88vT75y/c.png", 22307, "B"),
     new charInfo("Danjin", [], anime[560], "F", "https://i.ibb.co/0VqQxYL/c.png", 22308, "B"),
-    new charInfo("Phrolova", [], anime[560], "F", "https://i.ibb.co/7djTZkx7/c.png", 22309, "S"),
+    new charInfo("Phrolova", [], anime[560], "F", "https://i.ibb.co/chjTjNDY/c.png", 22309, "SS"),
     new charInfo("Yangyang", [], anime[560], "F", "https://i.ibb.co/KKnHdkc/c.png", 22310, "A"),
     new charInfo("Camellya", [], anime[560], "F", "https://i.ibb.co/0ry8qGj/c.png", 22311, "B"),
     new charInfo("Verina", [], anime[560], "F", "https://i.ibb.co/7Ch7nZZ/c.png", 22312, "C"),
