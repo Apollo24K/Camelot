@@ -681,6 +681,11 @@ export const anime: animeInfo[] = [
     new animeInfo("Mission: Yozakura Family", ['Yozakura-san Chi no Daisakusen', 'Mission of Yozakura Family', 'MYF', 'Mission Yozakura Family'], 646),
     new animeInfo("Natsume's Book of Friends", ["Natsume Yuujinchou", 'NY'], 647),
     new animeInfo("Masamune-kun's Revenge ", [" Masamune-kun no Revenge"], 648),
+    new animeInfo("Blood Lad", ['Blood Brat', 'Blood Lad: Kanketsu Kinen', 'Blood Lad: Wagahai wa Neko de wa Nai', 'BL'], 649),
+    new animeInfo("Kekkaishi", ['Barrier Master'], 650),
+    new animeInfo("PuraOre! ~Pride of Orange~", ['PuraOra! PRIDE OF ORANGE', 'Puraore!: PRIDE OF ORANGE', 'PuraOre', 'PuraOre! Pride of Orange', 'PoO', 'Pride of Orange'], 651),
+    new animeInfo("Seikon no Qwaser", ['Seikon no Quasar', 'The Qwaser Of Stigmata', 'The Quasar of Stigmata', 'SnQ', 'tQoS'], 652),
+    new animeInfo("Servant x Service", [], 653),
 ];
 
 
