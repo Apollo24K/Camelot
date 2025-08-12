@@ -18,6 +18,9 @@ const handler: BotHandler = {
     once: true,
     execute: async (client: Client) => {
 
+        // Only if Camelot
+        if (config.clientId.active !== "706183309943767112") return;
+
         const app = express();
         app.use(express.json());
 

@@ -623,6 +623,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         canTwinshot: false,
         isLightning: false,
         canCounter: true,
+        normalATK: false,
 
         preventRetaliation: false,
     };
@@ -695,12 +696,12 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         md: options.atkMultiplier * attacker.md,
         def: Math.max(Math.pow(0.99895, options.defReductionCap ? Math.max(effectiveDef - options.defReductionCap, options.defMultiplier * effectiveDef) : (options.defMultiplier * effectiveDef)), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_defcap ?? 0) > 0) && ((options.defMultiplier * effectiveDef) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * effectiveDef) - 2192, options.defMultiplier * target.increase_defcap)) : 1),
         mr: Math.max(Math.pow(0.99895, options.defReductionCap ? Math.max(effectiveMr - options.defReductionCap, options.defMultiplier * effectiveMr) : (options.defMultiplier * effectiveMr)), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_mrcap ?? 0) > 0) && ((options.defMultiplier * effectiveMr) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * effectiveMr) - 2192, options.defMultiplier * target.increase_mrcap)) : 1),
-        crit: (isCrit ? (options.critMultiplier * attacker.cd) : 1),
+        crit: ((isCrit || attacker.shorekeeperUsedActive) ? (options.critMultiplier * attacker.cd) : 1),
         combo: ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1),
         lightning: options.isLightning ? ((1 + (attacker.lightningMultiplier || 0)) * (1 - (target.lightningResistance || 0))) : 1,
         rng: (1 - (0.2 * Math.random())),
     };
-    if (attacker.shorekeeperUsedActive && !isCrit) options.critMultiplier * attacker.cd;
+    // Removed redundant line: crit scaling now handled in multipliers.crit
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
         damage = options.overwriteDamage || Math.floor(multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     } else {
@@ -894,7 +895,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         preventRetaliation: options.preventRetaliation,
     });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
-    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage });
+    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage , normalATK: options.normalATK });
 
     return damage;
 };
@@ -916,7 +917,7 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
                 if (amount < 0) amount = 0;
             };
         };
-
+        
         // 2: General Heal reduction
         if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
         if (amount > 0) target.hp += Math.floor(amount);

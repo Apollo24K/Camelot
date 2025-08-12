@@ -359,7 +359,7 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
 
             // Update the embed to show selection
             const updatedEmbed = buffEmbed
-                .setTitle(`<:checkmark:1402570453184286750> Add-on effect Selected!`)
+                .setTitle(`<:checkmark:1403330138975895643> Add-on effect Selected!`)
                 .setDescription(`**${selectedBuff.name}** has been added to your arsenal!\n\n*${selectedBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
                 .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` });
             await msg.edit({ embeds: [updatedEmbed], components: [] });
@@ -447,7 +447,7 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
         // console.log(characters[preselectedChar].name);
         const getDesc = () => {
             if (tab === "overview") {
-                return `### :crescent_moon: Liminal Descent    ྀིྀ ♁ ₊ :wing:｡˚ ₊ +\n-# ✧ Strategize and plan your battle against unknown entities, where the difficulty amplifies!\n-# ✧ After each win, you may pick one of three random add-on effects that will stack for the rest of your run until you are defeated!\n-# ✧ You can use any class you want. A new level unlocks daily.`
+                return `### :crescent_moon: Liminal Descent    ྀིྀ ♁ ₊ :wing:｡˚ ₊ +`
                     + `\n\n**Enemy**: __${currentNightmare.name}__`
                     + `\n\n**Traits**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
                     + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
@@ -463,17 +463,17 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
                     `**<:target1:1402578880291930154> Objective:** Progress as far as possible without losing to maximize your rewards!\n\n` +
 
                     `**How to Play:**\n` +
-                    `<:one:1402575947928043591> **Select a Stage** - Choose from unlocked liminal stages (1 new stage unlocks daily)\n` +
-                    `<:two:1402576432927866880> **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
-                    `<:three:1402576800651149362> **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen the difficulty\n` +
-                    `<:four:1402577136925147217> **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
-                    `<:five:1402577393285070968> **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
+                    `<:one:1403330141672964217> **Select a Stage** - Choose from unlocked liminal stages (1 new stage unlocks daily)\n` +
+                    `<:two:1403330145175212093> **Fight the Boss** - Battle using the preselected character (Lvl. 500) + your class (Lvl. 1000) + your equipment\n` +
+                    `<:three:1403330147607773296> **Choose Your Effect** - After winning, pick 1 from 3 random effects to strengthen the difficulty\n` +
+                    `<:four:1403330149549867109> **Repeat & Stack** - Fight the same boss again with your accumulated effects\n` +
+                    `<:five:1403330151642828810> **Push Higher** - Continue until you lose, earning more rewards the further you progress\n\n` +
 
                     `**Effect System:**\n` +
                     `🟡 **Player Debuffs** - Weaken your character's abilities\n` +
                     `⚫ **Enemy Buffs** - Enhance the boss's abilities\n` +
-                    `<:streak:1402579502470795264> **Stacking** - All chosen buffs remain active throughout your run\n` +
-                    `<:dice:1402580409103028325> **Random Selection** - Different buff options each time\n\n`;
+                    `<:streak:1403330158487933035> **Stacking** - All chosen buffs remain active throughout your run\n` +
+                    `<:dice:1403330160152809482> **Random Selection** - Different buff options each time\n\n`;
 
             }
             return "";
@@ -721,8 +721,8 @@ const exportCommand: SlashCommand = {
 
                 return Embed.setDescription(
                     `💀 **${myChar.name}** got lost in Liminality... 💀\n\n` +
-                    `<:tally:1402566927079051266> **Final Score: ${finalScore} points**\n\n` +
-                    `<:repeat1:1402565846433402960> **Run Reset** - Starting over at Level 1\n\n`
+                    `<:tally:1403331476916801566> **Final Score: ${finalScore} points**\n\n` +
+                    `<:repeat1:1403331474572185600> **Run Reset** - Starting over at Level 1\n\n`
                 );
             };
 
@@ -1037,7 +1037,6 @@ const exportCommand: SlashCommand = {
                         if (matchStats.ended) return;
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
-
 
 
                         // Consume Mana
