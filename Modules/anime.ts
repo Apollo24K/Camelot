@@ -686,6 +686,10 @@ export const anime: animeInfo[] = [
     new animeInfo("PuraOre! ~Pride of Orange~", ['PuraOra! PRIDE OF ORANGE', 'Puraore!: PRIDE OF ORANGE', 'PuraOre', 'PuraOre! Pride of Orange', 'PoO', 'Pride of Orange'], 651),
     new animeInfo("Seikon no Qwaser", ['Seikon no Quasar', 'The Qwaser Of Stigmata', 'The Quasar of Stigmata', 'SnQ', 'tQoS'], 652),
     new animeInfo("Servant x Service", [], 653),
+    new animeInfo("Sugar Sugar Rune", ["Sugar² Rune", "SSR"], 654),
+    new animeInfo("Zenless Zone Zero", ["ZZZ"], 655),
+    new animeInfo("My Bias Gets on the Last Train", ['Nae Choeaeneun Makchareul Tanda'], 656),
+    new animeInfo("Viral Hit", ['Hit Viral', 'How to Fight', 'Kenka Dougaku', 'Ssaumdokak'], 657),
 ];
 
 
