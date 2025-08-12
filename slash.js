@@ -158,6 +158,7 @@ const commands = [
 							{ name: 'Character Bundle', value: "4" },
 							{ name: 'Rare Pack', value: "5" },
 							{ name: 'Morpheus Blessing', value: "6" },
+							{ name: 'Newcomer Pack', value: "7" },
 						)
 				))
 			.addSubcommand((subcommand) => subcommand.setName('chest').setDescription('Buy a chest!')

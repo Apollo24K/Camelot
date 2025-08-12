@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { EmbedBuilder, ComponentType, ChatInputCommandInteraction } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
+import { anime } from "../Modules/anime";
 import { splitTitle, rarity, getRefinement, searchItem } from "../Modules/functions";
 import { monthlyShopItems } from "../Modules/monthlyShopItems";
 import { achievements } from "../Modules/achievements";
@@ -179,6 +180,27 @@ const exportCommand: SlashCommand = {
                 }
                 let fChars = newChars.filter((e) => e.rarity === rarUp);
                 const num = Math.floor(Math.random() * fChars.length);
+                tempChars.push(fChars[num].id);
+                stats.chars.push(fChars[num].id);
+                displayMy(fChars[num], stats.chars, stats.char_ref[fChars[num].id], interaction);
+
+                // Daily Quests
+                dailies[4].update(interaction);
+            } else if (item === "7") {
+                if (stats.coins < 1000) return interaction.reply("You don't have enough coins");
+                sub_coins = 1000;
+
+                let rar = "D";
+                if (ranRar < 3) rar = "SS";
+                else if (ranRar < 21) rar = "S";
+                else if (ranRar < 63) rar = "A";
+                else if (ranRar < 189) rar = "B";
+                else if (ranRar < 442) rar = "C";
+
+                let fChars = characters.filter((e) => e.rarity === rar);
+                const firstCharID = characters.filter((e) => e.animeInfo.id === anime.length - 20)[0].id;
+                fChars = fChars.filter((e) => e.id >= firstCharID);
+                let num = Math.floor(Math.random() * fChars.length);
                 tempChars.push(fChars[num].id);
                 stats.chars.push(fChars[num].id);
                 displayMy(fChars[num], stats.chars, stats.char_ref[fChars[num].id], interaction);

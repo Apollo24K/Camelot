@@ -60,6 +60,7 @@ const exportCommand: SlashCommand = {
                     { name: "Character Bundle - 800<:coins:872926669055356939>", value: "Get 3 characters for a discount" },
                     { name: "Rare Pack - 500<:coins:872926669055356939>", value: "Get at least a <:CTier:869316602858991657>-Tier character" },
                     { name: "Morpheus' Blessing - 2000<:coins:872926669055356939>", value: "Get a guaranteed new character\n(_<:SSTier:869316489931546644>-Tier are excluded from this pack_)" },
+                    { name: "Newcomer Pack - 1000<:coins:872926669055356939>", value: "Get a random character from the last 20 anime added" },
                 ),
             new EmbedBuilder()
                 .setColor(0xbbffff)
