@@ -25155,6 +25155,17 @@ export const characters: charInfo[] = [
     new charInfo("Hyeon-Su Lee", [], anime[657], "M", "https://i.ibb.co/Y725FkX0/c.png", 25051, "C"),
     new charInfo("Ji-Hyeon Park", [], anime[657], "F", "https://i.ibb.co/5XYMNGX6/c.png", 25052, "D"),
     new charInfo("Chan Jeong", [], anime[657], "M", "https://i.ibb.co/39cy40YH/c.png", 25053, "C"),
+    new charInfo("Takopi", [], anime[658], "M", 'https://i.ibb.co/W9hNnTH/c.png', 25054, "SS"),
+    new charInfo("Shizuka Kuze", [], anime[658], "F", 'https://i.ibb.co/kVZVVFnD/c.png', 25055, "S"),
+    new charInfo("Marina Kirarazaka ", [], anime[658], "F", 'https://i.ibb.co/WWYTSvFx/c.png', 25056, "S"),
+    new charInfo("Naoki Azuma", [], anime[658], "M", 'https://i.ibb.co/67Nkjy9P/c.png', 25057, "A"),
+    new charInfo("Junya Azuma", [], anime[658], "M", 'https://i.ibb.co/5X0xS3V5/c.png', 25058, "A"),
+    new charInfo("Happy Mama", [], anime[658], "F", 'https://i.ibb.co/chQZrKGf/c.png', 25059, "B"),
+    new charInfo("Marina's Mother", [], anime[658], "F", 'https://i.ibb.co/LhXKjGHX/c.png', 25060, "B"),
+    new charInfo("Marina's Father", [], anime[658], "M", 'https://i.ibb.co/d4rRbNf2/c.png', 25061, "C"),
+    new charInfo("Azuma's Mother", [], anime[658], "F", 'https://i.ibb.co/DfPsNjHv/c.png', 25062, "D"),
+    new charInfo("Shizuka's Mother", [], anime[658], "F", 'https://i.ibb.co/fdwKpNtX/c.png', 25063, "D"),
+
 
 ];
 

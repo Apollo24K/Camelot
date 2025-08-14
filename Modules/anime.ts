@@ -690,6 +690,7 @@ export const anime: animeInfo[] = [
     new animeInfo("Zenless Zone Zero", ["ZZZ"], 655),
     new animeInfo("My Bias Gets on the Last Train", ['Nae Choeaeneun Makchareul Tanda'], 656),
     new animeInfo("Viral Hit", ['Hit Viral', 'How to Fight', 'Kenka Dougaku', 'Ssaumdokak'], 657),
+    new animeInfo("Takopi's Orignal Sin", ["Takopii no Genzai", "Takopi no Genzai", "Takopi"], 658),
 ];
 
 
