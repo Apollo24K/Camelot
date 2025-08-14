@@ -1833,6 +1833,7 @@ export const items = [
     new weaponInfo("Overture", "weapon", "shield", ["chest"], "<:overture:1067246098810421299>", "https://i.imgur.com/lUO56sq.png", "shield", 70, 867, "cr", 0.04, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         matchStats.critbleed = true;
         matchStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 2 rounds.", "The Overture was crafted by the finest blacksmiths in the land, using only the strongest and most resilient metals. Its intricate designs and patterns symbolize the beginning of a great battle, and its sturdy construction allows it to withstand even the most fierce of blows. It is said that those who wield this shield are destined for greatness on the battlefield.", "unique", 275),
@@ -3205,7 +3206,7 @@ export const items = [
 
         myStats.flesh += 10;
         myStats.bone += 10;
-        
+
         myStats.delayedBuffs.push(new delayedBuffs(9, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             let mdBuff = Math.floor(myStats.md * 0.1 * myStats.flesh);
             myStats.md += mdBuff; // Boost according to flesh
@@ -3216,7 +3217,7 @@ export const items = [
             // Reset
             myStats.flesh = 0;
             myStats.bone = 0;
-            
+
             // Every 10 rounds = abyss engulf
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if ((matchStats.round - 9) % 10 === 0) {
@@ -3234,7 +3235,7 @@ export const items = [
             }, 9999));
             return AbilityResponse.SUCCESS;
         }));
-        
+
         myStats.mdChance = 1;
         //Object.keys(ebuff).forEach((e) => ebuff[e as keyof Buffs] = []);
 
@@ -3251,7 +3252,7 @@ export const items = [
                 };
             };
         });
-        
+
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // Increase MD by 3% for every Slice
             myStats.md += Math.floor(myStats.md * 0.03 * myStats.arcaneSlice);
@@ -3522,7 +3523,7 @@ export const items = [
         };
         matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
-                myStats.heartseeker++
+                myStats.heartseeker++;
                 if (myStats.heartseeker >= 7) {
                     // Progress the state
                     myStats.heartseekerState++;
@@ -3864,29 +3865,29 @@ export const items = [
                 if (dmgRedirect + target.hp > 0) {
                     myStats.hp += dmgRedirect;
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-                        myStats.ravagerHP -= dmgRedirect;
-                        if (myStats.ravagerHP <= 0) {
-                            eStats.ravagerHP = 0;
-                            const heal = Math.floor(myStats.maxhp * 0.1);
-                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
-                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
-                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The dying beast** dealt`, { atkMultiplier: 0.5, magicDamage: true});
-                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The dying beast** dealt`, { atkMultiplier: 0.5, magicDamage: true});
-                        };
-                        notice.push(`\n**${char.name}**'s ravager has fallen and is no longer active.`);
+                    myStats.ravagerHP -= dmgRedirect;
+                    if (myStats.ravagerHP <= 0) {
+                        eStats.ravagerHP = 0;
+                        const heal = Math.floor(myStats.maxhp * 0.1);
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The dying beast** dealt`, { atkMultiplier: 0.5, magicDamage: true });
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The dying beast** dealt`, { atkMultiplier: 0.5, magicDamage: true });
                     };
+                    notice.push(`\n**${char.name}**'s ravager has fallen and is no longer active.`);
                 };
-            });
+            };
+        });
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % 5 === 0) {
                 const heal = Math.floor(myStats.maxhp * 0.1);
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
                 myStats.ravagerHP += heal;
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The ravaging beast** dealt`, { atkMultiplier: 0.5, magicDamage: true});
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The ravaging beast** dealt`, { atkMultiplier: 0.5, magicDamage: true });
             };
             return AbilityResponse.SUCCESS;
-        }, 9999));        
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "The ravaging beasts fights alongside the wearer, its HP equivalent to that of the wearer's starting HP. **20%** of damage received is redirected to the ravaging beast. Every **5** rounds, the beast turns berserk, dealing **50%** damage and restoring **10%** max HP for both the wearer and itself. When the beast receives a fatal blow, re-triggers the berserk effects twice before dying."),
@@ -3915,10 +3916,10 @@ export const items = [
                 myStats.hp -= hpLoss;
                 eStats.sm = 0;
                 // @ts-ignore
-                this.used++
+                this.used++;
             };
             return AbilityResponse.SUCCESS;
-        }, 9999, 3)); 
+        }, 9999, 3));
 
         return AbilityResponse.SUCCESS;
     }, "The enemy starts with **0** mana, and gains **3** mana less every round. At the start of the round, if the enemy has more than half of their mana pool filled, consumes **18%** current HP to lower it to **0** (can be activated thrice)"),
@@ -3983,10 +3984,10 @@ export const items = [
         const hpLoss = Math.floor(myStats.hp * 0.04);
         myStats.hp -= hpLoss;
         mybuff.hp.push(new buffInfo("+", -hpLoss, 9999));
-        
+
         myStats.evadeDeathStrike ??= 0;
         myStats.evadeDeathChance ??= 0;
-           
+
         myStats.evadeDeathStrike += 1;
         myStats.evadeDeathChance += 1;
 
@@ -4000,7 +4001,8 @@ export const items = [
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.15), 9999));
                     return AbilityResponse.SUCCESS;
                 };
-            }});        
+            }
+        });
 
         return AbilityResponse.SUCCESS;
     }, "The wearer loses **4%** current HP every round, but evades the first lethal hit. When the wearer evades a lethal strike, it is considered a ritual for the well, where the wearer gains **15%** ATK & MD permanently (Up to 3 times)"),
@@ -4016,18 +4018,18 @@ export const items = [
         myStats.bone ??= 0;
 
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats && myStats.bone < myStats.boneCap) myStats.bone++
+            if (caster === myStats && myStats.bone < myStats.boneCap) myStats.bone++;
         });
 
         matchStats.on("noncrit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats && myStats.flesh < myStats.fleshCap) myStats.flesh++
+            if (caster === myStats && myStats.flesh < myStats.fleshCap) myStats.flesh++;
         });
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.atk += Math.floor(myStats.atk * Math.min(0.012 * myStats.bone));
             myStats.md += Math.floor(myStats.md * Math.min(0.012 * myStats.flesh));
             return AbilityResponse.SUCCESS;
-        }, 9999)); 
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "Every non-critical hit grants **1x** `🥩` (Up to 20), while every critical hit grants **1x** `🦴` (Up to 20). At the start of the round, for every `🥩`, increases MD by **1.2%**, for every `🦴`, increases ATK by **1.2%**\n\n_This item is synergistic with other `Flesh and Bone` items._"),
@@ -5236,6 +5238,8 @@ export const items = [
     }, (level) => `After using Defense, reduces incoming damage by **${[30, 35, 40][level - 1]}%** (stackable) for **1** turn`, "The Defender's Signet stands as a symbol of strength and protection, made of rugged iron with a broad, flat surface. It boasts a brilliant sapphire at its center, set within a circular shield-like design. Intricate engravings of armor and swords embellish the band, depicting tales of glorious battles fought by great heroes. This ring enhances the wearer's defense, creating a palpable energy that can absorb damage. When activated, glowing runes rise from the gem, encasing the wearer in a glimmering shield of ethereal light. It is favored by paladins and guardians who uphold justice and valor, making them an indomitable force against darkness.", "mythical", 732),
     new ringInfo("Glyph of Growth", "ring", "ring", ["chest"], "<:glyph_of_growth:1338654486067019827>", "https://i.ibb.co/JwKymcMJ/Glyph-of-Growth.png", 5, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
+        myStats.counter ??= 0;
+
         // 20/22.5/25/27.5/30% counter chance on crit received
         matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             const counterChance = [20, 22.5, 25, 27.5, 30][level - 1] / 100;
@@ -5884,7 +5888,7 @@ export const items = [
             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (caster === myStats) {
                     const cdBuff = [15, 17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
-                    myStats.cd += cdBuff
+                    myStats.cd += cdBuff;
                     mybuff.cd.push(new buffInfo("+", cdBuff, 9999));
                     return true;
                 };
@@ -5903,7 +5907,7 @@ export const items = [
                     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         if (myStats.atk < myStats.md) {
                             myStats.atk = myStats.md;
-                            
+
                         } else {
                             myStats.md = myStats.atk;
                         };
@@ -6328,7 +6332,7 @@ export const items = [
     //     myStats.atk += Math.floor(myStats.atk * 0.4);
     //     myStats.def -= Math.floor(myStats.def * 0.6);
     //     myStats.mr -= Math.floor(myStats.mr * 0.6);
-		
+
     //     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //         myStats.def -= Math.floor(myStats.def * 0.5);
     //         myStats.mr -= Math.floor(myStats.mr * 0.5);

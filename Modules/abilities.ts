@@ -1819,7 +1819,7 @@ export const abilities: Record<number, Ability> = {
     //         myStats.akikoDeathEva = 5;
     //         myStats.evadeDeathStrike ??= 0;
     //         myStats.evadeDeathChance ??= 0;
-           
+
     //         myStats.evadeDeathStrike += 1;
     //         myStats.evadeDeathChance += 1;
 
@@ -1848,7 +1848,7 @@ export const abilities: Record<number, Ability> = {
     //                    };
     //                }
     //            });
-            
+
     //         // Every Death Evade restore 100% max HP, down for 20% with every use, down to 20% at most
     //         matchStats.on("deathEvade", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
     //             let hpBefore = myStats.hp;
@@ -2172,10 +2172,10 @@ export const abilities: Record<number, Ability> = {
             const dmgScale = names.includes("Kisogi") ? 0.15 : 0.1, critChance = names.includes("Kisogi") ? 1 : Math.random(), dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(myStats.atk * dmgScale) : 0, desc = names.includes("Kisogi") ? `<:rosie:1387006066566627328> **Rosie**` : `**✨ Kisogi**`;
             // Dalus unique effects
             if (!names.includes("Kisogi")) {
-               eStats.def -= Math.min(Math.floor(eStats.def * 0.2), 660);
-               myStats.def -= Math.min(Math.floor(myStats.def * 0.2), 660);
-               ebuff.def.push(new buffInfo("+", -Math.min(Math.floor(eStats.def * 0.2), 660), 9999));
-               mybuff.def.push(new buffInfo("+", -Math.min(Math.floor(myStats.def * 0.2), 660), 9999));
+                eStats.def -= Math.min(Math.floor(eStats.def * 0.2), 660);
+                myStats.def -= Math.min(Math.floor(myStats.def * 0.2), 660);
+                ebuff.def.push(new buffInfo("+", -Math.min(Math.floor(eStats.def * 0.2), 660), 9999));
+                mybuff.def.push(new buffInfo("+", -Math.min(Math.floor(myStats.def * 0.2), 660), 9999));
             };
 
             // Common DMG
@@ -6698,7 +6698,7 @@ export const abilities: Record<number, Ability> = {
                 while (myStats.core >= 7) {
                     myStats.core -= 7;
                     if (myStats.butterfly < 10) {
-                        myStats.butterfly ++;
+                        myStats.butterfly++;
                     }
                 };
                 // Suction - debuffs for 3 turns

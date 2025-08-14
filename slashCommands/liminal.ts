@@ -16,7 +16,7 @@ import { AbilityResponse } from '../Modules/components';
 import { nightmares } from '../Modules/liminal';
 import delayedBuffs from "../Modules/delayedBuffs";
 
-const dungeonInProgress = new Map();
+const dungeonInProgress = new Map<string, number>();
 const nightmareSelected = new Map();
 const embedColor = 0x034f20;
 
@@ -340,7 +340,7 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
         );
 
     if (interaction.channel?.isSendable()) await interaction.channel.send({ embeds: [buffEmbed], components: [buffRow] }).then(msg => {
-        const buffCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId.startsWith("buff_"), componentType: ComponentType.Button, time: 90000, max: 1 });
+        const buffCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId.startsWith("buff_"), componentType: ComponentType.Button, time: 120000, max: 1 });
 
         buffCollector.on('collect', async (buttonInteraction) => {
 
@@ -351,6 +351,9 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
                 if (buttonInteraction.channel?.isSendable()) await buttonInteraction.channel?.send({ content: "❌ Invalid buff selection!" });
                 return;
             };
+
+            // Clear restrictions
+            dungeonInProgress.delete(interaction.user.id);
 
             // Apply the buff
             delete runData.buffPool[buffId];
@@ -372,6 +375,9 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
 
         buffCollector.on('end', async (collected) => {
             if (collected.size === 0) {
+                // Clear restrictions
+                dungeonInProgress.delete(interaction.user.id);
+
                 // Timeout - auto selecting first buff
                 const firstBuff = selectedBuffs[0];
 
@@ -381,10 +387,10 @@ async function buffSelection(interaction: ChatInputCommandInteraction, level: nu
                     userRuns.set(lvlKey, runData);
 
                     await msg.edit({
-                        embeds: [buffEmbed
-                            .setTitle(`⏱️ Time's Up!`)
-                            .setDescription(`**${firstBuff.name}** was automatically selected.\n\n*${firstBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
-                            .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` })
+                        embeds: [
+                            buffEmbed.setTitle(`⏱️ Time's Up!`)
+                                .setDescription(`**${firstBuff.name}** was automatically selected.\n\n*${firstBuff.description}*\n\n🌙 **Starting Stage ${level + 1} (Level ${runData.level + 1})...**`)
+                                .setFooter({ text: `Total Active effects: ${runData.appliedBuffs.length}` })
                         ],
                         components: []
                     });
@@ -494,10 +500,12 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
             const tutorial = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "tutorial", componentType: ComponentType.Button, time: 90000 });
 
             play.on('collect', () => {
-                if (dungeonInProgress.has(stats.id)) {
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
+                const userProgressCd = dungeonInProgress.get(stats.id);
+                if (userProgressCd && userProgressCd > Date.now()) {
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((userProgressCd - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((userProgressCd - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((userProgressCd - new Date().getTime()) / 1000) % 60}**s`);
                     return;
                 };
+                dungeonInProgress.set(stats.id, Date.now() + (5 * 60 * 1000));
                 resolve(level);
                 play.stop();
             });
@@ -989,7 +997,7 @@ const exportCommand: SlashCommand = {
 
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
-                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}\\💖${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}\\💖${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} ‖ round ${matchStats.round} ‖ time left: ${fightDuration + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         // await msg.edit({ embeds: [Embed] });
 
