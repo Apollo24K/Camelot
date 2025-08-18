@@ -810,6 +810,10 @@ export const updateRaidPhase = async (raidRowId: number, newRaidId: number, newE
     return raid;
 };
 
+export const updateRaidEnded = async (raidRowId: number): Promise<void> => {
+    await query(`UPDATE raids SET end_date = CURRENT_TIMESTAMP WHERE rowid = $1`, [raidRowId]);
+};
+
 
 // export const updateUsers = async (userIds: string | string[] | "*", updates: { [K in keyof Partial<UserSchema>]: { value: UserSchema[K], additive?: boolean; }; }): Promise<void> => {
 //     const setStatements = Object.entries(updates)
