@@ -1,6 +1,7 @@
 import { ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsers } from "../Modules/queries";
+import { isEventOngoing, ongoingEvent, seasonalEventEnd, seasonalEventStart } from "../Modules/components";
 
 // Get # of days since
 function daysAgo(lastOnlineDate: Date) {
@@ -16,8 +17,26 @@ function daysAgo(lastOnlineDate: Date) {
 };
 
 export const exportCommand: SlashCommand = {
-    name: 'christmas-present', // celebrate, christmas-present, valentines-chocolate, egg-hunt
+    name: { anniversary: 'celebrate', halloween: 'trick-or-treat', christmas: 'christmas-present', valentines: 'valentines-chocolate', easter: 'egg-hunt' }[ongoingEvent],
     async execute({ interaction, author }) {
+
+        // Check if event is on
+        if (!isEventOngoing()) {
+            if (Date.now() > seasonalEventEnd.getTime()) return interaction.reply({ content: "There's currently no active event", ephemeral: true });
+
+            // Return how much time is left till start
+            const timeLeft = seasonalEventStart.getTime() - Date.now();
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+
+            const timeComponents: string[] = [];
+            if (days > 0) timeComponents.push(`${days}d`);
+            if (hours > 0) timeComponents.push(`${hours}h`);
+            if (minutes > 0) timeComponents.push(`${minutes}min`);
+
+            return interaction.reply({ content: `The event will start in **${timeComponents.join(' ')}**`, ephemeral: true });
+        };
 
         const stats = author.schema;
 
@@ -77,7 +96,7 @@ export const exportCommand: SlashCommand = {
             });
         };
 
-
+        // Check if user has claimed today
         if (stats.celebrateclaimed && daysAgo(new Date(stats.celebrateclaimed)) === 0) return interaction.reply("Come back in " + `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min`);
 
         const reward = {
@@ -92,10 +111,14 @@ export const exportCommand: SlashCommand = {
         };
 
         // Trick
-        // if (Math.random() < 0.08) {
-        //     await query(`UPDATE users SET coins = coins - ${coins}, celebrateclaimed = ${Date.now()} WHERE id = ${interaction.user.id}`);
-        //     return interaction.reply(`🎃 Trick! 🍬\n>>> **-${coins}** <:coins:872926669055356939>`);
-        // };
+        if (ongoingEvent === "halloween" && Math.random() < 0.08) {
+            await updateUsers(interaction.user.id, {
+                coins: { type: 'increment', value: -reward.coins },
+                celebrateclaimed: { type: 'set', value: Date.now() }
+            });
+
+            return interaction.reply(`🎃 Trick! 🍬\n>>> **-${reward.coins}** <:coins:872926669055356939>`);
+        };
 
         // Update user table
         await updateUsers(interaction.user.id, {
@@ -121,11 +144,15 @@ export const exportCommand: SlashCommand = {
             { amount: reward.lootbox, name: 'lootbox' }
         ];
 
-        // Anniversary
-        // return interaction.reply(`🎂 Happy 3rd Anniversary! 🎉\n>>> ${rewardItems.filter(item => item.amount > 0).map(item => `**${item.amount}**x ${item.name}`).join(', ')}`);
+        const message = {
+            anniversary: "🎂 Happy 3rd Anniversary! 🎉",
+            halloween: "🎃 Treat! 🍬",
+            christmas: "🎄 Merry Christmas! ❄️",
+            valentines: "🍫 Indulge in a sweet treat! 🎀",
+            easter: "🐰 See what you find! 🧺",
+        }[ongoingEvent];
 
-        // Christmas
-        return interaction.reply(`🎄 Merry Christmas! ❄️\n>>> ${rewardItems.filter(item => item.amount > 0).map(item => `**${item.amount}**x ${item.name}`).join(', ')}`);
+        return interaction.reply(`${message}\n>>> ${rewardItems.filter(item => item.amount > 0).map(item => `**${item.amount}**x ${item.name}`).join(', ')}`);
     },
 };
 

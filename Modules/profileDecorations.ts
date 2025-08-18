@@ -150,39 +150,57 @@ export const profileSets = [
         new Background("Nursolde", { jades: 300, gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/chibisolde/nursolde.jpg", url: "https://i.ibb.co/gJt6LVN/nursolde.jpg" }), { credits: ["1083065632490274948"] }),
     ]),
 
-    new ProfileSet("Essentials", 2, { jades: 250, gems: 300, coins: 200000 }, [
-        new Background("Burgundy Bands", { gems: 100, coins: 100000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/burgundy-bands.jpg", url: "https://i.ibb.co/KxvcFpn/burgundy-bands.jpg" }), { credits: ["715186861965967440"] }),
-        new Background("King's Contour", { gems: 100, coins: 75000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/kings-contour.jpg", url: "https://i.ibb.co/CJ80Zpd/kings-contour.jpg" }), { credits: ["715186861965967440"] }),
-        new Background("Charcoal Mosaic", { gems: 100, coins: 50000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/charcoal-mosaic.jpg", url: "https://i.ibb.co/Bnkgq1j/charcoal-mosaic.jpg" }), { credits: ["715186861965967440"] }),
-        new Background("Pink Bloom", { gems: 100, coins: 25000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/pink-bloom.jpg", url: "https://i.ibb.co/cQBYGzh/pink-bloom.jpg" }), { credits: ["715186861965967440"] }),
+    new ProfileSet("Essentials", 2, { jades: 250, gems: 300, coins: 200_000 }, [
+        new Background("Burgundy Bands", { gems: 100, coins: 100_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/burgundy-bands.jpg", url: "https://i.ibb.co/KxvcFpn/burgundy-bands.jpg" }), { credits: ["715186861965967440"] }),
+        new Background("King's Contour", { gems: 100, coins: 75_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/kings-contour.jpg", url: "https://i.ibb.co/CJ80Zpd/kings-contour.jpg" }), { credits: ["715186861965967440"] }),
+        new Background("Charcoal Mosaic", { gems: 100, coins: 50_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/charcoal-mosaic.jpg", url: "https://i.ibb.co/Bnkgq1j/charcoal-mosaic.jpg" }), { credits: ["715186861965967440"] }),
+        new Background("Pink Bloom", { gems: 100, coins: 25_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/essentials/pink-bloom.jpg", url: "https://i.ibb.co/cQBYGzh/pink-bloom.jpg" }), { credits: ["715186861965967440"] }),
     ]),
 
-    new ProfileSet("Celestial Realms", 3, { jades: 250, gems: 300, coins: 300000 }, [
-        new Background("Enchanted Woodlands", { gems: 100, coins: 100000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/enchanted-woodlands.jpg", url: "https://i.ibb.co/R6jtTM3/enchanted-woodlands.jpg" })),
-        new Background("River Vale Vista", { gems: 100, coins: 100000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/river-vale-vista.jpg", url: "https://i.ibb.co/QCznBWn/river-vale-vista.jpg" })),
-        new Background("Elysian Woods", { gems: 100, coins: 100000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/elysian-woods.jpg", url: "https://i.ibb.co/DLJsjTG/elysian-woods.jpg" })),
-        new Background("River Grove", { gems: 100, coins: 100000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/river-grove.jpg", url: "https://i.ibb.co/gZsjj7W/river-grove.jpg" })),
+    new ProfileSet("Celestial Realms", 3, { jades: 250, gems: 300, coins: 300_000 }, [
+        new Background("Enchanted Woodlands", { gems: 100, coins: 100_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/enchanted-woodlands.jpg", url: "https://i.ibb.co/R6jtTM3/enchanted-woodlands.jpg" })),
+        new Background("River Vale Vista", { gems: 100, coins: 100_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/river-vale-vista.jpg", url: "https://i.ibb.co/QCznBWn/river-vale-vista.jpg" })),
+        new Background("Elysian Woods", { gems: 100, coins: 100_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/elysian-woods.jpg", url: "https://i.ibb.co/DLJsjTG/elysian-woods.jpg" })),
+        new Background("River Grove", { gems: 100, coins: 100_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/celestial-realms/river-grove.jpg", url: "https://i.ibb.co/gZsjj7W/river-grove.jpg" })),
     ]),
 
-    new ProfileSet("Wuthering Waves", 4, { jades: 600, gems: 900, coins: 2000000 }, [
-        new Background("Yinlin WHIP", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/yinlin.gif", url: "https://i.ibb.co/GW4LmJG/yinlin.gif" }), { delay: 35 }),
-        new Background("Jiyan", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/jiyan.gif", url: "https://i.ibb.co/8bqxYWp/jiyan.gif" }), { delay: 100 }),
-        new Background("Encore", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/encore.gif", url: "https://i.ibb.co/hmYCZ1G/encore.gif" }), { delay: 100 }),
-        new Background("Jianxin", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/jianxin.gif", url: "https://i.ibb.co/kcHJSRg/jianxin.gif" }), { delay: 100 }),
-        new Background("Disco Tortoise", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/disco-tortoise.gif", url: "https://i.ibb.co/gr936Pd/disco-tortoise.gif" }), { delay: 80 }),
+    new ProfileSet("Wuthering Waves", 4, { jades: 600, gems: 900, coins: 2_000_000 }, [
+        new Background("Yinlin WHIP", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/yinlin.gif", url: "https://i.ibb.co/GW4LmJG/yinlin.gif" }), { delay: 35 }),
+        new Background("Jiyan", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/jiyan.gif", url: "https://i.ibb.co/8bqxYWp/jiyan.gif" }), { delay: 100 }),
+        new Background("Encore", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/encore.gif", url: "https://i.ibb.co/hmYCZ1G/encore.gif" }), { delay: 100 }),
+        new Background("Jianxin", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/jianxin.gif", url: "https://i.ibb.co/kcHJSRg/jianxin.gif" }), { delay: 100 }),
+        new Background("Disco Tortoise", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/wuthering/disco-tortoise.gif", url: "https://i.ibb.co/gr936Pd/disco-tortoise.gif" }), { delay: 80 }),
     ]),
 
-    new ProfileSet("Neco-Arc", 5, { jades: 500, gems: 600, coins: 1000000 }, [
-        new Background("Neco-Arc", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-arc.gif", url: "https://i.ibb.co/Wznc8W0/neco-arc.gif" }), { delay: 70 }),
-        new Background("Neco-Dance", { gems: 200, coins: 300000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-dance.gif", url: "https://i.ibb.co/vhXsvVF/neco-dance.gif" }), { delay: 70 }),
-        new Background("Neco-Army", { gems: 200, coins: 300000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-army.gif", url: "https://i.ibb.co/t3zrKKW/neco-army.gif" }), { delay: 100 }),
+    new ProfileSet("Neco-Arc", 5, { jades: 500, gems: 600, coins: 1_000_000 }, [
+        new Background("Neco-Arc", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-arc.gif", url: "https://i.ibb.co/Wznc8W0/neco-arc.gif" }), { delay: 70 }),
+        new Background("Neco-Dance", { gems: 200, coins: 300_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-dance.gif", url: "https://i.ibb.co/vhXsvVF/neco-dance.gif" }), { delay: 70 }),
+        new Background("Neco-Army", { gems: 200, coins: 300_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/neco-arc/neco-army.gif", url: "https://i.ibb.co/t3zrKKW/neco-army.gif" }), { delay: 100 }),
     ]),
 
     new ProfileSet("Genshin Impact Bursts", 6, { jades: 600, gems: 900, coins: 1_750_000 }, [
-        new Background("Raiden Shogun", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/raiden-shogun.gif", url: "https://i.ibb.co/B5zk4bkM/raiden-shogun.gif" }), { delay: 60 }),
-        new Background("Arlecchino", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/arlecchino.gif", url: "https://i.ibb.co/BHjQMpFD/arlecchino.gif" }), { delay: 60 }),
-        new Background("Kinich", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/kinich.gif", url: "https://i.ibb.co/xS3T021D/kinich.gif" }), { delay: 30 }),
-        new Background("Varesa", { gems: 300, coins: 500000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/varesa.gif", url: "https://i.ibb.co/99VrRhv6/varesa.gif" }), { delay: 50 }),
+        new Background("Raiden Shogun", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/raiden-shogun.gif", url: "https://i.ibb.co/B5zk4bkM/raiden-shogun.gif" }), { delay: 60 }),
+        new Background("Arlecchino", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/arlecchino.gif", url: "https://i.ibb.co/BHjQMpFD/arlecchino.gif" }), { delay: 60 }),
+        new Background("Kinich", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/kinich.gif", url: "https://i.ibb.co/xS3T021D/kinich.gif" }), { delay: 30 }),
+        new Background("Varesa", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/genshin-impact-bursts/varesa.gif", url: "https://i.ibb.co/99VrRhv6/varesa.gif" }), { delay: 50 }),
+    ]),
+
+    new ProfileSet("Shorekeeper", 7, { jades: 750, gems: 1000, coins: 1_500_000 }, [
+        new Background("The Shorekeeper", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shorekeeper/the-shorekeeper.gif", url: "https://i.ibb.co/Z1Y6wJTD/the-shorekeeper.gif" }), { delay: 83 }),
+        new Background("Shorekeeper Wake", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shorekeeper/shorekeeper-wake.gif", url: "https://i.ibb.co/sdHCwmkS/shorekeeper-wake.gif" }), { delay: 100 }),
+        new Background("Shorekeeper Lie", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shorekeeper/shorekeeper-lie.gif", url: "https://i.ibb.co/nqm9PjwJ/shorekeeper-lie.gif" }), { delay: 80 }),
+        new Background("Shorekeeper Sit", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shorekeeper/shorekeeper-sit.gif", url: "https://i.ibb.co/vvVWNqL8/shorekeeper-sit.gif" }), { delay: 105 }),
+        new Background("Wife", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shorekeeper/wife.gif", url: "https://i.ibb.co/23w3pm5L/wife.gif" }), { delay: 90 }),
+    ]),
+
+    new ProfileSet("Frieren", 8, { jades: 600, gems: 750, coins: 1_250_000 }, [
+        new Background("Frieren", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/frieren/frieren.gif", url: "https://i.ibb.co/C30c4pTP/frieren.gif" }), { delay: 83 }),
+        new Background("Frieren River", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/frieren/frieren-river.gif", url: "https://i.ibb.co/Tx4H5tYf/river.gif" }), { delay: 73 }),
+        new Background("Frieren Mimic", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/frieren/frieren-mimic.gif", url: "https://i.ibb.co/wN4dffZ8/mimic.gif" }), { delay: 62 }),
+    ]),
+
+    new ProfileSet("Vermeil", 9, { jades: 9000, gems: 12000, coins: 50_000_000 }, [
+        new Background("Vermeil", { gems: 10000, coins: 30_000_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/vermeil/vermeil.gif", url: "https://i.ibb.co/tgNMh6K/vermeil.gif" }), { delay: 130 }),
     ]),
 
 ];

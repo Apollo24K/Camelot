@@ -11,7 +11,7 @@ const event: BotEvent = {
     execute: async (interaction: Interaction) => {
 
         // if (interaction.user.id === "489490486734880774") {
-        //     interaction.user.id = "489490486734880789";
+        //     interaction.user.id = "447160532286570506";
         // };
 
         // Defer Buttons

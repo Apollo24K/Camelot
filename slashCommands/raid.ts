@@ -14,7 +14,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, RaidRank, RaidSchema, SlashCommand } from '../types';
-import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateGuilds, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
+import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateGuilds, updateRaidEnded, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
@@ -453,6 +453,10 @@ async function endRaid(raidRowId: number) {
     // Fetch Raid
     const raid = await getRaidByRaidRowId(raidRowId);
     if (!raid) return;
+    if (raid.end_date) return;
+
+    // End raid
+    await updateRaidEnded(raidRowId);
 
     // Distribute Rewards
     const totalPoints = Object.values(raid.participation).reduce((acc, [points]) => acc + points, 0);
@@ -562,7 +566,7 @@ const exportCommand: SlashCommand = {
         const isTestBoss = isTestRun && testBoss !== null;
 
         // Skip Overview
-        const skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
+        let skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
 
 
         const actionMapping = {
@@ -573,44 +577,141 @@ const exportCommand: SlashCommand = {
             "skip": ["5", "skip", "flee", "escape", "esc"],
         };
 
-        // Action Sequence
+        // Enhanced Action Sequence Parser
         const sequence = interaction.options.getString('sequence') ?? null;
-        const actionSequence = sequence ? sequence.split(',').map((e) => e.trim().toLowerCase()).flatMap((e) => {
-            const trimmed = e.trim().toLowerCase();
 
-            // Check if it has a repeat notation like "atk:3"
-            if (trimmed.includes(':')) {
-                const [action, countStr] = trimmed.split(':');
-                const count = parseInt(countStr);
+        // Safety constants
+        const MAX_SEQUENCE_LENGTH = 5000;    // Maximum total actions allowed
+        const MAX_REPEAT_COUNT = 200;        // Maximum repeat count for any single pattern
+        const MAX_NESTING_DEPTH = 5;         // Maximum parentheses nesting depth
+        const MAX_EXPANSION_ITERATIONS = 50; // Maximum iterations to prevent infinite loops
 
-                // Validate count
-                if (isNaN(count) || count <= 0) return [null];
+        function expandParentheses(str: string): string | null {
+            let result = str;
+            let changed = true;
+            let iterations = 0;
 
-                // Find the action key
-                let actionKey = null;
-                for (const [key, value] of Object.entries(actionMapping)) {
-                    if (value.includes(action)) {
-                        actionKey = key;
-                        break;
+            // Check nesting depth
+            let maxDepth = 0;
+            let currentDepth = 0;
+            for (const char of str) {
+                if (char === '(') {
+                    currentDepth++;
+                    maxDepth = Math.max(maxDepth, currentDepth);
+                } else if (char === ')') {
+                    currentDepth--;
+                };
+            };
+            if (maxDepth > MAX_NESTING_DEPTH) {
+                return null; // Too deeply nested
+            };
+
+            while (changed && iterations < MAX_EXPANSION_ITERATIONS) {
+                changed = false;
+                iterations++;
+
+                // First, handle parentheses with repeat notation: (content):number
+                const parenthesesWithRepeatRegex = /\(([^()]+)\):(\d+)/g;
+                result = result.replace(parenthesesWithRepeatRegex, (match, content, countStr) => {
+                    const count = parseInt(countStr);
+                    if (isNaN(count) || count <= 0) return match; // Invalid count, leave as is
+                    if (count > MAX_REPEAT_COUNT) return match; // Count too high, leave as is
+
+                    // Check if expansion would create too many items
+                    const contentItems = content.split(',').length;
+                    const resultItems = result.split(',').length;
+                    const newItems = contentItems * count;
+                    if (resultItems + newItems > MAX_SEQUENCE_LENGTH) {
+                        return match; // Would exceed limit, leave as is
                     }
-                }
 
-                // Return the action repeated count times
-                return Array(count).fill(actionKey);
-            } else {
-                // Normal single action
-                for (const [key, value] of Object.entries(actionMapping)) {
-                    if (value.includes(trimmed)) return [key];
-                }
+                    // Repeat the content
+                    const repeated = Array(count).fill(content).join(',');
+                    changed = true;
+                    return repeated;
+                });
+
+                // Then, handle parentheses without repeat notation: (content) - treat as (content):1
+                const parenthesesWithoutRepeatRegex = /\(([^()]+)\)(?!:)/g;
+                result = result.replace(parenthesesWithoutRepeatRegex, (match, content) => {
+                    changed = true;
+                    return content; // Just remove the parentheses, equivalent to :1
+                });
+
+                // Safety check: if result is getting too long, abort
+                if (result.split(',').length > MAX_SEQUENCE_LENGTH) {
+                    return null;
+                };
+            };
+
+            // If we hit the iteration limit, it might be an infinite loop
+            if (iterations >= MAX_EXPANSION_ITERATIONS) {
+                return null;
+            };
+
+            return result;
+        };
+
+        function parseActionSequence(input: string | null): (string | null)[] {
+            if (!input) return [];
+
+            // First expand all parentheses notations
+            const expandedSequence = expandParentheses(input);
+            if (expandedSequence === null) {
+                return [null]; // Expansion failed due to safety limits
+            };
+
+            // Then parse individual actions
+            const actions = expandedSequence.split(',').map((e) => e.trim().toLowerCase()).flatMap((e) => {
+                const trimmed = e.trim().toLowerCase();
+
+                // Check if it has a repeat notation like "atk:3"
+                if (trimmed.includes(':')) {
+                    const [action, countStr] = trimmed.split(':');
+                    const count = parseInt(countStr);
+
+                    // Validate count
+                    if (isNaN(count) || count <= 0) return [null];
+                    if (count > MAX_REPEAT_COUNT) return [null]; // Safety limit
+
+                    // Find the action key
+                    let actionKey = null;
+                    for (const [key, value] of Object.entries(actionMapping)) {
+                        if (value.includes(action)) {
+                            actionKey = key;
+                            break;
+                        };
+                    };
+
+                    // Return the action repeated count times
+                    return Array(count).fill(actionKey);
+                } else {
+                    // Normal single action
+                    for (const [key, value] of Object.entries(actionMapping)) {
+                        if (value.includes(trimmed)) return [key];
+                    };
+                    return [null];
+                };
+            });
+
+            // Final safety check
+            if (actions.length > MAX_SEQUENCE_LENGTH) {
                 return [null];
             };
-        }) : [];
-        if (actionSequence.includes(null)) return interaction.reply("Error in action sequence. Please use the format `atk:3,def,ability,skill,skip`.");
 
-        // Experimental
-        if (!isTestRun && actionSequence.length > 0) {
-            return interaction.reply("Experimental action sequences are currently only available in test runs. Please use it at your own risk.");
+            return actions;
         };
+
+        const actionSequence = parseActionSequence(sequence);
+        if (actionSequence.includes(null)) return interaction.reply("Error in action sequence. Please use the format `atk:3,def,ability,skill,skip` or `(atk,def):3` for patterns.\n**Restrictions**: Max 5000 actions, max 200 repeats, max 5 nesting levels, max 50 iterations");
+
+        // Skip by default if action sequence is used
+        if (actionSequence.length > 0 && interaction.options.getBoolean('skip-overview') !== false) skipOverview = true;
+
+        //! Experimental
+        // if (!isTestRun && actionSequence.length > 0) {
+        //     return interaction.reply("Experimental action sequences are currently only available in test runs. Please use it at your own risk.");
+        // };
 
         // Check if user has a battle character
         const stats = author.schema;
@@ -704,6 +805,9 @@ const exportCommand: SlashCommand = {
         // Return if no attempts left
         const raidCheck = await getLatestRaid(guild.id);
         if (!raidCheck) return interaction.followUp("An error occurred while checking your raid attempts. Please try again later.");
+
+        // Return if ended and no test run
+        if (raidCheck.end_date && !isTestRun) return interaction.reply("The raid has ended. You can start a new one with `/raid` or use the test flag");
 
         // Attempts left
         const attemptsUsed = raidCheck.participation[interaction.user.id]?.[1] ?? 0;

@@ -117,16 +117,16 @@ const exportCommand: SlashCommand = {
         if (floor > 300) floor = 300;
 
         // Increase limit
-        let dunLim = [10, 20, 800]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
+        let dunLim = [10, 20, 500]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
         if (stats.premium) {
             switch (stats.premium) {
-                case 1: dunLim = [12, 23, 800]; break;
-                case 2: dunLim = [13, 25, 800]; break;
-                case 3: dunLim = [15, 30, 800]; break;
-                case 4: dunLim = [15, 32, 800]; break;
-                case 5: dunLim = [16, 35, 800]; break;
-                case 6: dunLim = [18, 36, 800]; break;
-                case 7: dunLim = [20, 40, 800]; break;
+                case 1: dunLim = [12, 23, 500]; break;
+                case 2: dunLim = [13, 25, 500]; break;
+                case 3: dunLim = [15, 30, 500]; break;
+                case 4: dunLim = [15, 32, 500]; break;
+                case 5: dunLim = [16, 35, 500]; break;
+                case 6: dunLim = [18, 36, 500]; break;
+                case 7: dunLim = [20, 40, 500]; break;
                 default: false; break;
             };
         };
@@ -307,8 +307,8 @@ const exportCommand: SlashCommand = {
             if (loot > 1_000_000) loot = 42187;
 
             // Guild Tax
+            const tax = Math.max(0, Math.floor(loot * ((guild?.tax ?? 0) / 100)));
             if (loot > 0 && guild && guild.tax) {
-                const tax = Math.floor(loot * (guild.tax / 100));
                 loot = Math.floor(loot - tax);
                 await addGuildDonation(guild.id, interaction.user.id, "coins", tax);
             };
@@ -360,28 +360,28 @@ const exportCommand: SlashCommand = {
             } // Second Loot Cap
             else if (dunLim[2] >= stats.dungeon_limit) {
                 // Crafting Resources
-                craftCount += drops(0.08, 4 * skipRounds);
+                craftCount += drops(0.12, 4 * skipRounds);
 
                 // Ascension Materials
-                ascCount += drops(0.11, 4 * skipRounds);
+                ascCount += drops(0.16, 4 * skipRounds);
 
                 // Chests
-                chestDrops[0] += drops(0.055, skipRounds);
-                chestDrops[1] += drops(0.03, skipRounds);
-                chestDrops[2] += drops(0.016, skipRounds);
-                chestDrops[3] += drops(0.0055, skipRounds);
+                chestDrops[0] += drops(0.086, skipRounds);
+                chestDrops[1] += drops(0.047, skipRounds);
+                chestDrops[2] += drops(0.025, skipRounds);
+                chestDrops[3] += drops(0.008, skipRounds);
             };
 
             // Levelup mats
             let levelupMats = {
-                "50": floor <= 100 ? drops(0.2, 4 * skipRounds) : 0,
-                "51": floor <= 100 ? drops(0.2, 8 * skipRounds) : 0,
-                "52": floor <= 100 ? drops(0.12, 2 * skipRounds) : floor <= 200 ? drops(0.2, 4 * skipRounds) : 0,
-                "53": floor <= 100 ? drops(0.12, 4 * skipRounds) : floor <= 200 ? drops(0.2, 8 * skipRounds) : 0,
-                "54": floor > 200 ? drops(0.2, 4 * skipRounds) : floor > 100 ? drops(0.12, 2 * skipRounds) : 0,
-                "55": floor > 200 ? drops(0.2, 8 * skipRounds) : floor > 100 ? drops(0.12, 4 * skipRounds) : 0,
-                "56": floor > 200 ? drops(0.12, 2 * skipRounds) : 0,
-                "57": floor > 200 ? drops(0.12, 4 * skipRounds) : 0,
+                "50": floor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
+                "51": floor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
+                "52": floor <= 100 ? drops(0.18, 2 * skipRounds) : floor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
+                "53": floor <= 100 ? drops(0.18, 4 * skipRounds) : floor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
+                "54": floor > 200 ? drops(0.3, 4 * skipRounds) : floor > 100 ? drops(0.18, 2 * skipRounds) : 0,
+                "55": floor > 200 ? drops(0.3, 8 * skipRounds) : floor > 100 ? drops(0.18, 4 * skipRounds) : 0,
+                "56": floor > 200 ? drops(0.18, 2 * skipRounds) : 0,
+                "57": floor > 200 ? drops(0.18, 4 * skipRounds) : 0,
             };
 
             let lootArr = [];
@@ -418,6 +418,7 @@ const exportCommand: SlashCommand = {
                 dungeon_floors: { type: 'set', value: stats.dungeon_floors },
                 dungeon_classlevels: { type: 'set', value: stats.dungeon_classlevels },
                 tutorial: { type: 'append_unique', value: [9] },
+                donatedtotal: { type: "increment", value: tax },
             });
 
             // Tutorial
@@ -464,6 +465,9 @@ const exportCommand: SlashCommand = {
             };
 
             //* Achievements
+            // Guild donation achievement
+            achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);
+
             // Ascension material achievement
             achievements[67].check(interaction, interaction.user), achievements[68].check(interaction, interaction.user), achievements[69].check(interaction, interaction.user), achievements[70].check(interaction, interaction.user);
 

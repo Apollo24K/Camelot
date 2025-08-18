@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { RaidRank } from '../types';
+import { RaidRank, SeasonalEvent } from '../types';
 
 export const cowSettings = (() => {
     try {
@@ -53,6 +53,14 @@ export const OfferRow = new ActionRowBuilder<ButtonBuilder>()
             .setStyle(ButtonStyle.Danger),
     );
 
+// Event
+export const ongoingEvent = "anniversary" as SeasonalEvent;
+export const seasonalEventStart = new Date('2025-08-16 00:00:00');
+export const seasonalEventLastsDays = 16;
+export const seasonalEventEnd = new Date(seasonalEventStart.getTime() + (seasonalEventLastsDays * 24 * 60 * 60 * 1000));
+export const isEventOngoing = () => seasonalEventStart.getTime() <= Date.now() && Date.now() < seasonalEventEnd.getTime();
+
+// Misc
 export const requestVerification = new Map();
 export const dungeonTempBan = new Map();
 

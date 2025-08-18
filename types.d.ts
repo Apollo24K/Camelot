@@ -23,6 +23,13 @@ export type BuffType = "*" | "+" | "=";
 
 export type IRoK = { name: string, id: string, char: number, ep: number; };
 
+export type SeasonalEvent =
+    | "anniversary"
+    | "halloween"
+    | "christmas"
+    | "valentines"
+    | "easter";
+
 export type ProfileImageArguments = {
     profilecolor: string | null;
     quality: string | null;
@@ -382,7 +389,7 @@ export interface UserSchema {
     craze_equipment: Record<string, any>;
     equipment: Record<string, string>;
     trial_equipment: Record<string, any>;
-    craze_levels: Record<string, any>;
+    craze_levels: Record<string, number>;
     shield_slot: number;
     lastguildjoin: Date | null;
     valentine: string | null;

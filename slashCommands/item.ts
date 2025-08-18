@@ -801,7 +801,7 @@ const exportCommand: SlashCommand = {
                     else stats.equipment["shell"] = "broken";
 
                     if (itemChoice.toLowerCase() === "remove shell") equipped.push("Unequipped Broken Shell");
-                    else equipped.push(`**__Broken Shell__** <:brokenshell:1387074948815781918>`);
+                    else equipped.push(`**__Broken Shell__** <:brokenshell:1405524630520987771>`);
 
                     continue;
                 };

@@ -1,5 +1,5 @@
 import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType, ButtonStyle } from 'discord.js';
-import { PageRow, OfferRow } from "../Modules/components";
+import { PageRow, OfferRow, ongoingEvent, isEventOngoing, seasonalEventEnd, seasonalEventStart } from "../Modules/components";
 import { showPage } from "../Modules/functions";
 import { characters } from "../Modules/chars";
 import { skins } from "../Modules/skins";
@@ -403,7 +403,13 @@ async function getPassImage(stats: CompactUserSchema, page: number) {
     const ctx = canvas.getContext('2d');
 
     // Colors
-    const premiumColor = '#c0f7ff'; // Default: '#e7d9b2' (Gold), Halloween: '#ffa53a' (Orange), Christmas: '#c0f7ff' (Light Blue), Valentine's: '#f8c8dc' (pink), Easter: '#69ffb9' (light green)
+    const premiumColor = {
+        anniversary: '#e7d9b2', // Gold
+        halloween: '#ffa53a', // Orange
+        christmas: '#c0f7ff', // Light Blue
+        valentines: '#f8c8dc', // Pink
+        easter: '#69ffb9', // Light Green
+    }[ongoingEvent] || '#e7d9b2'; // Gold
 
     // Background
     ctx.fillStyle = '#495366'; // Grey
@@ -458,7 +464,7 @@ async function getPassImage(stats: CompactUserSchema, page: number) {
     ctx.textBaseline = 'middle';
     ctx.fillText(`Event Pass ${Math.min(stats.passlevel, passRewards[0].length)}/${passRewards[0].length}`, 10, 20, 200);
     ctx.fillStyle = premiumColor;
-    ctx.fillText("Christmas Event", 230, 20, 500);
+    ctx.fillText({ anniversary: "Anniversary Event", halloween: "Halloween Event", christmas: "Christmas Event", valentines: "Valentine's Event", easter: "Easter Event" }[ongoingEvent], 230, 20, 500);
 
     // Tiles
     for (let i = 0; i < 6; i++) {
@@ -744,9 +750,40 @@ const exportCommand: SlashCommand = {
 
             let file = await getPassImage(stats, currPage - 1);
 
+            let footer = "";
+            if (isEventOngoing()) {
+                const timeLeft = seasonalEventEnd.getTime() - Date.now();
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+
+                const timeComponents: string[] = [];
+                if (days > 0) timeComponents.push(`${days}d`);
+                if (hours > 0) timeComponents.push(`${hours}h`);
+                if (minutes > 0) timeComponents.push(`${minutes}min`);
+
+                footer = `The event will end in ${timeComponents.join(' ')}`;
+            } else if (Date.now() > seasonalEventEnd.getTime()) {
+                footer = "The event has ended!";
+            } else {
+                // Return how much time is left till start
+                const timeLeft = seasonalEventStart.getTime() - Date.now();
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+
+                const timeComponents: string[] = [];
+                if (days > 0) timeComponents.push(`${days}d`);
+                if (hours > 0) timeComponents.push(`${hours}h`);
+                if (minutes > 0) timeComponents.push(`${minutes}min`);
+
+                footer = `The event will start in ${timeComponents.join(' ')}`;
+            };
+
             const Embed = new EmbedBuilder()
-                .setColor(0x94f7ff) // Anniversary: 0x2aad9d, Halloween: 0xff8733, Christmas: 0x94f7ff, Valentine's: 0xf8c8dc, Easter: 0x69ffb9
+                .setColor({ anniversary: 0x2aad9d, halloween: 0xff8733, christmas: 0x94f7ff, valentines: 0xf8c8dc, easter: 0x69ffb9 }[ongoingEvent] || 0x2aad9d)
                 .setImage(`attachment://file.jpg`)
+                .setFooter({ text: footer, iconURL: "https://cdn.discordapp.com/emojis/1131679799207796756.webp?size=56" })
                 .setDescription(`Complete daily </quests:1087099255652622433> to unlock rewards!\nWith </give pass:1013437508933128242> you can gift someone a premium pass! (**${Math.max(0, 5 - stats.passpurchaselimit)}**/5 left)`);
             interaction.reply({ embeds: [Embed], components: [getPassRow(stats)], files: [file] }).then(msg => {
 

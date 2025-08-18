@@ -24434,7 +24434,7 @@ export const characters: charInfo[] = [
     new charInfo("Keiichirou Tsumugi", [], anime[637], "M", 'https://i.ibb.co/vC8pHbyq/Keiichirou-Tsumugi-processed.png', 24329, "C"),
     new charInfo("Kousuke Waguri", [], anime[637], "M", 'https://i.ibb.co/fG2MnnVn/Kousuke-Waguri-processed.png', 24330, "D"),
     new charInfo("J", ["Joe"], anime[481], "M", "https://i.ibb.co/hRCBLFr8/c.png", 24331, "SS"),
-    new charInfo("6", ["Atticus"], anime[481], "M", "https://i.ibb.co/tTFDZRdP/c.png", 24332, "S"),
+    new charInfo("6 (R1999)", ["Atticus"], anime[481], "M", "https://i.ibb.co/tTFDZRdP/c.png", 24332, "S"),
     new charInfo("Aleph", [], anime[481], "M", "https://i.ibb.co/C34w6qSQ/c.png", 24333, "SS"),
     new charInfo("Alien T", [], anime[481], "M", "https://i.ibb.co/7tX9r7jZ/c.png", 24334, "D"),
     new charInfo("An An Lee", [], anime[481], "F", "https://i.ibb.co/bgsDyjtm/c.png", 24335, "S"),
@@ -25226,7 +25226,7 @@ characters.forEach((e, i) => {
 // // Print
 // {
 //     let totalChars = 0, totalAnime = 0;
-//     for (let i = 627; i < anime.length; i++) {
+//     for (let i = 647; i < anime.length; i++) {
 //         const numberOfChars = characters.filter(char => char.animeInfo.id === anime[i].id).length;
 //         console.log(`  - **${anime[i].name}** (${numberOfChars} chars)`);
 //         totalChars += numberOfChars;

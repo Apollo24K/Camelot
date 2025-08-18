@@ -3208,12 +3208,13 @@ export const items = [
         myStats.bone += 10;
 
         myStats.delayedBuffs.push(new delayedBuffs(9, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            let mdBuff = Math.floor(myStats.md * 0.1 * myStats.flesh);
+            let mdBuff = Math.floor(myStats.md * 0.02 * myStats.flesh);
             myStats.md += mdBuff; // Boost according to flesh
-            myStats.cd += 0.1 * myStats.bone; // Boost according to bone
-            mybuff.md.push(new buffInfo("+", mdBuff, 2));
-            mybuff.cd.push(new buffInfo("+", 0.1 * myStats.bone, 2));
-            notice.push(`\n<:abyssal_shard:1069019809993461872> The abyss yields the flesh and bone. **${char.name}** gained **${mdBuff}** MD and **${myStats.bone * 10}%** critical damage.`);
+            myStats.cd += 0.04 * myStats.bone; // Boost according to bone
+            mybuff.md.push(new buffInfo("+", mdBuff, 1));
+            mybuff.cd.push(new buffInfo("+", 0.04 * myStats.bone, 1));
+            notice.push(`\n<:abyssal_shard:1069019809993461872> The abyss yields the flesh and bone. **${char.name}** gained **${mdBuff}** MD and **${myStats.bone * 4}%** critical damage.`);
+
             // Reset
             myStats.flesh = 0;
             myStats.bone = 0;
@@ -3221,12 +3222,14 @@ export const items = [
             // Every 10 rounds = abyss engulf
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if ((matchStats.round - 9) % 10 === 0) {
-                    let mdBuff = Math.floor(myStats.md * 0.1 * myStats.flesh);
+                    let mdBuff = Math.floor(myStats.md * 0.02 * myStats.flesh);
+
                     myStats.md += mdBuff; // Boost according to flesh
-                    myStats.cd += 0.1 * myStats.bone; // Boost according to bone
+                    myStats.cd += 0.04 * myStats.bone; // Boost according to bone
                     mybuff.md.push(new buffInfo("+", mdBuff, 2));
-                    mybuff.cd.push(new buffInfo("+", 0.1 * myStats.bone, 2));
-                    notice.push(`\n<:abyssal_shard:1069019809993461872> The abyss yields the flesh and bone. **${char.name}** gained **${mdBuff}** MD and **${myStats.bone * 10}%** critical damage.`);
+                    mybuff.cd.push(new buffInfo("+", 0.04 * myStats.bone, 2));
+                    notice.push(`\n<:abyssal_shard:1069019809993461872> The abyss yields the flesh and bone. **${char.name}** gained **${mdBuff}** MD and **${myStats.bone * 4}%** critical damage.`);
+
                     // Reset
                     myStats.flesh = 0;
                     myStats.bone = 0;
@@ -3240,15 +3243,18 @@ export const items = [
         //Object.keys(ebuff).forEach((e) => ebuff[e as keyof Buffs] = []);
 
         return AbilityResponse.SUCCESS;
-    }, "The wielder begins battles with **10x** `🥩` and `🦴`.\nOn the **9th** round, the abyss consumes all `🥩` and `🦴`. For every `🥩` consumed, raises own MD by **10%** for **2** rounds. For every `🦴`, raises own critical damage by **10%** for **2** rounds. After that, the abyss rests for **10** rounds before engulfing again. The wielder deals magic damage by default.\n\n_This item is synergistic with other `Flesh and Bone` items._", "The Abyssal Shard is a weapon of pure darkness, forged in the depths of the underworld by a powerful demon. Its jagged edge glints with malevolent intent, and those who wield it are said to be consumed by a thirst for destruction and power. Those who face the Abyssal Shard in combat are often struck with fear, knowing that they are facing the wrath of the abyss itself.", "mythical", 422),
+    }, "The wielder begins battles with **10x** `🥩` and `🦴`.\nOn the **9th** round, the abyss consumes all `🥩` and `🦴`. For every `🥩` consumed, raises own MD by **2%** for **2** rounds. For every `🦴`, raises own critical damage by **4%** for **2** rounds. After that, the abyss rests for **10** rounds before engulfing again. The wielder deals magic damage by default.\n\n_This item is synergistic with other `Flesh and Bone` items._", "The Abyssal Shard is a weapon of pure darkness, forged in the depths of the underworld by a powerful demon. Its jagged edge glints with malevolent intent, and those who wield it are said to be consumed by a thirst for destruction and power. Those who face the Abyssal Shard in combat are often struck with fear, knowing that they are facing the wrath of the abyss itself.", "mythical", 422),
+
     new weaponInfo("Arcane Slicer", "weapon", "dagger", ["chest"], "<:arcane_slicer:1069019806881284137>", "https://i.imgur.com/MbSEzOA.png", "md", 96, 1085, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.arcaneSlice = 0;
+        myStats.arcaneSliceUsed = -1;
         matchStats.on("noncrit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
                 if (myStats.arcaneSlice < 10) myStats.arcaneSlice++;
-                if (myStats.arcaneSlice === 10) {
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:arcane_slicer:1069019806881284137> **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, dodge: false, combodmg: true });
-                    myStats.arcaneSlice -= 5;
+                if (myStats.arcaneSlice === 10 && myStats.arcaneSliceUsed !== matchStats.round) {
+                    myStats.arcaneSliceUsed = matchStats.round;
+                    myStats.arcaneSlice -= 10;
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:arcane_slicer:1069019806881284137> **${char.name}**`, { atkMultiplier: 1.2, magicDamage: true, dodge: false, combodmg: true });
                 };
             };
         });
@@ -3262,8 +3268,8 @@ export const items = [
         //mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.25), 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Non-critical hits grant **1x** `Slice` (Up to **10**). Every `Slice` raises MD by **3%**. After any non-critical hit, if the wielder has **10x** `Slice`, consumes **5x** to unleash mystic arcane power, dealing **150%** undodgeable MD. This attack will not break combos.", "The Arcane Slicer is a dagger imbued with ancient magic, capable of slicing through even the toughest of defenses. Its razor-sharp blade glows with a faint, otherworldly light, making it a formidable weapon in the hands of those skilled in the arcane arts.", "mythical", 423),
-    new weaponInfo("Flaming Fomor", "weapon", "dagger", ["chest"], "<:flaming_fomor:1069020248398897202>", "https://i.imgur.com/7sryILJ.png", "atk", 108, 1137, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    }, "Non-critical hits grant **1x** `Slice` (Up to **10**, can be triggered once every round). Every `Slice` raises MD by **3%**. After any non-critical hit, if the wielder has **10x** `Slice`, consumes **10x** to unleash mystic arcane power, dealing **120%** undodgeable MD. This attack will not break combos.", "The Arcane Slicer is a dagger imbued with ancient magic, capable of slicing through even the toughest of defenses. Its razor-sharp blade glows with a faint, otherworldly light, making it a formidable weapon in the hands of those skilled in the arcane arts.", "mythical", 423),
+  new weaponInfo("Flaming Fomor", "weapon", "dagger", ["chest"], "<:flaming_fomor:1069020248398897202>", "https://i.imgur.com/7sryILJ.png", "atk", 108, 1137, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:flaming_fomor:1069020248398897202>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3862,19 +3868,19 @@ export const items = [
 
         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (target === myStats && myStats.ravagerHP > 0) {
-                if (dmgRedirect + target.hp > 0) {
-                    myStats.hp += dmgRedirect;
+                if (myStats.hp > 0) {
+                    myStats.hp += Math.floor(options.damage * dmgRedirect);
                     if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-                    myStats.ravagerHP -= dmgRedirect;
+                    myStats.ravagerHP -= Math.floor(options.damage * dmgRedirect);
                     if (myStats.ravagerHP <= 0) {
-                        eStats.ravagerHP = 0;
+                        myStats.ravagerHP = 0;
+                        notice.push(`\n<:ravager_helmet:1081365191876427857> **${char.name}**'s ravager has fallen and is no longer active.`);
                         const heal = Math.floor(myStats.maxhp * 0.1);
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The dying beast** dealt`, { atkMultiplier: 0.5, magicDamage: true });
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:ravager_helmet:1081365191876427857> **The dying beast** dealt`, { atkMultiplier: 0.5, magicDamage: true });
                     };
-                    notice.push(`\n**${char.name}**'s ravager has fallen and is no longer active.`);
                 };
             };
         });
@@ -3890,7 +3896,7 @@ export const items = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "The ravaging beasts fights alongside the wearer, its HP equivalent to that of the wearer's starting HP. **20%** of damage received is redirected to the ravaging beast. Every **5** rounds, the beast turns berserk, dealing **50%** damage and restoring **10%** max HP for both the wearer and itself. When the beast receives a fatal blow, re-triggers the berserk effects twice before dying."),
+    }, "The ravaging beasts fights alongside the wearer, its HP equivalent to that of the wearer's starting HP. **20%** of non-lethal damage received is redirected to the ravaging beast. Every **5** rounds, the beast turns berserk, dealing **50%** damage and restoring **10%** max HP for both the wearer and itself. When the beast receives a fatal blow, re-triggers the berserk effects twice before dying."),
     new armorInfo("Reef's Bane Helmet", "armor", "helmet", "Reef's Bane Set", ["crafting", "chest"], "<:reefs_bane_helmet:1081365447406014614>", "https://i.imgur.com/iCfJ4kg.png", "hp", 37, 1218, "unique", 531),
     new armorInfo("Reef's Bane Cuirass", "armor", "cuirass", "Reef's Bane Set", ["crafting", "chest"], "<:reefs_bane_cuirass:1081366206914764872>", "https://i.imgur.com/MOYQSpO.png", "def", 12, 124, "unique", 532),
     new armorInfo("Reef's Bane Gloves", "armor", "gloves", "Reef's Bane Set", ["crafting", "chest"], "<:reefs_bane_gloves:1081366792368295997>", "https://i.imgur.com/4m8GX1q.png", "mr", 12, 125, "unique", 533),
@@ -3905,21 +3911,23 @@ export const items = [
     new armorInfo("Sirenscale Vest", "armor", "cuirass", "Sirenscale Set", ["crafting", "chest"], "<:sirenscale_vest:1081366210823860276>", "https://i.imgur.com/zNveflv.png", "mr", 12, 125, "unique", 536),
     new armorInfo("Sirenscale Gloves", "armor", "gloves", "Sirenscale Set", ["crafting", "chest"], "<:sirenscale_gloves:1081366796063490139>", "https://i.imgur.com/RCngOYR.png", "def", 11, 114, "unique", 537),
     new armorInfo("Sirenscale Boots", "armor", "boots", "Sirenscale Set", ["crafting", "chest"], "<:sirenscale_boots:1081367344913326160>", "https://i.imgur.com/RtUw1la.png", "hp", 34, 1207, "unique", 538, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.sirenScale = 0;
+
         eStats.sm = 0;
         eStats.mg -= 3;
         if (eStats.mg < 0) eStats.mg = 0;
         ebuff.mg.push(new buffInfo("+", -3, 9999));
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (eStats.sm / eStats.mana > 0.5) {
+            if (eStats.sm / eStats.mana > 0.5 && myStats.sirenScale < 3) {
                 const hpLoss = Math.floor(myStats.hp * 0.18);
                 myStats.hp -= hpLoss;
                 eStats.sm = 0;
-                // @ts-ignore
-                this.used++;
+                myStats.sirenScale++;
+                notice.push(`\n<:sirenscale_hood:1081365450446884904> Sirenscale sacrificed **18%** HP and lowered ${enemy.name}'s mana to **0**`);
             };
             return AbilityResponse.SUCCESS;
-        }, 9999, 3));
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "The enemy starts with **0** mana, and gains **3** mana less every round. At the start of the round, if the enemy has more than half of their mana pool filled, consumes **18%** current HP to lower it to **0** (can be activated thrice)"),
@@ -3939,22 +3947,20 @@ export const items = [
     new armorInfo("Vindicator Robe", "armor", "cuirass", "Vindicator Set", ["chest"], "<:vindicator_robe:1081366216389701712>", "https://i.imgur.com/j5pavmp.png", "mr", 13, 124, "unique", 544),
     new armorInfo("Vindicator Gloves", "armor", "gloves", "Vindicator Set", ["chest"], "<:vindicator_gloves:1081366801922932787>", "https://i.imgur.com/0x4jfpD.png", "hp", 36, 1220, "unique", 545),
     new armorInfo("Vindicator Boots", "armor", "boots", "Vindicator Set", ["chest"], "<:vindicator_boots:1081367351062175875>", "https://i.imgur.com/l4i0H4s.png", "hp", 34, 1209, "unique", 546, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.vindicator = 0;
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            // @ts-ignore
-            if (myStats.hp / myStats.maxhp < 0.5 && this.used < 4) {
-                // @ts-ignore
-                this.used++;
+            if (myStats.hp / myStats.maxhp < 0.5 && myStats.vindicator < 3) {
+                myStats.vindicator++;
                 notice.push(`\n<:vindicator_hood:1081365456897712129> **The vindicator** sows their seed...`);
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15), {});
                 if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-            } else {
-                // @ts-ignore
-                this.used++;
+            } else if (myStats.vindicator === 3) {
+                myStats.vindicator++;
                 const dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(myStats.maxhp * 0.3) : 0;
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vindicator_hood:1081365456897712129> **The vindicator** reaps their harvest... They`, { overwriteDamage: dmg, magicDamage: true, dodge: false });
             };
             return AbilityResponse.SUCCESS;
-        }, 9999, 4));
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }, "The vindicator sows every time the wearer falls below **50%** HP, healing them for **15%** max HP (3 uses). When all 3 uses are consumed, the vindicator reaps, dealing **30%** of max HP to the enemy (1 use)"),
@@ -5907,7 +5913,6 @@ export const items = [
                     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         if (myStats.atk < myStats.md) {
                             myStats.atk = myStats.md;
-
                         } else {
                             myStats.md = myStats.atk;
                         };
@@ -6286,6 +6291,9 @@ export const items = [
 
         return AbilityResponse.SUCCESS;
     }, (level) => `Normal attacks hit once, dealing **100%** damage. After every counter, reflects damage back to the attacker. On death, revives when possible.`, "A ring said to be once worn by Phoebus until its novelty wore off. Having no further use for it, the Weaver corrupted its image before tossing it out of the Afterthought. Ever since, scholars have vigorously debated the utility of this oddity, unaware that its state of perpetual potential, forever on the cusp of revealing something amazing but never actually doing it, might be precisely what Phoebus intended.", "genesis", 777),
+
+    // New loot - Liminal Descent (Summer2025)
+    new lootInfo("Finality", "loot", "event exclusive item", ["Liminal Descent - Summer 2025"], "<:finality:1405573239018881107>", "https://i.ibb.co/spDSxHMB/finality.png", "mythical", 778, false, false, false, "As Juliette's strength begins to fade, the pendant at her chest glows — not with power, but with longing.\n\nUrashima’s presence stirs within, answering the silent call of the one he once cherished. The pendant cracks, and stardust flows into her — a quiet promise, a final embrace.\n\nThe sea accepts the stars.\nShe rises again, reborn as Twilight Juliette —\nnot alone, but fused with the will of Urashima, her guardian and guide.\n\nOcean and cosmos move as one.\nAnd together, they will not fall.\n\n~ Liminal Descent | Summer 2025"),
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     myStats.boneCap ??= 30;

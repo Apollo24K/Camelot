@@ -1,5 +1,6 @@
 import { ChatInputCommandInteraction, User } from "discord.js";
 import { getUserSchema, updateUsers } from "./queries.js";
+import { isEventOngoing } from "./components.js";
 
 const dailyLock = new Set<string>();
 
@@ -74,13 +75,20 @@ class dailyQuestInfo {
 
             // Check if it was completed now
             if (this.check(stats.dailies[this.id])) {
+
+                // Check if event is active
+                const passlevel = isEventOngoing()
+                    ? ({ passlevel: { type: "increment", value: 1 } } as const)
+                    : {};
+
                 if (todaysQuests.every((quest) => quest.check(stats.dailies[quest.id]))) { // passlevel = passlevel + 1,
 
                     await updateUsers(user.id, {
                         xp: { type: "increment", value: 20 },
                         coins: { type: "increment", value: 1000 },
                         gems: { type: "increment", value: 4 },
-                        dailies: { type: "set_json", value: stats.dailies }
+                        dailies: { type: "set_json", value: stats.dailies },
+                        ...passlevel
                     });
 
                     if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
@@ -90,7 +98,8 @@ class dailyQuestInfo {
                         xp: { type: "increment", value: 10 },
                         coins: { type: "increment", value: 500 },
                         gems: { type: "increment", value: 2 },
-                        dailies: { type: "set_json", value: stats.dailies }
+                        dailies: { type: "set_json", value: stats.dailies },
+                        ...passlevel
                     });
 
                     if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);

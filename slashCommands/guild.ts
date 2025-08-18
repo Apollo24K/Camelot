@@ -863,14 +863,14 @@ const exportCommand: SlashCommand = {
                         donatedtotal: { type: "increment", value: donation }
                     });
 
+                    // Add guild donation
+                    await addGuildDonation(guild.id, interaction.user.id, currency, donation);
+
                     // Daily Quests
                     dailies[9].update(interaction, donation);
 
                     // Achievements
                     achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);
-
-                    // Add guild donation
-                    await addGuildDonation(guild.id, interaction.user.id, currency, donation);
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.username} has donated **${donation}**${emoji} to **${guild.name}**!`);
                 });
