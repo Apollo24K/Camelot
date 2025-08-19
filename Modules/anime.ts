@@ -691,6 +691,9 @@ export const anime: animeInfo[] = [
     new animeInfo("My Bias Gets on the Last Train", ['Nae Choeaeneun Makchareul Tanda'], 656),
     new animeInfo("Viral Hit", ['Hit Viral', 'How to Fight', 'Kenka Dougaku', 'Ssaumdokak'], 657),
     new animeInfo("Takopi's Orignal Sin", ["Takopii no Genzai", "Takopi no Genzai", "Takopi"], 658),
+    new animeInfo("Shakugan no Shana", ['Burning-Eyed Shana', 'BES', 'Shana'], 659),
+    new animeInfo("Cells at Work!!", ['Hataraku Saibou', 'CaW', 'Cells at Work'], 660),
+    new animeInfo("Cells at Work! CODE BLACK", ['Hataraku Saibou BLACK', 'CaWB', 'Cells at Work! BLACK', 'Cells at Work Code Black', 'Cells at Work Black'], 661),
 ];
 
 
