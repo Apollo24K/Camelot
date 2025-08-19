@@ -547,6 +547,11 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
             dStats.proginfo = inv.equipment?.prog?.split(",") ?? [];
         };
 
+        // Dalus & Kisogi's Shell
+        if ((id === 10528 || id === 12398) && inv.equipment.shell) {
+            dStats.shell = inv.equipment?.shell;
+        };
+
     };
 
     dStats.maxhp = dStats.hp;

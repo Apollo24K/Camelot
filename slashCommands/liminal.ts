@@ -6,7 +6,7 @@ import { curses } from "../Modules/curses";
 import { armorInfo, itemInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, customEmojis, dealDamage, searchClass, classLevelToXP, getRingSlotsTotal } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage, searchClass, classLevelToXP, getRingSlotsTotal, searchItem } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
@@ -264,7 +264,7 @@ function getNightmareButtonRow(tab: string): ActionRowBuilder<ButtonBuilder> {
         buttons.push(
             new ButtonBuilder()
                 .setCustomId('ignore_defer-edit')
-                .setLabel(`Edit Class`)
+                .setLabel(`Edit Build`)
                 .setStyle(ButtonStyle.Secondary),
 
         );
@@ -288,7 +288,37 @@ function getModal(uid: string) {
                     // .setMaxLength(20)
                     .setPlaceholder('E.g. Paladin (type "remove" to remove)')
                     .setRequired(false)
-            )
+            ),
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('weapon')
+                    .setLabel("Weapon name or ID")
+                    .setStyle(TextInputStyle.Short)
+                    // .setMinLength(16)
+                    // .setMaxLength(20)
+                    .setPlaceholder('E.g. Excalibur (type "remove" to remove)')
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('shield')
+                    .setLabel("Shield name or ID")
+                    .setStyle(TextInputStyle.Short)
+                    // .setMinLength(16)
+                    // .setMaxLength(20)
+                    .setPlaceholder('E.g. Tyranny (type "remove" to remove)')
+                    .setRequired(false)
+            ),
+            new ActionRowBuilder<TextInputBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('set')
+                    .setLabel("Set name or ID")
+                    .setStyle(TextInputStyle.Short)
+                    // .setMinLength(16)
+                    // .setMaxLength(20)
+                    .setPlaceholder('E.g. Aureate (type "remove" to remove)')
+                    .setRequired(false)
+            ),
         );
 };
 
@@ -454,7 +484,11 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
                 return `### :crescent_moon: Liminal Descent    ྀིྀ ♁ ₊ :wing:｡˚ ₊ +`
                     + `\n\n**Enemy**: __${currentNightmare.name}__`
                     + `\n\n**Traits**\n- ${currentNightmare.ability?.list[0].join("\n- ")}`
-                    + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
+                    + `\n### Your Character\n**Name**: ${preselectedChar ? characters[preselectedChar].name + " Lvl. 500" : "`None`"}\n`
+                    + `**Class**: ${"class" in stats.craze_equipment ? classes[stats.craze_equipment.class].name + classes[stats.craze_equipment.class].emblem + "Lvl. 1000" : "`None`"}\n`
+
+                    // `**Equipment**: ${userItems.find((e) => e.category === "weapon" && e.type !== "shield")?.emoji ?? "<:sword_empty:1034502134474997790>"}${userItems.find((e) => e.type === "shield")?.emoji ?? "<:shield_empty:1087089686809415730>"} ${userItems.find((e) => e.type === "helmet")?.emoji ?? "<:helmet_empty:1034499888878198885>"}${userItems.find((e) => e.type === "cuirass")?.emoji ?? "<:cuirass_empty:1034499890165858305>"}${userItems.find((e) => e.type === "gloves")?.emoji ?? "<:gloves_empty:1034499892409794570>"}${userItems.find((e) => e.type === "boots")?.emoji ?? "<:boots_empty:1034499893919764480>"}`
+                    + `**Equipment**: ${"weapon" in stats.craze_equipment ? (isNaN(stats.craze_equipment.weapon.split(":")[0]) ? stats.craze_equipment.weapon : items[stats.craze_equipment.weapon.split(":")[0]].emoji) : "<:sword_empty:1034502134474997790>"}${"shield" in stats.craze_equipment ? items[stats.craze_equipment.shield.split(":")[0]].emoji : "<:shield_empty:1087089686809415730>"} ${"helmet" in stats.craze_equipment ? items[stats.craze_equipment.helmet.split(":")[0]].emoji : "<:helmet_empty:1034499888878198885>"}${"cuirass" in stats.craze_equipment ? items[stats.craze_equipment.cuirass.split(":")[0]].emoji : "<:cuirass_empty:1034499890165858305>"}${"gloves" in stats.craze_equipment ? items[stats.craze_equipment.gloves.split(":")[0]].emoji : "<:gloves_empty:1034499892409794570>"}${"boots" in stats.craze_equipment ? items[stats.craze_equipment.boots.split(":")[0]].emoji : "<:boots_empty:1034499893919764480>"}${("weapon" in stats.craze_equipment || "shield" in stats.craze_equipment || "helmet" in stats.craze_equipment) ? " Lvl. 70/70" : ""}`
 
                     + `\n**Items**: <:rune_empty:1034507494539669635> `
                     + userItems.filter((e) => e.category === "ring").map((e) => e.emoji).concat(
@@ -514,7 +548,9 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_nightmare_' + uid), time: 90000 }).then(async (r) => {
                     const cls = r.fields.getTextInputValue('class');
-
+                    const weapon = r.fields.getTextInputValue('weapon');
+                    const shield = r.fields.getTextInputValue('shield');
+                    const set = r.fields.getTextInputValue('set');
 
                     // Match class
                     if (cls) {
@@ -523,6 +559,58 @@ function nightmareOverview(interaction: ChatInputCommandInteraction, stats: Comp
                             stats.craze_equipment.class = getClass.id;
                         };
                         if (cls === "remove") delete stats.craze_equipment.class;
+                    };
+
+                    // Match weapon
+                    if (weapon) {
+                        if (weapon === "<:GojoHeart:1194021178029920266>") {
+                            stats.craze_equipment.weapon = "<:GojoHeart:1194021178029920266>";
+                        } else {
+                            let getWeapon = searchItem(weapon, interaction, true);
+                            if (getWeapon?.name) { // && getWeapon.type !== "shield") {
+                                stats.craze_equipment.weapon = `${getWeapon.id}:706183309943767112`;
+                            };
+                            if (weapon === "remove") delete stats.craze_equipment.weapon;
+                        };
+                    };
+
+                    // Match shield
+                    if (shield) {
+                        let getShield = searchItem(shield, interaction, true);
+                        if (getShield?.name && getShield.type === "shield") {
+                            stats.craze_equipment.shield = `${getShield.id}:706183309943767112`;
+                        };
+                        if (shield === "remove") delete stats.craze_equipment.shield;
+                    };
+
+                    // Match set
+                    if (set) {
+                        let getSet = searchItem(set, interaction, true, { returnSet: true });
+                        if (getSet && getSet instanceof armorInfo) {
+                            let setItems = (items.filter((item) => (item instanceof armorInfo && getSet instanceof armorInfo && item.setname === getSet.setname)) ?? []) as armorInfo[];
+                            if (setItems.find((item) => item.type === "helmet")) {
+                                const helmet = setItems.find((item) => item.type === "helmet");
+                                if (helmet) stats.craze_equipment.helmet = `${helmet.id}:706183309943767112`;
+                            };
+                            if (setItems.find((item) => item.type === "cuirass")) {
+                                const cuirass = setItems.find((item) => item.type === "cuirass");
+                                if (cuirass) stats.craze_equipment.cuirass = `${cuirass.id}:706183309943767112`;
+                            };
+                            if (setItems.find((item) => item.type === "gloves")) {
+                                const gloves = setItems.find((item) => item.type === "gloves");
+                                if (gloves) stats.craze_equipment.gloves = `${gloves.id}:706183309943767112`;
+                            };
+                            if (setItems.find((item) => item.type === "boots")) {
+                                const boots = setItems.find((item) => item.type === "boots");
+                                if (boots) stats.craze_equipment.boots = `${boots.id}:706183309943767112`;
+                            };
+                        };
+                        if (set === "remove") {
+                            delete stats.craze_equipment.helmet;
+                            delete stats.craze_equipment.cuirass;
+                            delete stats.craze_equipment.gloves;
+                            delete stats.craze_equipment.boots;
+                        };
                     };
 
                     // Update users table
@@ -623,6 +711,19 @@ const exportCommand: SlashCommand = {
             stats.class = stats.craze_equipment.class;
             stats.dungeon_classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, classLevelToXP(1000)]));
         } else stats.class = null;
+        if ("weapon" in stats.craze_equipment) stats.equipment.weapon = stats.craze_equipment.weapon;
+        else delete stats.equipment.weapon;
+        if ("shield" in stats.craze_equipment) stats.equipment.shield = stats.craze_equipment.shield;
+        else delete stats.equipment.shield;
+        if ("helmet" in stats.craze_equipment) stats.equipment.helmet = stats.craze_equipment.helmet;
+        else delete stats.equipment.helmet;
+        if ("cuirass" in stats.craze_equipment) stats.equipment.cuirass = stats.craze_equipment.cuirass;
+        else delete stats.equipment.cuirass;
+        if ("gloves" in stats.craze_equipment) stats.equipment.gloves = stats.craze_equipment.gloves;
+        else delete stats.equipment.gloves;
+        if ("boots" in stats.craze_equipment) stats.equipment.boots = stats.craze_equipment.boots;
+        else delete stats.equipment.boots;
+
 
         // User stats
         let myChar = characters[stats.battlechar];

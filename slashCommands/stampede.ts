@@ -208,7 +208,8 @@ const monsterRow = new ActionRowBuilder<ButtonBuilder>()
             .setStyle(ButtonStyle.Danger),
     );
 
-const isStampedeDisabled = (stampede: StampedeSchema) => {
+const isStampedeDisabled = (stampede: StampedeSchema, isTestRun: boolean) => {
+    if (isTestRun) return false;
     return (stampede.bosshp < 1 || new Date().getDate() > 7 || !isStampedeMonth());
 };
 
@@ -220,7 +221,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stampede: Stamp
                     .setCustomId('0')
                     .setLabel("I'm ready, let me fight!")
                     .setStyle(ButtonStyle.Danger)
-                    .setDisabled(isStampedeDisabled(stampede)),
+                    .setDisabled(isStampedeDisabled(stampede, false)),
                 new ButtonBuilder()
                     .setCustomId('test')
                     .setLabel("Let's try a test run first!")
@@ -348,7 +349,7 @@ const exportCommand: SlashCommand = {
         if (boss === 0) return;
 
         // Check if stampede is disabled
-        if (isStampedeDisabled(stampede)) return interaction.editReply("Stampede is currently unavailable. Please try again later!");
+        if (isStampedeDisabled(stampede, boss > 1)) return interaction.editReply("Stampede is currently unavailable. Please try again later!");
 
         // Check if user is on cooldown
         if (dungeonInProgress.has(interaction.user.id)) {

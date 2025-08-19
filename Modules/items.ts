@@ -3249,7 +3249,7 @@ export const items = [
         myStats.arcaneSlice = 0;
         myStats.arcaneSliceUsed = -1;
         matchStats.on("noncrit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats) {
+            if (caster === myStats && target === eStats) {
                 if (myStats.arcaneSlice < 10) myStats.arcaneSlice++;
                 if (myStats.arcaneSlice === 10 && myStats.arcaneSliceUsed !== matchStats.round) {
                     myStats.arcaneSliceUsed = matchStats.round;
@@ -3268,8 +3268,8 @@ export const items = [
         //mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.25), 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Non-critical hits grant **1x** `Slice` (Up to **10**, can be triggered once every round). Every `Slice` raises MD by **3%**. After any non-critical hit, if the wielder has **10x** `Slice`, consumes **10x** to unleash mystic arcane power, dealing **120%** undodgeable MD. This attack will not break combos.", "The Arcane Slicer is a dagger imbued with ancient magic, capable of slicing through even the toughest of defenses. Its razor-sharp blade glows with a faint, otherworldly light, making it a formidable weapon in the hands of those skilled in the arcane arts.", "mythical", 423),
-  new weaponInfo("Flaming Fomor", "weapon", "dagger", ["chest"], "<:flaming_fomor:1069020248398897202>", "https://i.imgur.com/7sryILJ.png", "atk", 108, 1137, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    }, "Non-critical hits on the enemy grant **1x** `Slice` (Up to **10**, can be procced once every round). Every `Slice` raises MD by **3%**. After any non-critical hit, if the wielder has **10x** `Slice`, consumes **10x** to unleash mystic arcane power, dealing **120%** undodgeable MD. This attack will not break combos.", "The Arcane Slicer is a dagger imbued with ancient magic, capable of slicing through even the toughest of defenses. Its razor-sharp blade glows with a faint, otherworldly light, making it a formidable weapon in the hands of those skilled in the arcane arts.", "mythical", 423),
+    new weaponInfo("Flaming Fomor", "weapon", "dagger", ["chest"], "<:flaming_fomor:1069020248398897202>", "https://i.imgur.com/7sryILJ.png", "atk", 108, 1137, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:flaming_fomor:1069020248398897202>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
