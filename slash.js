@@ -1085,6 +1085,9 @@ const commands = [
 				.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(false))
 				.addStringOption(option => option.setName('class').setDescription('Select a class').setRequired(false))
 				.addStringOption(option => option.setName('items').setDescription('Select items separated by comma (,)').setRequired(false))
+				.addStringOption(option => option.setName('ring-1').setDescription('Select the 1st ring').setRequired(false))
+				.addStringOption(option => option.setName('ring-2').setDescription('Select the 2nd ring').setRequired(false))
+				.addStringOption(option => option.setName('ring-3').setDescription('Select the 3rd ring').setRequired(false))
 			)
 	}.data.toJSON(),
 	{

@@ -360,6 +360,9 @@ export interface UserSchema {
         cuirass?: string;
         gloves?: string;
         boots?: string;
+        ring1?: string;
+        ring2?: string;
+        ring3?: string;
     }>;
     itemlock: string[];
     party: string | null;
