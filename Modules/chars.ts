@@ -22280,7 +22280,7 @@ export const characters: charInfo[] = [
     new charInfo("Raiz Dunner", [], anime[551], "M", "https://i.ibb.co/5vghmVb/c.png", 22175, "D"),
     new charInfo("Isabelle Cariello", [], anime[551], "F", "https://i.ibb.co/txR3pkn/c.png", 22176, "C"),
     new charInfo("Loris Cariello", [], anime[551], "M", "https://i.ibb.co/DWFJDgp/c.png", 22177, "D"),
-    new charInfo("Granat Needakitta", [], anime[552], "F", "https://i.ibb.co/FBkL0yk/c.png", 22178, "S"),
+    new charInfo("Granat Needakitta", ["Granart Needakitta"], anime[552], "F", "https://i.ibb.co/FBkL0yk/c.png", 22178, "S"),
     new charInfo("Krystal Nokanatika", [], anime[552], "F", "https://i.ibb.co/SB9NCXk/c.png", 22179, "S"),
     new charInfo("Saphir Maasa", [], anime[552], "F", "https://i.ibb.co/SfxXLSv/c.png", 22180, "A"),
     new charInfo("Nephrites Lomka", [], anime[552], "F", "https://i.ibb.co/JxhLK5H/c.png", 22181, "A"),
@@ -25266,7 +25266,6 @@ export const characters: charInfo[] = [
     new charInfo("Sertoli Cell", ["Sertoli Saibou"], anime[661], "F", "https://i.ibb.co/W4tmjSjJ/c.png", 25162, "D"),
     new charInfo("Shikyuutai", ["Glomerulus"], anime[661], "F", "https://i.ibb.co/Fb0ZJwLb/c.png", 25163, "D"),
     new charInfo("AD6614", ["Sekkekkyuu AD6614"], anime[661], "M", "https://i.ibb.co/B2JHRNBY/c.png", 25164, "C"),
-
 ];
 
 

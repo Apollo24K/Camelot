@@ -157,7 +157,7 @@ export const skins: skinInfo[] = [
     new skinInfo("Lumine (Easter 2024)", 709, "easter event 2024", "", "", 8000, "", "https://i.ibb.co/JRLbbFtF/lumine.png", 104),
     new skinInfo("Isolde EX (Happy Milkshake Monday!)", 17116, "yes", "animeblaze", "", 9999999999, "", "https://i.ibb.co/DVF0Wq8/Isolde-Happy-Milkshake-Monday.gif", 105),
     new skinInfo("Raphael EX (Birthday)", 17583, "yes", "seki#0001", "", 9999999999, "", "https://i.ibb.co/nq0sMdnj/Raphael-EX-Birthday.png", 106),
-    new skinInfo("Kisogi (Summer 2024)", 12398, "summer event 2024", "trulylost", "", 20000, "", "https://i.ibb.co/TxZjVM4P/kisogi.png", 107),
+    new skinInfo("Kisogi (Summer 2024)", 12398, "summer event 2024", "trulylost", "", 20000, "", "https://i.ibb.co/6Jv3GyRN/c.png", 107),
     new skinInfo("Dalus (Summer 2024)", 10528, "summer event 2024", "trulylost", "", 20000, "", "https://i.ibb.co/chjpsCRP/1fe026d708dd.png", 108),
     new skinInfo("Boa Hancock EX (Summer 2024)", 21928, "summer event 2024", "trulylost", "", 20000, "", "https://i.ibb.co/PzZMZBfG/Boa-Hancock-EX-2.png", 109),
     new skinInfo("Neco-Arc EX", 17118, "yes", "animeblaze", "", 9999999999, "", "https://i.ibb.co/tMn1zHg2/Neco-Arc-EX.gif", 110),
