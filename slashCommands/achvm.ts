@@ -220,6 +220,11 @@ const exportCommand: SlashCommand = {
                     return achvmBar(totalFish / threshold, ` (${totalFish}/${threshold})\n`);
                 }
                 case 88: return achvmBar(0);
+                case 89: return achvmBar(0);
+                case 90: return achvmBar(0);
+                case 91: return achvmBar(0);
+                case 92: return achvmBar(0);
+                case 93: return achvmBar(0);
                 default: return achvmBar(0);
             };
         };

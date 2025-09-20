@@ -16,6 +16,7 @@ import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, RaidRank, RaidSchema, SlashCommand } from '../types';
 import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateGuilds, updateRaidEnded, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
+import { achievements } from '../Modules/achievements';
 
 const dungeonInProgress = new Set();
 
@@ -927,6 +928,8 @@ const exportCommand: SlashCommand = {
 
             // Participation
             if (!isTestRun) await updateRaidParticipation(raid.rowid, interaction.user.id, damageDealt);
+
+            achievements[89].check(interaction, interaction.user, damageDealt), achievements[90].check(interaction, interaction.user, damageDealt), achievements[91].check(interaction, interaction.user, damageDealt), achievements[92].check(interaction, interaction.user, damageDealt), achievements[93].check(interaction, interaction.user, damageDealt);
 
             //* LOOT DROPS
 

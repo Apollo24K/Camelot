@@ -287,6 +287,11 @@ export default class achievInfo {
                 }
 
                 case 88: if (list[0]) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 89: if(list[0] >= 500000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 90: if(list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 91: if(list[0] >= 5000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 92: if(list[0] >= 10000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 93: if(list[0] >= 50000000) this.addRewards(interaction, user), this.notify(interaction); break;
 
                 default: false; break;
             };
@@ -416,5 +421,10 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Something's Fishy", "Catch 2000 fish", 87, 27, "1,4", "xp|100", "ss ticket|2"),
 
     new achievInfo("David vs. Goliath", "Defeat an enemy with 500% of your EP", 88, 28, "1,2,4", "xp|50", "coins|3000", "ss ticket|1"),
+    new achievInfo("The Last Hope", "Deal 500k damage in a single raid", 89, 29, "1,2,3", "xp|50", "coins|3000", "s shard|4"),
+    new achievInfo("The Last Hope", "Deal 1M damage in a single raid", 90, 29, "1,2,3", "xp|60", "coins|5000", "s shard|8"),
+    new achievInfo("The Last Hope", "Deal 5M damage in a single raid", 91, 29, "1,2,3", "xp|70", "coins|10000", "s shard|12"),
+    new achievInfo("The Last Hope", "Deal 10M damage in a single raid", 92, 29, "1,2,3", "xp|80", "coins|15000", "ss shard|16"),
+    new achievInfo("The Last Hope", "Deal 50M damage in a single raid", 93, 29, "1,2,4", "xp|100", "coins|25000", "ss ticket|3"),
 
 ];
