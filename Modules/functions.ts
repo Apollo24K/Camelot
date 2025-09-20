@@ -900,7 +900,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         preventRetaliation: options.preventRetaliation,
     });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
-    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage , normalATK: options.normalATK });
+    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage, normalATK: options.normalATK });
 
     return damage;
 };
@@ -922,7 +922,7 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
                 if (amount < 0) amount = 0;
             };
         };
-        
+
         // 2: General Heal reduction
         if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
         if (amount > 0) target.hp += Math.floor(amount);

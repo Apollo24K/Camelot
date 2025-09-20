@@ -6788,6 +6788,7 @@ export const abilities: Record<number, Ability> = {
         },
         party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
+            myStats.evadeDeathChance ??= 0;
             myStats.evadeDeathStrike ??= 0;
             myStats.evadeDeathStrike += 2;
 

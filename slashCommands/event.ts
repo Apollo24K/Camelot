@@ -614,13 +614,13 @@ const exportCommand: SlashCommand = {
 
             let file = await getPageImage(showSkins, selected);
 
-            let disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
+            let disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
             const Embed = new EmbedBuilder()
                 .setTitle('Event Shop')
                 .setColor(0xff8733)
                 .setImage(`attachment://file.jpg`)
-                .setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`)
+                .setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`)
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             interaction.reply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] }).then(msg => {
 
@@ -643,9 +643,9 @@ const exportCommand: SlashCommand = {
 
                     file = await getPageImage(showSkins, selected);
 
-                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
+                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
-                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
@@ -663,9 +663,9 @@ const exportCommand: SlashCommand = {
 
                     file = await getPageImage(showSkins, selected);
 
-                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
+                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
-                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
@@ -675,36 +675,37 @@ const exportCommand: SlashCommand = {
 
                     file = await getPageImage(showSkins, selected);
 
-                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
+                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
-                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
                 buyCollector.on('collect', async () => {
+                    const cost = skins[showSkins[selected]].cost.eventpts;
                     if (stats.skins.includes(showSkins[selected])) {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`You already own this skin`);
                         return;
                     };
-                    if (skins[showSkins[selected]].price > stats.eventpts2) {
+                    if (!cost || cost > stats.eventpts2) {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough 🌙`);
                         return;
                     };
 
                     stats.skins.push(showSkins[selected]);
-                    stats.eventpts2 -= skins[showSkins[selected]].price;
+                    stats.eventpts2 -= cost;
 
                     // Update users table
                     await updateUsers(interaction.user.id, {
-                        eventpts2: { type: "increment", value: -skins[showSkins[selected]].price },
+                        eventpts2: { type: "increment", value: -cost },
                         skins: { type: "append_unique", value: [showSkins[selected]] },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You've bought **${skins[showSkins[selected]].name}**!`);
 
-                    disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].price > stats.eventpts2);
+                    disableBuy = stats.skins.includes(showSkins[selected]) || (cost > stats.eventpts2);
 
-                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].price}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${cost}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 

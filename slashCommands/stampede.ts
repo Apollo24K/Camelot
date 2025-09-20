@@ -14,9 +14,12 @@ import buffInfo from "../Modules/buffs.js";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, StampedeSchema, UpdateUserOptions } from '../types.js';
 import { getGuildSchema, getLatestStampede, getPartyMembers, getPartySchema, getUserSchema, getUserSchemas, updateStampedeParticipation, updateStampedes, updateUsers } from '../Modules/queries.js';
+import { customHpBars } from '../Modules/customHpBars.js';
 
 const dungeonInProgress = new Map();
 const captchaCooldown = new Map();
+
+const EMBED_COLOR = 0xff0000;
 
 function participationPrize(rounds: number) {
     const prizePool = {
@@ -236,7 +239,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stampede: Stamp
         };
 
         const Embed = new EmbedBuilder()
-            .setColor(0xff0000)
+            .setColor(EMBED_COLOR)
             .setTitle(stampedes[stampede.type].title)
             .setThumbnail("https://i.imgur.com/ZUdnLZO.png") // https://i.imgur.com/Au6LNIx.jpg https://i.imgur.com/ZUdnLZO.png
             // .setDescription(`**Goblin King**: \`${stampede.bosshp < 0 ? 0 : stampede.bosshp}/${stampede.bosshpmax}\`\\💖\n**Goblin Generals**: \`${stampede.generalsleft}/${stampede.generalstotal}\` ➜ \`${stampede.generalhp < 0 ? 0 : stampede.generalhp}/${stampede.generalhpmax}\`\\💖\n**Goblins**: \`${stampede.monstersleft}/${stampede.monsterstotal}\`\n\n**Damage dealt**: \`${JSON.parse(stampede.participation)[interaction.user.id]?.[0] || 0}\`\n**Total damage**: \`${Object.values(JSON.parse(stampede.participation)).reduce((acc, e) => acc+e[0], 0)}\`\n\n**Prize Pool**\n<:deluxe_chest:1069301259603026061>x${prizePool.deluxe}, <:royal_chest:1069301128711376976>x${prizePool.royal}, <:glorious_chest:1069076067081539726>x${prizePool.glorious}\n<:ss_ticket:927503239396622336>x${prizePool.ssticket}, <:s_ticket:927642487705722890>x${prizePool.sticket}, <:a_ticket:929420377946472508>x${prizePool.aticket}\n<:genesis_gems:1034179687720681492>x${prizePool.gems}, <:coins:1030580480782893197>x${Math.round(prizePool.coins/1000000)}mil\n\n**Party**\n${(abilities?.[myChar.id]?.party) ? "✨ " : "<:blank:917804200363171860> "}__${myChar.name}__ ${cdLeft(interaction.user.id)}${partyQuery.map((e) => `\n${(abilities?.[e.stampedechar]?.party) ? "✨ " : "<:blank:917804200363171860> "}${characters[e.stampedechar].name} ${cdLeft(e.id)}`)}`)
@@ -507,6 +510,12 @@ const exportCommand: SlashCommand = {
         const difficulty = Avalon.getDifficulty(myStats.ep / eStats.ep);
         const aDelay = stats.premium ? stats.animationdelay : 1200;
 
+        // Random HP Bar
+        if (stats.user_settings.random_hp_bar && stats.hpbars.length > 0) {
+            stats.hpbar = [null, ...stats.hpbars][Math.floor(Math.random() * (stats.hpbars.length + 1))];
+        };
+        const embedColor = stats.hpbar === null ? EMBED_COLOR : customHpBars[stats.hpbar].color;
+
         let buffs = Avalon.getBuffs();
         let eBuffs = Avalon.getBuffs();
 
@@ -543,7 +552,7 @@ const exportCommand: SlashCommand = {
                 };
 
                 const Embed = new EmbedBuilder()
-                    .setColor(0xff0000)
+                    .setColor(embedColor)
                     .setThumbnail(myStatsC.thumbnail)
                     .setTitle(stampedes[stampede.type].title)
                     .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${damageDealt}** damage\n<a:arrow_orange:916716747623641210> Class XP: **--** (Boost: x--)\n\n<:npbag:929428030554787892> Loot\n--<:coins:872926669055356939>`)
@@ -644,7 +653,7 @@ const exportCommand: SlashCommand = {
             };
 
             const Embed = new EmbedBuilder()
-                .setColor(0xff0000)
+                .setColor(embedColor)
                 .setThumbnail(myStatsC.thumbnail)
                 .setTitle(stampedes[stampede.type].title)
                 .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${damageDealt}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot}<:coins:872926669055356939>${kernelDrop ? ", <:starlight_kernel:1106121205515288659>x1" : ""}`)
@@ -705,11 +714,11 @@ const exportCommand: SlashCommand = {
             const timestart = new Date().getTime();
             const result = await new Promise<EmbedBuilder | undefined>((resolve, rejects) => {
                 const Embed = new EmbedBuilder()
-                    .setColor(0xff0000)
+                    .setColor(embedColor)
                     .setThumbnail(isCompactEmbed ? eStatsC.image : myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
                     .setTitle(stampedes[stampede.type].title)
-                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}`)
+                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
@@ -730,7 +739,7 @@ const exportCommand: SlashCommand = {
 
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
-                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         if (eStats.image !== eStatsC.image) Embed.setImage(eStatsC.image);
                         // await msg.edit({ embeds: [Embed] });

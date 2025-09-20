@@ -683,6 +683,16 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('hpbar')
+			.setDescription('HP bar related commands')
+			.addSubcommand((subcommand) => subcommand.setName('list').setDescription('List all available HP bars')
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false)))
+			.addSubcommand((subcommand) => subcommand.setName('select').setDescription('Select an HP bar')
+				.addStringOption(option => option.setName('item').setDescription('Select an HP bar').setRequired(true)))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('info')
 			.setDescription('Search for a character in our database')
 			.addStringOption(option => option.setName('characters').setDescription('Select characters to view, separated by comma if multiple').setRequired(false))

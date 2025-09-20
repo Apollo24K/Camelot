@@ -284,6 +284,24 @@ export class ringInfo extends itemInfo {
     };
 };
 
+type PotionSubtype = "xp" | "instant xp";
+
+export class potionInfo extends itemInfo {
+    private _subtype: PotionSubtype;
+
+    constructor(name: string, subtype: PotionSubtype, obtain: string[], emoji: `<:${string}:${number}>`, image: `https://${string}`, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = false, tradable: boolean = false, sellable: boolean = false) {
+        const category = "consumable";
+        const type = "potion";
+
+        super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
+        this._subtype = subtype;
+    };
+
+    get subtype() {
+        return this._subtype;
+    };
+};
+
 export const items = [
     // Fish
     new fishInfo("Carp", "fish", "fish", ["fishing"], true, "<:carp:1028307600128872468>", "https://i.ibb.co/ZB9chS1/c.png", "normal", 0),
@@ -6264,6 +6282,16 @@ export const items = [
 
     // New loot - Liminal Descent (Summer2025)
     new lootInfo("Finality", "loot", "event exclusive item", ["Liminal Descent - Summer 2025"], "<:finality:1405573239018881107>", "https://i.ibb.co/spDSxHMB/finality.png", "mythical", 778, false, false, false, "As Juliette's strength begins to fade, the pendant at her chest glows — not with power, but with longing.\n\nUrashima’s presence stirs within, answering the silent call of the one he once cherished. The pendant cracks, and stardust flows into her — a quiet promise, a final embrace.\n\nThe sea accepts the stars.\nShe rises again, reborn as Twilight Juliette —\nnot alone, but fused with the will of Urashima, her guardian and guide.\n\nOcean and cosmos move as one.\nAnd together, they will not fall.\n\n~ Liminal Descent | Summer 2025"),
+
+    // Potions
+    new potionInfo("Small XP Potion", "xp", [], "<:small_xp_potion:1411700662898528396>", "https://i.ibb.co/dsdw6jqC/c.png", "flair text", "rare", 779),
+    new potionInfo("Large XP Potion", "xp", [], "<:large_xp_potion:1411701231260270684>", "https://i.ibb.co/0pGgPDmg/c.png", "flair text", "unique", 780),
+    new potionInfo("Huge XP Potion", "xp", [], "<:huge_xp_potion:1411700642887766086>", "https://i.ibb.co/GKDnnMr/c.png", "flair text", "legendary", 781),
+    new potionInfo("Small Instant XP Potion", "instant xp", [], "<:small_instant_xp_potion:1411713377511800842>", "https://i.ibb.co/jvy4rdK8/c.png", "flair text", "rare", 782),
+    new potionInfo("Large Instant XP Potion", "instant xp", [], "<:large_instant_xp_potion:1411713396260339873>", "https://i.ibb.co/7wSYggL/c.png", "flair text", "unique", 783),
+    new potionInfo("Huge Instant XP Potion", "instant xp", [], "<:huge_instant_xp_potion:1411713671977107496>", "https://i.ibb.co/9m6tXSv9/c.png", "flair text", "legendary", 784)
+
+
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     myStats.boneCap ??= 30;

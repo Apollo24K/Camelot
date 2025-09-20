@@ -24,10 +24,10 @@ type hpBarComponents = {
 export default class CustomHpBar {
     private _name: string;
     private _id: number;
-    private _color: ColorResolvable;
+    private _color: number;
     private _bar: hpBarComponents;
 
-    constructor(name: string, id: number, color: ColorResolvable, bar: hpBarComponents) {
+    constructor(name: string, id: number, color: number, bar: hpBarComponents) {
         this._name = name;
         this._id = id;
         this._color = color;
@@ -98,6 +98,18 @@ export const customHpBars: CustomHpBar[] = [
         start: { empty: "<:dbl:1408905623290253312>", hp_only: "<:dblh:1408905624980553799>", mana_only: "<:dblm:1408905603358658580>", full: "<:dblhm:1408905627148877905>" },
         middle: { empty: "<:db:1408905617632137356>", hp_only: "<:dbh:1408905619901120674>", mana_only: "<:dbm:1408905605242028192>", full: "<:dbhm:1408905621637435464>" },
         end: { empty: "<:dbr:1408905606831538226>", hp_only: "<:dbrh:1408905609155182623>", mana_only: "<:dbrm:1408905614238814258>", full: "<:dbrhm:1408905611818700872>" },
+    }),
+
+    new CustomHpBar("Falling Leaves", 4, 0xe78700, {
+        start: { empty: "<:dbl:1412184144393539694>", hp_only: "<:dblh:1412184147841257502>", mana_only: "<:dblm:1412184113389109419>", full: "<:dblhm:1412184151557406834>" },
+        middle: { empty: "<:db:1412184133299605545>", hp_only: "<:dbh:1412184137711751239>", mana_only: "<:dbm:1412184116241236068>", full: "<:dbhm:1412184140706480269>" },
+        end: { empty: "<:dbr:1412184120683008161>", hp_only: "<:dbrh:1412184124822913235>", mana_only: "<:dbrm:1412184130208272434>", full: "<:dbrhm:1412184127507140788>" },
+    }),
+
+    new CustomHpBar("Autumn Leaves", 5, 0xa0522d, {
+        start: { empty: "<:dbl:1415266537748828203>", hp_only: "<:dblh:1415266542815285268>", mana_only: "<:dblm:1415266553150046259>", full: "<:dblhm:1415266548976713882>" },
+        middle: { empty: "<:db:1415266524532314272>", hp_only: "<:dbh:1415266531268366437>", mana_only: "<:dbm:1415266558237868052>", full: "<:dbhm:1415266535798476890>" },
+        end: { empty: "<:dbr:1415266560745934848>", hp_only: "<:dbrh:1415266565607129141>", mana_only: "<:dbrm:1415266578114674842>", full: "<:dbrhm:1415266572775198750>" },
     }),
 
 ];

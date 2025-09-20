@@ -14,6 +14,7 @@ import _ from 'lodash';
 import { DetailedStats, SlashCommand, UpdateUserOptions } from '../types';
 import { getUserSchema, updateUsers } from '../Modules/queries';
 import { AbilityResponse } from '../Modules/components';
+import { customHpBars } from '../Modules/customHpBars';
 
 const dungeonInProgress = new Map();
 
@@ -65,6 +66,11 @@ const exportCommand: SlashCommand = {
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
 
+        // Random HP Bar
+        if (stats.user_settings.random_hp_bar && stats.hpbars.length > 0) {
+            stats.hpbar = [null, ...stats.hpbars][Math.floor(Math.random() * (stats.hpbars.length + 1))];
+        };
+        const embedColor = stats.hpbar === null ? 0x69ffb9 : customHpBars[stats.hpbar].color;
 
         let round = 0;
 
@@ -315,7 +321,7 @@ const exportCommand: SlashCommand = {
                 rewMessage = "\nYou have unlocked all rewards!";
             };
 
-            Embed.setColor(0x69ffb9)
+            Embed.setColor(embedColor)
                 .setThumbnail(myStatsC.thumbnail)
                 .setTitle(`Boss Rush${r === "t" ? " (Time's up!)" : ""}`)
                 .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) })
@@ -417,11 +423,11 @@ const exportCommand: SlashCommand = {
             const timestart = Date.now();
             let result = await new Promise<EmbedBuilder | undefined>((resolve, rejects) => {
                 const Embed = new EmbedBuilder()
-                    .setColor(0x69ffb9)
+                    .setColor(embedColor)
                     .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | Round: ${round + 1} | time left: 120s` })
                     .setTitle(`Boss Rush`)
-                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`)
+                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`)
                     .setImage(isCompactEmbed ? null : eImage);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
@@ -438,7 +444,7 @@ const exportCommand: SlashCommand = {
                     async function editEmbed() {
                         if (myStatsC.hp < 1 || eStatsC.hp < 1) return;
 
-                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | Round: ${round + 1} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
 
                         // await msg.edit({ embeds: [Embed] });

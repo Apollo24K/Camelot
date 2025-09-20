@@ -31,6 +31,7 @@ async function createTables() {
         xp INT DEFAULT 0 NOT NULL,
         coins BIGINT DEFAULT 0 NOT NULL,
         lilies INT DEFAULT 0 NOT NULL,
+        season_keys INT DEFAULT 0 NOT NULL,
         favchar INT,
         battlechar INT,
         lootbox INT DEFAULT 0 NOT NULL,
@@ -39,6 +40,7 @@ async function createTables() {
         dailyclaimed INT DEFAULT 0 NOT NULL,
         dailystreak INT DEFAULT 0 NOT NULL,
         lastdaily TIMESTAMP,
+        lastonline TIMESTAMP,
         pullcount INT DEFAULT 0 NOT NULL,
         pullstacks INT DEFAULT 0 NOT NULL,
         pullstacksinterval INT DEFAULT 0 NOT NULL,
@@ -69,6 +71,8 @@ async function createTables() {
         votereminder INT DEFAULT 1 NOT NULL,
         items JSONB DEFAULT '{}' NOT NULL,
         skins INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
+        hpbars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
+        hpbar INT,
         eventpts INT DEFAULT 0 NOT NULL,
         eventpts2 INT DEFAULT 0 NOT NULL,
         brbest INT DEFAULT 0 NOT NULL,
@@ -472,11 +476,14 @@ async function alterTables() {
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INT DEFAULT 0 NOT NULL');
 
     // add genesisdupepity INT DEFAULT 0 NOT NULL,
-    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS genesisdupepity INT DEFAULT 0 NOT NULL');
-    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS user_settings JSONB DEFAULT '{}' NOT NULL`);
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS genesisdupepity INT DEFAULT 0 NOT NULL');
+    // await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS user_settings JSONB DEFAULT '{}' NOT NULL`);
 
-    await query('ALTER TABLE users ALTER COLUMN votereminder SET DEFAULT 1');
-
+    // New with seasonal shop update
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lastonline TIMESTAMP;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS season_keys INT DEFAULT 0 NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbars INT[] DEFAULT ARRAY[]::INT[] NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbar INT;');
 
 
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');

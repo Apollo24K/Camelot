@@ -78,6 +78,25 @@ export const shardEmoji = {
     "D": "<:d_shard:917202840563363891>",
 } as const;
 
+const seasonalKeys = {
+    "valentines": "<:valentines_key:1415408453060399225>",
+    "cny": "<:cny_key:1415409748597280941>",
+    "easter": "<:easter_key:1415408485281173647>",
+    "summer": "<:summer_key:1415409314725757083>",
+    "fall": "<:fall_key:1415402576509141143>",
+    "halloween": "<:halloween_key:1415403370318925977>",
+    "winter": "<:winter_key:1415403402992681079>",
+} as const;
+
+export const currencyEmojis = {
+    "gems": "<:genesis_gems:1034179687720681492>",
+    "coins": "<:coins:1030580480782893197>",
+    "lilies": "<:lilium:974057059618291732>",
+    "jades": "<:eternal_jade:1256124504141201428>",
+    "season_keys": seasonalKeys.fall,
+    "eventpts": "🌙",
+} as const;
+
 export const profileColors = {
     creme: ['#FFF9F3', '#FFEEDD'],
     red: ['#F95959', '#EE3E3E'],
