@@ -66,6 +66,12 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('arena-test')
+			.setDescription('Challenge someone to a 1v1')
+			.addUserOption(option => option.setName('user').setDescription('user to challenge').setRequired(true)),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('avatar')
 			.setDescription('Display a user\'s profile picture')
 			.addUserOption(option => option.setName('user').setDescription('Get the profile picture of a user')),
