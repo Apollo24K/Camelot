@@ -4,6 +4,7 @@ import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal } from "./functions";
 import { AbilityResponse } from "./components";
+import { Ability } from "./abilities";
 
 export class itemInfo {
     private _name: string;
@@ -283,6 +284,75 @@ export class ringInfo extends itemInfo {
         return this.buffdescs(level);
     };
 };
+
+type PotionSubtype = "xp" | "instant xp";
+
+export class potionInfo extends itemInfo {
+    private _subtype: PotionSubtype;
+
+    constructor(name: string, subtype: PotionSubtype, obtain: string[], emoji: `<:${string}:${number}>`, image: `https://${string}`, flair: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = false, tradable: boolean = false, sellable: boolean = false) {
+        const category = "consumable";
+        const type = "potion";
+
+        super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc, flair);
+        this._subtype = subtype;
+    };
+
+    get subtype() {
+        return this._subtype;
+    };
+};
+
+type RuneAbilities =
+    | (Partial<Ability> & {
+        ability: Ability['ability'];
+        usage: number;
+        used: number;
+        cost: number;
+    })
+    | (Partial<Ability> & {
+        ability?: undefined;
+        usage?: number;
+        used?: number;
+        cost?: number;
+    })
+    & {
+        buff?: ItemAbility;
+    };
+
+export class runeInfo extends itemInfo {
+    private _ability: RuneAbilities;
+    private _buffdesc: string;
+
+    constructor(name: string, obtain: string[], emoji: `<:${string}:${number}>`, image: `https://${string}`, ability: RuneAbilities, buffdesc: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
+        const category = "rune";
+        const type = "rune";
+
+        super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc);
+        this._ability = ability;
+        this._buffdesc = buffdesc;
+    };
+
+    get ability() {
+        return this._ability;
+    };
+    get active() {
+        return this.ability.ability;
+    };
+    get passive() {
+        return this.ability.passive;
+    };
+    get party() {
+        return this.ability.party;
+    };
+    get buff(): ItemAbility {
+        return this.ability.buff || (async () => AbilityResponse.SUCCESS);
+    };
+    get buffdesc() {
+        return this._buffdesc;
+    };
+};
+
 
 export const items = [
     // Fish
@@ -908,6 +978,7 @@ export const items = [
     new weaponInfo("Dainsleif", "weapon", "sword", ["chest"], "<:dainsleif:1066858376585285663>", "https://i.imgur.com/w96701M.png", "atk", 36, 605, "mg", 1, 5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 50;
         myStats.sm += 10;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
 
         return AbilityResponse.SUCCESS;
     }, "Increases the wielders mana cap by **+50**. Start the battle with **+10** mana.", "The legendary sword Dainsleif, passed down through the ages and wielded by only the most worthy warriors, is said to be cursed. Those who draw the blade are doomed to suffer a fate worse than death, as the sword compels its wielder to kill until it is satisfied. Its thirst for blood is insatiable, making it a weapon to be feared by even the bravest of men.", "unique", 170),
@@ -998,6 +1069,7 @@ export const items = [
     new weaponInfo("Sssssssword of Ssssssssnek", "weapon", "sword", ["crafting", "chest"], "<:sssssssword_of_ssssssssnek:1066861510602793112>", "https://i.imgur.com/VmbU8fb.png", "atk", 31, 564, "cr", 0.04, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm += Math.floor(eStats.sm * 0.5);
         eStats.sm -= Math.floor(eStats.sm * 0.5);
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         myStats.mg += 1;
         eStats.mg -= 1;
         mybuff.mg.push(new buffInfo("+", 1, 9999));
@@ -1164,6 +1236,7 @@ export const items = [
     new weaponInfo("Tribute of Illumination", "weapon", "staff", ["crafting", "chest"], "<:tribute_of_illumination:1066864560423850034>", "https://i.imgur.com/HnUdOz6.png", "md", 32, 568, "mana", 5, 25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.hp = Math.floor(myStats.hp * 0.5);
         myStats.sm += 30;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         myStats.md += Math.floor(myStats.md * Math.min(((1 - (myStats.hp / myStats.maxhp)) / 2), 0.25));
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.md += Math.floor(myStats.md * Math.min(((1 - (myStats.hp / myStats.maxhp)) / 2), 0.25));
@@ -1599,6 +1672,7 @@ export const items = [
     new weaponInfo("Tristan's Trance", "weapon", "lance", ["chest"], "<:tristans_trance:1067200876197969973>", "https://i.imgur.com/iYaqRAr.png", "atk", 37, 580, "mg", 1, 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 40;
         myStats.sm += 10;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         myStats.mg += 2;
         mybuff.mg.push(new buffInfo("+", 2, 9999));
 
@@ -1840,6 +1914,7 @@ export const items = [
     new weaponInfo("Recruit's Ebon Ward", "weapon", "shield", ["crafting", "chest"], "<:recruits_ebon_ward:1067246103508029551>", "https://i.imgur.com/6Aa0qul.png", "shield", 67, 866, "mg", 1, 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 50;
         myStats.sm += 10;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
 
         return AbilityResponse.SUCCESS;
     }, "Increases the wielders mana cap by **+50**. Start the battle with **+10** mana.", "The Recruit's Ebon Ward is the perfect shield for those new to the battlefield. Its sturdy construction and sleek design provide ample protection against incoming attacks, while its dark, menacing appearance strikes fear into the hearts of enemies. As you progress in your training, this shield will become a steadfast companion and a symbol of your growing strength and skill.", "unique", 276),
@@ -2283,6 +2358,7 @@ export const items = [
     }, "Executes the enemy when below **15%** HP. Increases the wielders attack by **14%** during the first 10 rounds.", "The Warbringer is a fearsome weapon, forged in the heat of battle and tempered in the fires of war. Its sharp, double-edged blade is capable of cleaving through armor and bone with ease, and its sturdy haft allows for powerful, crushing blows. In the hands of a skilled warrior, the Warbringer becomes a force to be reckoned with, striking fear into the hearts of enemies and bringing swift victory to its wielder.", "legendary", 330),
     new weaponInfo("Whisper of Woe", "weapon", "axe", ["crafting", "chest"], "<:whisper_of_woe:1068531160126332928>", "https://i.imgur.com/TO09o0Z.png", "atk", 55, 865, "mana", 10, 30, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm += Math.floor(eStats.sm * 0.5);
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         eStats.sm -= Math.floor(eStats.sm * 0.5);
         myStats.mg += 2;
         eStats.mg -= 2;
@@ -2879,6 +2955,7 @@ export const items = [
     new weaponInfo("Sirene's Song", "weapon", "sword", ["chest"], "<:sirenes_song:1068720493957497002>", "https://i.imgur.com/o9Ek5oh.png", "atk", 98, 1067, "mana", 15, 50, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm = myStats.mana;
         myStats.mg -= 5;
+        if (myStats.mg < 0) myStats.mg = 0;
         mybuff.mg.push(new buffInfo("+", -5, 9999));
 
         return AbilityResponse.SUCCESS;
@@ -3514,49 +3591,19 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Fires a burning shot at the start of the battle, immediately dealing **200%** damage and burns the enemy dealing **40%** true damage each round for 15 rounds.\n\n_true damage = ignores shield_", "The Flames of Valyria is a bow of legends forged in the fiery pits of the ancient city of Valyria. It is said that the bow was crafted by the greatest blacksmiths of the Valyrian Freehold, imbuing it with the power of dragonfire. The bow is made of Valyrian steel, a rare and highly sought-after metal known for its strength and ability to hold a sharp edge. The bowstring of the Flames of Valyria is made from the sinew of a dragon, giving it the ability to launch arrows with incredible speed and accuracy.\nIn the days of the Valyrian Freehold, the Flames of Valyria was wielded by the greatest dragonriders, who used it to hunt the fearsome beasts of the land. But with the downfall of Valyria, the bow was lost to the ages, its whereabouts and true power unknown. Adventurers and warriors from all over the realm have set out to find the Flames of Valyria, seeking to wield its power for themselves and become the greatest archer the world has ever known.", "genesis", 441),
     new weaponInfo("Heartseeker", "weapon", "bow", ["chest"], "<:heartseeker:1069028625019576320>", "https://i.imgur.com/UoZXFTQ.png", "atk", 777, 1333, "hp", 77, 777, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        myStats.heartseeker = 0;
-        myStats.heartseekerState = 0; // 0 = Default ; 1 = Observation ; 2 = Whispers of Celestia
-        const seekerStates = ["Default", "Observation", "Whispers of Celestia"];
         myStats.replaceButton.atk = {
             "emoji": "<:heartseeker:1069028625019576320>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (myStats.heartseekerState !== 0) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.07), {});
-                //if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:heartseeker:1069028625019576320> **${char.name}**`, { atkMultiplier: (myStats.heartseekerState === 1) ? 1.3 : 1.1, magicDamage: true });
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.07), {});
+                if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:heartseeker:1069028625019576320> **${char.name}**`, { atkMultiplier: 1.2, magicDamage: true });
 
                 return AbilityResponse.SUCCESS;
             },
         };
-        matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats) {
-                myStats.heartseeker++;
-                if (myStats.heartseeker >= 7) {
-                    // Progress the state
-                    myStats.heartseekerState++;
-
-                    // Reset to default if the progressed round is 3
-                    if (myStats.heartseekerState === 3) myStats.heartseekerState = 0;
-
-                    notice.push(`\n**${char.name}** entered mode: \`${seekerStates[myStats.heartseekerState]}\``);
-                    myStats.heartseeker = 0; // Reset ATKcount
-
-                    // Activate timeout false ATK effect if the progressed round is 2
-                    if (myStats.heartseekerState === 2) {
-                        // Whispers of Celestia
-                        matchStats.on("ATK", {
-                            maxUsage: 3,
-                            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                                matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                                return true;
-                            },
-                        });
-                    };
-                };
-            };
-        });
 
         return AbilityResponse.SUCCESS;
-    }, "Normal attack is defaulted to deal **110%** damage. After **7** uses of ATK, the wielder to enter `Observation`, where the normal attack is defaulted to deal **130%** damage and restore **7%** max HP for the wielder. After another **7** uses of ATK, the wielder enters `Whispers of Celestia`, where the next **3** uses of ATK don't progress the round (timeout false). After another **7** uses of ATK, resets mode to default.", "The Heartseeker is a bow of immense beauty and power, said to be crafted by the gods of celestia. This bow is said to be imbued with the very essence of the heavens, granting its wielder unparalleled accuracy and power. Its limbs are crafted from the finest celestial gold and the bowstring is woven from the purest of celestial silk. Its arrows fly true and straight, guided by the hands of the gods themselves.", "genesis", 442),
+    }, "Normal attacks deal **120%** damage and heal **7%** of the wielders max HP.", "The Heartseeker is a bow of immense beauty and power, said to be crafted by the gods of celestia. This bow is said to be imbued with the very essence of the heavens, granting its wielder unparalleled accuracy and power. Its limbs are crafted from the finest celestial gold and the bowstring is woven from the purest of celestial silk. Its arrows fly true and straight, guided by the hands of the gods themselves.", "genesis", 442),
     new weaponInfo("Moonlit Shadow", "weapon", "bow", ["chest"], "<:moonlit_shadow:1069028628630872125>", "https://i.imgur.com/tZ9pgya.png", "atk", 194, 1136, "dodge", 0.08, 0.16, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         ebuff.def.push(new buffInfo("+", -Math.min(eStats.def * 0.66, 1055), 9999));
         ebuff.mr.push(new buffInfo("+", -Math.min(eStats.mr * 0.66, 1055), 9999));
@@ -3799,6 +3846,7 @@ export const items = [
     new armorInfo("Azure Enchantment Boots", "armor", "boots", "Azure Enchantment Set", ["crafting", "chest"], "<:azure_enchantment_boots:1081367325778919554>", "https://i.imgur.com/cgnYDv6.png", "def", 10, 105, "unique", 514, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 60;
         myStats.sm += 100;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
 
         return AbilityResponse.SUCCESS;
     }, "Increases the wielders mana cap by **+60**. Start the battle with **+100** mana."),
@@ -4005,7 +4053,7 @@ export const items = [
                     myStats.md += Math.floor(myStats.md * 0.15);
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.15), 9999));
-                    return AbilityResponse.SUCCESS;
+                    return true;
                 };
             }
         });
@@ -6292,8 +6340,63 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, (level) => `Normal attacks hit once, dealing **100%** damage. After every counter, reflects damage back to the attacker. On death, revives when possible.`, "A ring said to be once worn by Phoebus until its novelty wore off. Having no further use for it, the Weaver corrupted its image before tossing it out of the Afterthought. Ever since, scholars have vigorously debated the utility of this oddity, unaware that its state of perpetual potential, forever on the cusp of revealing something amazing but never actually doing it, might be precisely what Phoebus intended.", "genesis", 777),
 
-    // New loot - Liminal Descent (Summer2025)
+    // New loot - Liminal Descent (Summer 2025)
     new lootInfo("Finality", "loot", "event exclusive item", ["Liminal Descent - Summer 2025"], "<:finality:1405573239018881107>", "https://i.ibb.co/spDSxHMB/finality.png", "mythical", 778, false, false, false, "As Juliette's strength begins to fade, the pendant at her chest glows — not with power, but with longing.\n\nUrashima’s presence stirs within, answering the silent call of the one he once cherished. The pendant cracks, and stardust flows into her — a quiet promise, a final embrace.\n\nThe sea accepts the stars.\nShe rises again, reborn as Twilight Juliette —\nnot alone, but fused with the will of Urashima, her guardian and guide.\n\nOcean and cosmos move as one.\nAnd together, they will not fall.\n\n~ Liminal Descent | Summer 2025"),
+
+    // Potions
+    new potionInfo("Small XP Potion", "xp", [], "<:small_xp_potion:1411700662898528396>", "https://i.ibb.co/dsdw6jqC/c.png", "flair text", "rare", 779),
+    new potionInfo("Large XP Potion", "xp", [], "<:large_xp_potion:1411701231260270684>", "https://i.ibb.co/0pGgPDmg/c.png", "flair text", "unique", 780),
+    new potionInfo("Huge XP Potion", "xp", [], "<:huge_xp_potion:1411700642887766086>", "https://i.ibb.co/GKDnnMr/c.png", "flair text", "legendary", 781),
+    new potionInfo("Small Instant XP Potion", "instant xp", [], "<:small_instant_xp_potion:1411713377511800842>", "https://i.ibb.co/jvy4rdK8/c.png", "flair text", "rare", 782),
+    new potionInfo("Large Instant XP Potion", "instant xp", [], "<:large_instant_xp_potion:1411713396260339873>", "https://i.ibb.co/7wSYggL/c.png", "flair text", "unique", 783),
+    new potionInfo("Huge Instant XP Potion", "instant xp", [], "<:huge_instant_xp_potion:1411713671977107496>", "https://i.ibb.co/9m6tXSv9/c.png", "flair text", "legendary", 784),
+
+    // Runes
+    new runeInfo("Arcane Rebirth", ["seasonal shop"], "<:arcane_rebirth:1419634455911596163>", "https://i.ibb.co/0yN5xDSD/Arcane-Rebirth.png", {
+        cost: 60,
+        usage: 9999,
+        used: 0,
+        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:arcane_rebirth:1419634455911596163> **${char.name}**`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 });
+
+            return AbilityResponse.SUCCESS;
+        },
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.mdChance = 1;
+
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.1), 9999));
+            myStats.md += Math.floor(myStats.md * 0.1);
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Attacks deal magic damage by default.\n- Increases magic damage by **10%**.\n- When using the active ability, deals **200%** magic damage.", "rare", 785),
+    new runeInfo("Coinmark of Riches", ["seasonal shop"], "<:coinmark_of_riches:1420459821362315337>", "https://i.ibb.co/svFFZvQB/Coinmark-of-Riches.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.lootm += 0.1;
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Increases coins earned from the dungeon by **10%**.", "rare", 786),
+    new runeInfo("Valkyrie Sigil", ["seasonal shop"], "<:valkyrie_sigil:1420830074118209547>", "https://i.ibb.co/VYSdFjh2/Valkyrie-Sigil.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.counter ??= 0;
+
+            myStats.atk += Math.floor(myStats.atk * 0.1);
+            mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999));
+
+            // Counter every 8th round
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 8 === 0) {
+                    myStats.counter += 1;
+                };
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Increases attack by **10%**.\n- Every **8** rounds, the wearer gains **1x** counter attempt.", "rare", 787),
+
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     myStats.boneCap ??= 30;

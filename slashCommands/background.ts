@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, AttachmentBuilder } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, AttachmentBuilder, MessageFlags } from "discord.js";
 import { getProfileImage } from "./profile";
 import { CostTypes, ProfileDecorations, profileSets } from "../Modules/profileDecorations";
 import { getClassLvl, getDetailedStats, lastActive, userLevel } from "../Modules/functions";
@@ -7,7 +7,7 @@ import { characters } from "../Modules/chars";
 import { CompactUserSchema, ProfileImageArguments, SlashCommand } from '../types';
 import { items } from '../Modules/items';
 import { classes } from '../Modules/classes';
-import { profileColors } from '../Modules/components';
+import { currencyEmojis, profileColors } from '../Modules/components';
 import { getUserSchema, updateUsers } from '../Modules/queries';
 
 function getPageRow(background: ProfileDecorations, cachedImages: Record<number, AttachmentBuilder>, stats: CompactUserSchema) {
@@ -39,14 +39,13 @@ function getPageRow(background: ProfileDecorations, cachedImages: Record<number,
         );
 };
 
-const emojis = { gems: "<:genesis_gems:1034179687720681492>", coins: "<:coins:1030580480782893197>", lilies: "<:lilium:974057059618291732>", jades: "<:eternal_jade:1256124504141201428>" };
 function buyRow(background: ProfileDecorations) {
     return new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
             ...Object.entries(background.cost).map(([currency, amount]) => {
                 return new ButtonBuilder()
                     .setCustomId(currency)
-                    .setEmoji(emojis[currency as keyof CostTypes])
+                    .setEmoji(currencyEmojis[currency as keyof CostTypes])
                     .setLabel(`${amount}`)
                     .setStyle((currency === "jades") ? ButtonStyle.Success : ((currency === "gems") ? ButtonStyle.Primary : ButtonStyle.Secondary));
             }),
@@ -58,7 +57,7 @@ function buySetRow(background: ProfileDecorations) {
             ...Object.entries(background.set?.cost ?? {}).map(([currency, amount]) => {
                 return new ButtonBuilder()
                     .setCustomId(`set-${currency}`)
-                    .setEmoji(emojis[currency as keyof CostTypes])
+                    .setEmoji(currencyEmojis[currency as keyof CostTypes])
                     .setLabel(`${amount}`)
                     .setStyle((currency === "jades") ? ButtonStyle.Success : ((currency === "gems") ? ButtonStyle.Primary : ButtonStyle.Secondary));
             }),
@@ -126,6 +125,7 @@ const exportCommand: SlashCommand = {
         if (subcommand === "search") {
             const name = interaction.options.getString('name', true);
             const type = interaction.options.getString('type') ?? "background";
+            const isRedirect = interaction.deferred;
 
             const background = type === "background"
                 ? searchBackground(name, interaction)
@@ -135,7 +135,7 @@ const exportCommand: SlashCommand = {
             const pagesTotal = background.set.assets.length;
             let currPage = background.id + 1;
 
-            await interaction.deferReply().catch(() => {
+            if (!interaction.deferred) await interaction.deferReply().catch(() => {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             });
 
@@ -199,7 +199,7 @@ const exportCommand: SlashCommand = {
                 .setImage(background.set.assets[currPage - 1].asset.url)
                 .setThumbnail(`attachment://profile.${background.set.assets[currPage - 1].asset.fileType === "gif" ? "gif" : "jpg"}`)
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-            return interaction.editReply({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] }).then(msg => {
+            return interaction[isRedirect ? 'followUp' : 'editReply']({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async r => {
@@ -215,7 +215,7 @@ const exportCommand: SlashCommand = {
                                 if (!background || !background.set) return;
 
                                 const tempStats = await getUserSchema(interaction.user.id);
-                                if (!tempStats) return interaction.editReply("You haven't started playing yet.");
+                                if (!tempStats) return msg.edit("You haven't started playing yet.");
 
                                 let cost = 1_000_000_000, bgid;
                                 if (rr.customId.startsWith("set")) {
@@ -229,7 +229,7 @@ const exportCommand: SlashCommand = {
 
                                 // Return if balance not enough
                                 if (tempStats[rr.customId as keyof CostTypes] < cost) {
-                                    ms.edit({ content: `You don't have enough ${rr.customId} (**${tempStats[rr.customId as keyof CostTypes]}**/${cost} ${emojis[rr.customId as keyof CostTypes]})`, components: [] });
+                                    ms.edit({ content: `You don't have enough ${rr.customId} (**${tempStats[rr.customId as keyof CostTypes]}**/${cost} ${currencyEmojis[rr.customId as keyof CostTypes]})`, components: [] });
                                     return;
                                 };
 
@@ -246,7 +246,7 @@ const exportCommand: SlashCommand = {
 
                                 // Edit replies
                                 ms.edit({ content: "Purchase Successful!", components: [] });
-                                interaction.editReply({ components: [getPageRow(background.set.assets[currPage - 1], cachedImages, tempStats)] });
+                                msg.edit({ components: [getPageRow(background.set.assets[currPage - 1], cachedImages, tempStats)] });
                             });
 
                         });
@@ -273,7 +273,7 @@ const exportCommand: SlashCommand = {
                         .setImage(background.set.assets[currPage - 1].asset.url)
                         .setThumbnail(cachedImages[currPage - 1] ? `attachment://profile.${background.set.assets[currPage - 1].asset.fileType === "gif" ? "gif" : "jpg"}` : null)
                         .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] });
+                    msg.edit({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] });
                 });
             });
         };

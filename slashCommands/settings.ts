@@ -38,6 +38,20 @@ const exportCommand: SlashCommand = {
             return interaction.reply(`🎉 Battle log length is now set to **${numInput}**!`);
         };
 
+        // Random HP Bar
+        if (setting === "random_hp_bar") {
+            if (input.toLowerCase() !== "true" && input.toLowerCase() !== "false") {
+                return interaction.reply("Please input either `true` or `false`");
+            };
+
+            // Update users table
+            await updateUsers(interaction.user.id, {
+                user_settings: { type: "merge_json", value: { random_hp_bar: input.toLowerCase() === "true" ? true : false } },
+            });
+
+            return interaction.reply(`🎉 Random HP Bar is now **${input.toLowerCase() === "true" ? "enabled" : "disabled"}**!`);
+        };
+
     },
 };
 

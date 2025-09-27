@@ -49,9 +49,9 @@ export default class Avalon {
         };
     };
 
-    static hpbar(hp: number, mana: number) {
+    static hpbar(hp: number, mana: number, hpBarId: number | null = 0) {
 
-        const hpBarTheme = customHpBars[0];
+        const hpBarTheme = customHpBars[hpBarId || 0];
 
         return hpBarTheme.getHpBar(hp, mana);
 

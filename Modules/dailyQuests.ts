@@ -87,6 +87,7 @@ class dailyQuestInfo {
                         xp: { type: "increment", value: 20 },
                         coins: { type: "increment", value: 1000 },
                         gems: { type: "increment", value: 4 },
+                        season_keys: { type: "increment", value: [10, 12].includes(this.id) ? 10 : 5 },
                         dailies: { type: "set_json", value: stats.dailies },
                         ...passlevel
                     });
@@ -98,6 +99,7 @@ class dailyQuestInfo {
                         xp: { type: "increment", value: 10 },
                         coins: { type: "increment", value: 500 },
                         gems: { type: "increment", value: 2 },
+                        season_keys: { type: "increment", value: [10, 12].includes(this.id) ? 5 : 0 },
                         dailies: { type: "set_json", value: stats.dailies },
                         ...passlevel
                     });
@@ -129,4 +131,5 @@ export const dailies = [
     new dailyQuestInfo("Fortune's Favor", "Donate 2000 coins to a guild", 9, (stat) => { return stat >= 2000; }),
     new dailyQuestInfo("Knight's Ballot", "[Vote for Camelot](<https://rank.top/bot/camelot/vote>)", 10, (stat) => { return stat >= 1; }),
     new dailyQuestInfo("Parting Pieces", "Disassemble 3 items", 11, (stat) => { return stat >= 3; }),
+    new dailyQuestInfo("Guild's Ballot", "[Vote for Camelot OS](<https://rank.top/server/camelot/vote>)", 12, (stat) => { return stat >= 1; }),
 ];

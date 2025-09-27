@@ -682,7 +682,7 @@ export const raidBosses: enemyInfo[] = [
             eStats.negateHeal = 1;
 
             matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (target === myStats) eStats.hp -= Math.floor(eStats.hp * 0.045);
+                if (target === myStats) eStats.hp -= Math.floor(myStats.hp * 0.045);
             });
 
             return AbilityResponse.SUCCESS;
@@ -706,8 +706,8 @@ export const raidBosses: enemyInfo[] = [
             // +0.025% of shield as atk and md (max 250%) //* 10k shield = 250% atk
             const buffMax = 2.0, buffScale = 0.00025;
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.atk += Math.floor(myStats.atk * Math.min(myStats.shield * buffScale, buffMax));
-                myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax));
+                myStats.atk += Math.floor(myStats.batk * Math.min(myStats.shield * buffScale, buffMax));
+                myStats.md += Math.floor(myStats.bmd * Math.min(myStats.shield * buffScale, buffMax));
 
                 return AbilityResponse.SUCCESS;
             }, 9999));
@@ -733,8 +733,8 @@ export const raidBosses: enemyInfo[] = [
             // +0.025% of shield as atk and md (max 250%) //* 10k shield = 250% atk
             const buffMax = 2.0, buffScale = 0.00025;
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.atk += Math.floor(myStats.atk * Math.min(myStats.shield * buffScale, buffMax));
-                myStats.md += Math.floor(myStats.md * Math.min(myStats.shield * buffScale, buffMax));
+                myStats.atk += Math.floor(myStats.batk * Math.min(myStats.shield * buffScale, buffMax));
+                myStats.md += Math.floor(myStats.bmd * Math.min(myStats.shield * buffScale, buffMax));
 
                 return AbilityResponse.SUCCESS;
             }, 9999));
@@ -1636,7 +1636,7 @@ export const nightmareMobs: enemyInfo[] = [
 
                 if (matchStats.round % 2 === 0) {
                     let dmg = Math.floor(eStats.maxhp * 0.05);
-                    if (dmg > 0) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:rosie:1387006066566627328> **Rosie**`, { overwriteDamage: dmg, dodge: false });
+                    if (dmg > 0) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:rosie:1408505520641409127> **Rosie**`, { overwriteDamage: dmg, dodge: false });
                 };
                 return AbilityResponse.SUCCESS;
             }, 9999));

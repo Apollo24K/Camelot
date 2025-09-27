@@ -1,6 +1,6 @@
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
 import { getDetailedStats, dealDamage, addHeal, getRefinement } from "./functions";
-import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createCanvas, loadImage, Image } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
 import delayedBuffs from "./delayedBuffs";
@@ -20,6 +20,8 @@ export type Ability = {
     passive?: (myStats: DetailedStats, myStatsFixed: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => Promise<AbilityResponse>;
     party?: (pStats: DetailedStats, myStats: DetailedStats, eStats: DetailedStats, mybuff: Buffs, ebuff: Buffs, char: charInfo, enemy: IentityInfo, matchStats: MatchStats, notice: string[], embed: EmbedBuilder, user: User, ...list: any[]) => Promise<AbilityResponse>;
 };
+
+const loadedImages: Record<string, Image> = {};
 
 export const abilities: Record<number, Ability> = {
     "64": {
@@ -789,8 +791,8 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 60,
         pause: 0,
-        desc: "**Total Usage**: `unlimited`\n**Mana**: `60`\\💧\n**Timeout**: `no`\n**Role**: `DPS`\n\nTetsuya Kuroko has significantly decreased offensive and defensive stats, specifically **20%** decreased ATK, MD, DEF and MR, but compensates by starting the battle with **80%** dodge chance. This however decreases by **5%** each round, stopping at **30%** dodge chance. Moreover, there's a **25%** chance of him stealing an enemy attack, countering it.\n\nAfter using his active, for **4** rounds Kuroko increases his ATK and MD by **30%**. During this period, the likelihood of him stealing an enemy attack increases to **35%**.\n\nIn a party, Kuroko assists party members with quick interceptions. For every **5** participation points the party member has, the chance of Kuroko stealing an enemy attack increases by **1%**, up to a maximum of **25%**. A successful steal allows Kuroko to perform an additional attack, dealing **120%** damage to the enemy.",
-        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `60 💧`\n**Timeout**: `No`\n**Role**: `Support/Sub-DPS (Burst Dodge, Counter, Additional Attack)`\n\n__**Passive**__\n- **-20%** ATK, MD, DEF & MR\n- Begins battles with **80%** dodge rate, decreasing by **5%** every round, down to at most **30%**\n- **25%** chance to counter the next hit (stackable)\n\n__**Active**__ (✨)\nFor **4** rounds:\n- **+30%** ATK & MD\n- Likelihood of countering next hit increased from 25% to **35%**\n\n__**Party**__ (👥)\nFor every **5** participation points:\n- **+1%** chance of intervening (Up to **25%**) and dealing **120%** DMG every round",
+        desc: "**Total Usage**: `unlimited`\n**Mana**: `60`\\💧\n**Timeout**: `no`\n**Role**: `DPS`\n\nTetsuya Kuroko has significantly decreased offensive and defensive stats, specifically **20%** decreased ATK, MD, DEF and MR, but compensates by starting the battle with **80%** dodge chance. This however decreases by **5%** each round, stopping at **30%** dodge chance. Moreover, there's a **25%** chance of him stealing an enemy attack, countering it.\n\nAfter using his active, for **4** rounds Kuroko increases his ATK and MD by **30%**. During this period, the likelihood of him stealing an enemy attack increases to **35%**.\n\nIn a party, Kuroko assists party members with quick interceptions. In stampedes, for every **5** participation points the party member has, the chance of Kuroko stealing an enemy attack increases by **1%**, up to a maximum of **25%**. In raids, the chance is fixed at **25%**. A successful steal allows Kuroko to perform an additional attack, dealing **120%** damage to the enemy (This is considered a counter).",
+        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `60 💧`\n**Timeout**: `No`\n**Role**: `Support/Sub-DPS (Burst Dodge, Counter, Additional Attack)`\n\n__**Passive**__\n- **-20%** ATK, MD, DEF & MR\n- Begins battles with **80%** dodge rate, decreasing by **5%** every round, down to at most **30%**\n- **25%** chance to counter the next hit (stackable)\n\n__**Active**__ (✨)\nFor **4** rounds:\n- **+30%** ATK & MD\n- Likelihood of countering next hit increased from 25% to **35%**\n\n__**Party**__ (👥)\nIn stampedes: For every **5** participation points -> **+1%** chance of intervening every round (Up to **25%**)\nIn raids: chance fixed at **25%**\n- Successful intervention -> Deal **120%** DMG (This is considered a counter)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Tetsuya Kuroko
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -846,11 +848,17 @@ export const abilities: Record<number, Ability> = {
 
                 myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                     if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0) / 500) {
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
+                        let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
+                        matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { dmg });
                     };
 
                     return AbilityResponse.SUCCESS;
                 }, 9999));
+            } else if (matchStats.interaction.commandName === "raid") {
+                if (Math.random() < 0.25) {
+                    let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
+                    matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { dmg });
+                };
             };
 
             return AbilityResponse.SUCCESS;
@@ -861,28 +869,31 @@ export const abilities: Record<number, Ability> = {
     //     used: 0,
     //     cost: 0,
     //     pause: 0,
-    //     desc: "**Total Usage**: `unlimited`\n**Mana**: `40 (Can be substituted with 10% max HP)`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nTaiga Kagami is known for his offensive capabilities from massive jumps and powerful dunks, making him a formidable opponent with brute force. Thanks to his athleticism, he enters battles with **+25%** critical DMG and **+10%** chance to counter attacks. Upon falling below **50%** HP the first time, he enters `ZONE`, where he steals **15%** dodge rate from the enemy, and decreases their DEF & MR by **20%**, lasting permanently.\n\nUpon using his active, if he doesn't have the required mana, he'll instead consume **10%** of his max HP to elevate his arms. If his HP is above **1** after the consumption, he slams the shot, dealing **130%** DMG and boosting his ATK by **15%** for the next **2** turns. Yet if his HP does fall below **1** HP, he remains at **1** HP and instead uses Meteor Jam, a defining dunk that shatters all expectations, dealing **300%** DMG and boosting his ATK by **30%** for the next **2** rounds.\n\nIn a party, Kagami assists party members with quick rebounds, boosting ally's ATK by **10%**. Moreover, he deals an additional instance of **30%** DMG to the enemy when the ally counters. If the ally is Tetsuya Kuroko, all of the buffs/effects aforementioned will have **doubled** effectiveness.",
-    //     shortdesc: "**Uses**: `Unlimited`\n**Cost**: `40 💧 (Can be substituted with 10% max HP)`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Nuke, Additional Attack)`\n\n__**Passive**__\n- **+25%** critical DMG\n- **+10%** chance to counter attacks (stackable)\nUpon falling below **50%** HP the first time:\n- Steals **15%** dodge rate permanently\n- Decreases enemy's DEF & MR by **20%** permanently\n\n__**Active**__ (✨)\n> If he does not have sufficient mana, consumes **10%** max HP instead as substitute.\n\nIf he is at **1** HP or more:\n- Deals **130%** DMG\n- Increases ATK by **15%** for the next **2** turns\n\nElse:\n- Remains at **1** HP\n- Deals **300%** DMG\n- Increases ATK by **30%** for the next **2** turns\n\n__**Party**__ (👥)\n- **+10%** ATK\n- Follows up any counters by the ally, dealing **30%** DMG\n- If Tetsuya Kuroko is the ally, gains **doubled** effectiveness from the aforementioned buffs/effects",
+    //     desc: "**Total Usage**: `unlimited`\n**Mana**: `50 (Can be substituted with 15% max HP, HP cost increased by 0.7% after every use starting from the 11th use)`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nTaiga Kagami is known for his offensive capabilities from massive jumps and powerful dunks, making him a formidable opponent with brute force. Thanks to his athleticism, upon falling below **50%** HP the first time, he enters `ZONE`, where he steals **15%** dodge rate from the enemy, and decreases their DEF & MR by **15%** (Up to 2x DMG), lasting permanently.\n\nUpon using his active, if he doesn't have the required mana, he'll instead consume **15%** of his max HP to elevate his arms. HP cost increased by **0.7%** after every use starting from the **11th** use. If his HP is above **1** after the consumption, he slams the shot, dealing **120%** DMG and boosting his ATK by **10%** for **2** rounds. Yet if his HP does fall below **1** HP, he remains at **1** HP and instead uses Meteor Jam, a defining dunk that shatters all expectations, dealing **240%** DMG, boosting his ATK by **20%** for **2** rounds.\n\nIn a party, Kagami assists party members with quick rebounds, boosting ally's ATK by **10%**. Moreover, he deals an additional instance of **30%** DMG to the enemy when the ally counters. If the ally is Tetsuya Kuroko, all of the buffs/effects aforementioned will have **doubled** effectiveness.",
+    //     shortdesc: "**Uses**: `Unlimited`\n**Cost**: `50 💧 (Can be substituted with 15% max HP, HP cost increased by 0.7% after every use starting from the 11th use)`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Nuke, Additional Attack)`\n\n__**Passive**__\nUpon falling below **50%** HP the first time:\n- Steals **15%** dodge rate permanently\n- Decreases enemy's DEF & MR by **15%** permanently (Up to 2x DMG) \n\n__**Active**__ (✨)\n> If he does not have sufficient mana, consumes **15%** max HP instead as substitute.\n- HP cost increased by **0.7%** after every use starting from the **11th** use\n\nIf he is at **1** HP or more:\n- Deals **120%** DMG\n- Increases ATK by **10%** for **2** rounds\n\nElse:\n- Remains at **1** HP\n- Deals **240%** DMG\n- Increases ATK by **20%** for **2** rounds\n\n__**Party**__ (👥)\n- **+10%** ATK\n- Follows up any counters by the ally, dealing **30%** DMG\n- If Tetsuya Kuroko is the ally, gains **doubled** effectiveness from the aforementioned buffs/effects",
     //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
     //         // Taiga Kagami
 
     //         // Active cost
-    //         if (myStats.sm < 40) {
-    //             myStats.hp -= myStats.maxhp * 0.1;
+    //         if (myStats.sm < 50) {
+    //             let hpCost = myStats.maxhp * (0.15 + (this.used >= 10 ? this.used - 10 : 0) * 0.007);
+    //             myStats.hp -= Math.floor(hpCost);
     //         } else {
-    //             myStats.sm -= 40;
+    //             myStats.sm -= 50;
     //         };
 
     //         // Meteor Jam
     //         if (myStats.hp <= 0) {
     //             myStats.hp = 1;
-    //             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🌠 **${char.name}** used Meteor Jam! He`, { atkMultiplier: 3 });
+    //             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🌠 **${char.name}** used Meteor Jam! He`, { atkMultiplier: 2.4 });
     //             // ATK buffs (Doubled effectiveness)
-    //             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.3), 2));
+    //             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.2), 2));
+    //             myStats.atk += Math.floor(myStats.atk * 0.2);
     //         } else {
-    //             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **${char.name}** slammed the shot! He`, { atkMultiplier: 1.3 });
+    //             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **${char.name}** slammed the shot! He`, { atkMultiplier: 1.2 });
     //             // ATK buffs
-    //             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 2));
+    //             myStats.atk += Math.floor(myStats.atk * 0.1);
+    //             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1), 2));
     //         };
 
     //         return AbilityResponse.SUCCESS;
@@ -891,30 +902,31 @@ export const abilities: Record<number, Ability> = {
     //         myStats.zone = false;
 
     //         // Crit DMG Buff
-    //         mybuff.cd.push(new buffInfo("+", 0.25, 9999));
-    //         myStats.cd += 0.25;
+    //         //mybuff.cd.push(new buffInfo("+", 0.25, 9999));
+    //         //myStats.cd += 0.25;
 
     //         // Counter Chance
     //         myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-    //             if (Math.random() < 0.1) myStats.counter += 1;
+    //             //if (Math.random() < 0.1) myStats.counter += 1;
 
     //             // Zone (One-time)
     //             if ((myStats.hp / myStats.maxhp < 0.4) && !myStats.zone) {
     //                 notice.push(`\n💢 We have to win... **${char.name}** entered ZONE.`);
-    //                 let def_debuff = 0.2;
+    //                 let def_debuff = 0.15;
     //                 myStats.zone = true;
 
     //                 eStats.dodge -= 0.15;
     //                 if (eStats.dodge < 0) eStats.dodge = 0;
     //                 myStats.dodge += 0.15;
     //                 if (myStats.dodge > 1) myStats.dodge = 1;
-    //                 eStats.def -= Math.floor(eStats.def * def_debuff);
-    //                 eStats.mr -= Math.floor(eStats.mr * def_debuff);
+    //                 eStats.def -= Math.min(Math.floor(eStats.def * def_debuff), 660);
+    //                 eStats.mr -= Math.min(Math.floor(eStats.mr * def_debuff), 660);
 
-    //                 ebuff.dodge.push(new buffInfo("=", Math.min(eStats.dodge - 0.15, 0), 9999));
-    //                 mybuff.dodge.push(new buffInfo("=", Math.min(myStats.dodge + 0.15, 1), 9999));
-    //                 ebuff.def.push(new buffInfo("+", Math.floor(eStats.def * def_debuff), 9999));
-    //                 ebuff.mr.push(new buffInfo("+", Math.floor(eStats.mr * def_debuff), 9999));
+    //                 ebuff.dodge.push(new buffInfo("+", -0.15, 9999));
+    //                 mybuff.dodge.push(new buffInfo("+", 0.15, 9999));
+    //                 ebuff.def.push(new buffInfo("+", Math.min(Math.floor(eStats.def * def_debuff), 660), 9999));
+    //                 ebuff.mr.push(new buffInfo("+", Math.min(Math.floor(eStats.mr * def_debuff), 660), 9999));
+    //                 embed.setThumbnail("https://i.ibb.co/2YYgNyw5/c.png");
     //             };
 
     //             return AbilityResponse.SUCCESS;
@@ -923,22 +935,22 @@ export const abilities: Record<number, Ability> = {
     //         return AbilityResponse.SUCCESS;
     //     },
     //     party: async function (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-    //         let buff_multiplier = 1;
+    //         let buff_multiplier = 0.1;
     //         // Kuroko synergy
     //         if (myStats.name == "Tetsuya Kuroko") {
-    //             buff_multiplier = 2;
+    //             buff_multiplier = 0.2;
     //             notice.push(`\n✨ I won't let your ray of hope go out this time.`);
     //         };
 
     //         // General DMG buff
-    //         myStats.atk += Math.floor(myStats.atk * 0.1 * buff_multiplier);
+    //         myStats.atk += Math.floor(myStats.atk * buff_multiplier);
     //         mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * buff_multiplier), 9999));
 
     //         // Upon ally counter, follows up with additional hit
     //         matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
     //             if (target == myStats) {
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `=͟͟͞͞🏀 **${char.name}** followed up with an alley-oop! He`, { atkMultiplier: 0.3 * buff_multiplier });
-    //             }
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `=͟͟͞͞🏀 **${pStats.name}** followed up with an alley-oop! He`, { atkMultiplier: 0.3 * buff_multiplier });
+    //             };
     //         });
 
     //         return AbilityResponse.SUCCESS;
@@ -1621,6 +1633,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (this.pause > matchStats.round) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                myStats.sm += this.cost;
                 matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -1812,8 +1825,8 @@ export const abilities: Record<number, Ability> = {
     //     used: 0,
     //     cost: 0,
     //     pause: -10,
-    //     desc: "**Total Usage**: `NA`\n**Cost**: `NA`\n**Timeout**: `NA`\n**Role**: `DPS (Burst) / Support (Heal, Burst)`\n\nAs a personal physician of the Armed Detective Agency, Yosano has a unique ability that activates when one is near the state of death -- `❤️‍🩹 Thou shalt Not Die`.\nSuch is activated so that whenever she receives a fatal normal attack from the foe and successfully evades the lethal strike, she recovers **100%** max HP. This is decreased by **20%** every use, down to **20%** HP at most. She evades the next lethal hit (stackable) every **15** rounds. After that, she deals an unpredicted punch on the enemy (once per battle), dealing **250%** undodgeable DMG and reducing their DEF/MR by **25%** for the rest of the battle.\n\n*You think death lies in the apex of science? Anyone with such little regard for life will die by my hand.*\n\nIn a party, a successful death evasion will recover **100%** max HP. This is decreased by **20%** every use, down to **20%** HP at most",
-    //     shortdesc: "**Role**: `DPS/Support (Death Evasion, Burst heal)`\n\n__**Passive**__\n- Every **15** rounds: Evades the next lethal hit (stackable)\n- After evading the first lethal hit, deals **250%** DMG and decreases the enemy's DEF & MR by **25%** permanently\n\n__Core Mechanic__:\nAfter evading a lethal hit:\n- Recovers **100%** max HP\n- The scaling is lowered by **20%** with every use, down to **20%** at most\n\n__**Party**__ (👥)\nAfter evading a lethal hit:\n- Recovers **100%** max HP\n- The scaling is lowered by **20%** with every use, down to **20%** at most",
+    //     desc: "**Total Usage**: `NA`\n**Cost**: `NA`\n**Timeout**: `NA`\n**Role**: `DPS (Burst) / Support (Heal, Burst)`\n\nAs a personal physician of the Armed Detective Agency, Yosano has a unique ability that activates when one is near the state of death -- `❤️‍🩹 Thou shalt Not Die`.\nSuch is activated so that whenever she receives a fatal normal attack from the foe and successfully evades the lethal strike, she recovers **100%** max HP. This is decreased by **20%** every use, down to **20%** HP at most. She evades the next lethal hit (stackable) every **15** rounds. After that, she deals an unpredicted punch on the enemy (once per battle), dealing **220%** undodgeable DMG and reducing their DEF/MR by **20%** for the rest of the battle (Up to 2x damage).\n\n*You think death lies in the apex of science? Anyone with such little regard for life will die by my hand.*\n\nIn a party, a successful death evasion will recover **100%** max HP. This is decreased by **20%** every use, down to **20%** HP at most",
+    //     shortdesc: "**Role**: `DPS/Support (Death Evasion, Burst heal)`\n\n__**Passive**__\n- Every **15** rounds: Evades the next lethal hit (stackable)\n- After evading the first lethal hit, deals **220%** DMG and decreases the enemy's DEF & MR by **20%** permanently (Up to 2x damage)\n\n__Core Mechanic__:\nAfter evading a lethal hit:\n- Recovers **100%** max HP\n- The scaling is lowered by **20%** with every use, down to **20%** at most\n\n__**Party**__ (👥)\nAfter evading a lethal hit:\n- Recovers **100%** max HP\n- The scaling is lowered by **20%** with every use, down to **20%** at most",
     //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //         // Akiko Yosano
     //         myStats.akikoDeathEva = 5;
@@ -1828,7 +1841,7 @@ export const abilities: Record<number, Ability> = {
     //             if (matchStats.round % 15 === 0) {
     //                 myStats.evadeDeathStrike += 1;
     //                 myStats.evadeDeathChance += 1;
-    //                 notice.push(`Akiko gained **1x** Death Evasion! She will now evade the next ${myStats.evadeDeathStrike} lethal ${myStats.evadeDeathStrike > 1 ? `hits` : `hit`}`);
+    //                 notice.push(`\n**${char.name}** gained **1x** Death Evasion! She will now evade the next ${myStats.evadeDeathStrike} lethal ${myStats.evadeDeathStrike > 1 ? `hits` : `hit`}`);
     //             };
 
     //             return AbilityResponse.SUCCESS;
@@ -1839,23 +1852,25 @@ export const abilities: Record<number, Ability> = {
     //                maxUsage: 1,
     //                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
     //                    if (target == myStats) {
-    //                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** landed an unexpected punch! She`, { atkMultiplier: 2.5, dodge: false, combodmg: true, selfdmg: true, selfheal: true });
-    //                        eStats.def -= Math.min(Math.floor(eStats.def * 0.25), 660);
-    //                        eStats.mr -= Math.min(Math.floor(eStats.mr * 0.25), 660);
-    //                        ebuff.def.push(new buffInfo("+", -Math.min(Math.floor(eStats.def * 0.25), 660), 9999));
-    //                        ebuff.mr.push(new buffInfo("+", -Math.min(Math.floor(eStats.mr * 0.25), 660), 9999));
-    //                        return AbilityResponse.SUCCESS;
+    //                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** landed an unexpected punch! She`, { atkMultiplier: 2.2, dodge: false, combodmg: true, selfdmg: true, selfheal: true });
+    //                        eStats.def -= Math.min(Math.floor(eStats.def * 0.2), 660);
+    //                        eStats.mr -= Math.min(Math.floor(eStats.mr * 0.2), 660);
+    //                        ebuff.def.push(new buffInfo("+", -Math.min(Math.floor(eStats.def * 0.2), 660), 9999));
+    //                        ebuff.mr.push(new buffInfo("+", -Math.min(Math.floor(eStats.mr * 0.2), 660), 9999));
+    //                        return true;
     //                    };
     //                }
     //            });
 
     //         // Every Death Evade restore 100% max HP, down for 20% with every use, down to 20% at most
     //         matchStats.on("deathEvade", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-    //             let hpBefore = myStats.hp;
-    //             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.2 * myStats.akikoDeathEva), {}); // myStats.akikoDeathEva shldnt be lower than 1
-    //             notice.push(`\n❤️‍🩹 **__Thou Shalt Not Die!__** Yosano recovered ${myStats.hp - hpBefore}`);
-    //             if (myStats.akikoDeathEva >= 2) myStats.akikoDeathEva--;
-    //             return AbilityResponse.SUCCESS;
+    //             if (target === myStats) {
+    //                 let hpBefore = myStats.hp;
+    //                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.2 * myStats.akikoDeathEva), {}); // myStats.akikoDeathEva shldnt be lower than 1
+    //                 notice.push(`\n❤️‍🩹 **__Thou Shalt Not Die!__** ${char.name} recovered ${myStats.hp - hpBefore} HP`);
+    //                 if (myStats.akikoDeathEva >= 2) myStats.akikoDeathEva--;
+    //                 return AbilityResponse.SUCCESS;
+    //             };
     //         });
 
     //         return AbilityResponse.SUCCESS;
@@ -1864,11 +1879,13 @@ export const abilities: Record<number, Ability> = {
     //         myStats.akikoDeathEva = 5;
     //         // Every Death Evade restore 100% max HP, down for 20% with every use, down to 20% at most
     //         matchStats.on("deathEvade", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-    //             let hpBefore = myStats.hp;
-    //             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.2 * myStats.akikoDeathEva), {}); // myStats.akikoDeathEva shldnt be lower than 1
-    //             notice.push(`\n❤️‍🩹 **__Thou Shalt Not Die!__** Yosano recovered ${myStats.hp - hpBefore}`);
-    //             if (myStats.akikoDeathEva >= 2) myStats.akikoDeathEva--;
-    //             return AbilityResponse.SUCCESS;
+    //             if (target === myStats) {
+    //                 let hpBefore = myStats.hp;
+    //                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.2 * myStats.akikoDeathEva), {}); // myStats.akikoDeathEva shldnt be lower than 1
+    //                 notice.push(`\n❤️‍🩹 **__Thou Shalt Not Die!__** ${char.name} recovered ${myStats.hp - hpBefore} HP`);
+    //                 if (myStats.akikoDeathEva >= 2) myStats.akikoDeathEva--;
+    //                 return AbilityResponse.SUCCESS;
+    //             };
     //         });
 
     //         return AbilityResponse.SUCCESS;
@@ -2088,7 +2105,7 @@ export const abilities: Record<number, Ability> = {
                 // Lose 50% current HP instantly & 5% current HP every round
                 myStats.hp -= Math.floor(myStats.hp * 0.5);
                 mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * 0.05), 9999));
-                notice.push(`\n<:dalusrose:1387007950601719908> Dalus summoned **Rosie** for the rest of the fight`);
+                notice.push(`\n🌹 Dalus summoned **Rosie** for the rest of the fight`);
 
                 // Permanent mana loss & dmg boost effect
                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2105,7 +2122,7 @@ export const abilities: Record<number, Ability> = {
                     if (eStats.maxhp * 0.05 > myStats.atk * dmgLimit) {
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(Math.min(eStats.maxhp * 0.05 - myStats.atk * dmgLimit, myStats.maxhp * (myStats.dalusPrime ? 0.12 : 0.07))), {});
                     };
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:rosie:1387006066566627328> **Rosie**`, { overwriteDamage: dmg, magicDamage: true, dodge: false });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:rosie:1408505520641409127> **Rosie**`, { overwriteDamage: dmg, magicDamage: true, dodge: false });
 
                     return AbilityResponse.SUCCESS;
                 }, 9999));
@@ -2119,7 +2136,7 @@ export const abilities: Record<number, Ability> = {
                 } else {
                     myStats.hp -= Math.floor(myStats.hp * 0.2);
                     this.pause = matchStats.round + 5;
-                    mybuff.mg.push(new buffInfo("+", 20, 4));
+                    mybuff.mg.push(new buffInfo("+", 20, 3));
                     notice.push("\n✨ **Dalus** further increased their mana regeneration by **20** 💦");
                 };
             };
@@ -2127,7 +2144,7 @@ export const abilities: Record<number, Ability> = {
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             myStats.dalusPrime = (myStats.shell === "broken") ? false : true; // false = Past, true = Prime
-            const msg = (!myStats.dalusPrime) ? `\n<:brokenshell:1405524630520987771> **${char.name}** decides to hold onto the last bit of memories left...` : `\n<:dalusrose:1387007950601719908> The nightmare has given an impetus to **${char.name}**. Havoc shall wreck.`;
+            const msg = (!myStats.dalusPrime) ? `\n<:brokenshell:1405524630520987771> **${char.name}** decides to hold onto the last bit of memories left...` : `\n🌹 The nightmare has given an impetus to **${char.name}**. Havoc shall wreck.`;
             notice.push(msg);
             myStats.evadeDeathStrike ??= 0;
             myStats.evadeDeathChance ??= 0;
@@ -2146,10 +2163,10 @@ export const abilities: Record<number, Ability> = {
                         myStatsFixed.hp = 1;
                         myStats.maxhp = 1;
                         mybuff.mg.push(new buffInfo("+", 20, 5));
-                        notice.push(`\n<:dalusrose:1387007950601719908> The show must... go on. **Dalus** gained a **${shgain}** HP shield`);
-                        return AbilityResponse.SUCCESS;
+                        notice.push(`\n🌹 The show must... go on. **Dalus** gained a **${shgain}** HP shield`);
+                        return true;
                     };
-                }
+                },
             });
             if (myStats.dalusPrime) {
                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2169,7 +2186,7 @@ export const abilities: Record<number, Ability> = {
         },
         party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
-            const dmgScale = names.includes("Kisogi") ? 0.15 : 0.1, critChance = names.includes("Kisogi") ? 1 : Math.random(), dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(myStats.atk * dmgScale) : 0, desc = names.includes("Kisogi") ? `<:rosie:1387006066566627328> **Rosie**` : `**✨ Kisogi**`;
+            const dmgScale = names.includes("Kisogi") ? 0.15 : 0.1, critChance = names.includes("Kisogi") ? 1 : Math.random(), dmg = (eStats.def + eStats.mr < 100000) ? Math.floor(myStats.atk * dmgScale) : 0, desc = names.includes("Kisogi") ? `**✨ Kisogi**` : `<:rosie:1408505520641409127> **Rosie**`;
             // Dalus unique effects
             if (!names.includes("Kisogi")) {
                 eStats.def -= Math.min(Math.floor(eStats.def * 0.2), 660);
@@ -2583,42 +2600,20 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 30,
         roundUsed: 0,
+        appliedIce: 0,
         buffer: undefined,
+        messageEditTimeout: undefined,
         desc: "**Total Usage**: `unlimited`\n**Mana**: `30`\\💧\n**Timeout**: `no`\n**Role**: `DPS`\n\nAneira, wielding her ancient frost magic, has an ability that leaves her enemies frozen in fear and ice. Once activated, her ability delivers a chilling attack. Starting with **50%** damage, Aneira gains 1 additional icicle every round (up to 7), each adding **+25%** more to her active's damage.\n\nTrying to block her freezing attacks is futile, but if her opponent can miraculously dodge her frozen fury, the spell simply fizzles out. Should the attack land however, Aneira's enemy gets encased in ice, decreasing their defense by **20%**. Moreover, the action will be considered Timeout false, allowing Aneira to make another action that round.\n\nAdditionally, Aneira gains **+25%** class xp from her battles.",
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `30 💧`\n**Timeout**: `no`\n**Role**: `DPS (Freeze, Progressive DMG-boost)`\n\n__**Passive**__\n- Gains **+25%** class XP\n\n__**Active**__ (✨)\n- Deals **50%** DMG\n- Increases this attack's DMG scaling by **25%** (Up to **175%**) for every round it wasn't used\n- If the attack hits, the enemy is frozen (**-20%** DEF & MR)\n-# This will leave the round unchanged as well",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
 
-            //! Slow ability, have to use mana early to prevent bugs 
+            //! Slow ability, have to use mana early to prevent bugs
             myStats.sm -= this.cost;
 
             // Aneira
             const dmg = (!eStats.dodge && Math.random() < eStats.br) ? notice.push(`\n💨 **${enemy.name}** dodged the attack!`) : dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.5 + Math.min(0.25 * (matchStats.round - this.roundUsed), 1.75), magicDamage: true, block: false });
             this.roundUsed = matchStats.round;
-
-            // if (dmg) { // Don't freeze if dodged
-            //     matchStats.turn = matchStats.turnSkill ? 0 : 1;
-
-            //     eStats.def = Math.floor(eStats.def * 0.8); // Decrease DEF
-
-            //     const path = "icy-" + eStats.image.split("").filter((e) => !" /:\\*?!<>|".includes(e)).join("").toLowerCase();
-
-            //     // If it doesn't exist, generate it
-            //     if (!fs.existsSync(`./Images/${path}`)) {
-            //         await generateImage(eStats.image, "https://i.imgur.com/vzFuaNd.png", path);
-            //     };
-
-            //     const { AttachmentBuilder } = require('discord.js');
-            //     const file = new AttachmentBuilder(`./Images/${path}`);
-            //     message.edit({ files: [file] });
-            //     embed.setImage(`attachment://${path}`);
-
-            //     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            //         message.edit({ files: [] });
-            //         embed.setImage(eStats.image);
-            //     }));
-
-            //     notice.push(`\n✨ **${enemy.name}** was frozen for 1 round!`);
-            // };
+            const appliedIce = this.appliedIce++;
 
             if (dmg) {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -2629,23 +2624,50 @@ export const abilities: Record<number, Ability> = {
                     const canvas = createCanvas(225, 350);
                     const ctx = canvas.getContext('2d');
 
-                    const enemyImage = await loadImage(eStats.image);
-                    const iceLayer = await loadImage("https://i.imgur.com/vzFuaNd.png");
+                    const iceLayer = "https://i.ibb.co/d4XzMzrW/vzFuaNd.png";
+                    loadedImages[eStats.image] ||= await loadImage(eStats.image);
+                    loadedImages[iceLayer] ||= await loadImage(iceLayer);
 
-                    ctx.drawImage(enemyImage, 0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(iceLayer, 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(loadedImages[eStats.image] || await loadImage(eStats.image), 0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(loadedImages[iceLayer] || await loadImage(iceLayer), 0, 0, canvas.width, canvas.height);
 
                     // Convert to buffer and upload
                     const buffer = canvas.toBuffer('image/jpeg');
                     this.buffer = new AttachmentBuilder(buffer);
+
+                    // Clean up after 5 minutes
+                    setTimeout(() => {
+                        delete loadedImages[eStats.image];
+                        // delete loadedImages[iceLayer];           // --- Ice layer can stay loaded
+                    }, 5 * 60 * 1000);
                 };
 
-                message.edit({ files: [this.buffer] });
-                embed.setImage(`attachment://file.jpg`);
+                // Debounce message editing to prevent rate limits
+                if (this.messageEditTimeout) {
+                    clearTimeout(this.messageEditTimeout);
+                }
+                this.messageEditTimeout = setTimeout(async () => {
+                    try {
+                        await message.edit({ files: [this.buffer] });
+                        embed.setImage(`attachment://file.jpg`);
+                    } catch (error) {
+                        console.error('Failed to edit message with ice effect:', error);
+                    }
+                }, appliedIce === 0 ? 0 : 1200);
 
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    message.edit({ files: [] });
-                    embed.setImage(eStats.image);
+                    // Debounce message editing for cleanup as well
+                    if (this.messageEditTimeout) {
+                        clearTimeout(this.messageEditTimeout);
+                    }
+                    this.messageEditTimeout = setTimeout(async () => {
+                        try {
+                            await message.edit({ files: [] });
+                            embed.setImage(eStats.image);
+                        } catch (error) {
+                            console.error('Failed to edit message to remove ice effect:', error);
+                        }
+                    }, 1200);
 
                     return AbilityResponse.SUCCESS;
                 }));
@@ -2653,13 +2675,23 @@ export const abilities: Record<number, Ability> = {
                 notice.push(`\n✨ **${enemy.name}** was frozen!`);
             };
 
-            //! Add the failsafe back 
+            //! Add the failsafe back
             myStats.sm += this.cost;
 
             return AbilityResponse.SUCCESS;
         },
         passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, message, ...list) => {
             matchStats.xpboost += 0.25;
+
+            const iceLayer = "https://i.ibb.co/d4XzMzrW/vzFuaNd.png";
+            loadedImages[eStats.image] ||= await loadImage(eStats.image);
+            loadedImages[iceLayer] ||= await loadImage(iceLayer);
+
+            // Clean up after 5 minutes
+            setTimeout(() => {
+                delete loadedImages[eStats.image];
+                // delete loadedImages[iceLayer];           // --- Ice layer can stay loaded
+            }, 5 * 60 * 1000);
 
             return AbilityResponse.SUCCESS;
         },
@@ -2940,8 +2972,8 @@ export const abilities: Record<number, Ability> = {
     //     used: 0,
     //     cost: 0,
     //     roundUsed: 0,
-    //     shortdesc: "**Uses**: `Unlimited // 2`\n**Cost**: `Every 5 Blitz automatically // 0 💧 manually to quit` \n**Timeout**: `Automatic / No`\n**Role**: `DPS (Initiative, Blitz, Dodge+Crit)`\n\n__**Passive**__\n- Gains **5x** `Initiative` upon entering battle\n- Without `Initiative`: loses **4%** current HP every turn.\n- Dodging grants him **3x** `Initiative`\n- Dealing a critical strike: Grants **1x** `Blitz` and **+2%** counter chance, up to **20%**.\n\n`Initiative` : > Decreases by **1x** after every round. The inflicted has **+5%** critical rate for every stack.\n\n`Blitz` : > At the start of the round, when **4x** are available, consumes **4x** and enters the __FLOW state__ that round. \n\n__Core Mechanic__: FLOW state:\n- If he already has `Initiative`: Gains **25%** block rate, **50%** critical DMG, and decreases the enemy's DEF/MR by **25%** for that turn\n- Else, grants **5x** `Initiative`.\n\n__**Active**__ (:sparkles:)\nCONDITION: After every **4** times of him entering __FLOW state__:\n- Automatically followup by casting his Active -- Five-Shot Fake Valley Shot immediately, dealing **150%** DMG.\n- However, if you force him by using `✨` manually, it will do nothing. Twice and he'll leave the battle (considered a loss).\n\n__**Party**__ (:busts_in_silhouette:)\n- **20%** chance for the ally to counter every round (stackable)",
-    //     desc: "**Total Usage**: `Unlimited // 2`\n**Cost**: `Every 5 Blitz automatically // 0 💧 manually to quit` \n**Timeout**: `Automatic / No`\n**Role**: `DPS (Initiative, Blitz, Dodge+Crit)`\n\nWith speedy reflexes and a lack of motivation to spend time for trivial matters, Nagi gains **5x** `Initiative` upon entering battle. Without `Initiative`, he becomes consumed by boredom and loses **4%** current HP every turn.\n\nDodging grants him **3x** `Initiative`, while dealing a critical strike grants him **1x** `Blitz` and **+2%** counter chance, up to **20%**.\n\n`Initiative` : Decreases by **1x** after every round. The inflicted has **+5%** critical rate for every stack.\n\n`Blitz` : At the start of the round, when **4x** are available, consumes **4x** and enters the __FLOW state__ that round. If he already has `Initiative`, he gains **25%** block rate, **50%** critical DMG, and decreases the enemy's DEF/MR by **25%** for that turn. Else, grants **5x** `Initiative`.\n\nAfter every **4** times of him entering __FLOW state__, he will cast his Active -- Five-Shot Fake Valley Shot immediately, dealing **150%** DMG.\n\nHowever, if you force him by using `✨` manually, something wrong might happen~\n-# Do it twice and he'll leave. Just don't-!\n\nIn a party, he has a **20%** chance to intervene every turn, attempting a Zero Reset Turn, allowing the ally to counter the next incoming hit.",
+    //     shortdesc: "**Uses**: `Unlimited // 2`\n**Cost**: `Every 5 Blitz automatically // 0 💧 manually to quit` \n**Timeout**: `Automatic / No`\n**Role**: `DPS (Initiative, Blitz, Dodge+Crit)`\n\n__**Passive**__\n- Gains **5x** `Initiative` upon entering battle\n- Without `Initiative`: loses **4%** current HP every turn.\n- Dodging or countering grants him **3x** `Initiative`\n- Dealing a critical strike: Grants **1x** `Blitz` and **+2%** counter chance, up to **20%**.\n\n`Initiative` : > Decreases by **1x** after every round. The inflicted has **+5%** critical rate for every stack.\n\n`Blitz` : > At the start of the round, when **4x** are available, consumes **4x** and enters the __FLOW state__ that round. \n\n__Core Mechanic__: FLOW state:\n- If he already has `Initiative`: Gains **25%** block rate, **50%** critical DMG, and decreases the enemy's DEF/MR by **25%** for that turn\n- Else, grants **5x** `Initiative`.\n\n__**Active**__ (:sparkles:)\nCONDITION: After every **4** times of him entering __FLOW state__:\n- Automatically followup by casting his Active -- Five-Shot Fake Valley Shot immediately, dealing **150%** DMG.\n- However, if you force him by using `✨` manually, it will do nothing. Twice and he'll leave the battle (considered a loss).\n\n__**Party**__ (:busts_in_silhouette:)\n- **20%** chance for the ally to counter every round (stackable)",
+    //     desc: "**Total Usage**: `Unlimited // 2`\n**Cost**: `Every 5 Blitz automatically // 0 💧 manually to quit` \n**Timeout**: `Automatic / No`\n**Role**: `DPS (Initiative, Blitz, Dodge+Crit)`\n\nWith speedy reflexes and a lack of motivation to spend time for trivial matters, Nagi gains **5x** `Initiative` upon entering battle. Without `Initiative`, he becomes consumed by boredom and loses **4%** current HP every turn.\n\nDodging and countering grants him **3x** `Initiative`, while dealing a critical strike grants him **1x** `Blitz` and **+2%** counter chance, up to **20%**.\n\n`Initiative` : Decreases by **1x** after every round. The inflicted has **+5%** critical rate for every stack.\n\n`Blitz` : At the start of the round, when **4x** are available, consumes **4x** and enters the __FLOW state__ that round. If he already has `Initiative`, he gains **25%** block rate, **50%** critical DMG, and decreases the enemy's DEF/MR by **25%** for that turn. Else, grants **5x** `Initiative`.\n\nAfter every **4** times of him entering __FLOW state__, he will cast his Active -- Five-Shot Fake Valley Shot immediately, dealing **150%** DMG.\n\nHowever, if you force him by using `✨` manually, something wrong might happen~\n-# Do it twice and he'll leave. Just don't-!\n\nIn a party, he has a **20%** chance to intervene every turn, attempting a Zero Reset Turn, allowing the ally to counter the next incoming hit.",
     //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, ...list) {
     //         // Seishirou Nagi: https://discord.com/channels/927257132624130119/1238325252946395217
     //         matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -3031,13 +3063,13 @@ export const abilities: Record<number, Ability> = {
     //         // Dodge / Counter = +3 Initiative
     //         matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
     //             if (target === myStats) {
-    //                 myStats.initiative += 1;
+    //                 myStats.initiative += 3;
     //             };
     //         });
 
     //         matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
     //             if (target === myStats) {
-    //                 myStats.initiative += 1;
+    //                 myStats.initiative += 3;
     //             };
     //         });
 
@@ -3258,8 +3290,8 @@ export const abilities: Record<number, Ability> = {
         cost: 80,
         pause: 0,
         bladeUsedActive: false,
-        desc: "**Total Usage**: `10 (CD: 4)`\n**Cost**: `80`\\💧\n**Timeout**: `Yes`\n**Role**: `DPS`\n\nCursed with self-healing immortality, Blade works with Kafka and Silverwolf as a stellaron hunter, while seeking to end his own suffering by eternal death. When he is below **50%** HP in battle, he takes **40%** less DMG from damage instances. This is unstackable with other damage mitigation effects, where only the strongest one takes effect.\n\nUpon taking damage from damage instances or countering a hit, gains **1x** `Charge`. Upon having **4x** or more `Charge`, consumes **4x** to unleash Shuhu's Gift. This increases his ATK by **15%** of recorded DMG taken (Up to 50%) for that turn, and recovers his HP by **15%** of recorded DMG taken (Up to 50%), before dealing **80%** undodgeable DMG.\n\nUsing his active deals **30%** missing HP to the enemy, before lowering max HP by **50%** for **4** turns. Moreover, he will also self-inflict **5%** DMG to himself for the next **4** rounds.\n\nIn a party, he intervenes every **4** rounds, dealing **60%** DMG to the enemy before lowering their DEF & MR by **20%** for that round (Max 2x damage). However, if the ally is Dan Heng, or the fight reaches round **40**, he becomes marastruck, additionally dealing **15%** DMG to the ally every **4th** turn. This marastruck effect however can be completely nullified if Kafka is in the team.",
-        shortdesc: "**Uses**: `10`\n**Cooldown**: `4 rounds`\n**Cost**: `80 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Charge, Burst survival)`\n\n__**Passive**__\nWhen below **50%** HP:\n- **+40%** DMG mitigation (Unstackable : Only the strongest one takes effect) \n- Upon receiving a damage instance or countering a hit, gains **1x** `Charge`\n\nUpon reaching **4x** or more `Charge`, consumes **4x** to activate Shuhu's Gift:\n- Increases ATK by **15%** of recorded DMG taken for that turn (Up to **50%**)\n- Recovers HP by **15%** of recorded DMG taken (Up to **50%** max HP)\n- Deals **80%** undodgeable DMG\n\n__**Active**__ (✨)\n- Deals **30%** missing HP\nFor **4** turns:\n- Decreases max HP by **50%**\n- Self-inflicts **5%** undodgeable DMG (counts as a damage instance)\n\n__**Party**__ (👥)\nIntervenes every **4** rounds\n- Deals **60%** DMG to the enemy\n- Decreases their DEF & MR by **20%** for that round (Max 2x damage)\n\nIf ally is Dan Heng, or the fight reaches round **40**:\n- Becomes Mara struck: additionally deals **15%** DMG to the ally every **4th** round\n- This marastruck effect can be nullified when Kafka is in the team",
+        desc: "**Total Usage**: `10 (CD: 4)`\n**Cost**: `80`\\💧\n**Timeout**: `Yes`\n**Role**: `DPS`\n\nCursed with self-healing immortality, Blade works with Kafka and Silverwolf as a stellaron hunter, while seeking to end his own suffering by eternal death. When he is below **50%** HP in battle, he takes **40%** less DMG from damage instances. This is unstackable with other damage mitigation effects, where only the strongest one takes effect.\n\nUpon taking damage from damage instances or countering a hit, gains **1x** `Charge`. Upon having **4x** or more `Charge`, consumes **4x** to unleash Shuhu's Gift. This increases his ATK by **15%** of recorded DMG taken (Up to 50%) for that turn, and recovers his HP by **15%** of recorded DMG taken (Up to 50%), before dealing **80%** undodgeable DMG. (Up to once every round)\n\nUsing his active deals **30%** missing HP to the enemy, before lowering max HP by **50%** for **4** turns. Moreover, he will also self-inflict **5%** DMG to himself for the next **4** rounds.\n\nIn a party, he intervenes every **4** rounds, dealing **60%** DMG to the enemy before lowering their DEF & MR by **20%** for that round (Max 2x damage). However, if the ally is Dan Heng, or the fight reaches round **40**, he becomes marastruck, additionally dealing **15%** DMG to the ally every **4th** turn. This marastruck effect however can be completely nullified if Kafka is in the team.",
+        shortdesc: "**Uses**: `10`\n**Cooldown**: `4 rounds`\n**Cost**: `80 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Charge, Burst survival)`\n\n__**Passive**__\nWhen below **50%** HP:\n- **+40%** DMG mitigation (Unstackable : Only the strongest one takes effect) \n- Upon receiving a damage instance or countering a hit, gains **1x** `Charge`\n\nUpon reaching **4x** or more `Charge`, consumes **4x** to activate Shuhu's Gift (Up to once every round):\n- Increases ATK by **15%** of recorded DMG taken for that turn (Up to **50%**)\n- Recovers HP by **15%** of recorded DMG taken (Up to **50%** max HP)\n- Deals **80%** undodgeable DMG\n\n__**Active**__ (✨)\n- Deals **30%** missing HP\nFor **4** turns:\n- Decreases max HP by **50%**\n- Self-inflicts **5%** undodgeable DMG (counts as a damage instance)\n\n__**Party**__ (👥)\nIntervenes every **4** rounds\n- Deals **60%** DMG to the enemy\n- Decreases their DEF & MR by **20%** for that round (Max 2x damage)\n\nIf ally is Dan Heng, or the fight reaches round **40**:\n- Becomes Mara struck: additionally deals **15%** DMG to the ally every **4th** round\n- This marastruck effect can be nullified when Kafka is in the team",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Blade (HSR)
             if (this.pause > matchStats.round) {
@@ -3298,6 +3330,7 @@ export const abilities: Record<number, Ability> = {
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             myStats.charge ??= 0;
             myStats.damageTaken ??= 0;
+            myStats.vengeanceLastRound = 0;
 
             matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
                 if (target === myStats) {
@@ -3305,7 +3338,8 @@ export const abilities: Record<number, Ability> = {
                 };
 
                 // Shuhu's Gift
-                if (myStats.charge >= 4) {
+                if (myStats.charge >= 4 && myStats.vengeanceLastRound !== matchStats.round) {
+                    myStats.vengeanceLastRound = matchStats.round;
                     myStats.charge -= 4;
                     const bonus = Math.floor(myStats.damageTaken * 0.15);
                     myStats.atk += Math.min(Math.floor(myStats.atk * 0.5), bonus);
@@ -3321,7 +3355,8 @@ export const abilities: Record<number, Ability> = {
                 };
 
                 // Shuhu's Gift
-                if (myStats.charge >= 4) {
+                if (myStats.charge >= 4 && myStats.vengeanceLastRound !== matchStats.round) {
+                    myStats.vengeanceLastRound = matchStats.round;
                     myStats.charge -= 4;
                     const bonus = Math.floor(myStats.damageTaken * 0.15);
                     myStats.atk += Math.min(Math.floor(myStats.atk * 0.5), bonus);
@@ -3333,7 +3368,8 @@ export const abilities: Record<number, Ability> = {
 
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if ((myStats.hp / myStats.maxhp < 0.5 || this.bladeUsedActive) && myStats.damageReduction < 0.4) myStats.damageReduction = 0.4;
-                if (myStats.charge >= 4) {
+                if (myStats.charge >= 4 && myStats.vengeanceLastRound !== matchStats.round) {
+                    myStats.vengeanceLastRound = matchStats.round;
                     myStats.charge -= 4;
                     const bonus = Math.floor(myStats.damageTaken * 0.15);
                     myStats.atk += Math.min(Math.floor(myStats.atk * 0.5), bonus);
@@ -4516,6 +4552,181 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
+    // "17772": {
+    //     usage: 5,
+    //     used: 0,
+    //     cost: 0,
+    //     pause: -7,
+    //     desc: "**Total Usages**: `5 (CD: 10)`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Type**: DPS\n\nEntering battle, he converts all MD into ATK (Up to **+12%** ATK), and always *deals physical DMG*. His starting mana and mana regeneration is set to **0**. On top of that, he has **10** cream puffs (<:creampuff:1409383229844095137>). So long he has creampuffs, he diverts his attention on guarding them, having **-15%** critical rate & critical DMG, but **+30%** block rate. At the start of every round, he consumes **1x** cream puff, increasing ATK by **2%**. Once all creampuffs are consumed/lost, he will no longer guard.\n\nAfter **5** DEFENDs, he can block attacks with his muscles even while attacking (Up to 30% chance). After another DEFEND, he consumes all cream puffs, losing and transferring every **3%** block rate to **1%** personal counter chance (Up to 33%), lasting permanently.\n\nIf he no longer has creampuffs, he may use his ability to enter Unlimited Physical Mode for **6** rounds, *transferring all personal counter chance to critical rate, and all dodge rate to critical DMG*. While in this form, he contracts his muscle, locking any incoming attacks. Upon being attacked after mash makes an action (e.g. via counter, retaliate, using a skill), the enemy loses momentum and is *knocked out this round, unable to do a normal ATK*.\nWhen he exits the mode, he decreases his DEF & MR by **15%** permanently.\n\nIn a party, he has a **75%** chance of intervening the battle every round, offering teammates a creampuff, each increasing their ATK by **2%** permanently (cumulative). Once **10** creampuffs are offered, instead has a **12%** chance to intervene every round, countering a hit that round (stackable).",
+    //     shortdesc: "__**Usage**__: `5 (CD: 10)` | __**Cost**__: `0 💧` | __**Type**__: `DPS (Physical, Block/Counter, Progressive)` | __**Timeout**__: `Yes`\n\n__**Passive**__ :\n- Converts all MD → ATK on entry (max **+12%**). Always deals Physical DMG. Mana & regen = **0**.\n- Starts with **10** `Cream Puffs`: while holding → **-15%** Crit Rate & Crit DMG, **+30%** Block. Each round consumes **1**, giving **+2%** ATK. No guarding once all are gone.\n- After **5** DEFENDs: can block while attacking (max 30%).\n- After **6th** DEFEND: consumes all `Cream Puffs` → every **3%** Block → **1%** Counter Chance (max 33%, permanent).\n\n__**Active (:sparkles:)**__ :\n- Should have no `Cream Puffs` →  triggers Unlimited Physical Mode (**6** rounds):\n- Converts Counter Chance → Crit Rate, Dodge → Crit DMG.\n- Enemy is stunned(cannot do normal ATK that round) if the enemy hits Mash after he makes an action (e.g. Counter, retaliate, using a damaging skill)\n- Exits with **-15%** permanent DEF & MR.\n\n__**Party effect**__(:busts_in_silhouette:): **75%** chance each round to give ally **1** `Cream Puff` (+2% ATK perm, stacks). After **10** are given → instead **12%** chance to counter once per round (stackable).",
+    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+    //         // Mash Burnedead
+    //         if (this.pause > matchStats.round) {
+    //             myStats.sm += this.cost;
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             matchStats.sendWarning({ content: `Mash Burnedead needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+    //             this.used--;
+    //             return AbilityResponse.FAILURE;
+    //         };
+
+    //         if (myStats.creampuff > 0) {
+    //             myStats.sm += this.cost;
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             matchStats.sendWarning({ content: `Mash Burnedead needs to have no creampuffs to use this ability`, ephemeral: true });
+    //             this.used--;
+    //             return AbilityResponse.FAILURE;
+    //         };
+
+    //         this.pause = matchStats.round + 10;
+
+    //         const domainLast = 6;
+
+    //         // Convert all personal counterChance to critical rate
+    //         myStats.mashCounterChanceBefore = myStats.mashCounterChance;
+    //         myStats.cr += myStats.mashCounterChance;
+    //         myStats.mashCounterChance = 0;
+
+    //         // Convert all dodge rate to critical damage
+    //         myStats.cd += myStats.dodge;
+    //         myStats.dodge = 0;
+
+    //         // Ultimate Physical Mode Stance
+    //         myStats.mashStance = 1;
+
+    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             // Mode effects                
+    //             myStats.cr += myStats.mashCounterChanceBefore;
+    //             myStats.cd += myStats.dodge;
+    //             myStats.dodge = 0;
+    //             return AbilityResponse.SUCCESS;
+    //         }, domainLast));
+
+    //         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             // Regain personal counterChance
+    //             myStats.mashCounterChance = myStats.mashCounterChanceBefore;
+
+    //             // Reset stance
+    //             myStats.mashStance = 0;
+
+    //             // Lose 15% DEF & MR permanently
+    //             myStats.def -= Math.floor(myStats.def * 0.15);
+    //             myStats.mr -= Math.floor(myStats.mr * 0.15);
+    //             mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.15), 9999));
+    //             mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.15), 9999));
+    //             return AbilityResponse.SUCCESS;
+    //         }));
+
+    //         notice.push(`\n💪🏻 **${char.name}** entered Unlimited Physical Mode for **${domainLast}** rounds!`);
+
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //         myStats.mashCounterChance = 0;
+    //         myStats.mashStance = 0; // 0 = Default ; 1 = Unlimited Physical Mode
+    //         myStats.defUsed = 0;
+
+    //         myStats.counter ??= 0;
+    //         if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
+
+    //         myStats.creampuff ??= 0;
+    //         myStats.creampuff += 10; // Unique stack
+
+    //         myStats.sm = 0;
+    //         myStats.mg = 0;
+    //         mybuff.mg.push(new buffInfo("=", 0, 9999)); // Never gain mana
+    //         myStats.mana = 1;
+
+    //         const atkBuff = Math.floor(Math.min(myStats.md, myStats.atk * 0.12));
+    //         myStats.atk += atkBuff;
+    //         mybuff.atk.push(new buffInfo("+", atkBuff, 9999)); // Convert all MD to ATK, up to +12%
+    //         myStats.md = 0;
+    //         mybuff.md.push(new buffInfo("=", 0, 9999));
+    //         myStats.mdChance = -1; // Can never deal magical damage
+    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
+
+    //             if (myStats.creampuff > 0) {
+    //                 myStats.creampuff--;
+    //                 myStats.atk += Math.floor(myStats.atk * 0.02);
+    //                 mybuff.atk.push(new buffInfo("*", 1.02, 9999)); // Boost ATK by 2%
+    //                 if (myStats.creampuff > 0) {
+    //                     myStats.cr -= 0.15;
+    //                     if (myStats.cr < 0) myStats.cr = 0;
+    //                     myStats.cd -= 0.15;
+    //                     myStats.br += 0.3;
+    //                 } else {
+    //                     notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** is out of creampuffs and exited Guard Stance.`);
+    //                 };
+    //             };
+    //             return AbilityResponse.SUCCESS;
+    //         }, 9999));
+
+    //         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+    //             if (caster === eStats && myStats.mashStance === 1) {
+    //                 if (options.damage) {
+    //                     eStats.timeFrozen = true;
+    //                     eStats.frozenMessage = "was knocked out";
+
+    //                     // When freeze is over
+    //                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                         eStats.timeFrozen = false;
+
+    //                         return AbilityResponse.SUCCESS;
+    //                     }));
+    //                 };
+    //             };
+    //         });
+
+    //         matchStats.on("DEF", {
+    //                 maxUsage: 6,
+    //                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+    //                     if (caster == myStats) {
+    //                         myStats.defUsed++;
+    //                         if (myStats.defUsed === 5) {
+    //                             myStats.brCap = 0.3;
+    //                             notice.push(`\n✨ Mash will now passively block attacks`);
+    //                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                                 myStats.usedBlockRound = matchStats.round;
+    //                                 return AbilityResponse.SUCCESS;
+    //                             }, 9999));
+    //                         } else if (myStats.defUsed === 6) {
+    //                             myStats.creampuff = 0;
+    //                             const ccGain = Math.min((myStats.br / 3), 0.33);
+    //                             myStats.mashCounterChance += ccGain
+    //                             myStats.br = 0;
+    //                             mybuff.br.push(new buffInfo("=", 0, 9999));
+    //                             notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** lost all creampuffs and converted block rate to **${Math.floor(ccGain * 100)}%** counter chance.`);
+    //                         };
+    //                         return true;
+    //                     };
+    //                 },
+    //             });
+
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //         myStats.creampuff ??= 0;
+    //         myStats.counter ??= 0;
+            
+    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             // 75% chance to offer creampuff, up to 10
+    //             if (0.75 > Math.random() && myStats.creampuff < 10) {
+    //                 myStats.creampuff++;
+    //                 notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** has received a creampuff and have ${myStats.creampuff} creampuffs.`)
+    //             };
+    //             if (myStats.creampuff > 9) {
+    //                 if (0.12 > Math.random()) myStats.counter++;
+    //             };
+
+    //             // Gain 2% ATK for every creampuff
+    //             myStats.atk += Math.floor(myStats.atk * 0.02 * myStats.creampuff);
+
+    //             return AbilityResponse.SUCCESS;
+    //         }, 9999));
+
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    // },
     "18011": {
         usage: 9999,
         used: 0,
@@ -5418,10 +5629,13 @@ export const abilities: Record<number, Ability> = {
                     callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                         if (target == myStats) {
                             myStats.cr += 0.02;
+                            mybuff.cr.push(new buffInfo("+", 0.02, 9999));
                             if (myStats.cr > 1) myStats.cr = 1;
                             myStats.cd += 0.03;
-                        }
-                    }
+                            mybuff.cd.push(new buffInfo("+", 0.03, 9999));
+                            return true;
+                        };
+                    },
                 });
             } /* else if (this.rolledWisp === 4) {
                 // Centauri
@@ -5755,6 +5969,168 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
+    // "22309": {
+    //     usage: 9999,
+    //     used: 0,
+    //     cost: 0,
+    //     pause: -5,
+    //     desc: "**Total Usage:** `Unlimited (CD: 4)`\n**Cost:** `0 💧`\n**Timeout:** `Yes`\n**Role:** `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n\Phrolova has **3** states – Compose, Reincarnate (lasts for 1 action), and Maestro. She starts off in her __Compose__ state, and gains `Volatile Notes` (🎶) via different means to enhance her capabilities.\n\nDuring her __Compose__ state:\n> - Her ATK is altered to deal **90%** damage. The **3rd** ATK additionally causes her to enter the __Reincarnate__ state for the next ATK/DEF\n\nDuring her __Reincarnate__ state:\n> - ATK is altered to deal **110%** damage and gain **1** 🎶\n> - DEF is altered to apply bleed on the enemy (**12%** of wielder’s max HP over **3** rounds) and gain **1** 🎶\n> - If she has **6** 🎶 after the action, consumes all 🎶 to activate Scarlet Coda, dealing **80%** damage and *stunning the enemy*. Then, she enters the __Maestro__ state for **6** rounds\n\nDuring her __Maestro__ state:\n> - Shares damage with Hecate, deflecting **28%** of damage taken (does not take damage and reflects it instead)\n> - ATK is altered to deal **120%** damage. The **3rd** ATK instead deals **140%** damage\n> - DEF is altered to double the damage deflect from hecate this round to **56%**\n\nBy the end of the __Maestro__ state: Deals **150%** damage\n### Come, let us finish this performance we've all been waiting for. Together\nWhen she is in the __Compose__ state: Her active (✨) deals **100%** damage and immediately causes her to enter the __Reincarnate__ state for the next ATK/DEF. This has a cooldown of **4** rounds.\n\nIn a party, Phrolova summons Hecate to deal **80%** damage twice every **10** rounds, after which the ally’s ATK & MD is boosted by **2%**, up to **5** times.",
+    //     shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n__**Passive**__\n- ATK (:crossed_swords:) is altered to do **90%** dmg. Every **3** attacks -> Enter __Reincarnate__ state\n\n__Core Mechanic__: Gaining notes for the Maestro state\n### During __Reincarnate__ state (ends after 1 action):\n- :crossed_swords:  -> Deals **110%** dmg and gain **1** :notes: \n- :shield:  -> Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) and gain **1** :notes:\n- With **6** :notes: -> Automatically deals **80%** damage and enters __Maestro state__ for **6** rounds\n\n### During __Maestro__ state (ends after 1 action):\n- Deflects **28%** of damage taken (Doesn't take but reflects)\n- :crossed_swords: -> Deal **120%** dmg. Every **3rd** ATK deals **140%** instead\n- :shield: -> Deflects another **28%** of damage taken\n\n__**Active**__ (:sparkles:)\n- Enter __Reincarnate__ state if she isn't in Reincarnate/Maestro state\n\n__**Party**__ (:busts_in_silhouette:)\n- Every **10th** turn: Deal **80%** damage twice and boost ATK & MD by **2%** up to **5** times.",
+    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+    //         // Phrolova
+
+    //         // Whispers of a Fleeting Dream
+    //         if (myStats.phrState === 1) {
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             this.used--;
+    //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Reincarnate__ state`, ephemeral: true });
+    //             return AbilityResponse.FAILURE;
+    //         };
+
+    //         if (myStats.phrState === 2) {
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             this.used--;
+    //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Maestro__ state`, ephemeral: true });
+    //             return AbilityResponse.FAILURE;
+    //         };
+
+    //         // Cooldown
+    //         if (this.pause > matchStats.round) {
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             this.used--;
+    //             matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+    //             return AbilityResponse.FAILURE;
+    //         };
+
+    //         this.pause = matchStats.round + 4;
+    //         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Preparatory beat, begin.* **${char.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+    //         myStats.phrState = 1;
+    //         notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`);
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //         myStats.phrState = 0; // 0 = Compose ; 1 = Reincarnate ; 2 = Maestro
+    //         myStats.volatileNote = 0;
+    //         myStats.atkcount = 0;
+    //         myStats.deflectDamage ??= 0
+
+    //         const scarletCoda = () => {
+    //             if (myStats.volatileNote >= 6) {
+    //                 myStats.volatileNote = 0;
+    //                 myStats.phrState = 2;
+    //                 notice.push(`\n✨ **${char.name}** entered the __Maestro__ state`);
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Wails... Rejoicing!* **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                    
+    //                 // Maestro immediate effects: Stun for 1 round
+    //                 eStats.timeFrozen = true;
+    //                 eStats.frozenMessage = "was stunned for **1** round";
+    //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                     eStats.timeFrozen = false;
+
+    //                     return AbilityResponse.SUCCESS;
+    //                 }, 1));
+
+    //                 // Maestro prolonged effects: 28% damage deflection
+    //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                     // Deflect 28% of damage taken every round
+    //                     myStats.deflectDamage += 0.28;
+    //                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                         myStats.deflectDamage -= 0.28;
+    //                         return AbilityResponse.SUCCESS;
+    //                     }));
+    //                     return AbilityResponse.SUCCESS;
+    //                 }, 6));
+
+    //                 // By the end of Maestro: Deal 150% damage
+    //                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+    //                     myStats.phrState = myStats.phrState = 1 ? 1 : 0;
+    //                     return AbilityResponse.SUCCESS;
+    //                 }));
+    //             } else {
+    //                 // Reset state to Compose
+    //                 myStats.phrState = 0;
+    //             };
+    //         };
+
+    //         // replace attack
+    //         myStats.replaceButton.atk = {
+    //             run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                 myStats.atkcount++;
+    //                 let atkScale = [0.9, 1.1, 1.2][myStats.phrState];
+    //                 let flairemoji = ["<:rednote:1417513133559386303>","🎵","<:purplenote:1417513260453990450>"][myStats.phrState];
+    //                 if (myStats.atkcount === 3) {
+    //                     myStats.atkcount = 0;
+    //                     if (myStats.phrState === 0) {
+    //                         myStats.phrState = 1; // 3rd ATK in Compose enters Reincarnate
+    //                     } else if (myStats.phrState === 3) {
+    //                         atkScale += 0.2;
+    //                     }; // 3rd ATK in Maestro deals 20% more dmg
+    //                 } else if (myStats.phrState === 1) {
+    //                     myStats.volatileNote++;
+    //                     // Enter Maestro State for 6 rounds if applicable
+    //                     scarletCoda();
+    //                 };
+
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `${flairemoji} **${char.name}**`, { atkMultiplier: atkScale, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+    //                 if (myStats.phrState === 1) notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`); // notice for entering Reincarnate
+    //                 return AbilityResponse.SUCCESS;
+    //             },
+    //         };
+
+    //         // replace def optionally every round
+    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             if (myStats.phrState !== 0) {
+    //                 myStats.replaceButton.def = {
+    //                     run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+    //                     // Reincarnate
+    //                     if (myStats.phrState === 1) {
+    //                         // Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) 
+    //                         ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.04), 3));
+    //                         myStats.volatileNote++;
+    //                         // Enter Maestro State for 6 rounds if applicable
+    //                         scarletCoda();
+    //                     } else if (myStats.phrState === 2) {
+    //                         // Deflect +28% of damage taken
+    //                         myStats.deflectDamage += 0.28;
+    //                         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //                             myStats.deflectDamage -= 0.28;
+    //                             return AbilityResponse.SUCCESS;
+    //                         }, 1));
+    //                     };
+    //                     delete myStats.replaceButton.def;
+    //                 return AbilityResponse.SUCCESS;
+    //             },
+    //         };
+    //             };
+    //             return AbilityResponse.SUCCESS;
+    //         }, 9999));            
+
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //         const name = pStats.name;
+    //         myStats.phrbuff = 0;
+    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             if (matchStats.round % 10 === 0) {
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+    //                 if (myStats.phrbuff < 5) {
+    //                     myStats.phrbuff++
+    //                     myStats.atk += Math.floor(myStats.atk * 0.02);
+    //                     myStats.md += Math.floor(myStats.md * 0.02);
+    //                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.02), 9999));
+    //                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.02), 9999));
+    //                 };
+    //             };
+
+    //             return AbilityResponse.SUCCESS;
+    //         }, 9999));
+
+    //         return AbilityResponse.SUCCESS;
+    //     },
+    // },
     "22610": {
         usage: 5,
         used: 0,
@@ -6090,8 +6466,8 @@ export const abilities: Record<number, Ability> = {
         cost: 20,
         pause: 0,
         selfhealidx: 0,
-        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+15%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To view programmes, do `item equip item:prog info`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **80%** DMG, before slamming them in a strike, dealing an additional instance of **10%** DMG, further increased by **1%** for every **1%** HP missing from the enemy (Up to 40% in total). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+2%** ATK/MD, up to **+16%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy's DEF by **25%** (up to **2x** damage). Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **1.5%** permanently (Up to 15%). After using DEFEND, activates “Boost”, increasing dodge rate by **20%** for **2** rounds and decreases enemy’s DEF by **1.5%** permanently (Up to 15%, max 2x damage). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **1.5%** permanently (Up to 15%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of [ɪɴꜱɪɢʜᴛ] instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
-        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+15%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`. To reset, do `/item equip item:prog remove`.\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **80%** DMG, before dealing another instance of **10%**, further increased by **1%** for every **1%** HP missing from the enemy (Up to 40% in total).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+2%** ATK, up to 16%\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- If the enemy has less than **50%** HP, the effect is changed to decreasing the enemy’s DEF by **25%** (up to **2x** damage)\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **20%** chance to counter the next hit (stackable)\n- **-1.5%** enemy's ATK permanently (Up to 15%)\n\nAfter using DEFEND:\n- **+20%** dodge rate for **2** rounds\n- **-1.5%** enemy's DEF permanently (Up to 15%)\n\nAfter using CLASS SKILL:\n- **+1.5%** DMG mitigation permanently (Up to 15%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\nWhen 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\n- Shares equipped pod passive with entire party\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, has **+2%** ATK, up to 16%",
+        desc: "**Total Usage**: `1 (CD: 10) + 1`\n**Cost**: `20 💧+ 0💧`\n**Timeout**: `No/Yes`\n\nBeing YorHa androids, 2B and 9S complement each other in combat as a duo, cleaving through machines, fighting for a future where humanity on the moon could regain control over the world.\n\nSpecifically programmed to operate indefinitely, androids are especially resistant to damage, having **+15%** max HP. Moreover, they may upload their data to their headquarters, allowing them a **100%** chance to revive with **50%** HP upon death. Lastly, programmed to derive pleasure from enticing combat, when under **50%** HP, they have **+7%** lifesteal.\n\nThey are equipped with their pods, allowing them to equip up to **2** programmes which take effect in battles via `/item equip item:prog <ID>`. To view programmes, do `item equip item:prog info`. To reset progreammes, do `/item equip item:prog remove` instead.\n\nIn combat, 2B takes the mainstay of attacks. Using ATTACK allows 2B to spring into the air, losing **7%** current HP before clashing the enemy, dealing **80%** DMG, before slamming them in a strike, dealing an additional instance of **10%** DMG, further increased by **1%** for every **1%** HP missing from the enemy (Up to 40% in total). If 2B has revived, no longer loses **7%** current HP but instead heals **7%** current HP.\n\nEvery critical hit allows 9S to analyze the foe, granting **1x** [ɪɴꜱɪɢʜᴛ]. At the start of a round, when 9S is not HACKING but owns **8x** or more [ɪɴꜱɪɢʜᴛ], 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins HACKING for **4** rounds.\n\n[ɪɴꜱɪɢʜᴛ]: For every stack present, both 9S and the enemy has **+2%** ATK/MD, up to **+16%** ATK\n\nHACKING: 9S initiates hacking on the enemy while 2B supports by distracting the foe. Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%. Moreover, non-critical hits cause him to lose **7%** current HP.\n\nThe duo’s active is split into 2 parts. The First use allows 2B & 9S to enter their respective flight unit for **10** rounds, granting additional effects after certain actions. After using ATTACK, activates “Forward slash”, which has a **20%** chance to counter the next hit (stackable) and decreases enemy’s ATK by **1.5%** permanently (Up to 15%). After using DEFEND, activates “Boost”, increasing dodge rate by **20%** for **2** rounds and decreases enemy’s DEF by **1.5%** permanently (Up to 15%, max 2x damage). After using CLASS SKILL, activates “Subjugation”, increasing DMG mitigation by **1.5%** permanently (Up to 15%).\n\n The Second use causes 2B to self-destruct, dealing **70%** max HP as a non-critical hit to the enemy, before lowering HP to **1**. However, when 9S is not in HACKING, they instead collide their black boxes, the source of energy. This deals **100%** max HP as a critical hit to the enemy before *dying*.\n\nIn a party, the duo shares their pod passives with the entire team. The effect of [ɪɴꜱɪɢʜᴛ] instead grants allies **+2%** ATK per stack, up to **+16%** ATK.",
+        shortdesc: "**Uses**: `1+1`\n**Cooldown**: `10 rounds`\n**Cost**: `20 💧 // 0 💧`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Sacrificial, Critical, Revival)`\n__**Passive**__\n- Upon death, has a **100%** chance of reviving with **50%** HP.\n- **+15%** max HP\n- When at **50%** HP or below, has **+7%** lifesteal.\n- They may equip **2** programmes on pod for battle effects. To view available options, do `/item equip item: prog info`. To equip, do `/item equip item:prog <ID>`. To reset, do `/item equip item:prog remove`.\n\nATTACK is altered:\n> - Loses **7%** current HP (*Heals* instead after the first revive)\n> - Deals **80%** DMG, before dealing another instance of **10%**, further increased by **1%** for every **1%** HP missing from the enemy (Up to 40% in total).\n\n- Every critical hit grants **1x** [ɪɴꜱɪɢʜᴛ].\n\n__Core Mechanic__: HACKING\n- At the start of the round, when owning **8x** [ɪɴꜱɪɢʜᴛ] while not *HACKING*: 9S consumes **8x** [ɪɴꜱɪɢʜᴛ] and begins *HACKING* for **4** rounds.\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, the duo has **+2%** ATK, up to 16%\n\nDuring *HACKING*:\n- Critical hits deal **+1%** DMG for every **1** percentage point of remaining HP% difference between you and the enemy, up to +30%.\n- Non-critical hits cause him to lose **7%** current HP\n\n__**Active**__:\n__First use__: 2B & 9S enter their respective flight unit for **10** rounds. During this period:\n\nAfter using ATTACK:\n- **20%** chance to counter the next hit (stackable)\n- **-1.5%** enemy's ATK permanently (Up to 15%)\n\nAfter using DEFEND:\n- **+20%** dodge rate for **2** rounds\n- **-1.5%** enemy's DEF permanently (Up to 15%)\n\nAfter using CLASS SKILL:\n- **+1.5%** DMG mitigation permanently (Up to 15%)\n\n__Second use__:\n- Deals **70%** max HP as an undodgeable hit to the enemy, before lowering HP to **1**.\nWhen 9S is not in *HACKING*:\n- Instead deals **100%** max HP as a critical hit to the enemy before *dying*.\n\n__**Party**__:\n- Shares equipped pod passive with entire party\n- [ɪɴꜱɪɢʜᴛ]: For every stack present, has **+2%** ATK, up to 16%",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // 2B & 9S EX | 2B&9S EX
 
@@ -6111,7 +6487,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                 this.pause = matchStats.round + 10;
 
-                notice.push(`\n✨ 2B and 9S entered their flight units for **10** rounds.`);
+                notice.push(`\n✨ **${char.name}** entered their flight units for **10** rounds.`);
 
                 // Additional effects after ATK/DEF/CSKILL
                 matchStats.on("ATK", {
@@ -6155,6 +6531,7 @@ export const abilities: Record<number, Ability> = {
                         if (caster === myStats) {
                             myStats.damageReduction += 0.015;
                             if (myStats.damageReduction > 1) myStats.damageReduction = 1;
+                            return true;
                         };
                     },
                 });
@@ -6217,10 +6594,10 @@ export const abilities: Record<number, Ability> = {
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Gravity**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                                 if (matchStats.round % 4 === 0) {
-                                    eStats.atk -= Math.floor(eStats.atk * 0.25);
-                                    eStats.md -= Math.floor(eStats.md * 0.25);
-                                    eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
-                                    eStats.mr -= Math.floor(Math.min(eStats.mr * 0.25, 660));
+                                    eStats.atk -= Math.floor(eStats.atk * 0.2);
+                                    eStats.md -= Math.floor(eStats.md * 0.2);
+                                    eStats.def -= Math.floor(Math.min(eStats.def * 0.1, 212));
+                                    eStats.mr -= Math.floor(Math.min(eStats.mr * 0.1, 212));
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -6255,6 +6632,7 @@ export const abilities: Record<number, Ability> = {
             } else {
                 notice.push("\n`⚙️` Pod is not equipped with any programme! Please run `/item equip item:prog` to proceed with choosing one!");
             };
+
             myStats.hacking = false;
             const domainLast = 4;
             const atklist = ["Nuissance.", "Reorganizing...", "Destroy."];
@@ -6329,21 +6707,26 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n<:9SHack:1373261619924172940> 9S initiated hacking for **4** rounds`);
                     myStats.insight -= 8;
                     myStats.hacking = true;
-                    if ((eStats.hp / eStats.maxhp) > 0.5) {
-                        let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
-                        myStats.critbonus = Math.max(myStats.critbonus, bonus);
-                    } else {
-                        eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
-                    };
+
+                    let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
+                    myStats.critbonus = Math.max(myStats.critbonus, bonus);
+                    // if ((eStats.hp / eStats.maxhp) > 0.5) {
+                    //     let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
+                    //     myStats.critbonus = Math.max(myStats.critbonus, bonus);
+                    // } else {
+                    //     eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
+                    // };
 
                     // Hacking long term effects
                     myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                        if ((eStats.hp / eStats.maxhp) > 0.5) {
-                            let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
-                            myStats.critbonus = Math.max(myStats.critbonus, bonus);
-                        } else {
-                            eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
-                        };
+                        let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
+                        myStats.critbonus = Math.max(myStats.critbonus, bonus);
+                        // if ((eStats.hp / eStats.maxhp) > 0.5) {
+                        //     let bonus = Math.min(0.3, Math.abs((myStats.hp / myStats.maxhp) - (eStats.hp / eStats.maxhp)));
+                        //     myStats.critbonus = Math.max(myStats.critbonus, bonus);
+                        // } else {
+                        //     eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
+                        // };
 
                         return AbilityResponse.SUCCESS;
                     }, domainLast));
@@ -6406,10 +6789,10 @@ export const abilities: Record<number, Ability> = {
                             notice.push("\n`⚙️` Pod has been equipped with programme : **Gravity**.");
                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                                 if (matchStats.round % 4 === 0) {
-                                    eStats.atk -= Math.floor(eStats.atk * 0.25);
-                                    eStats.md -= Math.floor(eStats.md * 0.25);
-                                    eStats.def -= Math.floor(Math.min(eStats.def * 0.25, 660));
-                                    eStats.mr -= Math.floor(Math.min(eStats.mr * 0.25, 660));
+                                    eStats.atk -= Math.floor(eStats.atk * 0.2);
+                                    eStats.md -= Math.floor(eStats.md * 0.2);
+                                    eStats.def -= Math.floor(Math.min(eStats.def * 0.1, 212));
+                                    eStats.mr -= Math.floor(Math.min(eStats.mr * 0.1, 212));
                                 };
 
                                 return AbilityResponse.SUCCESS;
@@ -6626,8 +7009,8 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 0,
         pause: -11,
-        desc: "**Total Usage**: `Unlimited (CD: 10)`\n**Cost**: `35% current HP`\n**Timeout**: `false`\n**Role**: `DPS (Non-critical)`\n\nBuilt out of high-energy pure crystals, Shorekeeper acts as a vessel where data filled with grief, chaos and decay flow through her for analysis. She repairs her scars with new crystals, as she witnesses the tragedies of humanity.\n\nHer ATTACK is altered to __Origin Calculus__, interpreting the reverberations. She deals **80%** DMG. For every `Flare Stare Butterfly` summoned, this hit’s damage scaling is increased by **6%**. If the hit is non-critical, gains **3x** `Core`. When she has **5x** or more `Core`, she immediately follows up with __Astral Chord__.\n\nAfter using DEFEND, she follows up with  __Astral Chord__. For every **5** existing `Core`, transforms them into **1x** `Flare Stare Butterfly` (Up to 10). She then casts Suction, where for every `Flare Stare Butterfly` on-field, the enemy has **-2%** critical rate and **-2%** DEF & MR for **3** rounds (Max 1.5x DMG, each shred calculated independently), meanwhile boosting her DEF & MR by **20** for **3** rounds, up to **200**.\n\nConsuming **35%** of her current HP, she casts her active, __End Loop__, where she summons a domain of Stellarealm for **10** rounds. During this period, She restores **5%** lost HP every round and has **+3%** ATK & MD for every **1x** `Flare Stare Butterfly` owned. Moreover, attacks will *benefit from the critical damage scaling* even if they don’t land a critical strike\n\nRight before exiting the domain, she increases critical DMG by **100%** for **1** round, before giving a final ordination.\n- [Default] : Deals **70%** DMG\n- [5+ Butterflies] : Deals **210%** undodgeable DMG + restores **25%** max HP\n- [10 Butterflies] : Deals **300%** undodgeable DMG + restores **50%** max HP + Increases dodge rate by **100%** for **1** round\n\nIn a party, whenever the ally lands a non-critical hit, they gain **1.5%** dodge rate, up to **15%**. Moreover, allies evade the first **2** lethal attacks and restore **15%** max HP right afterwards.",
-        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `10 rounds`\n**Cost**: `35% current HP`\n**Timeout**: `No`\n**Role**: `DPS (Non-critical)`\n\n__**Passive**__\n- After using DEF, follows up with “Astral Chord”\n\nATTACK is altered:\n- Deals **80%** DMG\n- For each `Butterfly` summoned, DMG scaling is increased by **6%**\n- If this hit is non-critical, grant **3x** additional `Core`\n- If amount of `Core` reaches **5** or more, follows up with “Astral Chord”\n\n“Astral Chord”:\n- For every **5** existing cores, transforms them to **1x** `Butterfly` (Up to 10)\n- For every `Butterfly` on-field:\n> - Reduces enemy’s critical rate by **2%** for **3** rounds\n> - Reduces enemy’s DEF/MR by **2%** for **3** rounds (Max 1.5x DMG, each shred calculated independently)\n> - Increases DEF/MR by **20** (Up to 200) for **3** rounds\n\n__**Active**__ (✨)\nCreates a domain of Stellarealm for **10** rounds, during this period:\n- Restores **5%** missing HP every round\n- Boosts ATK & MD by **3%** for every **1x** `Butterfly` owned\n- All attacks **will benefit from the critical damage scaling** even if they don’t land a critical strike\n\nRight before exiting the domain:\n- Increases critical DMG by **100%** for **1** round\n- Grants additional effects based off `Butterfly` owned\n> - [Default] : Deals **70%** DMG\n> - [5+ Butterflies] : Deals **210%** undodgeable DMG + restores **25%** max HP\n> - [10 Butterflies] : Deals **300%** undodgeable DMG + restores **50%** max HP + Increases dodge rate by **100%** for **1** round\n- The hit aforementioned will not reset combos\n\n__**Party**__ (👥):\nAfter the ally lands a non-critical strike: Increases ally’s dodge rate by **1.5%** (Up to 15%)\n- Allies evade the first **2** lethal attacks and restores **15%** max HP (Up to 2 times)",
+        desc: "**Total Usage**: `Unlimited (CD: 10)`\n**Cost**: `35% current HP`\n**Timeout**: `false`\n**Role**: `DPS (Non-critical)`\n\nBuilt out of high-energy pure crystals, Shorekeeper acts as a vessel where data filled with grief, chaos and decay flow through her for analysis. She repairs her scars with new crystals, as she witnesses the tragedies of humanity.\n\nHer ATTACK is altered to __Origin Calculus__, interpreting the reverberations. She deals **80%** DMG. For every `Flare Stare Butterfly` summoned, this hit’s damage scaling is increased by **6%**. If the hit is non-critical, gains **3x** `Core`. When she has **5x** or more `Core`, she immediately follows up with __Astral Chord__.\n\nAfter using DEFEND, she follows up with  __Astral Chord__. For every **5** existing `Core`, transforms them into **1x** `Flare Stare Butterfly` (Up to 10). She then casts Suction, where for every `Flare Stare Butterfly` on-field, the enemy has **-2%** critical rate and **-2%** DEF & MR for **3** rounds (Max 1.5x DMG, each shred calculated independently), meanwhile boosting her DEF & MR by **20** for **3** rounds, up to **200**.\n\nConsuming **35%** of her current HP, she casts her active, __End Loop__, where she summons a domain of Stellarealm for **10** rounds. During this period, She restores **5%** lost HP every round and has **+3%** ATK & MD for every **1x** `Flare Stare Butterfly` owned. Moreover, attacks will *benefit from the critical damage scaling* even if they don’t land a critical strike\n\nRight before exiting the domain, she increases critical DMG by **30%** for **1** round, before giving a final ordination.\n- [Default] : Deals **70%** DMG\n- [5+ Butterflies] : Deals **210%** DMG + restores **15%** max HP\n- [10 Butterflies] : Deals **300%** DMG + restores **30%** max HP\n\nIn a party, whenever the ally lands a non-critical hit, they gain **1.5%** dodge rate, up to **15%**. Moreover, allies evade the first **2** lethal attacks and restore **15%** max HP right afterwards.",
+        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `10 rounds`\n**Cost**: `35% current HP`\n**Timeout**: `No`\n**Role**: `DPS (Non-critical)`\n\n__**Passive**__\n- After using DEF, follows up with “Astral Chord”\n\nATTACK is altered:\n- Deals **80%** DMG\n- For each `Butterfly` summoned, DMG scaling is increased by **6%**\n- If this hit is non-critical, grant **3x** additional `Core`\n- If amount of `Core` reaches **5** or more, follows up with “Astral Chord”\n\n“Astral Chord”:\n- For every **5** existing cores, transforms them to **1x** `Butterfly` (Up to 10)\n- For every `Butterfly` on-field:\n> - Reduces enemy’s critical rate by **2%** for **3** rounds\n> - Reduces enemy’s DEF/MR by **2%** for **3** rounds (Max 1.5x DMG, each shred calculated independently)\n> - Increases DEF/MR by **20** (Up to 200) for **3** rounds\n\n__**Active**__ (✨)\nCreates a domain of Stellarealm for **10** rounds, during this period:\n- Restores **5%** missing HP every round\n- Boosts ATK & MD by **3%** for every **1x** `Butterfly` owned\n- All attacks **will benefit from the critical damage scaling** even if they don’t land a critical strike\n\nRight before exiting the domain:\n- Increases critical DMG by **30%** for **1** round\n- Grants additional effects based off `Butterfly` owned\n> - [Default] : Deals **70%** DMG\n> - [5+ Butterflies] : Deals **210%** DMG + restores **15%** max HP\n> - [10 Butterflies] : Deals **300%** DMG + restores **30%** max HP\n- The hit aforementioned will not reset combos\n\n__**Party**__ (👥):\nAfter the ally lands a non-critical strike: Increases ally’s dodge rate by **1.5%** (Up to 15%)\n- Allies evade the first **2** lethal attacks and restores **15%** max HP (Up to 2 times)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Shorekeeper EX
             matchStats.turn = matchStats.turnSkill ? 0 : 1;
@@ -6664,21 +7047,20 @@ export const abilities: Record<number, Ability> = {
 
             // Exit Stellarealm
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.cd += 1;
+                myStats.cd += 0.3;
 
                 // Activates additional effects based off Butterfly
                 switch (true) {
                     case myStats.butterfly >= 10:
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Rectify!* **${char.name}** dealt`, { atkMultiplier: 5, magicDamage: true, dodge: false, combodmg: true });
-                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.5), {});
-                        myStats.dodge = 1;
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Rectify!* **${char.name}** dealt`, { atkMultiplier: 3, magicDamage: true });
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.3), {});
                         break;
                     case myStats.butterfly >= 5:
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Perish!* **${char.name}** dealt`, { atkMultiplier: 2.5, magicDamage: true, dodge: false, combodmg: true });
-                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.25), {});
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Perish!* **${char.name}** dealt`, { atkMultiplier: 2.1, magicDamage: true });
+                        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15), {});
                         break;
                     default:
-                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Ordained!* **${char.name}** dealt`, { atkMultiplier: 1, magicDamage: true, dodge: false, combodmg: true });
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Ordained!* **${char.name}** dealt`, { atkMultiplier: 0.7, magicDamage: true });
                         break;
                 };
 
@@ -6705,8 +7087,9 @@ export const abilities: Record<number, Ability> = {
                     myStats.core -= 7;
                     if (myStats.butterfly < 10) {
                         myStats.butterfly++;
-                    }
+                    };
                 };
+
                 // Suction - debuffs for 3 turns
                 const def_debuff = 0.02 * myStats.butterfly;
                 eStats.cr -= def_debuff;
@@ -6756,14 +7139,16 @@ export const abilities: Record<number, Ability> = {
         },
         party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
+            myStats.evadeDeathChance ??= 0;
             myStats.evadeDeathStrike ??= 0;
             myStats.evadeDeathStrike += 2;
+            myStats.evadeDeathChance += 2;
 
             // Upon death evasion, restores 15% max HP (up to 2 times)
             matchStats.on("deathEvade", {
                 maxUsage: 2,
                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                    if (caster === myStats) {
+                    if (target === myStats) {
                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15), {});
                         return true;
                     }
@@ -6777,9 +7162,11 @@ export const abilities: Record<number, Ability> = {
                         myStats.dodge += 0.015;
                         mybuff.dodge.push(new buffInfo("+", 0.015, 9999));
                         if (myStats.dodge > 1) myStats.dodge = 1;
-                    }
-                }
+                        return true;
+                    };
+                },
             });
+
             // Removed party ability after discussion with Taskalot:
             // Allies cannot fall below 0% dodge rate. Increases dodge rate by 2% for every 5% missing HP, up to 20%
             // if (myStats.dodge < 0) myStats.dodge = 0;

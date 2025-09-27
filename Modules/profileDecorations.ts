@@ -1,6 +1,6 @@
 import { Asset } from "./assets";
 
-export type CostTypes = { gems?: number, coins?: number, lilies?: number, jades?: number; };
+export type CostTypes = { gems?: number, coins?: number, lilies?: number, jades?: number, season_keys?: number, eventpts?: number; };
 
 export class ProfileSet {
     private _name: string;
@@ -202,5 +202,27 @@ export const profileSets = [
     new ProfileSet("Vermeil", 9, { jades: 9000, gems: 12000, coins: 50_000_000 }, [
         new Background("Vermeil", { gems: 10000, coins: 30_000_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/vermeil/vermeil.gif", url: "https://i.ibb.co/tgNMh6K/vermeil.gif" }), { delay: 130 }),
     ]),
+
+    new ProfileSet("Shades of Rust", 10, { jades: 900, gems: 1000, season_keys: 60 }, [
+        new Background("Autumn Breaths", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/autumn-breaths.jpg", url: "https://i.ibb.co/8DqzCMQ2/20250906-141336-0000.png" })),
+        new Background("Nostalgic Sunlight", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/nostalgic-sunlight.jpg", url: "https://i.ibb.co/tMQQXYmX/20250906-141314-0000.png" })),
+        new Background("Familiar Roads", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/familiar-roads.jpg", url: "https://i.ibb.co/B5BS4Ckm/20250906-141207-0000.png" })),
+        new Background("A Trace of Memory", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/a-trace-of-memory.jpg", url: "https://i.ibb.co/vCJCr214/20250906-141504-0000.png" })),
+    ]),
+
+    new ProfileSet("Autumn Forest", 11, { jades: 900, gems: 1000, season_keys: 60 }, [
+        new Background("Crimson Grove", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/crimson-grove.jpg", url: "https://i.ibb.co/skFryJJ/fall1.png" })),
+        new Background("Golden Canopy", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/golden-canopy.jpg", url: "https://i.ibb.co/Zp1gcrmD/fall2.png" })),
+        new Background("Amber Meadow", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/amber-meadow.jpg", url: "https://i.ibb.co/0Nmjb1n/fall3.png" })),
+        new Background("Russet Wilderness", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/russet-wilderness.jpg", url: "https://i.ibb.co/hxjYvpVD/fall4.png" })),
+    ]),
+
+    new ProfileSet("Eternal Autumn", 12, { jades: 1000, gems: 1200, season_keys: 80 }, [
+        new Background("Luminous Fall", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/luminous-fall.gif", url: "https://i.ibb.co/6cqN7J0v/Luminous-Background.gif" }), { delay: 140 }),
+        new Background("Crimson Reflection", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/crimson-reflection.gif", url: "https://i.ibb.co/d3wb06S/Isolde-Background.gif" }), { delay: 90 }),
+        new Background("Whispering Leaves", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/whispering-leaves.gif", url: "https://i.ibb.co/tPYVdK40/Kisogi-Background.gif" }), { delay: 200 }),
+    ]),
+
+
 
 ];

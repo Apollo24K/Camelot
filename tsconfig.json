@@ -4,6 +4,7 @@
     "module": "commonjs",
     "outDir": "./build",
     "rootDir": "./",
+    "types": ["node"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

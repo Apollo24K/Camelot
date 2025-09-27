@@ -213,6 +213,8 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "ring1icon": "<:locked:1034511902417621002>",
         "ring2icon": "<:locked:1034511902417621002>",
         "ring3icon": "<:locked:1034511902417621002>",
+        "rune": inv.equipment[`rune:${id}`],
+        "runeicon": inv.equipment[`rune:${id}`] === undefined ? "<:rune_empty:1034507494539669635>" : items[parseInt(inv.equipment[`rune:${id}`])].emoji,
     };
 
     // Expertise change
@@ -900,7 +902,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         preventRetaliation: options.preventRetaliation,
     });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
-    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage , normalATK: options.normalATK });
+    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage, normalATK: options.normalATK });
 
     return damage;
 };
@@ -922,7 +924,7 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
                 if (amount < 0) amount = 0;
             };
         };
-        
+
         // 2: General Heal reduction
         if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
         if (amount > 0) target.hp += Math.floor(amount);

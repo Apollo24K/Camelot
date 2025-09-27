@@ -97,7 +97,9 @@ export const exportCommand: SlashCommand = {
         };
 
         // Check if user has claimed today
-        if (stats.celebrateclaimed && daysAgo(new Date(stats.celebrateclaimed)) === 0) return interaction.reply("Come back in " + `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min`);
+        if (stats.celebrateclaimed && daysAgo(new Date(stats.celebrateclaimed)) === 0) {
+            return interaction.reply(`Please come back in ${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h ` : ""}**${60 - new Date().getMinutes()}**min`);
+        };
 
         const reward = {
             coins: Math.floor(1200 + (Math.random() * 600)),
