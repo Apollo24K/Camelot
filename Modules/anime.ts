@@ -691,6 +691,21 @@ export const anime: animeInfo[] = [
     new animeInfo("My Bias Gets on the Last Train", ['Nae Choeaeneun Makchareul Tanda'], 656),
     new animeInfo("Viral Hit", ['Hit Viral', 'How to Fight', 'Kenka Dougaku', 'Ssaumdokak'], 657),
     new animeInfo("Takopi's Orignal Sin", ["Takopii no Genzai", "Takopi no Genzai", "Takopi"], 658),
+    new animeInfo("Shakugan no Shana", ['Burning-Eyed Shana', 'BES', 'Shana'], 659),
+    new animeInfo("Cells at Work!!", ['Hataraku Saibou', 'CaW', 'Cells at Work'], 660),
+    new animeInfo("Cells at Work! CODE BLACK", ['Hataraku Saibou BLACK', 'CaWB', 'Cells at Work! BLACK', 'Cells at Work Code Black', 'Cells at Work Black'], 661),
+    new animeInfo("Lord of the Mysteries", ["LOTM"], 662),
+    new animeInfo("Teenage Mercenary", ["High School Mercenary", "High School Soldier", "HS Soldier", "HS Mercenary"], 663),
+    new animeInfo("Hatsukoi Time.", ["Hatsukoi Jikan.", "Hatsukoi Jikan"], 664),
+    new animeInfo("Angels of Death", ["Satsuriku no Tenshi"], 665),
+    new animeInfo("Kpop Demon Hunters", ["K-Pop Demon Hunters", "K Pop Demon Hunters", "KDH", "KPDH"], 666),
+    new animeInfo("In Cold Love", ["Cold-Blooded Beast", "Cold Blooded Beast", "ICL"], 667),
+    new animeInfo("Kowloon Generic Romance", ["KGR"], 668),
+    new animeInfo("Vampire Hunter D: Bloodlust", [], 669),
+    new animeInfo("The Pet Girl of Sakurasou", ["Sakurasou no Pet na Kanojo", "SnPnK", "Sakura-sou no Pet na Kanojo", "TPGoS"], 670),
+    new animeInfo("The Villainess is a Marionette", [], 671),
+    new animeInfo("Sankarea: Undying Love", ["Sankarea"], 672),
+    new animeInfo("Tribe Nine", ["T9", "TN", "Tribe 9"], 673),
 ];
 
 
