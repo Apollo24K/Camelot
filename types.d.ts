@@ -241,6 +241,7 @@ export type DetailedStats = {
     dodgebuffLast?: number;
     dodgebuff: number;
     twinshot: number;
+    selfdmg: number;
     lvl: number;
     ref: number;
     class: number;
@@ -659,15 +660,12 @@ export type MatchStats = {
     loot: number;
     lootm: number;
     xpboost: number;
-    counter: number;
-    counterChance: number;
     currentCharacter: number;
     currentOpponent: number;
     myStatsCC: Record<string, any>;
     eStatsCC: Record<string, any>;
     tdChance: number;
     shieldBreak: number;
-    selfdmg: number;
     critbleed: boolean;
     critbleedlast: number;
     evadeDeathStrike: number;

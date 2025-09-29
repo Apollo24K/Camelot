@@ -202,6 +202,7 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "replaceButton": {},
         "dodgebuff": 0,
         "twinshot": 0,
+        "selfdmg": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,
@@ -869,7 +870,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         addHeal(attacker, target, attacker, attackerBuff, targetBuff, matchStats, notice, ``, Math.floor(Math.min(selfHealedTotal, healCap)), {});
         if (selfHealedTotal >= healCap) attacker.lastSelfHealRoundCapped = matchStats.round;
     };
-    if (options.selfdmg && Math.random() < matchStats.selfdmg) attacker.hp -= damage;
+    if (options.selfdmg && Math.random() < attacker.selfdmg) attacker.hp -= damage;
     if ("gintokiStacks" in attacker && isCrit) attacker.gintokiStacks = 0;
     if (damage && attacker.guinaifenStackRounds?.filter((e: number) => e >= (matchStats.round - attacker.guinaifenStackLast)).length < attacker.guinaifenStackMax) {
         targetBuff.hp.push(new buffInfo("+", -Math.floor(0.06 * damage), attacker.guinaifenStackLast));
