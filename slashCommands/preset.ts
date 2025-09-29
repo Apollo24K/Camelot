@@ -126,6 +126,7 @@ const exportCommand: SlashCommand = {
             // Get existing preset rings and extract their item IDs for comparison
             const existingRings = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
             let existingRingItemIds: number[] = [];
+            let slotRingItemId: number[] = [];
 
             if (existingRings.length > 0) {
                 const existingRingSchemas = await getWeaponSchemas(existingRings.filter(Boolean) as string[]);
@@ -140,8 +141,14 @@ const exportCommand: SlashCommand = {
 
                 const newRingSchemas = await getWeaponSchemas([`${ring1Choice}:${interaction.user.id}`]);
                 const newRingItemId = newRingSchemas.map(ring => ring.itemid);
+                if (preset.ring1) {
+                    const slotRingSchema = await getWeaponSchemas([preset.ring1]);
+                    slotRingItemId = slotRingSchema.map(ring => ring.itemid);
+                };
                 const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
-                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== allRingItemIds[1]) {
+                console.log(allRingItemIds);
+                console.log(new Set(allRingItemIds));
+                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
                     return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                 }
 
@@ -156,8 +163,14 @@ const exportCommand: SlashCommand = {
 
                 const newRingSchemas = await getWeaponSchemas([`${ring2Choice}:${interaction.user.id}`]);
                 const newRingItemId = newRingSchemas.map(ring => ring.itemid);
+                if (preset.ring2) {
+                    const slotRingSchema = await getWeaponSchemas([preset.ring2]);
+                    slotRingItemId = slotRingSchema.map(ring => ring.itemid);
+                };
                 const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
-                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== allRingItemIds[2]) {
+                console.log(allRingItemIds);
+                console.log(new Set(allRingItemIds));
+                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
                     return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                 }
 
@@ -173,8 +186,14 @@ const exportCommand: SlashCommand = {
 
                 const newRingSchemas = await getWeaponSchemas([`${ring3Choice}:${interaction.user.id}`]);
                 const newRingItemId = newRingSchemas.map(ring => ring.itemid);
+                if (preset.ring3) {
+                    const slotRingSchema = await getWeaponSchemas([preset.ring3]);
+                    slotRingItemId = slotRingSchema.map(ring => ring.itemid);
+                };
                 const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
-                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== allRingItemIds[3]) {
+                console.log(allRingItemIds);
+                console.log(new Set(allRingItemIds));
+                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
                     return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                 }
 
