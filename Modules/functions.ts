@@ -659,16 +659,16 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         return 0;
     }; /* Reset BlockStreak */ target.blockStreak = 0;
     if (!options.isTest && options.dodge && Math.random() < Math.min(target.dodge, target.dodgeCap ?? target.dodge)) {
-        notice.push(`\n💨 **${target.name}** dodged the attack!${matchStats.dodgebuff ? ` Gained **+${matchStats.dodgebuff * 100}%** ATK` : ""}`);
+        notice.push(`\n💨 **${target.name}** dodged the attack!${target.dodgebuff ? ` Gained **+${target.dodgebuff * 100}%** ATK` : ""}`);
         attacker.attackStreak = 0;
         target.dodgeStreak++;
         if (target.dodgeHeal) {
             addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(target.maxhp * target.dodgeHeal), {});
             if (target.hp > target.maxhp) target.hp = target.maxhp;
         };
-        if (matchStats.dodgebuff) {
-            const buff = new buffInfo("*", 1 + matchStats.dodgebuff, 5);
-            buff.label = `dodgebuff: ${matchStats.dodgebuff * 100}%, ${5} rounds`;
+        if (target.dodgebuff) {
+            const buff = new buffInfo("*", 1 + target.dodgebuff, target.dodgebuffLast ?? 5);
+            buff.label = `dodgebuff: ${target.dodgebuff * 100}%, ${target.dodgebuffLast ?? 5} rounds`;
             targetBuff.atk.push(buff);
         };
         // if (target.sjwUsedActive) {
@@ -900,7 +900,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         preventRetaliation: options.preventRetaliation,
     });
     if (isCrit) matchStats.trigger("crit", attacker, target, attackerBuff, targetBuff, { damage });
-    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage , normalATK: options.normalATK });
+    else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage, normalATK: options.normalATK });
 
     return damage;
 };
@@ -922,7 +922,7 @@ export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: 
                 if (amount < 0) amount = 0;
             };
         };
-        
+
         // 2: General Heal reduction
         if (attacker.reduceHealing) amount * (1 - attacker.reduceHealing);
         if (amount > 0) target.hp += Math.floor(amount);

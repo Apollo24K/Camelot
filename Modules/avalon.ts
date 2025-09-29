@@ -148,7 +148,6 @@ export default class Avalon {
             damageFormula: "default" as "default" | `log_scale_${number}`,
             consumeMana: 0,
             lightningMultiplier: 0,
-            dodgebuff: 0,
             heap1: 0,
 
             sendWarning: function ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) {

@@ -1032,7 +1032,7 @@ export const skills: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.dodgebuff = 0.04;
+        myStats.dodgebuff = 0.04;
 
         return AbilityResponse.SUCCESS;
     }),

@@ -238,6 +238,8 @@ export type DetailedStats = {
     damageFormula: string;
     delayedBuffs: IdelayedBuff[];
     replaceButton: ReplaceButton;
+    dodgebuffLast?: number;
+    dodgebuff?: number;
     lvl: number;
     ref: number;
     class: number;
@@ -674,8 +676,6 @@ export type MatchStats = {
     damageFormula: "default" | `log_scale_${number}`;
     consumeMana: number;
     lightningMultiplier?: number;
-    dodgebuffLast?: number;
-    dodgebuff?: number;
     allowSelfheal?: boolean;
     heap1: any;
 

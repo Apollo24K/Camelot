@@ -4549,11 +4549,13 @@ export const abilities: Record<number, Ability> = {
                 mybuff.dodge.push(new buffInfo("+", 0.2, 2));
 
                 // Dodge Buff Last
-                matchStats.dodgebuffLast = 1;
-                matchStats.dodgebuff = 0.2;
+                const previousDodgeBuff = myStats.dodgebuff ?? 0;
+                myStats.dodgebuffLast = 1;
+                myStats.dodgebuff = 0.2;
+
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3 /* 3 rounds */, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    delete matchStats.dodgebuffLast;
-                    delete matchStats.dodgebuff;
+                    myStats.dodgebuff = previousDodgeBuff;
+                    delete myStats.dodgebuffLast;
 
                     return AbilityResponse.SUCCESS;
                 }));
