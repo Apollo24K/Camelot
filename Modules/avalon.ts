@@ -136,8 +136,6 @@ export default class Avalon {
             eStatsCC: {},
             tdChance: 0,
             shieldBreak: 0,
-            critbleed: false,
-            critbleedlast: 0,
             evadeDeathStrike: 0,
             evadeDeathChance: 0,
             allowExecution: true,

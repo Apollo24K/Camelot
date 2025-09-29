@@ -5386,8 +5386,8 @@ export const abilities: Record<number, Ability> = {
                         });
                     } /*else if (firstWisp === 4) {
                         // Centauri
-                        matchStats.critbleed = true;
-                        matchStats.critbleedlast = 2;
+                        myStats.critbleed = true;
+                        myStats.critbleedlast = 2;
                     };*/
                 };
             } else if (this.rolledWisp === 1) {

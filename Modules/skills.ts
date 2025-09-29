@@ -635,8 +635,8 @@ export const skills: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
 
         return AbilityResponse.SUCCESS;
     }),
@@ -649,8 +649,8 @@ export const skills: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
 
         return AbilityResponse.SUCCESS;
     }),

@@ -203,6 +203,8 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "dodgebuff": 0,
         "twinshot": 0,
         "selfdmg": 0,
+        "critbleed": false,
+        "critbleedlast": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,
@@ -625,7 +627,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         selfheal: true,
         selfhealAmount: 0,
         selfhealChance: Math.random(),
-        critbleed: matchStats.critbleed,
+        critbleed: attacker.critbleed,
         execute: matchStats.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: true,
@@ -852,7 +854,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (options.combodmg && attacker.combodmg) attacker.attackStreak++;
     if (options.critbleed && isCrit) {
         const bleedPercentage = attacker.critbleedAmount ?? 0.05;
-        targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * bleedPercentage), matchStats.critbleedlast));
+        targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * bleedPercentage), attacker.critbleedlast));
     };
     if (attacker.critmana && isCrit) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
     if (options.selfheal && attacker.selfheal && attacker.lastSelfHealRoundCapped !== matchStats.round) {

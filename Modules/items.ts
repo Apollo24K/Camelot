@@ -1264,8 +1264,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The first time the wielder's HP falls below **40%** of max HP, increases defense and magic resistance by **15%** each and heals **20%** of missing HP.", "The Lethargic Hatchet may seem slow and sluggish at first glance, but once it's in motion, it becomes a deadly force to be reckoned with. Its heavy, lethargic swings packs a powerful punch and can easily cleave through wood and stone alike. The axe's dull edge may not strike fear into the hearts of foes, but its devastating power will surely leave them reeling.", "unique", 211),
     new weaponInfo("Paltry Monsoon", "weapon", "axe", ["crafting", "chest"], "<:paltry_monsoon:1067186839959633980>", "https://i.imgur.com/ohbksPt.png", "atk", 36, 584, "cr", 0.03, 0.13, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.025;
 
         return AbilityResponse.SUCCESS;
     }, "Critical hits cause bleeding, leading the enemy to lose **2.5%** of their max HP for 2 rounds. If the enemy has more than double the HP of the wielder, they lose **5%** of the wielder's max HP instead.", "As the storm rages on, the Paltry Monsoon battle axe glimmers with anticipation. The fury of a monsoon is contained within its blades, ready to unleash its devastating power upon any who dare to cross its path. Wield the Paltry Monsoon with caution, for its might is not to be underestimated.", "unique", 212),
@@ -1516,8 +1517,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Every 3rd round, the wielder heals for **20%** of missing HP.", "The Glas Ghaibhleann is a lance of legend, said to have been crafted by the fairy folk of ancient Hibernia. It glimmers with an otherworldly light, as if it were made of the essence of nature itself. Those who wield it in battle are said to be imbued with the power of the fae, striking fear into the hearts of their enemies with each swift and deadly thrust.", "unique", 237),
     new weaponInfo("Hellreaver", "weapon", "lance", ["chest"], "<:hellreaver:1067200689165578401>", "https://i.imgur.com/6YKgHAb.png", "atk", 33, 568, "cr", 0.03, 0.13, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical hits cause bleeding, leading the enemy to lose **3%** of max HP for 2 rounds.", "Forged in the fiery depths of hell, the Hellreaver lance is a weapon of destruction, capable of tearing through even the toughest armor with ease. Those who wield it are said to be blessed with the power of the underworld, striking fear into the hearts of their enemies with each ruthless strike. Those foolish enough to stand in their way will be met with a swift and merciless end, as the Hellreaver claims their souls for the inferno.", "unique", 238),
@@ -1705,8 +1707,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The enemy has **18%** decreased block rate and dodge chance during the first 8 rounds.", "As the sun sets and the darkness of night envelops the land, the Nightfall Knife awakens, thirsting for the blood of its enemies. Its sleek, black blade glints in the moonlight, promising swift and deadly retribution to those who dare to cross its path. With a single strike, it can end a life, leaving no trace except for a pool of crimson on the ground.", "unique", 258),
     new weaponInfo("Nightshade", "weapon", "dagger", ["chest"], "<:nightshade:1067235936330600528>", "https://i.imgur.com/ub6Y8Ja.png", "atk", 36, 577, "cr", 0.04, 0.16, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 2 rounds.", "Forged in the shadows of the moonlit forest, Nightshade glimmers with a dark, eerie beauty. Its razor-sharp blade is imbued with the power of the night itself, capable of striking with the speed and precision of a deadly predator. Those who wield it are said to be able to move like shadows, striking from the darkness with swift and deadly force. Beware the Nightshade, for it is a weapon of the night, and those who cross its path may never see the dawn again.", "unique", 259),
@@ -1831,8 +1834,8 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder has **20%** increased attack.", "The Ironclad Lionheart is a shield forged from the finest steel, imbued with the strength and courage of a lion. Its surface is etched with the image of a majestic lion, symbolizing its unbreakable fortitude and unwavering spirit. In battle, it is a steadfast ally, protecting its wielder from even the mightiest of blows. Those who bear the Ironclad Lionheart into battle are known for their valor and fearlessness, striking fear into the hearts of their enemies.", "unique", 274),
     new weaponInfo("Overture", "weapon", "shield", ["chest"], "<:overture:1067246098810421299>", "https://i.imgur.com/lUO56sq.png", "shield", 70, 867, "cr", 0.04, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
         myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
@@ -2195,8 +2198,9 @@ export const items = [
 
     // Weapons - Legendary Axe
     new weaponInfo("Cairbre's Curse", "weapon", "axe", ["crafting", "chest"], "<:cairbres_curse:1068531119122825267>", "https://i.imgur.com/IWTvChe.png", "atk", 57, 856, "cr", 0.04, 0.16, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 3 rounds.", "Forged by the ancient Celtic king Cairbre, Cairbre's Curse is said to be imbued with the power of poison. Its blade is coated with a deadly toxin that can kill with a single strike, a tiny scratch shall suffice. Those who wield it are said to be granted the cunning of Cairbre himself, and can strike fear into the hearts of their enemies.", "legendary", 319),
@@ -2476,8 +2480,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Forged in the flames of Mount Vesuvius, the Ignis Aureus is a weapon of unmatched power and beauty. Its golden patterns shimmer in the sunlight, striking fear into the hearts of enemies. With a single thrust, this lance can unleash a devastating inferno, incinerating anything in its path. Those who wield the Ignis Aureus are truly masters of fire, commanding its destructive power with precision and grace.", "legendary", 352),
     new weaponInfo("Ildathach", "weapon", "lance", ["crafting", "chest"], "<:ildathach:1068648986405261374>", "https://i.imgur.com/tiqy8WE.png", "atk", 54, 840, "cd", 0.06, 0.4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
         myStats.cr += 0.15;
         if (myStats.cr > 1) myStats.cr = 1;
         mybuff.cr.push(new buffInfo("+", 0.15, 9999));
@@ -2584,8 +2589,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder takes **20%** less damage.\n\n_A reduction of 20% = 212 DEF|MR_", "The ancient dwarven weapon known as Darganfod was forged in the fiery depths of the earth by the skilled hands of the finest dwarven smiths. It is said that the weapon was created for a great dwarf king. Legend has it that Darganfod was lost during a great battle, its wielder felled by a mighty blow. But some say that the weapon still exists, hidden away in a secret location, waiting for a worthy knight to wield it once again and restore the glory of the ancient dwarven kingdom.", "legendary", 365),
     new weaponInfo("Death's Sting", "weapon", "dagger", ["chest"], "<:deaths_sting:1068702001430548611>", "https://i.imgur.com/22JAeJZ.png", "atk", 51, 833, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 3 rounds.", "The glint of Death's Sting can be seen in the light, as it is drawn from its sheath with all of its might. A harbinger of doom for those who stand in its way, it shall strike fear into the hearts of those who stay. The origins of Death's Sting are shrouded in mystery, but it is believed to have been crafted by a powerful necromancer who sought to create the ultimate weapon of death. The necromancer poured all of his dark knowledge and power into the creation of the dagger, imbuing it with the ability to steal the life force of those it strikes. Those who have faced its sharp edge speak of a cold sensation as it pierces their flesh, followed by a feeling of life slipping away. This legendary dagger has been wielded by some of the greatest warriors throughout history, and its power is said to be unmatched.", "legendary", 366),
@@ -4410,8 +4416,8 @@ export const items = [
 
     // Additional Weapons
     new weaponInfo("Serket's Sting", "weapon", "dagger", ["chest"], "<:serkets_sting:1173987001444347964>", "https://i.imgur.com/C4BTUBk.png", "atk", 114, 1038, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
         myStats.critbleedAmount = 0.03;
         myStats.def += 155;
         myStats.mr += 155;
