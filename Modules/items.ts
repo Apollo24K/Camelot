@@ -635,7 +635,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Increases magic resistance by **15%** at the start of battle, lasting 5 rounds", "The Hardwood Shooter is crafted from the finest hardwood trees, chosen for their strength and durability. Its sleek design allows for precision shooting, making it a favorite among skilled archers. The bow sings as the arrow is released, a testament to its superior craftsmanship. With the Hardwood Shooter by your side, you will strike fear into the hearts of your enemies.", "rare", 129),
     new weaponInfo("Hungering Yew Launcher", "weapon", "bow", ["crafting", "chest"], "<:hungering_yew_launcher:1063549513832353862>", "https://i.imgur.com/lj5KVio.png", "atk", 23, 396, "cd", 0.04, 0.18, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.twinshot += 0.16;
+        myStats.twinshot += 0.16;
 
         return AbilityResponse.SUCCESS;
     }, "Normal attacks have a **16%** chance of triggering a second shot.", "The Hungering Yew Launcher is crafted from the finest yew wood and imbued with dark magic. Its curved, menacing shape is a clear indication of its deadly capabilities. Those who dare to draw its string can feel the hunger of the bow, begging to be unleashed upon its unsuspecting prey. With each shot, it devours the souls of its victims, leaving nothing but destruction in its wake. Beware the Hungering Yew Launcher, for it will leave you wanting more.", "rare", 130),
@@ -1425,7 +1425,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Decreases dodge chance of the enemy by **12%** for the rest of battle.", "With its sleek and lightweight design, the Quickstrike bow allows archers to unleash rapid-fire shots with deadly precision. Its powerful drawstring and finely crafted limbs unleash arrows with explosive force, catching enemies off guard and leaving them no time to react. In the hands of a skilled archer, the Quickstrike is a formidable weapon capable of delivering swift and deadly blows.", "unique", 229),
     new weaponInfo("Quintain", "weapon", "bow", ["crafting", "chest"], "<:quintain:1067194009556103388>", "https://i.imgur.com/oh9SOYb.png", "atk", 36, 573, "cd", 0.05, 0.32, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.twinshot += 0.16;
+        myStats.twinshot += 0.16;
 
         return AbilityResponse.SUCCESS;
     }, "The wielder has a **16%** chance of firing 2 shots.", "The Quintain bow was crafted by a master archer who sought to create the ultimate weapon for combat. Its sleek design allows for swift and precise shots, striking fear into the hearts of opponents. Its power and precision have earned it the nickname \"The Knight's Bane\". With the Quintain in hand, any archer can become a champion on the battlefield.", "unique", 230),
@@ -4857,11 +4857,11 @@ export const items = [
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && Math.random() < [0.3, 0.35, 0.4, 0.45, 0.5][level - 1]) {
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    matchStats.twinshot = 0;
+                    myStats.twinshot = 0;
 
                     return AbilityResponse.SUCCESS;
                 }));
-                matchStats.twinshot = 1;
+                myStats.twinshot = 1;
             };
         });
 
@@ -5373,9 +5373,9 @@ export const items = [
                     myStats.md += Math.floor(myStats.md * 0.2);
                 } else { // Stuns enemy for 1 turn
                     notice.push(`\n<:termination_letter:1340483926665203792> **${char.name}** sent a termination letter to **${enemy.name}**!`);
-                    matchStats.twinshot = 1;
+                    myStats.twinshot = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        matchStats.twinshot = 0;
+                        myStats.twinshot = 0;
 
                         return AbilityResponse.SUCCESS;
                     }));
@@ -5637,7 +5637,7 @@ export const items = [
         // If no active ability/skill was used for 30 rounds, 20/22/24/26/28/30/32/33% chance to twinshot
         myStats.delayedBuffs.push(new delayedBuffs(30, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (!myStats.activeUsed) {
-                matchStats.twinshot = [20, 22, 24, 26, 28, 30, 32, 33][level - 1] / 100;
+                myStats.twinshot = [20, 22, 24, 26, 28, 30, 32, 33][level - 1] / 100;
             };
 
             return AbilityResponse.SUCCESS;
@@ -5666,8 +5666,8 @@ export const items = [
     }, (level) => `If the wearer uses no active ability or skill during the first **30** rounds, their attacks gain a **${[20, 22, 24, 26, 28, 30, 32, 33][level - 1]}%** chance to strike twice for the rest of the fight.`, "The Prism Sovereign is a majestic ring that captures the essence of a kaleidoscope in its design. Set in an ornate gold band, this magnificent piece features an array of colorful gemstones, including sapphires, emeralds, and garnets, each skillfully positioned to reflect light in dazzling patterns. The intricate swirls of the band symbolize the flow of magic, and at its center rests a resplendent aquamarine that seems to shimmer with a watery glow. Wearing this ring enhances a mage's spellcasting capabilities, allowing for spontaneous bursts of elemental power. Rumored to contain the soul of an ancient sorcerer, it grants wisdom and resilience against magical interference.", "legendary", 749),
     new ringInfo("Aurelian Twinkeeper", "ring", "ring", ["chest"], "<:aurelian_twinkeeper:1337936525467455608>", "https://i.ibb.co/rRfVRQ5Q/Aurelian-Twinkeeper.png", 4, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        matchStats.twinshot ||= 0;
-        matchStats.twinshot += [12.5, 15, 17.5, 20][level - 1] / 100;
+        myStats.twinshot ||= 0;
+        myStats.twinshot += [12.5, 15, 17.5, 20][level - 1] / 100;
 
         return AbilityResponse.SUCCESS;
     }, (level) => `The wearer's attacks have a **${[12.5, 15, 17.5, 20][level - 1]}%** chance to strike twice.`, "The Aurelian Twinkeeper is a splendid ring, crafted in gleaming bronze with intricate scrollwork that spirals around its band like wisps of light. Embedded within are delicate azure gems that resemble stars frozen in time, creating an enchanting twilight effect. At the heart lies a deep green gemstone, capturing the essence of a perpetual dawn. This ring is not only a symbol of elegance but also a beacon of hope in dark times, granting the wearer the ability to illuminate their surroundings and inspire courage in allies. It is said that those who wear the Aurelian Twinkeeper can manipulate light to daze their foes.", "genesis", 750),
