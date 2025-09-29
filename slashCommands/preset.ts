@@ -134,10 +134,12 @@ const exportCommand: SlashCommand = {
             }
 
             if (ring1Choice) {
+
                 const userItems = await getUserWeapons(interaction.user.id);
                 if (!userItems.length) return interaction.reply(`You don't have any items.`);
                 const ring = userItems.find((w) => w.uniqueid === `${ring1Choice}:${interaction.user.id}`);
                 if (!ring) return interaction.reply(`You don't have a ring with the ID **${ring1Choice}**`);
+                if (ring.item_type !== "ring") return interaction.reply(`You can't equip a ring with the ID **${ring1Choice}**`);
 
                 const newRingSchemas = await getWeaponSchemas([`${ring1Choice}:${interaction.user.id}`]);
                 const newRingItemId = newRingSchemas.map(ring => ring.itemid);
@@ -160,6 +162,7 @@ const exportCommand: SlashCommand = {
                 if (!userItems.length) return interaction.reply(`You don't have any items.`);
                 const ring = userItems.find((w) => w.uniqueid === `${ring2Choice}:${interaction.user.id}`);
                 if (!ring) return interaction.reply(`You don't have a ring with the ID **${ring2Choice}**`);
+                if (ring.item_type !== "ring") return interaction.reply(`You can't equip a ring with the ID **${ring2Choice}**`);
 
                 const newRingSchemas = await getWeaponSchemas([`${ring2Choice}:${interaction.user.id}`]);
                 const newRingItemId = newRingSchemas.map(ring => ring.itemid);
@@ -183,6 +186,7 @@ const exportCommand: SlashCommand = {
                 if (!userItems.length) return interaction.reply(`You don't have any items.`);
                 const ring = userItems.find((w) => w.uniqueid === `${ring3Choice}:${interaction.user.id}`);
                 if (!ring) return interaction.reply(`You don't have a ring with the ID **${ring3Choice}**`);
+                if (ring.item_type !== "ring") return interaction.reply(`You can't equip a ring with the ID **${ring3Choice}**`);
 
                 const newRingSchemas = await getWeaponSchemas([`${ring3Choice}:${interaction.user.id}`]);
                 const newRingItemId = newRingSchemas.map(ring => ring.itemid);
