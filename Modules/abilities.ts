@@ -326,9 +326,9 @@ export const abilities: Record<number, Ability> = {
             // Deals 10% DMG for every flame (100% max)
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise! **${char.name}**`, { atkMultiplier: 0.1 * Math.min(myStats.yoimiyaFlames, 10), magicDamage: true, mdChance: -1 });
 
-            matchStats.twinshot = 1;
+            myStats.twinshot = 1;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                matchStats.twinshot = 0;
+                myStats.twinshot = 0;
 
                 return AbilityResponse.SUCCESS;
             }));
@@ -350,7 +350,7 @@ export const abilities: Record<number, Ability> = {
                     if (items[myStats.weapon]?.type === "bow") ebuff.hp.push(new buffInfo("+", -Math.floor(options.damage * 0.125), 2));
 
                     // Twinshot
-                    if (matchStats.twinshot > Math.random() && myStats.yoimiyaLastTwinshot !== matchStats.round) {
+                    if (myStats.twinshot > Math.random() && myStats.yoimiyaLastTwinshot !== matchStats.round) {
                         myStats.yoimiyaLastTwinshot = matchStats.round;
                         myStats.replaceButton.atk?.run?.(myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list);
                     };

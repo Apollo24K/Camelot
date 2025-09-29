@@ -239,7 +239,8 @@ export type DetailedStats = {
     delayedBuffs: IdelayedBuff[];
     replaceButton: ReplaceButton;
     dodgebuffLast?: number;
-    dodgebuff?: number;
+    dodgebuff: number;
+    twinshot: number;
     lvl: number;
     ref: number;
     class: number;
@@ -667,7 +668,6 @@ export type MatchStats = {
     tdChance: number;
     shieldBreak: number;
     selfdmg: number;
-    twinshot: number;
     critbleed: boolean;
     critbleedlast: number;
     evadeDeathStrike: number;

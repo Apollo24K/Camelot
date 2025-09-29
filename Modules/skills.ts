@@ -400,7 +400,7 @@ export const skills: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.twinshot += 0.33;
+        myStats.twinshot += 0.33;
 
         return AbilityResponse.SUCCESS;
     }),

@@ -139,7 +139,6 @@ export default class Avalon {
             tdChance: 0,
             shieldBreak: 0,
             selfdmg: 0,
-            twinshot: 0,
             critbleed: false,
             critbleedlast: 0,
             evadeDeathStrike: 0,

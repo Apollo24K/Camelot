@@ -200,8 +200,8 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "damageFormula": "default", // "default": default, "log_scale_<number>": example "log_scale_1.4"
         "delayedBuffs": [],
         "replaceButton": {},
-        "dodgebuffLast": 5,
         "dodgebuff": 0,
+        "twinshot": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,
@@ -627,7 +627,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         critbleed: matchStats.critbleed,
         execute: matchStats.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
-        canTwinshot: false,
+        canTwinshot: true,
         isLightning: false,
         canCounter: true,
         normalATK: false,
@@ -890,7 +890,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (attacker.hp < 0) attacker.hp = 0;
 
     // Twinshot
-    if (options.canTwinshot && matchStats.twinshot > Math.random()) {
+    if (options.canTwinshot && attacker.twinshot > Math.random()) {
         return damage + dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, { ...flags, canTwinshot: false });
     };
 
