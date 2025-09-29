@@ -200,6 +200,8 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "damageFormula": "default", // "default": default, "log_scale_<number>": example "log_scale_1.4"
         "delayedBuffs": [],
         "replaceButton": {},
+        "dodgebuffLast": 5,
+        "dodgebuff": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,
