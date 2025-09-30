@@ -2126,6 +2126,7 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            //! Problem Child: deathEvade is not triggered when Dalus is the evader
             myStats.dalusPrime = (myStats.shell === "broken") ? false : true; // false = Past, true = Prime
             const msg = (!myStats.dalusPrime) ? `\n<:brokenshell:1405524630520987771> **${char.name}** decides to hold onto the last bit of memories left...` : `\n<:dalusrose:1387007950601719908> The nightmare has given an impetus to **${char.name}**. Havoc shall wreck.`;
             notice.push(msg);

@@ -668,8 +668,6 @@ export type MatchStats = {
     eStatsCC: Record<string, any>;
     tdChance: number;
     shieldBreak: number;
-    evadeDeathStrike: number;
-    evadeDeathChance: number;
     allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
     consumeMana: number;
