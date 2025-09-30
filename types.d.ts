@@ -671,7 +671,6 @@ export type MatchStats = {
     allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
     consumeMana: number;
-    lightningMultiplier?: number;
     allowSelfheal?: boolean;
     heap1: any;
 
