@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import { achievements } from "./achievements";
-import { customEmojis, addHeal } from "./functions";
+import { customEmojis, addHeal, deleteReplyIn } from "./functions";
 import Trigger from "./trigger";
 import { Buffs, DetailedStats, MatchStats, TriggerEvents, TriggerOptions } from "../types";
 import { customHpBars } from "./customHpBars";
@@ -139,11 +139,11 @@ export default class Avalon {
             allowExecution: true,
             damageFormula: "default" as "default" | `log_scale_${number}`,
             consumeMana: 0,
-            heap1: 0,
 
             sendWarning: function ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) {
                 // Suppress warning if action sequence is active
                 if (this.actionSequence.length > 0) return;
+                if (matchStats.interaction.commandName === "arena") return (interaction.channel?.isSendable()) ? interaction.channel.send(content).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err)) : false;
 
                 this.interaction.followUp({ content, ephemeral });
             },
@@ -250,18 +250,18 @@ export default class Avalon {
     };
 
     static consumeActiveMana(matchStats: any, myStatsC: any, buffs: any, myChar: any, notice: any, Embed: any, thumbnail: any) {
-        if (matchStats.consumeMana > 0) {
-            myStatsC.sm -= matchStats.consumeMana;
-            if (matchStats.consumeMana > myStatsC.sm) {
-                matchStats.heap1.forEach((e: any) => {
+        if (myStatsC.consumeMana > 0) {
+            myStatsC.sm -= myStatsC.consumeMana;
+            if (myStatsC.consumeMana > myStatsC.sm) {
+                myStatsC.heap1.forEach((e: any) => {
                     buffs[e.type].forEach((a: any, i: number) => {
                         if (a.id === e.id) buffs[e.type].splice(i, 1);
                     });
                     if (e.type === "mg") myStatsC[e.type] += e.buff;
                     else myStatsC[e.type] -= e.buff;
                 });
-                matchStats.consumeMana = 0;
-                matchStats.heap1 = [];
+                myStatsC.consumeMana = 0;
+                myStatsC.heap1 = [];
                 Embed.setThumbnail(thumbnail);
                 return notice.push(`\n⚜️ **${myChar.name}** stopped ${myChar.gender === "F" ? "her" : "his"} transformation`);
             };

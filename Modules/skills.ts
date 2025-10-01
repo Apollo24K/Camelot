@@ -701,7 +701,7 @@ export const skills: skillInfo[] = [
     // new skillInfo(39, 0, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     // Demonic buffs himself by 33% and consumes mana every round
     //     if (matchStats.consumeMana) {
-    //         matchStats.heap1.forEach((e) => {
+    //         myStats.heap1.forEach((e) => {
     //             mybuff[e.type].forEach((a, i) => {
     //                 if (a.id === e.id) mybuff[e.type].splice(i, 1);
     //             });
@@ -709,7 +709,7 @@ export const skills: skillInfo[] = [
     //             else myStats[e.type] -= e.buff;
     //         });
     //         matchStats.consumeMana = 0;
-    //         matchStats.heap1 = [];
+    //         myStats.heap1 = [];
     //         notice.push(`\n⚜️ **${char.name}** stopped ${char.gender === "F" ? "her" : "his"} transformation`);
     //     } else {
     //         if (myStats.sm < 25) return matchStats.sendWarning({ content: "You need at least **25**\\💧 to sustain this form", ephemeral: true });
@@ -726,7 +726,7 @@ export const skills: skillInfo[] = [
     //         mybuff.md.push(mdbuff);
     //         mybuff.mr.push(mrbuff);
     //         mybuff.mg.push(mgbuff);
-    //         matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.33) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.33) }, { type: "md", id: mdbuff.id, buff: Math.floor(myStats.md * 0.33) }, { type: "mr", id: mrbuff.id, buff: Math.floor(myStats.mr * 0.33) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }];
+    //         myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.33) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.33) }, { type: "md", id: mdbuff.id, buff: Math.floor(myStats.md * 0.33) }, { type: "mr", id: mrbuff.id, buff: Math.floor(myStats.mr * 0.33) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }];
 
     //         myStats.atk += Math.floor(myStats.atk * 0.33);
     //         myStats.def += Math.floor(myStats.def * 0.33);
@@ -741,7 +741,7 @@ export const skills: skillInfo[] = [
     //     ebuff.atk.push(new buffInfo("*", 0.95, 9999));
     //     ebuff.def.push(new buffInfo("*", 0.95, 9999));
     //     mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.03), 9999));
-    //     matchStats.heap1 = [];
+    //     myStats.heap1 = [];
     // }),
 
     new skillInfo(39, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

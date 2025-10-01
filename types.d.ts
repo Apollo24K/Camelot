@@ -244,6 +244,8 @@ export type DetailedStats = {
     selfdmg: number;
     critbleed: boolean;
     critbleedlast: number;
+    heap1: any;
+    timeout: boolean;
     lvl: number;
     ref: number;
     class: number;
@@ -672,7 +674,6 @@ export type MatchStats = {
     damageFormula: "default" | `log_scale_${number}`;
     consumeMana: number;
     allowSelfheal?: boolean;
-    heap1: any;
 
     sendWarning: ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) => void;
 

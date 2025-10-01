@@ -387,8 +387,11 @@ const exportCommand: SlashCommand = {
                                         myAbility.used++;
                                         const response = await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
                                         myStatsC.sm -= myAbility.cost;
-                                        matchStats.round++;
-                                        startNextRound();
+                                        if (!myStatsC.timeout) matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                                        else {
+                                            matchStats.round++;
+                                            startNextRound();
+                                        };
 
                                         // Event Triggers
                                         if (response === AbilityResponse.SUCCESS) {
@@ -564,6 +567,7 @@ const exportCommand: SlashCommand = {
                                         matchStats2.attackStreak = 0;
                                         eAbility.used++;
                                         const response = await eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, msg);
+                                        if (!eStatsC.timeout) matchStats.turn = 1;
                                         eStatsC.sm -= eAbility.cost;
 
                                         // Event Triggers

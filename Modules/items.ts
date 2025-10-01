@@ -2,7 +2,7 @@ import { Buffs, IbuffInfo, ItemAbility, ItemCategory, ItemRarity, ItemType, Prim
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
-import { dealDamage, addHeal } from "./functions";
+import { dealDamage, addHeal, noTimeout } from "./functions";
 import { AbilityResponse } from "./components";
 
 export class itemInfo {
@@ -3552,7 +3552,7 @@ export const items = [
                         matchStats.on("ATK", {
                             maxUsage: 3,
                             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                                noTimeout(matchStats, myStats);
                                 return true;
                             },
                         });

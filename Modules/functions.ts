@@ -205,6 +205,8 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "selfdmg": 0,
         "critbleed": false,
         "critbleedlast": 0,
+        "heap1": 0,
+        "timeout": true,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,
@@ -908,6 +910,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage, normalATK: options.normalATK });
 
     return damage;
+};
+
+export const noTimeout = (matchStats: MatchStats, attacker: DetailedStats) => {
+    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    attacker.timeout = false;
 };
 
 export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], log: string, amount: number, flags = {}) => {
