@@ -700,7 +700,7 @@ export const skills: skillInfo[] = [
 
     // new skillInfo(39, 0, (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     // Demonic buffs himself by 33% and consumes mana every round
-    //     if (matchStats.consumeMana) {
+    //     if (myStats.consumeMana) {
     //         myStats.heap1.forEach((e) => {
     //             mybuff[e.type].forEach((a, i) => {
     //                 if (a.id === e.id) mybuff[e.type].splice(i, 1);
@@ -708,12 +708,12 @@ export const skills: skillInfo[] = [
     //             if (e.type === "mg") myStats[e.type] += e.buff;
     //             else myStats[e.type] -= e.buff;
     //         });
-    //         matchStats.consumeMana = 0;
+    //         myStats.consumeMana = 0;
     //         myStats.heap1 = [];
     //         notice.push(`\n⚜️ **${char.name}** stopped ${char.gender === "F" ? "her" : "his"} transformation`);
     //     } else {
     //         if (myStats.sm < 25) return matchStats.sendWarning({ content: "You need at least **25**\\💧 to sustain this form", ephemeral: true });
-    //         matchStats.consumeMana = 25;
+    //         myStats.consumeMana = 25;
 
     //         let atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.33), "9999");
     //         let defbuff = new buffInfo("+", Math.floor(myStats.def * 0.33), "9999");

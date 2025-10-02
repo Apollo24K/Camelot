@@ -1211,7 +1211,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.sendWarning({ content: "You need at least **15**\\💧 to sustain this form", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
-            matchStats.consumeMana = 15;
+            myStats.consumeMana = 15;
 
             // clear previous armors effects
             if (myStats.heap1.length > -1) {

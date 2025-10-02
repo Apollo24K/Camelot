@@ -672,7 +672,6 @@ export type MatchStats = {
     shieldBreak: number;
     allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
-    consumeMana: number;
     allowSelfheal?: boolean;
 
     sendWarning: ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) => void;

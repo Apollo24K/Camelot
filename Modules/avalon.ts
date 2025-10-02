@@ -138,7 +138,6 @@ export default class Avalon {
             shieldBreak: 0,
             allowExecution: true,
             damageFormula: "default" as "default" | `log_scale_${number}`,
-            consumeMana: 0,
 
             sendWarning: function ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) {
                 // Suppress warning if action sequence is active
