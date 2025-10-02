@@ -1606,10 +1606,6 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('trial')
 			.setDescription('Try out characters and classes')
-			.addStringOption(option => option.setName('character').setDescription('Choose a character to try').setRequired(false))
-			.addStringOption(option => option.setName('class').setDescription('Choose a class to try').setRequired(false))
-			.addIntegerOption(option => option.setName('character-level').setDescription('Set the character level').setRequired(false))
-			.addIntegerOption(option => option.setName('class-level').setDescription('Set the class level').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
