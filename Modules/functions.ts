@@ -637,6 +637,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         isLightning: false,
         canCounter: true,
         normalATK: false,
+        turn: 0,
 
         preventRetaliation: false,
     };
@@ -658,8 +659,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         // if (target.blockStreak >= 2) targetBuff.br.push(new buffInfo("*", 0.875, 6));
 
         // Event Triggers
-        matchStats.trigger("block", attacker, target, attackerBuff, targetBuff);
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("block", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         // Achievements & Daily Quests
         achievements[13].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak); // Invincible
@@ -695,8 +696,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         // if (target.dodgeStreak >= 2) targetBuff.dodge.push(new buffInfo("*", 0.875, 6));
 
         // Event Triggers
-        matchStats.trigger("dodge", attacker, target, attackerBuff, targetBuff);
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("dodge", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         return 0;
     }; /* Reset DodgeStreak */ target.dodgeStreak = 0;
@@ -768,7 +769,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
         // Event Triggers
         matchStats.trigger("counter", attacker, target, attackerBuff, targetBuff, { damage });
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
     };
@@ -784,8 +785,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         notice.push(`\n💨 **${target.name}** has evaded a deadly attack!`);
 
         // Event Triggers
-        matchStats.trigger("deathEvade", attacker, target, attackerBuff, targetBuff);
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("deathEvade", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         return 0;
     };
