@@ -246,6 +246,7 @@ export type DetailedStats = {
     critbleedlast: number;
     heap1: any;
     timeout: boolean;
+    allowExecution: boolean;
     lvl: number;
     ref: number;
     class: number;
@@ -670,7 +671,6 @@ export type MatchStats = {
     eStatsCC: Record<string, any>;
     tdChance: number;
     shieldBreak: number;
-    allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
     allowSelfheal?: boolean;
 
