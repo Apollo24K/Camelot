@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { RaidRank } from '../types';
+import { RaidRank, SeasonalEvent } from '../types';
 
 export const cowSettings = (() => {
     try {
@@ -53,6 +53,14 @@ export const OfferRow = new ActionRowBuilder<ButtonBuilder>()
             .setStyle(ButtonStyle.Danger),
     );
 
+// Event
+export const ongoingEvent = "anniversary" as SeasonalEvent;
+export const seasonalEventStart = new Date('2025-08-16 00:00:00');
+export const seasonalEventLastsDays = 16;
+export const seasonalEventEnd = new Date(seasonalEventStart.getTime() + (seasonalEventLastsDays * 24 * 60 * 60 * 1000));
+export const isEventOngoing = () => seasonalEventStart.getTime() <= Date.now() && Date.now() < seasonalEventEnd.getTime();
+
+// Misc
 export const requestVerification = new Map();
 export const dungeonTempBan = new Map();
 
@@ -68,6 +76,25 @@ export const shardEmoji = {
     "B": "<:b_shard:917202862851899392>",
     "C": "<:c_shard:917202862499582002>",
     "D": "<:d_shard:917202840563363891>",
+} as const;
+
+const seasonalKeys = {
+    "valentines": "<:valentines_key:1415408453060399225>",
+    "cny": "<:cny_key:1415409748597280941>",
+    "easter": "<:easter_key:1415408485281173647>",
+    "summer": "<:summer_key:1415409314725757083>",
+    "fall": "<:fall_key:1415402576509141143>",
+    "halloween": "<:halloween_key:1415403370318925977>",
+    "winter": "<:winter_key:1415403402992681079>",
+} as const;
+
+export const currencyEmojis = {
+    "gems": "<:genesis_gems:1034179687720681492>",
+    "coins": "<:coins:1030580480782893197>",
+    "lilies": "<:lilium:974057059618291732>",
+    "jades": "<:eternal_jade:1256124504141201428>",
+    "season_keys": seasonalKeys.fall,
+    "eventpts": "🌙",
 } as const;
 
 export const profileColors = {

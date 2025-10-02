@@ -28,25 +28,27 @@ function r1(stats: CompactUserSchema) {
         );
 };
 
-const thumbnail = "https://i.ibb.co/z4DcLzS/preview.gif";
+const thumbnail = "https://i.ibb.co/JwDfBWXr/shorekeeper-EX.gif";
 const expity = 24;
 
 const newex: { [key: string]: number; } = {
-    "22610": 0.016, // Mari EX
-    "22611": 0.013, // Frieren EX
-    "22612": 0.011, // Itachi EX
-}; // sum = 0.04
+    "24798": 0.01, // Shorekeeper EX
+    "23185": 0.008, // 2B EX
+    "23390": 0.012, // Garou EX
+
+    "17688": 0.004, // Apollo EX
+    "21928": 0.005, // Boa Hancock EX
+    "19050": 0.009, // Baal EX
+    "19049": 0.012, // Ruminas Valentine EX
+}; // sum = 0.03
 
 const oldex: { [key: string]: number; } = {
-    "17116": 0.004, // Isolde EX
-    "17686": 0.005, // Escanor EX
-    "17871": 0.006, // Padoru EX
-    "18011": 0.005, // Lria EX
-}; // sum = 0.02
+    "19049": 0, // Ruminas Valentine EX
+}; // sum = 0.03
 
 const expool: { [key: string]: number; } = {
-    ...newex,
     ...oldex,
+    ...newex,
 };
 
 const exDropRate = Math.floor(10000 * Object.values(expool).reduce((acc, rate) => acc + rate, 0)) / 100;
@@ -104,9 +106,11 @@ const exportCommand: SlashCommand = {
         const stats = author.schema;
 
         function getDesc() {
-            return `Pull for a chance of getting an EX character!\nIncludes the following characters:\n**NEW** (67%): ${Object.keys(newex).map((e) => `**${characters[e as any].name}**`).join(", ")}\n**RERUN** (33%): ${Object.keys(oldex).map((e) => `**${characters[e as any].name}**`).join(", ")}\n\n` +
+            return `Pull for a chance of getting an EX character!\nIncludes the following characters:\n` +
+                // `${Object.keys(newex).map((e) => `**${characters[e as any].name}**`).join(", ")}, ${Object.keys(oldex).map((e) => `**${characters[e as any].name}**`).join(", ")}\n\n` +
+                `**Shorekeeper EX**, **Apollo EX**, **2B & 9S EX**, **Boa Hancock EX**, **Raiden Shogun EX**, **Ruminas Valentine EX**, **Garou EX**\n\n` +
                 `**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **${exDropRate}**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **${50 - exDropRate}**%\n<:STier:869316518675095552> Tier ➜ **50**%\n\n` +
-                `-# Tip: Pity only includes new EX characters!`;
+                `-# Tip: Use up your <a:EXTRA:1138530846144462968> pulls before the next event starts, you'll lose them otherwise!`;
         };
 
         const Embed = new EmbedBuilder()

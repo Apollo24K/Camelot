@@ -158,6 +158,7 @@ const commands = [
 							{ name: 'Character Bundle', value: "4" },
 							{ name: 'Rare Pack', value: "5" },
 							{ name: 'Morpheus Blessing', value: "6" },
+							{ name: 'Newcomer Pack', value: "7" },
 						)
 				))
 			.addSubcommand((subcommand) => subcommand.setName('chest').setDescription('Buy a chest!')
@@ -271,17 +272,17 @@ const commands = [
 			.setDescription('See all your timers at once')
 			.addUserOption(option => option.setName('user').setDescription('See someone else\'s cooldown')),
 	}.data.toJSON(),
-	// { // celebrate: Claim your daily anniversary reward! 🎂 🎉
-	// 	// trick-or-treat: Trick, or treat? 👻 🍬
-	// 	// christmas-present: Unwrap a festive surprise! 🎄 🎁
-	// 	// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
-	// 	// egg-hunt: See what you find! 🧺 🐰
-	// 	data: new SlashCommandBuilder()
-	// 		.setName('christmas-present')
-	// 		.setDescription('Unwrap a festive surprise! 🎄 🎁')
-	// 	// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
-	// 	// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
-	// }.data.toJSON(),
+	{ // celebrate: Claim your daily anniversary reward! 🎂 🎉
+		// trick-or-treat: Trick, or treat? 👻 🍬
+		// christmas-present: Unwrap a festive surprise! 🎄 🎁
+		// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
+		// egg-hunt: See what you find! 🧺 🐰
+		data: new SlashCommandBuilder()
+			.setName('celebrate')
+			.setDescription('Claim your daily anniversary reward! 🎂 🎉')
+		// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
+		// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
+	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('changeimg')
@@ -614,6 +615,7 @@ const commands = [
 							{ name: 'Tax Rate', value: 'tax' },
 							{ name: 'Join Settings', value: 'canjoin' },
 							{ name: 'Change Join Code', value: 'changecode' },
+							{ name: 'Change Raid Reward Distribution', value: 'raid_distribution' },
 							{ name: 'Reset Perks', value: 'resetperks' },
 						)
 				)
@@ -679,6 +681,16 @@ const commands = [
 			.setName('help')
 			.setDescription('List all commands')
 			.addStringOption(option => option.setName('command').setDescription('Need help with a specific command? Type it\'s name in here').setRequired(false)),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('hpbar')
+			.setDescription('HP bar related commands')
+			.addSubcommand((subcommand) => subcommand.setName('list').setDescription('List all available HP bars')
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false)))
+		// .addSubcommand((subcommand) => subcommand.setName('select').setDescription('Select an HP bar')
+		// 	.addStringOption(option => option.setName('item').setDescription('Select an HP bar').setRequired(true)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -779,6 +791,8 @@ const commands = [
 							{ name: 'Cuirass', value: 'cuirass' },
 							{ name: 'Gloves', value: 'gloves' },
 							{ name: 'Boots', value: 'boots' },
+							{ name: 'All Runes', value: 'all_runes' },
+							{ name: 'Rune', value: 'rune' },
 							{ name: 'Rings', value: 'rings' },
 							{ name: 'Ring 1', value: 'ring1' },
 							{ name: 'Ring 2', value: 'ring2' },
@@ -825,6 +839,10 @@ const commands = [
 							{ name: 'levelup', value: 'levelup' },
 						)
 				))
+			.addSubcommand((subcommand) => subcommand.setName('runes').setDescription('See your runes inventory')
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			)
 			.addSubcommand((subcommand) => subcommand.setName('weapon').setDescription('See your weapon inventory')
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
@@ -1084,6 +1102,9 @@ const commands = [
 				.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(false))
 				.addStringOption(option => option.setName('class').setDescription('Select a class').setRequired(false))
 				.addStringOption(option => option.setName('items').setDescription('Select items separated by comma (,)').setRequired(false))
+				.addStringOption(option => option.setName('ring-1').setDescription('Select the 1st ring').setRequired(false))
+				.addStringOption(option => option.setName('ring-2').setDescription('Select the 2nd ring').setRequired(false))
+				.addStringOption(option => option.setName('ring-3').setDescription('Select the 3rd ring').setRequired(false))
 			)
 	}.data.toJSON(),
 	{
@@ -1335,6 +1356,12 @@ const commands = [
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('seasonal')
+			.setDescription('Seasonal events and activities')
+			.addSubcommand((subcommand) => subcommand.setName('shop').setDescription('View the seasonal shop'))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

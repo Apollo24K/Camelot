@@ -143,8 +143,8 @@ export const raids: RaidInfo[] = [
 
     // True damage, but shield scales it down
     //* Hammer
-    new RaidInfo(15, "Sledgefist", "C+", "EX+", 7_566_470, raidBosses[15], { accentColor: "#ff3a00", phase: 1, phasesTotal: 2, nextPhase: 16 }),
-    new RaidInfo(16, "Kraghammer", "C+", "EX+", 15_203_280, raidBosses[16], { accentColor: "#ff3a00", phase: 2, phasesTotal: 2 }),
+    new RaidInfo(15, "Sledgefist", "C+", "EX+", 5_566_470, raidBosses[15], { accentColor: "#ff3a00", phase: 1, phasesTotal: 2, nextPhase: 16 }),
+    new RaidInfo(16, "Kraghammer", "C+", "EX+", 7_203_280, raidBosses[16], { accentColor: "#ff3a00", phase: 2, phasesTotal: 2 }),
 
     // Reduces max hp, when phys. hit, steals md, gets mr
     //* Cakey

@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, weaponInfo } from "../Modules/items";
+import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel, getRingSlotsTotal } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
@@ -181,6 +181,9 @@ const exportCommand: SlashCommand = {
                             `${fItem.maxlevel > 1 ? `**Passive (Asc. ${fItem.maxlevel})**: ${fItem.getBuffDesc(fItem.maxlevel)}\n\n` : ""}` +
                             `>>> ${fItem.flair}`
                         );
+                        Embeds.push(Embed);
+                    } else if (fItem instanceof runeInfo) {
+                        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}${fItem.active ? ` (replaces active)` : ""}${fItem.passive ? ` (replaces passive)` : ""}${fItem.party ? ` (replaces party)` : ""}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n\n**Abilities**\n${fItem.buffdesc}`);
                         Embeds.push(Embed);
                     } else if (fItem instanceof fishInfo) {
                         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}`);
@@ -789,28 +792,41 @@ const exportCommand: SlashCommand = {
                         stats.equipment["prog"] = equippedProgs.join(",");
                         equipped.push(`[${action.toUpperCase()}]`);
                     } else {
-                        let progmsg = "`A110` : Slows enemy every **2** rounds. If dodge is below **0%**, sets dodge to **0%**, before increasing dodge rate by **1%** for every **1%** HP missing, up to **20%**\n`A120` : Initiates restoration every **4** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **4** rounds, reducing their ATK, MD, DEF, MR by **25%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **4** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme(s) from the pod.";
+                        let progmsg = "`A110` : Slows enemy every **2** rounds. If dodge is below **0%**, sets dodge to **0%**, before increasing dodge rate by **1%** for every **1%** HP missing, up to **20%**\n`A120` : Initiates restoration every **4** rounds, applying a **10%** max HP heal over **2** rounds.\n`A140` : Gathers enemy every **4** rounds, reducing their ATK & MD by **20%**, DEF & MR by **10%** for **1** round.\n`A170` : Sharply locates loot, increasing coins obtained from dungeons by **15%**. Grants **1x** ɪɴꜱɪɢʜᴛ at the start of every round.\n`R020` : Analyzes foes every **4** rounds, guaranteeing **2** hits of **20%** DMG on the enemy.\n`Remove` : Removes any existing programme(s) from the pod.";
                         return interaction.reply(`⚙️ Correct usage: /item equip item:prog <ID>. Valid programmes:\n\n${progmsg}`);
                     };
                     continue;
                 };
 
                 // Dalus/Kisogi's shell
-                // if (["broken shell", "remove shell"].includes(itemChoice.toLowerCase())) {
-                //     if (itemChoice.toLowerCase() === "remove shell") delete stats.equipment["shell"];
-                //     else stats.equipment["shell"] = "broken";
+                if (["broken shell", "remove shell"].includes(itemChoice.toLowerCase())) {
+                    if (itemChoice.toLowerCase() === "remove shell") delete stats.equipment["shell"];
+                    else stats.equipment["shell"] = "broken";
 
-                //     if (itemChoice.toLowerCase() === "remove shell") equipped.push("Unequipped Broken Shell");
-                //     else equipped.push(`**__Broken Shell__** <:brokenshell:1387074948815781918>`);
+                    if (itemChoice.toLowerCase() === "remove shell") equipped.push("Unequipped Broken Shell");
+                    else equipped.push(`**__Broken Shell__** <:brokenshell:1405524630520987771>`);
 
-                //     continue;
-                // };
+                    continue;
+                };
 
                 const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
                 if (!item) {
                     const fItem = searchItem(itemChoice, interaction);
                     if (!fItem) return;
-                    return interaction.reply(`Please use your weapon's ID, not its name. You can find it in your inventory through \`/items\``);
+
+                    // Match Rune
+                    if (fItem instanceof runeInfo) {
+                        if (!(stats.items[fItem.id] && stats.items[fItem.id] > 0)) {
+                            return interaction.reply(`You don't have ${fItem.emoji} **${fItem.name}**`);
+                        };
+
+                        stats.equipment[`rune:${stats.battlechar}`] = `${fItem.id}`;
+                        equipped.push(`${fItem.emoji} **__${fItem.name}__**`);
+
+                        continue;
+                    } else {
+                        return interaction.reply(`Please use your weapon's ID, not its name. You can find it in your inventory through \`/items\``);
+                    };
                 };
 
                 const fItem = items[item.itemid];
@@ -865,6 +881,15 @@ const exportCommand: SlashCommand = {
                 delete stats.equipment["cuirass"];
                 delete stats.equipment["gloves"];
                 delete stats.equipment["boots"];
+            } else if (typeChoice === "all_runes") {
+                const keys = Object.keys(stats.equipment);
+                for (const key of keys) {
+                    if (key.startsWith("rune:")) {
+                        delete stats.equipment[key];
+                    };
+                };
+            } else if (typeChoice === "rune") {
+                delete stats.equipment[`rune:${stats.battlechar}`];
             } else if (typeChoice === "rings") {
                 delete stats.equipment["ring1"];
                 delete stats.equipment["ring2"];

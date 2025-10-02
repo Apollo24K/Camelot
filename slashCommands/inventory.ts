@@ -84,7 +84,7 @@ const exportCommand: SlashCommand = {
             .setDescription(formatPage(showChars, sort, invd, stats))
             .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
         if (pagesTotal === 1) return interaction.reply({ embeds: [Embed], ephemeral: ephemeral === "true" });
-        return interaction.reply({ embeds: [Embed], components: [PageRow], ephemeral: ephemeral === "true", fetchReply: true }).then(msg => {
+        return interaction.reply({ embeds: [Embed], components: [PageRow], ephemeral: ephemeral === "true" }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
             collector.on('collect', r => {

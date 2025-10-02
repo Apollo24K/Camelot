@@ -329,6 +329,17 @@ const exportCommand: SlashCommand = {
                 return interaction.reply(`Successfully reset your guild perks. Your guild tokens have been refunded.`);
             };
 
+            if (setting === "raid_distribution") {
+                if (!(input.toLowerCase() === "true" || input.toLowerCase() === "false")) return interaction.reply(`Change your guild's raid reward distribution.\nWrite \`true\` if you want the rewards to be distributed equally, \`false\` if you want them to be distributed by points.`);
+
+                // Update guilds table
+                await updateGuilds(guild.id, {
+                    raid_distribute_equally: { type: "set", value: input.toLowerCase() === "true" }
+                });
+
+                return interaction.reply(`Changed raid reward distribution to **${input.toLowerCase() === "true" ? "equal" : "by points"}**.`);
+            };
+
         } else if (subcommand === "join") {
             const code = interaction.options.getString('code', true);
 
@@ -863,14 +874,14 @@ const exportCommand: SlashCommand = {
                         donatedtotal: { type: "increment", value: donation }
                     });
 
+                    // Add guild donation
+                    await addGuildDonation(guild.id, interaction.user.id, currency, donation);
+
                     // Daily Quests
                     dailies[9].update(interaction, donation);
 
                     // Achievements
                     achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);
-
-                    // Add guild donation
-                    await addGuildDonation(guild.id, interaction.user.id, currency, donation);
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.username} has donated **${donation}**${emoji} to **${guild.name}**!`);
                 });

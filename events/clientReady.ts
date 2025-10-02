@@ -2,7 +2,7 @@ import { Client, ActivityType } from "discord.js";
 import { BotEvent } from "../types";
 
 const event: BotEvent = {
-    name: "ready",
+    name: "clientReady",
     once: true,
     execute: (client: Client) => {
 

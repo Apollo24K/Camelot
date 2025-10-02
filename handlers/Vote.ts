@@ -18,6 +18,9 @@ const handler: BotHandler = {
     once: true,
     execute: async (client: Client) => {
 
+        // Only if Camelot
+        if (config.clientId.active !== "706183309943767112") return;
+
         const app = express();
         app.use(express.json());
 
@@ -75,6 +78,12 @@ const handler: BotHandler = {
 
             // Return if lastvote has been less than 12h ago
             if (stats.lastvote && ((Date.now() - new Date(stats.lastvote).getTime()) < 12 * 60 * 60 * 1000)) return;
+
+            // If server vote
+            if (vote.target_type === "server") {
+                dailies[12].update(undefined, 1, { id: vote.user_id }); // Guild's Ballot
+                return;
+            };
 
             // Update users table
             await updateUsers(vote.user_id, {

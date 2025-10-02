@@ -11,9 +11,22 @@ export type ItemRarity = 'genesis' | 'mythical' | 'legendary' | 'unique' | 'rare
 
 export type PrimaryStat = 'hp' | 'hp%' | 'atk' | 'atk%' | 'def' | 'def%' | 'md' | 'md%' | 'mr' | 'cr' | 'cd' | 'dodge' | 'br' | 'mana' | 'sm' | 'mg' | 'shield';
 
-export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring";
+export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring" | "rune" | "consumable";
 
-export type ItemType = "fish" | "crafting material" | "ascension material" | "levelup material" | "awakening material" | "exchange point" | "event exclusive item" | "chest" | "sword" | "staff" | "axe" | "bow" | "lance" | "dagger" | "ring" | "shield" | "helmet" | "cuirass" | "gloves" | "boots";
+export type ItemType =
+    | "fish"
+    | "crafting material"
+    | "ascension material"
+    | "levelup material"
+    | "awakening material"
+    | "exchange point"
+    | "event exclusive item"
+    | "chest"
+    | "sword" | "staff" | "axe" | "bow" | "lance" | "dagger"
+    | "shield" | "helmet" | "cuirass" | "gloves" | "boots"
+    | "ring"
+    | "rune"
+    | "potion";
 
 export type RaidRank = 'F-' | 'F' | 'F+' | 'E-' | 'E' | 'E+' | 'D-' | 'D' | 'D+' | 'C-' | 'C' | 'C+' | 'B-' | 'B' | 'B+' | 'A-' | 'A' | 'A+' | 'S-' | 'S' | 'S+' | 'SS-' | 'SS' | 'SS+' | 'SSS-' | 'SSS' | 'SSS+' | 'EX-' | 'EX' | 'EX+';
 
@@ -22,6 +35,13 @@ export type Expertise = 'sword' | 'staff' | 'axe' | 'bow' | 'lance' | 'dagger' |
 export type BuffType = "*" | "+" | "=";
 
 export type IRoK = { name: string, id: string, char: number, ep: number; };
+
+export type SeasonalEvent =
+    | "anniversary"
+    | "halloween"
+    | "christmas"
+    | "valentines"
+    | "easter";
 
 export type ProfileImageArguments = {
     profilecolor: string | null;
@@ -293,6 +313,7 @@ export interface UserSchema {
     xp: number;
     coins: number;
     lilies: number;
+    season_keys: number;
     favchar: number | null;
     battlechar: number | null;
     lootbox: number;
@@ -301,6 +322,7 @@ export interface UserSchema {
     dailyclaimed: number;
     dailystreak: number;
     lastdaily: Date | null;
+    lastonline: Date | null;
     pullcount: number;
     pullstacks: number;
     pullstacksinterval: number;
@@ -332,6 +354,8 @@ export interface UserSchema {
     votereminder: number;
     items: Record<string, number>;
     skins: number[];
+    hpbars: number[];
+    hpbar: number | null;
     eventpts: number;
     brbest: number;
     mailbox: { type: string, rewards: string, message: string, date: number; }[];
@@ -353,6 +377,9 @@ export interface UserSchema {
         cuirass?: string;
         gloves?: string;
         boots?: string;
+        ring1?: string;
+        ring2?: string;
+        ring3?: string;
     }>;
     itemlock: string[];
     party: string | null;
@@ -382,7 +409,7 @@ export interface UserSchema {
     craze_equipment: Record<string, any>;
     equipment: Record<string, string>;
     trial_equipment: Record<string, any>;
-    craze_levels: Record<string, any>;
+    craze_levels: Record<string, number>;
     shield_slot: number;
     lastguildjoin: Date | null;
     valentine: string | null;
@@ -472,13 +499,17 @@ export interface GuildSchema {
     members: string[];
     banned: string[];
     eventpoints: number;
+
     bosshuntstage: number;
     boss1: number;
     boss2: number;
     boss3: number;
     boss4: number;
+
     lastlevelup: Date | null;
+
     raidid: number | null;
+    raid_distribute_equally: boolean;
 }
 
 export interface GuildDonationSchema {

@@ -30,7 +30,7 @@
     "canvas-constructor": "^7.0.1",
     "connect-sqlite3": "^0.9.13",
     "cors": "^2.8.5",
-    "discord.js": "^14.15.2",
+    "discord.js": "^14.22.1",
     "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "fast-csv": "^4.3.6",
