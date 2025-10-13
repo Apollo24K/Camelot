@@ -2139,12 +2139,12 @@ export const abilities: Record<number, Ability> = {
             // Burst shield gain and stuff upon first death evasion
             matchStats.on("deathEvade", {
                 maxUsage: 1,
+                target: myStats,
+                caster: eStats,
                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     console.log(target.hp);
                     console.log(caster.hp);
-                    console.log(options.turn);
-                    console.log(matchStats.turn);
-                    if (target == myStats) {
+                    if (target === myStats) {
                         const shgain = myStats.maxhp;
                         myStats.shield += myStats.maxhp;
                         myStatsFixed.maxhp = 1;

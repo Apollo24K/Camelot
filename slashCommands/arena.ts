@@ -109,7 +109,7 @@ const exportCommand: SlashCommand = {
 
 
         let matchStats = Avalon.getMatchStats(interaction, { turnSkill: 1 });
-        let matchStats2 = Avalon.getMatchStats(interaction);
+        // let matchStats2 = Avalon.getMatchStats(interaction);
         let notice = ["", "", "", ""];
 
         let ATK_EMOJI = '⚔️', DEF_EMOJI = '🛡️', ABILITY_EMOJI = '✨', SKILL_EMOJI = '⚜️';
@@ -139,15 +139,15 @@ const exportCommand: SlashCommand = {
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
         // Player 2
-        if (eSkill && myChar.id !== 4767 && enemy.id !== 4767) await eSkill.passive(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user, interaction.commandName);
-        if (eAbility?.passive && myChar.id !== 4767) await eAbility.passive(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.weapon !== -1) await (items[eStats.weapon] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.shieldid) await (items[eStats.shieldid] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.helmet && (items[eStats.helmet] as armorInfo).setname === (items[eStats.cuirass] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.gloves] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.boots] as armorInfo)?.setname) await (items[eStats.boots] as armorInfo)?.buff?.(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eSkill && myChar.id !== 4767 && enemy.id !== 4767) await eSkill.passive(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user, interaction.commandName);
+        if (eAbility?.passive && myChar.id !== 4767) await eAbility.passive(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
+        if (eStats.weapon !== -1) await (items[eStats.weapon] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
+        if (eStats.shieldid) await (items[eStats.shieldid] as weaponInfo).buff(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
+        if (eStats.helmet && (items[eStats.helmet] as armorInfo).setname === (items[eStats.cuirass] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.gloves] as armorInfo)?.setname && (items[eStats.helmet] as armorInfo).setname === (items[eStats.boots] as armorInfo)?.setname) await (items[eStats.boots] as armorInfo)?.buff?.(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
 
-        if (eStats.ring1) await (items[eStats.ring1] as ringInfo).getBuff(eStats.ring1info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.ring2) await (items[eStats.ring2] as ringInfo).getBuff(eStats.ring2info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
-        if (eStats.ring3) await (items[eStats.ring3] as ringInfo).getBuff(eStats.ring3info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, new EmbedBuilder(), user);
+        if (eStats.ring1) await (items[eStats.ring1] as ringInfo).getBuff(eStats.ring1info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
+        if (eStats.ring2) await (items[eStats.ring2] as ringInfo).getBuff(eStats.ring2info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
+        if (eStats.ring3) await (items[eStats.ring3] as ringInfo).getBuff(eStats.ring3info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
 
         async function newFight() {
             let timestart = new Date().getTime();
@@ -208,8 +208,8 @@ const exportCommand: SlashCommand = {
                         if (matchStats.ended) return;
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
-                        if (matchStats.currentCharacter || matchStats.currentOpponent || matchStats2.currentCharacter) return;
-                        matchStats2.round = matchStats.round - 1;
+                        if (matchStats.currentCharacter || matchStats.currentOpponent) return;
+                        // matchStats2.round = matchStats.round - 1;
 
                         // Consume Mana
                         Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, thumbnail);
@@ -247,7 +247,7 @@ const exportCommand: SlashCommand = {
                         if (matchStats.currentOpponent === 0) {
                             for (let i = eStatsC.delayedBuffs.length - 1; i >= 0; i--) {
                                 if (eStatsC.delayedBuffs[i].round <= matchStats.round) {
-                                    eStatsC.delayedBuffs[i].run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, user);
+                                    eStatsC.delayedBuffs[i].run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
                                     if (eStatsC.delayedBuffs[i].last <= 1 || eStatsC.delayedBuffs[i].used >= eStatsC.delayedBuffs[i].usage) {
                                         eStatsC.delayedBuffs.splice(i, 1);
                                     } else {
@@ -463,7 +463,7 @@ const exportCommand: SlashCommand = {
 
                             // If attack was replaced
                             if (eStatsC.replaceButton.atk?.run) {
-                                eStatsC.replaceButton.atk.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, user);
+                                eStatsC.replaceButton.atk.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
 
                                 // Event Triggers
                                 matchStats.trigger("ATK", eStatsC, myStatsC, eBuffs, buffs);
@@ -474,7 +474,7 @@ const exportCommand: SlashCommand = {
 
                             // Normal attack
                             else {
-                                dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats2, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                                dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
 
                                 // Event Triggers
                                 matchStats.trigger("ATK", eStatsC, myStatsC, eBuffs, buffs);
@@ -482,8 +482,8 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                                if (matchStats2.twinshot > Math.random()) setTimeout(() => {
-                                    dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats2, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                                if (matchStats.twinshot > Math.random()) setTimeout(() => {
+                                    dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                 }, aDelay);
@@ -495,11 +495,11 @@ const exportCommand: SlashCommand = {
                     def2.on('collect', async r => {
                         if (matchStats.turn === 1) {
                             matchStats.turn = 0;
-                            matchStats2.attackStreak = 0;
+                            eStatsC.attackStreak = 0;
 
                             // If defense was replaced
                             if (eStatsC.replaceButton.def?.run) {
-                                eStatsC.replaceButton.def.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, user);
+                                eStatsC.replaceButton.def.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
 
                                 // Event Triggers
                                 matchStats.trigger("DEF", eStatsC, myStatsC, eBuffs, buffs);
@@ -509,12 +509,13 @@ const exportCommand: SlashCommand = {
                             }
 
                             else {
-                                if (++matchStats2.defUsed === 10 && interaction.channel?.isSendable()) interaction.channel.send(`You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                                if (matchStats2.defUsed > 10) {
+                                //! defUsed
+                                if (++matchStats.defUsed === 10 && interaction.channel?.isSendable()) interaction.channel.send(`You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                if (matchStats.defUsed > 10) {
                                     notice.push(`\n🛡️ **${enemy.name}** can't increase DEF/MR anymore`);
                                 } else {
-                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats2.defUsed - 1) * 5);
-                                    let addmr = Math.floor((eClass ? 60 * eClass.stats.mr[0] : 60) + Math.floor(30 * Math.random())) - ((matchStats2.defUsed - 1) * 5);
+                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
+                                    let addmr = Math.floor((eClass ? 60 * eClass.stats.mr[0] : 60) + Math.floor(30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
                                     eBuffs.def.push(new buffInfo("+", adddef, 9999));
                                     eBuffs.mr.push(new buffInfo("+", addmr, 9999));
                                     eStatsC.def += adddef;
@@ -564,9 +565,9 @@ const exportCommand: SlashCommand = {
                                     if (eAbility.cost > eStatsC.sm && interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough mana! (**${eStatsC.sm}**/${eAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                     else {
                                         matchStats.turn = 0;
-                                        matchStats2.attackStreak = 0;
+                                        eStatsC.attackStreak = 0;
                                         eAbility.used++;
-                                        const response = await eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, msg);
+                                        const response = await eAbility.ability(eStatsC, eStats, myStatsC, myStats, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, msg);
                                         if (!eStatsC.timeout) matchStats.turn = 1;
                                         eStatsC.sm -= eAbility.cost;
 
@@ -588,8 +589,8 @@ const exportCommand: SlashCommand = {
                         // If class active was replaced
                         if (eStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
-                            matchStats2.attackStreak = 0;
-                            const response = await eStatsC.replaceButton.cskill.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, user);
+                            eStatsC.attackStreak = 0;
+                            const response = await eStatsC.replaceButton.cskill.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
 
                             // Event Triggers
                             if (response === AbilityResponse.SUCCESS) {
@@ -618,9 +619,9 @@ const exportCommand: SlashCommand = {
                             else {
                                 if (matchStats.turn === 1) {
                                     eStatsC.sm -= eSkill.cost;
-                                    matchStats2.attackStreak = 0;
-                                    const response = await eSkill.skill(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats2, notice, Embed, user, stats2 ? stats2.chars : []);
-                                    matchStats.turn = matchStats2.turn;
+                                    eStatsC.attackStreak = 0;
+                                    const response = await eSkill.skill(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user, stats2 ? stats2.chars : []);
+                                    // matchStats.turn = matchStats2.turn;
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {
