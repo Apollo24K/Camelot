@@ -648,6 +648,7 @@ export type TriggerOptions = {
 export type MatchStats = {
     turn: number;
     round: number;
+    user: string;
     roundCheck: number;
     ended: boolean;
     interaction: ChatInputCommandInteraction;

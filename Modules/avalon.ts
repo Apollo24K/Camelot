@@ -113,6 +113,7 @@ export default class Avalon {
         const matchStats: MatchStats = {
             turn: 1,
             round: 1,
+            user: interaction.user.id,
             roundCheck: 1,
             ended: false,
             interaction: interaction,

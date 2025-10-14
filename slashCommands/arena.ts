@@ -268,6 +268,7 @@ const exportCommand: SlashCommand = {
                     atk.on('collect', async r => {
                         if (matchStats.turn === 0) {
                             matchStats.turn = 1;
+                            matchStats.user = matchStats.interaction.user.id;
 
                             // If attack was replaced
                             if (myStatsC.replaceButton.atk?.run) {
@@ -311,6 +312,7 @@ const exportCommand: SlashCommand = {
                     def.on('collect', async r => {
                         if (matchStats.turn === 0) {
                             matchStats.turn = 1;
+                            matchStats.user = matchStats.interaction.user.id;
                             myStatsC.attackStreak = 0;
 
                             // If defense was replaced
@@ -360,6 +362,7 @@ const exportCommand: SlashCommand = {
                         // If ability was replaced
                         if (myStatsC.replaceButton.ability?.run && matchStats.turn === 0) {
                             matchStats.turn = 1;
+                            matchStats.user = matchStats.interaction.user.id;
                             myStatsC.attackStreak = 0;
                             const response = await myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
@@ -382,6 +385,7 @@ const exportCommand: SlashCommand = {
                                     if (myAbility.cost > myStatsC.sm) {
                                         if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                     } else {
+                                        matchStats.user = matchStats.interaction.user.id;
                                         matchStats.turn = 1;
                                         myStatsC.attackStreak = 0;
                                         myAbility.used++;
@@ -410,6 +414,7 @@ const exportCommand: SlashCommand = {
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 0) {
                             matchStats.turn = 1;
+                            matchStats.user = matchStats.interaction.user.id;
                             myStatsC.attackStreak = 0;
                             const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
@@ -439,6 +444,8 @@ const exportCommand: SlashCommand = {
                             if (skill.cost > myStatsC.sm && interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             else {
                                 if (matchStats.turn === 0) {
+                                    matchStats.turn = 1;
+                                    matchStats.user = matchStats.interaction.user.id;
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
                                     const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
@@ -459,6 +466,7 @@ const exportCommand: SlashCommand = {
 
                     atk2.on('collect', async r => {
                         if (matchStats.turn === 1) {
+                            matchStats.user = user.id;
                             matchStats.turn = 0;
 
                             // If attack was replaced
@@ -495,6 +503,7 @@ const exportCommand: SlashCommand = {
                     def2.on('collect', async r => {
                         if (matchStats.turn === 1) {
                             matchStats.turn = 0;
+                            matchStats.user = user.id;
                             eStatsC.attackStreak = 0;
 
                             // If defense was replaced
@@ -543,6 +552,7 @@ const exportCommand: SlashCommand = {
                         // If ability was replaced
                         if (eStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
+                            matchStats.user = user.id;
                             eStatsC.attackStreak = 0;
                             const response = await eStatsC.replaceButton.ability.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, interaction.user);
 
@@ -564,6 +574,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     if (eAbility.cost > eStatsC.sm && interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough mana! (**${eStatsC.sm}**/${eAbility.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                     else {
+                                        matchStats.user = user.id;
                                         matchStats.turn = 0;
                                         eStatsC.attackStreak = 0;
                                         eAbility.used++;
@@ -589,6 +600,7 @@ const exportCommand: SlashCommand = {
                         // If class active was replaced
                         if (eStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
                             matchStats.turn = 0;
+                            matchStats.user = user.id;
                             eStatsC.attackStreak = 0;
                             const response = await eStatsC.replaceButton.cskill.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
 
@@ -618,6 +630,8 @@ const exportCommand: SlashCommand = {
                             if (eSkill.cost > eStatsC.sm && interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough mana! (**${eStatsC.sm}**/${eSkill.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             else {
                                 if (matchStats.turn === 1) {
+                                    matchStats.turn = 0;
+                                    matchStats.user = user.id;
                                     eStatsC.sm -= eSkill.cost;
                                     eStatsC.attackStreak = 0;
                                     const response = await eSkill.skill(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user, stats2 ? stats2.chars : []);

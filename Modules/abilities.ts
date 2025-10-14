@@ -35,7 +35,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `25`💧\n**Timeout**: `Yes`\n**Role**: `Support (Summon)`\n\n __**Active**__ (✨)\n- Transforms into Gugu (S TIER), Parona (A TIER) or March (B TIER) randomly (if you own them)\n- They have their own HP & STATS, but items & classes remain the same\n- Using it again transforms back to Fushi",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Fushi transforms randomly in one of 3 characters who each have their own stats.
-            const inv = await getUserSchema(matchStats.interaction.user.id);
+            const inv = await getUserSchema(matchStats.user);
             if (!inv) {
                 matchStats.sendWarning({ content: "You don't have any characters to transform into", ephemeral: true });
                 return AbilityResponse.FAILURE;
@@ -175,7 +175,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Mana-losing, Followup Attack, Nuke)`\n\n__**Passive**__\nWhenever he has **35** 💧:\n- Deals **40%** DMG\n- Boosts ATK/MD by **2%** if it hits\n\n__**Active**__ (✨)\n- Deals **150%** DMG after **3** rounds\n- This DMG scaling is further increased by **1%** for for every **1** weapon owned (Dupes included, capped at 100% increase for a total of 250% DMG)\n\n__**Party**__ (👥)\n- There is a **33%** chance to deal **40%** DMG to the enemy every round",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Gilgamesh
-            const weaponCount = await getUserWeaponCount(matchStats.interaction.user.id, "weapon");
+            const weaponCount = await getUserWeaponCount(matchStats.user, "weapon");
 
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Ea! He`, { atkMultiplier: 1.5 + Math.min(weaponCount / 100, 1), magicDamage: true, dodge: false });
@@ -724,7 +724,7 @@ export const abilities: Record<number, Ability> = {
     //         noTimeout(matchStats, myStats);
 
     //         // Active: Sung Jin Woo summons either Igris, Beru or Iron (SL) from the users inventory. Passive:
-    //         const inv = await getUserSchema(matchStats.interaction.user.id);
+    //         const inv = await getUserSchema(matchStats.user);
     //         if (!inv || !inv.chars.filter((e) => e === 3156 || e === 3159 || e === 3174).length) return matchStats.sendWarning({ content: "You don't have any of the characters **Igris**, **Beru** or **Iron (SL)** to summon.", ephemeral: true });
 
     //         myStats.sm -= this.cost;
@@ -845,7 +845,7 @@ export const abilities: Record<number, Ability> = {
                 const stampede = await getLatestStampede();
 
                 myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                    if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0) / 500) {
+                    if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.user]?.[1] || 0) / 500) {
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
                     };
 
@@ -2517,7 +2517,7 @@ export const abilities: Record<number, Ability> = {
             noTimeout(matchStats, myStats);
             this.used--;
 
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
             const coins = Math.min(stats?.coins ?? 0, 100000);
 
             if (matchStats.round === this.roundUsed) {
@@ -2550,7 +2550,7 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n✨ **${char.name}** uses 250<:coins:872926669055356939> to gain **${atkbuff}** ATK and **${Math.floor(myStats.maxhp * 0.05)}** Shield`);
 
                     // Update users table
-                    await updateUsers(matchStats.interaction.user.id, {
+                    await updateUsers(matchStats.user, {
                         coins: { type: "increment", value: -250 },
                     });
                     break;
@@ -2565,7 +2565,7 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n✨ **${char.name}** uses 250<:coins:872926669055356939> to gain **${atkbuff}** ATK and **${Math.floor(myStats.maxhp * 0.05)}** Shield`);
 
                     // Update users table
-                    await updateUsers(matchStats.interaction.user.id, {
+                    await updateUsers(matchStats.user, {
                         coins: { type: "increment", value: -250 },
                     });
                     break;
@@ -2687,7 +2687,7 @@ export const abilities: Record<number, Ability> = {
             this.pause = matchStats.round + 7;
 
             // Get user inv
-            const inv = await getUserSchema(matchStats.interaction.user.id);
+            const inv = await getUserSchema(matchStats.user);
             if (!inv) {
                 noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: "You don't have any fish in your inventory.", ephemeral: true });
@@ -2721,7 +2721,7 @@ export const abilities: Record<number, Ability> = {
             Object.entries(fishToConsume).forEach(([key, val]) => {
                 updateItems[key] = -val;
             });
-            await updateUsers(matchStats.interaction.user.id, {
+            await updateUsers(matchStats.user, {
                 items: { type: "merge_json", value: updateItems },
             });
 
@@ -2750,7 +2750,7 @@ export const abilities: Record<number, Ability> = {
             myStats.oceansLamentStacks = 0;
 
             // Get Fish Inv
-            const inv = await getUserSchema(matchStats.interaction.user.id);
+            const inv = await getUserSchema(matchStats.user);
             if (!inv) return AbilityResponse.FAILURE;
 
             // Get Total Amount of Fish
@@ -2912,7 +2912,7 @@ export const abilities: Record<number, Ability> = {
                 } else {
                     const stampede = await getLatestStampede();
 
-                    const points = Math.min(200, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0);
+                    const points = Math.min(200, stampede?.participation?.[matchStats.user]?.[1] || 0);
 
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.002 * points)), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.002 * points)), 9999));
@@ -4221,7 +4221,7 @@ export const abilities: Record<number, Ability> = {
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             // User has Artemis?
 
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             this.hasArtemis = stats?.chars.includes(17689) ?? false;
 
@@ -4349,7 +4349,7 @@ export const abilities: Record<number, Ability> = {
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             eStats.vulnerability ??= 1;
             // User has Apollo?
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             this.hasApollo = stats?.chars.includes(17688) ?? false;
 
@@ -5176,7 +5176,7 @@ export const abilities: Record<number, Ability> = {
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, increaseHp, {});
             };
 
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
             const items = stats?.items ?? {};
 
             const atkBuff = Math.floor(myStats.atk * Math.min(0.3, (items[663] ?? 0) * 0.001));
@@ -5451,12 +5451,12 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
         passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             const favcharref = stats?.char_ref[stats?.favchar ?? 21929];
 
             /*// Get SS shards
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             const shardStacks = Math.min(5, (stats?.ssshard ?? 0) / 50);
             */
@@ -6555,7 +6555,7 @@ export const abilities: Record<number, Ability> = {
     //         return AbilityResponse.SUCCESS;
     //     },
     //     passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         const stats = await getUserSchema(matchStats.interaction.user.id);
+    //         const stats = await getUserSchema(matchStats.user);
     //         myStats.equippedSkin ??= stats?.char_skin[char.id];
 
     //         // Encounters Saitama
