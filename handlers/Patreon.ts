@@ -16,7 +16,7 @@ const handler: BotHandler = {
         });
 
         // Check if premium gift expired (every 15 min)
-        setInterval(() => {
+        setInterval(async () => {
 
             // fetch active patrons
             myCampaign.fetchPatrons(['active_patron', 'declined_patron', /*'former_patron'*/]).then(async patrons => {

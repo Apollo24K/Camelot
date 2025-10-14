@@ -1,4 +1,4 @@
-import { Worker } from 'worker_threads';
+import { Worker } from 'node:worker_threads';
 import os from 'os';
 
 export default class WorkerPool {
@@ -7,7 +7,7 @@ export default class WorkerPool {
     private _workers: Worker[];
     private _queue: any[];
 
-    constructor(workerScript: string, numWorkers: number = os.cpus().length) {
+    constructor(workerScript: string, numWorkers: number = Math.max(1, os.cpus().length - 1)) {
         this._workerScript = workerScript;
         this._numWorkers = numWorkers;
         this._workers = [];
@@ -30,7 +30,7 @@ export default class WorkerPool {
 
     init() {
         for (let i = 0; i < this.numWorkers; i++) {
-            const worker = new Worker(this.workerScript);
+            const worker = new Worker(this.workerScript, { workerData: { type: 'module' } });
             worker.on('message', this.createMessageHandler(worker));
             worker.on('error', this.createErrorHandler(worker));
             this.workers.push(worker);

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
@@ -7,7 +6,7 @@ import { getUserSchema } from '../Modules/queries';
 const exportCommand: SlashCommand = {
     name: 'shards',
     async execute({ interaction, author }) {
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
+
         const user = interaction.options.getUser('user') || interaction.user;
 
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
@@ -15,7 +14,7 @@ const exportCommand: SlashCommand = {
 
         let chars = [...new Set(stats.chars)].map((e) => characters[e]);
         let thumbnail = chars[Math.floor(Math.random() * chars.length)].image;
-        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar]);
+        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         const Embed = new EmbedBuilder()
             .setColor(0xbbffff)

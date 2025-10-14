@@ -6395,7 +6395,7 @@ export const items = [
 
             return AbilityResponse.SUCCESS;
         },
-    }, "- Increases attack by **10%**.\n- Every **8** rounds, the wearer gains **1x** counter attempt.", "rare", 787),
+    }, "- Increases attack by **10%**.\n- Every **8th** round, the wearer counters the next attack.", "rare", 787),
 
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

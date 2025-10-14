@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, AttachmentBuilder, MessageFlags } from "discord.js";
 import { getProfileImage } from "./profile";
 import { CostTypes, ProfileDecorations, profileSets } from "../Modules/profileDecorations";
@@ -118,8 +117,6 @@ const exportCommand: SlashCommand = {
     name: 'background',
     async execute({ interaction, author }) {
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const subcommand = interaction.options.getSubcommand();
 
         if (subcommand === "search") {
@@ -159,7 +156,7 @@ const exportCommand: SlashCommand = {
                 profilecolor: stats.profilecolor,
                 quality: "thumbnail",
                 forceStatic: false,
-                thumbnail: stats.favchar === null ? undefined : characters[stats.favchar].getImage(stats.premium, customSettings[interaction.user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar], true),
+                thumbnail: stats.favchar === null ? undefined : characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar], true),
 
                 stats: detailedStats,
                 ref: stats.char_ref[stats.battlechar],
@@ -316,7 +313,7 @@ const exportCommand: SlashCommand = {
                 profilecolor: stats.profilecolor,
                 quality: "thumbnail",
                 forceStatic: false,
-                thumbnail: stats.favchar === null ? undefined : characters[stats.favchar].getImage(stats.premium, customSettings[interaction.user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar], true),
+                thumbnail: stats.favchar === null ? undefined : characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar], true),
 
                 stats: detailedStats,
                 ref: stats.char_ref[stats.battlechar],

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder } from "discord.js";
 import { items } from "../Modules/items";
 import { characters } from "../Modules/chars";
@@ -19,8 +18,6 @@ const charxpByRarity = {
 const exportCommand: SlashCommand = {
     name: 'feed',
     async execute({ interaction, author }) {
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         const selected = parseInt(interaction.options.getString('use', true));
         const amountFlag = interaction.options.getString('amount') ?? "1";
@@ -75,7 +72,7 @@ const exportCommand: SlashCommand = {
                     { name: 'ATK ️️⚔️', value: `${stats.atk} ➜ **${stats2.atk}**`, inline: true },
                     { name: 'DEF ️️️🛡️', value: `${stats.def} ➜ **${stats2.def}**`, inline: true },
                 )
-                .setThumbnail(char.getImage(inv.premium, customSettings[interaction.user.id]?.cimg[char.id], inv.char_skin[char.id]))
+                .setThumbnail(char.getImage(inv.premium, stats.custom_skins[char.id], inv.char_skin[char.id]))
                 .setFooter({ text: `EP: ${stats.ep} ➜ ${stats2.ep}` });
             return interaction.reply({ embeds: [Embed] });
         } else {

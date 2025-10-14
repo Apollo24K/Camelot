@@ -735,6 +735,13 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.damageReduction))));
     };
 
+    // Deflect damage
+    if (target.deflectDamage) {
+        attacker.hp = Math.floor(attacker.hp - Math.floor(damage * target.deflectDamage));
+        damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.deflectDamage))));
+        if (attacker.hp < 1) attacker.hp = 0;
+    };
+
     // Vulnerability
     if (target.vulnerability) {
         damage = Math.floor(damage * target.vulnerability);

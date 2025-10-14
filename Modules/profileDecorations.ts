@@ -223,6 +223,12 @@ export const profileSets = [
         new Background("Whispering Leaves", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/whispering-leaves.gif", url: "https://i.ibb.co/tPYVdK40/Kisogi-Background.gif" }), { delay: 200 }),
     ]),
 
-
+    new ProfileSet("Ai Hoshino", 13, { jades: 800, gems: 1000, coins: 1_500_000 }, [
+        new Background("Ai", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai.jpg", url: "https://i.ibb.co/mC3GdGYC/ai.jpg" })),
+        new Background("Ai Hoshino", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-hoshino.gif", url: "https://i.ibb.co/8gXrCNSC/ezgif-6dfcecd6ed4d8a.gif" }), { delay: 40 }),
+        new Background("Ai Outfits", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-outfits.gif", url: "https://i.ibb.co/qMQw7ZtX/ezgif-6c40ce606afb09.gif" }), { delay: 80 }),
+        new Background("Ai Vibing", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-vibing.gif", url: "https://i.ibb.co/ymDdpqSF/ezgif-67abc5540fd53b.gif" }), { delay: 30 }),
+        new Background("Ai Tease", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-tease.gif", url: "https://i.ibb.co/PZYGCQGV/ezgif-6442bffaea6a72.gif" }), { delay: 60 }),
+    ]),
 
 ];

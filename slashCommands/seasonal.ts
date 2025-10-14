@@ -36,6 +36,35 @@ const BACKGROUNDS_FOR_SALE = [
     { name: "Autumn Forest", id: 11, price: 60, isNew: true },
 ] as const; // Total cost: 170
 
+const BuyKeysRow = new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(
+        new ButtonBuilder()
+            .setCustomId('buy_key_10')
+            .setEmoji(currencyEmojis.season_keys)
+            .setLabel('10')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_key_25')
+            .setEmoji(currencyEmojis.season_keys)
+            .setLabel('25')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_key_50')
+            .setEmoji(currencyEmojis.season_keys)
+            .setLabel('50')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_key_100')
+            .setEmoji(currencyEmojis.season_keys)
+            .setLabel('100')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_key_250')
+            .setEmoji(currencyEmojis.season_keys)
+            .setLabel('250')
+            .setStyle(ButtonStyle.Secondary),
+    );
+
 async function getSeasonalSkinsImage({ columns }: { columns: number; }): Promise<AttachmentBuilder> {
     const skinsForSale = skins.filter(skin => skin.obtain === "fall season 2025");
 
@@ -209,11 +238,25 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema): Con
     // Add Footer
     shopContainer
         .addSeparatorComponents(separator => separator)
-        .addTextDisplayComponents(
-            text => text.setContent(
-                `-# Season Keys: **${stats.season_keys}** ${currencyEmojis.season_keys}` +
-                ` | ` +
-                `**Time left**: <t:${Math.floor(SEASON_END_DATE.getTime() / 1000)}:R>`
+        // .addTextDisplayComponents(
+        //     text => text.setContent(
+        //         `-# Season Keys: **${stats.season_keys}** ${currencyEmojis.season_keys}` +
+        //         ` | ` +
+        //         `**Time left**: <t:${Math.floor(SEASON_END_DATE.getTime() / 1000)}:R>`
+        //     )
+        // )
+        .addSectionComponents(section => section
+            .addTextDisplayComponents(text => text
+                .setContent(
+                    `-# Season Keys: **${stats.season_keys}** ${currencyEmojis.season_keys}` +
+                    ` | ` +
+                    `**Time left**: <t:${Math.floor(SEASON_END_DATE.getTime() / 1000)}:R>`
+                )
+            )
+            .setButtonAccessory(button => button
+                .setCustomId(`buy_keys`)
+                .setLabel('Buy More Keys')
+                .setStyle(ButtonStyle.Secondary)
             )
         );
 
@@ -242,6 +285,49 @@ export const exportCommand: SlashCommand = {
                 };
 
                 if (r.customId.startsWith('buy_')) {
+                    if (r.customId.startsWith('buy_keys')) {
+                        const content = `Please select how many keys you want to purchase\nConversion rate: **1** ${currencyEmojis.season_keys} = **10** ${currencyEmojis.gems} (your balance: **${stats.gems}** ${currencyEmojis.gems})`;
+                        interaction.followUp({ content, components: [BuyKeysRow] }).then(ms => {
+                            const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                            buyCollector.on('collect', async rr => {
+                                if (!rr.customId.startsWith('buy_key_')) {
+                                    ms.edit({ content: "Action cancelled", components: [] });
+                                    return;
+                                };
+
+                                const amount = parseInt(rr.customId.split('_')[2]);
+                                const cost = 10 * amount;
+                                if (isNaN(amount) || isNaN(cost)) {
+                                    ms.edit({ content: "Invalid input", components: [] });
+                                    return;
+                                };
+
+                                const tempStats = await getUserSchema(interaction.user.id);
+                                if (!tempStats) return msg.edit("You haven't started playing yet.");
+
+                                // Return if balance not enough
+                                if (tempStats.gems < cost) {
+                                    ms.edit({ content: `You don't have enough genesis gems (**${tempStats.gems}**/${cost} ${currencyEmojis.gems})`, components: [] });
+                                    return;
+                                };
+
+                                // Update users table
+                                await updateUsers(interaction.user.id, {
+                                    gems: { type: "increment", value: -cost },
+                                    season_keys: { type: "increment", value: amount },
+                                });
+
+                                stats.gems -= cost;
+                                stats.season_keys += amount;
+
+                                // Edit replies
+                                ms.edit({ content: "Purchase Successful!", components: [] });
+                                await msg.edit({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)] });
+                            });
+                        });
+                    };
+
                     if (r.customId.startsWith('buy_rune_')) {
                         const runeId = parseInt(r.customId.split('_')[2]);
                         const rune = items[runeId];

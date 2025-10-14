@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { ComponentType } from "discord.js";
 import { search, userLevel } from "../Modules/functions.js";
 import { OfferRow } from "../Modules/components.js";
@@ -14,8 +13,9 @@ const exportCommand: SlashCommand = {
         if (user.id === interaction.user.id) return interaction.reply("You can't trade with yourself <:Heh:869656740667469864>");
 
         // Blacklist
-        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
-        if (user.id in blacklist) return interaction.reply(`**${user.username}** cannot trade.`);
+        if (interaction.client.blacklist.has(user.id)) {
+            return interaction.reply(`**${user.username}** cannot trade.`);
+        };
 
         const _stats = await getUserSchema(user.id);
         if (!_stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);

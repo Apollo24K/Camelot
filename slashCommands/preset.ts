@@ -1,17 +1,14 @@
-import fs from 'fs';
 import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { classes } from "../Modules/classes";
 import { items } from "../Modules/items";
-import { search, searchClass, filterItems, getRingSlotsTotal, searchItem } from "../Modules/functions";
+import { search, searchClass, filterItems, getRingSlotsTotal } from "../Modules/functions";
 import { ItemCategory, ItemType, SlashCommand, UpdateUserOptions } from '../types';
 import { getUserSchema, getUserWeapons, getWeaponSchemas, updateUsers } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'preset',
     async execute({ interaction, author }) {
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         const subcommand = interaction.options.getSubcommand();
 
@@ -22,7 +19,7 @@ const exportCommand: SlashCommand = {
             if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
 
             let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
-            if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar]);
+            if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
             const userItems = await getUserWeapons(user.id);
             const ringSlotsTotal = getRingSlotsTotal(stats);
@@ -148,8 +145,6 @@ const exportCommand: SlashCommand = {
                     slotRingItemId = slotRingSchema.map(ring => ring.itemid);
                 };
                 const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
-                console.log(allRingItemIds);
-                console.log(new Set(allRingItemIds));
                 if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
                     return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                 }
@@ -171,8 +166,6 @@ const exportCommand: SlashCommand = {
                     slotRingItemId = slotRingSchema.map(ring => ring.itemid);
                 };
                 const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
-                console.log(allRingItemIds);
-                console.log(new Set(allRingItemIds));
                 if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
                     return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                 }
@@ -195,8 +188,6 @@ const exportCommand: SlashCommand = {
                     slotRingItemId = slotRingSchema.map(ring => ring.itemid);
                 };
                 const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
-                console.log(allRingItemIds);
-                console.log(new Set(allRingItemIds));
                 if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
                     return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                 }

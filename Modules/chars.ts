@@ -25527,7 +25527,7 @@ characters.forEach((e, i) => {
 // // Print
 // {
 //     let totalChars = 0, totalAnime = 0;
-//     for (let i = 647; i < anime.length; i++) {
+//     for (let i = 659; i < anime.length; i++) {
 //         const numberOfChars = characters.filter(char => char.animeInfo.id === anime[i].id).length;
 //         console.log(`  - **${anime[i].name}** (${numberOfChars} chars)`);
 //         totalChars += numberOfChars;

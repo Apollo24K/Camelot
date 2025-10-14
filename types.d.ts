@@ -318,6 +318,7 @@ export interface UserSchema {
     battlechar: number | null;
     lootbox: number;
     lastvote: Date | null;
+    lastvoteserver: Date | null;
     weeklyclaimed: number;
     dailyclaimed: number;
     dailystreak: number;
@@ -434,6 +435,7 @@ export interface UserSchema {
     skill_points: number;
     raid_supports: number[];
     user_settings: Record<string, any>;
+    custom_skins: Record<string, string>;
     created: Date;
 
     chars: number[];
@@ -892,5 +894,6 @@ declare global {
 declare module "discord.js" {
     export interface Client {
         slashCommands: Collection<string, SlashCommand>;
+        blacklist: Map<string, string>;
     }
 }

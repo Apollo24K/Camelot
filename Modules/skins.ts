@@ -199,5 +199,6 @@ export const skins: skinInfo[] = [
     new skinInfo("Blade (Fall 2025)", 14909, "fall season 2025", "snowflake.ex", "", { season_keys: 25 }, "https://i.ibb.co/prQ516M7/image.png", 125),
     new skinInfo("Kyouko Hori (Fall 2025)", 24, "fall season 2025", "kidsad", "", { season_keys: 30 }, "https://i.ibb.co/GQHT3JS7/Hori-1.png", 126),
 
+    // new skinInfo("Monster Garou", 23390, "fall season 2025", "skykey291", "", { season_keys: 0 }, "https://i.ibb.co/kVP4TCBZ/image.png", 127),
 
 ];

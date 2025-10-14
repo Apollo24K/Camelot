@@ -87,7 +87,7 @@ class dailyQuestInfo {
                         xp: { type: "increment", value: 20 },
                         coins: { type: "increment", value: 1000 },
                         gems: { type: "increment", value: 4 },
-                        season_keys: { type: "increment", value: [10, 12].includes(this.id) ? 10 : 5 },
+                        season_keys: { type: "increment", value: 5 },
                         dailies: { type: "set_json", value: stats.dailies },
                         ...passlevel
                     });
@@ -99,7 +99,6 @@ class dailyQuestInfo {
                         xp: { type: "increment", value: 10 },
                         coins: { type: "increment", value: 500 },
                         gems: { type: "increment", value: 2 },
-                        season_keys: { type: "increment", value: [10, 12].includes(this.id) ? 5 : 0 },
                         dailies: { type: "set_json", value: stats.dailies },
                         ...passlevel
                     });

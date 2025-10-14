@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { DetailedStats, SlashCommand } from '../types';
 import { abilities, Ability } from "../Modules/abilities";
@@ -31,8 +30,6 @@ const exportCommand: SlashCommand = {
     name: 'arena',
     async execute({ interaction, author }) {
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const user = interaction.options.getUser('user', true);
 
         const stats = author.schema;
@@ -62,12 +59,12 @@ const exportCommand: SlashCommand = {
             };
         };
 
-        const thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.char_skin[myChar.id]);
+        const thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
 
         // Enemy Stats
         let enemy = characters[stats2.battlechar];
         let eStats = await getDetailedStats(enemy.id, stats2, stats2.dungeon_classlevels);
-        eStats.image = enemy.getImage(stats2.premium, customSettings[user.id]?.cimg[enemy.id], stats2.char_skin[enemy.id]);
+        eStats.image = enemy.getImage(stats2.premium, stats2.custom_skins[enemy.id], stats2.char_skin[enemy.id]);
         let eStatsC = { ...eStats };
         let eClass = eStats.class !== -1 ? classes[eStats.class] : undefined;
         let eSkill = eStats.class !== -1 ? _.cloneDeep(skills[eStats.class]) : undefined;
