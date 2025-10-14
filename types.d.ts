@@ -852,13 +852,26 @@ declare global {
 
             PREFIX: string,
 
+            CLIENT_ID: string,
+            CLIENT_ID_CAMELOT: string,
+            CLIENT_ID_ELDER: string,
+            CLIENT_ID_POKE: string,
+
             PATREON_TOKEN: string,
             PATREON_CAMPAIGN_ID: string,
 
             RANK_AUTH: string,
+            RANK_API_KEY: string,
 
             TOPGG_AUTH: string,
             TOPGG_TOKEN: string,
+
+            OPENAI_API_KEY: string,
+
+            RUNWARE_SOURCE: string,
+            RUNWARE_API_KEY: string,
+
+            GEMINI_API_KEY: string,
 
             DONATEBOT_KEY: string,
 
@@ -868,6 +881,9 @@ declare global {
             PG_PORT: string,
 
             ADMINS: string,
+            ADMIN_APOLLO: string,
+            ADMIN_POKE: string,
+
             VERSION: string,
         }
     }
