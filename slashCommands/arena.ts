@@ -291,19 +291,9 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                                if (matchStats.twinshot > Math.random()) setTimeout(() => {
-                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-                                    editEmbed();
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    matchStats.round++;
-                                    startNextRound();
-                                    editEmbed();
-                                }, aDelay);
-                                else {
-                                    matchStats.round++;
-                                    startNextRound();
-                                    editEmbed();
-                                };
+                                matchStats.round++;
+                                startNextRound();
+                                editEmbed();
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -489,12 +479,6 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-
-                                if (matchStats.twinshot > Math.random()) setTimeout(() => {
-                                    dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-                                    editEmbed();
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                }, aDelay);
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
