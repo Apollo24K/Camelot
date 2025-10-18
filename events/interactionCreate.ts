@@ -2,6 +2,7 @@ import fs from "fs";
 import { Interaction, PermissionsBitField } from "discord.js";
 import { BotEvent, SlashCommand } from "../types";
 import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUsers } from "../Modules/queries";
+import { daysSince } from "../Modules/functions";
 
 const userCooldown = new Map();
 const channelCooldown = new Set();
@@ -106,6 +107,21 @@ const event: BotEvent = {
                 if (command) return command.execute({ interaction, author, server, locale: 'en_US' });
             };
 
+            // Login rewards
+            let delayForLoginRewards = false;
+            const daysSinceLastLogin = daysSince(author.schema.lastonline ?? new Date());
+            if (author.schema.lastonline === null || daysSinceLastLogin) {
+                // New player bonuses
+                const accountAge = daysSince(author.schema.created);
+                if (accountAge < 30) {
+                    // do something
+                };
+
+                await updateUsers(interaction.user.id, {
+                    lastonline: { type: "set", value: new Date() },
+                });
+            };
+
             // Check new mails
             if (author.schema.mailbox.length > author.schema.mailreceived) {
                 await updateUsers(interaction.user.id, {
@@ -113,7 +129,7 @@ const event: BotEvent = {
                 });
                 setTimeout(() => {
                     if (interaction.channel?.isSendable()) interaction.channel.send(interaction.user.toString() + " you have received a **new mail**! Open it using </profile:1010583712527810641>");
-                }, 1000);
+                }, delayForLoginRewards ? 1800 : 1000);
             };
 
             // NPC Arena Easter Egg

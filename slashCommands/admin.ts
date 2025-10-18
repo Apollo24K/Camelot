@@ -23,13 +23,45 @@ const exportCommand: SlashCommand = {
         const cmd = args.shift()?.toLowerCase();
 
         // Return if not owner
-        if (interaction.user.id !== "489490486734880774") {
+        if (!process.env.ADMINS.split(",").includes(interaction.user.id)) {
             return interaction.reply({ content: "You're not allowed to use this command", ephemeral });
         };
 
         // List all actions
-        if (action === "list" || action === "ls") {
+        if (cmd === "list" || cmd === "ls") {
             return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`guilds`\n`add vote`\n`set <key> <value>`\n`did`", ephemeral });
+        };
+
+        // DB size
+        if (cmd === "db_size") {
+            const [{ db_size }] = await query(`SELECT pg_size_pretty(pg_database_size(current_database())) AS db_size`) as { db_size: string; }[];
+
+            const breakdown = await query(`SELECT relname AS table_name, pg_size_pretty(pg_total_relation_size(relid)) AS total_size FROM pg_catalog.pg_statio_user_tables ORDER BY pg_total_relation_size(relid) DESC;`) as { table_name: string, total_size: string; }[];
+
+            return interaction.reply({ content: `DB size: ${db_size}\n\n**Breakdown**:\n>>> ` + breakdown.slice(0, 30).map((e) => `${e.table_name}: ${e.total_size}`).join("\n"), ephemeral });
+        };
+
+        // Table size
+        if (cmd === "table_size") {
+            const table = args.shift()?.toLowerCase() || 'users';
+            if (!table) return interaction.reply({ content: "missing table name", ephemeral });
+
+            await interaction.deferReply({ ephemeral });
+
+            // Get table columns
+            const tableColumns = await query(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'public'   AND table_name   = '${table}' ORDER BY ordinal_position;`) as { column_name: string; }[];
+
+            // Get column sizes
+            const sql = tableColumns.map((col) => {
+                return `SELECT '${col.column_name}' AS column_name, SUM(pg_column_size(${col.column_name})) AS bytes, pg_size_pretty(SUM(pg_column_size(${col.column_name}))) AS total_size FROM ${table}`;
+            }).join(' UNION ALL ') + ` ORDER BY bytes DESC`;
+
+            const res = await query(sql) as { column_name: string, bytes: string, total_size: string; }[];
+            const totalBytes = res.filter((e) => e.bytes !== null).reduce((acc, curr) => acc + Number(curr.bytes), 0);
+            const sum_pretty = (await query(`SELECT pg_size_pretty($1::bigint) AS size`, [totalBytes]) as { size: string; }[])[0].size;
+
+            // Return table size
+            return interaction.editReply({ content: `**Total**: ${sum_pretty}\n\n**Breakdown**:\n>>> ` + res.filter((e) => e.bytes !== null).slice(0, 30).map((e) => `${e.column_name}: ${e.total_size}`).join("\n") });
         };
 
         // Check refunded shard amount

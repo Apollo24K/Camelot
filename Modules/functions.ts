@@ -221,6 +221,8 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "ring1icon": "<:locked:1034511902417621002>",
         "ring2icon": "<:locked:1034511902417621002>",
         "ring3icon": "<:locked:1034511902417621002>",
+        "rune": inv.equipment[`rune:${id}`],
+        "runeicon": inv.equipment[`rune:${id}`] === undefined ? "<:rune_empty:1034507494539669635>" : items[parseInt(inv.equipment[`rune:${id}`])].emoji,
     };
 
     // Expertise change

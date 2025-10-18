@@ -39,16 +39,16 @@ const newex: { [key: string]: number; } = {
     "17688": 0.004, // Apollo EX
     "21928": 0.005, // Boa Hancock EX
     "19050": 0.009, // Baal EX
-    "19049": 0.011, // Ruminas Valentine EX
+    "19049": 0.012, // Ruminas Valentine EX
 }; // sum = 0.03
 
 const oldex: { [key: string]: number; } = {
-    "19049": 0.001, // Ruminas Valentine EX
+    "19049": 0, // Ruminas Valentine EX
 }; // sum = 0.03
 
 const expool: { [key: string]: number; } = {
-    ...newex,
     ...oldex,
+    ...newex,
 };
 
 const exDropRate = Math.floor(10000 * Object.values(expool).reduce((acc, rate) => acc + rate, 0)) / 100;

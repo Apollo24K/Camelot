@@ -115,11 +115,44 @@ const exportCommand: SlashCommand = {
 
             if (ringSlotsTotal === 0 && (ring1Choice || ring2Choice || ring3Choice)) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
 
+            // Collect all ring choices to check for duplicates
+            const ringChoices = [ring1Choice, ring2Choice, ring3Choice].filter(Boolean);
+
+            // Check for duplicates within the ring choices themselves
+            if (ringChoices.length !== new Set(ringChoices).size) {
+                return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+            }
+
+            // Get existing preset rings and extract their item IDs for comparison
+            const existingRings = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
+            let existingRingItemIds: number[] = [];
+            let slotRingItemId: number[] = [];
+
+            if (existingRings.length > 0) {
+                const existingRingSchemas = await getWeaponSchemas(existingRings.filter(Boolean) as string[]);
+                existingRingItemIds = existingRingSchemas.map(ring => ring.itemid);
+            }
+
             if (ring1Choice) {
+
                 const userItems = await getUserWeapons(interaction.user.id);
                 if (!userItems.length) return interaction.reply(`You don't have any items.`);
                 const ring = userItems.find((w) => w.uniqueid === `${ring1Choice}:${interaction.user.id}`);
                 if (!ring) return interaction.reply(`You don't have a ring with the ID **${ring1Choice}**`);
+                if (ring.item_type !== "ring") return interaction.reply(`You can't equip a ring with the ID **${ring1Choice}**`);
+
+                const newRingSchemas = await getWeaponSchemas([`${ring1Choice}:${interaction.user.id}`]);
+                const newRingItemId = newRingSchemas.map(ring => ring.itemid);
+                if (preset.ring1) {
+                    const slotRingSchema = await getWeaponSchemas([preset.ring1]);
+                    slotRingItemId = slotRingSchema.map(ring => ring.itemid);
+                };
+                const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
+                console.log(allRingItemIds);
+                console.log(new Set(allRingItemIds));
+                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
+                    return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+                }
 
                 preset.ring1 = `${ring1Choice}:${interaction.user.id}`;
             };
@@ -129,17 +162,44 @@ const exportCommand: SlashCommand = {
                 if (!userItems.length) return interaction.reply(`You don't have any items.`);
                 const ring = userItems.find((w) => w.uniqueid === `${ring2Choice}:${interaction.user.id}`);
                 if (!ring) return interaction.reply(`You don't have a ring with the ID **${ring2Choice}**`);
+                if (ring.item_type !== "ring") return interaction.reply(`You can't equip a ring with the ID **${ring2Choice}**`);
+
+                const newRingSchemas = await getWeaponSchemas([`${ring2Choice}:${interaction.user.id}`]);
+                const newRingItemId = newRingSchemas.map(ring => ring.itemid);
+                if (preset.ring2) {
+                    const slotRingSchema = await getWeaponSchemas([preset.ring2]);
+                    slotRingItemId = slotRingSchema.map(ring => ring.itemid);
+                };
+                const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
+                console.log(allRingItemIds);
+                console.log(new Set(allRingItemIds));
+                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
+                    return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+                }
 
                 preset.ring2 = `${ring2Choice}:${interaction.user.id}`;
             };
             if (ring2Choice && ringSlotsTotal === 1) return interaction.reply(`You don't have enough ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
 
             if (ring3Choice) {
-
                 const userItems = await getUserWeapons(interaction.user.id);
                 if (!userItems.length) return interaction.reply(`You don't have any items.`);
                 const ring = userItems.find((w) => w.uniqueid === `${ring3Choice}:${interaction.user.id}`);
                 if (!ring) return interaction.reply(`You don't have a ring with the ID **${ring3Choice}**`);
+                if (ring.item_type !== "ring") return interaction.reply(`You can't equip a ring with the ID **${ring3Choice}**`);
+
+                const newRingSchemas = await getWeaponSchemas([`${ring3Choice}:${interaction.user.id}`]);
+                const newRingItemId = newRingSchemas.map(ring => ring.itemid);
+                if (preset.ring3) {
+                    const slotRingSchema = await getWeaponSchemas([preset.ring3]);
+                    slotRingItemId = slotRingSchema.map(ring => ring.itemid);
+                };
+                const allRingItemIds = [...newRingItemId, ...new Set(existingRingItemIds)];
+                console.log(allRingItemIds);
+                console.log(new Set(allRingItemIds));
+                if (allRingItemIds.length !== new Set(allRingItemIds).size && allRingItemIds[0] !== slotRingItemId[0]) {
+                    return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+                }
 
                 preset.ring3 = `${ring3Choice}:${interaction.user.id}`;
             };
@@ -195,6 +255,31 @@ const exportCommand: SlashCommand = {
                 if (type === "armor" || fItem.type === "shield") type = fItem.type;
                 if (type === "shield" && (stats.premium < 4 && stats.shield_slot === 0)) type = "weapon";
                 if (type === "ring") {
+
+                    // Collect all ring choices to check for duplicates
+                    const ringChoices = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
+
+                    // Check for duplicates within the ring choices themselves
+                    if (ringChoices.length !== new Set(ringChoices).size) {
+                        return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+                    }
+
+                    // Get existing preset rings and extract their item IDs for comparison
+                    const existingRings = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
+                    let existingRingItemIds: number[] = [];
+
+                    if (existingRings.length > 0) {
+                        const userItems = await getUserWeapons(interaction.user.id);
+                        const existingRingSchemas = await getWeaponSchemas(existingRings.filter(Boolean) as string[]);
+                        existingRingItemIds = existingRingSchemas.map(ring => ring.itemid);
+                    }
+
+                    // Check for duplicates between new choices and existing preset rings
+                    const allRingItemIds = [...ringChoices, ...existingRingItemIds];
+                    if (allRingItemIds.length !== new Set(allRingItemIds).size) {
+                        return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+                    }
+
                     if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
                     type += ringSlot;
                     ringSlot++;

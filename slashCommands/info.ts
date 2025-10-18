@@ -132,7 +132,11 @@ const exportCommand: SlashCommand = {
                         `**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n` +
                         `**Class**: ${cls}\n` +
                         `**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n` +
-                        `**Items**: <:rune_empty:1034507494539669635> ${charstats.ring1icon}${charstats.ring2icon}${charstats.ring3icon}`
+                        `**Items**: `
+                        + `${charstats.runeicon} `
+                        + `${charstats.ring1icon}`
+                        + `${charstats.ring2icon}`
+                        + `${charstats.ring3icon}`
                     )
                     .addFields(
                         { name: `HP ${customEmojis.hp}`, value: "" + charstats.hp, inline: true },
@@ -255,7 +259,8 @@ const exportCommand: SlashCommand = {
                         + `${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}`
                         + `${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}`
                         + `${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n` +
-                        `**Items**: <:rune_empty:1034507494539669635> `
+                        `**Items**: `
+                        + `${charstats.runeicon} `
                         + `${charstats.ring1icon}`
                         + `${charstats.ring2icon}`
                         + `${charstats.ring3icon}`
