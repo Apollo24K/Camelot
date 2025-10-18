@@ -174,7 +174,7 @@ export default class Avalon {
             },
             trigger: function (event: TriggerEvents, caster: any, target: any, casterBuff: any, targetBuff: any, options: any = {}) {
                 this.listeners[event]?.forEach(trigger => {
-                    if (target !== trigger.target) return;
+                    if (trigger.target !== undefined && target !== trigger.target) return;
 
                     const used = trigger.callback({ trigger, caster, target, casterBuff, targetBuff, matchStats: this, options });
                     if (used) trigger.used++;
