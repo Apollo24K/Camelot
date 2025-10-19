@@ -308,6 +308,10 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                matchStats.round++;
+                                startNextRound();
+                                editEmbed();
                             }
 
                             // Normal attack
@@ -343,6 +347,10 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                matchStats.round++;
+                                startNextRound();
+                                editEmbed();
                             }
 
                             else {
@@ -390,8 +398,17 @@ const exportCommand: SlashCommand = {
                                 matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
                             };
 
+                            if (!myStatsC.timeout) matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                            else {
+                                matchStats.round++;
+                                startNextRound();
+                            };
+
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                            startNextRound();
+                            editEmbed();
                         }
 
                         else {
@@ -436,6 +453,8 @@ const exportCommand: SlashCommand = {
                             matchStats.user = matchStats.interaction.user.id;
                             myStatsC.attackStreak = 0;
                             const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            matchStats.round++;
+                            startNextRound();
 
                             // Event Triggers
                             if (response === AbilityResponse.SUCCESS) {
