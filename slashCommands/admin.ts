@@ -250,6 +250,21 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Action Successful: Added **${char.name}** to ${user.toString()}`, ephemeral });
         };
 
+        // Add all chars
+        if (action.startsWith("add all chars")) {
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add all chars user:@user\`\n\n**Options**\n\`user\`: User to add the characters to`, ephemeral });
+
+            // Get all character IDs at once
+            const allCharIds = characters.map(char => char.id);
+
+            // Single database call to append all characters
+            await updateUsers(user.id, {
+                chars: { type: "append", value: allCharIds }
+            });
+
+            return interaction.reply({ content: `Action Successful: Added all characters to ${user.toString()}`, ephemeral });
+        };
+
         // Remove char
         if (action.startsWith("remove char")) {
             if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
