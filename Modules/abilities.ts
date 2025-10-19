@@ -4567,7 +4567,7 @@ export const abilities: Record<number, Ability> = {
     //         // Mash Burnedead
     //         if (this.pause > matchStats.round) {
     //             myStats.sm += this.cost;
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             noTimeout(matchStats, myStats);
     //             matchStats.sendWarning({ content: `Mash Burnedead needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
     //             this.used--;
     //             return AbilityResponse.FAILURE;
@@ -4575,7 +4575,7 @@ export const abilities: Record<number, Ability> = {
 
     //         if (myStats.creampuff > 0) {
     //             myStats.sm += this.cost;
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             noTimeout(matchStats, myStats);
     //             matchStats.sendWarning({ content: `Mash Burnedead needs to have no creampuffs to use this ability`, ephemeral: true });
     //             this.used--;
     //             return AbilityResponse.FAILURE;
@@ -5987,14 +5987,14 @@ export const abilities: Record<number, Ability> = {
 
     //         // Whispers of a Fleeting Dream
     //         if (myStats.phrState === 1) {
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             noTimeout(matchStats, myStats);
     //             this.used--;
     //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Reincarnate__ state`, ephemeral: true });
     //             return AbilityResponse.FAILURE;
     //         };
 
     //         if (myStats.phrState === 2) {
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             noTimeout(matchStats, myStats);
     //             this.used--;
     //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Maestro__ state`, ephemeral: true });
     //             return AbilityResponse.FAILURE;
@@ -6002,7 +6002,7 @@ export const abilities: Record<number, Ability> = {
 
     //         // Cooldown
     //         if (this.pause > matchStats.round) {
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //             noTimeout(matchStats, myStats);
     //             this.used--;
     //             matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
     //             return AbilityResponse.FAILURE;
