@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
 import { abilities } from "../Modules/abilities";
@@ -31,7 +30,6 @@ const exportCommand: SlashCommand = {
         const stats = (user.id === interaction.user.id) ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.reply({ content: `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} characters.`, ephemeral: ephemeral === "true" });
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
         const invd = new Map<number, number>();
 
         let uniq = [...new Set(stats.chars)];
@@ -67,7 +65,7 @@ const exportCommand: SlashCommand = {
         };
 
         let thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]].image;
-        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[interaction.user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar]);
+        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         let pagesTotal = Math.ceil(uniq.length / 15);
         let currPage = 1;

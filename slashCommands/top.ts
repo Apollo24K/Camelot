@@ -1,5 +1,4 @@
 import { EmbedBuilder, ComponentType, ButtonInteraction, Message } from "discord.js";
-import fs from 'fs';
 import { auniq, characters } from "../Modules/chars";
 import { userLevel, getClassLvl, showPage, formatNumberWithQuotes } from "../Modules/functions";
 import { classes } from "../Modules/classes";
@@ -12,9 +11,6 @@ const exportCommand: SlashCommand = {
     async execute({ interaction }) {
         if (!interaction.guild) return interaction.reply("Please use this command in a server!");
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
-
         let page = interaction.options.getInteger('page') ?? 1;
         let flag = interaction.options.getString('flag') ?? "level";
         let scope = interaction.options.getString('scope') as "server" | "global";
@@ -26,28 +22,28 @@ const exportCommand: SlashCommand = {
         const servers = await getServerSchema(interaction.guild.id);
         const user_ids = servers?.user_ids ?? [];
 
-        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
+        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
         let count = 1, showUsers: string[] = [];
         switch (flag) {
             case "level":
                 stats = await getUserRanking(scope, user_ids, "xp");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - Level **${userLevel(e.xp)}**`); break;
             case "pulls":
                 stats = await getUserRanking(scope, user_ids, "pullstotal");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.pullstotal}** pulls`); break;
             case "chars":
                 stats = await getUserRanking(scope, user_ids, "chars");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - has **${e.chars.length}** characters`); break;
             case "uchars":
                 stats = await getUserRanking(scope, user_ids, "uniqueChars");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - has **${[...new Set(e.chars)].length}** unique characters`); break;
             case "progress":
                 stats = await getUserRanking(scope, user_ids, "uniqueChars");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => {
                     const uniqueChars = [...new Set(e.chars)].length;
                     const progressPercentage = Math.floor((uniqueChars / characters.length) * 1000) / 10;
@@ -56,7 +52,7 @@ const exportCommand: SlashCommand = {
                 break;
             case "anime":
                 stats = await getUserRanking(scope, user_ids, "anime");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
 
                 // Calculate completed anime count for each user
                 const charsTotal = auniq.reduce((obj, animeName) => {
@@ -88,15 +84,15 @@ const exportCommand: SlashCommand = {
                 break;
             case "lilies":
                 stats = await getUserRanking(scope, user_ids, "lilies");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.lilies}** <:lilium:974057059618291732>`); break;
             case "achievements":
                 stats = await getUserRanking(scope, user_ids, "achievements");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - has completed **${e.achievements.length}** achievements`); break;
             case "dungeon":
                 stats = await getUserRanking(scope, user_ids, "dungeon");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => {
                     const floorKeys = Object.keys(e.dungeon_floors);
                     const maxFloor = floorKeys.length > 0 ? Math.max(...floorKeys.map(Number)) : 1;
@@ -111,11 +107,11 @@ const exportCommand: SlashCommand = {
                 break;
             case "coins":
                 stats = await getUserRanking(scope, user_ids, "coins");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.coins}** <:coins:872926669055356939>`); break;
             case "class":
                 stats = await getUserRanking(scope, user_ids, "class");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - Level **${getClassLvl(parseInt(e.cl!), e.dungeon_classlevels)}** ${classes[parseInt(e.cl!)].emblem}`); break;
             case "stampede":
                 const stampedeData = await getLatestStampede();
@@ -131,7 +127,7 @@ const exportCommand: SlashCommand = {
                 // Filter out users with no stampede damage and sort by damage
                 stats = stats.filter((e) => e.stampede && e.stampede > 0);
                 stats.sort((a, b) => (b.stampede || 0) - (a.stampede || 0));
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${formatNumberWithQuotes(e.stampede || 0)}** damage`);
                 break;
             // case "referrals":
@@ -162,12 +158,12 @@ const exportCommand: SlashCommand = {
             //     break;
             case "cow":
                 stats = await getUserRanking(scope, user_ids, "cow_participation");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.cow_participation}** points`);
                 break;
             case "event":
                 stats = await getUserRanking(scope, user_ids, "event");
-                stats = stats.filter((e) => !(e.id in blacklist));
+                stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.eventpts}** 🍫`); break;
             default: return interaction.editReply(`${flag} leaderboard is currently not available`);
         };
@@ -176,7 +172,7 @@ const exportCommand: SlashCommand = {
 
         const topChars = (typeof stats[0].chars === "string") ? JSON.parse(stats[0].chars) : stats[0].chars;
         let thumbnail = characters[topChars[Math.floor(Math.random() * topChars.length)]]?.image || "https://i.ibb.co/jZ7fHSj/camelot.png";
-        if (stats[0].favchar !== null) thumbnail = characters[stats[0].favchar].getImage(stats[0].premium, customSettings[interaction.user.id]?.cimg[stats[0].favchar], stats[0].char_skin[stats[0].favchar]);
+        if (stats[0].favchar !== null) thumbnail = characters[stats[0].favchar].getImage(stats[0].premium, stats[0].custom_skins[stats[0].favchar], stats[0].char_skin[stats[0].favchar]);
 
         // Pages
         const pagesTotal = Math.ceil(stats.length / 15);

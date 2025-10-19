@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, getDetailedStats } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
@@ -8,8 +7,6 @@ import { getUserSchema, updateUsers } from '../Modules/queries';
 const exportCommand: SlashCommand = {
     name: 'refine',
     async execute({ interaction, author }) {
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         const choice = interaction.options.getString('character') ?? "";
 
@@ -39,7 +36,7 @@ const exportCommand: SlashCommand = {
         if (author.schema.coins < price) return interaction.reply(`You don't have enough coins. You need ${price}`);
 
         // Thumbnail
-        const thumbnail = char.getImage(author.schema.premium, customSettings[interaction.user.id]?.cimg[char.id], author.schema.char_skin[char.id]);
+        const thumbnail = char.getImage(author.schema.premium, author.schema.custom_skins[char.id], author.schema.char_skin[char.id]);
 
         const Embed = new EmbedBuilder()
             .setTitle(char.name.slice(0, 256))

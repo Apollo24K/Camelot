@@ -68,7 +68,7 @@ const exportCommand: SlashCommand = {
         // Daily
         if (stats.dailyclaimed) dailymsg = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
         // Daily Quests
-        if (Object.keys(stats.dailies).length === 4 && Object.entries(stats.dailies).every((e) => dailies[e[0] as any].check(e[1]))) dailyquest = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
+        if (Object.keys(stats.dailies).length >= 4 && Object.entries(stats.dailies).reduce((acc, e) => acc + (dailies[e[0] as any].check(e[1]) ? 1 : 0), 0) >= 4) dailyquest = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
         // Vote
         if (stats.lastvote && ((new Date().getTime() - (stats.lastvote?.getTime() ?? 0)) < 12 * 60 * 60 * 1000)) {
             let hr = Math.floor(((12 * 60 * 60 * 1000) - (new Date().getTime() - (stats.lastvote?.getTime() ?? 0))) / (60 * 60 * 1000));

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
@@ -119,8 +118,6 @@ const exportCommand: SlashCommand = {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const subcommand = interaction.options.getSubcommand();
         const user = interaction.options.getUser('user') ?? interaction.user;
         const page = interaction.options.getInteger('page') || 1;
@@ -131,7 +128,7 @@ const exportCommand: SlashCommand = {
         if (!stats) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
 
         let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
-        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[interaction.user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar]);
+        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         if (subcommand === "loot") {
             let itemsR = Object.entries(stats.items);

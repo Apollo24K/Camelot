@@ -1,4 +1,5 @@
-import { Client } from "discord.js";
+import fs from "fs";
+import { Client, Collection } from "discord.js";
 import { BotHandler } from "../types";
 import { loadPullResets, loadRanking, updateUsers } from "../Modules/queries";
 import { getDetailedStats, pullsToResetList, RoK, sleep } from "../Modules/functions";
@@ -24,6 +25,10 @@ async function indexRanking() {
 const handler: BotHandler = {
     name: "Setup",
     execute: async (client: Client) => {
+
+        // Load Blacklist
+        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8')) as Record<string, string>;
+        client.blacklist = new Collection(Object.entries(blacklist));
 
         // Load Pull Resets
         const users = await loadPullResets();
@@ -52,7 +57,7 @@ const handler: BotHandler = {
 
         // Load Ranking
         indexRanking();
-        setInterval(indexRanking, 15 * 60 * 1000); // 15 min interval
+        setInterval(indexRanking, 6 * 60 * 60 * 1000); // 6h interval
     },
 };
 

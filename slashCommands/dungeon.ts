@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ChatInputCommandInteraction, ButtonStyle } from "discord.js";
 import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
 import { abilities, Ability } from "../Modules/abilities";
@@ -90,8 +89,6 @@ const exportCommand: SlashCommand = {
         } catch (err) {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         };
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         let choice = interaction.options.getInteger('floor');
         let floorDiff = parseInt(interaction.options.getString('difficulty') || "-1");
@@ -185,7 +182,7 @@ const exportCommand: SlashCommand = {
         let myChar = characters[stats.battlechar];
         let myStats = await getDetailedStats(myChar.id, stats, stats.dungeon_classlevels);
 
-        myStats.thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.char_skin[myChar.id]);
+        myStats.thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
 
         let myStatsC: DetailedStats = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;

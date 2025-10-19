@@ -1,5 +1,6 @@
 import express from 'express';
-import config from '../config.json';
+import dotenv from 'dotenv';
+dotenv.config();
 import { Client } from "discord.js";
 import { BotHandler } from "../types";
 import { Webhook } from '@top-gg/sdk';
@@ -8,7 +9,7 @@ import { getUserSchema, loadVoteReminders, updateUsers } from '../Modules/querie
 
 const reminderMessage =
     `You're off cooldown!\n` +
-    `You can vote again at <https://rank.top/bot/camelot/vote>\n` +
+    `You can vote again at https://rank.top/bot/camelot/vote\n` +
     `Voting rewards include **1x** pull reset, **3x** gems <:genesis_gems:1034179687720681492> and **3x** lootboxes containing coins <:coins:872926669055356939>, shards <:ss_shard:917203009543503892> and tickets <:ss_ticket:927503239396622336>\n` +
     `\n` +
     `-# You can use \`/reminder\` to disable vote reminders`;
@@ -19,12 +20,12 @@ const handler: BotHandler = {
     execute: async (client: Client) => {
 
         // Only if Camelot
-        if (config.clientId.active !== "706183309943767112") return;
+        if (process.env.CLIENT_ID !== "706183309943767112") return;
 
         const app = express();
         app.use(express.json());
 
-        const webhook = new Webhook(config.topgg.auth);
+        const webhook = new Webhook(process.env.TOPGG_AUTH);
 
         // Top.gg Webhook
         app.post('/dblwebhook', webhook.listener(async (vote) => {
@@ -43,6 +44,9 @@ const handler: BotHandler = {
                 lootbox: { type: "increment", value: 3 },
                 gems: { type: "increment", value: 3 },
                 lastvote: { type: "set", value: new Date() },
+
+                season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
+                dailies: { type: "merge_json", value: { 10: 0 } }
             });
 
             // Send reminder
@@ -65,7 +69,7 @@ const handler: BotHandler = {
             const vote = req.body;
 
             // Check if authorization is valid
-            if (req.headers.authorization !== config.rank.auth && vote.authorization !== config.rank.auth) {
+            if (req.headers.authorization !== process.env.RANK_AUTH && vote.authorization !== process.env.RANK_AUTH) {
                 return res.status(401).send('Unauthorized');
             };
 
@@ -76,14 +80,23 @@ const handler: BotHandler = {
             const stats = await getUserSchema(vote.user_id);
             if (!stats) return;
 
-            // Return if lastvote has been less than 12h ago
-            if (stats.lastvote && ((Date.now() - new Date(stats.lastvote).getTime()) < 12 * 60 * 60 * 1000)) return;
-
             // If server vote
             if (vote.target_type === "server") {
+                // Return if lastvote has been less than 12h ago
+                if (stats.lastvoteserver && ((Date.now() - new Date(stats.lastvoteserver).getTime()) < 12 * 60 * 60 * 1000)) return;
+
+                await updateUsers(vote.user_id, {
+                    lastvoteserver: { type: "set", value: new Date() },
+                    season_keys: { type: "increment", value: "12" in stats.dailies ? 0 : 5 },
+                    dailies: { type: "merge_json", value: { 12: 0 } }
+                });
+
                 dailies[12].update(undefined, 1, { id: vote.user_id }); // Guild's Ballot
                 return;
             };
+
+            // Return if lastvote has been less than 12h ago
+            if (stats.lastvote && ((Date.now() - new Date(stats.lastvote).getTime()) < 12 * 60 * 60 * 1000)) return;
 
             // Update users table
             await updateUsers(vote.user_id, {
@@ -92,6 +105,9 @@ const handler: BotHandler = {
                 lootbox: { type: "increment", value: 3 },
                 gems: { type: "increment", value: 3 },
                 lastvote: { type: "set", value: new Date() },
+
+                season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
+                dailies: { type: "merge_json", value: { 10: 0 } }
             });
 
             // Send reminder

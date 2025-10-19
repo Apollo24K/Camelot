@@ -1,4 +1,3 @@
-import fs from "fs";
 import { Interaction, PermissionsBitField } from "discord.js";
 import { BotEvent, SlashCommand } from "../types";
 import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUsers } from "../Modules/queries";
@@ -59,8 +58,9 @@ const event: BotEvent = {
             };
 
             // Blacklist
-            const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
-            if (interaction.user.id in blacklist) return interaction.reply(`Your account has been suspended${blacklist[interaction.user.id]}.\nIf you believe there to be a mistake, please join the support server below to appeal for this decision.\n**Support Server**: https://discord.gg/myy9PBCdEW`);
+            if (interaction.client.blacklist.has(interaction.user.id)) {
+                return interaction.reply(`Your account has been suspended${interaction.client.blacklist.get(interaction.user.id)}.\nIf you believe there to be a mistake, please join the support server below to appeal for this decision.\n**Support Server**: https://discord.gg/myy9PBCdEW`);
+            };
 
             // Spam Control (User)
             const bypassedCommands = ["admin", "balance", "buy", "camelot", "guess", "info", "item", "mod", "pull", "rp", "shop"];

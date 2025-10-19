@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, showPage } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
@@ -11,8 +10,6 @@ const exportCommand: SlashCommand = {
     name: 'find',
     async execute({ interaction, author, server }) {
         if (!interaction.guild) return interaction.reply({ content: "This command can only be used in a server", ephemeral: true });
-
-        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
 
         const page = interaction.options.getInteger('page') ?? 1;
         const setting = interaction.options.getString('setting') as "0" | "1" | "2" | null;
@@ -39,7 +36,7 @@ const exportCommand: SlashCommand = {
         stats.forEach((user) => {
             const copies = user.chars.filter((e) => e === char.id).length;
             totalCopies += copies;
-            if ((!(user.id in blacklist)) && ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1))) userCounts.push({ name: user.name, count: copies });
+            if ((!interaction.client.blacklist.has(user.id)) && ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1))) userCounts.push({ name: user.name, count: copies });
         });
         userCounts.sort((a, b) => b.count - a.count);
 

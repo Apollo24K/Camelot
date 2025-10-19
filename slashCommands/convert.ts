@@ -133,8 +133,6 @@ const exportCommand: SlashCommand = {
                         newItems[to] = arg;
                     };
 
-                    console.log(newItems);
-
                     // Update users table
                     await updateUsers(interaction.user.id, {
                         items: { type: "merge_json", value: newItems },

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { search, splitTitle, baseHP, baseATK, baseDEF, baseEP, baseExpertise, getDetailedStats, rarity, getRefinement, customEmojis, getClassLvl } from "../Modules/functions";
 import { classes } from "../Modules/classes";
@@ -11,8 +10,6 @@ import charInfo from '../Modules/chars';
 const exportCommand: SlashCommand = {
     name: 'info',
     async execute({ interaction, author }) {
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         const user = interaction.options.getUser('user') ?? interaction.user;
         let choice = interaction.options.getString('characters') ?? "";
@@ -120,7 +117,7 @@ const exportCommand: SlashCommand = {
                 cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
                 dupes = stats.chars.filter((e) => e === char.id).length;
 
-                img = char.getImage(stats.premium, customSettings[user.id]?.cimg[char.id], stats.char_skin[char.id]);
+                img = char.getImage(stats.premium, stats.custom_skins[char.id], stats.char_skin[char.id]);
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
 
                 const Embed = new EmbedBuilder()
@@ -243,7 +240,7 @@ const exportCommand: SlashCommand = {
                 let charstats = await getDetailedStats(char.id, stats, stats.dungeon_classlevels);
                 let cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
 
-                img = char.getImage(stats.premium, customSettings[user.id]?.cimg[char.id], stats.char_skin[char.id]);
+                img = char.getImage(stats.premium, stats.custom_skins[char.id], stats.char_skin[char.id]);
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
 
                 const Embed = new EmbedBuilder()

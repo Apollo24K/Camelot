@@ -1851,7 +1851,7 @@ export const abilities: Record<number, Ability> = {
     //         matchStats.on("deathEvade", {
     //                maxUsage: 1,
     //                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-    //                    if (target == myStats) {
+    //                    if (target === myStats) {
     //                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** landed an unexpected punch! She`, { atkMultiplier: 2.2, dodge: false, combodmg: true, selfdmg: true, selfheal: true });
     //                        eStats.def -= Math.min(Math.floor(eStats.def * 0.2), 660);
     //                        eStats.mr -= Math.min(Math.floor(eStats.mr * 0.2), 660);
@@ -2158,8 +2158,6 @@ export const abilities: Record<number, Ability> = {
                 target: myStats,
                 caster: eStats,
                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                    console.log(target.hp);
-                    console.log(caster.hp);
                     if (target === myStats) {
                         const shgain = myStats.maxhp;
                         myStats.shield += myStats.maxhp;
@@ -3862,7 +3860,7 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 80,
         desc: "**Total Usage**: `unlimited`, `unlimited`, `3`\n**Mana**: `10-20`\\💧, `20-30`\\💧, `80-100`\\💧\n**Timeout**: `yes`, `yes`, `yes`\n**Role**: `DPS/Support`\n\nRudeus Greyrat encapsulates the progression and versatility of a mage that requires keen management of his considerable mana pool said to rival that of the ancient Demon God Laplace. His mana generation is increased by **+20** as well, reflecting his proficiency and natural talent in magic. And as the fight continues, Rudeus keeps learning and growing as a mage, increasing the potency of his spells on the 5th and 10th rounds each. His 3 spells are as follows:\n\n**Stone Cannon**: Rudeus can utilize this spell to fire a powerful projectile at his opponent. Notably, this attack has both a physical and magical damage component, dealing **100-120%** magic damage, and an additional **10-20%** physical damage caused by the impact. If Rudeus is low on mana only the physical impact will cause damage.\n\n**Quagmire**: Upon casting, Rudeus will drastically increase his dodge rate to **50-75%**, making him harder to hit in the subsequent round. It also weakens the opponent, reducing their dodge rate to **0%** for **3** rounds, as well as reducing their DEF & MR by **15-25%** for 2 rounds.\n\n**Electric**: Electric channels a surge of magical energy to electrocute the opponent. A high cost high damage spell with limited use, dealing **150-200%** magic damage to the opponent.\n\nIn a party, Rudeus offers a unique advantage backing his party members from the rear. He has a **30%** chance to intervene randomly, delivering a magical blow to the enemy dealing **60%** magic damage and reducing enemy DEF & MR by **10%** for 2 rounds.",
-        shortdesc: "**Uses**: `3`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ACTIVE are *enhanced* on the **5th** and **10th** rounds, having permanent upgrades.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of DEFEND)\n- **+50%-75%** dodge rate that round\n- Enemy has **0%** dodge rate for **3** rounds\n- **-15-25%** enemy's DEF/MR for **2** rounds\n\n__**Active**__ (✨)\n- Deals **150**/**170**/**200%** DMG (Depends on *enhancement* of ACTIVE)\n\n__**Party**__ (👥)\n- every round: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** rounds",
+        shortdesc: "**Uses**: `3`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ACTIVE are *enhanced* on the **5th** and **10th** rounds, having permanent upgrades.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of DEFEND)\n- **+50%-75%** dodge rate that round\n- Enemy has **0%** dodge rate for **3** rounds\n- **-15-25%** enemy's DEF/MR for **2** rounds\n\n__**Active**__ (<:stormbolt:1340378654919884981>)\n- Deals **150**/**170**/**200%** DMG (Depends on *enhancement* of ACTIVE)\n\n__**Party**__ (👥)\n- every round: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** rounds",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Rudeus Greyrat | Rudy | Rudeus EX
             let atkbuff = 1.5, mana_cost = 0;
@@ -4684,7 +4682,7 @@ export const abilities: Record<number, Ability> = {
     //         matchStats.on("DEF", {
     //                 maxUsage: 6,
     //                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-    //                     if (caster == myStats) {
+    //                     if (caster === myStats) {
     //                         myStats.defUsed++;
     //                         if (myStats.defUsed === 5) {
     //                             myStats.brCap = 0.3;
@@ -4924,7 +4922,7 @@ export const abilities: Record<number, Ability> = {
 
                 myStats.selfhealChance.push(1);
                 myStats.selfheal.push(0.1);
-                notice.push(`\n✨ Equipped buffs from __Phantasmal Mask__.` + names.includes("Artemis EX") ? ` Additional effects from Artemis EX applied` : ``);
+                notice.push(`\n✨ Equipped buffs from __Phantasmal Mask__.${names.includes("Artemis EX") ? "\n Additional effects from Artemis EX applied" : ""}`);
             } else if (mask === "verdant") { // Verdant Guardian Mask
                 const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
                 if (names.includes("Apollo EX")) {
@@ -4939,7 +4937,7 @@ export const abilities: Record<number, Ability> = {
                 myStats.def += Math.floor(myStats.def * 0.2);
                 mybuff.mr.push(new buffInfo("+", Math.floor(myStats.mr * 0.2), 3));
                 myStats.mr += Math.floor(myStats.mr * 0.2);
-                notice.push(`\n✨ Equipped buffs from __Verdant Mask__.` + names.includes("Apollo EX") ? ` Additional effects from Apollo EX applied` : ``);
+                notice.push(`\n✨ Equipped buffs from __Verdant Mask__.${names.includes("Apollo EX") ? " Additional effects from Apollo EX applied" : ""}`);
             } else if (mask === "valkyrie") { // Valkyrie's Battle Mask
                 const names = matchStats.partyChars.map((e: IcharInfo) => e.name);
                 if (!names.includes("Apollo EX") && !names.includes("Artemis EX")) {
@@ -4952,7 +4950,7 @@ export const abilities: Record<number, Ability> = {
 
                 mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999));
                 myStats.atk += Math.floor(myStats.atk * 0.25);
-                notice.push(`\n✨ Equipped buffs from __Valkyrie Mask__.` + (!names.includes("Apollo EX") && !names.includes("Artemis EX")) ? ` Additional effects from the absence of Apollo EX & Artemis EX applied` : ``);
+                notice.push(`\n✨ Equipped buffs from __Valkyrie Mask__.${(!names.includes("Apollo EX") && !names.includes("Artemis EX")) ? " Additional effects from the absence of Apollo EX & Artemis EX applied" : ""}`);
             };
 
             return AbilityResponse.SUCCESS;
@@ -5633,7 +5631,7 @@ export const abilities: Record<number, Ability> = {
                 matchStats.on("counter", {
                     maxUsage: 10,
                     callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                        if (target == myStats) {
+                        if (target === myStats) {
                             myStats.cr += 0.02;
                             mybuff.cr.push(new buffInfo("+", 0.02, 9999));
                             if (myStats.cr > 1) myStats.cr = 1;
@@ -6030,6 +6028,7 @@ export const abilities: Record<number, Ability> = {
     //                 // Maestro immediate effects: Stun for 1 round
     //                 eStats.timeFrozen = true;
     //                 eStats.frozenMessage = "was stunned for **1** round";
+    //                 embed.setThumbnail("https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
     //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                     eStats.timeFrozen = false;
 
@@ -6051,6 +6050,7 @@ export const abilities: Record<number, Ability> = {
     //                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
     //                     myStats.phrState = myStats.phrState = 1 ? 1 : 0;
+    //                     embed.setThumbnail("https://i.ibb.co/chjTjNDY/c.png"); // Revert back to original pic
     //                     return AbilityResponse.SUCCESS;
     //                 }));
     //             } else {
@@ -6842,13 +6842,17 @@ export const abilities: Record<number, Ability> = {
     //     pause: 0,
     //     passivePause: 0,
     //     partyPause: 0,
-    //     desc: "**Total Usage**: `5 (CD: 10) // 5 (CD: 4)`\nCost: `90 💧 // times used * 10% max HP`\nTimeout: `Yes // No`\n\nAs a martial arts prodigy, he is known as the 'Hero Hunter' even though he's a human, though behind his sadistic act is a misguided heart. Yet, despite the moniker, there's one hero he can never hunt.\n\nUpon dodging, he uses the opponent's momentum against themselves, reflecting **50%** of the DMG. It's possible to dodge and redirect active curse hits too (DoT excluded). Afterwards, he increases critical rate by **25%** for **2** rounds, before cutting down on the opponent's pressure points, dealing **30%** DMG and turning their movement sluggish, where they are unable to dodge for **5** rounds. The post-dodge effect can be triggered at most once every round.\n\nUtilizing his DEFEND, he attempts to learn the fighting style of the enemy. This increases his dodge rate by **100%** for that round, before converting any excess dodge rate to a critical DMG boost persisting for **5** rounds. This has a 5 round cooldown.\n\nHe evades the first **3** lethal hits (stackable). After evading any lethal hit, he has **+15%** critical rate, **+30%** critical damage and **1x** [Rising Surge].\n\nHis active depends on which skin he is wearing.\nIf Garou has the Monster skin, he activates **Wild Instincts** which grants **1x** [Rising Surge] and deals **150%** DMG, increased by **5%** for every **1x** [Rising Surge], up to **250%**. Moreover, he gains **1x** additional [Rising Surge] if any redirection is triggered within **4** rounds.\n\nIf Garou has the Cosmic skin, he activates **God Killer** which upon first use deals **70%** undodgeable DMG, and every attack that connected will grant the user **5%** of their missing HP back, at the cost of lowering their DEF/MR by the same amount (Final DEF/MR won't be lower than 1000).\nFor every use, he evolves stronger, increasing ATK by **7%** and deals **150%** DMG also gaining **1x** [Rising Surge]\n\n[Rising Surge] : For each stack, Cosmic Garou's normal ATK hit **1** more time (up to **3** hits each round at max). Each excess stack after **3x** instead grants Garou **4%** DMG mitigation that round\n\nWhen in a party, he absorbs **3** instances of incoming damage (including curse damage, if any) when allies fall under **30%** HP. For every attack absorbed, allies regenerate **5** mana and **5%** of their missing HP. This can only occur once every **5** rounds.",
-    //     shortdesc: "**Uses**: `5 // 5`\n**Cooldown**: `10 rounds // 4 rounds`\n**Cost**: `90 💧 // times used * 10% max HP`\n**Timeout**: `Yes // No`\n**Role**: `DPS (Counter, Critical)`\n\n**Passive**:\n- Redirects **50%** DMG upon dodging (includes curse hits, excludes DoT)\n- After dodging: **+25%** crit rate for **2 rounds**, deals **30%** DMG, disables dodge for **5 rounds**\n- Using DEFEND: **+100%** dodge rate; excess converted to crit DMG for **5 rounds** (*CD: 5 rounds*)\n- Evades first **3** lethal hits (stackable); each grants **+15%** crit rate, **+30%** crit DMG, and **1x** [Rising Surge]\n- Flees when facing **Saitama**\n\n**Active**:\n- *Monster Skin*:\n  - Grants **+1x Rising Surge**, deals **150% DMG**, increased by **+5% per Rising Surge** (up to **250%**)\n  - Gains **+1x Rising Surge** if redirection is triggered within **4 rounds**\n\n- *Cosmic Skin*:\n  - Alters ATTACK: deals **70% undodgeable DMG**, heals **5% missing HP per hit**, reduces **DEF/MR** by the same amount (not below 1000)\n  - Each use: **+7% ATK**, deals **150% DMG**, and gains **+1x Rising Surge**\n\n**Rising Surge**:\nEach stack gives Cosmic Garou **+1 hit** to normal ATK (**max 3 hits/round**)\nExtra stacks grant Garou **+4% DMG mitigation** for that round\n\n**Party**:\nWhen allies fall below **30% HP**, absorbs **3 hits** (including curse)\nEach hit restores **5 mana** & **5% missing HP**\n(*Cooldown: 5 rounds*)",
+    //     desc: "**Total Usage**: `5 (CD: 10) // 5 (CD: 4)`\nCost: `90 💧 // times used * 10% max HP`\nTimeout: `Yes // No`\n\nAs a martial arts prodigy, he is known as the 'Hero Hunter' even though he's a human, behind his sadistic act a misguided heart. Still, despite the moniker, there's one hero he can never hunt.\n\nUpon dodging, he uses the opponent's momentum against themselves, increasing critical rate by **15%** for **2** rounds, before cutting down on the opponent's pressure points, dealing **30%** DMG (CD: 4).\n\nHe evades the first **3** lethal hits (stackable). After evading any lethal hit, he gains **1x** [Rising Surge] (<:rs:1424050806272954568>).\n\nHis active depends on which skin he is wearing.\nIf Garou has the __Monster skin__, he activates **Wild Instincts** which grants **1x** <:rs:1424050806272954568> and deals **150%** DMG, increased by **5%** for every **1x** <:rs:1424050806272954568>, up to **250%**. Moreover, he gains **1x** additional <:rs:1424050806272954568> if any redirection is triggered within **4** rounds.\n\nIf Garou has the __Cosmic skin__, he activates **God Killer** which upon first use alters his ATK to deal **60%** undodgeable DMG, and heals for **3%** of their missing HP, at the cost of lowering his own DEF/MR by the same amount (DEF/MR reduction only occurs if you are above 1000 DEF/MR).\nFor every use afterwards, he evolves stronger, increasing ATK by **7%** and deals **150%** DMG also gaining **1x** <:rs:1424050806272954568>\n\n<:rs:1424050806272954568> : For each stack, Cosmic Garou's normal ATK hit **1** more time (up to **3** hits each round at max).\n\nWhen in a party, he absorbs **3** instances of incoming damage (including curse damage, if any) when allies fall under **30%** HP. For every attack absorbed, allies regenerate **5** mana and **5%** of their missing HP. This can only occur once every **20** rounds.",
+    //     shortdesc: "**Uses**: `5 // 5`\n**Cooldown**: `10 rounds // 4 rounds`\n**Cost**: `90 💧 // times used * 10% max HP`\n**Timeout**: `Yes // No`\n**Role**: `DPS (Counter, Critical)`\n\n__**Passive**__:\n- After dodging: **+15%** crit rate for **2 rounds**, deals **30%** DMG (CD: 4)\n- Evades first **3** lethal hits (stackable); each grants **1x** <:rs:1424050806272954568>\n\n__**Active**__ (✨)\n## Monster Skin:\n  - Grants **1x** <:rs:1424050806272954568>, deals **150%** DMG, **+5%** for every <:rs:1424050806272954568> (up to **250%**)\n  - Gains **1x** additional <:rs:1424050806272954568> if redirection is triggered within **4** rounds\n\n## Cosmic Skin:\n  - Alters ATTACK: deals **60%** undodgeable DMG, heals **3%** missing HP per hit, reduces **DEF/MR** by the same amount if you are above 1000 DEF/MR\n- This attack is hit another **1** time for every <:rs:1424050806272954568> owned, up to a total of **3** times\n- Each use: **+7%** ATK, deals **150%** DMG, and gains **1x** <:rs:1424050806272954568>\n\n__**Party**__:\nWhen allies fall below **30%** HP, absorbs **3** hits (including curse)\nEach hit restores **5** mana & **5%** missing HP\n(CD: 20)",
     //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
     //         //Garou EX
+    //         if (myStats.equippedSkin !== 127 && myStats.equippedSkin !== 112) {
+    //             matchStats.sendWarning({ content: `You need to equip either of his skins to use his active`, ephemeral: true });
+    //             return AbilityResponse.FAILURE;
+    //         };
 
     //         //Active (I) : Wild Instincts (Monster skin)
-    //         if (myStats.equippedSkin === 113) { // Random number for now until monster skin is added
+    //         if (myStats.equippedSkin === 127) { // Random number for now until monster skin is added
 
     //             if (this.pause > matchStats.round) {
     //                 myStats.sm += this.cost;
@@ -6886,23 +6890,32 @@ export const abilities: Record<number, Ability> = {
     //             };
 
     //             // Cost: times used * 10% of max hp
-    //             myStats.hp -= Math.floor(myStats.maxhp * (this.used * 0.10));
+    //             myStats.hp -= Math.floor(myStats.maxhp * (this.used * 0.1));
 
     //             this.pause = matchStats.round + 4;
 
     //             //Altered ATK
     //             const godKiller = () => {
-    //                 const amountHealed = Math.floor((myStats.maxhp - myStats.hp) * 0.05);
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.7, dodge: false });
+    //                 const amountHealed = Math.floor((myStats.maxhp - myStats.hp) * 0.03);
+    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.6, dodge: false });
 
     //                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, amountHealed, {});
 
     //                 // DEF / MR shred by amount healed
-    //                 mybuff.def.push(new buffInfo("+", -amountHealed, 9999));
-    //                 mybuff.mr.push(new buffInfo("+", -amountHealed, 9999));
+    //                 if (myStats.def > 1000) {
+    //                     let defShred = Math.min(amountHealed, myStats.def - 1000);
+    //                     myStats.def -= defShred;
+    //                     mybuff.def.push(new buffInfo("+", -defShred, 9999));
+    //                 };
 
-    //                 myStats.def = Math.max(myStats.def - amountHealed, 1000);
-    //                 myStats.mr = Math.max(myStats.mr - amountHealed, 1000);
+    //                 if (myStats.mr > 1000) {
+    //                     let mrShred = Math.min(amountHealed, myStats.mr - 1000);
+    //                     myStats.mr -= mrShred;
+    //                     mybuff.mr.push(new buffInfo("+", -mrShred, 9999));
+    //                 };
+
+    //                 //myStats.def = Math.max(myStats.def - amountHealed, 1000);
+    //                 //myStats.mr = Math.max(myStats.mr - amountHealed, 1000);
 
     //             };
     //             // First use
@@ -6910,11 +6923,9 @@ export const abilities: Record<number, Ability> = {
     //                 myStats.replaceButton.atk = {
     //                     "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                         godKiller();
-    //                         //Rising Surge
-    //                         if (myStats.risingSurge <= 3) {
-    //                             for (let i = 0; i < myStats.risingSurge; i++) {
-    //                                 godKiller();
-    //                             }
+    //                         // Additional hits
+    //                         for (let i = 0; i < Math.min(myStats.risingSurge, 2); i++) {
+    //                             godKiller();
     //                         }
     //                         return AbilityResponse.SUCCESS;
     //                     },
@@ -6924,14 +6935,7 @@ export const abilities: Record<number, Ability> = {
     //             // Every use
     //             mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.07), 9999));
     //             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.5 });
-    //             myStats.risingSurge += 1;
-
-    //             //Rising Surge Excess stacks
-    //             if (myStats.risingSurge > 3) {
-    //                 const excessStacks = myStats.risingSurge - 3;
-
-    //                 myStats.damageReduction += (excessStacks * 0.04);
-    //             };
+    //             myStats.risingSurge++;
 
     //         };
     //         return AbilityResponse.SUCCESS;
@@ -6939,45 +6943,88 @@ export const abilities: Record<number, Ability> = {
     //     passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
     //         const stats = await getUserSchema(matchStats.user);
     //         myStats.equippedSkin ??= stats?.char_skin[char.id];
+    //         this.passivePause = 0;
+    //         const dodgeEmoji = myStats.equippedSkin === 112 ? "<:dodgeCosmic:1421859395909980231>" : myStats.equippedSkin === 127 ? "<:dodgeMonster:1421859392034181232>" : "💨";
 
     //         // Encounters Saitama
     //         if (enemy.name === "Saitama") {
     //             myStats.hp = 0;
     //             myStats.rev = 0;
     //             notice.push(`\n✨ Is he even human?`);
+    //             embed.setImage(`https://i.ibb.co/rGDZy9LY/c.png`);
     //             return AbilityResponse.SUCCESS;
     //         };
 
     //         myStats.risingSurge ??= 0;
     //         myStats.redirectionLastTriggered ??= 0;
+    //         myStats.evadeDeathChance ??= 0;
+    //         myStats.evadeDeathStrike ??= 0;
+    //         myStats.evadeDeathStrike += 3;
+    //         myStats.evadeDeathChance += 3;
+
+    //         // Upon death evasion, gain RS
+    //         matchStats.on("deathEvade", {
+    //             maxUsage: 3,
+    //             callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+    //                 if (target === myStats) {
+    //                     myStats.risingSurge++;
+    //                     return true;
+    //                 }
+    //             },
+    //         });
+
     //         matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
 
     //             if (caster === eStats) {
 
-    //                 if (matchStats.round > myStats.redirectionLastTriggered) {
+    //                 if (matchStats.round > myStats.redirectionLastTriggered + 4) {
     //                     myStats.redirectionLastTriggered = matchStats.round;
 
     //                     // Deal 30% DMG
-    //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨Garou`, { atkMultiplier: 0.30 });
+    //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `${dodgeEmoji} **${char.name}**`, { atkMultiplier: 0.3 });
 
     //                     // 15% CR increase for 2 rounds
+    //                     myStats.cr += 0.15;
     //                     mybuff.cr.push(new buffInfo("+", 0.15, 2));
+
+    //                     // Enemy cannot dodge for 5 rounds (Removed for balancing)
+    //                     //myStats.dodge = 0;
+    //                     //mybuff.dodge.push(new buffInfo("=", 0, 5));
     //                 };
     //             };
 
     //         });
 
-    //         matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-    //             if (caster === myStats) {
+    //         /* Removed post-DEF effects and RS overstack for balancing */
+    //         //matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+    //             //if (caster === myStats) {
 
-    //                 if (matchStats.round >= this.passivePause) {
-    //                     // Set dodge to 100% 
-    //                     myStats.dodge = 1;
+    //                 //if (matchStats.round >= this.passivePause) {
+    //                     // Increase dodge rate by 100% 
+    //                     //myStats.dodge += 1;
+    //                     //let defmsg = `\n**${char.name}** increased dodge rate by **100%**`;
+    //                     // Excess dodge => crit dmg
+    //                     //if (myStats.dodge > 1) {
+    //                         //let cdBuff = Math.min(myStats.dodge - 1, 0.5);
+    //                         //myStats.cd += cdBuff;
+    //                         //mybuff.cd.push(new buffInfo("+", cdBuff, 5));
+    //                         //defmsg += ` and boosted critical damage by **${Math.floor(cdBuff * 100)}**%`;
+    //                         //myStats.dodge = 1;
+    //                     //};
+    //                     //this.passivePause = matchStats.round + 5; // 5 round cooldown
+    //                     //notice.push(defmsg);
+    //                 //};
+    //             //};
+    //         //});
 
-    //                     this.passivePause = matchStats.round + 5; // 5 round cooldown
-    //                 };
-    //             };
-    //         });
+    //         //myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    //             //if (myStats.risingSurge > 3) {
+    //                 //const excessStacks = myStats.risingSurge - 3;
+    //                 //myStats.damageReduction += Math.min(excessStacks * 0.04, 0.2);
+    //             //};
+
+    //             //return AbilityResponse.SUCCESS;
+    //         //}, 9999));
 
     //         return AbilityResponse.SUCCESS;
     //     },
@@ -6993,13 +7040,13 @@ export const abilities: Record<number, Ability> = {
     //                     // Allies hp under 30%
     //                     if (myStats.hp / myStats.maxhp < 0.3) {
     //                         myStats.garouAbsorbedHits = 0; // Reset hit counter
-    //                         this.partyPause = matchStats.round + 5; // 5 round cooldown
+    //                         this.partyPause = matchStats.round + 20; // 20 round cooldown
     //                     };
     //                 };
 
     //                 // Absorbed DMG 
     //                 if (myStats.garouAbsorbedHits < 3 && myStats.hp / myStats.maxhp < 0.3) {
-    //                     notice.push(`\n✨ Garou absorbed the DMG!`);
+    //                     notice.push(`\n✨ **${char.name}** absorbed the DMG!`);
     //                     myStats.hp += options.damage;
     //                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
     //                     myStats.sm += 5;
@@ -7164,7 +7211,7 @@ export const abilities: Record<number, Ability> = {
             matchStats.on("noncrit", {
                 maxUsage: 10,
                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                    if (caster == myStats) {
+                    if (caster === myStats) {
                         myStats.dodge += 0.015;
                         mybuff.dodge.push(new buffInfo("+", 0.015, 9999));
                         if (myStats.dodge > 1) myStats.dodge = 1;

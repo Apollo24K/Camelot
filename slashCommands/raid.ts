@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, ColorResolvable, TextInputBuilder, TextInputStyle, ModalBuilder, StringSelectMenuBuilder, SelectMenuComponentOptionData } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
@@ -504,12 +503,20 @@ async function endRaid(raidRowId: number, equalRewardDistribution: boolean) {
     // Distribute remaining rewards
     for (let [key, value] of Object.entries(remainingRewards)) {
         if (value >= 1) {
+            const remReceived = new Set<string>(); // users who have already received a remaining reward
             let maxIterations = players.length;
             while (value >= 1 && maxIterations > 0) {
-                const weightedRandomNumber = Math.random() * sumOfShares;
-                const weightedRandomPlayer = players.find((player) => weightedRandomNumber <= player.percentile);
+                let weightedRandomNumber = Math.random() * sumOfShares;
+                let weightedRandomPlayer = players.find((player) => (weightedRandomNumber <= player.percentile && !remReceived.has(player.id)));
+                let maxRerolls = 10;
+                while (!weightedRandomPlayer && maxRerolls > 0) {
+                    weightedRandomNumber = Math.random() * sumOfShares;
+                    weightedRandomPlayer = players.find((player) => (weightedRandomNumber <= player.percentile && !remReceived.has(player.id)));
+                    maxRerolls--;
+                };
                 if (weightedRandomPlayer) {
                     weightedRandomPlayer.rewards[key as keyof typeof weightedRandomPlayer.rewards] += 1;
+                    remReceived.add(weightedRandomPlayer.id);
                 };
                 value--;
                 maxIterations--;
@@ -559,8 +566,6 @@ async function endRaid(raidRowId: number, equalRewardDistribution: boolean) {
 const exportCommand: SlashCommand = {
     name: 'raid',
     async execute({ interaction, author }) {
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         // Deprecated
         const cancelOption = interaction.options.getBoolean('cancel') ?? false;
@@ -833,7 +838,7 @@ const exportCommand: SlashCommand = {
         let myChar = characters[stats.battlechar];
         let myStats = await getDetailedStats(myChar.id, stats, stats.dungeon_classlevels);
         myStats.damageFormula = "log_scale_1.4";
-        myStats.thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.char_skin[myChar.id]);
+        myStats.thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
 
         // Add Guild Perks
         myStats.atk += Math.floor(myStats.atk * (guild.atkbuff * 0.2));

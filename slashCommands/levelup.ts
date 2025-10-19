@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { achievements } from "../Modules/achievements";
@@ -10,8 +9,6 @@ import { getUserSchema, updateUsers } from '../Modules/queries';
 const exportCommand: SlashCommand = {
     name: 'levelup',
     async execute({ interaction, author }) {
-
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
         // const choice = interaction.options.getString('character');
         let byFlag = interaction.options.getString('by') || "1";
@@ -51,7 +48,7 @@ const exportCommand: SlashCommand = {
         if (inv.coins < price) return interaction.reply(`You don't have enough coins (**${inv.coins}**/${price}<:coins:872926669055356939>)`);
 
         // Thumbnail
-        const thumbnail = char.getImage(inv.premium, customSettings[interaction.user.id]?.cimg[char.id], inv.char_skin[char.id]);
+        const thumbnail = char.getImage(inv.premium, inv.custom_skins[char.id], inv.char_skin[char.id]);
 
         const Embed = new EmbedBuilder()
             .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])

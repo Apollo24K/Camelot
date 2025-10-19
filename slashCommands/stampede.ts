@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities.js";
 import { classes } from "../Modules/classes.js";
@@ -304,8 +303,6 @@ const exportCommand: SlashCommand = {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         // Skip Overview
         const skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
 
@@ -321,7 +318,7 @@ const exportCommand: SlashCommand = {
         let myStats = await getDetailedStats(myChar.id, stats, stats.dungeon_classlevels);
         // myStats.damageFormula = "log_scale_1.4";
 
-        myStats.thumbnail = myChar.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[myChar.id], stats.char_skin[myChar.id]);
+        myStats.thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
 
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, showPage, baseEP, RoK } from "../Modules/functions";
@@ -30,8 +29,6 @@ export const exportCommand: SlashCommand = {
     name: 'rank',
     async execute({ interaction, author, server }) {
         if (!interaction.guild || !server.schema) return interaction.reply("Please use this command in a server");
-
-        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
 
         let scope = interaction.options.getString('scope') ?? "global";
         let page = interaction.options.getInteger('page') ?? 1;
@@ -82,17 +79,16 @@ export const exportCommand: SlashCommand = {
             } else {
                 sortedRoK = [...RoK.values()];
             };
-            sortedRoK = sortedRoK.filter((e) => e && !(e.id in blacklist));
+            sortedRoK = sortedRoK.filter((e) => e && !interaction.client.blacklist.has(e.id));
             sortedRoK.sort((a, b) => b.ep - a.ep);
 
             sortedArr = sortedRoK.map((e) => `${rarities[characters[e.char].rarity]} ${count++}. **${characters[e.char].name}** - EP: ${e.ep} => ${e.name}`);
 
             embedTitle = `🏆 ${scope === "server" ? interaction.guild.name : "Camelot"} top characters 🏆`;
-            const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
 
             const tuser = await getUserSchema(sortedRoK[0].id);
             if (!tuser) return interaction.reply("Something went wrong, please try again later.");
-            thumbnail = characters[sortedRoK[0].char].getImage((tuser?.premium || 0), (customSettings?.[tuser?.id]?.cimg[sortedRoK[0].char] || ""), tuser?.char_skin[sortedRoK[0].char] || undefined);
+            thumbnail = characters[sortedRoK[0].char].getImage((tuser?.premium || 0), (tuser?.custom_skins[sortedRoK[0].char] || ""), tuser?.char_skin[sortedRoK[0].char] || undefined);
         };
 
         const elementsPerPage = 15;
@@ -110,7 +106,7 @@ export const exportCommand: SlashCommand = {
             .setTitle(embedTitle)
             .setDescription(showUsersF.join("\n"))
             .setThumbnail(thumbnail)
-            .setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 15 minutes" : ""}` });
+            .setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 6 hours" : ""}` });
         if (pagesTotal === 1) return interaction[interaction.deferred ? "editReply" : "reply"]({ embeds: [Embed] });
         return interaction[interaction.deferred ? "editReply" : "reply"]({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
@@ -126,7 +122,7 @@ export const exportCommand: SlashCommand = {
 
                 showUsersF = showPage(currPage, sortedArr, elementsPerPage);
 
-                Embed.setDescription(showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 15 minutes" : ""}` });
+                Embed.setDescription(showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 6 hours" : ""}` });
                 msg.edit({ embeds: [Embed], components: [PageRow] });
             });
 

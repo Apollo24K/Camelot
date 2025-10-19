@@ -1,5 +1,6 @@
 import WebSocket from 'ws';
-import config from '../config.json';
+import dotenv from 'dotenv';
+dotenv.config();
 
 type RunwareModel = "FLUX.1 (Schnell)" | "FLUX.1 (Dev)" | "Anything V3" | "PrimeMix";
 
@@ -200,7 +201,7 @@ class RunwareDirectApi {
                 category: "vae",  // Specify that we're uploading a VAE
                 architecture,
                 format: "safetensors",  // Most VAEs are in safetensors format
-                air: `${config.runware.source}:${airId}@1`,
+                air: `${process.env.RUNWARE_SOURCE}:${airId}@1`,
                 uniqueIdentifier,
                 name,
                 version,
@@ -392,7 +393,7 @@ class RunwareDirectApi {
     };
 };
 
-export const runwareApi = new RunwareDirectApi(config.runware.apiKey);
+export const runwareApi = new RunwareDirectApi(process.env.RUNWARE_API_KEY);
 export const generateImages = runwareApi.generateImages.bind(runwareApi);
 export const removeBackground = runwareApi.removeBackground.bind(runwareApi);
 
