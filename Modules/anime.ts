@@ -706,6 +706,10 @@ export const anime: animeInfo[] = [
     new animeInfo("The Villainess is a Marionette", [], 671),
     new animeInfo("Sankarea: Undying Love", ["Sankarea"], 672),
     new animeInfo("Tribe Nine", ["T9", "TN", "Tribe 9"], 673),
+    new animeInfo("The Novel's Extra", ["TNE"], 674),
+    new animeInfo("My Next Life as a Villainess: All Routes Lead to Doom!", ["Otome Game no Hametsu Flag Shika Nai Akuyaku Reijou ni Tensei Shiteshimatta", "HameFura",], 675),
+    new animeInfo("Restaurant to Another World", ["Isekai Shokudou", "RtAW"], 676)
+
 ];
 
 
