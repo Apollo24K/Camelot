@@ -187,22 +187,22 @@ const exportCommand: SlashCommand = {
                     .setThumbnail(thumbnail)
                     .setTitle(`Battle Arena`)
                     .setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
-                    .setFooter({ text: `Turn: ${user.username} | time left: 120s` });
+                    .setFooter({ text: `Turn: ${user.username} | round 1 | time left: 240s` });
                 if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
-                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
-                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
-                    const atk2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                    const def2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
-                    const ability2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
-                    const cskill2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 240000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 240000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 240000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 240000 });
+                    const atk2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 240000 });
+                    const def2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 240000 });
+                    const ability2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 240000 });
+                    const cskill2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 240000 });
 
 
                     function editEmbed() {
                         Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
-                        Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                        Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${240 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         msg.edit({ embeds: [Embed] });
                     };
 
@@ -529,7 +529,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                        } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                     });
 
                     def2.on('collect', async r => {
@@ -694,7 +694,7 @@ const exportCommand: SlashCommand = {
                 collector.stop();
 
                 if (r.customId === "1") newFight();
-                else if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
+                else if (interaction.channel?.isSendable()) interaction.channel.send(`${user.username} has declined the challenge!`);
             });
         });
     },
