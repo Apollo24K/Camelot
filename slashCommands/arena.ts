@@ -201,7 +201,7 @@ const exportCommand: SlashCommand = {
 
 
                     function editEmbed() {
-                        Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-4).join("")}`);
+                        Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${240 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         msg.edit({ embeds: [Embed] });
                     };
@@ -245,8 +245,8 @@ const exportCommand: SlashCommand = {
                         Avalon.consumeActiveMana(matchStats, eStatsC, eBuffs, enemy, notice, Embed, eStats.image);
 
                         // Reset Buffs
-                        if (matchStats.currentCharacter === 0) myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
-                        if (matchStats.currentOpponent === 0) eStatsC.atk = eStats.atk, eStatsC.md = eStats.md, eStatsC.def = eStats.def, eStatsC.mr = eStats.mr, eStatsC.cd = eStats.cd, eStatsC.cr = eStats.cr, eStatsC.dodge = eStats.dodge, eStatsC.br = eStats.br, eStatsC.mg = eStats.mg;
+                        if (matchStats.currentCharacter === 0) myStatsC.timeout = true, myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
+                        if (matchStats.currentOpponent === 0) eStatsC.timeout = true, eStatsC.atk = eStats.atk, eStatsC.md = eStats.md, eStatsC.def = eStats.def, eStatsC.mr = eStats.mr, eStatsC.cd = eStats.cd, eStatsC.cr = eStats.cr, eStatsC.dodge = eStats.dodge, eStatsC.br = eStats.br, eStatsC.mg = eStats.mg;
 
                         // Apply Buffs
                         if (matchStats.currentCharacter === 0) Avalon.applyBuffs(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice);
@@ -289,6 +289,25 @@ const exportCommand: SlashCommand = {
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                     };
 
+                    function frozenCheck(caster: DetailedStats, target: DetailedStats) {
+                        if (target.timeFrozen) {
+                            if (target.frozenMessage) notice.push(`\n✨ **${target.name}** ${target.frozenMessage}.`);
+                            matchStats.turn = (matchStats.turn === 1 ? 0 : 1);
+
+                            matchStats.round++;
+                            startNextRound();
+                            editEmbed();
+
+                            return true;
+                        } else {
+                            if (matchStats.turn === 1 && caster.timeout) {
+                                matchStats.round++;
+                                startNextRound();
+                                editEmbed();
+                            }
+                        }
+                    }
+
                     if (notice.length > 4) {
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                         editEmbed();
@@ -309,9 +328,7 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                                matchStats.round++;
-                                startNextRound();
-                                editEmbed();
+                                frozenCheck(myStatsC, eStatsC);
                             }
 
                             // Normal attack
@@ -324,9 +341,8 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                                matchStats.round++;
-                                startNextRound();
-                                editEmbed();
+                                frozenCheck(myStatsC, eStatsC);
+
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -348,9 +364,7 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                                matchStats.round++;
-                                startNextRound();
-                                editEmbed();
+                                frozenCheck(myStatsC, eStatsC);
                             }
 
                             else {
@@ -367,14 +381,14 @@ const exportCommand: SlashCommand = {
                                     notice.push(`\n🛡️ **${myChar.name}** has increased DEF by **${adddef}** and MR by **${addmr}**`);
                                 }
                                 myStatsC.usedBlockRound = matchStats.round;
-                                matchStats.round++;
-                                startNextRound();
 
                                 // Event Triggers
                                 matchStats.trigger("DEF", myStatsC, eStatsC, buffs, eBuffs);
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                frozenCheck(myStatsC, eStatsC);
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -398,17 +412,16 @@ const exportCommand: SlashCommand = {
                                 matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
                             };
 
-                            if (!myStatsC.timeout) matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                            else {
-                                matchStats.round++;
-                                startNextRound();
-                            };
-
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                            startNextRound();
-                            editEmbed();
+                            if (!myStatsC.timeout) {
+                                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                                editEmbed();
+                            } else {
+                                frozenCheck(myStatsC, eStatsC);
+                            };
+
                         }
 
                         else {
@@ -427,11 +440,6 @@ const exportCommand: SlashCommand = {
                                         myAbility.used++;
                                         const response = await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
                                         myStatsC.sm -= myAbility.cost;
-                                        if (!myStatsC.timeout) matchStats.turn = matchStats.turnSkill ? 0 : 1;
-                                        else {
-                                            matchStats.round++;
-                                            startNextRound();
-                                        };
 
                                         // Event Triggers
                                         if (response === AbilityResponse.SUCCESS) {
@@ -440,6 +448,13 @@ const exportCommand: SlashCommand = {
 
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                        if (!myStatsC.timeout) {
+                                            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                                            editEmbed();
+                                        } else {
+                                            frozenCheck(myStatsC, eStatsC);
+                                        };
                                     };
                                 } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             } else if (interaction.channel?.isSendable()) interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -453,8 +468,6 @@ const exportCommand: SlashCommand = {
                             matchStats.user = matchStats.interaction.user.id;
                             myStatsC.attackStreak = 0;
                             const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                            matchStats.round++;
-                            startNextRound();
 
                             // Event Triggers
                             if (response === AbilityResponse.SUCCESS) {
@@ -463,6 +476,8 @@ const exportCommand: SlashCommand = {
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                            frozenCheck(myStatsC, eStatsC);
                         }
 
                         // Class active
@@ -487,8 +502,6 @@ const exportCommand: SlashCommand = {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
                                     const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
-                                    matchStats.round++;
-                                    startNextRound();
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {
@@ -497,6 +510,8 @@ const exportCommand: SlashCommand = {
 
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                    frozenCheck(myStatsC, eStatsC);
                                 } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             };
                         };
@@ -516,6 +531,8 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                frozenCheck(eStatsC, myStatsC);
                             }
 
                             // Normal attack
@@ -527,6 +544,8 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                frozenCheck(eStatsC, myStatsC);
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -547,6 +566,8 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                frozenCheck(eStatsC, myStatsC);
                             }
 
                             else {
@@ -570,6 +591,8 @@ const exportCommand: SlashCommand = {
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                frozenCheck(eStatsC, myStatsC);
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -587,6 +610,7 @@ const exportCommand: SlashCommand = {
                             matchStats.user = user.id;
                             eStatsC.attackStreak = 0;
                             const response = await eStatsC.replaceButton.ability.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, interaction.user);
+                            if (!eStatsC.timeout) matchStats.turn = 1;
 
                             // Event Triggers
                             if (response === AbilityResponse.SUCCESS) {
@@ -595,6 +619,8 @@ const exportCommand: SlashCommand = {
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                            frozenCheck(eStatsC, myStatsC);
                         }
 
                         else {
@@ -621,6 +647,8 @@ const exportCommand: SlashCommand = {
 
                                         editEmbed();
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                        frozenCheck(eStatsC, myStatsC);
                                     };
                                 } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             } else if (interaction.channel?.isSendable()) interaction.channel.send(`You can use **${enemy.name}**'s ability only ${eAbility.usage == 1 ? "once" : `${eAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -631,10 +659,12 @@ const exportCommand: SlashCommand = {
 
                         // If class active was replaced
                         if (eStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
-                            matchStats.turn = 0;
                             matchStats.user = user.id;
                             eStatsC.attackStreak = 0;
                             const response = await eStatsC.replaceButton.cskill.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
+                            matchStats.turn = 0;
+                            if (!eStatsC.timeout) matchStats.turn = 1;
+                            if (myStatsC.timeFrozen) matchStats.turn = matchStats.turnSkill - 1;
 
                             // Event Triggers
                             if (response === AbilityResponse.SUCCESS) {
@@ -643,6 +673,8 @@ const exportCommand: SlashCommand = {
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                            frozenCheck(eStatsC, myStatsC);
                         }
 
                         // Class active
@@ -662,20 +694,24 @@ const exportCommand: SlashCommand = {
                             if (eSkill.cost > eStatsC.sm && interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough mana! (**${eStatsC.sm}**/${eSkill.cost}${customEmojis.mana})`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             else {
                                 if (matchStats.turn === 1) {
-                                    matchStats.turn = 0;
                                     matchStats.user = user.id;
                                     eStatsC.sm -= eSkill.cost;
                                     eStatsC.attackStreak = 0;
                                     const response = await eSkill.skill(eStatsC, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user, stats2 ? stats2.chars : []);
-                                    // matchStats.turn = matchStats2.turn;
+                                    matchStats.turn = 0;
+                                    if (!eStatsC.timeout) matchStats.turn = 1;
+                                    if (myStatsC.timeFrozen) matchStats.turn = matchStats.turnSkill - 1;
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {
                                         matchStats.trigger("CSKILL", eStatsC, myStatsC, eBuffs, buffs);
-                                    };
+                                    }
 
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+
+                                    frozenCheck(eStatsC, myStatsC);
+
                                 } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             };
                         };
