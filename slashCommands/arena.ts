@@ -137,21 +137,6 @@ const exportCommand: SlashCommand = {
         // let matchStats2 = Avalon.getMatchStats(interaction);
         let notice = ["", "", "", ""];
 
-        let ATK_EMOJI = '⚔️', DEF_EMOJI = '🛡️', ABILITY_EMOJI = '✨', SKILL_EMOJI = '⚜️';
-        if (new Date().getMonth() === 11) ATK_EMOJI = '<:sw:1030154812496560218>', DEF_EMOJI = '<:sh:1030154814652420127>', ABILITY_EMOJI = '<:sp:1030154816288198768>', SKILL_EMOJI = '<:fl:1030154818746069012>';
-
-        // Buttons
-        let atkButton = new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle(ButtonStyle.Secondary);
-        let defButton = new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle(ButtonStyle.Secondary);
-        let abilityButton = new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(true);
-        let skillButton = new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(true);
-
-        if ((myAbility && "ability" in myAbility) || (eAbility && "ability" in eAbility)) abilityButton.setDisabled(false);
-        if (myStats.class !== -1 || eStats.class !== -1) skillButton.setDisabled(false);
-
-        const row = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(atkButton, defButton, abilityButton, skillButton);
-
         // Player 1
         if (skill && myChar.id !== 4767 && enemy.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
         if (myAbility?.passive && enemy.id !== 4767) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
@@ -178,6 +163,33 @@ const exportCommand: SlashCommand = {
         if (eStats.ring2) await (items[eStats.ring2] as ringInfo).getBuff(eStats.ring2info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
         if (eStats.ring3) await (items[eStats.ring3] as ringInfo).getBuff(eStats.ring3info?.level)(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, new EmbedBuilder(), user);
 
+        matchStats.player1 = myStatsC, matchStats.player2 = eStatsC;
+
+        let ATK_EMOJI1 = myStatsC.replaceButton?.atk?.emoji || '⚔️',
+            DEF_EMOJI1 = myStatsC.replaceButton?.def?.emoji || '🛡️',
+            ABILITY_EMOJI1 = myStatsC.replaceButton?.ability?.emoji || '✨',
+            SKILL_EMOJI1 = myStatsC.replaceButton?.cskill?.emoji || '⚜️';
+
+        let ATK_EMOJI2 = eStatsC.replaceButton?.atk?.emoji || '⚔️',
+            DEF_EMOJI2 = eStatsC.replaceButton?.def?.emoji || '🛡️',
+            ABILITY_EMOJI2 = eStatsC.replaceButton?.ability?.emoji || '✨',
+            SKILL_EMOJI2 = eStatsC.replaceButton?.cskill?.emoji || '⚜️';
+
+        if (new Date().getMonth() === 11) ATK_EMOJI1 = '<:sw:1030154812496560218>', DEF_EMOJI1 = '<:sh:1030154814652420127>', ABILITY_EMOJI1 = '<:sp:1030154816288198768>', SKILL_EMOJI1 = '<:fl:1030154818746069012>';
+
+        // Buttons
+        let atkButton = new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI2).setStyle(ButtonStyle.Secondary);
+        let defButton = new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI2).setStyle(ButtonStyle.Secondary);
+        let abilityButton = new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI2).setStyle(ButtonStyle.Secondary).setDisabled(true);
+        let skillButton = new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI2).setStyle(ButtonStyle.Secondary).setDisabled(true);
+
+        if ((myAbility && "ability" in myAbility) || (eAbility && "ability" in eAbility)) abilityButton.setDisabled(false);
+        if (myStats.class !== -1 || eStats.class !== -1) skillButton.setDisabled(false);
+
+        const row = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(atkButton, defButton, abilityButton, skillButton);
+
+
         async function newFight() {
             let timestart = new Date().getTime();
             let result = await new Promise<EmbedBuilder | undefined>((resolve) => {
@@ -201,9 +213,20 @@ const exportCommand: SlashCommand = {
 
 
                     function editEmbed() {
+                        if (matchStats.turn === 0) {
+                            row.components[0].setEmoji(ATK_EMOJI1);
+                            row.components[1].setEmoji(DEF_EMOJI1);
+                            row.components[2].setEmoji(ABILITY_EMOJI1);
+                            row.components[3].setEmoji(SKILL_EMOJI1);
+                        } else {
+                            row.components[0].setEmoji(ATK_EMOJI2);
+                            row.components[1].setEmoji(DEF_EMOJI2);
+                            row.components[2].setEmoji(ABILITY_EMOJI2);
+                            row.components[3].setEmoji(SKILL_EMOJI2);
+                        }
                         Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${240 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
-                        msg.edit({ embeds: [Embed] });
+                        msg.edit({ embeds: [Embed], components: [row] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -342,7 +365,6 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
                                 frozenCheck(myStatsC, eStatsC);
-
                             }
 
                         } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -418,10 +440,8 @@ const exportCommand: SlashCommand = {
                             if (!myStatsC.timeout) {
                                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
                                 editEmbed();
-                            } else {
-                                frozenCheck(myStatsC, eStatsC);
-                            };
-
+                                myStatsC.timeout = true;
+                            } else frozenCheck(myStatsC, eStatsC);
                         }
 
                         else {
@@ -452,9 +472,8 @@ const exportCommand: SlashCommand = {
                                         if (!myStatsC.timeout) {
                                             matchStats.turn = matchStats.turnSkill ? 0 : 1;
                                             editEmbed();
-                                        } else {
-                                            frozenCheck(myStatsC, eStatsC);
-                                        };
+                                            myStatsC.timeout = true;
+                                        } else frozenCheck(myStatsC, eStatsC);
                                     };
                                 } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             } else if (interaction.channel?.isSendable()) interaction.channel.send(`You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
@@ -711,7 +730,6 @@ const exportCommand: SlashCommand = {
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
                                     frozenCheck(eStatsC, myStatsC);
-
                                 } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             };
                         };

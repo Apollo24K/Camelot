@@ -928,6 +928,13 @@ export const noTimeout = (matchStats: MatchStats, attacker: DetailedStats) => {
     attacker.timeout = false;
 };
 
+export const imageChange = (embed: EmbedBuilder, matchStats: MatchStats, caster: DetailedStats, image: string) => {
+    console.log(matchStats.turn);
+    matchStats.player1 ??= caster;
+    if (matchStats.player1 === caster) embed.setThumbnail(image);
+    else embed.setImage(image);
+};
+
 export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], log: string, amount: number, flags = {}) => {
     const options = { // true = enabled, false = disabled
         bypassBoL: false,

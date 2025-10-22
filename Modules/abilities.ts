@@ -1,5 +1,5 @@
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
-import { getDetailedStats, dealDamage, addHeal, getRefinement, noTimeout } from "./functions";
+import { getDetailedStats, dealDamage, addHeal, getRefinement, noTimeout, imageChange } from "./functions";
 import { createCanvas, loadImage, Image } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
@@ -70,7 +70,7 @@ export const abilities: Record<number, Ability> = {
                 });
 
                 notice.push(`\n✨ **${char.name}** transformed into **${characters[pID].name}**!`);
-                embed.setThumbnail(characters[pID].image);
+                imageChange(embed, matchStats, myStats, characters[pID].image);
             } else {
                 this[this.selected] = myStats.hp;
                 this.selected = "fushi";
@@ -85,7 +85,7 @@ export const abilities: Record<number, Ability> = {
                 });
 
                 notice.push(`\n✨ **${char.name}** transformed back`);
-                embed.setThumbnail(char.image);
+                imageChange(embed, matchStats, myStats, char.image);
             };
 
             return AbilityResponse.SUCCESS;
@@ -151,7 +151,7 @@ export const abilities: Record<number, Ability> = {
             myStats.maxhp += Math.floor(myStats.maxhp * 0.2);
             ["atk", "def", "md", "mr"].forEach((e) => mybuff[e as keyof Buffs].push(new buffInfo("*", 1.2, 9999)));
             notice.push(`\n✨ **${char.name}** has transformed into a Titan! Raised HP, ATK, MD, DEF and MR by **20%**`);
-            embed.setThumbnail("https://i.ibb.co/YfnG2Tn/at.png");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/YfnG2Tn/at.png");
 
             return AbilityResponse.SUCCESS;
         },
@@ -292,7 +292,7 @@ export const abilities: Record<number, Ability> = {
                 myStats.md += Math.floor(myStats.md * 0.3);
                 myStats.mg = 0;
 
-                embed.setThumbnail("https://i.ibb.co/m024R2q/x.png");
+                imageChange(embed, matchStats, myStats, "https://i.ibb.co/m024R2q/x.png");
                 notice.push(`\n🎭 **${char.name}** dons the Yaksha Mask, increasing his MD by **30%**`);
             };
 
@@ -370,8 +370,10 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Nuke)`\n\n__**Active**__ (✨)\n- Deals **300%** undodgeable MD\n- Decreases ATK, MD, DEF, MR to **0** for **3** rounds\n\n__**Party**__ (👥)\nWhen megumin's active (✨) is used in stampedes:\n- If Aqua/Darkness/Kazuma Satou is selected in the party, gains a shield equivalent to **10%** of her max HP",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Megumin unleashes an attack with 300% magic damage. This can't be dodged. ATK, MATK, DEF and MDEF fall to 0 for 2 rounds
-            embed.setThumbnail("https://i.ibb.co/9wktf9S/c.gif");
-            embed.setImage(`https://i.imgur.com/80tH5Uz.gif`);
+            if (matchStats.interaction.commandName !== "arena") {
+                embed.setThumbnail("https://i.ibb.co/9wktf9S/c.gif");
+                embed.setImage(`https://i.imgur.com/80tH5Uz.gif`);
+            } else imageChange(embed, matchStats, myStats, "https://i.ibb.co/9wktf9S/c.gif");
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ Bakuretsu! Bakuhatsu! **EXPLOSION!!!** She`, { atkMultiplier: 3, magicDamage: true, mdChance: -1, dodge: false, canTwinshot: true });
             mybuff.atk.push(new buffInfo("=", 0, 2));
             mybuff.def.push(new buffInfo("=", 0, 2));
@@ -387,7 +389,7 @@ export const abilities: Record<number, Ability> = {
             };
 
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                embed.setImage(eStats.image);
+                if (matchStats.interaction.commandName !== "arena") embed.setImage(eStats.image);
 
                 return AbilityResponse.SUCCESS;
             }));
@@ -573,7 +575,7 @@ export const abilities: Record<number, Ability> = {
             myStats.atk += raiseAtk;
             mybuff.atk.push(new buffInfo("+", raiseAtk, 9999));
             notice.push(`\n✨ **${char.name}** equipped Hermes Trismegistus!\n<:blank:917804200363171860> She has gained **+${raiseDef}**DEF and **+${raiseAtk}**ATK`);
-            embed.setThumbnail("https://i.ibb.co/S7v6Qmx/a.png");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/S7v6Qmx/a.png");
 
             return AbilityResponse.SUCCESS;
         },
@@ -742,7 +744,7 @@ export const abilities: Record<number, Ability> = {
     //         let pick = obtained[Math.floor(Math.random() * obtained.length)];
     //         this.summoned.push(pick);
 
-    //         embed.setThumbnail(characters[pick].image);
+    //         imageChange(embed, matchStats, myStats, characters[pick].image);
 
     //         let newStats = await getDetailedStats(pick, inv, inv.dungeon_classlevels);
     //         ["hp", "maxhp", "def", "mr", "cr", "cd", "td", "br", "dodge"].forEach((e) => {
@@ -926,7 +928,7 @@ export const abilities: Record<number, Ability> = {
     //                 mybuff.dodge.push(new buffInfo("+", 0.15, 9999));
     //                 ebuff.def.push(new buffInfo("+", Math.min(Math.floor(eStats.def * def_debuff), 660), 9999));
     //                 ebuff.mr.push(new buffInfo("+", Math.min(Math.floor(eStats.mr * def_debuff), 660), 9999));
-    //                 embed.setThumbnail("https://i.ibb.co/2YYgNyw5/c.png");
+    //                 imageChange(embed, matchStats, myStats, "https://i.ibb.co/2YYgNyw5/c.png");
     //             };
 
     //             return AbilityResponse.SUCCESS;
@@ -1098,7 +1100,7 @@ export const abilities: Record<number, Ability> = {
                         matchStats.trigger("shieldBreak", myStats, eStats, mybuff, ebuff);
                     };
                     notice.push(`\n✨ **${char.name}** entered his shadow form!`);
-                    embed.setThumbnail("https://i.imgur.com/2VZTpDS.png");
+                    imageChange(embed, matchStats, myStats, "https://i.imgur.com/2VZTpDS.png");
                     //@ts-ignore
                     this._used++;
                 } else {
@@ -1241,11 +1243,11 @@ export const abilities: Record<number, Ability> = {
             // Add new buffs to heap
             let armorName, atkbuff, defbuff, crbuff, cdbuff, dodgebuff, hpbuff, mgbuff = new buffInfo("=", 0, 9999);
             switch (this.armor++ % 5) {
-                case 0: embed.setThumbnail("https://i.ibb.co/KFLzdqd/f.png"); armorName = "Fire Empress Armor. She gained **60%** ATK, decreased DEF by **20%**"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.6), 9999); defbuff = new buffInfo("+", -Math.floor(myStats.def * 0.2), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.6) }, { type: "def", id: defbuff.id, buff: -Math.floor(myStats.def * 0.2) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.6); myStats.def += -Math.floor(myStats.def * 0.2); myStats.mg = 0; break;
-                case 1: embed.setThumbnail("https://i.ibb.co/HG4tHWt/a.png"); armorName = "Adamantine Armor. She gained **60%** DEF, decreased ATK by **20%**"; atkbuff = new buffInfo("+", -Math.floor(myStats.atk * 0.2), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.6), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: -Math.floor(myStats.atk * 0.2) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.6) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += -Math.floor(myStats.atk * 0.2); myStats.def += Math.floor(myStats.def * 0.6); myStats.mg = 0; break;
-                case 2: embed.setThumbnail("https://i.ibb.co/VDPkR10/w.png"); armorName = "Heaven's Wheel Armor. She gained **25%** ATK and DEF"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.25), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.25) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.25) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.25); myStats.def += Math.floor(myStats.def * 0.25); myStats.mg = 0; break;
-                case 3: embed.setThumbnail("https://i.ibb.co/TH4gNq5/c.png"); armorName = "Clear Heart Clothing. She gained **10%** ATK, **+20%** crit rate, **+50%** crit damage, and **+10%** dodge chance"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999); crbuff = new buffInfo("+", 0.2, 9999); cdbuff = new buffInfo("+", 0.5, 9999); dodgebuff = new buffInfo("+", 0.1, 9999); mybuff.atk.push(atkbuff); mybuff.cr.push(crbuff); mybuff.cd.push(cdbuff); mybuff.dodge.push(dodgebuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.1) }, { type: "cr", id: crbuff.id, buff: 0.2 }, { type: "cd", id: cdbuff.id, buff: 0.5 }, { type: "dodge", id: dodgebuff.id, buff: 0.1 }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.1); myStats.cr += 0.2; myStats.cd += 0.5; myStats.dodge += 0.1; myStats.mg = 0; break;
-                case 4: embed.setThumbnail("https://i.imgur.com/TDbvwEX.png"); armorName = "Armadura Fairy. She will gain **10%** HP every round"; hpbuff = new buffInfo("+", Math.floor(myStats.maxhp * 0.1), 9999); mybuff.hp.push(hpbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "hp", id: hpbuff.id, buff: Math.floor(myStats.maxhp * 0.1) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; /* addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp*0.1), { }); myStats.hp > myStats.maxhp ? myStats.hp = myStats.maxhp : false; */ myStats.mg = 0; break;
+                case 0: imageChange(embed, matchStats, myStats, "https://i.ibb.co/KFLzdqd/f.png"); armorName = "Fire Empress Armor. She gained **60%** ATK, decreased DEF by **20%**"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.6), 9999); defbuff = new buffInfo("+", -Math.floor(myStats.def * 0.2), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.6) }, { type: "def", id: defbuff.id, buff: -Math.floor(myStats.def * 0.2) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.6); myStats.def += -Math.floor(myStats.def * 0.2); myStats.mg = 0; break;
+                case 1: imageChange(embed, matchStats, myStats, "https://i.ibb.co/HG4tHWt/a.png"); armorName = "Adamantine Armor. She gained **60%** DEF, decreased ATK by **20%**"; atkbuff = new buffInfo("+", -Math.floor(myStats.atk * 0.2), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.6), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: -Math.floor(myStats.atk * 0.2) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.6) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += -Math.floor(myStats.atk * 0.2); myStats.def += Math.floor(myStats.def * 0.6); myStats.mg = 0; break;
+                case 2: imageChange(embed, matchStats, myStats, "https://i.ibb.co/VDPkR10/w.png"); armorName = "Heaven's Wheel Armor. She gained **25%** ATK and DEF"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.25), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.25) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.25) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.25); myStats.def += Math.floor(myStats.def * 0.25); myStats.mg = 0; break;
+                case 3: imageChange(embed, matchStats, myStats, "https://i.ibb.co/TH4gNq5/c.png"); armorName = "Clear Heart Clothing. She gained **10%** ATK, **+20%** crit rate, **+50%** crit damage, and **+10%** dodge chance"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999); crbuff = new buffInfo("+", 0.2, 9999); cdbuff = new buffInfo("+", 0.5, 9999); dodgebuff = new buffInfo("+", 0.1, 9999); mybuff.atk.push(atkbuff); mybuff.cr.push(crbuff); mybuff.cd.push(cdbuff); mybuff.dodge.push(dodgebuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.1) }, { type: "cr", id: crbuff.id, buff: 0.2 }, { type: "cd", id: cdbuff.id, buff: 0.5 }, { type: "dodge", id: dodgebuff.id, buff: 0.1 }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.1); myStats.cr += 0.2; myStats.cd += 0.5; myStats.dodge += 0.1; myStats.mg = 0; break;
+                case 4: imageChange(embed, matchStats, myStats, "https://i.imgur.com/TDbvwEX.png"); armorName = "Armadura Fairy. She will gain **10%** HP every round"; hpbuff = new buffInfo("+", Math.floor(myStats.maxhp * 0.1), 9999); mybuff.hp.push(hpbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "hp", id: hpbuff.id, buff: Math.floor(myStats.maxhp * 0.1) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; /* addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp*0.1), { }); myStats.hp > myStats.maxhp ? myStats.hp = myStats.maxhp : false; */ myStats.mg = 0; break;
                 default: false; break;
             };
             notice.push(`\n✨ **${char.name}** changed to ${armorName}`);
@@ -1346,7 +1348,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Kiyotaka Ayanokouji increases his attack by 15/25/33% and gains +5% dodge chance
             // if (this.used === 1) {
-            //     embed.setThumbnail("https://i.ibb.co/y8MDgRD/g.gif");
+            //     imageChange(embed, matchStats, myStats, "https://i.ibb.co/y8MDgRD/g.gif");
             //     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999));
             //     myStats.atk = Math.floor(myStats.atk * 1.15);
             //     myStats.dodge += 0.05;
@@ -1355,7 +1357,7 @@ export const abilities: Record<number, Ability> = {
             // }
 
             switch (this.used) {
-                case 1: embed.setThumbnail("https://i.ibb.co/y8MDgRD/g.gif"); mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999)); myStats.atk = Math.floor(myStats.atk * 1.15); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** decides to get slightly serious. Increased ATK by **15%** and dodge by **+5%**`); break;
+                case 1: imageChange(embed, matchStats, myStats, "https://i.ibb.co/y8MDgRD/g.gif"); mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999)); myStats.atk = Math.floor(myStats.atk * 1.15); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** decides to get slightly serious. Increased ATK by **15%** and dodge by **+5%**`); break;
                 case 2: mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999)); myStats.atk = Math.floor(myStats.atk * 1.1); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** gets a little more serious. Increased ATK by **25%** and dodge by **+5%**`); break;
                 case 3: mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.08), 9999)); myStats.atk = Math.floor(myStats.atk * 1.08); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** goes all out. Increased ATK by **33%** and dodge by **+5%**`); break;
                 default: false; break;
@@ -1491,7 +1493,7 @@ export const abilities: Record<number, Ability> = {
             const domainLast = 4;
             this.pause = matchStats.round + 10;
             myStats.rukiaUsedActive = true;
-            embed.setThumbnail("https://i.imgur.com/g56Plhs.png");
+            imageChange(embed, matchStats, myStats, "https://i.imgur.com/g56Plhs.png");
 
             // During Domain
             eStats.frost += 4;
@@ -1524,7 +1526,7 @@ export const abilities: Record<number, Ability> = {
                 if (eStats.hp < 0) eStats.hp = 0;
                 eStats.frozenwounds = 0;
 
-                embed.setThumbnail(myStatsFixed.thumbnail);
+                imageChange(embed, matchStats, myStats, myStatsFixed.thumbnail);
                 return AbilityResponse.SUCCESS;
             }));
 
@@ -1921,12 +1923,12 @@ export const abilities: Record<number, Ability> = {
             // Change image after 3 rounds
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 myStats.mdChance -= 1;
-                embed.setThumbnail(myStatsFixed.thumbnail || char.image);
+                imageChange(embed, matchStats, myStats, myStatsFixed.thumbnail || char.image);
 
                 return AbilityResponse.SUCCESS;
             }));
 
-            embed.setThumbnail("https://i.ibb.co/NKnp3KM/luminous.png");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/NKnp3KM/luminous.png");
             notice.push(`\n✨ **${char.name}** increased her MD by **25%** for 3 rounds!`);
             this.roundUsed = matchStats.round;
 
@@ -2651,7 +2653,9 @@ export const abilities: Record<number, Ability> = {
                 this.messageEditTimeout = setTimeout(async () => {
                     try {
                         await message.edit({ files: [this.buffer] });
-                        embed.setImage(`attachment://file.jpg`);
+                        // embed.setImage(`attachment://file.jpg`);
+                        imageChange(embed, matchStats, eStats, `attachment://file.jpg`);
+
                     } catch (error) {
                         console.error('Failed to edit message with ice effect:', error);
                     }
@@ -2665,7 +2669,8 @@ export const abilities: Record<number, Ability> = {
                     this.messageEditTimeout = setTimeout(async () => {
                         try {
                             await message.edit({ files: [] });
-                            embed.setImage(eStats.image);
+                            // embed.setImage(eStats.image);
+                            imageChange(embed, matchStats, eStats, eStats.image);
                         } catch (error) {
                             console.error('Failed to edit message to remove ice effect:', error);
                         }
@@ -5293,7 +5298,7 @@ export const abilities: Record<number, Ability> = {
                 };
             };
 
-            embed.setThumbnail("https://i.ibb.co/VWKDvfw/tenor.gif");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/VWKDvfw/tenor.gif");
 
             return AbilityResponse.SUCCESS;
         },
@@ -6028,7 +6033,7 @@ export const abilities: Record<number, Ability> = {
     //                 // Maestro immediate effects: Stun for 1 round
     //                 eStats.timeFrozen = true;
     //                 eStats.frozenMessage = "was stunned for **1** round";
-    //                 embed.setThumbnail("https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
+    //                 imageChange(embed, matchStats, myStats, "https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
     //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                     eStats.timeFrozen = false;
 
@@ -6050,7 +6055,7 @@ export const abilities: Record<number, Ability> = {
     //                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
     //                     myStats.phrState = myStats.phrState = 1 ? 1 : 0;
-    //                     embed.setThumbnail("https://i.ibb.co/chjTjNDY/c.png"); // Revert back to original pic
+    //                     imageChange(embed, matchStats, myStats, "https://i.ibb.co/chjTjNDY/c.png");
     //                     return AbilityResponse.SUCCESS;
     //                 }));
     //             } else {
@@ -6951,7 +6956,8 @@ export const abilities: Record<number, Ability> = {
     //             myStats.hp = 0;
     //             myStats.rev = 0;
     //             notice.push(`\n✨ Is he even human?`);
-    //             embed.setImage(`https://i.ibb.co/rGDZy9LY/c.png`);
+    //             // embed.setImage(`https://i.ibb.co/rGDZy9LY/c.png`);
+    //             imageChange(embed, matchStats, eStats, "https://i.ibb.co/rGDZy9LY/c.png");
     //             return AbilityResponse.SUCCESS;
     //         };
 

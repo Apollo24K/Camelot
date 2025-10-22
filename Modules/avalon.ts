@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction } from "discord.js";
 import { achievements } from "./achievements";
-import { customEmojis, addHeal, deleteReplyIn } from "./functions";
+import { customEmojis, addHeal, deleteReplyIn, imageChange } from "./functions";
 import Trigger from "./trigger";
 import { Buffs, DetailedStats, MatchStats, TriggerEvents, TriggerOptions } from "../types";
 import { customHpBars } from "./customHpBars";
@@ -263,7 +263,7 @@ export default class Avalon {
                 });
                 myStatsC.consumeMana = 0;
                 myStatsC.heap1 = [];
-                Embed.setThumbnail(thumbnail);
+                imageChange(Embed, matchStats, myStatsC, thumbnail);
                 return notice.push(`\n⚜️ **${myChar.name}** stopped ${myChar.gender === "F" ? "her" : "his"} transformation`);
             };
         };
