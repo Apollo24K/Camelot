@@ -7,7 +7,7 @@ import { skills } from "../Modules/skills";
 import { armorInfo, items, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
-import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage } from "../Modules/functions";
+import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, getRefinement } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
@@ -730,7 +730,7 @@ const exportCommand: SlashCommand = {
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
                                     frozenCheck(eStatsC, myStatsC);
-                                } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), 30000)).catch((err) => console.log(err));
                             };
                         };
                     });
@@ -740,7 +740,38 @@ const exportCommand: SlashCommand = {
             if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result] });
         };
 
-        interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle. Do you accept?`, components: [row2] }).then(msg2 => {
+        let cls = myStatsC.class === -1 ? "None" : `${classes[myStatsC.class].name}${classes[myStatsC.class].emblem}Lvl. ${myStatsC.clvl}`;
+
+        const Embed = new EmbedBuilder()
+            .setColor(embedColor)
+            .setThumbnail(myStatsC.image)
+            .setTitle(`⚔️ Battle Arena Challenge ⚔️`)
+            .setDescription(
+                `**Challenger**: <@${interaction.user.id}>\n` +
+                `**Challengee**: <@${user.id}>\n\n` +
+                `**${myChar.name}** - ${myChar.anime}\n` +
+                `**Level** ${myStatsC.lvl}ㅤ**Ref.** ${getRefinement(myStatsC.ref)}\n` +
+                `**Class**: ${cls}\n` +
+                `**Equipment**: ${myStatsC.weaponicon}`
+                + `${(stats.premium > 3 || stats.shield_slot) && myStatsC.shieldicon ? myStatsC.shieldicon : ""} `
+                + `${myStatsC.helmeticon || "<:helmet_empty:1034499888878198885>"}`
+                + `${myStatsC.cuirassicon || "<:cuirass_empty:1034499890165858305>"}`
+                + `${myStatsC.glovesicon || "<:gloves_empty:1034499892409794570>"}`
+                + `${myStatsC.bootsicon || "<:boots_empty:1034499893919764480>"}\n` +
+                `**Items**: `
+                + `${myStatsC.runeicon} `
+                + `${myStatsC.ring1icon}`
+                + `${myStatsC.ring2icon}`
+                + `${myStatsC.ring3icon}`
+                + `\n-----------------------------------\n` +
+                (`${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
+            );
+        // .setFooter({ text: `Turn: ${user.username} | round 1 | time left: 240s` });
+
+        interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle` }).then(msgReply => setTimeout(() => msgReply.delete(), deleteReplyIn)).catch((err) => console.log(err));
+        if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row2] }).then(msg2 => {
+
+            // interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle. Do you accept?`, components: [row2] }).then(msg2 => {
             const collector = msg2.createMessageComponentCollector({ filter: (r) => ((r.user.id === user.id) || (r.user.id === interaction.user.id)), componentType: ComponentType.Button, time: 30000 });
 
             collector.on('collect', async r => {
@@ -748,7 +779,10 @@ const exportCommand: SlashCommand = {
                 collector.stop();
 
                 if (r.customId === "1") newFight();
-                else if (interaction.channel?.isSendable()) interaction.channel.send(`${user.username} has declined the challenge!`);
+                else {
+                    msg2.edit({ content: `${user.username} has declined the challenge!`, components: [], embeds: [] });
+                    return;
+                };
             });
         });
     },
