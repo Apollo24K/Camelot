@@ -95,6 +95,7 @@ const exportCommand: SlashCommand = {
         const aDelay = stats.premium ? stats.animationdelay : 1200;
 
         let resolved = false;
+        let streakChanged = false;
         async function matchResult(r: "w" | "l") {
             if (resolved) return;
             resolved = true;
@@ -103,28 +104,54 @@ const exportCommand: SlashCommand = {
 
             const EmbedR = new EmbedBuilder()
                 .setColor(embedColor)
-                .setTitle(`Battle Arena`);
-            if (r === "w") {
-                // Update users table
-                await updateUsers(interaction.user.id, { arenawins: { type: "increment", value: 1 } });
-                await updateUsers(user.id, { arenalosses: { type: "increment", value: 1 } });
-
-                EmbedR.setDescription(`<:stars_v2:917023655840591963> **${interaction.user.username}** won! <:stars_v2:917023655840591963>\nBetter luck next time ${user.username}.`).setThumbnail(thumbnail).setFooter({ text: `Total wins: ${stats.arenawins + 1}`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
-
-                // Achievements
-                achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
-                achievements[6].check(interaction), achievements[7].check(interaction), achievements[8].check(interaction); // Champion
-            };
+                .setThumbnail((r === "l" ? eStats.image : myStatsC.image));
             if (r === "l") {
-                await updateUsers(interaction.user.id, { arenalosses: { type: "increment", value: 1 } });
-                await updateUsers(user.id, { arenawins: { type: "increment", value: 1 } });
+                await updateUsers(interaction.user.id, { arenalosses: { type: "increment", value: 1 }, arenastreak: { type: "set", value: 0 } });
+                await updateUsers(user.id, { arenawins: { type: "increment", value: 1 }, arenastreak: { type: "increment", value: 1 } });
 
-                EmbedR.setDescription(`<:stars_v2:917023655840591963> **${user.username}** won! <:stars_v2:917023655840591963>\nBetter luck next time ${interaction.user.username}.`).setThumbnail(eStats.image).setFooter({ text: `Total wins: ${stats2.arenawins + 1}`, iconURL: user.displayAvatarURL({ size: 512 }) });
+                if (stats2.arenastreak + 1 > stats2.arenastreakhighest) {
+                    await updateUsers(user.id, { arenastreakhighest: { type: "set", value: stats2.arenastreak } });
+                    streakChanged = true;
+                }
+
+                EmbedR.setDescription(
+                    `## <:victory:1432012219066875996> **${enemy.name}** won the arena!\n\n` +
+                    `<a:arrow_green_upwards:1431966637220954193> New Streak: ${stats2.arenastreak + 1} ${streakChanged ? `(Personal high!)` : ""} | Win Rate: ${Math.round((stats2.arenawins / (stats2.arenawins + stats2.arenalosses)) * 100)}%\n` +
+                    `<a:arrow_red_downwards:1431966642866225183> Final Streak: ${stats.arenastreak} | Win Rate: ${Math.round((stats.arenawins / (stats.arenawins + stats.arenalosses)) * 100)}%\n` +
+                    `════════════════════\n` +
+                    `<:WorryLuminous:1431976105627226112> Looking for ways to boost your prowess?\n` +
+                    `-# * Raise your character/ class levels\n` +
+                    `-# * Equip synergistic and levelled weapons/ armor\n` +
+                    `-# * Check out FAQ/ Community Builds`
+                );
 
                 // Achievements
                 achievements[39].check(interaction, user, eStatsC.hp), achievements[40].check(interaction, user, eStatsC.hp), achievements[41].check(interaction, user, eStatsC.hp); // Under Pressure
                 achievements[6].check(interaction, user), achievements[7].check(interaction, user), achievements[8].check(interaction, user); // Champion
-            };
+            } if (r === "w") {
+                await updateUsers(interaction.user.id, { arenawins: { type: "increment", value: 1 }, arenastreak: { type: "increment", value: 1 } });
+                await updateUsers(user.id, { arenalosses: { type: "increment", value: 1 }, arenastreak: { type: "set", value: 0 } });
+
+                if (stats.arenastreak > stats.arenastreakhighest) {
+                    await updateUsers(interaction.user.id, { arenastreakhighest: { type: "set", value: stats.arenastreak } });
+                    streakChanged = true;
+                }
+
+                EmbedR.setDescription(
+                    `## <:victory:1432012219066875996> **${myChar.name}** won the arena!\n\n` +
+                    `<a:arrow_green_upwards:1431966637220954193> New Streak: ${stats.arenastreak + 1} ${streakChanged ? `(Personal high!)` : ""} | Win Rate: ${Math.round((stats.arenawins / (stats.arenawins + stats.arenalosses)) * 100)}%\n` +
+                    `<a:arrow_red_downwards:1431966642866225183> Final Streak: ${stats2.arenastreak} | Win Rate: ${Math.round((stats2.arenawins / (stats2.arenawins + stats2.arenalosses)) * 100)}%\n` +
+                    `════════════════════\n` +
+                    `<:WorryLuminous:1431976105627226112> Looking for ways to boost your prowess?\n` +
+                    `-# * Raise your character/ class levels\n` +
+                    `-# * Equip synergistic and levelled weapons/ armor\n` +
+                    `-# * Check out FAQ/ Community Builds`
+                );
+
+                // Achievements
+                achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
+                achievements[6].check(interaction), achievements[7].check(interaction), achievements[8].check(interaction); // Champion
+            }
 
             // Daily Quests
             dailies[3].update(interaction), dailies[3].update(interaction, 1, user); // Contender
@@ -168,12 +195,14 @@ const exportCommand: SlashCommand = {
         let ATK_EMOJI1 = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI1 = myStatsC.replaceButton?.def?.emoji || '🛡️',
             ABILITY_EMOJI1 = myStatsC.replaceButton?.ability?.emoji || '✨',
-            SKILL_EMOJI1 = myStatsC.replaceButton?.cskill?.emoji || '⚜️';
+            SKILL_EMOJI1 = myStatsC.replaceButton?.cskill?.emoji || '⚜️',
+            SKIP_EMOJI1 = myStatsC.replaceButton?.skip?.emoji || '⏩';
 
         let ATK_EMOJI2 = eStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI2 = eStatsC.replaceButton?.def?.emoji || '🛡️',
             ABILITY_EMOJI2 = eStatsC.replaceButton?.ability?.emoji || '✨',
-            SKILL_EMOJI2 = eStatsC.replaceButton?.cskill?.emoji || '⚜️';
+            SKILL_EMOJI2 = eStatsC.replaceButton?.cskill?.emoji || '⚜️',
+            SKIP_EMOJI2 = eStatsC.replaceButton?.skip?.emoji || '⏩';
 
         if (new Date().getMonth() === 11) ATK_EMOJI1 = '<:sw:1030154812496560218>', DEF_EMOJI1 = '<:sh:1030154814652420127>', ABILITY_EMOJI1 = '<:sp:1030154816288198768>', SKILL_EMOJI1 = '<:fl:1030154818746069012>';
 
@@ -182,12 +211,13 @@ const exportCommand: SlashCommand = {
         let defButton = new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI2).setStyle(ButtonStyle.Secondary);
         let abilityButton = new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI2).setStyle(ButtonStyle.Secondary).setDisabled(true);
         let skillButton = new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI2).setStyle(ButtonStyle.Secondary).setDisabled(true);
+        let skipButton = new ButtonBuilder().setCustomId('SKIP').setEmoji(SKIP_EMOJI2).setStyle(ButtonStyle.Secondary);
 
         if ((myAbility && "ability" in myAbility) || (eAbility && "ability" in eAbility)) abilityButton.setDisabled(false);
         if (myStats.class !== -1 || eStats.class !== -1) skillButton.setDisabled(false);
 
         const row = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(atkButton, defButton, abilityButton, skillButton);
+            .addComponents(atkButton, defButton, abilityButton, skillButton, skipButton);
 
 
         async function newFight() {
@@ -197,7 +227,7 @@ const exportCommand: SlashCommand = {
                     .setColor(embedColor)
                     .setImage(eStats.image)
                     .setThumbnail(thumbnail)
-                    .setTitle(`Battle Arena`)
+                    .setTitle(`⚔️ Battle Arena ⚔️`)
                     .setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
                     .setFooter({ text: `Turn: ${user.username} | round 1 | time left: 240s` });
                 if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then(msg => {
@@ -206,10 +236,12 @@ const exportCommand: SlashCommand = {
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 240000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 240000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 240000 });
+                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 240000 });
                     const atk2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 240000 });
                     const def2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 240000 });
                     const ability2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 240000 });
                     const cskill2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 240000 });
+                    const skip2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 240000 });
 
 
                     function editEmbed() {
@@ -218,11 +250,13 @@ const exportCommand: SlashCommand = {
                             row.components[1].setEmoji(DEF_EMOJI1);
                             row.components[2].setEmoji(ABILITY_EMOJI1);
                             row.components[3].setEmoji(SKILL_EMOJI1);
+                            row.components[4].setEmoji(SKIP_EMOJI1);
                         } else {
                             row.components[0].setEmoji(ATK_EMOJI2);
                             row.components[1].setEmoji(DEF_EMOJI2);
                             row.components[2].setEmoji(ABILITY_EMOJI2);
                             row.components[3].setEmoji(SKILL_EMOJI2);
+                            row.components[4].setEmoji(SKIP_EMOJI2);
                         }
                         Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${240 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
@@ -247,11 +281,11 @@ const exportCommand: SlashCommand = {
                         if (matchStats.ended) return;
                         else matchStats.ended = true;
 
-                        atk.stop(), def.stop(), ability?.stop(), cskill?.stop();
-                        atk2.stop(), def2.stop(), ability2?.stop(), cskill2?.stop();
-                        if (wORl === "l") notice.push(`\n🎉 **${enemy.name}** won`);
-                        else notice.push(`\n🎉 **${myChar.name}** won`);
-                        editEmbed();
+                        atk.stop(), def.stop(), ability?.stop(), cskill?.stop(), skip?.stop();
+                        atk2.stop(), def2.stop(), ability2?.stop(), cskill2?.stop(), skip2?.stop();
+
+
+
                         matchStats.turn = 1;
                         resolve(matchResult(wORl));
                     };
@@ -536,6 +570,16 @@ const exportCommand: SlashCommand = {
                         };
                     });
 
+                    skip.on('collect', async r => {
+                        if (matchStats.turn === 0) {
+                            notice.push(`\n⏩ ${interaction.user.username} forfeited the fight!`);
+                            editEmbed();
+                            matchStats.turn = 1;
+                            myStatsC.hp = 0;
+                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                        } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                    });
+
                     atk2.on('collect', async r => {
                         if (matchStats.turn === 1) {
                             matchStats.user = user.id;
@@ -734,6 +778,17 @@ const exportCommand: SlashCommand = {
                             };
                         };
                     });
+
+                    skip2.on('collect', async r => {
+                        if (matchStats.turn === 1) {
+                            notice.push(`\n⏩ ${user.username} forfeited the fight!`);
+                            editEmbed();
+                            matchStats.turn = 0;
+                            eStatsC.hp = 0;
+                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                        } else if (interaction.channel?.isSendable()) interaction.channel.send(`Please wait for ${interaction.user.username} to make a move`).then((msg) => setTimeout(() => msg.delete(), 30000)).catch((err) => console.log(err));
+                    });
+
                 });
             });
 
@@ -748,7 +803,7 @@ const exportCommand: SlashCommand = {
             .setTitle(`⚔️ Battle Arena Challenge ⚔️`)
             .setDescription(
                 `**Challenger**: <@${interaction.user.id}>\n` +
-                `**Challengee**: <@${user.id}>\n\n` +
+                `**Against**: <@${user.id}>\n\n` +
                 `**${myChar.name}** - ${myChar.anime}\n` +
                 `**Level** ${myStatsC.lvl}ㅤ**Ref.** ${getRefinement(myStatsC.ref)}\n` +
                 `**Class**: ${cls}\n` +
@@ -763,15 +818,13 @@ const exportCommand: SlashCommand = {
                 + `${myStatsC.ring1icon}`
                 + `${myStatsC.ring2icon}`
                 + `${myStatsC.ring3icon}`
-                + `\n-----------------------------------\n` +
+                + `\n════════════════════\n` +
                 (`${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
-            );
-        // .setFooter({ text: `Turn: ${user.username} | round 1 | time left: 240s` });
+            )
+            .setFooter({ text: `Win Streak: ${stats.arenastreak} (Highest: ${stats.arenastreakhighest}) | Win Rate: ${Math.round((stats.arenawins / (stats.arenawins + stats.arenalosses)) * 100)}%` });
 
-        interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle` }).then(msgReply => setTimeout(() => msgReply.delete(), deleteReplyIn)).catch((err) => console.log(err));
-        if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row2] }).then(msg2 => {
+        interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle`, embeds: [Embed], components: [row2] }).then(msg2 => {
 
-            // interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle. Do you accept?`, components: [row2] }).then(msg2 => {
             const collector = msg2.createMessageComponentCollector({ filter: (r) => ((r.user.id === user.id) || (r.user.id === interaction.user.id)), componentType: ComponentType.Button, time: 30000 });
 
             collector.on('collect', async r => {

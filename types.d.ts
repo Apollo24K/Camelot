@@ -357,6 +357,8 @@ export interface UserSchema {
     votestotal: number;
     arenawins: number;
     arenalosses: number;
+    arenastreak: number;
+    arenastreakhighest: number;
     animationdelay: number;
     achievements: number[];
     lastpull: Date | null;

@@ -69,6 +69,8 @@ async function createTables() {
         votestotal INT DEFAULT 0 NOT NULL,
         arenawins INT DEFAULT 0 NOT NULL,
         arenalosses INT DEFAULT 0 NOT NULL,
+        arenastreak INT DEFAULT 0 NOT NULL,
+        arenahigheststreak INT DEFAULT 0 NOT NULL,
         animationdelay INT DEFAULT 1200 NOT NULL,
         achievements INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         lastpull TIMESTAMP,
@@ -497,6 +499,9 @@ async function alterTables() {
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbar INT;');
 
     // await query('ALTER TABLE guilds ADD COLUMN IF NOT EXISTS raid_distribute_equally BOOLEAN DEFAULT FALSE NOT NULL;');
+
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS arenastreak INT DEFAULT 0 NOT NULL');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS arenastreakhighest INT DEFAULT 0 NOT NULL');
 
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lastvoteserver TIMESTAMP;');
 
