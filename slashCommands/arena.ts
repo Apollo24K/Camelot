@@ -32,6 +32,17 @@ const exportCommand: SlashCommand = {
 
         const user = interaction.options.getUser('user', true);
 
+        const settingsTimer = interaction.options.getInteger('timer') || 240;
+        if (settingsTimer > 600) return interaction.reply(`The timer has to be under 10 minutes!`);
+
+        const settingsRounds = interaction.options.getInteger('rounds') || 0;
+        if (settingsRounds < 0) return interaction.reply(`The rounds have to be at least 0!`);
+
+        // const settingsCharLevelP1 = interaction.options.getInteger('challenger-character-level');
+        // const settingsCharLevelP2 = interaction.options.getInteger('against-character-level');
+        //const settingsClassLevelP1 = interaction.options.getInteger('challenger-class-level');
+        // const settingsClassLevelP2 = interaction.options.getInteger('against-class-level');
+
         const stats = author.schema;
         const stats2 = await getUserSchema(user.id);
         if (!stats2) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
@@ -159,7 +170,6 @@ const exportCommand: SlashCommand = {
             return EmbedR;
         };
 
-
         let matchStats = Avalon.getMatchStats(interaction, { turnSkill: 1 });
         // let matchStats2 = Avalon.getMatchStats(interaction);
         let notice = ["", "", "", ""];
@@ -204,6 +214,7 @@ const exportCommand: SlashCommand = {
             SKILL_EMOJI2 = eStatsC.replaceButton?.cskill?.emoji || '⚜️',
             SKIP_EMOJI2 = eStatsC.replaceButton?.skip?.emoji || '⏩';
 
+        //? What for?
         if (new Date().getMonth() === 11) ATK_EMOJI1 = '<:sw:1030154812496560218>', DEF_EMOJI1 = '<:sh:1030154814652420127>', ABILITY_EMOJI1 = '<:sp:1030154816288198768>', SKILL_EMOJI1 = '<:fl:1030154818746069012>';
 
         // Buttons
@@ -219,7 +230,6 @@ const exportCommand: SlashCommand = {
         const row = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(atkButton, defButton, abilityButton, skillButton, skipButton);
 
-
         async function newFight() {
             let timestart = new Date().getTime();
             let result = await new Promise<EmbedBuilder | undefined>((resolve) => {
@@ -229,19 +239,19 @@ const exportCommand: SlashCommand = {
                     .setThumbnail(thumbnail)
                     .setTitle(`⚔️ Battle Arena ⚔️`)
                     .setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
-                    .setFooter({ text: `Turn: ${user.username} | round 1 | time left: 240s` });
+                    .setFooter({ text: `Turn: ${user.username} | round 1 | time left: ${settingsTimer}s` });
                 if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 240000 });
-                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 240000 });
-                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 240000 });
-                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 240000 });
-                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 240000 });
-                    const atk2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 240000 });
-                    const def2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 240000 });
-                    const ability2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 240000 });
-                    const cskill2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 240000 });
-                    const skip2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 240000 });
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const atk2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ATK", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const def2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "DEF", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const ability2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const cskill2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    const skip2 = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: settingsTimer * 1000 });
 
 
                     function editEmbed() {
@@ -259,7 +269,7 @@ const exportCommand: SlashCommand = {
                             row.components[4].setEmoji(SKIP_EMOJI2);
                         }
                         Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
-                        Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${240 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                        Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${settingsTimer + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         msg.edit({ embeds: [Embed], components: [row] });
                     };
 
@@ -284,8 +294,6 @@ const exportCommand: SlashCommand = {
                         atk.stop(), def.stop(), ability?.stop(), cskill?.stop(), skip?.stop();
                         atk2.stop(), def2.stop(), ability2?.stop(), cskill2?.stop(), skip2?.stop();
 
-
-
                         matchStats.turn = 1;
                         resolve(matchResult(wORl));
                     };
@@ -295,7 +303,11 @@ const exportCommand: SlashCommand = {
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
                         if (matchStats.currentCharacter || matchStats.currentOpponent) return;
-                        // matchStats2.round = matchStats.round - 1;
+
+                        if (matchStats.round >= settingsRounds && settingsRounds > 0) {
+                            notice.push(`\n🕗 You've reached the end`);
+                            endMatch(myStatsC.hp >= eStatsC.hp ? "w" : "l");
+                        };
 
                         // Consume Mana
                         Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, thumbnail);
@@ -361,9 +373,9 @@ const exportCommand: SlashCommand = {
                                 matchStats.round++;
                                 startNextRound();
                                 editEmbed();
-                            }
-                        }
-                    }
+                            };
+                        };
+                    };
 
                     if (notice.length > 4) {
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -424,12 +436,12 @@ const exportCommand: SlashCommand = {
                             }
 
                             else {
-                                if (++matchStats.defUsed === 10 && interaction.channel?.isSendable()) interaction.channel.send(`You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                                if (matchStats.defUsed > 10) {
+                                if (++myStatsC.defUsed === 10 && interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.username} you have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                if (myStatsC.defUsed > 10) {
                                     notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
                                 } else {
-                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
-                                    let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
+                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((myStatsC.defUsed - 1) * 5);
+                                    let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((myStatsC.defUsed - 1) * 5);
                                     buffs.def.push(new buffInfo("+", adddef, 9999));
                                     buffs.mr.push(new buffInfo("+", addmr, 9999));
                                     myStatsC.def += adddef;
@@ -451,6 +463,11 @@ const exportCommand: SlashCommand = {
                     });
 
                     ability.on('collect', async r => {
+                        if (myStats.id === 4767 || enemy.id === 4767) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send("Ability usages are blocked this round.").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            return;
+                        };
+
                         if (myStatsC.isAbilityBlocked) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`You currently can't use your character ability`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             return;
@@ -517,6 +534,10 @@ const exportCommand: SlashCommand = {
                     cskill.on('collect', async r => {
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 0) {
+                            if (myStats.id === 4767 || enemy.id === 4767) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send("Ability usages are blocked this round.").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                return;
+                            };
                             matchStats.turn = 1;
                             matchStats.user = matchStats.interaction.user.id;
                             myStatsC.attackStreak = 0;
@@ -543,7 +564,7 @@ const exportCommand: SlashCommand = {
                                 if (interaction.channel?.isSendable()) interaction.channel.send(`**${myChar.name}** does not have a class.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                 return;
                             };
-                            if (myStats.id === 4767 && enemy.id === 4767) {
+                            if (myStats.id === 4767 || enemy.id === 4767) {
                                 if (interaction.channel?.isSendable()) interaction.channel.send("Ability usages are blocked this round.").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                 return;
                             };
@@ -634,13 +655,12 @@ const exportCommand: SlashCommand = {
                             }
 
                             else {
-                                //! defUsed
-                                if (++matchStats.defUsed === 10 && interaction.channel?.isSendable()) interaction.channel.send(`You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
-                                if (matchStats.defUsed > 10) {
+                                if (++eStatsC.defUsed === 10 && interaction.channel?.isSendable()) interaction.channel.send(`${user.username} you have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                if (eStatsC.defUsed > 10) {
                                     notice.push(`\n🛡️ **${enemy.name}** can't increase DEF/MR anymore`);
                                 } else {
-                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
-                                    let addmr = Math.floor((eClass ? 60 * eClass.stats.mr[0] : 60) + Math.floor(30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
+                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((eStatsC.defUsed - 1) * 5);
+                                    let addmr = Math.floor((eClass ? 60 * eClass.stats.mr[0] : 60) + Math.floor(30 * Math.random())) - ((eStatsC.defUsed - 1) * 5);
                                     eBuffs.def.push(new buffInfo("+", adddef, 9999));
                                     eBuffs.mr.push(new buffInfo("+", addmr, 9999));
                                     eStatsC.def += adddef;
@@ -662,6 +682,11 @@ const exportCommand: SlashCommand = {
                     });
 
                     ability2.on('collect', async r => {
+                        if (myStats.id === 4767 || enemy.id === 4767) {
+                            if (interaction.channel?.isSendable()) interaction.channel.send("Ability usages are blocked this round.").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                            return;
+                        };
+
                         if (eStatsC.isAbilityBlocked) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`You currently can't use your character ability`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                             return;
@@ -722,6 +747,12 @@ const exportCommand: SlashCommand = {
 
                         // If class active was replaced
                         if (eStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
+
+                            if (myStats.id === 4767 || enemy.id === 4767) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send("Ability usages are blocked this round.").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
+                                return;
+                            };
+
                             matchStats.user = user.id;
                             eStatsC.attackStreak = 0;
                             const response = await eStatsC.replaceButton.cskill.run(eStatsC, eStats, myStatsC, eBuffs, buffs, enemy, myChar, matchStats, notice, Embed, user);
@@ -750,7 +781,7 @@ const exportCommand: SlashCommand = {
                                 if (interaction.channel?.isSendable()) interaction.channel.send(`**${enemy.name}** does not have a class.`).then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                 return;
                             };
-                            if (myStats.id === 4767 && enemy.id === 4767) {
+                            if (myStats.id === 4767 || enemy.id === 4767) {
                                 if (interaction.channel?.isSendable()) interaction.channel.send("Ability usages are blocked this round.").then((msg) => setTimeout(() => msg.delete(), deleteReplyIn)).catch((err) => console.log(err));
                                 return;
                             };

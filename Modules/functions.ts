@@ -208,6 +208,7 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "heap1": 0,
         "timeout": true,
         "allowExecution": true,
+        "defUsed": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,

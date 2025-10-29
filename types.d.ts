@@ -260,6 +260,7 @@ export type DetailedStats = {
     heap1: any;
     timeout: boolean;
     allowExecution: boolean;
+    defUsed: number,
     lvl: number;
     ref: number;
     class: number;
