@@ -171,7 +171,6 @@ const exportCommand: SlashCommand = {
         };
 
         let matchStats = Avalon.getMatchStats(interaction, { turnSkill: 1 });
-        // let matchStats2 = Avalon.getMatchStats(interaction);
         let notice = ["", "", "", ""];
 
         // Player 1
