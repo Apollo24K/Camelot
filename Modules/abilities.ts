@@ -851,7 +851,7 @@ export const abilities: Record<number, Ability> = {
                 myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                     if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.user]?.[1] || 0) / 500) {
                         let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
-                        matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { dmg });
+                        matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { damage: dmg });
                     };
 
                     return AbilityResponse.SUCCESS;
@@ -859,7 +859,7 @@ export const abilities: Record<number, Ability> = {
             } else if (matchStats.interaction.commandName === "raid") {
                 if (Math.random() < 0.25) {
                     let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
-                    matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { dmg });
+                    matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { damage: dmg });
                 };
             };
 
@@ -6853,6 +6853,7 @@ export const abilities: Record<number, Ability> = {
     //         //Garou EX
     //         if (myStats.equippedSkin !== 127 && myStats.equippedSkin !== 112) {
     //             matchStats.sendWarning({ content: `You need to equip either of his skins to use his active`, ephemeral: true });
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
     //             return AbilityResponse.FAILURE;
     //         };
 
@@ -6962,7 +6963,7 @@ export const abilities: Record<number, Ability> = {
     //         };
 
     //         myStats.risingSurge ??= 0;
-    //         myStats.redirectionLastTriggered ??= 0;
+    //         myStats.redirectionLastTriggered ??= -4;
     //         myStats.evadeDeathChance ??= 0;
     //         myStats.evadeDeathStrike ??= 0;
     //         myStats.evadeDeathStrike += 3;
@@ -7090,11 +7091,13 @@ export const abilities: Record<number, Ability> = {
             // Enter Stellarealm
 
             // Increase ATK by 3% for every butterfly
-            const atkbuff = 0.03 * myStats.butterfly;
+            const atkbuff = 0.03 * Math.min(10, myStats.butterfly);
             myStats.atk += Math.floor(myStats.atk * atkbuff);
             myStats.md += Math.floor(myStats.md * atkbuff);
-            mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * atkbuff), domainLast));
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkbuff), domainLast));
+            mybuff.atk.push(new buffInfo("*", 1 + (atkbuff), domainLast));
+            mybuff.md.push(new buffInfo("*", 1 + (atkbuff), domainLast));
+            // mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * atkbuff), domainLast));
+            // mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkbuff), domainLast));
 
             // Restore 5% missing HP every round
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});

@@ -17,15 +17,13 @@ const exportCommand: SlashCommand = {
         const servers = server.schema ?? await getServerSchema(interaction.guild.id);
         if (!servers) return interaction.reply({ content: "This command can only be used in a server", ephemeral: true });
 
-        const char = search(interaction.options.getString('character', true), [0], interaction);
+        const char = search(interaction.options.getString('character', true), author.schema.chars, interaction);
         if (!char) return;
 
         const stats = await getFindUsers(servers.user_ids, char.id);
 
         if (setting !== null) {
-            const user = stats.find((e) => e.id === interaction.user.id);
-            if (!user) return interaction.reply({ content: "You are not in this server", ephemeral: true });
-            if (user.findoption !== parseInt(setting)) {
+            if (author.schema.findoption !== parseInt(setting)) {
                 await updateUsers(interaction.user.id, { findoption: { type: 'set', value: parseInt(setting) } });
             };
             return interaction.reply(`${["All your characters", "Only your dupes", "None of your characters"][parseInt(setting)]} will be visible for others in \`/find\` from now on <:ThumbsUp:1020442047712350298>`);
