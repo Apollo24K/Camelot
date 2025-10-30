@@ -6402,6 +6402,49 @@ export const items = [
             return AbilityResponse.SUCCESS;
         },
     }, "- Increases attack by **10%**.\n- Every **8th** round, the wearer counters the next attack.", "rare", 787),
+    new runeInfo("Hollow Crown", ["seasonal shop"], "<:hollow_crown:1433405028806295692>", "https://i.ibb.co/Ld93WVhD/Hollow-Crown.png", {
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+            matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && myStats.hollowCrownRoundUsed !== matchStats.round) {
+                    myStats.hollowCrownRoundUsed = matchStats.round;
+
+                    eStats.def = Math.floor(eStats.def * 0.8);
+                    eStats.mr = Math.floor(eStats.mr * 0.8);
+                    ebuff.def.push(new buffInfo("*", 0.8, 2));
+                    ebuff.mr.push(new buffInfo("*", 0.8, 2));
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Once per round after dealing a critical hit, decreases enemy DEF and MR by **20%** for **2** rounds.", "rare", 788),
+    new runeInfo("Wailing Lantern", ["seasonal shop"], "<:wailing_lantern:1433538781499363400>", "https://i.ibb.co/q3SV2GW4/Wailing-Lantern.png", {
+        cost: 60,
+        usage: 9999,
+        used: 0,
+        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:wailing_lantern:1433538781499363400> **${char.name}**`, { atkMultiplier: 1.6, magicDamage: true, mdChance: -1 });
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && myStats.hollowLanternUsedRound !== matchStats.round) {
+                    myStats.hollowLanternUsedRound = matchStats.round;
+
+                    // Spooked: -15% ATK & MD for 2 rounds
+                    eStats.atk = Math.floor(eStats.atk * 0.85);
+                    eStats.md = Math.floor(eStats.md * 0.85);
+                    ebuff.atk.push(new buffInfo("*", 0.85, 2));
+                    ebuff.md.push(new buffInfo("*", 0.85, 2));
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Once per round after using **ATK**, inflicts `Spooked`, decreasing ATK and MD by **15%** for **2** rounds.\n- When using the active ability, deals **160%** magic damage.", "rare", 789)
+
+
 
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

@@ -112,4 +112,23 @@ export const customHpBars: CustomHpBar[] = [
         end: { empty: "<:dbr:1415266560745934848>", hp_only: "<:dbrh:1415266565607129141>", mana_only: "<:dbrm:1415266578114674842>", full: "<:dbrhm:1415266572775198750>" },
     }),
 
+    new CustomHpBar("Velvet Night", 6, 0xae0303, {
+        start: { empty: "<:dbl:1415266537748828203>", hp_only: "<:dblh:1431679718356287619>", mana_only: "<:dblm:1431679624512929934>", full: "<:dblhm:1431679721292435617>" },
+        middle: { empty: "<:db:1415266524532314272>", hp_only: "<:dbh:1431679710726717500>", mana_only: "<:dbm:1431679627042226236>", full: "<:dbhm:1431679712937382049>" },
+        end: { empty: "<:dbr:1415266560745934848>", hp_only: "<:dbrh:1431679631358038077>", mana_only: "<:dbrm:1431679697766449314>", full: "<:dbrhm:1431679641524899871>" },
+    }),
+
+    new CustomHpBar("Poison Silk", 7, 0x00c125, {
+        start: { empty: "<:dbl:1431960329780330496>", hp_only: "<:dblh:1431960334226423909>", mana_only: "<:dblm:1431960342707306597>", full: "<:dblhm:1431960338282188832>" },
+        middle: { empty: "<:db:1431960311946149918>", hp_only: "<:dbh:1431960318099066890>", mana_only: "<:dbm:1431960345550782615>", full: "<:dbhm:1431960324239790122>" },
+        end: { empty: "<:dbr:1431965091603026010>", hp_only: "<:dbrh:1431961483490623509>", mana_only: "<:dbrm:1431961475668377651>", full: "<:dbrhm:1431961487446118454>" },
+    }),
+
+    new CustomHpBar("Pumpkin Parade", 8, 0xff6400, {
+        start: { empty: "<:dbl:1431968892984754277>", hp_only: "<:dblh:1431968897409618082>", mana_only: "<:dblm:1431968903143227452>", full: "<:dblhm:1431968900697817148>" },
+        middle: { empty: "<:db:1431968923389001738>", hp_only: "<:dbh:1431968885418233966>", mana_only: "<:dbm:1431968906444013659>", full: "<:dbhm:1431968890317045851>" },
+        end: { empty: "<:dbr:1431968909585809488>", hp_only: "<:dbrh:1431968913683386452>", mana_only: "<:dbrm:1431968920197136394>", full: "<:dbrhm:1431968917051674755>" },
+    }),
+
+
 ];

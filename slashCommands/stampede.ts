@@ -12,7 +12,7 @@ import Avalon from "../Modules/avalon.js";
 import buffInfo from "../Modules/buffs.js";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, StampedeSchema, UpdateUserOptions } from '../types.js';
-import { getGuildSchema, getLatestStampede, getPartyMembers, getPartySchema, getUserSchema, getUserSchemas, updateStampedeParticipation, updateStampedes, updateUsers } from '../Modules/queries.js';
+import { getGuildSchema, getLatestStampede, getPartyMembers, getUserSchema, getUserSchemas, updateStampedeParticipation, updateStampedes, updateUsers } from '../Modules/queries.js';
 import { customHpBars } from '../Modules/customHpBars.js';
 
 const dungeonInProgress = new Map();
@@ -546,7 +546,7 @@ const exportCommand: SlashCommand = {
                 const damageDealt = enemyType === "monster" ? eStatsC.maxhp - eStatsC.hp : eStats.hp - eStatsC.hp;
 
                 // Log damage
-                if (damageDealt > (enemyType === "general" ? 1_200_000 : 800_000)) {
+                if (damageDealt > (enemyType === "general" ? 3_000_000 : 2_500_000)) {
                     const chnl = interaction.client.channels.cache.find(channel => channel.id === "1147984366211973280");
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)

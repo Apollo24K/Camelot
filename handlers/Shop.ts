@@ -1,5 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import { ChannelType, Client, EmbedBuilder } from "discord.js";
 import { BotHandler, RankShopTransaction, UpdateUserOptions } from "../types";
 import express from 'express';

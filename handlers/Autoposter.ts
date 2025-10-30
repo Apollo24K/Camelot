@@ -1,5 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
 import { Client } from "discord.js";
 import { BotHandler } from "../types";
 import { AutoPoster } from 'topgg-autoposter';
@@ -20,7 +18,7 @@ const handler: BotHandler = {
 
             // POST bot stats to rank.top
             const rankTop = new RankTopClient({
-                apiKey: process.env.RANK_API_KEY,
+                apiKey: process.env.RANK_API_KEY
             });
             rankTop.startAutopost({
                 client: client,

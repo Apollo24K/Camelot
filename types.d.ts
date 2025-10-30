@@ -851,12 +851,7 @@ declare global {
             CAMELOT: string,
             ELDER: string,
 
-            PREFIX: string,
-
             CLIENT_ID: string,
-            CLIENT_ID_CAMELOT: string,
-            CLIENT_ID_ELDER: string,
-            CLIENT_ID_POKE: string,
 
             PATREON_TOKEN: string,
             PATREON_CAMPAIGN_ID: string,
@@ -867,14 +862,10 @@ declare global {
             TOPGG_AUTH: string,
             TOPGG_TOKEN: string,
 
-            OPENAI_API_KEY: string,
+            GEMINI_API_KEY: string,
 
             RUNWARE_SOURCE: string,
             RUNWARE_API_KEY: string,
-
-            GEMINI_API_KEY: string,
-
-            DONATEBOT_KEY: string,
 
             PG_USER: string,
             PG_DATABASE: string,
@@ -886,6 +877,7 @@ declare global {
             ADMIN_POKE: string,
 
             VERSION: string,
+            PREFIX: string,
         }
     }
 }

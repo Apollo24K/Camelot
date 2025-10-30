@@ -7,7 +7,7 @@ const mythicalFiltered = items.filter((e) => e.obtain.includes("chest") && e.gra
 const legendaryFiltered = items.filter((e) => e.obtain.includes("chest") && e.grade === "legendary");
 
 function getHash(hash: number) {
-    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Etc/GMT-2' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
         hash |= 0;

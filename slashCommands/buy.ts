@@ -29,7 +29,7 @@ function displayMy(thisChar: charInfo, inv: number[], ref: number, interaction: 
 };
 
 function getHash(hash: number) {
-    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Etc/GMT-2' }).format(new Date()).split("/").reverse().join("-") + "camelot24";
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
         hash |= 0;

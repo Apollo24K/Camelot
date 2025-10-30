@@ -4559,181 +4559,181 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    // "17772": {
-    //     usage: 5,
-    //     used: 0,
-    //     cost: 0,
-    //     pause: -7,
-    //     desc: "**Total Usages**: `5 (CD: 10)`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Type**: DPS\n\nEntering battle, he converts all MD into ATK (Up to **+12%** ATK), and always *deals physical DMG*. His starting mana and mana regeneration is set to **0**. On top of that, he has **10** cream puffs (<:creampuff:1409383229844095137>). So long he has creampuffs, he diverts his attention on guarding them, having **-15%** critical rate & critical DMG, but **+30%** block rate. At the start of every round, he consumes **1x** cream puff, increasing ATK by **2%**. Once all creampuffs are consumed/lost, he will no longer guard.\n\nAfter **5** DEFENDs, he can block attacks with his muscles even while attacking (Up to 30% chance). After another DEFEND, he consumes all cream puffs, losing and transferring every **3%** block rate to **1%** personal counter chance (Up to 33%), lasting permanently.\n\nIf he no longer has creampuffs, he may use his ability to enter Unlimited Physical Mode for **6** rounds, *transferring all personal counter chance to critical rate, and all dodge rate to critical DMG*. While in this form, he contracts his muscle, locking any incoming attacks. Upon being attacked after mash makes an action (e.g. via counter, retaliate, using a skill), the enemy loses momentum and is *knocked out this round, unable to do a normal ATK*.\nWhen he exits the mode, he decreases his DEF & MR by **15%** permanently.\n\nIn a party, he has a **75%** chance of intervening the battle every round, offering teammates a creampuff, each increasing their ATK by **2%** permanently (cumulative). Once **10** creampuffs are offered, instead has a **12%** chance to intervene every round, countering a hit that round (stackable).",
-    //     shortdesc: "__**Usage**__: `5 (CD: 10)` | __**Cost**__: `0 💧` | __**Type**__: `DPS (Physical, Block/Counter, Progressive)` | __**Timeout**__: `Yes`\n\n__**Passive**__ :\n- Converts all MD → ATK on entry (max **+12%**). Always deals Physical DMG. Mana & regen = **0**.\n- Starts with **10** `Cream Puffs`: while holding → **-15%** Crit Rate & Crit DMG, **+30%** Block. Each round consumes **1**, giving **+2%** ATK. No guarding once all are gone.\n- After **5** DEFENDs: can block while attacking (max 30%).\n- After **6th** DEFEND: consumes all `Cream Puffs` → every **3%** Block → **1%** Counter Chance (max 33%, permanent).\n\n__**Active (:sparkles:)**__ :\n- Should have no `Cream Puffs` →  triggers Unlimited Physical Mode (**6** rounds):\n- Converts Counter Chance → Crit Rate, Dodge → Crit DMG.\n- Enemy is stunned(cannot do normal ATK that round) if the enemy hits Mash after he makes an action (e.g. Counter, retaliate, using a damaging skill)\n- Exits with **-15%** permanent DEF & MR.\n\n__**Party effect**__(:busts_in_silhouette:): **75%** chance each round to give ally **1** `Cream Puff` (+2% ATK perm, stacks). After **10** are given → instead **12%** chance to counter once per round (stackable).",
-    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         // Mash Burnedead
-    //         if (this.pause > matchStats.round) {
-    //             myStats.sm += this.cost;
-    //             noTimeout(matchStats, myStats);
-    //             matchStats.sendWarning({ content: `Mash Burnedead needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
-    //             this.used--;
-    //             return AbilityResponse.FAILURE;
-    //         };
+    "17772": {
+        usage: 5,
+        used: 0,
+        cost: 0,
+        pause: -7,
+        desc: "**Total Usages**: `5 (CD: 10)`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Type**: DPS\n\nEntering battle, he converts all MD into ATK (Up to **+12%** ATK), and always *deals physical DMG*. His starting mana and mana regeneration is set to **0**. On top of that, he has **10** cream puffs (<:creampuff:1409383229844095137>). So long he has creampuffs, he diverts his attention on guarding them, having **-15%** critical rate & critical DMG, but **+30%** block rate. At the start of every round, he consumes **1x** cream puff, increasing ATK by **2%**. Once all creampuffs are consumed/lost, he will no longer guard.\n\nAfter **5** DEFENDs, he can block attacks with his muscles even while attacking (Up to 30% chance). After another DEFEND, he consumes all cream puffs, losing and transferring every **3%** block rate to **1%** personal counter chance (Up to 33%), lasting permanently.\n\nIf he no longer has creampuffs, he may use his ability to enter Unlimited Physical Mode for **6** rounds, *transferring all personal counter chance to critical rate, and all dodge rate to critical DMG*. While in this form, he contracts his muscle, locking any incoming attacks. Upon being attacked after mash makes an action (e.g. via counter, retaliate, using a skill), the enemy loses momentum and is *knocked out this round, unable to do a normal ATK*.\nWhen he exits the mode, he decreases his DEF & MR by **15%** permanently.\n\nIn a party, he has a **75%** chance of intervening the battle every round, offering teammates a creampuff, each increasing their ATK by **2%** permanently (cumulative). Once **10** creampuffs are offered, instead has a **12%** chance to intervene every round, countering a hit that round (stackable).",
+        shortdesc: "__**Usage**__: `5 (CD: 10)` | __**Cost**__: `0 💧` | __**Type**__: `DPS (Physical, Block/Counter, Progressive)` | __**Timeout**__: `Yes`\n\n__**Passive**__ :\n- Converts all MD → ATK on entry (max **+12%**). Always deals Physical DMG. Mana & regen = **0**.\n- Starts with **10** `Cream Puffs`: while holding → **-15%** Crit Rate & Crit DMG, **+30%** Block. Each round consumes **1**, giving **+2%** ATK. No guarding once all are gone.\n- After **5** DEFENDs: can block while attacking (max 30%).\n- After **6th** DEFEND: consumes all `Cream Puffs` → every **3%** Block → **1%** Counter Chance (max 33%, permanent).\n\n__**Active (:sparkles:)**__ :\n- Should have no `Cream Puffs` →  triggers Unlimited Physical Mode (**6** rounds):\n- Converts Counter Chance → Crit Rate, Dodge → Crit DMG.\n- Enemy is stunned(cannot do normal ATK that round) if the enemy hits Mash after he makes an action (e.g. Counter, retaliate, using a damaging skill)\n- Exits with **-15%** permanent DEF & MR.\n\n__**Party effect**__(:busts_in_silhouette:): **75%** chance each round to give ally **1** `Cream Puff` (+2% ATK perm, stacks). After **10** are given → instead **12%** chance to counter once per round (stackable).",
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            // Mash Burnedead
+            if (this.pause > matchStats.round) {
+                myStats.sm += this.cost;
+                noTimeout(matchStats, myStats);
+                matchStats.sendWarning({ content: `Mash Burnedead needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                this.used--;
+                return AbilityResponse.FAILURE;
+            };
 
-    //         if (myStats.creampuff > 0) {
-    //             myStats.sm += this.cost;
-    //             noTimeout(matchStats, myStats);
-    //             matchStats.sendWarning({ content: `Mash Burnedead needs to have no creampuffs to use this ability`, ephemeral: true });
-    //             this.used--;
-    //             return AbilityResponse.FAILURE;
-    //         };
+            if (myStats.creampuff > 0) {
+                myStats.sm += this.cost;
+                noTimeout(matchStats, myStats);
+                matchStats.sendWarning({ content: `Mash Burnedead needs to have no creampuffs to use this ability`, ephemeral: true });
+                this.used--;
+                return AbilityResponse.FAILURE;
+            };
 
-    //         this.pause = matchStats.round + 10;
+            this.pause = matchStats.round + 10;
 
-    //         const domainLast = 6;
+            const domainLast = 6;
 
-    //         // Convert all personal counterChance to critical rate
-    //         myStats.mashCounterChanceBefore = myStats.mashCounterChance;
-    //         myStats.cr += myStats.mashCounterChance;
-    //         myStats.mashCounterChance = 0;
+            // Convert all personal counterChance to critical rate
+            myStats.mashCounterChanceBefore = myStats.mashCounterChance;
+            myStats.cr += myStats.mashCounterChance;
+            myStats.mashCounterChance = 0;
 
-    //         // Convert all dodge rate to critical damage
-    //         myStats.cd += myStats.dodge;
-    //         myStats.dodge = 0;
+            // Convert all dodge rate to critical damage
+            myStats.cd += myStats.dodge;
+            myStats.dodge = 0;
 
-    //         // Ultimate Physical Mode Stance
-    //         myStats.mashStance = 1;
+            // Ultimate Physical Mode Stance
+            myStats.mashStance = 1;
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             // Mode effects                
-    //             myStats.cr += myStats.mashCounterChanceBefore;
-    //             myStats.cd += myStats.dodge;
-    //             myStats.dodge = 0;
-    //             return AbilityResponse.SUCCESS;
-    //         }, domainLast));
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Mode effects                
+                myStats.cr += myStats.mashCounterChanceBefore;
+                myStats.cd += myStats.dodge;
+                myStats.dodge = 0;
+                return AbilityResponse.SUCCESS;
+            }, domainLast));
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             // Regain personal counterChance
-    //             myStats.mashCounterChance = myStats.mashCounterChanceBefore;
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Regain personal counterChance
+                myStats.mashCounterChance = myStats.mashCounterChanceBefore;
 
-    //             // Reset stance
-    //             myStats.mashStance = 0;
+                // Reset stance
+                myStats.mashStance = 0;
 
-    //             // Lose 15% DEF & MR permanently
-    //             myStats.def -= Math.floor(myStats.def * 0.15);
-    //             myStats.mr -= Math.floor(myStats.mr * 0.15);
-    //             mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.15), 9999));
-    //             mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.15), 9999));
-    //             return AbilityResponse.SUCCESS;
-    //         }));
+                // Lose 15% DEF & MR permanently
+                myStats.def -= Math.floor(myStats.def * 0.15);
+                myStats.mr -= Math.floor(myStats.mr * 0.15);
+                mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.15), 9999));
+                mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.15), 9999));
+                return AbilityResponse.SUCCESS;
+            }));
 
-    //         notice.push(`\n💪🏻 **${char.name}** entered Unlimited Physical Mode for **${domainLast}** rounds!`);
+            notice.push(`\n💪🏻 **${char.name}** entered Unlimited Physical Mode for **${domainLast}** rounds!`);
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.mashCounterChance = 0;
-    //         myStats.mashStance = 0; // 0 = Default ; 1 = Unlimited Physical Mode
-    //         myStats.defUsed = 0;
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.mashCounterChance = 0;
+            myStats.mashStance = 0; // 0 = Default ; 1 = Unlimited Physical Mode
+            myStats.defUsed = 0;
 
-    //         myStats.counter ??= 0;
-    //         if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
+            myStats.counter ??= 0;
+            if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
 
-    //         myStats.creampuff ??= 0;
-    //         myStats.creampuff += 10; // Unique stack
+            myStats.creampuff ??= 0;
+            myStats.creampuff += 10; // Unique stack
 
-    //         myStats.sm = 0;
-    //         myStats.mg = 0;
-    //         mybuff.mg.push(new buffInfo("=", 0, 9999)); // Never gain mana
-    //         myStats.mana = 1;
+            myStats.sm = 0;
+            myStats.mg = 0;
+            mybuff.mg.push(new buffInfo("=", 0, 9999)); // Never gain mana
+            myStats.mana = 1;
 
-    //         const atkBuff = Math.floor(Math.min(myStats.md, myStats.atk * 0.12));
-    //         myStats.atk += atkBuff;
-    //         mybuff.atk.push(new buffInfo("+", atkBuff, 9999)); // Convert all MD to ATK, up to +12%
-    //         myStats.md = 0;
-    //         mybuff.md.push(new buffInfo("=", 0, 9999));
-    //         myStats.mdChance = -1; // Can never deal magical damage
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
+            const atkBuff = Math.floor(Math.min(myStats.md, myStats.atk * 0.12));
+            myStats.atk += atkBuff;
+            mybuff.atk.push(new buffInfo("+", atkBuff, 9999)); // Convert all MD to ATK, up to +12%
+            myStats.md = 0;
+            mybuff.md.push(new buffInfo("=", 0, 9999));
+            myStats.mdChance = -1; // Can never deal magical damage
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
 
-    //             if (myStats.creampuff > 0) {
-    //                 myStats.creampuff--;
-    //                 myStats.atk += Math.floor(myStats.atk * 0.02);
-    //                 mybuff.atk.push(new buffInfo("*", 1.02, 9999)); // Boost ATK by 2%
-    //                 if (myStats.creampuff > 0) {
-    //                     myStats.cr -= 0.15;
-    //                     if (myStats.cr < 0) myStats.cr = 0;
-    //                     myStats.cd -= 0.15;
-    //                     myStats.br += 0.3;
-    //                 } else {
-    //                     notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** is out of creampuffs and exited Guard Stance.`);
-    //                 };
-    //             };
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+                if (myStats.creampuff > 0) {
+                    myStats.creampuff--;
+                    myStats.atk += Math.floor(myStats.atk * 0.02);
+                    mybuff.atk.push(new buffInfo("*", 1.02, 9999)); // Boost ATK by 2%
+                    if (myStats.creampuff > 0) {
+                        myStats.cr -= 0.15;
+                        if (myStats.cr < 0) myStats.cr = 0;
+                        myStats.cd -= 0.15;
+                        myStats.br += 0.3;
+                    } else {
+                        notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** is out of creampuffs and exited Guard Stance.`);
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-    //             if (caster === eStats && myStats.mashStance === 1) {
-    //                 if (options.damage) {
-    //                     eStats.timeFrozen = true;
-    //                     eStats.frozenMessage = "was knocked out";
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === eStats && myStats.mashStance === 1) {
+                    if (options.damage) {
+                        eStats.timeFrozen = true;
+                        eStats.frozenMessage = "was knocked out";
 
-    //                     // When freeze is over
-    //                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                         eStats.timeFrozen = false;
+                        // When freeze is over
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            eStats.timeFrozen = false;
 
-    //                         return AbilityResponse.SUCCESS;
-    //                     }));
-    //                 };
-    //             };
-    //         });
+                            return AbilityResponse.SUCCESS;
+                        }));
+                    };
+                };
+            });
 
-    //         matchStats.on("DEF", {
-    //                 maxUsage: 6,
-    //                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-    //                     if (caster === myStats) {
-    //                         myStats.defUsed++;
-    //                         if (myStats.defUsed === 5) {
-    //                             myStats.brCap = 0.3;
-    //                             notice.push(`\n✨ Mash will now passively block attacks`);
-    //                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                                 myStats.usedBlockRound = matchStats.round;
-    //                                 return AbilityResponse.SUCCESS;
-    //                             }, 9999));
-    //                         } else if (myStats.defUsed === 6) {
-    //                             myStats.creampuff = 0;
-    //                             const ccGain = Math.min((myStats.br / 3), 0.33);
-    //                             myStats.mashCounterChance += ccGain
-    //                             myStats.br = 0;
-    //                             mybuff.br.push(new buffInfo("=", 0, 9999));
-    //                             notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** lost all creampuffs and converted block rate to **${Math.floor(ccGain * 100)}%** counter chance.`);
-    //                         };
-    //                         return true;
-    //                     };
-    //                 },
-    //             });
+            matchStats.on("DEF", {
+                maxUsage: 6,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (caster === myStats) {
+                        myStats.defUsed++;
+                        if (myStats.defUsed === 5) {
+                            myStats.brCap = 0.3;
+                            notice.push(`\n✨ Mash will now passively block attacks`);
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.usedBlockRound = matchStats.round;
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                        } else if (myStats.defUsed === 6) {
+                            myStats.creampuff = 0;
+                            const ccGain = Math.min((myStats.br / 3), 0.33);
+                            myStats.mashCounterChance += ccGain;
+                            myStats.br = 0;
+                            mybuff.br.push(new buffInfo("=", 0, 9999));
+                            notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** lost all creampuffs and converted block rate to **${Math.floor(ccGain * 100)}%** counter chance.`);
+                        };
+                        return true;
+                    };
+                },
+            });
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.creampuff ??= 0;
-    //         myStats.counter ??= 0;
+            return AbilityResponse.SUCCESS;
+        },
+        party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.creampuff ??= 0;
+            myStats.counter ??= 0;
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             // 75% chance to offer creampuff, up to 10
-    //             if (0.75 > Math.random() && myStats.creampuff < 10) {
-    //                 myStats.creampuff++;
-    //                 notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** has received a creampuff and have ${myStats.creampuff} creampuffs.`)
-    //             };
-    //             if (myStats.creampuff > 9) {
-    //                 if (0.12 > Math.random()) myStats.counter++;
-    //             };
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // 75% chance to offer creampuff, up to 10
+                if (0.75 > Math.random() && myStats.creampuff < 10) {
+                    myStats.creampuff++;
+                    notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** has received a creampuff and have ${myStats.creampuff} creampuffs.`);
+                };
+                if (myStats.creampuff > 9) {
+                    if (0.12 > Math.random()) myStats.counter++;
+                };
 
-    //             // Gain 2% ATK for every creampuff
-    //             myStats.atk += Math.floor(myStats.atk * 0.02 * myStats.creampuff);
+                // Gain 2% ATK for every creampuff
+                myStats.atk += Math.floor(myStats.atk * 0.02 * myStats.creampuff);
 
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    // },
+            return AbilityResponse.SUCCESS;
+        },
+    },
     "18011": {
         usage: 9999,
         used: 0,
@@ -5978,170 +5978,170 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    // "22309": {
-    //     usage: 9999,
-    //     used: 0,
-    //     cost: 0,
-    //     pause: -5,
-    //     desc: "**Total Usage:** `Unlimited (CD: 4)`\n**Cost:** `0 💧`\n**Timeout:** `Yes`\n**Role:** `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n\Phrolova has **3** states – Compose, Reincarnate (lasts for 1 action), and Maestro. She starts off in her __Compose__ state, and gains `Volatile Notes` (🎶) via different means to enhance her capabilities.\n\nDuring her __Compose__ state:\n> - Her ATK is altered to deal **90%** damage. The **3rd** ATK additionally causes her to enter the __Reincarnate__ state for the next ATK/DEF\n\nDuring her __Reincarnate__ state:\n> - ATK is altered to deal **110%** damage and gain **1** 🎶\n> - DEF is altered to apply bleed on the enemy (**12%** of wielder’s max HP over **3** rounds) and gain **1** 🎶\n> - If she has **6** 🎶 after the action, consumes all 🎶 to activate Scarlet Coda, dealing **80%** damage and *stunning the enemy*. Then, she enters the __Maestro__ state for **6** rounds\n\nDuring her __Maestro__ state:\n> - Shares damage with Hecate, deflecting **28%** of damage taken (does not take damage and reflects it instead)\n> - ATK is altered to deal **120%** damage. The **3rd** ATK instead deals **140%** damage\n> - DEF is altered to double the damage deflect from hecate this round to **56%**\n\nBy the end of the __Maestro__ state: Deals **150%** damage\n### Come, let us finish this performance we've all been waiting for. Together\nWhen she is in the __Compose__ state: Her active (✨) deals **100%** damage and immediately causes her to enter the __Reincarnate__ state for the next ATK/DEF. This has a cooldown of **4** rounds.\n\nIn a party, Phrolova summons Hecate to deal **80%** damage twice every **10** rounds, after which the ally’s ATK & MD is boosted by **2%**, up to **5** times.",
-    //     shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n__**Passive**__\n- ATK (:crossed_swords:) is altered to do **90%** dmg. Every **3** attacks -> Enter __Reincarnate__ state\n\n__Core Mechanic__: Gaining notes for the Maestro state\n### During __Reincarnate__ state (ends after 1 action):\n- :crossed_swords:  -> Deals **110%** dmg and gain **1** :notes: \n- :shield:  -> Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) and gain **1** :notes:\n- With **6** :notes: -> Automatically deals **80%** damage and enters __Maestro state__ for **6** rounds\n\n### During __Maestro__ state (ends after 1 action):\n- Deflects **28%** of damage taken (Doesn't take but reflects)\n- :crossed_swords: -> Deal **120%** dmg. Every **3rd** ATK deals **140%** instead\n- :shield: -> Deflects another **28%** of damage taken\n\n__**Active**__ (:sparkles:)\n- Enter __Reincarnate__ state if she isn't in Reincarnate/Maestro state\n\n__**Party**__ (:busts_in_silhouette:)\n- Every **10th** turn: Deal **80%** damage twice and boost ATK & MD by **2%** up to **5** times.",
-    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         // Phrolova
+    "22309": {
+        usage: 9999,
+        used: 0,
+        cost: 0,
+        pause: -5,
+        desc: "**Total Usage:** `Unlimited (CD: 4)`\n**Cost:** `0 💧`\n**Timeout:** `Yes`\n**Role:** `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n\Phrolova has **3** states – Compose, Reincarnate (lasts for 1 action), and Maestro. She starts off in her __Compose__ state, and gains `Volatile Notes` (🎶) via different means to enhance her capabilities.\n\nDuring her __Compose__ state:\n> - Her ATK is altered to deal **90%** damage. The **3rd** ATK additionally causes her to enter the __Reincarnate__ state for the next ATK/DEF\n\nDuring her __Reincarnate__ state:\n> - ATK is altered to deal **110%** damage and gain **1** 🎶\n> - DEF is altered to apply bleed on the enemy (**12%** of wielder’s max HP over **3** rounds) and gain **1** 🎶\n> - If she has **6** 🎶 after the action, consumes all 🎶 to activate Scarlet Coda, dealing **80%** damage and *stunning the enemy*. Then, she enters the __Maestro__ state for **6** rounds\n\nDuring her __Maestro__ state:\n> - Shares damage with Hecate, deflecting **28%** of damage taken (does not take damage and reflects it instead)\n> - ATK is altered to deal **120%** damage. The **3rd** ATK instead deals **140%** damage\n> - DEF is altered to double the damage deflect from hecate this round to **56%**\n\nBy the end of the __Maestro__ state: Deals **150%** damage\n### Come, let us finish this performance we've all been waiting for. Together\nWhen she is in the __Compose__ state: Her active (✨) deals **100%** damage and immediately causes her to enter the __Reincarnate__ state for the next ATK/DEF. This has a cooldown of **4** rounds.\n\nIn a party, Phrolova summons Hecate to deal **80%** damage twice every **10** rounds, after which the ally’s ATK & MD is boosted by **2%**, up to **5** times.",
+        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n__**Passive**__\n- ATK (:crossed_swords:) is altered to do **90%** dmg. Every **3** attacks -> Enter __Reincarnate__ state\n\n__Core Mechanic__: Gaining notes for the Maestro state\n### During __Reincarnate__ state (ends after 1 action):\n- :crossed_swords:  -> Deals **110%** dmg and gain **1** :notes: \n- :shield:  -> Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) and gain **1** :notes:\n- With **6** :notes: -> Automatically deals **80%** damage and enters __Maestro state__ for **6** rounds\n\n### During __Maestro__ state (ends after 1 action):\n- Deflects **28%** of damage taken (Doesn't take but reflects)\n- :crossed_swords: -> Deal **120%** dmg. Every **3rd** ATK deals **140%** instead\n- :shield: -> Deflects another **28%** of damage taken\n\n__**Active**__ (:sparkles:)\n- Enter __Reincarnate__ state if she isn't in Reincarnate/Maestro state\n\n__**Party**__ (:busts_in_silhouette:)\n- Every **10th** turn: Deal **80%** damage twice and boost ATK & MD by **2%** up to **5** times.",
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            // Phrolova
 
-    //         // Whispers of a Fleeting Dream
-    //         if (myStats.phrState === 1) {
-    //             noTimeout(matchStats, myStats);
-    //             this.used--;
-    //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Reincarnate__ state`, ephemeral: true });
-    //             return AbilityResponse.FAILURE;
-    //         };
+            // Whispers of a Fleeting Dream
+            if (myStats.phrState === 1) {
+                noTimeout(matchStats, myStats);
+                this.used--;
+                matchStats.sendWarning({ content: `**${char.name}** is already in the __Reincarnate__ state`, ephemeral: true });
+                return AbilityResponse.FAILURE;
+            };
 
-    //         if (myStats.phrState === 2) {
-    //             noTimeout(matchStats, myStats);
-    //             this.used--;
-    //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Maestro__ state`, ephemeral: true });
-    //             return AbilityResponse.FAILURE;
-    //         };
+            if (myStats.phrState === 2) {
+                noTimeout(matchStats, myStats);
+                this.used--;
+                matchStats.sendWarning({ content: `**${char.name}** is already in the __Maestro__ state`, ephemeral: true });
+                return AbilityResponse.FAILURE;
+            };
 
-    //         // Cooldown
-    //         if (this.pause > matchStats.round) {
-    //             noTimeout(matchStats, myStats);
-    //             this.used--;
-    //             matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
-    //             return AbilityResponse.FAILURE;
-    //         };
+            // Cooldown
+            if (this.pause > matchStats.round) {
+                noTimeout(matchStats, myStats);
+                this.used--;
+                matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                return AbilityResponse.FAILURE;
+            };
 
-    //         this.pause = matchStats.round + 4;
-    //         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Preparatory beat, begin.* **${char.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //         myStats.phrState = 1;
-    //         notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`);
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.phrState = 0; // 0 = Compose ; 1 = Reincarnate ; 2 = Maestro
-    //         myStats.volatileNote = 0;
-    //         myStats.atkcount = 0;
-    //         myStats.deflectDamage ??= 0
+            this.pause = matchStats.round + 4;
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Preparatory beat, begin.* **${char.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+            myStats.phrState = 1;
+            notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`);
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.phrState = 0; // 0 = Compose ; 1 = Reincarnate ; 2 = Maestro
+            myStats.volatileNote = 0;
+            myStats.atkcount = 0;
+            myStats.deflectDamage ??= 0;
 
-    //         const scarletCoda = () => {
-    //             if (myStats.volatileNote >= 6) {
-    //                 myStats.volatileNote = 0;
-    //                 myStats.phrState = 2;
-    //                 notice.push(`\n✨ **${char.name}** entered the __Maestro__ state`);
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Wails... Rejoicing!* **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+            const scarletCoda = () => {
+                if (myStats.volatileNote >= 6) {
+                    myStats.volatileNote = 0;
+                    myStats.phrState = 2;
+                    notice.push(`\n✨ **${char.name}** entered the __Maestro__ state`);
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Wails... Rejoicing!* **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
 
-    //                 // Maestro immediate effects: Stun for 1 round
-    //                 eStats.timeFrozen = true;
-    //                 eStats.frozenMessage = "was stunned for **1** round";
-    //                 imageChange(embed, matchStats, myStats, "https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
-    //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                     eStats.timeFrozen = false;
+                    // Maestro immediate effects: Stun for 1 round
+                    eStats.timeFrozen = true;
+                    eStats.frozenMessage = "was stunned for **1** round";
+                    imageChange(embed, matchStats, myStats, "https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
+                    myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        eStats.timeFrozen = false;
 
-    //                     return AbilityResponse.SUCCESS;
-    //                 }, 1));
+                        return AbilityResponse.SUCCESS;
+                    }, 1));
 
-    //                 // Maestro prolonged effects: 28% damage deflection
-    //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                     // Deflect 28% of damage taken every round
-    //                     myStats.deflectDamage += 0.28;
-    //                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                         myStats.deflectDamage -= 0.28;
-    //                         return AbilityResponse.SUCCESS;
-    //                     }));
-    //                     return AbilityResponse.SUCCESS;
-    //                 }, 6));
+                    // Maestro prolonged effects: 28% damage deflection
+                    myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        // Deflect 28% of damage taken every round
+                        myStats.deflectDamage += 0.28;
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.deflectDamage -= 0.28;
+                            return AbilityResponse.SUCCESS;
+                        }));
+                        return AbilityResponse.SUCCESS;
+                    }, 6));
 
-    //                 // By the end of Maestro: Deal 150% damage
-    //                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                     myStats.phrState = myStats.phrState = 1 ? 1 : 0;
-    //                     imageChange(embed, matchStats, myStats, "https://i.ibb.co/chjTjNDY/c.png");
-    //                     return AbilityResponse.SUCCESS;
-    //                 }));
-    //             } else {
-    //                 // Reset state to Compose
-    //                 myStats.phrState = 0;
-    //             };
-    //         };
+                    // By the end of Maestro: Deal 150% damage
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                        myStats.phrState = myStats.phrState = 1 ? 1 : 0;
+                        imageChange(embed, matchStats, myStats, "https://i.ibb.co/chjTjNDY/c.png");
+                        return AbilityResponse.SUCCESS;
+                    }));
+                } else {
+                    // Reset state to Compose
+                    myStats.phrState = 0;
+                };
+            };
 
-    //         // replace attack
-    //         myStats.replaceButton.atk = {
-    //             run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                 myStats.atkcount++;
-    //                 let atkScale = [0.9, 1.1, 1.2][myStats.phrState];
-    //                 let flairemoji = ["<:rednote:1417513133559386303>","🎵","<:purplenote:1417513260453990450>"][myStats.phrState];
-    //                 if (myStats.atkcount === 3) {
-    //                     myStats.atkcount = 0;
-    //                     if (myStats.phrState === 0) {
-    //                         myStats.phrState = 1; // 3rd ATK in Compose enters Reincarnate
-    //                     } else if (myStats.phrState === 3) {
-    //                         atkScale += 0.2;
-    //                     }; // 3rd ATK in Maestro deals 20% more dmg
-    //                 } else if (myStats.phrState === 1) {
-    //                     myStats.volatileNote++;
-    //                     // Enter Maestro State for 6 rounds if applicable
-    //                     scarletCoda();
-    //                 };
+            // replace attack
+            myStats.replaceButton.atk = {
+                run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    myStats.atkcount++;
+                    let atkScale = [0.9, 1.1, 1.2][myStats.phrState];
+                    let flairemoji = ["<:rednote:1417513133559386303>", "🎵", "<:purplenote:1417513260453990450>"][myStats.phrState];
+                    if (myStats.atkcount === 3) {
+                        myStats.atkcount = 0;
+                        if (myStats.phrState === 0) {
+                            myStats.phrState = 1; // 3rd ATK in Compose enters Reincarnate
+                        } else if (myStats.phrState === 3) {
+                            atkScale += 0.2;
+                        }; // 3rd ATK in Maestro deals 20% more dmg
+                    } else if (myStats.phrState === 1) {
+                        myStats.volatileNote++;
+                        // Enter Maestro State for 6 rounds if applicable
+                        scarletCoda();
+                    };
 
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `${flairemoji} **${char.name}**`, { atkMultiplier: atkScale, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                 if (myStats.phrState === 1) notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`); // notice for entering Reincarnate
-    //                 return AbilityResponse.SUCCESS;
-    //             },
-    //         };
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `${flairemoji} **${char.name}**`, { atkMultiplier: atkScale, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                    if (myStats.phrState === 1) notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`); // notice for entering Reincarnate
+                    return AbilityResponse.SUCCESS;
+                },
+            };
 
-    //         // replace def optionally every round
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (myStats.phrState !== 0) {
-    //                 myStats.replaceButton.def = {
-    //                     run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // replace def optionally every round
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (myStats.phrState !== 0) {
+                    myStats.replaceButton.def = {
+                        run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-    //                     // Reincarnate
-    //                     if (myStats.phrState === 1) {
-    //                         // Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) 
-    //                         ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.04), 3));
-    //                         myStats.volatileNote++;
-    //                         // Enter Maestro State for 6 rounds if applicable
-    //                         scarletCoda();
-    //                     } else if (myStats.phrState === 2) {
-    //                         // Deflect +28% of damage taken
-    //                         myStats.deflectDamage += 0.28;
-    //                         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                             myStats.deflectDamage -= 0.28;
-    //                             return AbilityResponse.SUCCESS;
-    //                         }, 1));
-    //                     };
-    //                     delete myStats.replaceButton.def;
-    //                 return AbilityResponse.SUCCESS;
-    //             },
-    //         };
-    //             };
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));            
+                            // Reincarnate
+                            if (myStats.phrState === 1) {
+                                // Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) 
+                                ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.04), 3));
+                                myStats.volatileNote++;
+                                // Enter Maestro State for 6 rounds if applicable
+                                scarletCoda();
+                            } else if (myStats.phrState === 2) {
+                                // Deflect +28% of damage taken
+                                myStats.deflectDamage += 0.28;
+                                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    myStats.deflectDamage -= 0.28;
+                                    return AbilityResponse.SUCCESS;
+                                }, 1));
+                            };
+                            delete myStats.replaceButton.def;
+                            return AbilityResponse.SUCCESS;
+                        },
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         const name = pStats.name;
-    //         myStats.phrbuff = 0;
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (matchStats.round % 10 === 0) {
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-    //                 if (myStats.phrbuff < 5) {
-    //                     myStats.phrbuff++
-    //                     myStats.atk += Math.floor(myStats.atk * 0.02);
-    //                     myStats.md += Math.floor(myStats.md * 0.02);
-    //                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.02), 9999));
-    //                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.02), 9999));
-    //                 };
-    //             };
+            return AbilityResponse.SUCCESS;
+        },
+        party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const name = pStats.name;
+            myStats.phrbuff = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 10 === 0) {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+                    if (myStats.phrbuff < 5) {
+                        myStats.phrbuff++;
+                        myStats.atk += Math.floor(myStats.atk * 0.02);
+                        myStats.md += Math.floor(myStats.md * 0.02);
+                        mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.02), 9999));
+                        mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.02), 9999));
+                    };
+                };
 
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    // },
+            return AbilityResponse.SUCCESS;
+        },
+    },
     "22610": {
         usage: 5,
         used: 0,
