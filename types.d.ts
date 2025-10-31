@@ -853,11 +853,6 @@ declare global {
 
             CLIENT_ID: string,
 
-            CLIENT_ID: string,
-            CLIENT_ID_CAMELOT: string,
-            CLIENT_ID_ELDER: string,
-            CLIENT_ID_POKE: string,
-
             PATREON_TOKEN: string,
             PATREON_CAMPAIGN_ID: string,
 
