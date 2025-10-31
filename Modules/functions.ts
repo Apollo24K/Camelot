@@ -200,6 +200,15 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "damageFormula": "default", // "default": default, "log_scale_<number>": example "log_scale_1.4"
         "delayedBuffs": [],
         "replaceButton": {},
+        "dodgebuff": 0,
+        "twinshot": 0,
+        "selfdmg": 0,
+        "critbleed": false,
+        "critbleedlast": 0,
+        "heap1": 0,
+        "timeout": true,
+        "allowExecution": true,
+        "defUsed": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
         "class": -1,
@@ -624,13 +633,14 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         selfheal: true,
         selfhealAmount: 0,
         selfhealChance: Math.random(),
-        critbleed: matchStats.critbleed,
-        execute: matchStats.allowExecution,
+        critbleed: attacker.critbleed,
+        execute: attacker.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
-        canTwinshot: false,
+        canTwinshot: true,
         isLightning: false,
         canCounter: true,
         normalATK: false,
+        turn: 0,
 
         preventRetaliation: false,
     };
@@ -652,8 +662,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         // if (target.blockStreak >= 2) targetBuff.br.push(new buffInfo("*", 0.875, 6));
 
         // Event Triggers
-        matchStats.trigger("block", attacker, target, attackerBuff, targetBuff);
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("block", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         // Achievements & Daily Quests
         achievements[13].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak); // Invincible
@@ -661,16 +671,16 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         return 0;
     }; /* Reset BlockStreak */ target.blockStreak = 0;
     if (!options.isTest && options.dodge && Math.random() < Math.min(target.dodge, target.dodgeCap ?? target.dodge)) {
-        notice.push(`\n💨 **${target.name}** dodged the attack!${matchStats.dodgebuff ? ` Gained **+${matchStats.dodgebuff * 100}%** ATK` : ""}`);
+        notice.push(`\n💨 **${target.name}** dodged the attack!${target.dodgebuff ? ` Gained **+${target.dodgebuff * 100}%** ATK` : ""}`);
         attacker.attackStreak = 0;
         target.dodgeStreak++;
         if (target.dodgeHeal) {
             addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(target.maxhp * target.dodgeHeal), {});
             if (target.hp > target.maxhp) target.hp = target.maxhp;
         };
-        if (matchStats.dodgebuff) {
-            const buff = new buffInfo("*", 1 + matchStats.dodgebuff, 5);
-            buff.label = `dodgebuff: ${matchStats.dodgebuff * 100}%, ${5} rounds`;
+        if (target.dodgebuff) {
+            const buff = new buffInfo("*", 1 + target.dodgebuff, target.dodgebuffLast ?? 5);
+            buff.label = `dodgebuff: ${target.dodgebuff * 100}%, ${target.dodgebuffLast ?? 5} rounds`;
             targetBuff.atk.push(buff);
         };
         // if (target.sjwUsedActive) {
@@ -689,8 +699,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         // if (target.dodgeStreak >= 2) targetBuff.dodge.push(new buffInfo("*", 0.875, 6));
 
         // Event Triggers
-        matchStats.trigger("dodge", attacker, target, attackerBuff, targetBuff);
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("dodge", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         return 0;
     }; /* Reset DodgeStreak */ target.dodgeStreak = 0;
@@ -769,7 +779,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
         // Event Triggers
         matchStats.trigger("counter", attacker, target, attackerBuff, targetBuff, { damage });
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
     };
@@ -785,8 +795,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         notice.push(`\n💨 **${target.name}** has evaded a deadly attack!`);
 
         // Event Triggers
-        matchStats.trigger("deathEvade", attacker, target, attackerBuff, targetBuff);
-        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff);
+        matchStats.trigger("deathEvade", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
+        matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
         return 0;
     };
@@ -858,7 +868,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (options.combodmg && attacker.combodmg) attacker.attackStreak++;
     if (options.critbleed && isCrit) {
         const bleedPercentage = attacker.critbleedAmount ?? 0.05;
-        targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * bleedPercentage), matchStats.critbleedlast));
+        targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * bleedPercentage), attacker.critbleedlast));
     };
     if (attacker.critmana && isCrit) attacker.sm = Math.min(attacker.sm + attacker.critmana, attacker.mana);
     if (options.selfheal && attacker.selfheal && attacker.lastSelfHealRoundCapped !== matchStats.round) {
@@ -876,7 +886,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         addHeal(attacker, target, attacker, attackerBuff, targetBuff, matchStats, notice, ``, Math.floor(Math.min(selfHealedTotal, healCap)), {});
         if (selfHealedTotal >= healCap) attacker.lastSelfHealRoundCapped = matchStats.round;
     };
-    if (options.selfdmg && Math.random() < matchStats.selfdmg) attacker.hp -= damage;
+    if (options.selfdmg && Math.random() < attacker.selfdmg) attacker.hp -= damage;
     if ("gintokiStacks" in attacker && isCrit) attacker.gintokiStacks = 0;
     if (damage && attacker.guinaifenStackRounds?.filter((e: number) => e >= (matchStats.round - attacker.guinaifenStackLast)).length < attacker.guinaifenStackMax) {
         targetBuff.hp.push(new buffInfo("+", -Math.floor(0.06 * damage), attacker.guinaifenStackLast));
@@ -897,7 +907,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (attacker.hp < 0) attacker.hp = 0;
 
     // Twinshot
-    if (options.canTwinshot && matchStats.twinshot > Math.random()) {
+    if (options.canTwinshot && attacker.twinshot > Math.random()) {
         return damage + dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, log, { ...flags, canTwinshot: false });
     };
 
@@ -912,6 +922,18 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     else matchStats.trigger("noncrit", attacker, target, attackerBuff, targetBuff, { damage, normalATK: options.normalATK });
 
     return damage;
+};
+
+export const noTimeout = (matchStats: MatchStats, attacker: DetailedStats) => {
+    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    attacker.timeout = false;
+};
+
+export const imageChange = (embed: EmbedBuilder, matchStats: MatchStats, caster: DetailedStats, image: string) => {
+    console.log(matchStats.turn);
+    matchStats.player1 ??= caster;
+    if (matchStats.player1 === caster) embed.setThumbnail(image);
+    else embed.setImage(image);
 };
 
 export const addHeal = (target: DetailedStats, attacker: DetailedStats, caster: DetailedStats, targetBuff: Buffs, attackerBuff: Buffs, matchStats: MatchStats, notice: string[], log: string, amount: number, flags = {}) => {
@@ -1702,7 +1724,7 @@ export const getLetterRank = (score: number) => {
 };
 
 export const isStampedeMonth = () => {
-    return (new Date().getMonth() % 2) === 1;
+    return (new Date().getMonth() % 2) === 0;
 };
 
 // Export CSV

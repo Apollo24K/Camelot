@@ -1,6 +1,4 @@
 import WebSocket from 'ws';
-import dotenv from 'dotenv';
-dotenv.config();
 
 type RunwareModel = "FLUX.1 (Schnell)" | "FLUX.1 (Dev)" | "Anything V3" | "PrimeMix";
 

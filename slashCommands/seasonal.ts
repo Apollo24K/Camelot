@@ -13,28 +13,30 @@ type SeasonalShopTab = 'runes' | 'hpbars' | 'backgrounds' | 'skins';
 
 const EMBED_COLOR = 0x2aad9d;
 
-const SEASON_END_DATE = new Date('2025-10-30 00:00:00');
+const SEASON_END_DATE = new Date('2025-12-20 00:00:00');
 
 const loadedImages: Record<string | number, Image> = {};
 
 const RUNES_FOR_SALE = [
-    { name: "Arcane Rebirth", item: items[785] as runeInfo, price: 60, isNew: true },
-    { name: "Valkyrie Sigil", item: items[787] as runeInfo, price: 60, isNew: true },
-    { name: "Coinmark of Riches", item: items[786] as runeInfo, price: 60, isNew: true },
-] as const; // Total cost: 180
+    { name: "Wailing Lantern", item: items[789] as runeInfo, price: 80, isNew: true },
+    { name: "Hollow Crown", item: items[788] as runeInfo, price: 70, isNew: true },
+    { name: "Coinmark of Riches", item: items[786] as runeInfo, price: 60, isNew: false },
+] as const; // Total cost: 210
 
 const HP_BARS_FOR_SALE = [
-    { name: "Falling Leaves", id: 4, price: 70, isNew: true },
-    { name: "Autumn Leaves", id: 5, price: 60, isNew: true },
-    { name: "Coffee Brew", id: 1, price: 50, isNew: true },
-    { name: "Golden Grasslands", id: 3, price: 50, isNew: true },
-] as const; // Total cost: 230
+    { name: "Pumpkin Parade", id: 8, price: 70, isNew: true },
+    { name: "Poison Silk", id: 7, price: 70, isNew: true },
+    { name: "Velvet Night", id: 6, price: 70, isNew: true },
+    { name: "Coffee Brew", id: 1, price: 50, isNew: false },
+] as const; // Total cost: 250
 
 const BACKGROUNDS_FOR_SALE = [
-    { name: "Eternal Autumn", id: 12, price: 50, isNew: true },
-    { name: "Shades of Rust", id: 10, price: 60, isNew: true },
-    { name: "Autumn Forest", id: 11, price: 60, isNew: true },
-] as const; // Total cost: 170
+    { name: "Festival of Shadows", id: 16, price: 80, isNew: true },
+    { name: "Devastation", id: 14, price: 60, isNew: true },
+    { name: "Augury", id: 15, price: 60, isNew: true },
+] as const; // Total cost: 200
+
+const SKIN_SEASON = "halloween season 2025"; // Total cost: 630
 
 const BuyKeysRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -66,7 +68,7 @@ const BuyKeysRow = new ActionRowBuilder<ButtonBuilder>()
     );
 
 async function getSeasonalSkinsImage({ columns }: { columns: number; }): Promise<AttachmentBuilder> {
-    const skinsForSale = skins.filter(skin => skin.obtain === "fall season 2025");
+    const skinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON);
 
     const tileW = 225, tileH = 350, gap = 20;
     const cols = Math.min(columns, Math.max(1, skinsForSale.length));
@@ -205,7 +207,7 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema): Con
         );
 
     } else if (currentTab === 'skins') {
-        const skinsForSale = skins.filter(skin => skin.obtain === "fall season 2025");
+        const skinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON);
 
         // The composed image will be attached to the message
         shopContainer.addMediaGalleryComponents(media => media

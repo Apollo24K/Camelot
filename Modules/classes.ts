@@ -52,8 +52,8 @@ const skillDescs: SkillDescription[] = [
 
     { "active": `Deals physical damage which increases by **10%** after each round (up to **200%**).`, "passive": `Loses **3%** of current HP after each round.` },
     { "active": `Deals physical damage which increases by **20%** after each round (up to **240%**).`, "passive": `Loses **2%** of current HP after each round.` },
-    { "active": `Deals **150%** physical damage and causes bleeding for 2 rounds.`, "passive": `Critical strikes cause bleeding on the enemy lasting 2 rounds.` },
-    { "active": `Deals **120%** true damage (ignores shield) and causes bleeding for 3 rounds.`, "passive": `Critical strikes cause bleeding on the enemy lasting 3 rounds.` },
+    { "active": `Deals **150%** physical damage and causes bleeding for 2 rounds.`, "passive": `Critical strikes cause bleeding, dealing **5%** damage to the enemy for 2 rounds.` },
+    { "active": `Deals **120%** true damage (ignores shield) and causes bleeding for 3 rounds.`, "passive": `Critical strikes cause bleeding, dealing **5%** damage to the enemy for 3 rounds.` },
     { "active": `Deals **120%** magic damage in dungeon, **110%** in arena.`, "passive": `Heals for **5%** of current HP after every round.` },
     { "active": `Deals **130%** magic damage in dungeon, **115%** in arena.`, "passive": `Has **10%** increased ATK in the dungeon. Heals for **5%** of current HP every round, and increases their own magic damage by **3%** (max **30%**).` },
     { "active": `Blocks the enemy from dodging, blocking and critting for 2 rounds.`, "passive": `Decreases enemy ATK by **3%** after each round. Has a **20%** chance of dealing magic damage.` },

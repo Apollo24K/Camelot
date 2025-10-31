@@ -93,7 +93,7 @@ export const currencyEmojis = {
     "coins": "<:coins:1030580480782893197>",
     "lilies": "<:lilium:974057059618291732>",
     "jades": "<:eternal_jade:1256124504141201428>",
-    "season_keys": seasonalKeys.fall,
+    "season_keys": seasonalKeys.halloween,
     "eventpts": "🌙",
 } as const;
 

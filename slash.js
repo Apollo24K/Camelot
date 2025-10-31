@@ -1,8 +1,8 @@
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
+const { SlashCommandBuilder } = require('@discordjs/builders');
 const dotenv = require('dotenv');
 dotenv.config();
-const { SlashCommandBuilder } = require('@discordjs/builders');
 
 const commands = [
 	{
@@ -63,7 +63,13 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('arena')
 			.setDescription('Challenge someone to a 1v1')
-			.addUserOption(option => option.setName('user').setDescription('user to challenge').setRequired(true)),
+			.addUserOption(option => option.setName('user').setDescription('user to challenge').setRequired(true))
+			.addIntegerOption(option => option.setName('timer').setDescription('set the maximum timer').setRequired(false))
+			.addIntegerOption(option => option.setName('rounds').setDescription('Change the maximum amount of rounds').setRequired(false))
+		// .addIntegerOption(option => option.setName('challenger-character-level').setDescription('set the character level for the challenger').setRequired(false))
+		// .addIntegerOption(option => option.setName('against-character-level').setDescription('set the character level for the one challenged').setRequired(false))
+		// .addIntegerOption(option => option.setName('challenger-class-level').setDescription('set the class level for the challenger').setRequired(false))
+		// .addIntegerOption(option => option.setName('against-class-level').setDescription('set the class level for the one challenged').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

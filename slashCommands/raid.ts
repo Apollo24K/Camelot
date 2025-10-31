@@ -1249,14 +1249,7 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
 
-                                if (matchStats.twinshot > Math.random()) setTimeout(() => {
-                                    dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-                                    editEmbed();
-                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                                    attack();
-                                }, actionSequence.length > 0 ? 0 : aDelay);
-
-                                else attack();
+                                attack();
                             }
 
                         } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });

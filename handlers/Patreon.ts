@@ -1,6 +1,4 @@
 import fs from 'fs';
-import dotenv from 'dotenv';
-dotenv.config();
 import { Campaign } from 'patreon-discord';
 import { Client } from "discord.js";
 import { BotHandler } from "../types";
