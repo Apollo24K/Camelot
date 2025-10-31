@@ -873,8 +873,6 @@ declare global {
             PG_PORT: string,
 
             ADMINS: string,
-            ADMIN_APOLLO: string,
-            ADMIN_POKE: string,
 
             VERSION: string,
             PREFIX: string,
