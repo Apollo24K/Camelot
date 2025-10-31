@@ -708,7 +708,13 @@ export const anime: animeInfo[] = [
     new animeInfo("Tribe Nine", ["T9", "TN", "Tribe 9"], 673),
     new animeInfo("The Novel's Extra", ["TNE"], 674),
     new animeInfo("My Next Life as a Villainess: All Routes Lead to Doom!", ["Otome Game no Hametsu Flag Shika Nai Akuyaku Reijou ni Tensei Shiteshimatta", "HameFura",], 675),
-    new animeInfo("Restaurant to Another World", ["Isekai Shokudou", "RtAW"], 676)
+    new animeInfo("Restaurant to Another World", ["Isekai Shokudou", "RtAW"], 676),
+    new animeInfo("Player", ['Peulleieo'], 677),
+    new animeInfo("Revenge of the Baskerville Bloodhound", ['Cheolhyeolgeomga Sanyanggaeui Hoegwi', 'Revenge of the Iron-Blooded Sword Hound', "Revenge of the Sword Clan's Hound", "Regression of the Ironblace Hound", "Return of the Iron-Blooded Sword Hound", "RotBB"], 678),
+    new animeInfo("Gachiakuta", ['Gachi Akuta'], 679),
+    new animeInfo("Absolute Sword Sense", ['Jeoldaegeomgam', 'Perfect Sword Sense'], 680),
+    new animeInfo("Myst, Might, Mayhem", ['Goeryeok Nansin', 'The Chaotic God of Extraordinary Strength'], 681),
+    new animeInfo("The Stellar Swordmaster", ['Byeoreul Pumeun Swordmaster', 'Star-Embracing Swordmaster', 'Star-Fostered Swordmaster'], 682),
 
 ];
 
