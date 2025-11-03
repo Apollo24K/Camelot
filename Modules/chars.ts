@@ -25796,7 +25796,6 @@ export const characters: charInfo[] = [
     new charInfo("Ramashut", [], anime[682], "F", "https://i.ibb.co/1JBTSZ61/c.png", 25692, "C"),
     new charInfo("Volkov Varanov", [], anime[682], "M", "https://i.ibb.co/NnKVDCxT/c.png", 25693, "C"),
     new charInfo("Zuber", [], anime[682], "M", "https://i.ibb.co/yn2v0M3C/c.png", 25694, "C"),
-    new charInfo("Firefly EX", ["SAM EX"], anime[343], "F", "https://i.ibb.co/ZRw9tB0D/firefly-ex.png", 25695, "EX"),
 
 ];
 

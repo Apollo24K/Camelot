@@ -854,11 +854,6 @@ declare global {
 
             CLIENT_ID: string,
 
-            CLIENT_ID: string,
-            CLIENT_ID_CAMELOT: string,
-            CLIENT_ID_ELDER: string,
-            CLIENT_ID_POKE: string,
-
             PATREON_TOKEN: string,
             PATREON_CAMPAIGN_ID: string,
 
@@ -879,8 +874,6 @@ declare global {
             PG_PORT: string,
 
             ADMINS: string,
-            ADMIN_APOLLO: string,
-            ADMIN_POKE: string,
 
             VERSION: string,
             PREFIX: string,
