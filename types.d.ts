@@ -874,7 +874,6 @@ declare global {
             PG_PORT: string,
 
             ADMINS: string,
-
             VERSION: string,
             PREFIX: string,
         }
