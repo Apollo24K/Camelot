@@ -203,21 +203,21 @@ export const profileSets = [
         new Background("Vermeil", { gems: 10000, coins: 30_000_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/vermeil/vermeil.gif", url: "https://i.ibb.co/tgNMh6K/vermeil.gif" }), { delay: 130 }),
     ]),
 
-    new ProfileSet("Shades of Rust", 10, { jades: 900, gems: 1000, season_keys: 60 }, [
+    new ProfileSet("Shades of Rust", 10, { jades: 900, gems: 1000 }, [
         new Background("Autumn Breaths", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/autumn-breaths.jpg", url: "https://i.ibb.co/8DqzCMQ2/20250906-141336-0000.png" })),
         new Background("Nostalgic Sunlight", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/nostalgic-sunlight.jpg", url: "https://i.ibb.co/tMQQXYmX/20250906-141314-0000.png" })),
         new Background("Familiar Roads", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/familiar-roads.jpg", url: "https://i.ibb.co/B5BS4Ckm/20250906-141207-0000.png" })),
         new Background("A Trace of Memory", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/shades-of-rust/a-trace-of-memory.jpg", url: "https://i.ibb.co/vCJCr214/20250906-141504-0000.png" })),
     ]),
 
-    new ProfileSet("Autumn Forest", 11, { jades: 900, gems: 1000, season_keys: 60 }, [
+    new ProfileSet("Autumn Forest", 11, { jades: 900, gems: 1000 }, [
         new Background("Crimson Grove", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/crimson-grove.jpg", url: "https://i.ibb.co/skFryJJ/fall1.png" })),
         new Background("Golden Canopy", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/golden-canopy.jpg", url: "https://i.ibb.co/Zp1gcrmD/fall2.png" })),
         new Background("Amber Meadow", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/amber-meadow.jpg", url: "https://i.ibb.co/0Nmjb1n/fall3.png" })),
         new Background("Russet Wilderness", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/autumn-forest/russet-wilderness.jpg", url: "https://i.ibb.co/hxjYvpVD/fall4.png" })),
     ]),
 
-    new ProfileSet("Eternal Autumn", 12, { jades: 1000, gems: 1200, season_keys: 80 }, [
+    new ProfileSet("Eternal Autumn", 12, { jades: 1000, gems: 1200 }, [
         new Background("Luminous Fall", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/luminous-fall.gif", url: "https://i.ibb.co/6cqN7J0v/Luminous-Background.gif" }), { delay: 140 }),
         new Background("Crimson Reflection", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/crimson-reflection.gif", url: "https://i.ibb.co/d3wb06S/Isolde-Background.gif" }), { delay: 90 }),
         new Background("Whispering Leaves", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/eternal-autumn/whispering-leaves.gif", url: "https://i.ibb.co/tPYVdK40/Kisogi-Background.gif" }), { delay: 200 }),
@@ -230,5 +230,27 @@ export const profileSets = [
         new Background("Ai Vibing", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-vibing.gif", url: "https://i.ibb.co/ymDdpqSF/ezgif-67abc5540fd53b.gif" }), { delay: 30 }),
         new Background("Ai Tease", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-tease.gif", url: "https://i.ibb.co/PZYGCQGV/ezgif-6442bffaea6a72.gif" }), { delay: 60 }),
     ]),
+
+    new ProfileSet("Devastation", 14, { jades: 900, gems: 1000, season_keys: 60 }, [
+        new Background("Turned to Ashes", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/turned-to-ashes.jpg", url: "https://i.ibb.co/XrRD8krF/20250910-104758-0003.png" })),
+        new Background("The Gap", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/the-gap.jpg", url: "https://i.ibb.co/S4Y073nN/20250910-104758-0002.png" })),
+        new Background("Grave Horizon", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/grave-horizon.jpg", url: "https://i.ibb.co/MkCbQ61W/20250910-104758-0001.png" })),
+        new Background("Black Death", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/black-death.jpg", url: "https://i.ibb.co/DHcQ6frY/20250910-104758-0000.png" })),
+    ]),
+
+    new ProfileSet("Augury", 15, { jades: 900, gems: 1000, season_keys: 60 }, [
+        new Background("Red Death", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/red-death.jpg", url: "https://i.ibb.co/dsmQqr1k/20250906-233439-0000.png" })),
+        new Background("Devil Man", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/devil-man.jpg", url: "https://i.ibb.co/q3HNgJBp/20250906-233439-0001.png" })),
+        new Background("The Chapel", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/the-chapel.jpg", url: "https://i.ibb.co/VYTzDxy6/20250906-233439-0002.png" })),
+        new Background("Bad Omen", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/bad-omen.jpg", url: "https://i.ibb.co/rRBK5rGJ/20250906-233439-0003.png" })),
+    ]),
+
+    new ProfileSet("Festival of Shadows", 16, { jades: 1000, gems: 1200, season_keys: 80 }, [
+        new Background("Crimson Midnight", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/festival-of-shadows/crimson-midnight.gif", url: "https://i.ibb.co/b54zzhC9/Dalus-Background.gif" }), { delay: 200 }),
+        new Background("Silent Lanterns", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/festival-of-shadows/silent-lanterns.gif", url: "https://i.ibb.co/v4njF45n/Mari-Background.gif" }), { delay: 143 }),
+        new Background("Harvest Enchantress", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/festival-of-shadows/harvest-enchantress.gif", url: "https://i.ibb.co/93NzZPDQ/Cecilia-Background.gif" }), { delay: 200 }),
+    ]),
+
+
 
 ];

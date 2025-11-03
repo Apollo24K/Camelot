@@ -1,5 +1,5 @@
 import { AttachmentBuilder, EmbedBuilder, Message, User } from "discord.js";
-import { getDetailedStats, dealDamage, addHeal, getRefinement } from "./functions";
+import { getDetailedStats, dealDamage, addHeal, getRefinement, noTimeout, imageChange } from "./functions";
 import { createCanvas, loadImage, Image } from '@napi-rs/canvas';
 import charInfo, { characters } from "./chars";
 import { items } from "./items";
@@ -37,7 +37,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `25`💧\n**Timeout**: `Yes`\n**Role**: `Support (Summon)`\n\n __**Active**__ (✨)\n- Transforms into Gugu (S TIER), Parona (A TIER) or March (B TIER) randomly (if you own them)\n- They have their own HP & STATS, but items & classes remain the same\n- Using it again transforms back to Fushi",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Fushi transforms randomly in one of 3 characters who each have their own stats.
-            const inv = await getUserSchema(matchStats.interaction.user.id);
+            const inv = await getUserSchema(matchStats.user);
             if (!inv) {
                 matchStats.sendWarning({ content: "You don't have any characters to transform into", ephemeral: true });
                 return AbilityResponse.FAILURE;
@@ -70,7 +70,7 @@ export const abilities: Record<number, Ability> = {
                 });
 
                 notice.push(`\n✨ **${char.name}** transformed into **${characters[pID].name}**!`);
-                embed.setThumbnail(characters[pID].image);
+                imageChange(embed, matchStats, myStats, characters[pID].image);
             } else {
                 this[this.selected] = myStats.hp;
                 this.selected = "fushi";
@@ -85,7 +85,7 @@ export const abilities: Record<number, Ability> = {
                 });
 
                 notice.push(`\n✨ **${char.name}** transformed back`);
-                embed.setThumbnail(char.image);
+                imageChange(embed, matchStats, myStats, char.image);
             };
 
             return AbilityResponse.SUCCESS;
@@ -151,7 +151,7 @@ export const abilities: Record<number, Ability> = {
             myStats.maxhp += Math.floor(myStats.maxhp * 0.2);
             ["atk", "def", "md", "mr"].forEach((e) => mybuff[e as keyof Buffs].push(new buffInfo("*", 1.2, 9999)));
             notice.push(`\n✨ **${char.name}** has transformed into a Titan! Raised HP, ATK, MD, DEF and MR by **20%**`);
-            embed.setThumbnail("https://i.ibb.co/YfnG2Tn/at.png");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/YfnG2Tn/at.png");
 
             return AbilityResponse.SUCCESS;
         },
@@ -177,7 +177,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Mana-losing, Followup Attack, Nuke)`\n\n__**Passive**__\nWhenever he has **35** 💧:\n- Deals **40%** DMG\n- Boosts ATK/MD by **2%** if it hits\n\n__**Active**__ (✨)\n- Deals **150%** DMG after **3** rounds\n- This DMG scaling is further increased by **1%** for for every **1** weapon owned (Dupes included, capped at 100% increase for a total of 250% DMG)\n\n__**Party**__ (👥)\n- There is a **33%** chance to deal **40%** DMG to the enemy every round",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Gilgamesh
-            const weaponCount = await getUserWeaponCount(matchStats.interaction.user.id, "weapon");
+            const weaponCount = await getUserWeaponCount(matchStats.user, "weapon");
 
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Ea! He`, { atkMultiplier: 1.5 + Math.min(weaponCount / 100, 1), magicDamage: true, dodge: false });
@@ -228,7 +228,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `50 💧` \n**Timeout**: `No`\n**Role**: `Tank (Burst shield)`\n\n__**Passive**__\n- **+100** DEF & MR\n- When a shield is active, own ATK **+15%**\n\n__**Active**__ (✨)\n- Summons a shield equivalent to **50%** of her max HP\n\n__**Party**__ (👥)\n- **+100** DEF & MR\n- **+10%** Block rate\n- Enters battles with a **10%** max HP shield",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Mash Kyrielight 
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             notice.push(`\n✨ Manifest yourself, Lord Camelot!`);
             myStats.shield += Math.floor(myStats.maxhp * 0.5);
 
@@ -268,31 +268,31 @@ export const abilities: Record<number, Ability> = {
         desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `10`\\💧 continuously\n**Timeout**: `No`\n**Role**: `DPS`\n\nWhen using his ability, Xiao dons the Yaksha Mask that set gods and demons trembling millennia ago. Until his mana runs dry, he will deal **30%** more magic damage in this state, losing **10** mana each round. If he uses his ability again during this state, he will consume 50 💧 to lunge forward, dealing **200%** magic damage.",
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `0 💧 , then 10 💧 every round`\n**Timeout**: `No`\n**Role**: `DPS (Mana-losing, Nuke)`\n\n__**Active**__ (✨)\nFalls in as General Alatus:\n- Halts mana regeneration\n- Consumes **10** 💧 every round\n- **+30%** MD\n\nHis active (✨) is altered when he's in this state:\n**Cost**:`50 💧`\n**Timeout**: `No`\n- Deals **200%** MD",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            if (matchStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 200% damage if used again.
+            if (myStats.heap1.length > 0) { // Xiao increases md by 30% by consuming 10 mana per round. Deals 200% damage if used again.
                 if (myStats.sm < 50) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: "You need at least **50**\\💧 for this attack.", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
                 myStats.sm -= 50;
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** lunged forward! He`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 });
             } else {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 if (myStats.sm < 10) {
                     matchStats.sendWarning({ content: "You need at least **10**\\💧 to sustain this form", ephemeral: true });
                     return AbilityResponse.FAILURE;
                 };
-                matchStats.consumeMana = 10;
+                myStats.consumeMana = 10;
 
                 // Add new buffs to heap
                 let mdbuff = new buffInfo("+", Math.floor(myStats.md * 0.3), 9999);
                 let mgbuff = new buffInfo("=", 0, 9999);
                 mybuff.md.push(mdbuff); mybuff.mg.push(mgbuff);
-                matchStats.heap1 = [{ type: "md", id: mdbuff.id, buff: Math.floor(myStats.md * 0.3) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }];
+                myStats.heap1 = [{ type: "md", id: mdbuff.id, buff: Math.floor(myStats.md * 0.3) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }];
                 myStats.md += Math.floor(myStats.md * 0.3);
                 myStats.mg = 0;
 
-                embed.setThumbnail("https://i.ibb.co/m024R2q/x.png");
+                imageChange(embed, matchStats, myStats, "https://i.ibb.co/m024R2q/x.png");
                 notice.push(`\n🎭 **${char.name}** dons the Yaksha Mask, increasing his MD by **30%**`);
             };
 
@@ -328,9 +328,9 @@ export const abilities: Record<number, Ability> = {
             // Deals 10% DMG for every flame (100% max)
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🔥 A festive reprise! **${char.name}**`, { atkMultiplier: 0.1 * Math.min(myStats.yoimiyaFlames, 10), magicDamage: true, mdChance: -1 });
 
-            matchStats.twinshot = 1;
+            myStats.twinshot = 1;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                matchStats.twinshot = 0;
+                myStats.twinshot = 0;
 
                 return AbilityResponse.SUCCESS;
             }));
@@ -352,7 +352,7 @@ export const abilities: Record<number, Ability> = {
                     if (items[myStats.weapon]?.type === "bow") ebuff.hp.push(new buffInfo("+", -Math.floor(options.damage * 0.125), 2));
 
                     // Twinshot
-                    if (matchStats.twinshot > Math.random() && myStats.yoimiyaLastTwinshot !== matchStats.round) {
+                    if (myStats.twinshot > Math.random() && myStats.yoimiyaLastTwinshot !== matchStats.round) {
                         myStats.yoimiyaLastTwinshot = matchStats.round;
                         myStats.replaceButton.atk?.run?.(myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list);
                     };
@@ -370,8 +370,10 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Nuke)`\n\n__**Active**__ (✨)\n- Deals **300%** undodgeable MD\n- Decreases ATK, MD, DEF, MR to **0** for **3** rounds\n\n__**Party**__ (👥)\nWhen megumin's active (✨) is used in stampedes:\n- If Aqua/Darkness/Kazuma Satou is selected in the party, gains a shield equivalent to **10%** of her max HP",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Megumin unleashes an attack with 300% magic damage. This can't be dodged. ATK, MATK, DEF and MDEF fall to 0 for 2 rounds
-            embed.setThumbnail("https://i.ibb.co/9wktf9S/c.gif");
-            embed.setImage(`https://i.imgur.com/80tH5Uz.gif`);
+            if (matchStats.interaction.commandName !== "arena") {
+                embed.setThumbnail("https://i.ibb.co/9wktf9S/c.gif");
+                embed.setImage(`https://i.imgur.com/80tH5Uz.gif`);
+            } else imageChange(embed, matchStats, myStats, "https://i.ibb.co/9wktf9S/c.gif");
             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ Bakuretsu! Bakuhatsu! **EXPLOSION!!!** She`, { atkMultiplier: 3, magicDamage: true, mdChance: -1, dodge: false, canTwinshot: true });
             mybuff.atk.push(new buffInfo("=", 0, 2));
             mybuff.def.push(new buffInfo("=", 0, 2));
@@ -387,7 +389,7 @@ export const abilities: Record<number, Ability> = {
             };
 
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                embed.setImage(eStats.image);
+                if (matchStats.interaction.commandName !== "arena") embed.setImage(eStats.image);
 
                 return AbilityResponse.SUCCESS;
             }));
@@ -494,7 +496,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Zoro uses all 3 of his swords to attack 3x
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.used--;
                 myStats.sm += 60;
                 matchStats.sendWarning({ content: `Zoro needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
@@ -573,7 +575,7 @@ export const abilities: Record<number, Ability> = {
             myStats.atk += raiseAtk;
             mybuff.atk.push(new buffInfo("+", raiseAtk, 9999));
             notice.push(`\n✨ **${char.name}** equipped Hermes Trismegistus!\n<:blank:917804200363171860> She has gained **+${raiseDef}**DEF and **+${raiseAtk}**ATK`);
-            embed.setThumbnail("https://i.ibb.co/S7v6Qmx/a.png");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/S7v6Qmx/a.png");
 
             return AbilityResponse.SUCCESS;
         },
@@ -643,7 +645,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Tanya Degurechaff
             if (myStats.hp / myStats.maxhp > 0.25) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.used--;
                 matchStats.sendWarning({ content: `Self destruct can only be used once your hp is below **25%** of your max HP (${Math.floor(myStats.maxhp * 0.15)})`, ephemeral: true });
                 return AbilityResponse.FAILURE;
@@ -674,7 +676,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `40 💧`\n**Timeout**: `No`\n**Role**: `Tank/DPS (Mitigation, Sacrificial)`\n\n__**Passive**__\n- **+300** DEF & MR\n- Has **0%** dodge rate\n\n__**Active**__ (✨)\n- Converts **75%** of her DEF & MR into ATK & MD for **3** rounds\n- Restores **50%** of lost HP every round during this period\n\n__**Party**__ (👥)\n- **+155** DEF & MR",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Maple
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             const incd = Math.floor(myStats.def * 0.75);
             mybuff.atk.push(new buffInfo("+", incd + Math.floor(myStats.atk * 0.05), 3));
             myStats.atk += incd + Math.floor(myStats.atk * 0.05);
@@ -723,10 +725,10 @@ export const abilities: Record<number, Ability> = {
     //     summoned: [],
     //     desc: "**Total Usage**: `max 3`\n**Mana**: `60`\\💧\n**Timeout**: `no`\n**Role**: `DPS`\n\nThanks to his ability to level up by fighting monsters, Sung Jin-Woo raises his level by 1 after every round for the duration of the fight. As the Shadow Monarch, he can summon one of his 3 loyal servants **Igris**, **Beru** or **Iron (SL)**. The user needs to have them in their inventory, and they take on their own stats (except ATK and MD, which is **60%** of Sung Jin Woo's ATK|MD). Once they're defeated, Sung Jin-Woo can no longer summon them.",
     //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //         noTimeout(matchStats, myStats);
 
     //         // Active: Sung Jin Woo summons either Igris, Beru or Iron (SL) from the users inventory. Passive:
-    //         const inv = await getUserSchema(matchStats.interaction.user.id);
+    //         const inv = await getUserSchema(matchStats.user);
     //         if (!inv || !inv.chars.filter((e) => e === 3156 || e === 3159 || e === 3174).length) return matchStats.sendWarning({ content: "You don't have any of the characters **Igris**, **Beru** or **Iron (SL)** to summon.", ephemeral: true });
 
     //         myStats.sm -= this.cost;
@@ -742,7 +744,7 @@ export const abilities: Record<number, Ability> = {
     //         let pick = obtained[Math.floor(Math.random() * obtained.length)];
     //         this.summoned.push(pick);
 
-    //         embed.setThumbnail(characters[pick].image);
+    //         imageChange(embed, matchStats, myStats, characters[pick].image);
 
     //         let newStats = await getDetailedStats(pick, inv, inv.dungeon_classlevels);
     //         ["hp", "maxhp", "def", "mr", "cr", "cd", "td", "br", "dodge"].forEach((e) => {
@@ -795,7 +797,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `60 💧`\n**Timeout**: `No`\n**Role**: `Support/Sub-DPS (Burst Dodge, Counter, Additional Attack)`\n\n__**Passive**__\n- **-20%** ATK, MD, DEF & MR\n- Begins battles with **80%** dodge rate, decreasing by **5%** every round, down to at most **30%**\n- **25%** chance to counter the next hit (stackable)\n\n__**Active**__ (✨)\nFor **4** rounds:\n- **+30%** ATK & MD\n- Likelihood of countering next hit increased from 25% to **35%**\n\n__**Party**__ (👥)\nIn stampedes: For every **5** participation points -> **+1%** chance of intervening every round (Up to **25%**)\nIn raids: chance fixed at **25%**\n- Successful intervention -> Deal **120%** DMG (This is considered a counter)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Tetsuya Kuroko
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (this.pause > matchStats.round) {
                 this.used--;
                 myStats.sm += this.cost;
@@ -847,9 +849,9 @@ export const abilities: Record<number, Ability> = {
                 const stampede = await getLatestStampede();
 
                 myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                    if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0) / 500) {
+                    if (Math.random() < Math.min(125, stampede?.participation?.[matchStats.user]?.[1] || 0) / 500) {
                         let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
-                        matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { dmg });
+                        matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { damage: dmg });
                     };
 
                     return AbilityResponse.SUCCESS;
@@ -857,7 +859,7 @@ export const abilities: Record<number, Ability> = {
             } else if (matchStats.interaction.commandName === "raid") {
                 if (Math.random() < 0.25) {
                     let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🏀 **Tetsuya Kuroko** stole the shot! He`, { atkMultiplier: 1.2 });
-                    matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { dmg });
+                    matchStats.trigger("counter", eStats, myStats, ebuff, mybuff, { damage: dmg });
                 };
             };
 
@@ -926,7 +928,7 @@ export const abilities: Record<number, Ability> = {
     //                 mybuff.dodge.push(new buffInfo("+", 0.15, 9999));
     //                 ebuff.def.push(new buffInfo("+", Math.min(Math.floor(eStats.def * def_debuff), 660), 9999));
     //                 ebuff.mr.push(new buffInfo("+", Math.min(Math.floor(eStats.mr * def_debuff), 660), 9999));
-    //                 embed.setThumbnail("https://i.ibb.co/2YYgNyw5/c.png");
+    //                 imageChange(embed, matchStats, myStats, "https://i.ibb.co/2YYgNyw5/c.png");
     //             };
 
     //             return AbilityResponse.SUCCESS;
@@ -1098,7 +1100,7 @@ export const abilities: Record<number, Ability> = {
                         matchStats.trigger("shieldBreak", myStats, eStats, mybuff, ebuff);
                     };
                     notice.push(`\n✨ **${char.name}** entered his shadow form!`);
-                    embed.setThumbnail("https://i.imgur.com/2VZTpDS.png");
+                    imageChange(embed, matchStats, myStats, "https://i.imgur.com/2VZTpDS.png");
                     //@ts-ignore
                     this._used++;
                 } else {
@@ -1156,7 +1158,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `4`\n**Cost**: `50 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Tank (MR-scaling, Anti-MD, Lifesteal)`\n\n__**Passive**__\n- **+8%** lifesteal\n\n__**Active**__ (✨)\n- Gains MR equivalent to **20%** of her ATK\n- Recovers HP equivalent to **30%** of her ATK",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Yue
-            matchStats.turn = matchStats.turnSkill ? 0 : 1; // Yue
+            noTimeout(matchStats, myStats); // Yue
             let hmr = Math.floor(myStats.atk * 0.2);
             mybuff.mr.push(new buffInfo("+", hmr, 9999));
             myStats.mr += hmr;
@@ -1218,16 +1220,16 @@ export const abilities: Record<number, Ability> = {
         desc: "**Total Usage**: `unlimited`\n**Mana**: `0`\\💧, then `15`\\💧 continuously\n**Timeout**: `no`\n**Role**: `DPS`\n\nWith her Re-Equip magic, Erza Scarlet is able to select between 5 different armors to face her opponent as needed. With every use of her ability, she will cycle through her armors, and she'll use up 15 mana every round. She will not gain any mana while she has an armor equipped. Her inventory is as follows:\n\n__Fire Empress Armor__: Grants her **60%** ATK but decreases DEF by **20%**\n__Adamantine Armor__: Grants her **60%** DEF but decreases ATK by **20%**\n__Heaven's Wheel Armor__: Grants her **25%** ATK and DEF\n__Clear Heart Clothing__: Grants her **10%** ATK, **+20%** crit rate, **+50%** crit damage and **+10%** dodge chance\n__Armadura Fairy__: Heals her for **10%** of max HP per round",
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `0 💧, then 15 💧 every round`\n**Timeout**: `No`\n**Role**: `DPS/Tank (Mana-losing, Versatile)`\n\n__**Active**__ (✨)\nWears/ rotates to the next armor:\n- Halts mana regeneration as long as the armor rotation is active\nArmor options:\n- Fire Empress Armor: **+60%** ATK , **-20%** DEF\n- Adamantine Armor: **+60%** DEF , **-20%** ATK\n- Heaven's Wheel Armor: **+25%** ATK & DEF\n- Clear Heart Clothing: **+10%** ATK, **+20%** Critical rate, **+50%** Critical  damage and **+10%** dodge chance\n- Armadura Fairy: Restores **10%** of max HP every round",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            matchStats.turn = matchStats.turnSkill ? 0 : 1; // Erza Scarlet can change between 5 different equipment
+            noTimeout(matchStats, myStats); // Erza Scarlet can change between 5 different equipment
             if (myStats.sm < 15) {
                 matchStats.sendWarning({ content: "You need at least **15**\\💧 to sustain this form", ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
-            matchStats.consumeMana = 15;
+            myStats.consumeMana = 15;
 
             // clear previous armors effects
-            if (matchStats.heap1.length > -1) {
-                matchStats.heap1.forEach((e: { type: keyof Buffs; id: number; buff: number; }) => {
+            if (myStats.heap1.length > -1) {
+                myStats.heap1.forEach((e: { type: keyof Buffs; id: number; buff: number; }) => {
                     mybuff[e.type].forEach((a: IbuffInfo, i: number) => {
                         if (a.id === e.id) mybuff[e.type].splice(i, 1);
                     });
@@ -1235,17 +1237,17 @@ export const abilities: Record<number, Ability> = {
                     else myStats[e.type] -= e.buff;
                 });
                 // matchStats.consumeMana = 0;
-                matchStats.heap1 = [];
+                myStats.heap1 = [];
             };
 
             // Add new buffs to heap
             let armorName, atkbuff, defbuff, crbuff, cdbuff, dodgebuff, hpbuff, mgbuff = new buffInfo("=", 0, 9999);
             switch (this.armor++ % 5) {
-                case 0: embed.setThumbnail("https://i.ibb.co/KFLzdqd/f.png"); armorName = "Fire Empress Armor. She gained **60%** ATK, decreased DEF by **20%**"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.6), 9999); defbuff = new buffInfo("+", -Math.floor(myStats.def * 0.2), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.6) }, { type: "def", id: defbuff.id, buff: -Math.floor(myStats.def * 0.2) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.6); myStats.def += -Math.floor(myStats.def * 0.2); myStats.mg = 0; break;
-                case 1: embed.setThumbnail("https://i.ibb.co/HG4tHWt/a.png"); armorName = "Adamantine Armor. She gained **60%** DEF, decreased ATK by **20%**"; atkbuff = new buffInfo("+", -Math.floor(myStats.atk * 0.2), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.6), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: -Math.floor(myStats.atk * 0.2) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.6) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += -Math.floor(myStats.atk * 0.2); myStats.def += Math.floor(myStats.def * 0.6); myStats.mg = 0; break;
-                case 2: embed.setThumbnail("https://i.ibb.co/VDPkR10/w.png"); armorName = "Heaven's Wheel Armor. She gained **25%** ATK and DEF"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.25), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.25) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.25) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.25); myStats.def += Math.floor(myStats.def * 0.25); myStats.mg = 0; break;
-                case 3: embed.setThumbnail("https://i.ibb.co/TH4gNq5/c.png"); armorName = "Clear Heart Clothing. She gained **10%** ATK, **+20%** crit rate, **+50%** crit damage, and **+10%** dodge chance"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999); crbuff = new buffInfo("+", 0.2, 9999); cdbuff = new buffInfo("+", 0.5, 9999); dodgebuff = new buffInfo("+", 0.1, 9999); mybuff.atk.push(atkbuff); mybuff.cr.push(crbuff); mybuff.cd.push(cdbuff); mybuff.dodge.push(dodgebuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.1) }, { type: "cr", id: crbuff.id, buff: 0.2 }, { type: "cd", id: cdbuff.id, buff: 0.5 }, { type: "dodge", id: dodgebuff.id, buff: 0.1 }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.1); myStats.cr += 0.2; myStats.cd += 0.5; myStats.dodge += 0.1; myStats.mg = 0; break;
-                case 4: embed.setThumbnail("https://i.imgur.com/TDbvwEX.png"); armorName = "Armadura Fairy. She will gain **10%** HP every round"; hpbuff = new buffInfo("+", Math.floor(myStats.maxhp * 0.1), 9999); mybuff.hp.push(hpbuff); mybuff.mg.push(mgbuff); matchStats.heap1 = [{ type: "hp", id: hpbuff.id, buff: Math.floor(myStats.maxhp * 0.1) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; /* addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp*0.1), { }); myStats.hp > myStats.maxhp ? myStats.hp = myStats.maxhp : false; */ myStats.mg = 0; break;
+                case 0: imageChange(embed, matchStats, myStats, "https://i.ibb.co/KFLzdqd/f.png"); armorName = "Fire Empress Armor. She gained **60%** ATK, decreased DEF by **20%**"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.6), 9999); defbuff = new buffInfo("+", -Math.floor(myStats.def * 0.2), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.6) }, { type: "def", id: defbuff.id, buff: -Math.floor(myStats.def * 0.2) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.6); myStats.def += -Math.floor(myStats.def * 0.2); myStats.mg = 0; break;
+                case 1: imageChange(embed, matchStats, myStats, "https://i.ibb.co/HG4tHWt/a.png"); armorName = "Adamantine Armor. She gained **60%** DEF, decreased ATK by **20%**"; atkbuff = new buffInfo("+", -Math.floor(myStats.atk * 0.2), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.6), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: -Math.floor(myStats.atk * 0.2) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.6) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += -Math.floor(myStats.atk * 0.2); myStats.def += Math.floor(myStats.def * 0.6); myStats.mg = 0; break;
+                case 2: imageChange(embed, matchStats, myStats, "https://i.ibb.co/VDPkR10/w.png"); armorName = "Heaven's Wheel Armor. She gained **25%** ATK and DEF"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.25), 9999); defbuff = new buffInfo("+", Math.floor(myStats.def * 0.25), 9999); mybuff.atk.push(atkbuff); mybuff.def.push(defbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.25) }, { type: "def", id: defbuff.id, buff: Math.floor(myStats.def * 0.25) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.25); myStats.def += Math.floor(myStats.def * 0.25); myStats.mg = 0; break;
+                case 3: imageChange(embed, matchStats, myStats, "https://i.ibb.co/TH4gNq5/c.png"); armorName = "Clear Heart Clothing. She gained **10%** ATK, **+20%** crit rate, **+50%** crit damage, and **+10%** dodge chance"; atkbuff = new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999); crbuff = new buffInfo("+", 0.2, 9999); cdbuff = new buffInfo("+", 0.5, 9999); dodgebuff = new buffInfo("+", 0.1, 9999); mybuff.atk.push(atkbuff); mybuff.cr.push(crbuff); mybuff.cd.push(cdbuff); mybuff.dodge.push(dodgebuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "atk", id: atkbuff.id, buff: Math.floor(myStats.atk * 0.1) }, { type: "cr", id: crbuff.id, buff: 0.2 }, { type: "cd", id: cdbuff.id, buff: 0.5 }, { type: "dodge", id: dodgebuff.id, buff: 0.1 }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; myStats.atk += Math.floor(myStats.atk * 0.1); myStats.cr += 0.2; myStats.cd += 0.5; myStats.dodge += 0.1; myStats.mg = 0; break;
+                case 4: imageChange(embed, matchStats, myStats, "https://i.imgur.com/TDbvwEX.png"); armorName = "Armadura Fairy. She will gain **10%** HP every round"; hpbuff = new buffInfo("+", Math.floor(myStats.maxhp * 0.1), 9999); mybuff.hp.push(hpbuff); mybuff.mg.push(mgbuff); myStats.heap1 = [{ type: "hp", id: hpbuff.id, buff: Math.floor(myStats.maxhp * 0.1) }, { type: "mg", id: mgbuff.id, buff: myStats.mg }]; /* addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp*0.1), { }); myStats.hp > myStats.maxhp ? myStats.hp = myStats.maxhp : false; */ myStats.mg = 0; break;
                 default: false; break;
             };
             notice.push(`\n✨ **${char.name}** changed to ${armorName}`);
@@ -1265,7 +1267,7 @@ export const abilities: Record<number, Ability> = {
             // Zeref Dragneel
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Zeref needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -1346,7 +1348,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Kiyotaka Ayanokouji increases his attack by 15/25/33% and gains +5% dodge chance
             // if (this.used === 1) {
-            //     embed.setThumbnail("https://i.ibb.co/y8MDgRD/g.gif");
+            //     imageChange(embed, matchStats, myStats, "https://i.ibb.co/y8MDgRD/g.gif");
             //     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999));
             //     myStats.atk = Math.floor(myStats.atk * 1.15);
             //     myStats.dodge += 0.05;
@@ -1355,7 +1357,7 @@ export const abilities: Record<number, Ability> = {
             // }
 
             switch (this.used) {
-                case 1: embed.setThumbnail("https://i.ibb.co/y8MDgRD/g.gif"); mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999)); myStats.atk = Math.floor(myStats.atk * 1.15); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** decides to get slightly serious. Increased ATK by **15%** and dodge by **+5%**`); break;
+                case 1: imageChange(embed, matchStats, myStats, "https://i.ibb.co/y8MDgRD/g.gif"); mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 9999)); myStats.atk = Math.floor(myStats.atk * 1.15); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** decides to get slightly serious. Increased ATK by **15%** and dodge by **+5%**`); break;
                 case 2: mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999)); myStats.atk = Math.floor(myStats.atk * 1.1); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** gets a little more serious. Increased ATK by **25%** and dodge by **+5%**`); break;
                 case 3: mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.08), 9999)); myStats.atk = Math.floor(myStats.atk * 1.08); myStats.dodge += 0.05; mybuff.dodge.push(new buffInfo("+", 0.05, 9999)); notice.push(`\n✨ **${char.name}** goes all out. Increased ATK by **33%** and dodge by **+5%**`); break;
                 default: false; break;
@@ -1388,7 +1390,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `40 💧`\n**Timeout**: `No`\n**Role**: `DPS (MR-shred, MD-boost)`\n\n__**Passive**__\n- Attacks deal MD hits\n- **+20%** MD\n\n__**Active**__ (✨)\n- **-30%** enemy's MR for **4** rounds (including turn of activation)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Tatsumaki decreases enemy magic resistance
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (matchStats.round === this.roundUsed) {
                 myStats.sm += this.cost;
                 matchStats.sendWarning({ content: "You can't stack Tatsumaki's ability", ephemeral: true });
@@ -1423,7 +1425,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Ichigo's ability comes in these 4 stages:
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.used--;
                 myStats.sm += 25;
                 matchStats.sendWarning({ content: `Ichigo Kurosaki needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
@@ -1479,7 +1481,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `4`\n**Cooldown:** `10 rounds`\n**Cost**: `100 💧`\n**Timeout**: `No`\n**Role**: `DPS (Frost, Freeze, DMG-delay)`\n\n__**Passive**__\nATTACK is altered:\n- Deal **90%** DMG with **+25%** critical rate\n- Inflicts **1x** `Frost`\n\nAt the start of the turn:\n- When the enemy has **8x** `Frost` or more: Consumes **8x** and freezes the enemy for **1** round\n- Frozen enemies take **+20%** DMG\n\n__**Active**__ (✨)\nFor **4** rounds:\n- Loses **10%** current HP every round\n- Inflicts **4x** `Frost` every round\n- Non-DoT DMG dealt by her is not dealt but stored as `Frozen Wounds`\n\nAfter **4** rounds:\n- Deals **200%** DMG\n- Deals **1.5x** `Frozen Wounds` as fixed DMG to the enemy\n- Frozen Wounds will not crit, but ignores DEF/MR, and cannot be dodged/blocked/countered\n\n__**Party**__ (👥)\n- Intervenes every **5** rounds and freezes the enemy for **1** round\n- Frozen enemies this way receive **+20%** DMG\n\nIf party contains Ichigo Kurosaki/Byakuya Kuchiki:\n- She evades first **3** lethal hits\n- They evade first **3** lethal hits",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Rukia Kuchiki
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             if (this.pause > matchStats.round) {
                 matchStats.sendWarning({ content: `Rukia needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
@@ -1491,7 +1493,7 @@ export const abilities: Record<number, Ability> = {
             const domainLast = 4;
             this.pause = matchStats.round + 10;
             myStats.rukiaUsedActive = true;
-            embed.setThumbnail("https://i.imgur.com/g56Plhs.png");
+            imageChange(embed, matchStats, myStats, "https://i.imgur.com/g56Plhs.png");
 
             // During Domain
             eStats.frost += 4;
@@ -1524,7 +1526,7 @@ export const abilities: Record<number, Ability> = {
                 if (eStats.hp < 0) eStats.hp = 0;
                 eStats.frozenwounds = 0;
 
-                embed.setThumbnail(myStatsFixed.thumbnail);
+                imageChange(embed, matchStats, myStats, myStatsFixed.thumbnail);
                 return AbilityResponse.SUCCESS;
             }));
 
@@ -1632,7 +1634,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `3 (CD: 3)`\n**Cost**: `55 💧`\n**Timeout**: `No`\n**Role**: `DPS/Support (Dodge, Followup Attack)`\n\n__**Passive**__\n- **+15%** permanent dodge rate\n- dodge rate won't exceed **80%**\n- ATTACK is altered to `Heroine Blast`, dealing **80%** DMG and has a **50%** chance of striking twice\nWhen the enemy deals a critical strike:\n- The enemy takes **+1%** DMG the next round for every **2%** dodge rate she has, up to **+25%** (CD: 4). Only the highest vulnerability effect takes place.\n\n__**Active**__ (✨)\n- **+10%** dodge rate permanently\n- ATTACK (`Heroine Blast`) is guaranteed to hit twice for **3** rounds\n\n__**Party**__ (👥)\n- **-15%** enemy's dodge rate\n- **+15%** ally's dodge rate",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 myStats.sm += this.cost;
                 matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
                 this.used--;
@@ -1641,7 +1643,7 @@ export const abilities: Record<number, Ability> = {
             this.pause = matchStats.round + 3;
 
             // +10% unremovable dodge rate
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             myStats.permdodge += 0.1;
             myStats.dodge += 0.1;
             if (myStats.dodge > 0.8) myStats.dodge = 0.8;
@@ -1757,7 +1759,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // David Martinez 
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `David needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}.`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -1794,7 +1796,7 @@ export const abilities: Record<number, Ability> = {
                     if (myStats.cr > 1) myStats.cr = 1;
                 };
             } else {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
             };
 
             return AbilityResponse.SUCCESS;
@@ -1900,7 +1902,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `50 💧`\n**Timeout**: `No`\n**Role**: `Support/DPS (Healing)`\n\n__**Passive**__\n- Restores **3%** missing HP\n\n__**Active**__ (✨)\n- Instantly restores **10%** missing HP\n\nFor **3** rounds:\n- **+25%** MD\n- Additionally restores **3%** missing HP\n- Attacks deal MD hits\n\n__**Party**__ (👥)\n- **+20%** MD\n- Restores **5%** missing HP every round",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Luminous increases her magic damage for 3 rounds
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (matchStats.round < this.roundUsed + 3) {
                 myStats.sm += this.cost;
                 matchStats.sendWarning({ content: "You can't stack Luminous' ability", ephemeral: true });
@@ -1921,12 +1923,12 @@ export const abilities: Record<number, Ability> = {
             // Change image after 3 rounds
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 myStats.mdChance -= 1;
-                embed.setThumbnail(myStatsFixed.thumbnail || char.image);
+                imageChange(embed, matchStats, myStats, myStatsFixed.thumbnail || char.image);
 
                 return AbilityResponse.SUCCESS;
             }));
 
-            embed.setThumbnail("https://i.ibb.co/NKnp3KM/luminous.png");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/NKnp3KM/luminous.png");
             notice.push(`\n✨ **${char.name}** increased her MD by **25%** for 3 rounds!`);
             this.roundUsed = matchStats.round;
 
@@ -1963,7 +1965,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `5% max HP`\n**Timeout**: `No`\n**Role**: `DPS (Mana-losing, Healing, Counter, Anti-dragon)`\n\n__**Passive**__\n- Begins battles by countering the next **3** hits (stackable)\n- When she is ready to counter a hit: **+25%** critical rate & critical DMG\n- When against dragons: **+20%** ATK\n- At the start of every round, if available, consumes **25** 💧 to restore **6%** max HP (once every round)\n- Gains **+25%** class XP\n\n__**Active**__ (✨)\n- **+25%** ATK for **1** round",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Victoria gains 20% more class xp. Has 20% increased ATK if she fights against a dragon.
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (matchStats.round === this.roundUsed) {
                 this.usedThisRound++;
                 if (this.usedThisRound >= 3) {
@@ -2042,12 +2044,12 @@ export const abilities: Record<number, Ability> = {
             const stealMana = Math.min(eStats.sm, 15);
             cost -= stealMana;
             if (myStats.sm < cost) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${cost}\\💧)`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             }
             // if (eStats.sm < 20) {
-            //     matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            //     noTimeout(matchStats, myStats);
             //     myStats.sm += 30;
             //     matchStats.sendWarning({ content: "Your enemy needs **20**💧 to activate", ephemeral: true });
             //     return AbilityResponse.FAILURE;
@@ -2098,7 +2100,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "Uses: `1 + Unlimited (CD: 5)`\nCost: `50% HP, 5% current hp per round | 20% HP`\nTimeout: `No`\nTags: `DPS (Mana burn, Absolute DMG, Burst survival)`\n\n__**Passive**__:\n- Dalus has **2** states : PAST & PRIME.\n- To equip the shell, do `/item equip item:broken shell` (PAST state)\n- To remove the shell, do `/item equip item:remove shell` (PRIME state)\n\nIf in PRIME state:\n- Enhances active (✨) effects\n- Faced by Kisogi’s intervention every **5th** turn (boosting enemy’s ATK & MD by **2%**)\n\n”Impish Glee”:\n- Evades the **1st** lethal hit (stackable)\n- Afterwards, immediately gains a shield with **100%** of his max HP before setting his max HP to **1**\n- For the next **5** turns: Mana regeneration **+20** 💦.\n\n__**Active**__ (✨):\n- Summons [Rosie] for the rest of the fight.\n- Will now expend all mana at the start of every round\n- In return gain a **1**/**2%** ATK increase for every **1** 💧consumed (Up to 25💧), lasting for that round.\n\n- Following the mana consumption, [Rosie] deals **5%** of the enemy's max HP (capped at 12/24% of Dalus ATK) as absolute DMG (Ignores DEF/MR).\n- Overflowing damage exceeding cap will instead be converted into HP for Dalus, up to **7**/**12%** of his max HP.\n\nIf he is in his PRIME state:\n- May use his ability again with no timeout\n- Sacrifices **20%** of his current HP\n- Mana regeneration **+20** 💦 for the next **3** rounds\n\n__**Party Ability**__ (👥):\n- **-20%** DEF & MR for both ally & enemy (Up to 2x damage)\n- Summons [Rosie] every turn: Deals **8%** ATK to the enemy as undodgeable absolute DMG.\n\nIf Kisogi is in the party: previous party effect disabled. Instead:\n- The ally will deal **10%** ATK to the enemy as undodgeable absolute dmg with **100%** critical rate every round.",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Dalus
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             // Active (I)
             if (this.used === 1) {
@@ -2155,6 +2157,8 @@ export const abilities: Record<number, Ability> = {
             // Burst shield gain and stuff upon first death evasion
             matchStats.on("deathEvade", {
                 maxUsage: 1,
+                target: myStats,
+                caster: eStats,
                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     if (target === myStats) {
                         const shgain = myStats.maxhp;
@@ -2216,7 +2220,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "__**Uses**__: `2 (3 if in Prime state)`\n__**Cost**__: `18% current HP (🩸)`\n__**Timeout**__: `No`\n__**Tags**__: `DPS (Progressive, RNG, Burst)`\n\n__**Passive**__:\n\- He may equip “Broken shell” to convert to his PAST state, else he always fights in his PRIME state.\n-  To equip the shell, do `/item equip item:broken shell`. To remove the shell, do `/item equip item:remove shell`\n\nWhen in his PRIME state: His normal attack and active have *enhanced* effects, but he has **-20%** max HP\n\nATTACK is altered:\n> - Deals **80%**/**100%** MD to the foe.\n> - Has a **50%** chance (**75%** chance instead when in [Wild Dream], **100%** chance instead when in [??? Dream]) to activate ”Fantasy”\n\n”Fantasy”:\n- Applies **1**/**2** random effect(s) from `Trick` to the enemy\n- Applies **1**/**2** random effect(s) from `Treat` to himself.\n- Non-stat buffs last for 2 rounds, while immediate effects only last for that round.\n- `Trick` : **-12%** ATK/MD , **-12%** DEF/MR (Max 1.2x DMG), **-25%** critical rate, lose **10** 💧, Loses **4%** of Kisogi’s max HP\n- `Treat` : **+12%** ATK/MD , **+12%** DEF/MR , **+25%** critical rate, steals **10** 💧, restores **6%** missing HP.\n\n__**Active (✨)**__:\n__Core Mechanic__: Kisogi has **3** Dream states.\n\n`1.` [Light Dream (1st use of ✨) ] :\nAt the start of every round: Loses **50%** of total 💧 owned, but increases MD and critical damage by **1**/**2%**, lasting for the rest of the battle.\nUpon using ✨again, or after **15** rounds:\n- Exits the [Light Dream], and enters a [Wild Dream].\n\n`2.` [Wild Dream] :\n- **-14%**/**-28%** enemy’s MR permanently (Max 2x DMG) \n- Deals **5%**/**7%** undodgeable DMG for every **1%** of mana missing from the mana pool.\n- His attack’s chance to activate “Fantasy” is increased to **75%**.\n\n`3.` [??? Dream (3rd ✨) ] :\nRequirement: In PRIME state\n- Restore all missing HP\n- Lose **5%** max HP every round\n- Chance of activating “Fantasy” is increased to **100%** for **10** rounds\n- The total damage dealt by Kisogi and the enemy are tallied every round\n\nAfter **10** rounds:\n- If Kisogi dealt more damage: the increased chance of activating “Fantasy” is kept permanently.\n- Else: His max HP is set to **1** permanently, and the max HP DoT is removed.\n\n__**Party Ability (👥)**__: \n- Starting from the **6th** round: Apply **1** effect from `Treat` to the ally every round, lasting for **1** round.\n\nIf Dalus is in the party:- Allies have **+10%** ATK & MD, and **+7** mana regeneration.",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Kisogi
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             // dreamState: 0 = Light ; 1 = Wild ; 2 = ???
             // Active (I)
@@ -2489,7 +2493,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `16`\n**Cooldown**: `1 round`\n**Cost**: `50 💧`\n**Timeout**: `No`\n**Role**: `DPS (Burst, ATK-boost, DEF-shred)`\n\n__**Active**__ (✨)\n- Doubles ATK\n- **-50%** enemy's DEF (Max 4x DMG)\n- **10%** chance of failing this move and instead loses **5%** current HP\n\n__**Party**__ (👥)\n- **+20%** ATK",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // All Might doubles his ATK and reduces enemy def by half for the next attack. 10% chance of failure damaging himself for 5% HP
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (matchStats.round === this.roundUsed) {
                 myStats.sm += this.cost;
                 matchStats.sendWarning({ content: "You can't stack All Might's ability", ephemeral: true });
@@ -2526,10 +2530,10 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `9`\n**Cost**: `70💧, then 250 🪙`\n**Timeout**: `No`\n**Role**: `DPS/Support (Coin-scaling, Shield, Farming)`\n\n__**Passive**__\n- **+20%** coins from dungeons\n\n__**Active**__ (✨)\nFirst use:\n- Increases ATK (Based off gold in bank, up to **20%** with 100k 🪙)\nSecond use and remaining uses:\n- Increase ATK (Based off gold in bank, each instance up to **10%** with 100k 🪙)\n- Grant **7.5%** max HP shield",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Eliza
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             this.used--;
 
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
             const coins = Math.min(stats?.coins ?? 0, 100000);
 
             if (matchStats.round === this.roundUsed) {
@@ -2562,7 +2566,7 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n✨ **${char.name}** uses 250<:coins:872926669055356939> to gain **${atkbuff}** ATK and **${Math.floor(myStats.maxhp * 0.05)}** Shield`);
 
                     // Update users table
-                    await updateUsers(matchStats.interaction.user.id, {
+                    await updateUsers(matchStats.user, {
                         coins: { type: "increment", value: -250 },
                     });
                     break;
@@ -2577,7 +2581,7 @@ export const abilities: Record<number, Ability> = {
                     notice.push(`\n✨ **${char.name}** uses 250<:coins:872926669055356939> to gain **${atkbuff}** ATK and **${Math.floor(myStats.maxhp * 0.05)}** Shield`);
 
                     // Update users table
-                    await updateUsers(matchStats.interaction.user.id, {
+                    await updateUsers(matchStats.user, {
                         coins: { type: "increment", value: -250 },
                     });
                     break;
@@ -2616,7 +2620,7 @@ export const abilities: Record<number, Ability> = {
             const appliedIce = this.appliedIce++;
 
             if (dmg) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
 
                 eStats.def = Math.floor(eStats.def * 0.8); // Decrease DEF
 
@@ -2649,7 +2653,9 @@ export const abilities: Record<number, Ability> = {
                 this.messageEditTimeout = setTimeout(async () => {
                     try {
                         await message.edit({ files: [this.buffer] });
-                        embed.setImage(`attachment://file.jpg`);
+                        // embed.setImage(`attachment://file.jpg`);
+                        imageChange(embed, matchStats, eStats, `attachment://file.jpg`);
+
                     } catch (error) {
                         console.error('Failed to edit message with ice effect:', error);
                     }
@@ -2663,7 +2669,8 @@ export const abilities: Record<number, Ability> = {
                     this.messageEditTimeout = setTimeout(async () => {
                         try {
                             await message.edit({ files: [] });
-                            embed.setImage(eStats.image);
+                            // embed.setImage(eStats.image);
+                            imageChange(embed, matchStats, eStats, eStats.image);
                         } catch (error) {
                             console.error('Failed to edit message to remove ice effect:', error);
                         }
@@ -2706,7 +2713,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Juliette
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Juliette needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -2714,9 +2721,9 @@ export const abilities: Record<number, Ability> = {
             this.pause = matchStats.round + 7;
 
             // Get user inv
-            const inv = await getUserSchema(matchStats.interaction.user.id);
+            const inv = await getUserSchema(matchStats.user);
             if (!inv) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: "You don't have any fish in your inventory.", ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -2737,7 +2744,7 @@ export const abilities: Record<number, Ability> = {
 
             // Return if not enough fish (10 cost)
             if (remainingFishCost > 0) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Not enough fish in your inventory **${10 - remainingFishCost}**/10`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -2748,7 +2755,7 @@ export const abilities: Record<number, Ability> = {
             Object.entries(fishToConsume).forEach(([key, val]) => {
                 updateItems[key] = -val;
             });
-            await updateUsers(matchStats.interaction.user.id, {
+            await updateUsers(matchStats.user, {
                 items: { type: "merge_json", value: updateItems },
             });
 
@@ -2777,7 +2784,7 @@ export const abilities: Record<number, Ability> = {
             myStats.oceansLamentStacks = 0;
 
             // Get Fish Inv
-            const inv = await getUserSchema(matchStats.interaction.user.id);
+            const inv = await getUserSchema(matchStats.user);
             if (!inv) return AbilityResponse.FAILURE;
 
             // Get Total Amount of Fish
@@ -2821,7 +2828,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `3`\n**Cooldown**: `1 round`\n**Cost**: `33% max HP`\n**Timeout**: `Yes`\n**Role**: `DPS (Sacrificial, Burst)`\n\n__**Passive**__\n- **+20%** critical rate\n- Loses **4%** max HP every round\n- Loses all shield at the start of every round\n- Gains **+25%** class XP\n\n__**Active**__ (✨)\n- Deals **140%** DMG\n\n__**Party**__ (👥)\n- Has a **25%** chance to deal a hit to ally with **1.33x** critical damage.",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Luminous Alter
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (matchStats.round === this.roundUsed) {
                 if (++this.usedThisRound >= 1) {
                     matchStats.sendWarning({ content: "You can use Luminous (alter)'s ability only once per round.", ephemeral: true });
@@ -2886,7 +2893,7 @@ export const abilities: Record<number, Ability> = {
             // Nao Tomori
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.used--;
                 matchStats.sendWarning({ content: `Nao Tomori needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
@@ -2939,7 +2946,7 @@ export const abilities: Record<number, Ability> = {
                 } else {
                     const stampede = await getLatestStampede();
 
-                    const points = Math.min(200, stampede?.participation?.[matchStats.interaction.user.id]?.[1] || 0);
+                    const points = Math.min(200, stampede?.participation?.[matchStats.user]?.[1] || 0);
 
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * (0.002 * points)), 9999));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * (0.002 * points)), 9999));
@@ -2976,7 +2983,7 @@ export const abilities: Record<number, Ability> = {
     //     desc: "**Total Usage**: `Unlimited // 2`\n**Cost**: `Every 5 Blitz automatically // 0 💧 manually to quit` \n**Timeout**: `Automatic / No`\n**Role**: `DPS (Initiative, Blitz, Dodge+Crit)`\n\nWith speedy reflexes and a lack of motivation to spend time for trivial matters, Nagi gains **5x** `Initiative` upon entering battle. Without `Initiative`, he becomes consumed by boredom and loses **4%** current HP every turn.\n\nDodging and countering grants him **3x** `Initiative`, while dealing a critical strike grants him **1x** `Blitz` and **+2%** counter chance, up to **20%**.\n\n`Initiative` : Decreases by **1x** after every round. The inflicted has **+5%** critical rate for every stack.\n\n`Blitz` : At the start of the round, when **4x** are available, consumes **4x** and enters the __FLOW state__ that round. If he already has `Initiative`, he gains **25%** block rate, **50%** critical DMG, and decreases the enemy's DEF/MR by **25%** for that turn. Else, grants **5x** `Initiative`.\n\nAfter every **4** times of him entering __FLOW state__, he will cast his Active -- Five-Shot Fake Valley Shot immediately, dealing **150%** DMG.\n\nHowever, if you force him by using `✨` manually, something wrong might happen~\n-# Do it twice and he'll leave. Just don't-!\n\nIn a party, he has a **20%** chance to intervene every turn, attempting a Zero Reset Turn, allowing the ally to counter the next incoming hit.",
     //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, ...list) {
     //         // Seishirou Nagi: https://discord.com/channels/927257132624130119/1238325252946395217
-    //         matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //         noTimeout(matchStats, myStats);
     //         myStats.nagiQuit ??= 0;
     //         myStats.nagiQuit++;
     //         if (myStats.nagiQuit === 1) notice.push(`\n🙁 Can't be bothered to think about it...`);
@@ -3162,7 +3169,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // March 7th
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.used--;
                 myStats.sm += this.cost;
                 matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
@@ -3231,7 +3238,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `5 rounds`\n**Cost**: `60 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (DoT - Shock)`\n\n__**Passive**__\n- ATTACK is altered to deal **100%** DMG + have a **35%** chance to apply Shock\n- Repeated Shock applications will not stack, instead they only refresh the duration of the existing Shock\n`Shock` : The enemy takes **25%** of the inflicted DMG as DoT for **4** rounds\n\n__**Active**__ (✨)\n- Deals **120%** physical DMG + **70%** magical DMG\n- Doubles effects of HP debuffs (e.g. Drain, Burn, Bleed) on the enemy for **2** rounds \n\n__**Party**__ (👥)\n- Allies have a **30%** chance to additionally deal **60%** DMG\n- This attack has a **25%** chance to apply Shock\n- `Shock`: The enemy takes **50%** of the inflicted DMG over **3** rounds as DoT",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Kafka
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
                 matchStats.sendWarning({ content: `Kafka needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
@@ -3295,7 +3302,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Blade (HSR)
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 myStats.sm += this.cost;
                 matchStats.interaction.followUp({ content: `Blade needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
@@ -3502,7 +3509,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited (CD: 6) [✨] // Unlimited (CD: 6) [❌]`\n**Cost**: `40 💧[✨] // All the “BoL” currently stacked [❌]`\n**Timeout**: `No / Yes`\n**Role**: `DPS (Bond of Life, Burst heal)`\n\n__**Core Mechanic**__:\n- Bond of Life (`BoL`) prevents healing from other sources\n- Every **1%** `BoL` is equal to **1%** of your max HP\n- You can have **200%** `BoL` at most anytime\n- Consuming any `BoL` allows you heal the equivalent, up to **50%** max HP\n- For every **10%** `BoL`, you have **+1%** DMG mitigation\n\n__**Active**__ (✨)\n- Gain `BoL` equivalent to **75%** of max HP\n- Inflict Blood-Debt Directive* on the enemy for **6** rounds\n\n*Blood-Debt Directive* : The inflicted cannot heal. At the start of every round, they take **7.5%** of her `BoL` as unamplified absolute undodgeable DMG (ignores DEF/MR). This also consumes **5%** `BoL` in the process.\n\n__**Passive**__\nHer ATTACK (🚫) is altered:\n- Deals **100%** damage, scaling increased by **1%** for every **5%** `BoL` owned. Afterwards, consumes up to **5%** `BoL`.\n\nHer class skill (❌) is altered:\n- Clears any *Blood-Debt Directive*.\n- Then, deals unamplified absolute undodgeable DMG (ignores DEF/MR) equal to all of her `BoL`\n- Alas, resets all `BoL` owned. If Blood-Debt Directive was cleared previously, immediately gains `BoL` equal to **125%** max HP",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Arlecchino
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
             if (this.pause > matchStats.round) {
                 matchStats.interaction.followUp({ content: `Arlecchino needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
@@ -3579,7 +3586,7 @@ export const abilities: Record<number, Ability> = {
                 "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                     let cd = this.bolLastCleared + 6 - matchStats.round;
                     if (cd > 0) {
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         matchStats.interaction.followUp({ content: `Arlecchino needs to rest ${cd} more ${cd === 1 ? "round" : "rounds"}`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     } else {
@@ -3628,7 +3635,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `110 💧`\n**Timeout**: `No/No`\n**Role**: `DPS (Marking, Burst survival)`\n\n__**Passive**__\n- Records DMG taken\nAt the start of the turn, if she's below **33%** HP:\n- Gains a shield equivalent to DMG taken (Up to **100%** of max HP, usable once in battle)\n- Stuns the enemy for **2** turns\n\n__**Active**__ (✨)\n80 💧: Marks enemy with `Seed` for **2** rounds, repeated markings extend duration.\nAttacks against marked enemies have the following properties:\n- **+30%** critical rate (+45% when in temple)\n- Ignore **15%** DEF & MR (-22.5% when in temple)\n- Critical hit restores **6** 💧 (9 when in temple)\n\n110 💧: Summons temple for **4** rounds\n- Marking ability costs **50%** less but has **+50%** effectiveness (40 cost, mark for 4 rounds)\n- When having sufficient mana, immediately follows up with her marking skill.\n\nNotes: If temple is inactive, always prioritizes summoning temple before using marking\n\n__**Party**__ (👥)\n- Marks enemy for **1** round every **3** rounds.\n- Hitting marked enemy instead grants **9** 💧. The rest of the marked effects are as the same as her passive.",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Nahida
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             const cheapmark = () => {
                 if (myStats.sm >= 40) {
@@ -3984,7 +3991,7 @@ export const abilities: Record<number, Ability> = {
 
             // Check if day time for the first 3 skill uses
             if (roundTime > 2 && this.used <= 3) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `${this.used === 3 ? "Final Prominence" : "Crazy Prominence"} can only be used during day time (in ${6 - roundTime} rounds)`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
@@ -3995,7 +4002,7 @@ export const abilities: Record<number, Ability> = {
             if (this.used <= 3) {
                 let mana_cost = (this.used === 3) ? 80 : 50;
                 if (this.cost + mana_cost > myStats.sm) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                     myStats.sm += this.cost;
                     this.used--;
@@ -4006,7 +4013,7 @@ export const abilities: Record<number, Ability> = {
 
             let atkbuff = 1;
             if (this.used === 4) { // Cruel Sun: Every 1 Heat -> +1% critical rate
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 if (myStats.heat < 0) {
                     this.used--;
                     matchStats.sendWarning({ content: `**${char.name}** has no heat to summon a miniature sun!`, ephemeral: true });
@@ -4131,7 +4138,7 @@ export const abilities: Record<number, Ability> = {
 
             // Check if enough mana
             if (mana_cost > myStats.sm) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -4144,7 +4151,7 @@ export const abilities: Record<number, Ability> = {
                     eStats.vulnerability += this.hasArtemis ? 0.25 : 0.15;
                     notice.push(`\n✨ **${this.hasArtemis ? "Artemis" : char.name}** applied vulnerability, **${enemy.name}** will now take **${Math.round((eStats.vulnerability - 1) * 100)}%** more damage for the duration of the domain`);
                 } else {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: "Domain of Ascendancy can only be used once", ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -4152,7 +4159,7 @@ export const abilities: Record<number, Ability> = {
             };
 
             if (this.used === 1) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 myStats.sm -= mana_cost;
 
                 this.domainLastRound = matchStats.round + domainLast;
@@ -4252,7 +4259,7 @@ export const abilities: Record<number, Ability> = {
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             // User has Artemis?
 
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             this.hasArtemis = stats?.chars.includes(17689) ?? false;
 
@@ -4301,7 +4308,7 @@ export const abilities: Record<number, Ability> = {
 
             // Check if enough mana
             if (mana_cost > myStats.sm) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -4321,7 +4328,7 @@ export const abilities: Record<number, Ability> = {
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 1.3, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                     };
                 } else {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: "Domain of Sanction can only be used once", ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -4329,7 +4336,7 @@ export const abilities: Record<number, Ability> = {
             };
 
             if (this.used === 1) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 myStats.sm -= mana_cost;
                 this.domainLastRound = matchStats.round + domainLast;
 
@@ -4380,7 +4387,7 @@ export const abilities: Record<number, Ability> = {
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             eStats.vulnerability ??= 1;
             // User has Apollo?
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             this.hasApollo = stats?.chars.includes(17688) ?? false;
 
@@ -4439,7 +4446,7 @@ export const abilities: Record<number, Ability> = {
                             ebuff.atk.push(poisonAtkBuff);
                             ebuff.md.push(poisonMdBuff);
                         } else if (debuffType === 3) { // Paralyse
-                            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                            noTimeout(matchStats, myStats);
                         };
                     };
 
@@ -4463,7 +4470,7 @@ export const abilities: Record<number, Ability> = {
             // Gintoki EX
             if (this.pause > matchStats.round) {
                 myStats.sm += this.cost;
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Gintoki needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -4552,181 +4559,181 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    // "17772": {
-    //     usage: 5,
-    //     used: 0,
-    //     cost: 0,
-    //     pause: -7,
-    //     desc: "**Total Usages**: `5 (CD: 10)`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Type**: DPS\n\nEntering battle, he converts all MD into ATK (Up to **+12%** ATK), and always *deals physical DMG*. His starting mana and mana regeneration is set to **0**. On top of that, he has **10** cream puffs (<:creampuff:1409383229844095137>). So long he has creampuffs, he diverts his attention on guarding them, having **-15%** critical rate & critical DMG, but **+30%** block rate. At the start of every round, he consumes **1x** cream puff, increasing ATK by **2%**. Once all creampuffs are consumed/lost, he will no longer guard.\n\nAfter **5** DEFENDs, he can block attacks with his muscles even while attacking (Up to 30% chance). After another DEFEND, he consumes all cream puffs, losing and transferring every **3%** block rate to **1%** personal counter chance (Up to 33%), lasting permanently.\n\nIf he no longer has creampuffs, he may use his ability to enter Unlimited Physical Mode for **6** rounds, *transferring all personal counter chance to critical rate, and all dodge rate to critical DMG*. While in this form, he contracts his muscle, locking any incoming attacks. Upon being attacked after mash makes an action (e.g. via counter, retaliate, using a skill), the enemy loses momentum and is *knocked out this round, unable to do a normal ATK*.\nWhen he exits the mode, he decreases his DEF & MR by **15%** permanently.\n\nIn a party, he has a **75%** chance of intervening the battle every round, offering teammates a creampuff, each increasing their ATK by **2%** permanently (cumulative). Once **10** creampuffs are offered, instead has a **12%** chance to intervene every round, countering a hit that round (stackable).",
-    //     shortdesc: "__**Usage**__: `5 (CD: 10)` | __**Cost**__: `0 💧` | __**Type**__: `DPS (Physical, Block/Counter, Progressive)` | __**Timeout**__: `Yes`\n\n__**Passive**__ :\n- Converts all MD → ATK on entry (max **+12%**). Always deals Physical DMG. Mana & regen = **0**.\n- Starts with **10** `Cream Puffs`: while holding → **-15%** Crit Rate & Crit DMG, **+30%** Block. Each round consumes **1**, giving **+2%** ATK. No guarding once all are gone.\n- After **5** DEFENDs: can block while attacking (max 30%).\n- After **6th** DEFEND: consumes all `Cream Puffs` → every **3%** Block → **1%** Counter Chance (max 33%, permanent).\n\n__**Active (:sparkles:)**__ :\n- Should have no `Cream Puffs` →  triggers Unlimited Physical Mode (**6** rounds):\n- Converts Counter Chance → Crit Rate, Dodge → Crit DMG.\n- Enemy is stunned(cannot do normal ATK that round) if the enemy hits Mash after he makes an action (e.g. Counter, retaliate, using a damaging skill)\n- Exits with **-15%** permanent DEF & MR.\n\n__**Party effect**__(:busts_in_silhouette:): **75%** chance each round to give ally **1** `Cream Puff` (+2% ATK perm, stacks). After **10** are given → instead **12%** chance to counter once per round (stackable).",
-    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         // Mash Burnedead
-    //         if (this.pause > matchStats.round) {
-    //             myStats.sm += this.cost;
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //             matchStats.sendWarning({ content: `Mash Burnedead needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
-    //             this.used--;
-    //             return AbilityResponse.FAILURE;
-    //         };
+    "17772": {
+        usage: 5,
+        used: 0,
+        cost: 0,
+        pause: -7,
+        desc: "**Total Usages**: `5 (CD: 10)`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Type**: DPS\n\nEntering battle, he converts all MD into ATK (Up to **+12%** ATK), and always *deals physical DMG*. His starting mana and mana regeneration is set to **0**. On top of that, he has **10** cream puffs (<:creampuff:1409383229844095137>). So long he has creampuffs, he diverts his attention on guarding them, having **-15%** critical rate & critical DMG, but **+30%** block rate. At the start of every round, he consumes **1x** cream puff, increasing ATK by **2%**. Once all creampuffs are consumed/lost, he will no longer guard.\n\nAfter **5** DEFENDs, he can block attacks with his muscles even while attacking (Up to 30% chance). After another DEFEND, he consumes all cream puffs, losing and transferring every **3%** block rate to **1%** personal counter chance (Up to 33%), lasting permanently.\n\nIf he no longer has creampuffs, he may use his ability to enter Unlimited Physical Mode for **6** rounds, *transferring all personal counter chance to critical rate, and all dodge rate to critical DMG*. While in this form, he contracts his muscle, locking any incoming attacks. Upon being attacked after mash makes an action (e.g. via counter, retaliate, using a skill), the enemy loses momentum and is *knocked out this round, unable to do a normal ATK*.\nWhen he exits the mode, he decreases his DEF & MR by **15%** permanently.\n\nIn a party, he has a **75%** chance of intervening the battle every round, offering teammates a creampuff, each increasing their ATK by **2%** permanently (cumulative). Once **10** creampuffs are offered, instead has a **12%** chance to intervene every round, countering a hit that round (stackable).",
+        shortdesc: "__**Usage**__: `5 (CD: 10)` | __**Cost**__: `0 💧` | __**Type**__: `DPS (Physical, Block/Counter, Progressive)` | __**Timeout**__: `Yes`\n\n__**Passive**__ :\n- Converts all MD → ATK on entry (max **+12%**). Always deals Physical DMG. Mana & regen = **0**.\n- Starts with **10** `Cream Puffs`: while holding → **-15%** Crit Rate & Crit DMG, **+30%** Block. Each round consumes **1**, giving **+2%** ATK. No guarding once all are gone.\n- After **5** DEFENDs: can block while attacking (max 30%).\n- After **6th** DEFEND: consumes all `Cream Puffs` → every **3%** Block → **1%** Counter Chance (max 33%, permanent).\n\n__**Active (:sparkles:)**__ :\n- Should have no `Cream Puffs` →  triggers Unlimited Physical Mode (**6** rounds):\n- Converts Counter Chance → Crit Rate, Dodge → Crit DMG.\n- Enemy is stunned(cannot do normal ATK that round) if the enemy hits Mash after he makes an action (e.g. Counter, retaliate, using a damaging skill)\n- Exits with **-15%** permanent DEF & MR.\n\n__**Party effect**__(:busts_in_silhouette:): **75%** chance each round to give ally **1** `Cream Puff` (+2% ATK perm, stacks). After **10** are given → instead **12%** chance to counter once per round (stackable).",
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            // Mash Burnedead
+            if (this.pause > matchStats.round) {
+                myStats.sm += this.cost;
+                noTimeout(matchStats, myStats);
+                matchStats.sendWarning({ content: `Mash Burnedead needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                this.used--;
+                return AbilityResponse.FAILURE;
+            };
 
-    //         if (myStats.creampuff > 0) {
-    //             myStats.sm += this.cost;
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //             matchStats.sendWarning({ content: `Mash Burnedead needs to have no creampuffs to use this ability`, ephemeral: true });
-    //             this.used--;
-    //             return AbilityResponse.FAILURE;
-    //         };
+            if (myStats.creampuff > 0) {
+                myStats.sm += this.cost;
+                noTimeout(matchStats, myStats);
+                matchStats.sendWarning({ content: `Mash Burnedead needs to have no creampuffs to use this ability`, ephemeral: true });
+                this.used--;
+                return AbilityResponse.FAILURE;
+            };
 
-    //         this.pause = matchStats.round + 10;
+            this.pause = matchStats.round + 10;
 
-    //         const domainLast = 6;
+            const domainLast = 6;
 
-    //         // Convert all personal counterChance to critical rate
-    //         myStats.mashCounterChanceBefore = myStats.mashCounterChance;
-    //         myStats.cr += myStats.mashCounterChance;
-    //         myStats.mashCounterChance = 0;
+            // Convert all personal counterChance to critical rate
+            myStats.mashCounterChanceBefore = myStats.mashCounterChance;
+            myStats.cr += myStats.mashCounterChance;
+            myStats.mashCounterChance = 0;
 
-    //         // Convert all dodge rate to critical damage
-    //         myStats.cd += myStats.dodge;
-    //         myStats.dodge = 0;
+            // Convert all dodge rate to critical damage
+            myStats.cd += myStats.dodge;
+            myStats.dodge = 0;
 
-    //         // Ultimate Physical Mode Stance
-    //         myStats.mashStance = 1;
+            // Ultimate Physical Mode Stance
+            myStats.mashStance = 1;
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             // Mode effects                
-    //             myStats.cr += myStats.mashCounterChanceBefore;
-    //             myStats.cd += myStats.dodge;
-    //             myStats.dodge = 0;
-    //             return AbilityResponse.SUCCESS;
-    //         }, domainLast));
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Mode effects                
+                myStats.cr += myStats.mashCounterChanceBefore;
+                myStats.cd += myStats.dodge;
+                myStats.dodge = 0;
+                return AbilityResponse.SUCCESS;
+            }, domainLast));
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             // Regain personal counterChance
-    //             myStats.mashCounterChance = myStats.mashCounterChanceBefore;
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Regain personal counterChance
+                myStats.mashCounterChance = myStats.mashCounterChanceBefore;
 
-    //             // Reset stance
-    //             myStats.mashStance = 0;
+                // Reset stance
+                myStats.mashStance = 0;
 
-    //             // Lose 15% DEF & MR permanently
-    //             myStats.def -= Math.floor(myStats.def * 0.15);
-    //             myStats.mr -= Math.floor(myStats.mr * 0.15);
-    //             mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.15), 9999));
-    //             mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.15), 9999));
-    //             return AbilityResponse.SUCCESS;
-    //         }));
+                // Lose 15% DEF & MR permanently
+                myStats.def -= Math.floor(myStats.def * 0.15);
+                myStats.mr -= Math.floor(myStats.mr * 0.15);
+                mybuff.def.push(new buffInfo("+", -Math.floor(myStats.def * 0.15), 9999));
+                mybuff.mr.push(new buffInfo("+", -Math.floor(myStats.mr * 0.15), 9999));
+                return AbilityResponse.SUCCESS;
+            }));
 
-    //         notice.push(`\n💪🏻 **${char.name}** entered Unlimited Physical Mode for **${domainLast}** rounds!`);
+            notice.push(`\n💪🏻 **${char.name}** entered Unlimited Physical Mode for **${domainLast}** rounds!`);
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.mashCounterChance = 0;
-    //         myStats.mashStance = 0; // 0 = Default ; 1 = Unlimited Physical Mode
-    //         myStats.defUsed = 0;
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.mashCounterChance = 0;
+            myStats.mashStance = 0; // 0 = Default ; 1 = Unlimited Physical Mode
+            myStats.defUsed = 0;
 
-    //         myStats.counter ??= 0;
-    //         if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
+            myStats.counter ??= 0;
+            if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
 
-    //         myStats.creampuff ??= 0;
-    //         myStats.creampuff += 10; // Unique stack
+            myStats.creampuff ??= 0;
+            myStats.creampuff += 10; // Unique stack
 
-    //         myStats.sm = 0;
-    //         myStats.mg = 0;
-    //         mybuff.mg.push(new buffInfo("=", 0, 9999)); // Never gain mana
-    //         myStats.mana = 1;
+            myStats.sm = 0;
+            myStats.mg = 0;
+            mybuff.mg.push(new buffInfo("=", 0, 9999)); // Never gain mana
+            myStats.mana = 1;
 
-    //         const atkBuff = Math.floor(Math.min(myStats.md, myStats.atk * 0.12));
-    //         myStats.atk += atkBuff;
-    //         mybuff.atk.push(new buffInfo("+", atkBuff, 9999)); // Convert all MD to ATK, up to +12%
-    //         myStats.md = 0;
-    //         mybuff.md.push(new buffInfo("=", 0, 9999));
-    //         myStats.mdChance = -1; // Can never deal magical damage
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
+            const atkBuff = Math.floor(Math.min(myStats.md, myStats.atk * 0.12));
+            myStats.atk += atkBuff;
+            mybuff.atk.push(new buffInfo("+", atkBuff, 9999)); // Convert all MD to ATK, up to +12%
+            myStats.md = 0;
+            mybuff.md.push(new buffInfo("=", 0, 9999));
+            myStats.mdChance = -1; // Can never deal magical damage
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (myStats.mashCounterChance > Math.random()) myStats.counter++; // PersonalChance to counter
 
-    //             if (myStats.creampuff > 0) {
-    //                 myStats.creampuff--;
-    //                 myStats.atk += Math.floor(myStats.atk * 0.02);
-    //                 mybuff.atk.push(new buffInfo("*", 1.02, 9999)); // Boost ATK by 2%
-    //                 if (myStats.creampuff > 0) {
-    //                     myStats.cr -= 0.15;
-    //                     if (myStats.cr < 0) myStats.cr = 0;
-    //                     myStats.cd -= 0.15;
-    //                     myStats.br += 0.3;
-    //                 } else {
-    //                     notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** is out of creampuffs and exited Guard Stance.`);
-    //                 };
-    //             };
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+                if (myStats.creampuff > 0) {
+                    myStats.creampuff--;
+                    myStats.atk += Math.floor(myStats.atk * 0.02);
+                    mybuff.atk.push(new buffInfo("*", 1.02, 9999)); // Boost ATK by 2%
+                    if (myStats.creampuff > 0) {
+                        myStats.cr -= 0.15;
+                        if (myStats.cr < 0) myStats.cr = 0;
+                        myStats.cd -= 0.15;
+                        myStats.br += 0.3;
+                    } else {
+                        notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** is out of creampuffs and exited Guard Stance.`);
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
-    //             if (caster === eStats && myStats.mashStance === 1) {
-    //                 if (options.damage) {
-    //                     eStats.timeFrozen = true;
-    //                     eStats.frozenMessage = "was knocked out";
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === eStats && myStats.mashStance === 1) {
+                    if (options.damage) {
+                        eStats.timeFrozen = true;
+                        eStats.frozenMessage = "was knocked out";
 
-    //                     // When freeze is over
-    //                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                         eStats.timeFrozen = false;
+                        // When freeze is over
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            eStats.timeFrozen = false;
 
-    //                         return AbilityResponse.SUCCESS;
-    //                     }));
-    //                 };
-    //             };
-    //         });
+                            return AbilityResponse.SUCCESS;
+                        }));
+                    };
+                };
+            });
 
-    //         matchStats.on("DEF", {
-    //                 maxUsage: 6,
-    //                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-    //                     if (caster === myStats) {
-    //                         myStats.defUsed++;
-    //                         if (myStats.defUsed === 5) {
-    //                             myStats.brCap = 0.3;
-    //                             notice.push(`\n✨ Mash will now passively block attacks`);
-    //                             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                                 myStats.usedBlockRound = matchStats.round;
-    //                                 return AbilityResponse.SUCCESS;
-    //                             }, 9999));
-    //                         } else if (myStats.defUsed === 6) {
-    //                             myStats.creampuff = 0;
-    //                             const ccGain = Math.min((myStats.br / 3), 0.33);
-    //                             myStats.mashCounterChance += ccGain
-    //                             myStats.br = 0;
-    //                             mybuff.br.push(new buffInfo("=", 0, 9999));
-    //                             notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** lost all creampuffs and converted block rate to **${Math.floor(ccGain * 100)}%** counter chance.`);
-    //                         };
-    //                         return true;
-    //                     };
-    //                 },
-    //             });
+            matchStats.on("DEF", {
+                maxUsage: 6,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (caster === myStats) {
+                        myStats.defUsed++;
+                        if (myStats.defUsed === 5) {
+                            myStats.brCap = 0.3;
+                            notice.push(`\n✨ Mash will now passively block attacks`);
+                            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.usedBlockRound = matchStats.round;
+                                return AbilityResponse.SUCCESS;
+                            }, 9999));
+                        } else if (myStats.defUsed === 6) {
+                            myStats.creampuff = 0;
+                            const ccGain = Math.min((myStats.br / 3), 0.33);
+                            myStats.mashCounterChance += ccGain;
+                            myStats.br = 0;
+                            mybuff.br.push(new buffInfo("=", 0, 9999));
+                            notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** lost all creampuffs and converted block rate to **${Math.floor(ccGain * 100)}%** counter chance.`);
+                        };
+                        return true;
+                    };
+                },
+            });
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.creampuff ??= 0;
-    //         myStats.counter ??= 0;
+            return AbilityResponse.SUCCESS;
+        },
+        party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.creampuff ??= 0;
+            myStats.counter ??= 0;
 
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             // 75% chance to offer creampuff, up to 10
-    //             if (0.75 > Math.random() && myStats.creampuff < 10) {
-    //                 myStats.creampuff++;
-    //                 notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** has received a creampuff and have ${myStats.creampuff} creampuffs.`)
-    //             };
-    //             if (myStats.creampuff > 9) {
-    //                 if (0.12 > Math.random()) myStats.counter++;
-    //             };
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // 75% chance to offer creampuff, up to 10
+                if (0.75 > Math.random() && myStats.creampuff < 10) {
+                    myStats.creampuff++;
+                    notice.push(`\n<:creampuff:1409383229844095137> **${char.name}** has received a creampuff and have ${myStats.creampuff} creampuffs.`);
+                };
+                if (myStats.creampuff > 9) {
+                    if (0.12 > Math.random()) myStats.counter++;
+                };
 
-    //             // Gain 2% ATK for every creampuff
-    //             myStats.atk += Math.floor(myStats.atk * 0.02 * myStats.creampuff);
+                // Gain 2% ATK for every creampuff
+                myStats.atk += Math.floor(myStats.atk * 0.02 * myStats.creampuff);
 
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    // },
+            return AbilityResponse.SUCCESS;
+        },
+    },
     "18011": {
         usage: 9999,
         used: 0,
@@ -4740,7 +4747,7 @@ export const abilities: Record<number, Ability> = {
             let mask = myStats.maskinfo;
 
             if (mask === undefined) { // Maskless
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 if (this.used > 5) {
                     matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **5** times per fight.`, ephemeral: true });
                     this.used--;
@@ -4760,11 +4767,13 @@ export const abilities: Record<number, Ability> = {
                 mybuff.dodge.push(new buffInfo("+", 0.2, 2));
 
                 // Dodge Buff Last
-                matchStats.dodgebuffLast = 1;
-                matchStats.dodgebuff = 0.2;
+                const previousDodgeBuff = myStats.dodgebuff ?? 0;
+                myStats.dodgebuffLast = 1;
+                myStats.dodgebuff = 0.2;
+
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3 /* 3 rounds */, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    delete matchStats.dodgebuffLast;
-                    delete matchStats.dodgebuff;
+                    myStats.dodgebuff = previousDodgeBuff;
+                    delete myStats.dodgebuffLast;
 
                     return AbilityResponse.SUCCESS;
                 }));
@@ -4772,7 +4781,7 @@ export const abilities: Record<number, Ability> = {
                 notice.push(`\n✨ **${char.name}** increased dodge by **20%** for the next 2 rounds!`);
             } else if (mask === "phantasmal") { // Phantasmal Deathmask
                 if (this.used > 3) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **3** times per fight.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -4780,7 +4789,7 @@ export const abilities: Record<number, Ability> = {
 
                 let activeCost = 60;
                 if (myStats.sm < activeCost) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -4792,7 +4801,7 @@ export const abilities: Record<number, Ability> = {
                 ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.05), 2));
                 mybuff.sm.push(new buffInfo("+", 5, 2));
             } else if (mask === "verdant") { // Verdant Guardian Mask
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 if (this.used > 2) {
                     matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **2** times per fight.`, ephemeral: true });
                     this.used--;
@@ -4821,7 +4830,7 @@ export const abilities: Record<number, Ability> = {
                 notice.push(`\n✨ **${char.name}** will take **30%** less damage and heal **5%** of her max HP for the next 3 rounds!`);
             } else if (mask === "valkyrie") { // Valkyrie's Battle Mask
                 if (this.used > 3) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: `You can use **${char.name}**'s ability only **3** times per fight.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -4829,7 +4838,7 @@ export const abilities: Record<number, Ability> = {
 
                 let activeCost = 70;
                 if (myStats.sm < activeCost) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -4964,7 +4973,7 @@ export const abilities: Record<number, Ability> = {
             let maxHealth = Math.ceil(0.3 * myStats.maxhp);
             if (myStats.hp >= maxHealth) {
                 this.used--;
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `You need to have less than **${maxHealth}** HP to use Infinite Void.`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
@@ -5042,14 +5051,14 @@ export const abilities: Record<number, Ability> = {
 
                     if (myStats.gojoMugenIsActive) {
                         myStats.gojoMugenIsActive = false;
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         notice.push(`\n🛡️ **${char.name}** Mugen was deactivated!`);
                         return AbilityResponse.FAILURE;
                     };
 
                     let activeCost = 20;
                     if (myStats.sm < activeCost) {
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
@@ -5070,7 +5079,7 @@ export const abilities: Record<number, Ability> = {
 
                     let activeCost = (myStats.gojoClassUsed % 3) === 0 ? 40 : ((myStats.gojoClassUsed % 3) === 1 ? 50 : 80);
                     if (myStats.sm < activeCost) {
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${activeCost}\\💧)`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
@@ -5132,7 +5141,7 @@ export const abilities: Record<number, Ability> = {
 
             if (this.weaponType === "sword") {
                 // Ei
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
 
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}** used Musou no Hitotachi! She`, { atkMultiplier: 1.2, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, ignoreShield: true });
 
@@ -5146,7 +5155,7 @@ export const abilities: Record<number, Ability> = {
                 if (this.used === 1) {
                     if (myStats.sm < 100) {
                         this.used--;
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${100}\\💧)`, ephemeral: true });
                         myStats.sm += 60;
                         return AbilityResponse.FAILURE;
@@ -5173,14 +5182,14 @@ export const abilities: Record<number, Ability> = {
                     if (myStats.hp >= maxHealth) {
                         this.used--;
                         myStats.sm += 60;
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         matchStats.sendWarning({ content: `You need to have less than **${maxHealth}** HP.`, ephemeral: true });
                         return AbilityResponse.FAILURE;
                     };
 
                     if (myStats.sm < 90) {
                         this.used--;
-                        matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                        noTimeout(matchStats, myStats);
                         matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${90}\\💧)`, ephemeral: true });
                         myStats.sm += 60;
                         return AbilityResponse.FAILURE;
@@ -5278,7 +5287,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `65 💧`\n**Timeout**: `No`\n**Role**: `DPS (DoT - Firekiss)`\n\n__**Passive**__\n- ATTACK is altered to deal **100%** DMG and apply **1x** `Firekiss` for **3** rounds\n`Firekiss` : Deals **6%** DMG every round (Up to **5** stacks)\n\nWhen enemy is under HP-debuff:\n- **+10%** ATK & MD\n\n__**Active**__ (✨)\n- Deals **70%** DMG\n- Applies **2x** `Firekiss` for **3** rounds\n\n__**Party**__ (👥)\n- Successful ATTACK apply **1x** `Firekiss` for **2** rounds (Up to **3** stacks)",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Guinaifen
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             const dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.7, magicDamage: true });
 
@@ -5289,7 +5298,7 @@ export const abilities: Record<number, Ability> = {
                 };
             };
 
-            embed.setThumbnail("https://i.ibb.co/VWKDvfw/tenor.gif");
+            imageChange(embed, matchStats, myStats, "https://i.ibb.co/VWKDvfw/tenor.gif");
 
             return AbilityResponse.SUCCESS;
         },
@@ -5327,7 +5336,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `1`\n**Cost**: `120 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Mana-losing, Followup Attack, Nuke)`\n\n__**Passive**__\nEvery 10 sets owned of the following materials grant stat buffs:\n- `King's Crown` =✧= ATK **+1%** (Up to 30%)\n- `Monster Egg` =✧= MR **+0.75%** (Up to 22.5%)\n- `Dragon Scales` =✧= DEF **+0.75%** (Up to 22.5%)\n- `Pendant of Silence` =✧= Crit Rate **+0.5%** (Up to 15%)\n- `Devil Claws` =✧= Crit DMG **+1%** (Up to 30%)\n- `Odious Brain`: =✧= Dodge **+0.5%** (Up to 10%)\nNote:\n> 10 sets owned means owning 10 of that material type. E.g. you need 300 King's Crown in your inventory for the max 30% ATK buff. \n\n__**Active**__ (✨)\nBuffs himself permanently:\n- Successful attacks each deal additional **6%** damage for **2** rounds.\n- Critical hits drain **3.5%** of the enemy's max HP (or **7%** of own max HP if the enemy has more than twice of yours).\n- Dodging an attack steals **12%** of the enemy's current mana.\n\n__**Party**__ (👥)\n- He refuses to fight (Dies) when in a party with ability characters\n- When in a party where he is the sole ability, he has **+50%** max HP, ATK & MD, DEF & MR",
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
             // Sung Jin Woo EX | SJW EX
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             // Shadow Soldiers: Beru & Igris
             matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
@@ -5380,7 +5389,7 @@ export const abilities: Record<number, Ability> = {
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, increaseHp, {});
             };
 
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
             const items = stats?.items ?? {};
 
             const atkBuff = Math.floor(myStats.atk * Math.min(0.3, (items[663] ?? 0) * 0.001));
@@ -5420,7 +5429,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Boa Hancock EX
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Boa Hancock needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
@@ -5522,7 +5531,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited (max. 2 wisps)`\n**Cost**: `5 💧`\n**Timeout**: `No`\n**Role**: `Support (Block/Counter/Tank+DoT-Immunity/Crit)`\n\n__**Passive**__\nFor every **1** refinement level on your favorite character (max **6**):\n- Begins battle with **+10** Mana (max +60)\n- **+5%** ATK/MD (max 30%)\n- **+3%** dodge rate (max **+18%**).\n\n__**Active**__ (✨)\nRolls a random wisp (click ✨ again to lock it), up to **1** per round. Locking lowers Urashima's mana regeneration by **5** permanently.\n-# (1) = locked once, (2) = locked same wisp twice.\n\n__Ursae Majoris:__\n- (1) Gives the “(2)” effect to any other wisp\n- (2) **+20%** max HP\n\n__Andromedae:__\n- (1) **+13%** Block Rate\n- (2) **+2%** Block Rate (max. **+12%**) for every successful consecutive block\n\n__Phoenicis__:\n- (1) **+212** MR (20% DMG reduction) + Immunity to DoT\n- (2) **+340** total DEF/MR (**30%** DMG reduction)\n\n__Draconis:__\n- (1) **+10%** Counter chance, every counter grants **+2%** critical rate and **+3%** critical DMG (Up to 10 times)\n- (2) Restores HP equal to **25%** of DMG avoided upon countering, up to **15%** of his missing HP.\n\n__**Party**__ (👥)\nAllies summon a Wisp on the first turn:\n- Rotating wisps with active (✨)\n- Lock an effect with DEFEND (🛡️)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Urashima EX
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             if (this.lockedWisps.length > 1) {
                 matchStats.sendWarning({ content: `You have already locked **2** wisps.`, ephemeral: true });
@@ -5595,8 +5604,8 @@ export const abilities: Record<number, Ability> = {
                         });
                     } /*else if (firstWisp === 4) {
                         // Centauri
-                        matchStats.critbleed = true;
-                        matchStats.critbleedlast = 2;
+                        myStats.critbleed = true;
+                        myStats.critbleedlast = 2;
                     };*/
                 };
             } else if (this.rolledWisp === 1) {
@@ -5658,12 +5667,12 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
         passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             const favcharref = stats?.char_ref[stats?.favchar ?? 21929];
 
             /*// Get SS shards
-            const stats = await getUserSchema(matchStats.interaction.user.id);
+            const stats = await getUserSchema(matchStats.user);
 
             const shardStacks = Math.min(5, (stats?.ssshard ?? 0) / 50);
             */
@@ -5708,7 +5717,7 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.ability = {
                 emoji: tempAbility?.emoji,
                 run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
 
                     if (this.pool.length === 0) this.pool.push(1, 2, 3); // 4
                     this.pool.sort(() => Math.random() - 0.5);
@@ -5722,7 +5731,7 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.def = {
                 emoji: tempDef?.emoji,
                 run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
 
                     if (tempAtk) myStats.replaceButton.atk = tempAtk;
                     else delete myStats.replaceButton.atk;
@@ -5777,7 +5786,7 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.atk = {
                 emoji: tempAtk?.emoji,
                 run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     notice.push(`\n🔅 **Urashima**: Please use ${tempAbility?.emoji || "✨"} to roll a wisp.`);
 
                     return AbilityResponse.SUCCESS;
@@ -5787,7 +5796,7 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.cskill = {
                 emoji: tempSkill?.emoji,
                 run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     notice.push(`\n🔅 **Urashima**: Please use ${tempAbility?.emoji || "✨"} to roll a wisp.`);
 
                     return AbilityResponse.SUCCESS;
@@ -5807,7 +5816,7 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Lucy EX / Lucyna EX
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Lucy needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
@@ -5878,14 +5887,14 @@ export const abilities: Record<number, Ability> = {
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Acheron EX
             if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `Acheron needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
 
             if (this.lotus < 9) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `You need 9 stacks of 🪷 (current: **${this.lotus}**🪷)`, ephemeral: true });
                 this.used--;
                 return AbilityResponse.FAILURE;
@@ -5969,170 +5978,170 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    // "22309": {
-    //     usage: 9999,
-    //     used: 0,
-    //     cost: 0,
-    //     pause: -5,
-    //     desc: "**Total Usage:** `Unlimited (CD: 4)`\n**Cost:** `0 💧`\n**Timeout:** `Yes`\n**Role:** `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n\Phrolova has **3** states – Compose, Reincarnate (lasts for 1 action), and Maestro. She starts off in her __Compose__ state, and gains `Volatile Notes` (🎶) via different means to enhance her capabilities.\n\nDuring her __Compose__ state:\n> - Her ATK is altered to deal **90%** damage. The **3rd** ATK additionally causes her to enter the __Reincarnate__ state for the next ATK/DEF\n\nDuring her __Reincarnate__ state:\n> - ATK is altered to deal **110%** damage and gain **1** 🎶\n> - DEF is altered to apply bleed on the enemy (**12%** of wielder’s max HP over **3** rounds) and gain **1** 🎶\n> - If she has **6** 🎶 after the action, consumes all 🎶 to activate Scarlet Coda, dealing **80%** damage and *stunning the enemy*. Then, she enters the __Maestro__ state for **6** rounds\n\nDuring her __Maestro__ state:\n> - Shares damage with Hecate, deflecting **28%** of damage taken (does not take damage and reflects it instead)\n> - ATK is altered to deal **120%** damage. The **3rd** ATK instead deals **140%** damage\n> - DEF is altered to double the damage deflect from hecate this round to **56%**\n\nBy the end of the __Maestro__ state: Deals **150%** damage\n### Come, let us finish this performance we've all been waiting for. Together\nWhen she is in the __Compose__ state: Her active (✨) deals **100%** damage and immediately causes her to enter the __Reincarnate__ state for the next ATK/DEF. This has a cooldown of **4** rounds.\n\nIn a party, Phrolova summons Hecate to deal **80%** damage twice every **10** rounds, after which the ally’s ATK & MD is boosted by **2%**, up to **5** times.",
-    //     shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n__**Passive**__\n- ATK (:crossed_swords:) is altered to do **90%** dmg. Every **3** attacks -> Enter __Reincarnate__ state\n\n__Core Mechanic__: Gaining notes for the Maestro state\n### During __Reincarnate__ state (ends after 1 action):\n- :crossed_swords:  -> Deals **110%** dmg and gain **1** :notes: \n- :shield:  -> Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) and gain **1** :notes:\n- With **6** :notes: -> Automatically deals **80%** damage and enters __Maestro state__ for **6** rounds\n\n### During __Maestro__ state (ends after 1 action):\n- Deflects **28%** of damage taken (Doesn't take but reflects)\n- :crossed_swords: -> Deal **120%** dmg. Every **3rd** ATK deals **140%** instead\n- :shield: -> Deflects another **28%** of damage taken\n\n__**Active**__ (:sparkles:)\n- Enter __Reincarnate__ state if she isn't in Reincarnate/Maestro state\n\n__**Party**__ (:busts_in_silhouette:)\n- Every **10th** turn: Deal **80%** damage twice and boost ATK & MD by **2%** up to **5** times.",
-    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         // Phrolova
+    "22309": {
+        usage: 9999,
+        used: 0,
+        cost: 0,
+        pause: -5,
+        desc: "**Total Usage:** `Unlimited (CD: 4)`\n**Cost:** `0 💧`\n**Timeout:** `Yes`\n**Role:** `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n\Phrolova has **3** states – Compose, Reincarnate (lasts for 1 action), and Maestro. She starts off in her __Compose__ state, and gains `Volatile Notes` (🎶) via different means to enhance her capabilities.\n\nDuring her __Compose__ state:\n> - Her ATK is altered to deal **90%** damage. The **3rd** ATK additionally causes her to enter the __Reincarnate__ state for the next ATK/DEF\n\nDuring her __Reincarnate__ state:\n> - ATK is altered to deal **110%** damage and gain **1** 🎶\n> - DEF is altered to apply bleed on the enemy (**12%** of wielder’s max HP over **3** rounds) and gain **1** 🎶\n> - If she has **6** 🎶 after the action, consumes all 🎶 to activate Scarlet Coda, dealing **80%** damage and *stunning the enemy*. Then, she enters the __Maestro__ state for **6** rounds\n\nDuring her __Maestro__ state:\n> - Shares damage with Hecate, deflecting **28%** of damage taken (does not take damage and reflects it instead)\n> - ATK is altered to deal **120%** damage. The **3rd** ATK instead deals **140%** damage\n> - DEF is altered to double the damage deflect from hecate this round to **56%**\n\nBy the end of the __Maestro__ state: Deals **150%** damage\n### Come, let us finish this performance we've all been waiting for. Together\nWhen she is in the __Compose__ state: Her active (✨) deals **100%** damage and immediately causes her to enter the __Reincarnate__ state for the next ATK/DEF. This has a cooldown of **4** rounds.\n\nIn a party, Phrolova summons Hecate to deal **80%** damage twice every **10** rounds, after which the ally’s ATK & MD is boosted by **2%**, up to **5** times.",
+        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `4 rounds`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Support (Nuke, Bleed, Deflect, Progressive)`\n\n__**Passive**__\n- ATK (:crossed_swords:) is altered to do **90%** dmg. Every **3** attacks -> Enter __Reincarnate__ state\n\n__Core Mechanic__: Gaining notes for the Maestro state\n### During __Reincarnate__ state (ends after 1 action):\n- :crossed_swords:  -> Deals **110%** dmg and gain **1** :notes: \n- :shield:  -> Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) and gain **1** :notes:\n- With **6** :notes: -> Automatically deals **80%** damage and enters __Maestro state__ for **6** rounds\n\n### During __Maestro__ state (ends after 1 action):\n- Deflects **28%** of damage taken (Doesn't take but reflects)\n- :crossed_swords: -> Deal **120%** dmg. Every **3rd** ATK deals **140%** instead\n- :shield: -> Deflects another **28%** of damage taken\n\n__**Active**__ (:sparkles:)\n- Enter __Reincarnate__ state if she isn't in Reincarnate/Maestro state\n\n__**Party**__ (:busts_in_silhouette:)\n- Every **10th** turn: Deal **80%** damage twice and boost ATK & MD by **2%** up to **5** times.",
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            // Phrolova
 
-    //         // Whispers of a Fleeting Dream
-    //         if (myStats.phrState === 1) {
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //             this.used--;
-    //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Reincarnate__ state`, ephemeral: true });
-    //             return AbilityResponse.FAILURE;
-    //         };
+            // Whispers of a Fleeting Dream
+            if (myStats.phrState === 1) {
+                noTimeout(matchStats, myStats);
+                this.used--;
+                matchStats.sendWarning({ content: `**${char.name}** is already in the __Reincarnate__ state`, ephemeral: true });
+                return AbilityResponse.FAILURE;
+            };
 
-    //         if (myStats.phrState === 2) {
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //             this.used--;
-    //             matchStats.sendWarning({ content: `**${char.name}** is already in the __Maestro__ state`, ephemeral: true });
-    //             return AbilityResponse.FAILURE;
-    //         };
+            if (myStats.phrState === 2) {
+                noTimeout(matchStats, myStats);
+                this.used--;
+                matchStats.sendWarning({ content: `**${char.name}** is already in the __Maestro__ state`, ephemeral: true });
+                return AbilityResponse.FAILURE;
+            };
 
-    //         // Cooldown
-    //         if (this.pause > matchStats.round) {
-    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
-    //             this.used--;
-    //             matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
-    //             return AbilityResponse.FAILURE;
-    //         };
+            // Cooldown
+            if (this.pause > matchStats.round) {
+                noTimeout(matchStats, myStats);
+                this.used--;
+                matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
+                return AbilityResponse.FAILURE;
+            };
 
-    //         this.pause = matchStats.round + 4;
-    //         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Preparatory beat, begin.* **${char.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //         myStats.phrState = 1;
-    //         notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`);
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.phrState = 0; // 0 = Compose ; 1 = Reincarnate ; 2 = Maestro
-    //         myStats.volatileNote = 0;
-    //         myStats.atkcount = 0;
-    //         myStats.deflectDamage ??= 0
+            this.pause = matchStats.round + 4;
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ *Preparatory beat, begin.* **${char.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+            myStats.phrState = 1;
+            notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`);
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.phrState = 0; // 0 = Compose ; 1 = Reincarnate ; 2 = Maestro
+            myStats.volatileNote = 0;
+            myStats.atkcount = 0;
+            myStats.deflectDamage ??= 0;
 
-    //         const scarletCoda = () => {
-    //             if (myStats.volatileNote >= 6) {
-    //                 myStats.volatileNote = 0;
-    //                 myStats.phrState = 2;
-    //                 notice.push(`\n✨ **${char.name}** entered the __Maestro__ state`);
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Wails... Rejoicing!* **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+            const scarletCoda = () => {
+                if (myStats.volatileNote >= 6) {
+                    myStats.volatileNote = 0;
+                    myStats.phrState = 2;
+                    notice.push(`\n✨ **${char.name}** entered the __Maestro__ state`);
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Wails... Rejoicing!* **${char.name}**`, { atkMultiplier: 0.8, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
 
-    //                 // Maestro immediate effects: Stun for 1 round
-    //                 eStats.timeFrozen = true;
-    //                 eStats.frozenMessage = "was stunned for **1** round";
-    //                 embed.setThumbnail("https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
-    //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                     eStats.timeFrozen = false;
+                    // Maestro immediate effects: Stun for 1 round
+                    eStats.timeFrozen = true;
+                    eStats.frozenMessage = "was stunned for **1** round";
+                    imageChange(embed, matchStats, myStats, "https://i.ibb.co/9HzQnJ4v/c.png"); // Chhange pic
+                    myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        eStats.timeFrozen = false;
 
-    //                     return AbilityResponse.SUCCESS;
-    //                 }, 1));
+                        return AbilityResponse.SUCCESS;
+                    }, 1));
 
-    //                 // Maestro prolonged effects: 28% damage deflection
-    //                 myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                     // Deflect 28% of damage taken every round
-    //                     myStats.deflectDamage += 0.28;
-    //                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                         myStats.deflectDamage -= 0.28;
-    //                         return AbilityResponse.SUCCESS;
-    //                     }));
-    //                     return AbilityResponse.SUCCESS;
-    //                 }, 6));
+                    // Maestro prolonged effects: 28% damage deflection
+                    myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        // Deflect 28% of damage taken every round
+                        myStats.deflectDamage += 0.28;
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.deflectDamage -= 0.28;
+                            return AbilityResponse.SUCCESS;
+                        }));
+                        return AbilityResponse.SUCCESS;
+                    }, 6));
 
-    //                 // By the end of Maestro: Deal 150% damage
-    //                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                     dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                     myStats.phrState = myStats.phrState = 1 ? 1 : 0;
-    //                     embed.setThumbnail("https://i.ibb.co/chjTjNDY/c.png"); // Revert back to original pic
-    //                     return AbilityResponse.SUCCESS;
-    //                 }));
-    //             } else {
-    //                 // Reset state to Compose
-    //                 myStats.phrState = 0;
-    //             };
-    //         };
+                    // By the end of Maestro: Deal 150% damage
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> *Chant, songs of old!* **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                        myStats.phrState = myStats.phrState = 1 ? 1 : 0;
+                        imageChange(embed, matchStats, myStats, "https://i.ibb.co/chjTjNDY/c.png");
+                        return AbilityResponse.SUCCESS;
+                    }));
+                } else {
+                    // Reset state to Compose
+                    myStats.phrState = 0;
+                };
+            };
 
-    //         // replace attack
-    //         myStats.replaceButton.atk = {
-    //             run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                 myStats.atkcount++;
-    //                 let atkScale = [0.9, 1.1, 1.2][myStats.phrState];
-    //                 let flairemoji = ["<:rednote:1417513133559386303>","🎵","<:purplenote:1417513260453990450>"][myStats.phrState];
-    //                 if (myStats.atkcount === 3) {
-    //                     myStats.atkcount = 0;
-    //                     if (myStats.phrState === 0) {
-    //                         myStats.phrState = 1; // 3rd ATK in Compose enters Reincarnate
-    //                     } else if (myStats.phrState === 3) {
-    //                         atkScale += 0.2;
-    //                     }; // 3rd ATK in Maestro deals 20% more dmg
-    //                 } else if (myStats.phrState === 1) {
-    //                     myStats.volatileNote++;
-    //                     // Enter Maestro State for 6 rounds if applicable
-    //                     scarletCoda();
-    //                 };
+            // replace attack
+            myStats.replaceButton.atk = {
+                run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    myStats.atkcount++;
+                    let atkScale = [0.9, 1.1, 1.2][myStats.phrState];
+                    let flairemoji = ["<:rednote:1417513133559386303>", "🎵", "<:purplenote:1417513260453990450>"][myStats.phrState];
+                    if (myStats.atkcount === 3) {
+                        myStats.atkcount = 0;
+                        if (myStats.phrState === 0) {
+                            myStats.phrState = 1; // 3rd ATK in Compose enters Reincarnate
+                        } else if (myStats.phrState === 3) {
+                            atkScale += 0.2;
+                        }; // 3rd ATK in Maestro deals 20% more dmg
+                    } else if (myStats.phrState === 1) {
+                        myStats.volatileNote++;
+                        // Enter Maestro State for 6 rounds if applicable
+                        scarletCoda();
+                    };
 
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `${flairemoji} **${char.name}**`, { atkMultiplier: atkScale, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                 if (myStats.phrState === 1) notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`); // notice for entering Reincarnate
-    //                 return AbilityResponse.SUCCESS;
-    //             },
-    //         };
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `${flairemoji} **${char.name}**`, { atkMultiplier: atkScale, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                    if (myStats.phrState === 1) notice.push(`\n✨ **${char.name}** entered the __Reincarnate__ state`); // notice for entering Reincarnate
+                    return AbilityResponse.SUCCESS;
+                },
+            };
 
-    //         // replace def optionally every round
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (myStats.phrState !== 0) {
-    //                 myStats.replaceButton.def = {
-    //                     run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // replace def optionally every round
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (myStats.phrState !== 0) {
+                    myStats.replaceButton.def = {
+                        run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-    //                     // Reincarnate
-    //                     if (myStats.phrState === 1) {
-    //                         // Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) 
-    //                         ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.04), 3));
-    //                         myStats.volatileNote++;
-    //                         // Enter Maestro State for 6 rounds if applicable
-    //                         scarletCoda();
-    //                     } else if (myStats.phrState === 2) {
-    //                         // Deflect +28% of damage taken
-    //                         myStats.deflectDamage += 0.28;
-    //                         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                             myStats.deflectDamage -= 0.28;
-    //                             return AbilityResponse.SUCCESS;
-    //                         }, 1));
-    //                     };
-    //                     delete myStats.replaceButton.def;
-    //                 return AbilityResponse.SUCCESS;
-    //             },
-    //         };
-    //             };
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));            
+                            // Reincarnate
+                            if (myStats.phrState === 1) {
+                                // Apply Bleed on the enemy (12% of wielder’s max HP over 3 rounds) 
+                                ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.04), 3));
+                                myStats.volatileNote++;
+                                // Enter Maestro State for 6 rounds if applicable
+                                scarletCoda();
+                            } else if (myStats.phrState === 2) {
+                                // Deflect +28% of damage taken
+                                myStats.deflectDamage += 0.28;
+                                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    myStats.deflectDamage -= 0.28;
+                                    return AbilityResponse.SUCCESS;
+                                }, 1));
+                            };
+                            delete myStats.replaceButton.def;
+                            return AbilityResponse.SUCCESS;
+                        },
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         const name = pStats.name;
-    //         myStats.phrbuff = 0;
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (matchStats.round % 10 === 0) {
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-    //                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
-    //                 if (myStats.phrbuff < 5) {
-    //                     myStats.phrbuff++
-    //                     myStats.atk += Math.floor(myStats.atk * 0.02);
-    //                     myStats.md += Math.floor(myStats.md * 0.02);
-    //                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.02), 9999));
-    //                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.02), 9999));
-    //                 };
-    //             };
+            return AbilityResponse.SUCCESS;
+        },
+        party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const name = pStats.name;
+            myStats.phrbuff = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 10 === 0) {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:spiderlily:1417507350486712320> **${name}**'s Hecate`, { atkMultiplier: 0.8, magicDamage: true, mdChance: -1 });
+                    if (myStats.phrbuff < 5) {
+                        myStats.phrbuff++;
+                        myStats.atk += Math.floor(myStats.atk * 0.02);
+                        myStats.md += Math.floor(myStats.md * 0.02);
+                        mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.02), 9999));
+                        mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.02), 9999));
+                    };
+                };
 
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    // },
+            return AbilityResponse.SUCCESS;
+        },
+    },
     "22610": {
         usage: 5,
         used: 0,
@@ -6236,7 +6245,7 @@ export const abilities: Record<number, Ability> = {
 
             // Cooldown
             /*if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.used--;
                 myStats.sm += 20;
                 matchStats.sendWarning({ content: `Frieren needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
@@ -6333,7 +6342,7 @@ export const abilities: Record<number, Ability> = {
             if (myStats.revivedTotal < 1) {
                 // Tsukuyomi
                 if (this.used > 1) {
-                    matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                    noTimeout(matchStats, myStats);
                     matchStats.sendWarning({ content: `Tsukuyomi can only be used once per battle.`, ephemeral: true });
                     this.used--;
                     return AbilityResponse.FAILURE;
@@ -6357,7 +6366,7 @@ export const abilities: Record<number, Ability> = {
 
                 notice.push(`\n✨ **${char.name}** used \`Tsukuyomi\`! Stunned the enemy for **${stunDuration}** rounds`);
             } else {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
 
                 // Mangekyo Sharingan; Kotoamatsukami
                 if (this.tsukuyomiUsed > 0) {
@@ -6476,17 +6485,17 @@ export const abilities: Record<number, Ability> = {
             // Enter respective flight unit for 10 rounds
 
             if (this.used === 1 && myStats.sm < 20) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${20}\\💧)`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             } else if (this.pause > matchStats.round) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 matchStats.sendWarning({ content: `**${char.name}** needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 myStats.sm += this.cost;
                 this.used--;
                 return AbilityResponse.FAILURE;
             } else if (this.used === 1) {
-                matchStats.turn = matchStats.turnSkill ? 0 : 1;
+                noTimeout(matchStats, myStats);
                 this.pause = matchStats.round + 10;
 
                 notice.push(`\n✨ **${char.name}** entered their flight units for **10** rounds.`);
@@ -6844,6 +6853,7 @@ export const abilities: Record<number, Ability> = {
     //         //Garou EX
     //         if (myStats.equippedSkin !== 127 && myStats.equippedSkin !== 112) {
     //             matchStats.sendWarning({ content: `You need to equip either of his skins to use his active`, ephemeral: true });
+    //             matchStats.turn = matchStats.turnSkill ? 0 : 1;
     //             return AbilityResponse.FAILURE;
     //         };
 
@@ -6852,7 +6862,7 @@ export const abilities: Record<number, Ability> = {
 
     //             if (this.pause > matchStats.round) {
     //                 myStats.sm += this.cost;
-    //                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //                 noTimeout(matchStats, myStats);
     //                 matchStats.sendWarning({ content: `Monster Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
     //                 this.used--;
     //                 return AbilityResponse.FAILURE;
@@ -6879,7 +6889,7 @@ export const abilities: Record<number, Ability> = {
     //         if (myStats.equippedSkin === 112) {
     //             if (this.pause > matchStats.round) {
     //                 myStats.sm += this.cost;
-    //                 matchStats.turn = matchStats.turnSkill ? 0 : 1;
+    //                 noTimeout(matchStats, myStats);
     //                 matchStats.sendWarning({ content: `Cosmic Garou needs to rest ${this.pause - matchStats.round} more ${this.pause - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
     //                 this.used--;
     //                 return AbilityResponse.FAILURE;
@@ -6937,7 +6947,7 @@ export const abilities: Record<number, Ability> = {
     //         return AbilityResponse.SUCCESS;
     //     },
     //     passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         const stats = await getUserSchema(matchStats.interaction.user.id);
+    //         const stats = await getUserSchema(matchStats.user);
     //         myStats.equippedSkin ??= stats?.char_skin[char.id];
     //         this.passivePause = 0;
     //         const dodgeEmoji = myStats.equippedSkin === 112 ? "<:dodgeCosmic:1421859395909980231>" : myStats.equippedSkin === 127 ? "<:dodgeMonster:1421859392034181232>" : "💨";
@@ -6947,12 +6957,13 @@ export const abilities: Record<number, Ability> = {
     //             myStats.hp = 0;
     //             myStats.rev = 0;
     //             notice.push(`\n✨ Is he even human?`);
-    //             embed.setImage(`https://i.ibb.co/rGDZy9LY/c.png`);
+    //             // embed.setImage(`https://i.ibb.co/rGDZy9LY/c.png`);
+    //             imageChange(embed, matchStats, eStats, "https://i.ibb.co/rGDZy9LY/c.png");
     //             return AbilityResponse.SUCCESS;
     //         };
 
     //         myStats.risingSurge ??= 0;
-    //         myStats.redirectionLastTriggered ??= 0;
+    //         myStats.redirectionLastTriggered ??= -4;
     //         myStats.evadeDeathChance ??= 0;
     //         myStats.evadeDeathStrike ??= 0;
     //         myStats.evadeDeathStrike += 3;
@@ -7062,7 +7073,7 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `10 rounds`\n**Cost**: `35% current HP`\n**Timeout**: `No`\n**Role**: `DPS (Non-critical)`\n\n__**Passive**__\n- After using DEF, follows up with “Astral Chord”\n\nATTACK is altered:\n- Deals **80%** DMG\n- For each `Butterfly` summoned, DMG scaling is increased by **6%**\n- If this hit is non-critical, grant **3x** additional `Core`\n- If amount of `Core` reaches **5** or more, follows up with “Astral Chord”\n\n“Astral Chord”:\n- For every **5** existing cores, transforms them to **1x** `Butterfly` (Up to 10)\n- For every `Butterfly` on-field:\n> - Reduces enemy’s critical rate by **2%** for **3** rounds\n> - Reduces enemy’s DEF/MR by **2%** for **3** rounds (Max 1.5x DMG, each shred calculated independently)\n> - Increases DEF/MR by **20** (Up to 200) for **3** rounds\n\n__**Active**__ (✨)\nCreates a domain of Stellarealm for **10** rounds, during this period:\n- Restores **5%** missing HP every round\n- Boosts ATK & MD by **3%** for every **1x** `Butterfly` owned\n- All attacks **will benefit from the critical damage scaling** even if they don’t land a critical strike\n\nRight before exiting the domain:\n- Increases critical DMG by **30%** for **1** round\n- Grants additional effects based off `Butterfly` owned\n> - [Default] : Deals **70%** DMG\n> - [5+ Butterflies] : Deals **210%** DMG + restores **15%** max HP\n> - [10 Butterflies] : Deals **300%** DMG + restores **30%** max HP\n- The hit aforementioned will not reset combos\n\n__**Party**__ (👥):\nAfter the ally lands a non-critical strike: Increases ally’s dodge rate by **1.5%** (Up to 15%)\n- Allies evade the first **2** lethal attacks and restores **15%** max HP (Up to 2 times)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Shorekeeper EX
-            matchStats.turn = matchStats.turnSkill ? 0 : 1;
+            noTimeout(matchStats, myStats);
 
             if (this.pause > matchStats.round) {
                 //myStats.sm += this.cost;
@@ -7080,11 +7091,13 @@ export const abilities: Record<number, Ability> = {
             // Enter Stellarealm
 
             // Increase ATK by 3% for every butterfly
-            const atkbuff = 0.03 * myStats.butterfly;
+            const atkbuff = 0.03 * Math.min(10, myStats.butterfly);
             myStats.atk += Math.floor(myStats.atk * atkbuff);
             myStats.md += Math.floor(myStats.md * atkbuff);
-            mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * atkbuff), domainLast));
-            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkbuff), domainLast));
+            mybuff.atk.push(new buffInfo("*", 1 + (atkbuff), domainLast));
+            mybuff.md.push(new buffInfo("*", 1 + (atkbuff), domainLast));
+            // mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * atkbuff), domainLast));
+            // mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * atkbuff), domainLast));
 
             // Restore 5% missing HP every round
             addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});

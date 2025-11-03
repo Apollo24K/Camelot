@@ -968,7 +968,8 @@ const exportCommand: SlashCommand = {
                 itemlock: { type: subcommand === "lock" ? "append_unique" : "remove_all", value: choice },
             });
 
-            return interaction.reply(`${subcommand === "lock" ? "Locked" : "Unlocked"} ${choice.length === 1 ? "item" : "items"} ${choice.map((e) => `\`${e}\``).join(", ")}${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`);
+            const content = `${subcommand === "lock" ? "Locked" : "Unlocked"} ${choice.length === 1 ? "item" : "items"} ${choice.map((e) => `\`${e}\``).join(", ")}${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`;
+            return interaction.reply(content.length > 2000 ? `${content}...`.slice(0, 2000) : content);
         };
 
         // Item Wishlist

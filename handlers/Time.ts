@@ -2,6 +2,7 @@ import fs from 'fs';
 import { Client } from "discord.js";
 import { BotHandler, UpdateUserOptions } from "../types";
 import { getPlayerbaseStats, insertNewStampede, resetDailyResponses, resetDungeonLimit, updateUsers } from '../Modules/queries';
+import { isStampedeMonth } from '../Modules/functions';
 
 const handler: BotHandler = {
     name: "Time",
@@ -25,7 +26,7 @@ const handler: BotHandler = {
                 await resetDailyResponses();
 
                 // Start new Stampede
-                if (now.getDate() === 14 && (now.getMonth() % 2) === 1) {
+                if (now.getDate() === 14 && isStampedeMonth()) {
                     await insertNewStampede();
                 };
 

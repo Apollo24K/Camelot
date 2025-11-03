@@ -29,7 +29,15 @@ const exportCommand: SlashCommand = {
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                 .setDescription("Use `/help <command name>` for more information");
             if (isEventOngoing()) Embed.addFields(
-                { name: "🌙 Anniversary Event", value: "`/liminal descent` `/celebrate` `/event pass` `/ex pull`" },
+                {
+                    name: {
+                        anniversary: "🌙 Anniversary Event",
+                        halloween: "🎃 Halloween Event",
+                        christmas: "🎄 Christmas Event",
+                        valentines: "💖 Valentines Event",
+                        easter: "🐣 Easter Event",
+                    }[ongoingEvent], value: "`/seasonal shop` `/trick-or-treat` `/event pass` `/ex pull`"
+                },
             );
             Embed.addFields(
                 { name: "<:SSTier:869316489931546644> Card Game", value: "`/pull` `/cd` `/pity` `/reminder` `/ability` `/anime` `/search`\n`/find` `/info` `/inventory` `/shards` `/refine` `/list`\n`/lock [anime|character]` `/unlock [anime|characters]` `/locked` `/vote` `/lootbox` `/rp` `/tickets` `/open` `/stats` `/fav`" },

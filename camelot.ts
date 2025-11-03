@@ -1,9 +1,9 @@
 import fs from 'fs';
 import { join } from "path";
 import { Client, GatewayIntentBits, Partials, Options, Collection } from 'discord.js';
+import { SlashCommand } from './types';
 import dotenv from 'dotenv';
 dotenv.config();
-import { SlashCommand } from './types';
 
 // Create Client
 const client = new Client({

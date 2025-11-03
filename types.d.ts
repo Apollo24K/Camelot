@@ -251,6 +251,16 @@ export type DetailedStats = {
     damageFormula: string;
     delayedBuffs: IdelayedBuff[];
     replaceButton: ReplaceButton;
+    dodgebuffLast?: number;
+    dodgebuff: number;
+    twinshot: number;
+    selfdmg: number;
+    critbleed: boolean;
+    critbleedlast: number;
+    heap1: any;
+    timeout: boolean;
+    allowExecution: boolean;
+    defUsed: number,
     lvl: number;
     ref: number;
     class: number;
@@ -348,6 +358,8 @@ export interface UserSchema {
     votestotal: number;
     arenawins: number;
     arenalosses: number;
+    arenastreak: number;
+    arenastreakhighest: number;
     animationdelay: number;
     achievements: number[];
     lastpull: Date | null;
@@ -436,6 +448,7 @@ export interface UserSchema {
     raid_supports: number[];
     user_settings: Record<string, any>;
     custom_skins: Record<string, string>;
+    discovered_via: string | null;
     created: Date;
 
     chars: number[];
@@ -662,6 +675,7 @@ export type TriggerOptions = {
 export type MatchStats = {
     turn: number;
     round: number;
+    user: string;
     roundCheck: number;
     ended: boolean;
     interaction: ChatInputCommandInteraction;
@@ -679,28 +693,14 @@ export type MatchStats = {
     loot: number;
     lootm: number;
     xpboost: number;
-    counter: number;
-    counterChance: number;
     currentCharacter: number;
     currentOpponent: number;
     myStatsCC: Record<string, any>;
     eStatsCC: Record<string, any>;
     tdChance: number;
     shieldBreak: number;
-    selfdmg: number;
-    twinshot: number;
-    critbleed: boolean;
-    critbleedlast: number;
-    evadeDeathStrike: number;
-    evadeDeathChance: number;
-    allowExecution: boolean;
     damageFormula: "default" | `log_scale_${number}`;
-    consumeMana: number;
-    lightningMultiplier?: number;
-    dodgebuffLast?: number;
-    dodgebuff?: number;
     allowSelfheal?: boolean;
-    heap1: any;
 
     sendWarning: ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) => void;
 
@@ -852,7 +852,7 @@ declare global {
             CAMELOT: string,
             ELDER: string,
 
-            PREFIX: string,
+            CLIENT_ID: string,
 
             CLIENT_ID: string,
             CLIENT_ID_CAMELOT: string,
@@ -868,14 +868,10 @@ declare global {
             TOPGG_AUTH: string,
             TOPGG_TOKEN: string,
 
-            OPENAI_API_KEY: string,
+            GEMINI_API_KEY: string,
 
             RUNWARE_SOURCE: string,
             RUNWARE_API_KEY: string,
-
-            GEMINI_API_KEY: string,
-
-            DONATEBOT_KEY: string,
 
             PG_USER: string,
             PG_DATABASE: string,
@@ -887,6 +883,7 @@ declare global {
             ADMIN_POKE: string,
 
             VERSION: string,
+            PREFIX: string,
         }
     }
 }

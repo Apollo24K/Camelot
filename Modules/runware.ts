@@ -1,6 +1,4 @@
 import { IOutputFormat, Runware, TPromptWeighting } from "@runware/sdk-js";
-import dotenv from 'dotenv';
-dotenv.config();
 
 const runware = new Runware({ apiKey: process.env.RUNWARE_API_KEY });
 

@@ -14,7 +14,7 @@ function getHash(key: string, hash: number) {
 
 function getQuests(id: string, len: number) {
     const quests = new Set<number>();
-    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + id;
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Etc/GMT-2' }).format(new Date()).split("/").reverse().join("-") + id;
     let i = 0;
     while (quests.size < 4 && i < 100) {
         const hash = getHash(key, i++);
