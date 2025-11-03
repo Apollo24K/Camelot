@@ -23838,7 +23838,7 @@ export const characters: charInfo[] = [
     new charInfo("Nishiyashiki Hana", ["Hana Nishiyashiki"], anime[622], "F", "https://i.ibb.co/QvFGQFVq/c.png", 23733, "D"),
     new charInfo("Elfaria Albis Serfort", [], anime[623], "F", "https://i.ibb.co/xtGJ00fh/c.png", 23734, "SS"),
     new charInfo("Will Serfort", [], anime[623], "M", "https://i.ibb.co/vxG0c87Y/c.png", 23735, "SS"),
-    new charInfo("Collete Loire", [], anime[623], "F", "https://i.ibb.co/sv5p88cP/c.png", 23736, "S"),
+    new charInfo("Colete Loire", [], anime[623], "F", "https://i.ibb.co/sv5p88cP/c.png", 23736, "S"),
     new charInfo("Sion Ulster", [], anime[623], "M", "https://i.ibb.co/N6Ls6jTK/c.png", 23737, "A"),
     new charInfo("Lihanna Owenzaus", [], anime[623], "F", "https://i.ibb.co/LDzVqFQ1/c.png", 23738, "A"),
     new charInfo("Julius Reinberg", [], anime[623], "M", "https://i.ibb.co/Wqw5F2v/c.png", 23739, "A"),
