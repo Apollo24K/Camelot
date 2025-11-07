@@ -1,7 +1,7 @@
 import { characters, auniq } from "./chars.js";
 import { ChatInputCommandInteraction, User } from "discord.js";
-import { getUserSchema, updateUsers } from "./queries.js";
-import { items } from "./items.js";
+import { getUserSchema, getUserWeapons, updateUsers } from "./queries.js";
+import { items, ringInfo } from "./items.js";
 import { UpdateUserOptions } from "../types.js";
 
 // Set to track ongoing achievement checks (userId:achievementId)
@@ -293,6 +293,30 @@ export default class achievInfo {
                 case 92: if(list[0] >= 10000000) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 93: if(list[0] >= 50000000) this.addRewards(interaction, user), this.notify(interaction); break;
 
+                case 94:
+                case 95:
+                case 96:
+                case 97:
+                case 98: {
+                    const userWeapons = await getUserWeapons(user.id)
+
+                    const ascendedRings = userWeapons.filter(weapon => {
+                        const item = items[weapon.itemid]
+
+                        return item instanceof ringInfo && item.maxlevel > 1 && (weapon.level + 1) == item.maxlevel
+                    })
+
+                    const threshold = { 94: 1, 95: 3, 96: 5, 97: 7, 98: 10 }[this.id]
+
+                    if (ascendedRings.length >= threshold) this.addRewards(interaction, user), this.notify(interaction);
+                    break;
+                }
+                case 99: if (list[0] >= 1) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 100: if (list[0] >= 5) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 101: if (list[0] >= 10) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 102: if (list[0] >= 20) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 103: if (list[0] >= 50) this.addRewards(interaction, user), this.notify(interaction); break;
+                
                 default: false; break;
             };
         } catch {
@@ -421,10 +445,31 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Something's Fishy", "Catch 2000 fish", 87, 27, "1,4", "xp|100", "ss ticket|2"),
 
     new achievInfo("David vs. Goliath", "Defeat an enemy with 500% of your EP", 88, 28, "1,2,4", "xp|50", "coins|3000", "ss ticket|1"),
+
     new achievInfo("The Last Hope", "Deal 500k damage in a single raid", 89, 29, "1,2,3", "xp|50", "coins|3000", "s shard|4"),
     new achievInfo("The Last Hope", "Deal 1M damage in a single raid", 90, 29, "1,2,3", "xp|60", "coins|5000", "s shard|8"),
     new achievInfo("The Last Hope", "Deal 5M damage in a single raid", 91, 29, "1,2,3", "xp|70", "coins|10000", "s shard|12"),
     new achievInfo("The Last Hope", "Deal 10M damage in a single raid", 92, 29, "1,2,3", "xp|80", "coins|15000", "ss shard|16"),
     new achievInfo("The Last Hope", "Deal 50M damage in a single raid", 93, 29, "1,2,4", "xp|100", "coins|25000", "ss ticket|3"),
+
+    new achievInfo("Lord of the Rings", "Ascend 1 ring to max ascension", 94, 30, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Lord of the Rings", "Ascend 3 rings to max ascension", 95, 30, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Lord of the Rings", "Ascend 5 rings to max ascension", 96, 30, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("Lord of the Rings", "Ascend 7 rings to max ascension", 97, 30, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("Lord of the Rings", "Ascend 10 rings to max ascension", 98, 30, "1,2", "xp|150", "coins|25000"),
+
+    // working on this and below
+    new achievInfo("Just One More Point", "Upgrade skills 1 time", 99, 31, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Just One More Point", "Upgrade skills 5 times", 100, 31, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Just One More Point", "Upgrade skills 10 times", 101, 31, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("Just One More Point", "Upgrade skills 20 times", 102, 31, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("Just One More Point", "Upgrade skills 50 times", 103, 31, "1,2", "xp|150", "coins|25000"),
+
+    new achievInfo("The Ranker", "Achieve A rank in rank-up exam", 104, 32, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("The Ranker", "Achieve S rank in rank-up exam", 105, 32, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("The Ranker", "Achieve SS rank in rank-up exam", 106, 32, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("The Ranker", "Achieve SSS rank in rank-up exam", 107, 32, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("The Ranker", "Achieve SSS+ rank in rank-up exam", 108, 32, "1,2", "xp|150", "coins|25000"),
+
 
 ];

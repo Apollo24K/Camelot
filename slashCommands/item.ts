@@ -418,6 +418,9 @@ const exportCommand: SlashCommand = {
                         await updateWeapons(`${itemChoice}:${interaction.user.id}`, {
                             level: { type: "increment", value: 1 },
                         });
+                        
+                        // Lord of the Rings
+                        achievements[94].check(interaction, interaction.user), achievements[95].check(interaction, interaction.user), achievements[96].check(interaction, interaction.user), achievements[97].check(interaction, interaction.user), achievements[98].check(interaction, interaction.user); 
 
                         interaction.editReply({ components: [] });
                         if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully ascended ${fItem.emoji} __**${fItem.name}**__!`);

@@ -225,6 +225,24 @@ const exportCommand: SlashCommand = {
                 case 91: return achvmBar(0);
                 case 92: return achvmBar(0);
                 case 93: return achvmBar(0);
+                case 94: return achvmBar(0);
+                case 95: return achvmBar(0);
+                case 96: return achvmBar(0);
+                case 97: return achvmBar(0);
+                case 98: return achvmBar(0);
+                case 99:
+                case 100:
+                case 101:
+                case 102:
+                case 103:{
+                    const totalSkillUpgrades = Object.values(stats.skill_tree).reduce((acc, curr) => acc + curr, 0);
+
+                    const threshold = { 99: 1, 100: 5, 101: 10, 102: 20, 103: 50 }[id];
+
+                    return achvmBar(totalSkillUpgrades / threshold, ` (${totalSkillUpgrades}/${threshold})\n`);
+
+                }
+
                 default: return achvmBar(0);
             };
         };

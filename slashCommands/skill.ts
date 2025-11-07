@@ -4,6 +4,7 @@ import { skillTree } from '../Modules/skillTree';
 import { CompactUserSchema, SlashCommand } from '../types';
 import { showPage } from '../Modules/functions';
 import { PageRow } from '../Modules/components';
+import { achievements } from '../Modules/achievements';
 
 const exportCommand: SlashCommand = {
     name: 'skill',
@@ -151,6 +152,14 @@ const exportCommand: SlashCommand = {
             });
         };
 
+        const totalSkillUpgrades = Object.values(author.schema.skill_tree).reduce((acc, curr) => acc + curr, 0);
+
+        // Check achievements
+        achievements[99].check(interaction, interaction.user, totalSkillUpgrades);
+        achievements[100].check(interaction, interaction.user, totalSkillUpgrades);
+        achievements[101].check(interaction, interaction.user, totalSkillUpgrades);
+        achievements[102].check(interaction, interaction.user, totalSkillUpgrades);
+        achievements[103].check(interaction, interaction.user, totalSkillUpgrades);
     },
 };
 
