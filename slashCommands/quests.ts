@@ -1,8 +1,9 @@
-import fs from 'fs';
 import { dailies } from "../Modules/dailyQuests";
 import { characters } from "../Modules/chars";
 import { EmbedBuilder } from "discord.js";
 import { SlashCommand } from '../types';
+import { currencyEmojis } from '../Modules/components';
+import { updateUsers } from '../Modules/queries';
 
 function getHash(key: string, hash: number) {
     for (let i = 0; i < key.length; i++) {
@@ -14,7 +15,7 @@ function getHash(key: string, hash: number) {
 
 function getQuests(id: string, len: number) {
     const quests = new Set<number>();
-    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Europe/Berlin' }).format(new Date()).split("/").reverse().join("-") + id;
+    const key = new Intl.DateTimeFormat('en-UK', { timeZone: 'Etc/GMT-2' }).format(new Date()).split("/").reverse().join("-") + id;
     let i = 0;
     while (quests.size < 4 && i < 100) {
         const hash = getHash(key, i++);
@@ -27,20 +28,32 @@ const exportCommand: SlashCommand = {
     name: 'quests',
     async execute({ interaction, author }) {
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const user = interaction.options.getUser('user') ?? interaction.user;
 
         const stats = author.schema;
 
         // Check if already voted
         if ((Date.now() - (stats.lastvote?.getTime() ?? 0)) < 12 * 60 * 60 * 1000) {
+            await updateUsers(interaction.user.id, {
+                season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
+                dailies: { type: "merge_json", value: { 10: 0 } }
+            });
+
             dailies[10].update(undefined, 1, { id: interaction.user.id }); // Knight's Ballot
             stats.dailies[10] = 1;
         };
+        if ((Date.now() - (stats.lastvoteserver?.getTime() ?? 0)) < 12 * 60 * 60 * 1000) {
+            await updateUsers(interaction.user.id, {
+                season_keys: { type: "increment", value: "12" in stats.dailies ? 0 : 5 },
+                dailies: { type: "merge_json", value: { 12: 0 } }
+            });
+
+            dailies[12].update(undefined, 1, { id: interaction.user.id }); // Guild's Ballot
+            stats.dailies[12] = 1;
+        };
 
         let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
-        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar]);
+        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         const todaysQuests = getQuests(user.id, dailies.length);
 
@@ -83,20 +96,20 @@ const exportCommand: SlashCommand = {
         const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
             .setTitle(`Daily Quests (${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0)}/4)`)
-            .setDescription(`**Completion Rewards**: 500<:coins:872926669055356939>, 2<:genesis_gems:1034179687720681492>, 10XP ${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0) === 4 ? "<a:check:873196253276700682>" : ""}\nㅤ`)
+            .setDescription(`**Completion Rewards**: 5 ${currencyEmojis.season_keys}, 500<:coins:872926669055356939>, 2<:genesis_gems:1034179687720681492>, 10XP ${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0) === 4 ? "<a:check:873196253276700682>" : ""}\nㅤ`)
             .setThumbnail(thumbnail)
             .addFields(
                 { name: todaysQuests[0].title, value: `> ${todaysQuests[0].description + progress(todaysQuests[0].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[0].check(stats.dailies[todaysQuests[0].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: `Rewards ${todaysQuests[0].check(stats.dailies[todaysQuests[0].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[0].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
                 { name: todaysQuests[1].title, value: `> ${todaysQuests[1].description + progress(todaysQuests[1].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[1].check(stats.dailies[todaysQuests[1].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: `Rewards ${todaysQuests[1].check(stats.dailies[todaysQuests[1].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[1].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
                 { name: todaysQuests[2].title, value: `> ${todaysQuests[2].description + progress(todaysQuests[2].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[2].check(stats.dailies[todaysQuests[2].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: `Rewards ${todaysQuests[2].check(stats.dailies[todaysQuests[2].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[2].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
                 { name: todaysQuests[3].title, value: `> ${todaysQuests[3].description + progress(todaysQuests[3].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[3].check(stats.dailies[todaysQuests[3].id]) ? "<a:check:873196253276700682>" : ""}`, value: '**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP', inline: true },
+                { name: `Rewards ${todaysQuests[3].check(stats.dailies[todaysQuests[3].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[3].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
             )
             .setFooter({ text: `dailies reset in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\nneed help? ➜ see /support` });

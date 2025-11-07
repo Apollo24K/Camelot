@@ -28,23 +28,23 @@ function r1(stats: CompactUserSchema) {
         );
 };
 
-const thumbnail = "https://i.ibb.co/JwDfBWXr/shorekeeper-EX.gif";
+const thumbnail = "https://i.ibb.co/ZRw9tB0D/firefly-ex.png";
 const expity = 24;
 
 const newex: { [key: string]: number; } = {
-    "24798": 0.01, // Shorekeeper EX
-    "23185": 0.008, // 2B EX
-    "23390": 0.012, // Garou EX
+    "25695": 0.016, // Firefly EX
+    "19277": 0.007, // SJW EX
+    "23390": 0.003, // Garou EX
 
-    "17688": 0.004, // Apollo EX
-    "21928": 0.005, // Boa Hancock EX
-    "19050": 0.009, // Baal EX
-    "19049": 0.012, // Ruminas Valentine EX
-}; // sum = 0.03
+    "17689": 0.004, // Artemis EX
+    "19048": 0.006, // Gojo EX
+    "22611": 0.008, // Frieren EX
+    "19051": 0.012, // Sara EX
+}; // sum = 0.056
 
 const oldex: { [key: string]: number; } = {
-    "19049": 0, // Ruminas Valentine EX
-}; // sum = 0.03
+    "19051": 0, // Sara EX
+}; // sum = 0.0
 
 const expool: { [key: string]: number; } = {
     ...oldex,
@@ -108,7 +108,7 @@ const exportCommand: SlashCommand = {
         function getDesc() {
             return `Pull for a chance of getting an EX character!\nIncludes the following characters:\n` +
                 // `${Object.keys(newex).map((e) => `**${characters[e as any].name}**`).join(", ")}, ${Object.keys(oldex).map((e) => `**${characters[e as any].name}**`).join(", ")}\n\n` +
-                `**Shorekeeper EX**, **Apollo EX**, **2B & 9S EX**, **Boa Hancock EX**, **Raiden Shogun EX**, **Ruminas Valentine EX**, **Garou EX**\n\n` +
+                `**Firefly EX**, **Artemis EX**, **Sung Jin-woo EX**, **Gojo EX**, **Frieren EX**, **Garou EX**, **Sara EX**\n\n` +
                 `**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **${exDropRate}**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **${50 - exDropRate}**%\n<:STier:869316518675095552> Tier ➜ **50**%\n\n` +
                 `-# Tip: Use up your <a:EXTRA:1138530846144462968> pulls before the next event starts, you'll lose them otherwise!`;
         };

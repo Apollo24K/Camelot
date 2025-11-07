@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder } from "discord.js";
 import { achievements } from "../Modules/achievements";
 import { search } from "../Modules/functions";
@@ -11,8 +10,6 @@ const exportCommand: SlashCommand = {
     name: 'select',
     async execute({ interaction, author }) {
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const choice = interaction.options.getString('character', true);
         const mode = interaction.options.getString('mode');
 
@@ -23,7 +20,7 @@ const exportCommand: SlashCommand = {
         if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
 
         let thumbnail = char.image;
-        if (stats.favchar !== null) thumbnail = char.getImage(stats.premium, customSettings[interaction.user.id]?.cimg[char.id], stats.char_skin[char.id]);
+        if (stats.favchar !== null) thumbnail = char.getImage(stats.premium, stats.custom_skins[char.id], stats.char_skin[char.id]);
 
         if (mode && stats.party !== null) {
             const members = await getPartyMembers(stats.party);

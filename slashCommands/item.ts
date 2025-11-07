@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, weaponInfo } from "../Modules/items";
+import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel, getRingSlotsTotal } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
@@ -181,6 +181,9 @@ const exportCommand: SlashCommand = {
                             `${fItem.maxlevel > 1 ? `**Passive (Asc. ${fItem.maxlevel})**: ${fItem.getBuffDesc(fItem.maxlevel)}\n\n` : ""}` +
                             `>>> ${fItem.flair}`
                         );
+                        Embeds.push(Embed);
+                    } else if (fItem instanceof runeInfo) {
+                        Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}${fItem.active ? ` (replaces active)` : ""}${fItem.passive ? ` (replaces passive)` : ""}${fItem.party ? ` (replaces party)` : ""}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}\n\n**Abilities**\n${fItem.buffdesc}`);
                         Embeds.push(Embed);
                     } else if (fItem instanceof fishInfo) {
                         Embed.setDescription(`**Grade**: ${fItem.gradeEmote}\n**Type**: ${fItem.type[0].toUpperCase() + fItem.type.slice(1)}\n**Obtain**: ${fItem.obtain.length ? fItem.obtain.join(", ") : "None"}`);
@@ -813,7 +816,20 @@ const exportCommand: SlashCommand = {
                 if (!item) {
                     const fItem = searchItem(itemChoice, interaction);
                     if (!fItem) return;
-                    return interaction.reply(`Please use your weapon's ID, not its name. You can find it in your inventory through \`/items\``);
+
+                    // Match Rune
+                    if (fItem instanceof runeInfo) {
+                        if (!(stats.items[fItem.id] && stats.items[fItem.id] > 0)) {
+                            return interaction.reply(`You don't have ${fItem.emoji} **${fItem.name}**`);
+                        };
+
+                        stats.equipment[`rune:${stats.battlechar}`] = `${fItem.id}`;
+                        equipped.push(`${fItem.emoji} **__${fItem.name}__**`);
+
+                        continue;
+                    } else {
+                        return interaction.reply(`Please use your weapon's ID, not its name. You can find it in your inventory through \`/items\``);
+                    };
                 };
 
                 const fItem = items[item.itemid];
@@ -868,6 +884,15 @@ const exportCommand: SlashCommand = {
                 delete stats.equipment["cuirass"];
                 delete stats.equipment["gloves"];
                 delete stats.equipment["boots"];
+            } else if (typeChoice === "all_runes") {
+                const keys = Object.keys(stats.equipment);
+                for (const key of keys) {
+                    if (key.startsWith("rune:")) {
+                        delete stats.equipment[key];
+                    };
+                };
+            } else if (typeChoice === "rune") {
+                delete stats.equipment[`rune:${stats.battlechar}`];
             } else if (typeChoice === "rings") {
                 delete stats.equipment["ring1"];
                 delete stats.equipment["ring2"];
@@ -946,7 +971,8 @@ const exportCommand: SlashCommand = {
                 itemlock: { type: subcommand === "lock" ? "append_unique" : "remove_all", value: choice },
             });
 
-            return interaction.reply(`${subcommand === "lock" ? "Locked" : "Unlocked"} ${choice.length === 1 ? "item" : "items"} ${choice.map((e) => `\`${e}\``).join(", ")}${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`);
+            const content = `${subcommand === "lock" ? "Locked" : "Unlocked"} ${choice.length === 1 ? "item" : "items"} ${choice.map((e) => `\`${e}\``).join(", ")}${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`;
+            return interaction.reply(content.length > 2000 ? `${content}...`.slice(0, 2000) : content);
         };
 
         // Item Wishlist

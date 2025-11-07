@@ -1,4 +1,4 @@
-import { parentPort } from 'worker_threads';
+import { parentPort } from 'node:worker_threads';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import GIFEncoder from 'gifencoder';
 import { Asset } from "./assets";

@@ -1,7 +1,8 @@
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
-const { token, clientId } = require('./config.json');
 const { SlashCommandBuilder } = require('@discordjs/builders');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const commands = [
 	{
@@ -62,7 +63,13 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('arena')
 			.setDescription('Challenge someone to a 1v1')
-			.addUserOption(option => option.setName('user').setDescription('user to challenge').setRequired(true)),
+			.addUserOption(option => option.setName('user').setDescription('user to challenge').setRequired(true))
+			.addIntegerOption(option => option.setName('timer').setDescription('set the maximum timer').setRequired(false))
+			.addIntegerOption(option => option.setName('rounds').setDescription('Change the maximum amount of rounds').setRequired(false))
+		// .addIntegerOption(option => option.setName('challenger-character-level').setDescription('set the character level for the challenger').setRequired(false))
+		// .addIntegerOption(option => option.setName('against-character-level').setDescription('set the character level for the one challenged').setRequired(false))
+		// .addIntegerOption(option => option.setName('challenger-class-level').setDescription('set the class level for the challenger').setRequired(false))
+		// .addIntegerOption(option => option.setName('against-class-level').setDescription('set the class level for the one challenged').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -278,8 +285,8 @@ const commands = [
 		// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
 		// egg-hunt: See what you find! 🧺 🐰
 		data: new SlashCommandBuilder()
-			.setName('celebrate')
-			.setDescription('Claim your daily anniversary reward! 🎂 🎉')
+			.setName('trick-or-treat')
+			.setDescription('Trick, or treat? 👻 🍬')
 		// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
 		// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
 	}.data.toJSON(),
@@ -615,6 +622,7 @@ const commands = [
 							{ name: 'Tax Rate', value: 'tax' },
 							{ name: 'Join Settings', value: 'canjoin' },
 							{ name: 'Change Join Code', value: 'changecode' },
+							{ name: 'Change Raid Reward Distribution', value: 'raid_distribution' },
 							{ name: 'Reset Perks', value: 'resetperks' },
 						)
 				)
@@ -688,8 +696,8 @@ const commands = [
 			.addSubcommand((subcommand) => subcommand.setName('list').setDescription('List all available HP bars')
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 				.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false)))
-			.addSubcommand((subcommand) => subcommand.setName('select').setDescription('Select an HP bar')
-				.addStringOption(option => option.setName('item').setDescription('Select an HP bar').setRequired(true)))
+		// .addSubcommand((subcommand) => subcommand.setName('select').setDescription('Select an HP bar')
+		// 	.addStringOption(option => option.setName('item').setDescription('Select an HP bar').setRequired(true)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -790,6 +798,8 @@ const commands = [
 							{ name: 'Cuirass', value: 'cuirass' },
 							{ name: 'Gloves', value: 'gloves' },
 							{ name: 'Boots', value: 'boots' },
+							{ name: 'All Runes', value: 'all_runes' },
+							{ name: 'Rune', value: 'rune' },
 							{ name: 'Rings', value: 'rings' },
 							{ name: 'Ring 1', value: 'ring1' },
 							{ name: 'Ring 2', value: 'ring2' },
@@ -836,6 +846,10 @@ const commands = [
 							{ name: 'levelup', value: 'levelup' },
 						)
 				))
+			.addSubcommand((subcommand) => subcommand.setName('runes').setDescription('See your runes inventory')
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			)
 			.addSubcommand((subcommand) => subcommand.setName('weapon').setDescription('See your weapon inventory')
 				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
@@ -1095,6 +1109,9 @@ const commands = [
 				.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(false))
 				.addStringOption(option => option.setName('class').setDescription('Select a class').setRequired(false))
 				.addStringOption(option => option.setName('items').setDescription('Select items separated by comma (,)').setRequired(false))
+				.addStringOption(option => option.setName('ring-1').setDescription('Select the 1st ring').setRequired(false))
+				.addStringOption(option => option.setName('ring-2').setDescription('Select the 2nd ring').setRequired(false))
+				.addStringOption(option => option.setName('ring-3').setDescription('Select the 3rd ring').setRequired(false))
 			)
 	}.data.toJSON(),
 	{
@@ -1545,6 +1562,11 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('survey')
+			.setDescription('Take a survey to help us improve'),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('terms')
 			.setDescription('Access Camelot\'s Terms of Service (and Privacy Policy)'),
 	}.data.toJSON(),
@@ -1623,10 +1645,6 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('trial')
 			.setDescription('Try out characters and classes')
-			.addStringOption(option => option.setName('character').setDescription('Choose a character to try').setRequired(false))
-			.addStringOption(option => option.setName('class').setDescription('Choose a class to try').setRequired(false))
-			.addIntegerOption(option => option.setName('character-level').setDescription('Set the character level').setRequired(false))
-			.addIntegerOption(option => option.setName('class-level').setDescription('Set the class level').setRequired(false))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1649,14 +1667,14 @@ const commands = [
 	}.data.toJSON(),
 ];
 
-const rest = new REST({ version: '9' }).setToken(token);
+const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
 
 (async () => {
 	try {
 		console.log('Started refreshing application (/) commands.');
 
 		await rest.put(
-			Routes.applicationCommands(clientId.active),
+			Routes.applicationCommands(process.env.CLIENT_ID),
 			{ body: commands },
 		);
 

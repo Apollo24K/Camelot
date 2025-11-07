@@ -329,6 +329,17 @@ const exportCommand: SlashCommand = {
                 return interaction.reply(`Successfully reset your guild perks. Your guild tokens have been refunded.`);
             };
 
+            if (setting === "raid_distribution") {
+                if (!(input.toLowerCase() === "true" || input.toLowerCase() === "false")) return interaction.reply(`Change your guild's raid reward distribution.\nWrite \`true\` if you want the rewards to be distributed equally, \`false\` if you want them to be distributed by points.`);
+
+                // Update guilds table
+                await updateGuilds(guild.id, {
+                    raid_distribute_equally: { type: "set", value: input.toLowerCase() === "true" }
+                });
+
+                return interaction.reply(`Changed raid reward distribution to **${input.toLowerCase() === "true" ? "equal" : "by points"}**.`);
+            };
+
         } else if (subcommand === "join") {
             const code = interaction.options.getString('code', true);
 

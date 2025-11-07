@@ -1,4 +1,3 @@
-import config from '../config.json';
 import { Client } from "discord.js";
 import { BotHandler } from "../types";
 import { AutoPoster } from 'topgg-autoposter';
@@ -9,21 +8,21 @@ const handler: BotHandler = {
     execute: async (client: Client) => {
 
         // Only if Camelot
-        if (config.clientId.active === "706183309943767112") {
+        if (process.env.CLIENT_ID === "706183309943767112") {
 
             // POST bot stats to top.gg
-            const ap = AutoPoster(config.topgg.token, client);
+            const ap = AutoPoster(process.env.TOPGG_TOKEN, client);
             ap.on('posted', (stats) => {
                 console.log(`Posted stats to Top.gg | ${stats.serverCount} servers`);
             });
 
             // POST bot stats to rank.top
             const rankTop = new RankTopClient({
-                apiKey: config.rank.apiKey
+                apiKey: process.env.RANK_API_KEY
             });
             rankTop.startAutopost({
                 client: client,
-                authorization: config.rank.auth
+                authorization: process.env.RANK_AUTH
             });
             rankTop.on("autoposter/posted", () => {
                 console.log("[Rank.top] Posted stats");

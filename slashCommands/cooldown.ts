@@ -26,6 +26,7 @@ const exportCommand: SlashCommand = {
         let weeklymsg = `\`locked\` => see </premium:1011293280702578691>`;
         let dailyquest = `Your quests are ready! => </quests:1087099255652622433>`;
         let vote = `You can [vote](<https://rank.top/bot/camelot/vote>) now! => </vote:1010546185792135198>`;
+        let survey = author.schema.discovered_via ? "" : `\n**Survey**: You can take a survey now! => </survey:1433782177979437108>`;
 
         if (stats.premium) {
             // Pulls & Dungeon
@@ -68,7 +69,7 @@ const exportCommand: SlashCommand = {
         // Daily
         if (stats.dailyclaimed) dailymsg = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
         // Daily Quests
-        if (Object.keys(stats.dailies).length === 4 && Object.entries(stats.dailies).every((e) => dailies[e[0] as any].check(e[1]))) dailyquest = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
+        if (Object.keys(stats.dailies).length >= 4 && Object.entries(stats.dailies).reduce((acc, e) => acc + (dailies[e[0] as any].check(e[1]) ? 1 : 0), 0) >= 4) dailyquest = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
         // Vote
         if (stats.lastvote && ((new Date().getTime() - (stats.lastvote?.getTime() ?? 0)) < 12 * 60 * 60 * 1000)) {
             let hr = Math.floor(((12 * 60 * 60 * 1000) - (new Date().getTime() - (stats.lastvote?.getTime() ?? 0))) / (60 * 60 * 1000));
@@ -77,7 +78,7 @@ const exportCommand: SlashCommand = {
             vote = `${hr ? `**${hr}**h ` : ""}${`**${min}**min`} left`;
         };
 
-        return interaction.reply(`**Pulls**: ${pull}\n**Dungeon**: ${dungeon}\n**Daily**: ${dailymsg}\n**Weekly**: ${weeklymsg}\n**Quests**: ${dailyquest}\n**Vote**: ${vote}`);
+        return interaction.reply(`**Pulls**: ${pull}\n**Dungeon**: ${dungeon}\n**Daily**: ${dailymsg}\n**Weekly**: ${weeklymsg}\n**Quests**: ${dailyquest}\n**Vote**: ${vote}${survey}`);
     },
 };
 

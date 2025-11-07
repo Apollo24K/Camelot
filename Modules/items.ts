@@ -2,8 +2,9 @@ import { Buffs, IbuffInfo, ItemAbility, ItemCategory, ItemRarity, ItemType, Prim
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
-import { dealDamage, addHeal } from "./functions";
+import { dealDamage, addHeal, noTimeout } from "./functions";
 import { AbilityResponse } from "./components";
+import { Ability } from "./abilities";
 
 export class itemInfo {
     private _name: string;
@@ -301,6 +302,57 @@ export class potionInfo extends itemInfo {
         return this._subtype;
     };
 };
+
+type RuneAbilities =
+    | (Partial<Ability> & {
+        ability: Ability['ability'];
+        usage: number;
+        used: number;
+        cost: number;
+    })
+    | (Partial<Ability> & {
+        ability?: undefined;
+        usage?: number;
+        used?: number;
+        cost?: number;
+    })
+    & {
+        buff?: ItemAbility;
+    };
+
+export class runeInfo extends itemInfo {
+    private _ability: RuneAbilities;
+    private _buffdesc: string;
+
+    constructor(name: string, obtain: string[], emoji: `<:${string}:${number}>`, image: `https://${string}`, ability: RuneAbilities, buffdesc: string, grade: ItemRarity, id: number, desc: string = "", unique: boolean = true, tradable: boolean = false, sellable: boolean = true) {
+        const category = "rune";
+        const type = "rune";
+
+        super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable, desc);
+        this._ability = ability;
+        this._buffdesc = buffdesc;
+    };
+
+    get ability() {
+        return this._ability;
+    };
+    get active() {
+        return this.ability.ability;
+    };
+    get passive() {
+        return this.ability.passive;
+    };
+    get party() {
+        return this.ability.party;
+    };
+    get buff(): ItemAbility {
+        return this.ability.buff || (async () => AbilityResponse.SUCCESS);
+    };
+    get buffdesc() {
+        return this._buffdesc;
+    };
+};
+
 
 export const items = [
     // Fish
@@ -653,7 +705,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Increases magic resistance by **15%** at the start of battle, lasting 5 rounds", "The Hardwood Shooter is crafted from the finest hardwood trees, chosen for their strength and durability. Its sleek design allows for precision shooting, making it a favorite among skilled archers. The bow sings as the arrow is released, a testament to its superior craftsmanship. With the Hardwood Shooter by your side, you will strike fear into the hearts of your enemies.", "rare", 129),
     new weaponInfo("Hungering Yew Launcher", "weapon", "bow", ["crafting", "chest"], "<:hungering_yew_launcher:1063549513832353862>", "https://i.imgur.com/lj5KVio.png", "atk", 23, 396, "cd", 0.04, 0.18, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.twinshot += 0.16;
+        myStats.twinshot += 0.16;
 
         return AbilityResponse.SUCCESS;
     }, "Normal attacks have a **16%** chance of triggering a second shot.", "The Hungering Yew Launcher is crafted from the finest yew wood and imbued with dark magic. Its curved, menacing shape is a clear indication of its deadly capabilities. Those who dare to draw its string can feel the hunger of the bow, begging to be unleashed upon its unsuspecting prey. With each shot, it devours the souls of its victims, leaving nothing but destruction in its wake. Beware the Hungering Yew Launcher, for it will leave you wanting more.", "rare", 130),
@@ -926,6 +978,7 @@ export const items = [
     new weaponInfo("Dainsleif", "weapon", "sword", ["chest"], "<:dainsleif:1066858376585285663>", "https://i.imgur.com/w96701M.png", "atk", 36, 605, "mg", 1, 5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 50;
         myStats.sm += 10;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
 
         return AbilityResponse.SUCCESS;
     }, "Increases the wielders mana cap by **+50**. Start the battle with **+10** mana.", "The legendary sword Dainsleif, passed down through the ages and wielded by only the most worthy warriors, is said to be cursed. Those who draw the blade are doomed to suffer a fate worse than death, as the sword compels its wielder to kill until it is satisfied. Its thirst for blood is insatiable, making it a weapon to be feared by even the bravest of men.", "unique", 170),
@@ -1016,6 +1069,7 @@ export const items = [
     new weaponInfo("Sssssssword of Ssssssssnek", "weapon", "sword", ["crafting", "chest"], "<:sssssssword_of_ssssssssnek:1066861510602793112>", "https://i.imgur.com/VmbU8fb.png", "atk", 31, 564, "cr", 0.04, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm += Math.floor(eStats.sm * 0.5);
         eStats.sm -= Math.floor(eStats.sm * 0.5);
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         myStats.mg += 1;
         eStats.mg -= 1;
         mybuff.mg.push(new buffInfo("+", 1, 9999));
@@ -1182,6 +1236,7 @@ export const items = [
     new weaponInfo("Tribute of Illumination", "weapon", "staff", ["crafting", "chest"], "<:tribute_of_illumination:1066864560423850034>", "https://i.imgur.com/HnUdOz6.png", "md", 32, 568, "mana", 5, 25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.hp = Math.floor(myStats.hp * 0.5);
         myStats.sm += 30;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         myStats.md += Math.floor(myStats.md * Math.min(((1 - (myStats.hp / myStats.maxhp)) / 2), 0.25));
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.md += Math.floor(myStats.md * Math.min(((1 - (myStats.hp / myStats.maxhp)) / 2), 0.25));
@@ -1282,8 +1337,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The first time the wielder's HP falls below **40%** of max HP, increases defense and magic resistance by **15%** each and heals **20%** of missing HP.", "The Lethargic Hatchet may seem slow and sluggish at first glance, but once it's in motion, it becomes a deadly force to be reckoned with. Its heavy, lethargic swings packs a powerful punch and can easily cleave through wood and stone alike. The axe's dull edge may not strike fear into the hearts of foes, but its devastating power will surely leave them reeling.", "unique", 211),
     new weaponInfo("Paltry Monsoon", "weapon", "axe", ["crafting", "chest"], "<:paltry_monsoon:1067186839959633980>", "https://i.imgur.com/ohbksPt.png", "atk", 36, 584, "cr", 0.03, 0.13, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.025;
 
         return AbilityResponse.SUCCESS;
     }, "Critical hits cause bleeding, leading the enemy to lose **2.5%** of their max HP for 2 rounds. If the enemy has more than double the HP of the wielder, they lose **5%** of the wielder's max HP instead.", "As the storm rages on, the Paltry Monsoon battle axe glimmers with anticipation. The fury of a monsoon is contained within its blades, ready to unleash its devastating power upon any who dare to cross its path. Wield the Paltry Monsoon with caution, for its might is not to be underestimated.", "unique", 212),
@@ -1443,7 +1499,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Decreases dodge chance of the enemy by **12%** for the rest of battle.", "With its sleek and lightweight design, the Quickstrike bow allows archers to unleash rapid-fire shots with deadly precision. Its powerful drawstring and finely crafted limbs unleash arrows with explosive force, catching enemies off guard and leaving them no time to react. In the hands of a skilled archer, the Quickstrike is a formidable weapon capable of delivering swift and deadly blows.", "unique", 229),
     new weaponInfo("Quintain", "weapon", "bow", ["crafting", "chest"], "<:quintain:1067194009556103388>", "https://i.imgur.com/oh9SOYb.png", "atk", 36, 573, "cd", 0.05, 0.32, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.twinshot += 0.16;
+        myStats.twinshot += 0.16;
 
         return AbilityResponse.SUCCESS;
     }, "The wielder has a **16%** chance of firing 2 shots.", "The Quintain bow was crafted by a master archer who sought to create the ultimate weapon for combat. Its sleek design allows for swift and precise shots, striking fear into the hearts of opponents. Its power and precision have earned it the nickname \"The Knight's Bane\". With the Quintain in hand, any archer can become a champion on the battlefield.", "unique", 230),
@@ -1534,8 +1590,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Every 3rd round, the wielder heals for **20%** of missing HP.", "The Glas Ghaibhleann is a lance of legend, said to have been crafted by the fairy folk of ancient Hibernia. It glimmers with an otherworldly light, as if it were made of the essence of nature itself. Those who wield it in battle are said to be imbued with the power of the fae, striking fear into the hearts of their enemies with each swift and deadly thrust.", "unique", 237),
     new weaponInfo("Hellreaver", "weapon", "lance", ["chest"], "<:hellreaver:1067200689165578401>", "https://i.imgur.com/6YKgHAb.png", "atk", 33, 568, "cr", 0.03, 0.13, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical hits cause bleeding, leading the enemy to lose **3%** of max HP for 2 rounds.", "Forged in the fiery depths of hell, the Hellreaver lance is a weapon of destruction, capable of tearing through even the toughest armor with ease. Those who wield it are said to be blessed with the power of the underworld, striking fear into the hearts of their enemies with each ruthless strike. Those foolish enough to stand in their way will be met with a swift and merciless end, as the Hellreaver claims their souls for the inferno.", "unique", 238),
@@ -1617,6 +1674,7 @@ export const items = [
     new weaponInfo("Tristan's Trance", "weapon", "lance", ["chest"], "<:tristans_trance:1067200876197969973>", "https://i.imgur.com/iYaqRAr.png", "atk", 37, 580, "mg", 1, 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 40;
         myStats.sm += 10;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         myStats.mg += 2;
         mybuff.mg.push(new buffInfo("+", 2, 9999));
 
@@ -1723,8 +1781,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The enemy has **18%** decreased block rate and dodge chance during the first 8 rounds.", "As the sun sets and the darkness of night envelops the land, the Nightfall Knife awakens, thirsting for the blood of its enemies. Its sleek, black blade glints in the moonlight, promising swift and deadly retribution to those who dare to cross its path. With a single strike, it can end a life, leaving no trace except for a pool of crimson on the ground.", "unique", 258),
     new weaponInfo("Nightshade", "weapon", "dagger", ["chest"], "<:nightshade:1067235936330600528>", "https://i.imgur.com/ub6Y8Ja.png", "atk", 36, 577, "cr", 0.04, 0.16, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 2 rounds.", "Forged in the shadows of the moonlit forest, Nightshade glimmers with a dark, eerie beauty. Its razor-sharp blade is imbued with the power of the night itself, capable of striking with the speed and precision of a deadly predator. Those who wield it are said to be able to move like shadows, striking from the darkness with swift and deadly force. Beware the Nightshade, for it is a weapon of the night, and those who cross its path may never see the dawn again.", "unique", 259),
@@ -1849,8 +1908,8 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder has **20%** increased attack.", "The Ironclad Lionheart is a shield forged from the finest steel, imbued with the strength and courage of a lion. Its surface is etched with the image of a majestic lion, symbolizing its unbreakable fortitude and unwavering spirit. In battle, it is a steadfast ally, protecting its wielder from even the mightiest of blows. Those who bear the Ironclad Lionheart into battle are known for their valor and fearlessness, striking fear into the hearts of their enemies.", "unique", 274),
     new weaponInfo("Overture", "weapon", "shield", ["chest"], "<:overture:1067246098810421299>", "https://i.imgur.com/lUO56sq.png", "shield", 70, 867, "cr", 0.04, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 2;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 2;
         myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
@@ -1858,6 +1917,7 @@ export const items = [
     new weaponInfo("Recruit's Ebon Ward", "weapon", "shield", ["crafting", "chest"], "<:recruits_ebon_ward:1067246103508029551>", "https://i.imgur.com/6Aa0qul.png", "shield", 67, 866, "mg", 1, 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 50;
         myStats.sm += 10;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
 
         return AbilityResponse.SUCCESS;
     }, "Increases the wielders mana cap by **+50**. Start the battle with **+10** mana.", "The Recruit's Ebon Ward is the perfect shield for those new to the battlefield. Its sturdy construction and sleek design provide ample protection against incoming attacks, while its dark, menacing appearance strikes fear into the hearts of enemies. As you progress in your training, this shield will become a steadfast companion and a symbol of your growing strength and skill.", "unique", 276),
@@ -2213,8 +2273,9 @@ export const items = [
 
     // Weapons - Legendary Axe
     new weaponInfo("Cairbre's Curse", "weapon", "axe", ["crafting", "chest"], "<:cairbres_curse:1068531119122825267>", "https://i.imgur.com/IWTvChe.png", "atk", 57, 856, "cr", 0.04, 0.16, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 3 rounds.", "Forged by the ancient Celtic king Cairbre, Cairbre's Curse is said to be imbued with the power of poison. Its blade is coated with a deadly toxin that can kill with a single strike, a tiny scratch shall suffice. Those who wield it are said to be granted the cunning of Cairbre himself, and can strike fear into the hearts of their enemies.", "legendary", 319),
@@ -2301,6 +2362,7 @@ export const items = [
     }, "Executes the enemy when below **15%** HP. Increases the wielders attack by **14%** during the first 10 rounds.", "The Warbringer is a fearsome weapon, forged in the heat of battle and tempered in the fires of war. Its sharp, double-edged blade is capable of cleaving through armor and bone with ease, and its sturdy haft allows for powerful, crushing blows. In the hands of a skilled warrior, the Warbringer becomes a force to be reckoned with, striking fear into the hearts of enemies and bringing swift victory to its wielder.", "legendary", 330),
     new weaponInfo("Whisper of Woe", "weapon", "axe", ["crafting", "chest"], "<:whisper_of_woe:1068531160126332928>", "https://i.imgur.com/TO09o0Z.png", "atk", 55, 865, "mana", 10, 30, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm += Math.floor(eStats.sm * 0.5);
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
         eStats.sm -= Math.floor(eStats.sm * 0.5);
         myStats.mg += 2;
         eStats.mg -= 2;
@@ -2494,8 +2556,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Forged in the flames of Mount Vesuvius, the Ignis Aureus is a weapon of unmatched power and beauty. Its golden patterns shimmer in the sunlight, striking fear into the hearts of enemies. With a single thrust, this lance can unleash a devastating inferno, incinerating anything in its path. Those who wield the Ignis Aureus are truly masters of fire, commanding its destructive power with precision and grace.", "legendary", 352),
     new weaponInfo("Ildathach", "weapon", "lance", ["crafting", "chest"], "<:ildathach:1068648986405261374>", "https://i.imgur.com/tiqy8WE.png", "atk", 54, 840, "cd", 0.06, 0.4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
         myStats.cr += 0.15;
         if (myStats.cr > 1) myStats.cr = 1;
         mybuff.cr.push(new buffInfo("+", 0.15, 9999));
@@ -2602,8 +2665,9 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder takes **20%** less damage.\n\n_A reduction of 20% = 212 DEF|MR_", "The ancient dwarven weapon known as Darganfod was forged in the fiery depths of the earth by the skilled hands of the finest dwarven smiths. It is said that the weapon was created for a great dwarf king. Legend has it that Darganfod was lost during a great battle, its wielder felled by a mighty blow. But some say that the weapon still exists, hidden away in a secret location, waiting for a worthy knight to wield it once again and restore the glory of the ancient dwarven kingdom.", "legendary", 365),
     new weaponInfo("Death's Sting", "weapon", "dagger", ["chest"], "<:deaths_sting:1068702001430548611>", "https://i.imgur.com/22JAeJZ.png", "atk", 51, 833, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
+        myStats.critbleedAmount = 0.03;
 
         return AbilityResponse.SUCCESS;
     }, "Critical Strikes cause bleeding, dealing **3%** damage to the enemy for 3 rounds.", "The glint of Death's Sting can be seen in the light, as it is drawn from its sheath with all of its might. A harbinger of doom for those who stand in its way, it shall strike fear into the hearts of those who stay. The origins of Death's Sting are shrouded in mystery, but it is believed to have been crafted by a powerful necromancer who sought to create the ultimate weapon of death. The necromancer poured all of his dark knowledge and power into the creation of the dagger, imbuing it with the ability to steal the life force of those it strikes. Those who have faced its sharp edge speak of a cold sensation as it pierces their flesh, followed by a feeling of life slipping away. This legendary dagger has been wielded by some of the greatest warriors throughout history, and its power is said to be unmatched.", "legendary", 366),
@@ -2897,6 +2961,7 @@ export const items = [
     new weaponInfo("Sirene's Song", "weapon", "sword", ["chest"], "<:sirenes_song:1068720493957497002>", "https://i.imgur.com/o9Ek5oh.png", "atk", 98, 1067, "mana", 15, 50, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.sm = myStats.mana;
         myStats.mg -= 5;
+        if (myStats.mg < 0) myStats.mg = 0;
         mybuff.mg.push(new buffInfo("+", -5, 9999));
 
         return AbilityResponse.SUCCESS;
@@ -3787,6 +3852,7 @@ export const items = [
     new armorInfo("Azure Enchantment Boots", "armor", "boots", "Azure Enchantment Set", ["crafting", "chest"], "<:azure_enchantment_boots:1081367325778919554>", "https://i.imgur.com/cgnYDv6.png", "def", 10, 105, "unique", 514, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mana += 60;
         myStats.sm += 100;
+        if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
 
         return AbilityResponse.SUCCESS;
     }, "Increases the wielders mana cap by **+60**. Start the battle with **+100** mana."),
@@ -4398,8 +4464,8 @@ export const items = [
 
     // Additional Weapons
     new weaponInfo("Serket's Sting", "weapon", "dagger", ["chest"], "<:serkets_sting:1173987001444347964>", "https://i.imgur.com/C4BTUBk.png", "atk", 114, 1038, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        matchStats.critbleed = true;
-        matchStats.critbleedlast = 3;
+        myStats.critbleed = true;
+        myStats.critbleedlast = 3;
         myStats.critbleedAmount = 0.03;
         myStats.def += 155;
         myStats.mr += 155;
@@ -4845,11 +4911,11 @@ export const items = [
         matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && Math.random() < [0.3, 0.35, 0.4, 0.45, 0.5][level - 1]) {
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    matchStats.twinshot = 0;
+                    myStats.twinshot = 0;
 
                     return AbilityResponse.SUCCESS;
                 }));
-                matchStats.twinshot = 1;
+                myStats.twinshot = 1;
             };
         });
 
@@ -5361,9 +5427,9 @@ export const items = [
                     myStats.md += Math.floor(myStats.md * 0.2);
                 } else { // Stuns enemy for 1 turn
                     notice.push(`\n<:termination_letter:1340483926665203792> **${char.name}** sent a termination letter to **${enemy.name}**!`);
-                    matchStats.twinshot = 1;
+                    myStats.twinshot = 1;
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        matchStats.twinshot = 0;
+                        myStats.twinshot = 0;
 
                         return AbilityResponse.SUCCESS;
                     }));
@@ -5625,7 +5691,7 @@ export const items = [
         // If no active ability/skill was used for 30 rounds, 20/22/24/26/28/30/32/33% chance to twinshot
         myStats.delayedBuffs.push(new delayedBuffs(30, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (!myStats.activeUsed) {
-                matchStats.twinshot = [20, 22, 24, 26, 28, 30, 32, 33][level - 1] / 100;
+                myStats.twinshot = [20, 22, 24, 26, 28, 30, 32, 33][level - 1] / 100;
             };
 
             return AbilityResponse.SUCCESS;
@@ -5654,8 +5720,8 @@ export const items = [
     }, (level) => `If the wearer uses no active ability or skill during the first **30** rounds, their attacks gain a **${[20, 22, 24, 26, 28, 30, 32, 33][level - 1]}%** chance to strike twice for the rest of the fight.`, "The Prism Sovereign is a majestic ring that captures the essence of a kaleidoscope in its design. Set in an ornate gold band, this magnificent piece features an array of colorful gemstones, including sapphires, emeralds, and garnets, each skillfully positioned to reflect light in dazzling patterns. The intricate swirls of the band symbolize the flow of magic, and at its center rests a resplendent aquamarine that seems to shimmer with a watery glow. Wearing this ring enhances a mage's spellcasting capabilities, allowing for spontaneous bursts of elemental power. Rumored to contain the soul of an ancient sorcerer, it grants wisdom and resilience against magical interference.", "legendary", 749),
     new ringInfo("Aurelian Twinkeeper", "ring", "ring", ["chest"], "<:aurelian_twinkeeper:1337936525467455608>", "https://i.ibb.co/rRfVRQ5Q/Aurelian-Twinkeeper.png", 4, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
-        matchStats.twinshot ||= 0;
-        matchStats.twinshot += [12.5, 15, 17.5, 20][level - 1] / 100;
+        myStats.twinshot ||= 0;
+        myStats.twinshot += [12.5, 15, 17.5, 20][level - 1] / 100;
 
         return AbilityResponse.SUCCESS;
     }, (level) => `The wearer's attacks have a **${[12.5, 15, 17.5, 20][level - 1]}%** chance to strike twice.`, "The Aurelian Twinkeeper is a splendid ring, crafted in gleaming bronze with intricate scrollwork that spirals around its band like wisps of light. Embedded within are delicate azure gems that resemble stars frozen in time, creating an enchanting twilight effect. At the heart lies a deep green gemstone, capturing the essence of a perpetual dawn. This ring is not only a symbol of elegance but also a beacon of hope in dark times, granting the wearer the ability to illuminate their surroundings and inspire courage in allies. It is said that those who wear the Aurelian Twinkeeper can manipulate light to daze their foes.", "genesis", 750),
@@ -6280,7 +6346,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, (level) => `Normal attacks hit once, dealing **100%** damage. After every counter, reflects damage back to the attacker. On death, revives when possible.`, "A ring said to be once worn by Phoebus until its novelty wore off. Having no further use for it, the Weaver corrupted its image before tossing it out of the Afterthought. Ever since, scholars have vigorously debated the utility of this oddity, unaware that its state of perpetual potential, forever on the cusp of revealing something amazing but never actually doing it, might be precisely what Phoebus intended.", "genesis", 777),
 
-    // New loot - Liminal Descent (Summer2025)
+    // New loot - Liminal Descent (Summer 2025)
     new lootInfo("Finality", "loot", "event exclusive item", ["Liminal Descent - Summer 2025"], "<:finality:1405573239018881107>", "https://i.ibb.co/spDSxHMB/finality.png", "mythical", 778, false, false, false, "As Juliette's strength begins to fade, the pendant at her chest glows — not with power, but with longing.\n\nUrashima’s presence stirs within, answering the silent call of the one he once cherished. The pendant cracks, and stardust flows into her — a quiet promise, a final embrace.\n\nThe sea accepts the stars.\nShe rises again, reborn as Twilight Juliette —\nnot alone, but fused with the will of Urashima, her guardian and guide.\n\nOcean and cosmos move as one.\nAnd together, they will not fall.\n\n~ Liminal Descent | Summer 2025"),
 
     // Potions
@@ -6289,7 +6355,95 @@ export const items = [
     new potionInfo("Huge XP Potion", "xp", [], "<:huge_xp_potion:1411700642887766086>", "https://i.ibb.co/GKDnnMr/c.png", "flair text", "legendary", 781),
     new potionInfo("Small Instant XP Potion", "instant xp", [], "<:small_instant_xp_potion:1411713377511800842>", "https://i.ibb.co/jvy4rdK8/c.png", "flair text", "rare", 782),
     new potionInfo("Large Instant XP Potion", "instant xp", [], "<:large_instant_xp_potion:1411713396260339873>", "https://i.ibb.co/7wSYggL/c.png", "flair text", "unique", 783),
-    new potionInfo("Huge Instant XP Potion", "instant xp", [], "<:huge_instant_xp_potion:1411713671977107496>", "https://i.ibb.co/9m6tXSv9/c.png", "flair text", "legendary", 784)
+    new potionInfo("Huge Instant XP Potion", "instant xp", [], "<:huge_instant_xp_potion:1411713671977107496>", "https://i.ibb.co/9m6tXSv9/c.png", "flair text", "legendary", 784),
+
+    // Runes
+    new runeInfo("Arcane Rebirth", ["seasonal shop"], "<:arcane_rebirth:1419634455911596163>", "https://i.ibb.co/0yN5xDSD/Arcane-Rebirth.png", {
+        cost: 60,
+        usage: 9999,
+        used: 0,
+        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:arcane_rebirth:1419634455911596163> **${char.name}**`, { atkMultiplier: 2, magicDamage: true, mdChance: -1 });
+
+            return AbilityResponse.SUCCESS;
+        },
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.mdChance = 1;
+
+            mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.1), 9999));
+            myStats.md += Math.floor(myStats.md * 0.1);
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Attacks deal magic damage by default.\n- Increases magic damage by **10%**.\n- When using the active ability, deals **200%** magic damage.", "rare", 785),
+    new runeInfo("Coinmark of Riches", ["seasonal shop"], "<:coinmark_of_riches:1420459821362315337>", "https://i.ibb.co/svFFZvQB/Coinmark-of-Riches.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.lootm += 0.1;
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Increases coins earned from the dungeon by **10%**.", "rare", 786),
+    new runeInfo("Valkyrie Sigil", ["seasonal shop"], "<:valkyrie_sigil:1420830074118209547>", "https://i.ibb.co/VYSdFjh2/Valkyrie-Sigil.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.counter ??= 0;
+
+            myStats.atk += Math.floor(myStats.atk * 0.1);
+            mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.1), 9999));
+
+            // Counter every 8th round
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 8 === 0) {
+                    myStats.counter += 1;
+                };
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Increases attack by **10%**.\n- Every **8th** round, the wearer counters the next attack.", "rare", 787),
+    new runeInfo("Hollow Crown", ["seasonal shop"], "<:hollow_crown:1433405028806295692>", "https://i.ibb.co/Ld93WVhD/Hollow-Crown.png", {
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+            matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && myStats.hollowCrownRoundUsed !== matchStats.round) {
+                    myStats.hollowCrownRoundUsed = matchStats.round;
+
+                    eStats.def = Math.floor(eStats.def * 0.8);
+                    eStats.mr = Math.floor(eStats.mr * 0.8);
+                    ebuff.def.push(new buffInfo("*", 0.8, 2));
+                    ebuff.mr.push(new buffInfo("*", 0.8, 2));
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Once per round after dealing a critical hit, decreases enemy DEF and MR by **20%** for **2** rounds.", "rare", 788),
+    new runeInfo("Wailing Lantern", ["seasonal shop"], "<:wailing_lantern:1433538781499363400>", "https://i.ibb.co/q3SV2GW4/Wailing-Lantern.png", {
+        cost: 60,
+        usage: 9999,
+        used: 0,
+        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:wailing_lantern:1433538781499363400> **${char.name}**`, { atkMultiplier: 1.6, magicDamage: true, mdChance: -1 });
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && myStats.hollowLanternUsedRound !== matchStats.round) {
+                    myStats.hollowLanternUsedRound = matchStats.round;
+
+                    // Spooked: -15% ATK & MD for 2 rounds
+                    eStats.atk = Math.floor(eStats.atk * 0.85);
+                    eStats.md = Math.floor(eStats.md * 0.85);
+                    ebuff.atk.push(new buffInfo("*", 0.85, 2));
+                    ebuff.md.push(new buffInfo("*", 0.85, 2));
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Once per round after using **ATK**, inflicts `Spooked`, decreasing ATK and MD by **15%** for **2** rounds.\n- When using the active ability, deals **160%** magic damage.", "rare", 789)
+
 
 
 

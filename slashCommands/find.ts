@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, showPage } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
@@ -12,23 +11,19 @@ const exportCommand: SlashCommand = {
     async execute({ interaction, author, server }) {
         if (!interaction.guild) return interaction.reply({ content: "This command can only be used in a server", ephemeral: true });
 
-        const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
-
         const page = interaction.options.getInteger('page') ?? 1;
         const setting = interaction.options.getString('setting') as "0" | "1" | "2" | null;
 
         const servers = server.schema ?? await getServerSchema(interaction.guild.id);
         if (!servers) return interaction.reply({ content: "This command can only be used in a server", ephemeral: true });
 
-        const char = search(interaction.options.getString('character', true), [0], interaction);
+        const char = search(interaction.options.getString('character', true), author.schema.chars, interaction);
         if (!char) return;
 
         const stats = await getFindUsers(servers.user_ids, char.id);
 
         if (setting !== null) {
-            const user = stats.find((e) => e.id === interaction.user.id);
-            if (!user) return interaction.reply({ content: "You are not in this server", ephemeral: true });
-            if (user.findoption !== parseInt(setting)) {
+            if (author.schema.findoption !== parseInt(setting)) {
                 await updateUsers(interaction.user.id, { findoption: { type: 'set', value: parseInt(setting) } });
             };
             return interaction.reply(`${["All your characters", "Only your dupes", "None of your characters"][parseInt(setting)]} will be visible for others in \`/find\` from now on <:ThumbsUp:1020442047712350298>`);
@@ -39,7 +34,7 @@ const exportCommand: SlashCommand = {
         stats.forEach((user) => {
             const copies = user.chars.filter((e) => e === char.id).length;
             totalCopies += copies;
-            if ((!(user.id in blacklist)) && ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1))) userCounts.push({ name: user.name, count: copies });
+            if ((!interaction.client.blacklist.has(user.id)) && ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1))) userCounts.push({ name: user.name, count: copies });
         });
         userCounts.sort((a, b) => b.count - a.count);
 

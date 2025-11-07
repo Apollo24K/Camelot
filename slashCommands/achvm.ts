@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ComponentType, APIEmbedField } from "discord.js";
 import achievInfo, { achievements } from "../Modules/achievements";
 import { characters, auniq } from "../Modules/chars";
@@ -25,8 +24,6 @@ const exportCommand: SlashCommand = {
     name: 'achievements',
     async execute({ interaction, author }) {
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const user = interaction.options.getUser('user') ?? interaction.user;
         const page = interaction.options.getInteger('page') ?? 1;
 
@@ -39,10 +36,10 @@ const exportCommand: SlashCommand = {
         if (uniq.length) thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]].image;
         if (stats.favchar !== null) {
             thumbnail = characters[stats.favchar].image;
-            if (stats.premium > 3) if (customSettings[user.id] && customSettings[user.id].cimg[stats.favchar]) thumbnail = customSettings[user.id].cimg[stats.favchar];
+            if (stats.premium > 3 && stats.custom_skins[stats.favchar]) thumbnail = stats.custom_skins[stats.favchar];
         };
 
-        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar]);
+        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         let level = userLevel(stats.xp);
 
@@ -216,7 +213,7 @@ const exportCommand: SlashCommand = {
                         .reduce((sum, [_, amount]) => sum + amount, 0);
 
                     const threshold = { 83: 100, 84: 200, 85: 500, 86: 1000, 87: 2000 }[id];
-                    
+
                     return achvmBar(totalFish / threshold, ` (${totalFish}/${threshold})\n`);
                 }
                 case 88: return achvmBar(0);

@@ -1,15 +1,14 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { search, getDimensions } from "../Modules/functions";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
+import { getUserSchema, updateUsers } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'changeimg',
     async execute({ interaction, author }) {
 
         const stats = author.schema;
-
         if (stats.premium < 3) return interaction.reply("This is a `/premium` feature to change the image of a character. If you're enjoying the bot we would appreciate your help <:RaphiSmile:868998036645380197>\nIf you're having any issues, you can ask us on our `/support` Server.");
 
         const choice = interaction.options.getString('character', true);
@@ -19,21 +18,14 @@ const exportCommand: SlashCommand = {
         if (!char) return;
         if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of ${char.name}`);
 
-        let customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
-        if (!customSettings[interaction.user.id]) customSettings[interaction.user.id] = { cimg: {}, aimg: {} };
-        fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
-            if (err) console.error(err);
-        });
-
         if (imgurl.toLowerCase() === "reset") {
-            if (customSettings[interaction.user.id].cimg[char.id]) {
-                delete customSettings[interaction.user.id].cimg[char.id];
-                setTimeout(() => {
-                    fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
-                        if (err) console.error(err);
-                    });
-                }, 100);
+            if (stats.custom_skins[char.id]) {
+                delete stats.custom_skins[char.id];
+
+                await updateUsers(interaction.user.id, {
+                    custom_skins: { type: "set", value: stats.custom_skins },
+                });
+
                 return interaction.reply(`Removed **${char.name}**'s image`);
             } else {
                 return interaction.reply(`Your **${char.name}** doesn't have a custom image`);
@@ -53,22 +45,23 @@ const exportCommand: SlashCommand = {
             default: false; break;
         };
 
-        if (Object.keys(customSettings[interaction.user.id].cimg).length >= uploadLimit) return interaction.reply(`You have reached your upload limit of ${uploadLimit} characters. You can reset the image of a character with \`/changeimg <char>, reset\``);
+        if (Object.keys(stats.custom_skins).length >= uploadLimit) return interaction.reply(`You have reached your upload limit of ${uploadLimit} characters. You can reset the image of a character with \`/changeimg <char>, reset\``);
         if (imgurl.endsWith(".gif") && !hasGif) return interaction.reply("You can't use gifs");
 
         async function getImg() {
             let dimensions = await getDimensions(imgurl);
             if (!dimensions) return interaction.reply("Invalid image link. Please try another one");
             if (!((dimensions.width % 9 == 0 && dimensions.height % 14 == 0) && (dimensions.width / 9 == dimensions.height / 14))) return interaction.reply(`Your image should have a width to height ratio of 9:14 (recommended: 225x350px)\nCurrent image width x height = ${dimensions.width}x${dimensions.height}`);
-            setCustomImage();
+            await setCustomImage();
         };
 
-        function setCustomImage() {
+        async function setCustomImage() {
             if (!char) return;
-            customSettings[interaction.user.id].cimg[char.id] = imgurl;
+            stats.custom_skins[char.id] = imgurl;
             interaction.reply(`**${char.name}**'s image was changed successfully`);
-            fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
-                if (err) console.error(err);
+
+            await updateUsers(interaction.user.id, {
+                custom_skins: { type: "set", value: stats.custom_skins },
             });
 
             const row = new ActionRowBuilder<ButtonBuilder>()
@@ -93,18 +86,17 @@ const exportCommand: SlashCommand = {
         getImg();
 
     },
-    executeButtonInteraction({ interaction }) {
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
+    async executeButtonInteraction({ interaction }) {
         const [, , uid, cid] = interaction.customId.split("-");
 
-        if (customSettings[uid]?.cimg?.[cid]) {
-            delete customSettings[uid].cimg[cid];
-            setTimeout(() => {
-                fs.writeFile('Storage/customSettings.json', JSON.stringify(customSettings), (err) => {
-                    if (err) console.error(err);
-                });
-            }, 100);
+        const stats = await getUserSchema(uid);
+        if (!stats) return interaction.followUp({ content: "Couldn't find user" });
+
+        if (stats.custom_skins[cid]) {
+            delete stats.custom_skins[cid];
+            await updateUsers(uid, {
+                custom_skins: { type: "set", value: stats.custom_skins },
+            });
 
             interaction.followUp({ content: `${interaction.user} has removed <@${uid}>'s ${characters[parseInt(cid)].name} skin` });
         } else {

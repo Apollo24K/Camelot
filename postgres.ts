@@ -8,6 +8,10 @@ const pool = new Pool({
     database: process.env.PG_DATABASE,
     password: process.env.PG_PASSWORD,
     port: parseInt(process.env.PG_PORT || '5432'),
+    max: 20,                       // Maximum pool size
+    idleTimeoutMillis: 30000,      // Close idle clients after 30s
+    connectionTimeoutMillis: 2000, // Return error after 2s if no connection available
+    statement_timeout: 30000,      // Cancel queries after 30 seconds
 });
 
 export const query = async (text: string, params?: any[]) => {
@@ -36,6 +40,7 @@ async function createTables() {
         battlechar INT,
         lootbox INT DEFAULT 0 NOT NULL,
         lastvote TIMESTAMP,
+        lastvoteserver TIMESTAMP,
         weeklyclaimed INT DEFAULT 0 NOT NULL,
         dailyclaimed INT DEFAULT 0 NOT NULL,
         dailystreak INT DEFAULT 0 NOT NULL,
@@ -64,6 +69,8 @@ async function createTables() {
         votestotal INT DEFAULT 0 NOT NULL,
         arenawins INT DEFAULT 0 NOT NULL,
         arenalosses INT DEFAULT 0 NOT NULL,
+        arenastreak INT DEFAULT 0 NOT NULL,
+        arenahigheststreak INT DEFAULT 0 NOT NULL,
         animationdelay INT DEFAULT 1200 NOT NULL,
         achievements INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         lastpull TIMESTAMP,
@@ -140,6 +147,8 @@ async function createTables() {
         raid_supports INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         stamps INT DEFAULT 0 NOT NULL,
         user_settings JSONB DEFAULT '{}' NOT NULL,
+        custom_skins JSONB DEFAULT '{}' NOT NULL,
+        discovered_via TEXT,
 
         -- Characters table columns
         chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
@@ -207,14 +216,18 @@ async function createTables() {
         elders TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         members TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         banned TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+
         eventpoints INT DEFAULT 0 NOT NULL,
         bosshuntstage INT DEFAULT 1 NOT NULL,
         boss1 BIGINT DEFAULT 124080 NOT NULL,
         boss2 BIGINT DEFAULT 160260 NOT NULL,
         boss3 BIGINT DEFAULT 113720 NOT NULL,
         boss4 BIGINT DEFAULT 144640 NOT NULL,
+        
         lastlevelup TIMESTAMP,
-        raidid INT
+
+        raidid INT,
+        raid_distribute_equally BOOLEAN DEFAULT FALSE NOT NULL
     )`);
 
     // Guild donations table
@@ -298,6 +311,7 @@ async function createIndexes() {
     // Create indexes for frequently accessed columns
     await query(`CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_users_rowid ON users(rowid)`);
+    await query(`CREATE INDEX IF NOT EXISTS idx_servers_id ON servers(id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_weapons_id ON weapons(id)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
     await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
@@ -480,10 +494,20 @@ async function alterTables() {
     // await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS user_settings JSONB DEFAULT '{}' NOT NULL`);
 
     // New with seasonal shop update
-    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lastonline TIMESTAMP;');
-    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS season_keys INT DEFAULT 0 NOT NULL;');
-    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbars INT[] DEFAULT ARRAY[]::INT[] NOT NULL;');
-    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbar INT;');
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lastonline TIMESTAMP;');
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS season_keys INT DEFAULT 0 NOT NULL;');
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbars INT[] DEFAULT ARRAY[]::INT[] NOT NULL;');
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hpbar INT;');
+
+    // await query('ALTER TABLE guilds ADD COLUMN IF NOT EXISTS raid_distribute_equally BOOLEAN DEFAULT FALSE NOT NULL;');
+
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS arenastreak INT DEFAULT 0 NOT NULL');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS arenastreakhighest INT DEFAULT 0 NOT NULL');
+
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS discovered_via TEXT;');
+
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lastvoteserver TIMESTAMP;');
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_skins JSONB DEFAULT '{}' NOT NULL;`);
 
 
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');

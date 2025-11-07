@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, AttachmentBuilder, ComponentType, ButtonStyle, User } from "discord.js";
 import { createCanvas, loadImage, SKRSContext2D, Image } from '@napi-rs/canvas';
 import WorkerPool from '../Modules/workerPool';
@@ -12,8 +11,10 @@ import { Asset } from "../Modules/assets";
 import { CompactUserSchema, ProfileImageArguments, SlashCommand } from '../types';
 import { getGuildSchema, getPartySchema, getUserSchema, insertNewWeapon, updateUsers } from '../Modules/queries';
 import { botPfp, profileColors } from '../Modules/components';
+import path from 'path';
 
-const workerPool = new WorkerPool('../Camelot/build/Modules/profileWorker.js');
+const workerPath = path.join(__dirname, '../Modules/profileWorker.js');
+const workerPool = new WorkerPool(workerPath);
 
 const loadedImages: { [key: string]: Image; } = {};
 
@@ -416,8 +417,6 @@ const exportCommand: SlashCommand = {
     name: 'profile',
     async execute({ interaction, author }) {
 
-        const customSettings = JSON.parse(fs.readFileSync('Storage/customSettings.json', 'utf8'));
-
         const user = interaction.options.getUser('user') ?? interaction.user;
         const type = interaction.options.getString('type') ?? "image";
         const quality = interaction.options.getString('quality');
@@ -488,7 +487,7 @@ const exportCommand: SlashCommand = {
             profilecolor: stats.profilecolor || color,
             quality: quality,
             forceStatic: forceStatic,
-            thumbnail: stats.favchar === null ? undefined : characters[stats.favchar].getImage(stats.premium, customSettings[user.id]?.cimg[stats.favchar], stats.char_skin[stats.favchar], true),
+            thumbnail: stats.favchar === null ? undefined : characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar], true),
 
             stats: detailedStats,
             ref: stats.char_ref[stats.battlechar],

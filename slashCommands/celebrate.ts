@@ -113,7 +113,7 @@ export const exportCommand: SlashCommand = {
         };
 
         // Trick
-        if (ongoingEvent === "halloween" && Math.random() < 0.08) {
+        if (ongoingEvent === "halloween" && Math.random() < 0.06) {
             await updateUsers(interaction.user.id, {
                 coins: { type: 'increment', value: -reward.coins },
                 celebrateclaimed: { type: 'set', value: Date.now() }

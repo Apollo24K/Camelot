@@ -12,7 +12,7 @@ const event: BotEvent = {
         //     if(client.ws.status === 5) { // If the WebSocket is disconnected
         //         console.log('Reconnecting...');
         //         client.destroy().then(() => {
-        //             client.login(config.token);
+        //             client.login(process.env.TOKEN);
         //         });
         //     }
         // }, 15000);

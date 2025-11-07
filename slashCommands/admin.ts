@@ -250,6 +250,21 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Action Successful: Added **${char.name}** to ${user.toString()}`, ephemeral });
         };
 
+        // Add all chars
+        if (action.startsWith("add all chars")) {
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add all chars user:@user\`\n\n**Options**\n\`user\`: User to add the characters to`, ephemeral });
+
+            // Get all character IDs at once
+            const allCharIds = characters.map(char => char.id);
+
+            // Single database call to append all characters
+            await updateUsers(user.id, {
+                chars: { type: "append", value: allCharIds }
+            });
+
+            return interaction.reply({ content: `Action Successful: Added all characters to ${user.toString()}`, ephemeral });
+        };
+
         // Remove char
         if (action.startsWith("remove char")) {
             if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
@@ -543,10 +558,11 @@ const exportCommand: SlashCommand = {
         if (cmd === "ban" || cmd === "blacklist" || cmd === "suspend") {
             if (!user || user.bot || user.id === "489490486734880774") return interaction.reply({ content: `No <:kek:927271748385243206>`, ephemeral });
 
-            const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
-            blacklist[user.id] = args.length ? ` ${args.join(" ")}` : "";
+            const reason = args.length ? ` ${args.join(" ")}` : "";
 
-            fs.writeFile('Storage/blacklist.json', JSON.stringify(blacklist), (err) => {
+            interaction.client.blacklist.set(user.id, reason);
+
+            fs.writeFile('Storage/blacklist.json', JSON.stringify(Object.fromEntries(interaction.client.blacklist)), (err) => {
                 if (err) console.error(err);
             });
 
@@ -557,11 +573,12 @@ const exportCommand: SlashCommand = {
         if (cmd === "unban") {
             if (!user || user.bot || user.id === "489490486734880774") return interaction.reply({ content: `Please specify a valid user to unban\nUsage: \`/admin unban user:<user>\``, ephemeral });
 
-            const blacklist = JSON.parse(fs.readFileSync('Storage/blacklist.json', 'utf8'));
-            delete blacklist[user.id];
-            fs.writeFile('Storage/blacklist.json', JSON.stringify(blacklist), (err) => {
+            interaction.client.blacklist.delete(user.id);
+
+            fs.writeFile('Storage/blacklist.json', JSON.stringify(Object.fromEntries(interaction.client.blacklist)), (err) => {
                 if (err) console.error(err);
             });
+
             return interaction.reply({ content: `${user.username} was unbanned`, ephemeral });
         };
 

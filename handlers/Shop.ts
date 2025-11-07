@@ -1,4 +1,3 @@
-import config from '../config.json';
 import { ChannelType, Client, EmbedBuilder } from "discord.js";
 import { BotHandler, RankShopTransaction, UpdateUserOptions } from "../types";
 import express from 'express';
@@ -27,7 +26,7 @@ const handler: BotHandler = {
             const donation = req.body as RankShopTransaction;
 
             // Check if authorization is valid
-            if (req.headers.authorization !== config.rank.auth && donation.authorization !== config.rank.auth) {
+            if (req.headers.authorization !== process.env.RANK_AUTH && donation.authorization !== process.env.RANK_AUTH) {
                 return res.status(401).send('Unauthorized');
             };
 

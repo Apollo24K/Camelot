@@ -2568,7 +2568,7 @@ export const floors: floorInfo[] = [
 
 // Loot Drops
 for (const enemy of enemies) {
-    if (!enemy.loot.length) console.log(enemy.id + ") " + enemy.name);
+    if (!enemy.loot.length) console.log(`${enemy.id}) ${enemy.name} missing loot`);
 };
 
 // Floor EP's
