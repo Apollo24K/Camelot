@@ -1,10 +1,9 @@
-import { formatNumberWithQuotes } from '../Modules/functions';
-import { updateUsers } from '../Modules/queries';
+import { updateUsersAndCache } from '../Modules/queries';
 import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'settings',
-    async execute({ interaction, author }) {
+    async execute({ interaction }) {
 
         const setting = interaction.options.getString('setting', true);
         const input = interaction.options.getString('input', true);
@@ -16,8 +15,10 @@ const exportCommand: SlashCommand = {
             };
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                user_settings: { type: "merge_json", value: { compact_battle_embeds: input.toLowerCase() === "true" ? true : false } },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    user_settings: { type: "merge_json", value: { compact_battle_embeds: input.toLowerCase() === "true" ? true : false } },
+                },
             });
 
             return interaction.reply(`🎉 Compact battle embeds are now **${input.toLowerCase() === "true" ? "enabled" : "disabled"}**!`);
@@ -31,8 +32,10 @@ const exportCommand: SlashCommand = {
             };
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                user_settings: { type: "merge_json", value: { battle_log_length: `${numInput}` } },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    user_settings: { type: "merge_json", value: { battle_log_length: `${numInput}` } },
+                },
             });
 
             return interaction.reply(`🎉 Battle log length is now set to **${numInput}**!`);
@@ -45,8 +48,10 @@ const exportCommand: SlashCommand = {
             };
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                user_settings: { type: "merge_json", value: { random_hp_bar: input.toLowerCase() === "true" ? true : false } },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    user_settings: { type: "merge_json", value: { random_hp_bar: input.toLowerCase() === "true" ? true : false } },
+                },
             });
 
             return interaction.reply(`🎉 Random HP Bar is now **${input.toLowerCase() === "true" ? "enabled" : "disabled"}**!`);

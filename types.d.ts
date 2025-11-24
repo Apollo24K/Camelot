@@ -259,7 +259,6 @@ export type DetailedStats = {
     critbleedlast: number;
     heap1: any;
     timeout: boolean;
-    allowExecution: boolean;
     defUsed: number,
     lvl: number;
     ref: number;
@@ -314,6 +313,8 @@ export interface SlashCommand {
     autocomplete?: ({ }: { interaction: AutocompleteInteraction; }) => Promise<Array<{ name: string, value: string; }>>,
     executeButtonInteraction?: ({ }: { interaction: ButtonInteraction; }) => void,
     cooldown?: number, // in seconds
+    skipUserRefetch?: boolean,
+    skipServerRefetch?: boolean,
 }
 
 export interface UserSchema {
@@ -883,6 +884,8 @@ declare global {
 declare module "discord.js" {
     export interface Client {
         slashCommands: Collection<string, SlashCommand>;
+        userCache: Map<string, { o: CompactUserSchema, t: number; }>;
+        serverCache: Map<string, { o: ServerSchema, t: number; }>;
         blacklist: Map<string, string>;
     }
 }

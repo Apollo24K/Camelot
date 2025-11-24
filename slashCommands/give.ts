@@ -5,7 +5,7 @@ import charInfo, { characters } from "../Modules/chars";
 import { userLevel, search, formatNumberWithQuotes } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from '../types';
-import { getUserSchema, insertNewTrade, updateUsers } from '../Modules/queries';
+import { getUserSchema, insertNewTrade, updateUsersAndCache } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'give',
@@ -44,8 +44,16 @@ const exportCommand: SlashCommand = {
                         return;
                     };
 
-                    await updateUsers(interaction.user.id, { coins: { type: 'increment', value: -amount } });
-                    await updateUsers(user.id, { coins: { type: 'increment', value: amount } });
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            coins: { type: 'increment', value: -amount },
+                        },
+                    });
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            coins: { type: 'increment', value: amount },
+                        },
+                    });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.toString()} has sent **${formatNumberWithQuotes(amount)}**<:coins:872926669055356939> to ${user.toString()}`);
 
@@ -119,11 +127,15 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        chars: { type: 'remove', value: chars.map((e) => e.id) }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            chars: { type: 'remove', value: chars.map((e) => e.id) },
+                        },
                     });
-                    await updateUsers(user.id, {
-                        chars: { type: 'append', value: chars.map((e) => e.id) }
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            chars: { type: 'append', value: chars.map((e) => e.id) },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${chars.map((c) => c.name.slice(0, 20)).join(", ").length > 1800 ? (chars.map((c) => c.name.slice(0, 20)).join(", ") + " __+ more__") : chars.map((c) => c.name.slice(0, 20)).join(", ")}** ${chars.length === 1 ? "was" : "were"} gifted to **${user.toString()}**`);
@@ -212,8 +224,10 @@ const exportCommand: SlashCommand = {
             });
 
             // Update users table
-            await updateUsers(user.id, {
-                premium: { type: 'set', value: tier }
+            await updateUsersAndCache(interaction.client, user.id, {
+                updates: {
+                    premium: { type: 'set', value: tier },
+                },
             });
 
             return interaction.reply(`${user.toString()} has received ${isStack ? "an additional month of premium!" : "1 month of premium!"}`);
@@ -254,12 +268,16 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        jades: { type: 'increment', value: -1000 },
-                        passpurchaselimit: { type: 'increment', value: 1 }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            jades: { type: 'increment', value: -1000 },
+                            passpurchaselimit: { type: 'increment', value: 1 },
+                        },
                     });
-                    await updateUsers(user.id, {
-                        pass: { type: 'set', value: 1 }
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            pass: { type: 'set', value: 1 },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${user.toString()} has received a premium pass from ${interaction.user.toString()}!`);

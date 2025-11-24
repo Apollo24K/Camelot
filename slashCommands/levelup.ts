@@ -4,7 +4,7 @@ import { achievements } from "../Modules/achievements";
 import { getDetailedStats } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'levelup',
@@ -88,10 +88,12 @@ const exportCommand: SlashCommand = {
                 };
 
                 // Update user table
-                await updateUsers(interaction.user.id, {
-                    coins: { type: "increment", value: -price },
-                    charxp: { type: "set", value: 0 },
-                    level: { type: "increment", value: up }
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        coins: { type: "increment", value: -price },
+                        charxp: { type: "set", value: 0 },
+                        level: { type: "increment", value: up },
+                    },
                 });
 
                 if (interaction.channel?.isSendable()) interaction.channel.send(`**${char.name}** reached level ${currLvl + up}!`);

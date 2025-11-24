@@ -9,7 +9,7 @@ import { dailies } from "../Modules/dailyQuests";
 import { itemInfo, items } from "../Modules/items";
 import { OfferRow } from "../Modules/components";
 import { CharacterRarity, SlashCommand, UpdateUserOptions } from '../types';
-import { getUserSchema, insertNewWeapon, updateUsers } from '../Modules/queries';
+import { getUserSchema, insertNewWeapon, updateUsersAndCache } from '../Modules/queries';
 
 function displayMy(thisChar: charInfo, inv: number[], ref: number, interaction: ChatInputCommandInteraction) {
     let animeL = splitTitle(thisChar.anime);
@@ -88,7 +88,7 @@ const exportCommand: SlashCommand = {
                 displayMy(fChars[num], stats.chars, stats.char_ref[fChars[num].id], interaction);
 
                 // Daily Quests
-                dailies[4].update(interaction);
+                dailies[4].update(interaction, interaction.client);
             } else if (item === "4") {
                 if (stats.coins < 800) return interaction.reply("You don't have enough coins");
                 sub_coins = 800;
@@ -121,7 +121,7 @@ const exportCommand: SlashCommand = {
                 interaction.reply({ embeds: [Embed] });
 
                 // Daily Quests
-                dailies[4].update(interaction);
+                dailies[4].update(interaction, interaction.client);
             } else if (item === "5") {
                 if (stats.coins < 500) return interaction.reply("You don't have enough coins");
                 sub_coins = 500;
@@ -139,7 +139,7 @@ const exportCommand: SlashCommand = {
                 displayMy(fChars[num], stats.chars, stats.char_ref[fChars[num].id], interaction);
 
                 // Daily Quests
-                dailies[4].update(interaction);
+                dailies[4].update(interaction, interaction.client);
             } else if (item === "6") {
                 if (stats.coins < 2000) return interaction.reply("You don't have enough coins");
                 let newChars = characters.filter((e) => !stats.chars.includes(e.id) && e.rarity !== "SS" && e.rarity !== "EX");
@@ -185,7 +185,7 @@ const exportCommand: SlashCommand = {
                 displayMy(fChars[num], stats.chars, stats.char_ref[fChars[num].id], interaction);
 
                 // Daily Quests
-                dailies[4].update(interaction);
+                dailies[4].update(interaction, interaction.client);
             } else if (item === "7") {
                 if (stats.coins < 1000) return interaction.reply("You don't have enough coins");
                 sub_coins = 1000;
@@ -206,12 +206,14 @@ const exportCommand: SlashCommand = {
                 displayMy(fChars[num], stats.chars, stats.char_ref[fChars[num].id], interaction);
 
                 // Daily Quests
-                dailies[4].update(interaction);
+                dailies[4].update(interaction, interaction.client);
             };
 
-            await updateUsers(interaction.user.id, {
-                coins: { type: "increment", value: -sub_coins, },
-                chars: { type: "append", value: tempChars },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: "increment", value: -sub_coins, },
+                    chars: { type: "append", value: tempChars },
+                },
             });
 
             // Achievements
@@ -240,9 +242,11 @@ const exportCommand: SlashCommand = {
             // Return if not enough gems
             if (stats.gems < price) return interaction.reply(`You don't have enough gems (**${stats.gems}**/${price}<:genesis_gems:1034179687720681492>)`);
 
-            await updateUsers(interaction.user.id, {
-                gems: { type: "increment", value: -price, },
-                items: { type: "merge_json", value: { [item]: amount } },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    gems: { type: "increment", value: -price, },
+                    items: { type: "merge_json", value: { [item]: amount } },
+                },
             });
 
             return interaction.reply(`You have bought **${amount}x** ${items[item as any].emoji} **__${items[item as any].name}__**!`);
@@ -262,8 +266,10 @@ const exportCommand: SlashCommand = {
             if (!(stats.items[currency] >= price)) return interaction.reply(`You don't have enough exchange points (**${stats.items[currency] || 0}**/${price}${items[currency].emoji})`);
 
             // Remove Points
-            await updateUsers(interaction.user.id, {
-                items: { type: "merge_json", value: { [currency]: -price } },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    items: { type: "merge_json", value: { [currency]: -price } },
+                },
             });
 
             // Insert new weapon
@@ -374,7 +380,10 @@ const exportCommand: SlashCommand = {
                         updateOptions.image_credits = { type: "increment", value: (fItem.custom.amount ?? 1) * amount };
                     };
 
-                    await updateUsers(interaction.user.id, updateOptions);
+                    // Update users table
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: updateOptions,
+                    });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(replyMessage || `You have bought ${amount}x ${fItem.displayName}!`);
                 });

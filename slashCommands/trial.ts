@@ -419,7 +419,7 @@ const exportCommand: SlashCommand = {
             };
 
             // Daily Quests
-            dailies[5].update(interaction);
+            dailies[5].update(interaction, interaction.client);
 
             const Embed = new EmbedBuilder()
                 .setColor(embedColor)

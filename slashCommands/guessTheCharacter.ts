@@ -3,7 +3,7 @@ import charInfo, { characters, charactersSS, charactersS, charactersA, character
 import { splitTitle } from "../Modules/functions";
 import { dailies } from "../Modules/dailyQuests";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 
 const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -156,17 +156,17 @@ const exportCommand: SlashCommand = {
                             modalInteraction.reply({ embeds: [Embed] });
 
                             // Update users table
-                            await updateUsers(modalInteraction.user.id, {
-                                lilies: { type: 'increment', value: points }
+                            await updateUsersAndCache(interaction.client, modalInteraction.user.id, {
+                                updates: {
+                                    lilies: { type: 'increment', value: points },
+                                },
                             });
 
                             // Daily Quests
-                            if (dailyPending) dailies[1].update(interaction, points, modalInteraction.user);
+                            if (dailyPending) dailies[1].update(interaction, interaction.client, points, modalInteraction.user);
                             dailyPending = false;
                         };
-                    }).catch(() => {
-                        false;
-                    });
+                    }).catch();
                 };
             });
 

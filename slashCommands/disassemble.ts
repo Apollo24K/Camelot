@@ -82,7 +82,7 @@ const exportCommand: SlashCommand = {
                 if (interaction.channel?.isSendable()) interaction.channel.send(`Added ${Object.entries(loot).map((e) => `${items[parseInt(e[0])].emoji}x${e[1]}`).join(", ")}`);
 
                 // Dailies
-                dailies[11].update(interaction, itemsToDisassemble.length); // Parting Pieces
+                dailies[11].update(interaction, interaction.client, itemsToDisassemble.length); // Parting Pieces
             });
         });
     }

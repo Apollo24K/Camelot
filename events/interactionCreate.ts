@@ -1,6 +1,6 @@
 import { Interaction, PermissionsBitField } from "discord.js";
-import { BotEvent, SlashCommand } from "../types";
-import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUsers } from "../Modules/queries";
+import { BotEvent, CompactUserSchema, ServerSchema, SlashCommand } from "../types";
+import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUsersAndCache } from "../Modules/queries";
 import { daysSince } from "../Modules/functions";
 
 const userCooldown = new Map();
@@ -89,22 +89,47 @@ const event: BotEvent = {
                 setTimeout(() => channelCooldown.delete(channelId), 750);
             }
 
+            // Get command
+            const isNPCArena = (interaction.commandName === "arena" && interaction.options.getUser('user')?.id === interaction.client.user.id);
+            const commandName = isNPCArena ? "npc-arena" : interaction.commandName;
+            const command = interaction.client.slashCommands.get(commandName) as SlashCommand | undefined;
+            if (!command) return;
+
+            // Get cached user and server
+            const CACHE_TIME = 5 * 60 * 1000;
+            const cachedUser = interaction.client.userCache.get(interaction.user.id);
+            const useCachedUser = ((command.skipUserRefetch && cachedUser && (cachedUser.t > (Date.now() - CACHE_TIME))) ? cachedUser.o : undefined);
+            const cachedServer = interaction.client.serverCache.get(interaction.guild.id);
+            const useCachedServer = ((command.skipServerRefetch && cachedServer && (cachedServer.t > (Date.now() - CACHE_TIME))) ? cachedServer.o : undefined);
+
             // ADD NEW PLAYERS
             const author = {
-                schema: await getUserSchema(interaction.user.id) ?? await insertNewUser(interaction.user.id, interaction.user.username),
+                schema: useCachedUser ?? await getUserSchema(interaction.user.id) ?? await insertNewUser(interaction.user.id, interaction.user.username),
             };
             if (author.schema.name !== interaction.user.username) author.schema = await insertNewUser(interaction.user.id, interaction.user.username);
 
+            // Cache for 5 minutes
+            if (!cachedUser || cachedUser.t < (Date.now() - CACHE_TIME)) {
+                interaction.client.userCache.set(interaction.user.id, { o: author.schema, t: Date.now() });
+                setTimeout(() => interaction.client.userCache.delete(interaction.user.id), CACHE_TIME);
+            };
+
             // ADD NEW SERVERS
             const server = {
-                schema: await getServerSchema(interaction.guild.id) ?? await insertNewServer(interaction.guild.id, interaction.guild.name, interaction.user.id),
+                schema: useCachedServer ?? await getServerSchema(interaction.guild.id) ?? await insertNewServer(interaction.guild.id, interaction.guild.name, interaction.user.id),
             };
             if (!server.schema.user_ids.includes(interaction.user.id)) await addUserToServer(interaction.guild.id, interaction.user.id);
 
+            // Cache for 5 minutes
+            if (!cachedServer || cachedServer.t < (Date.now() - CACHE_TIME)) {
+                interaction.client.serverCache.set(interaction.guild.id, { o: server.schema, t: Date.now() });
+                setTimeout(() => interaction.guild ? interaction.client.serverCache.delete(interaction.guild.id) : undefined, CACHE_TIME);
+            };
+
             // TUTORIAL
             if (!([0, 1, 2, 3, 4, 5, 6, 7].every((e) => author.schema.tutorial.includes(e)))) {
-                const command = interaction.client.slashCommands.get('tutorial') as SlashCommand | undefined;
-                if (command) return command.execute({ interaction, author, server, locale: 'en_US' });
+                const tutorialCommand = interaction.client.slashCommands.get("tutorial") as SlashCommand | undefined;
+                if (tutorialCommand) return tutorialCommand.execute({ interaction, author, server, locale: 'en_US' });
             };
 
             // Login rewards
@@ -117,30 +142,27 @@ const event: BotEvent = {
                     // do something
                 };
 
-                await updateUsers(interaction.user.id, {
-                    lastonline: { type: "set", value: new Date() },
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        lastonline: { type: "set", value: new Date() },
+                    },
                 });
             };
 
             // Check new mails
             if (author.schema.mailbox.length > author.schema.mailreceived) {
-                await updateUsers(interaction.user.id, {
-                    mailreceived: { type: 'set', value: author.schema.mailbox.length }
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        mailreceived: { type: 'set', value: author.schema.mailbox.length },
+                    },
                 });
                 setTimeout(() => {
                     if (interaction.channel?.isSendable()) interaction.channel.send(interaction.user.toString() + " you have received a **new mail**! Open it using </profile:1010583712527810641>");
                 }, delayForLoginRewards ? 1800 : 1000);
             };
 
-            // NPC Arena Easter Egg
-            if (interaction.commandName === "arena" && interaction.options.getUser('user')?.id === interaction.client.user.id) {
-                const command = interaction.client.slashCommands.get("npc-arena") as SlashCommand | undefined;
-                if (command) return command.execute({ interaction, author, server, locale: 'en_US' });
-            };
-
-            // Slash Commands
-            const command = interaction.client.slashCommands.get(interaction.commandName) as SlashCommand | undefined;
-            if (command) return command.execute({ interaction, author, server, locale: 'en_US' });
+            // Execute slash command
+            return command.execute({ interaction, author, server, locale: 'en_US' });
         };
 
     },

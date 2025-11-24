@@ -3,6 +3,8 @@ import { SlashCommand } from "../types";
 
 const exportCommand: SlashCommand = {
     name: 'faq',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     execute: async ({ interaction }) => {
 
         const search = interaction.options.getString('search', true);

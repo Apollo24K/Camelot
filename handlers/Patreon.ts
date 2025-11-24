@@ -2,7 +2,7 @@ import fs from 'fs';
 import { Campaign } from 'patreon-discord';
 import { Client } from "discord.js";
 import { BotHandler } from "../types";
-import { getPremiumUsers, updateUsers } from '../Modules/queries';
+import { getPremiumUsers, updateUsersAndCache } from '../Modules/queries';
 
 const handler: BotHandler = {
     name: "Autoposter",
@@ -38,8 +38,10 @@ const handler: BotHandler = {
                     if (user.id in patronIDs) {
                         if (user.premium !== patronIDs[user.id]) {
                             // Update users table
-                            await updateUsers(user.id, {
-                                premium: { type: "set", value: patronIDs[user.id] },
+                            await updateUsersAndCache(client, user.id, {
+                                updates: {
+                                    premium: { type: "set", value: patronIDs[user.id] },
+                                },
                             });
                         };
                     } else if (premiumGift?.[user.id]?.date > (new Date().getTime() - (premiumGift?.[user.id]?.method === "shop-7day" ? (7 * 24 * 60 * 60 * 1000) : (31 * 24 * 60 * 60 * 1000)))) {
@@ -51,8 +53,10 @@ const handler: BotHandler = {
 
                 // Remove expired premium
                 if (lostPrem.length) {
-                    await updateUsers(lostPrem, {
-                        premium: { type: "set", value: 0 },
+                    await updateUsersAndCache(client, lostPrem, {
+                        updates: {
+                            premium: { type: "set", value: 0 },
+                        },
                     });
                 };
             });

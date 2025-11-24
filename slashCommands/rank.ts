@@ -3,7 +3,7 @@ import { characters } from "../Modules/chars";
 import { getDetailedStats, showPage, baseEP, RoK } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { IRoK, SlashCommand } from '../types';
-import { getUserSchema } from '../Modules/queries';
+import { getCachedUserSchema } from '../Modules/queries';
 
 /*
     Formula                         | P0 100  1  0  EP:   1.00
@@ -27,6 +27,8 @@ const rarities = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316
 
 export const exportCommand: SlashCommand = {
     name: 'rank',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author, server }) {
         if (!interaction.guild || !server.schema) return interaction.reply("Please use this command in a server");
 
@@ -54,7 +56,7 @@ export const exportCommand: SlashCommand = {
                 characters.forEach((e) => rok.set(e.id, baseEP(e.id)));
                 embedTitle = "Top Characters Ranking";
             } else {
-                const inv = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+                const inv = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
                 if (!inv) return interaction.editReply(`${user.username} hasn't started playing yet.`);
                 const uniq = [...new Set(inv.chars)];
                 for (const id of uniq) {
@@ -86,7 +88,7 @@ export const exportCommand: SlashCommand = {
 
             embedTitle = `🏆 ${scope === "server" ? interaction.guild.name : "Camelot"} top characters 🏆`;
 
-            const tuser = await getUserSchema(sortedRoK[0].id);
+            const tuser = await getCachedUserSchema(sortedRoK[0].id, interaction.client);
             if (!tuser) return interaction.reply("Something went wrong, please try again later.");
             thumbnail = characters[sortedRoK[0].char].getImage((tuser?.premium || 0), (tuser?.custom_skins[sortedRoK[0].char] || ""), tuser?.char_skin[sortedRoK[0].char] || undefined);
         };

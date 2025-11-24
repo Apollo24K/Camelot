@@ -9,9 +9,9 @@ const pool = new Pool({
     password: process.env.PG_PASSWORD,
     port: parseInt(process.env.PG_PORT || '5432'),
     max: 20,                       // Maximum pool size
-    idleTimeoutMillis: 30000,      // Close idle clients after 30s
-    connectionTimeoutMillis: 2000, // Return error after 2s if no connection available
-    statement_timeout: 30000,      // Cancel queries after 30 seconds
+    // idleTimeoutMillis: 30000,      // Close idle clients after 30s
+    // connectionTimeoutMillis: 2000, // Return error after 2s if no connection available
+    // statement_timeout: 30000,      // Cancel queries after 30 seconds
 });
 
 export const query = async (text: string, params?: any[]) => {
@@ -70,7 +70,7 @@ async function createTables() {
         arenawins INT DEFAULT 0 NOT NULL,
         arenalosses INT DEFAULT 0 NOT NULL,
         arenastreak INT DEFAULT 0 NOT NULL,
-        arenahigheststreak INT DEFAULT 0 NOT NULL,
+        arenastreakhighest INT DEFAULT 0 NOT NULL,
         animationdelay INT DEFAULT 1200 NOT NULL,
         achievements INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         lastpull TIMESTAMP,
@@ -309,13 +309,21 @@ async function createTables() {
 
 async function createIndexes() {
     // Create indexes for frequently accessed columns
-    await query(`CREATE INDEX IF NOT EXISTS idx_users_id ON users(id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_users_rowid ON users(rowid)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_servers_id ON servers(id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_weapons_id ON weapons(id)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
-    await query(`CREATE INDEX IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_id ON users(id)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_rowid ON users(rowid)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_party ON users(party)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_pullcount ON users(pullcount) WHERE pullcount > 0`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_lastpull ON users(lastpull) WHERE lastpull IS NOT NULL`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_premium ON users(premium)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_battlechar ON users(battlechar) WHERE battlechar IS NOT NULL`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_battlechar_rowid ON users(rowid, battlechar) WHERE battlechar IS NOT NULL`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_stampedeenergy ON users(stampedeenergy)`);
+
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_servers_id ON servers(id)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_weapons_id ON weapons(id)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
 };
 
 async function createTriggerWeaponUniqueId() {

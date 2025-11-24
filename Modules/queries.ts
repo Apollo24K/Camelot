@@ -1,3 +1,4 @@
+import { ChatInputCommandInteraction, Client } from "discord.js";
 import { query } from "../postgres";
 import { CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateGuildOptions, UpdatePartyOptions, UpdateStampedeOptions, UpdateUserOptions, UpdateWeaponOptions, UserSchema, UserSchemaForStats, WeaponSchema } from "../types";
 import { donationWeekStart } from "./components";
@@ -63,16 +64,35 @@ export const getMinimalUserSchemas = async (ids: string[]): Promise<Pick<UserSch
     return users;
 };
 
+const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via FROM users`;
+
 export const getUserSchema = async (id: string): Promise<CompactUserSchema | undefined> => {
-    const [user] = await query(`SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via FROM users WHERE id = $1`, [id]) as [CompactUserSchema];
+    const [user] = await query(`${SELECT_COMPACT_USER_SCHEMA} WHERE id = $1`, [id]) as [CompactUserSchema];
     if (user) {
         fixBigintForUser(user);
         return user;
     };
 };
 
+export const getCachedUserSchema = async (id: string, client: Client): Promise<CompactUserSchema | undefined> => {
+    const cachedUser = client.userCache.get(id);
+    if (cachedUser && cachedUser.t > (Date.now() - (5 * 60 * 1000))) {
+        return cachedUser.o;
+    };
+
+    const [user] = await query(`${SELECT_COMPACT_USER_SCHEMA} WHERE id = $1`, [id]) as [CompactUserSchema];
+    if (user) {
+        fixBigintForUser(user);
+
+        client.userCache.set(id, { o: user, t: Date.now() });
+        setTimeout(() => client.userCache.delete(id), (5 * 60 * 1000));
+
+        return user;
+    };
+};
+
 export const getUserSchemas = async (ids: string[] | "*", whereClause?: string): Promise<CompactUserSchema[]> => {
-    const query_str = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via FROM users ${whereClause ? whereClause : ""}`;
+    const query_str = `${SELECT_COMPACT_USER_SCHEMA} ${whereClause ? whereClause : ""}`;
 
     if (ids === "*") {
         const users = await query(query_str, []) as CompactUserSchema[];
@@ -716,11 +736,13 @@ export const addGuildDonation = async (guildId: string, userId: string, type: "c
     });
 };
 
-export const resetDailyResponses = async (): Promise<void> => {
+export const resetDailyResponses = async (client: Client): Promise<void> => {
     await query(`UPDATE users SET dungeon_responsetime = ARRAY[]::timestamp[] WHERE array_length(dungeon_responsetime, 1) < 200`);
+
+    client.userCache.clear();
 };
 
-export const resetDungeonLimit = async (): Promise<void> => {
+export const resetDungeonLimit = async (client: Client): Promise<void> => {
     await query(`UPDATE users
         SET dungeon_limit = CASE
             WHEN premium = 7 THEN 
@@ -732,6 +754,8 @@ export const resetDungeonLimit = async (): Promise<void> => {
             ELSE 0
         END
     `);
+
+    client.userCache.clear();
 };
 
 export const updateFAQBody = async (name: string, body: string): Promise<void> => {
@@ -915,6 +939,11 @@ export const updateUsers = async (
                 case 'increment':
                     return `${key} = ${key} + $${paramIndex}`;
                 case 'append':
+                    // if (Array.isArray(value) && value.length === 1) {
+                    //     return `${key} = array_append(${key}, ($${paramIndex}::anyarray)[1])`;
+                    // } else {
+                    // return `${key} = array_cat(${key}, $${paramIndex})`;
+                    // };
                     return `${key} = array_cat(${key}, $${paramIndex})`;
                 case 'append_unique':
                     return `${key} = array(select distinct unnest(array_cat(${key}, $${paramIndex})))`;
@@ -989,6 +1018,81 @@ export const updateUsers = async (
             `UPDATE users SET ${setStatements} WHERE id = ANY($1) ${condition ? `AND ${condition}` : ""}`,
             [ids, ...values]
         );
+    };
+};
+
+export const updateUsersAndCache = async (client: Client, userIds: string | string[] | "*", { updates, condition, evictCache }: {
+    updates: UpdateUserOptions,
+    condition?: string,
+    evictCache?: boolean,
+}): Promise<void> => {
+    try {
+        await updateUsers(userIds, updates, condition);
+        if (userIds === "*") {
+            client.userCache.clear();
+        } else {
+            const ids = Array.isArray(userIds) ? userIds : [userIds];
+            if (evictCache || (Array.isArray(userIds) && userIds.length > 20)) {
+                for (const id of ids) {
+                    client.userCache.delete(id);
+                };
+            } else {
+                for (const id of ids) {
+                    const user = client.userCache.get(id);
+                    if (user) {
+                        const entries = Object.entries(updates);
+                        for (const [key, { type, value }] of entries) {
+                            if (!(key in user.o)) continue;
+                            switch (type) {
+                                case 'set':
+                                    //@ts-ignore
+                                    user.o[key] = value;
+                                    break;
+                                case 'increment':
+                                    //@ts-ignore
+                                    user.o[key] = user.o[key] + value;
+                                    break;
+                                case 'append':
+                                    //@ts-ignore
+                                    user.o[key]?.push(...(Array.isArray(value) ? value : [value]));
+                                    break;
+                                case 'append_unique':
+                                    //@ts-ignore
+                                    user.o[key]?.push(...(Array.isArray(value) ? value : [value]));
+                                    //@ts-ignore
+                                    user.o[key] = [...new Set(user.o[key])];
+                                    break;
+                                case 'remove':
+                                    //@ts-ignore
+                                    user.o[key] = user.o[key]?.filter((item: any) => item !== value);
+                                    break;
+                                case 'remove_all':
+                                    //@ts-ignore
+                                    user.o[key] = user.o[key]?.filter((item: any) => item !== value);
+                                    break;
+                                case 'set_json':
+                                    //@ts-ignore
+                                    user.o[key] = value;
+                                    break;
+                                case 'merge_json':
+                                    //@ts-ignore
+                                    const mergedJson = { ...user.o[key], ...value };
+                                    //@ts-ignore
+                                    for (const [k, v] of Object.entries(value)) {
+                                        //@ts-ignore
+                                        mergedJson[k] = user.o[key][k] + v;
+                                    };
+                                    //@ts-ignore
+                                    user.o[key] = mergedJson;
+                                    break;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+    } catch (error) {
+        console.error(`Error updating users and cache: ${error}`);
     };
 };
 

@@ -23,6 +23,8 @@ function getDesc(showChars: (number | ":")[], stats: CompactUserSchema, elements
 
 const exportCommand: SlashCommand = {
     name: 'locked',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const stats = author.schema;

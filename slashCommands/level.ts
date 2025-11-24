@@ -1,15 +1,17 @@
 import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
-import { getUserSchema } from '../Modules/queries';
+import { getCachedUserSchema } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'level',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user') ?? interaction.user;
 
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply({ content: `**${user.username}** hasn't started playing yet.`, ephemeral: true });
 
         let xpr = stats.xp;

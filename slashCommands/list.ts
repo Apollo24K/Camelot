@@ -4,10 +4,12 @@ import { PageRow } from "../Modules/components";
 import { showPage } from "../Modules/functions";
 import { abilities } from "../Modules/abilities";
 import { SlashCommand } from "../types";
-import { getUserSchema } from "../Modules/queries";
+import { getCachedUserSchema } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'list',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const rarity = interaction.options.getString('rarity');
@@ -15,7 +17,7 @@ const exportCommand: SlashCommand = {
         const user = interaction.options.getUser('user') ?? interaction.user;
         const page = interaction.options.getInteger('page') ?? 1;
 
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply("User not found");
 
         let chars = characters.filter((e) => e.rarity === rarity);

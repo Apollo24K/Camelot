@@ -5,7 +5,7 @@ import { enemies } from "../Modules/enemies";
 import { userLevel } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from '../types';
-import { getUserSchema } from "../Modules/queries";
+import { getCachedUserSchema } from "../Modules/queries";
 import { items } from '../Modules/items';
 
 /**
@@ -22,12 +22,14 @@ function formatPriceText(price: string | number): string {
 
 const exportCommand: SlashCommand = {
     name: 'achievements',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user') ?? interaction.user;
         const page = interaction.options.getInteger('page') ?? 1;
 
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet`);
 
         let uniq = [...new Set(stats.chars)];

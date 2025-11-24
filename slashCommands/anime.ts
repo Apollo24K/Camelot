@@ -3,7 +3,7 @@ import charInfo, { characters, auniq } from "../Modules/chars";
 import { showPage } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema } from "../Modules/queries";
+import { getCachedUserSchema } from "../Modules/queries";
 
 function itemsToShow(show: string[], chars: charInfo[]) {
     let showAnime = [];
@@ -27,13 +27,15 @@ function getMissingAmount(str: string) {
 
 const exportCommand: SlashCommand = {
     name: 'anime',
-    async execute({ interaction, author, server }) {
+    skipUserRefetch: true,
+    skipServerRefetch: true,
+    async execute({ interaction, author }) {
 
         const filter = interaction.options.getString('filter');
         const user = interaction.options.getUser('user') ?? interaction.user;
         const page = interaction.options.getInteger('page') ?? 1;
 
-        const stats = (user.id === interaction.user.id) ? author.schema : await getUserSchema(user.id);
+        const stats = (user.id === interaction.user.id) ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply({ content: `${user.username} hasn't started playing yet`, ephemeral: true });
 
         let uniq = [...new Set(auniq.sort())];

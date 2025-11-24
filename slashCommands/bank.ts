@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from "discord.js";
 import { formatNumberWithQuotes } from "../Modules/functions";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 import { SlashCommand } from '../types';
 import { achievements } from "../Modules/achievements";
 
@@ -54,7 +54,11 @@ const exportCommand: SlashCommand = {
 
                         collector.on('collect', async () => {
                             collector.stop();
-                            updateUsers(interaction.user.id, { bank: { type: 'increment', value: 1 } });
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    bank: { type: 'increment', value: 1 },
+                                },
+                            });
                         });
                     });
                 };
@@ -70,9 +74,11 @@ const exportCommand: SlashCommand = {
             if (stats.coins < amount) amount = stats.coins;
             if (amount < 1) return interaction.reply(`You don't have any coins to deposit.`);
 
-            await updateUsers(interaction.user.id, {
-                coins: { type: 'increment', value: -amount },
-                bank: { type: 'increment', value: amount + (stats.bank === -1 ? 1 : 0) }
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: 'increment', value: -amount },
+                    bank: { type: 'increment', value: amount + (stats.bank === -1 ? 1 : 0) },
+                },
             });
 
             //* Achievements
@@ -90,9 +96,11 @@ const exportCommand: SlashCommand = {
 
             if (amount < 1) return interaction.reply(`You can't withdraw negative coins.`);
 
-            await updateUsers(interaction.user.id, {
-                coins: { type: 'increment', value: amount },
-                bank: { type: 'increment', value: -amount }
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: 'increment', value: amount },
+                    bank: { type: 'increment', value: -amount },
+                },
             });
 
             return interaction.reply(`Withdrew **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> from your bank!\nBank balance: \`${formatNumberWithQuotes(stats.bank - amount)}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
@@ -101,4 +109,3 @@ const exportCommand: SlashCommand = {
 };
 
 export default exportCommand;
-

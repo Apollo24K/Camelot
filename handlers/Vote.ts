@@ -3,7 +3,7 @@ import { Client } from "discord.js";
 import { BotHandler } from "../types";
 import { Webhook } from '@top-gg/sdk';
 import { dailies } from "../Modules/dailyQuests";
-import { getUserSchema, loadVoteReminders, updateUsers } from '../Modules/queries';
+import { getUserSchema, loadVoteReminders, updateUsersAndCache } from '../Modules/queries';
 
 const reminderMessage =
     `You're off cooldown!\n` +
@@ -36,15 +36,17 @@ const handler: BotHandler = {
             if (stats.lastvote && ((Date.now() - new Date(stats.lastvote).getTime()) < 12 * 60 * 60 * 1000)) return;
 
             // Update users table
-            await updateUsers(vote.user, {
-                pullresets: { type: "increment", value: 1 },
-                votestotal: { type: "increment", value: 1 },
-                lootbox: { type: "increment", value: 3 },
-                gems: { type: "increment", value: 3 },
-                lastvote: { type: "set", value: new Date() },
+            await updateUsersAndCache(client, vote.user, {
+                updates: {
+                    pullresets: { type: "increment", value: 1 },
+                    votestotal: { type: "increment", value: 1 },
+                    lootbox: { type: "increment", value: 3 },
+                    gems: { type: "increment", value: 3 },
+                    lastvote: { type: "set", value: new Date() },
 
-                season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
-                dailies: { type: "merge_json", value: { 10: 0 } }
+                    season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
+                    dailies: { type: "merge_json", value: { 10: 0 } },
+                },
             });
 
             // Send reminder
@@ -56,7 +58,7 @@ const handler: BotHandler = {
             };
 
             // Daily Quest
-            dailies[10].update(undefined, 1, { id: vote.user }); // Knight's Ballot
+            dailies[10].update(undefined, client, 1, { id: vote.user }); // Knight's Ballot
         }));
 
         // Listen for Webhooks
@@ -83,13 +85,15 @@ const handler: BotHandler = {
                 // Return if lastvote has been less than 12h ago
                 if (stats.lastvoteserver && ((Date.now() - new Date(stats.lastvoteserver).getTime()) < 12 * 60 * 60 * 1000)) return;
 
-                await updateUsers(vote.user_id, {
-                    lastvoteserver: { type: "set", value: new Date() },
-                    season_keys: { type: "increment", value: "12" in stats.dailies ? 0 : 5 },
-                    dailies: { type: "merge_json", value: { 12: 0 } }
+                await updateUsersAndCache(client, vote.user_id, {
+                    updates: {
+                        lastvoteserver: { type: "set", value: new Date() },
+                        season_keys: { type: "increment", value: "12" in stats.dailies ? 0 : 5 },
+                        dailies: { type: "merge_json", value: { 12: 0 } },
+                    },
                 });
 
-                dailies[12].update(undefined, 1, { id: vote.user_id }); // Guild's Ballot
+                dailies[12].update(undefined, client, 1, { id: vote.user_id }); // Guild's Ballot
                 return;
             };
 
@@ -97,15 +101,17 @@ const handler: BotHandler = {
             if (stats.lastvote && ((Date.now() - new Date(stats.lastvote).getTime()) < 12 * 60 * 60 * 1000)) return;
 
             // Update users table
-            await updateUsers(vote.user_id, {
-                pullresets: { type: "increment", value: 1 },
-                votestotal: { type: "increment", value: 1 },
-                lootbox: { type: "increment", value: 3 },
-                gems: { type: "increment", value: 3 },
-                lastvote: { type: "set", value: new Date() },
+            await updateUsersAndCache(client, vote.user_id, {
+                updates: {
+                    pullresets: { type: "increment", value: 1 },
+                    votestotal: { type: "increment", value: 1 },
+                    lootbox: { type: "increment", value: 3 },
+                    gems: { type: "increment", value: 3 },
+                    lastvote: { type: "set", value: new Date() },
 
-                season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
-                dailies: { type: "merge_json", value: { 10: 0 } }
+                    season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
+                    dailies: { type: "merge_json", value: { 10: 0 } },
+                },
             });
 
             // Send reminder
@@ -117,7 +123,7 @@ const handler: BotHandler = {
             };
 
             // Daily Quest
-            dailies[10].update(undefined, 1, { id: vote.user_id }); // Knight's Ballot
+            dailies[10].update(undefined, client, 1, { id: vote.user_id }); // Knight's Ballot
         });
 
         // Reload active vote reminders after bot restart

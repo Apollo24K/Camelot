@@ -1,7 +1,7 @@
 import { ChannelType, Client, EmbedBuilder } from "discord.js";
 import { BotHandler, RankShopTransaction, UpdateUserOptions } from "../types";
 import express from 'express';
-import { getFullUserSchema, updateUsers } from '../Modules/queries';
+import { getFullUserSchema, updateUsersAndCache } from '../Modules/queries';
 
 const products: { [key: string]: { jades: number, bonus: number, char?: number; }; } = {
     // Rank.top
@@ -57,7 +57,9 @@ const handler: BotHandler = {
                 transactions: { type: "append", value: [donation] },
             };
             if (product.char && donation.first_purchase) userUpdates.chars = { type: "append", value: [product.char] };
-            await updateUsers(donation.buyer_id, userUpdates);
+            await updateUsersAndCache(client, donation.buyer_id, {
+                updates: userUpdates,
+            });
 
             // Send DM
             const dmUser = await client.users.fetch(donation.buyer_id);
@@ -77,9 +79,11 @@ const handler: BotHandler = {
                 const mail = { "type": "9", "rewards": `gems|${Math.floor(0.2 * jades)}`, "message": `Hey <@${stats.referred_by}>! <:MashaWave:928370055354400799>\nA player you have referred has bought some jades, here is your reward <:TohruPoint:928370972132782090>\nThank you for playing <:LoveHeart:928369932683595827>`, "date": Date.now() };
 
                 // Update users table
-                await updateUsers(stats.referred_by, {
-                    referred_gems: { type: "increment", value: Math.floor(0.2 * jades) },
-                    mailbox: { type: "append", value: [mail] },
+                await updateUsersAndCache(client, stats.referred_by, {
+                    updates: {
+                        referred_gems: { type: "increment", value: Math.floor(0.2 * jades) },
+                        mailbox: { type: "append", value: [mail] },
+                    },
                 });
             };
         });

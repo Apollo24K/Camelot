@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { join } from "path";
 import { Client, GatewayIntentBits, Partials, Options, Collection } from 'discord.js';
-import { SlashCommand } from './types';
+import { ServerSchema, CompactUserSchema, SlashCommand } from './types';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -12,8 +12,8 @@ const client = new Client({
     makeCache: Options.cacheWithLimits({
         MessageManager: 0,
         DMMessageManager: 0,
-        GuildMessageManager: 0,
-        UserManager: 0,
+        GuildMessageManager: 100,
+        UserManager: 100,
     }),
     shards: "auto",
 });
@@ -21,6 +21,8 @@ client.login(process.env.TOKEN);
 
 // Collections
 client.slashCommands = new Collection<string, SlashCommand>();
+client.userCache = new Map<string, { o: CompactUserSchema, t: number; }>();
+client.serverCache = new Map<string, { o: ServerSchema, t: number; }>();
 client.blacklist = new Map<string, string>();
 
 // Add Handlers

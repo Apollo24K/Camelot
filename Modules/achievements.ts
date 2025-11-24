@@ -1,6 +1,6 @@
 import { characters, auniq } from "./chars.js";
 import { ChatInputCommandInteraction, User } from "discord.js";
-import { getUserSchema, updateUsers } from "./queries.js";
+import { getCachedUserSchema, updateUsersAndCache } from "./queries.js";
 import { items } from "./items.js";
 import { UpdateUserOptions } from "../types.js";
 
@@ -117,7 +117,9 @@ export default class achievInfo {
             achievements: { type: "append_unique", value: [this.id] }
         };
         if (add_shield > 0) userUpdates.shield_slot = { type: "set", value: add_shield };
-        await updateUsers(user.id, userUpdates);
+        await updateUsersAndCache(interaction.client, user.id, {
+            updates: userUpdates,
+        });
 
         // Achievements
         achievements[15].check(interaction, user), achievements[16].check(interaction, user), achievements[17].check(interaction, user), achievements[18].check(interaction, user); // Rising
@@ -151,7 +153,7 @@ export default class achievInfo {
         achvmLock.add(lockKey);
 
         try {
-            const stats = await getUserSchema(user.id);
+            const stats = await getCachedUserSchema(user.id, interaction.client);
             if (!stats) return;
             if (stats.achievements.includes(this.id)) return;
 

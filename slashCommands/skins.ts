@@ -3,18 +3,20 @@ import { characters } from "../Modules/chars";
 import { skins } from "../Modules/skins";
 import { showPage } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
-import { getUserSchema } from '../Modules/queries';
+import { getCachedUserSchema } from '../Modules/queries';
 import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'skins',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user') ?? interaction.user;
         const filter = interaction.options.getString('filter');
         let page = interaction.options.getInteger('page') || 1;
 
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply(`**${user.username}** has not started playing yet`);
 
         // Filter

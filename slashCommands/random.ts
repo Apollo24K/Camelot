@@ -2,6 +2,8 @@ import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'random',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
 
         const subcommand = interaction.options.getSubcommand();

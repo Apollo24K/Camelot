@@ -3,6 +3,8 @@ import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'avatar',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
         const user = interaction.options.getUser('user') ?? interaction.user;
         const Embed = new EmbedBuilder()

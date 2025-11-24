@@ -62,6 +62,8 @@ function ruin(input: string): string {
 
 const exportCommand: SlashCommand = {
    name: 'ruin',
+   skipUserRefetch: true,
+   skipServerRefetch: true,
    async execute({ interaction }) {
       const title = interaction.options.getString('title');
       if (!title) return interaction.reply('Please provide a title to ruin');

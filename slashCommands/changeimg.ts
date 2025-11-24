@@ -2,7 +2,7 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "disc
 import { search, getDimensions } from "../Modules/functions";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'changeimg',
@@ -22,8 +22,10 @@ const exportCommand: SlashCommand = {
             if (stats.custom_skins[char.id]) {
                 delete stats.custom_skins[char.id];
 
-                await updateUsers(interaction.user.id, {
-                    custom_skins: { type: "set", value: stats.custom_skins },
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        custom_skins: { type: "set", value: stats.custom_skins },
+                    },
                 });
 
                 return interaction.reply(`Removed **${char.name}**'s image`);
@@ -60,8 +62,10 @@ const exportCommand: SlashCommand = {
             stats.custom_skins[char.id] = imgurl;
             interaction.reply(`**${char.name}**'s image was changed successfully`);
 
-            await updateUsers(interaction.user.id, {
-                custom_skins: { type: "set", value: stats.custom_skins },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    custom_skins: { type: "set", value: stats.custom_skins },
+                },
             });
 
             const row = new ActionRowBuilder<ButtonBuilder>()
@@ -94,8 +98,10 @@ const exportCommand: SlashCommand = {
 
         if (stats.custom_skins[cid]) {
             delete stats.custom_skins[cid];
-            await updateUsers(uid, {
-                custom_skins: { type: "set", value: stats.custom_skins },
+            await updateUsersAndCache(interaction.client, uid, {
+                updates: {
+                    custom_skins: { type: "set", value: stats.custom_skins },
+                },
             });
 
             interaction.followUp({ content: `${interaction.user} has removed <@${uid}>'s ${characters[parseInt(cid)].name} skin` });

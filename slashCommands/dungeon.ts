@@ -14,7 +14,7 @@ import { requestVerification, dungeonTempBan, AbilityResponse } from "../Modules
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
-import { addGuildDonation, getGuildSchema, getUserSchema, updateUsers } from '../Modules/queries';
+import { addGuildDonation, getCachedUserSchema, getGuildSchema, getUserSchema, updateUsersAndCache } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 import { customHpBars } from '../Modules/customHpBars';
 
@@ -63,7 +63,11 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
             collector.on('collect', async () => {
                 if (++page === pages.length) {
                     collector.stop(), skip.stop();
-                    await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [8] } });
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            tutorial: { type: 'append_unique', value: [8] },
+                        },
+                    });
                     resolve(1);
                 } else {
                     Embed.setTitle(pages[page][0]).setDescription(pages[page][1]);
@@ -73,7 +77,11 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
 
             skip.on('collect', async () => {
                 collector.stop(), skip.stop();
-                await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [8] } });
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        tutorial: { type: 'append_unique', value: [8] },
+                    },
+                });
                 resolve(1);
             });
         });
@@ -82,6 +90,8 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
 
 const exportCommand: SlashCommand = {
     name: 'dungeon',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         try {
@@ -138,17 +148,20 @@ const exportCommand: SlashCommand = {
         if (requestVerification.has(interaction.user.id)) {
             const captcha = generateCaptcha();
             clearTimeout(requestVerification.get(interaction.user.id)?.timeout);
-            requestVerification.set(interaction.user.id, { text: captcha.text, repeats: (requestVerification.get(interaction.user.id)?.repeats ?? 0) + 1, timeout: setTimeout(() => requestVerification.delete(interaction.user.id), 60 * 60 * 1000) });
+            requestVerification.set(interaction.user.id, { repeats: (requestVerification.get(interaction.user.id)?.repeats ?? 0) + 1, text: captcha.text, timeout: setTimeout(() => requestVerification.delete(interaction.user.id), 60 * 60 * 1000) });
 
             // Temp ban
-            if (requestVerification.get(interaction.user.id).repeats > 4) {
+            if ((requestVerification.get(interaction.user.id)?.repeats ?? 0) > 4) {
                 clearTimeout(dungeonTempBan.get(interaction.user.id)?.timeout);
                 dungeonTempBan.set(interaction.user.id, { ends: (dungeonTempBan.get(interaction.user.id)?.ends || Date.now()) + (20 * 60 * 1000), timeout: setTimeout(() => dungeonTempBan.delete(interaction.user.id), ((dungeonTempBan.get(interaction.user.id)?.ends || Date.now()) + (20 * 60 * 1000)) - Date.now()) });
             };
 
             const now = new Date();
-            await updateUsers(interaction.user.id, { dungeon_responsetime: { type: 'append', value: [now, now] } });
-
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    dungeon_responsetime: { type: 'append', value: [now, now] },
+                },
+            });
             // Captcha cooldown
             captchaCooldown.set(interaction.user.id, Date.now());
             setTimeout(() => captchaCooldown.delete(interaction.user.id), 10 * 60 * 1000);
@@ -166,16 +179,18 @@ const exportCommand: SlashCommand = {
         let skipRounds = 1;
         if (flag === "all") {
             skipRounds = dunLim[0] - stats.dungeon_limit;
-            stats.dungeon_limit = dunLim[0];
+            // stats.dungeon_limit = dunLim[0];
         } else {
-            stats.dungeon_limit++;
+            // stats.dungeon_limit++;
         };
         let skippedTotal = skipRounds;
 
         // Update users table
-        await updateUsers(interaction.user.id, {
-            dungeon_limit: { type: 'increment', value: skipRounds },
-            dungeon_responsetime: { type: 'append', value: [new Date()] },
+        await updateUsersAndCache(interaction.client, interaction.user.id, {
+            updates: {
+                dungeon_limit: { type: 'increment', value: skipRounds },
+                dungeon_responsetime: { type: 'append', value: [new Date()] },
+            },
         });
 
         // User stats
@@ -420,19 +435,21 @@ const exportCommand: SlashCommand = {
             });
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                coins: { type: 'increment', value: loot },
-                ssshard: { type: 'increment', value: ssShards },
-                sshard: { type: 'increment', value: sShards },
-                ashard: { type: 'increment', value: aShards },
-                bshard: { type: 'increment', value: bShards },
-                cshard: { type: 'increment', value: cShards },
-                dshard: { type: 'increment', value: dShards },
-                items: { type: 'merge_json', value: addNewItems },
-                dungeon_floors: { type: 'set', value: stats.dungeon_floors },
-                dungeon_classlevels: { type: 'set', value: stats.dungeon_classlevels },
-                tutorial: { type: 'append_unique', value: [9] },
-                donatedtotal: { type: "increment", value: tax },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: 'increment', value: loot },
+                    ssshard: { type: 'increment', value: ssShards },
+                    sshard: { type: 'increment', value: sShards },
+                    ashard: { type: 'increment', value: aShards },
+                    bshard: { type: 'increment', value: bShards },
+                    cshard: { type: 'increment', value: cShards },
+                    dshard: { type: 'increment', value: dShards },
+                    items: { type: 'merge_json', value: addNewItems },
+                    dungeon_floors: { type: 'set', value: stats.dungeon_floors },
+                    dungeon_classlevels: { type: 'set', value: stats.dungeon_classlevels },
+                    tutorial: { type: 'append_unique', value: [9] },
+                    donatedtotal: { type: "increment", value: tax },
+                },
             });
 
             // Tutorial
@@ -466,7 +483,11 @@ const exportCommand: SlashCommand = {
                             msg.edit({ embeds: [Embed], components: [] });
 
                             // Finish Tutorial
-                            await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [9] } });
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    tutorial: { type: 'append_unique', value: [9] },
+                                },
+                            });
 
                             // Achievements
                             achievements[51].check(interaction); // A New Adventure
@@ -493,7 +514,7 @@ const exportCommand: SlashCommand = {
 
             //* Daily Quests
             // Increasing Danger
-            dailies[2].update(interaction, skipRounds);
+            dailies[2].update(interaction, interaction.client, skipRounds);
 
             let xpleft = myClass
                 ? (myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))

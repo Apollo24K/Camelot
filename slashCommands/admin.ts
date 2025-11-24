@@ -6,7 +6,7 @@ import { OfferRow, PageRow, cowSettings } from "../Modules/components";
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { SlashCommand, UserSchema } from '../types';
-import { deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewWeapon, transferAccount, updateUsers } from '../Modules/queries';
+import { deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
 import { query } from '../postgres';
 import { createResponseGraph, getResponseData } from '../Modules/responseGraph';
 import { query as sqliteQuery } from '../db_handler';
@@ -219,8 +219,11 @@ const exportCommand: SlashCommand = {
             const key = action.split(" ")[1].toLowerCase();
             const value = action.split(" ")[2];
 
-            await updateUsers(user ? user.id : "*", {
-                [key]: { type: "set", value: isNaN(parseInt(value)) ? value : parseInt(value) }
+            await updateUsersAndCache(interaction.client, user ? user.id : "*", {
+                updates: {
+                    [key]: { type: "set", value: isNaN(parseInt(value)) ? value : parseInt(value) },
+                },
+                evictCache: true,
             });
 
             return interaction.reply({ content: `Action Successful: Set \`${key}\` to **${value}** for ${user ? user.toString() : "all users"}`, ephemeral });
@@ -521,6 +524,10 @@ const exportCommand: SlashCommand = {
 
             if (args[0].toUpperCase() === "DROP") return interaction.reply({ content: "not allowed", ephemeral });
             const res = await query(args.join(" ") + (user ? ` WHERE id = '${user.id}'` : ""));
+
+            // Clear user cache
+            if (user) interaction.client.userCache.delete(user.id);
+            else interaction.client.userCache.clear();
 
             if (Array.isArray(res)) {
                 if (flags.includes("txt")) {

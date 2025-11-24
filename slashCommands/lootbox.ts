@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from "discord.js";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getCachedUserSchema, getUserSchema, updateUsersAndCache } from "../Modules/queries";
 
 const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -22,11 +22,13 @@ function rollItems(p: number, n: number, c: number = 0) {
 
 const exportCommand: SlashCommand = {
     name: 'lootbox',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user') ?? interaction.user;
 
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats?.lootbox) return interaction.reply(`${user.id === interaction.user.id ? "You don't" : `**${user.username}** doesn't`} have any lootboxes left`);
 
         // Return without buttons if someone else
@@ -75,21 +77,23 @@ const exportCommand: SlashCommand = {
                 const ticketmsg = obtTickets.map((e) => `${e[1]}x ${ticketEmojis[e[0] as keyof typeof ticketEmojis]}`).join(", ");
 
                 // Update user table
-                await updateUsers(user.id, {
-                    lootbox: { type: "increment", value: -openAmount },
-                    coins: { type: "increment", value: addCoins },
-                    ssshard: { type: "increment", value: addShards["ss"] },
-                    sshard: { type: "increment", value: addShards["s"] },
-                    ashard: { type: "increment", value: addShards["a"] },
-                    bshard: { type: "increment", value: addShards["b"] },
-                    cshard: { type: "increment", value: addShards["c"] },
-                    dshard: { type: "increment", value: addShards["d"] },
-                    ssticket: { type: "increment", value: addTickets["ss"] },
-                    sticket: { type: "increment", value: addTickets["s"] },
-                    aticket: { type: "increment", value: addTickets["a"] },
-                    bticket: { type: "increment", value: addTickets["b"] },
-                    cticket: { type: "increment", value: addTickets["c"] },
-                    dticket: { type: "increment", value: addTickets["d"] },
+                await updateUsersAndCache(interaction.client, user.id, {
+                    updates: {
+                        lootbox: { type: "increment", value: -openAmount },
+                        coins: { type: "increment", value: addCoins },
+                        ssshard: { type: "increment", value: addShards["ss"] },
+                        sshard: { type: "increment", value: addShards["s"] },
+                        ashard: { type: "increment", value: addShards["a"] },
+                        bshard: { type: "increment", value: addShards["b"] },
+                        cshard: { type: "increment", value: addShards["c"] },
+                        dshard: { type: "increment", value: addShards["d"] },
+                        ssticket: { type: "increment", value: addTickets["ss"] },
+                        sticket: { type: "increment", value: addTickets["s"] },
+                        aticket: { type: "increment", value: addTickets["a"] },
+                        bticket: { type: "increment", value: addTickets["b"] },
+                        cticket: { type: "increment", value: addTickets["c"] },
+                        dticket: { type: "increment", value: addTickets["d"] },
+                    },
                 });
 
                 if (interaction.channel?.isSendable()) interaction.channel.send(`You've opened a lootbox! <a:MikuGold:942200295855890483>\n**Coins**: ${addCoins}<:coins:872926669055356939>\n**Shards**: ${shardmsg}\n**Tickets**: ${ticketmsg}`);

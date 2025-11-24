@@ -4,7 +4,7 @@ import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel,
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
 import { ItemCategory, ItemRarity, ItemType, SlashCommand } from "../types";
-import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, getWeaponSchemas, updateUsers, updateWeapons } from "../Modules/queries";
+import { deleteWeapon, getUserSchema, getWeaponCount, getWeaponDupeSchemas, getWeaponSchema, getWeaponSchemas, updateUsersAndCache, updateWeapons } from "../Modules/queries";
 import { achievements } from "../Modules/achievements";
 import { raids } from "../Modules/raids";
 
@@ -345,12 +345,14 @@ const exportCommand: SlashCommand = {
                         };
 
                         // Update users table
-                        await updateUsers(interaction.user.id, {
-                            items: {
-                                type: "merge_json", value: {
-                                    [ascItem.id]: -ascMatsNeeded,
-                                    [craftItem.id]: -craftMatsNeeded,
-                                    [awakenItem.id]: -awakenItemNeeded,
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                items: {
+                                    type: "merge_json", value: {
+                                        [ascItem.id]: -ascMatsNeeded,
+                                        [craftItem.id]: -craftMatsNeeded,
+                                        [awakenItem.id]: -awakenItemNeeded,
+                                    },
                                 },
                             },
                         });
@@ -697,10 +699,12 @@ const exportCommand: SlashCommand = {
                         }
 
                         // Update user materials
-                        await updateUsers(interaction.user.id, {
-                            items: {
-                                type: "merge_json",
-                                value: materialUpdates
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                items: {
+                                    type: "merge_json",
+                                    value: materialUpdates
+                                },
                             },
                         });
 
@@ -861,8 +865,10 @@ const exportCommand: SlashCommand = {
             };
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                equipment: { type: "set", value: stats.equipment },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    equipment: { type: "set", value: stats.equipment },
+                },
             });
 
             return interaction.reply(`Equipped **${characters[stats.battlechar].name}** with ${equipped.join(", ")}`);
@@ -897,8 +903,10 @@ const exportCommand: SlashCommand = {
             } else delete stats.equipment[typeChoice];
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                equipment: { type: "set", value: stats.equipment },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    equipment: { type: "set", value: stats.equipment },
+                },
             });
 
             return interaction.reply(`Unequipped ${typeChoice === "all" ? "items" : "item"} from **${characters[stats.battlechar].name}**`);
@@ -941,9 +949,11 @@ const exportCommand: SlashCommand = {
             if (index !== -1) stats.itemlock[index] = after;
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                equipment: { type: "set", value: stats.equipment },
-                itemlock: { type: "set", value: stats.itemlock },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    equipment: { type: "set", value: stats.equipment },
+                    itemlock: { type: "set", value: stats.itemlock },
+                },
             });
 
             return interaction.reply(`Changed code of ${items[existing.itemid].emoji} ${items[existing.itemid].name} from \`${before}\` to \`${after}\``);
@@ -964,8 +974,10 @@ const exportCommand: SlashCommand = {
             if (stats.itemlock.length > 500) return interaction.reply(`You can't lock more than 500 items at once.`);
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                itemlock: { type: subcommand === "lock" ? "append_unique" : "remove_all", value: choice },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    itemlock: { type: subcommand === "lock" ? "append_unique" : "remove_all", value: choice },
+                },
             });
 
             const content = `${subcommand === "lock" ? "Locked" : "Unlocked"} ${choice.length === 1 ? "item" : "items"} ${choice.map((e) => `\`${e}\``).join(", ")}${stats.itemlock.length ? `\n\nYour currently locked items are:\n> ${stats.itemlock.map((e) => `\`${e}\``).join(", ")}` : ""}`;
@@ -997,8 +1009,10 @@ const exportCommand: SlashCommand = {
             const newWishList = [fItem.id, ...wished.filter((item) => (item.grade !== fItem.grade) && (item.id !== fItem.id)).map((item) => item.id)];
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                itemwishlist: { type: "set", value: newWishList },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    itemwishlist: { type: "set", value: newWishList },
+                },
             });
 
             return interaction.reply(`Added ${fItem.emoji} __${fItem.name}__ to your wish list!`);

@@ -6,7 +6,7 @@ import { skills } from "../Modules/skills";
 import { items, weaponInfo } from "../Modules/items";
 import { splitTitle, getRefinement, rarity, searchClass, customEmojis, generateUniqueItemId } from "../Modules/functions";
 import { SlashCommand } from "../types";
-import { getUserSchema, insertNewWeapon, updateUsers } from "../Modules/queries";
+import { getUserSchema, insertNewWeapon, updateUsersAndCache } from "../Modules/queries";
 
 function formatPath(fClass: classInfo) {
     if (!fClass.path.length) return "Unique\n";
@@ -59,7 +59,11 @@ const exportCommand: SlashCommand = {
                     collector.on('collect', async () => {
                         collector.stop();
 
-                        await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                tutorial: { type: 'append_unique', value: [tutorial] },
+                            },
+                        });
 
                         triggerTutorial();
                     });
@@ -74,17 +78,23 @@ const exportCommand: SlashCommand = {
                     .setDescription("Then let's start by properly introducing myself again. My name's Luminous, and my most important job is to introduce you to Camelot, a massive dungeon RPG with lots and lots of exciting features! Let me show you!\n\n**/pull**\nCamelot lets you collect your favorite characters whom you're already familiar with from anime, manga, games, and more with the </pull:1011014030103674913> command. Try it out!");
                 interaction.editReply({ embeds: [Embed], components: [] });
 
-                await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        tutorial: { type: 'append_unique', value: [tutorial] },
+                    },
+                });
 
             } else if (tutorial === 2) {
                 if (interaction.commandName !== "pull") return interaction.editReply("Nope, that's not it! Try using </pull:1011014030103674913>");
 
                 let char = charactersA[Math.floor(Math.random() * charactersA.length)];
 
-                await updateUsers(interaction.user.id, {
-                    chars: { type: 'append', value: [char.id] },
-                    tutorial: { type: 'append_unique', value: [tutorial] },
-                    battlechar: { type: 'set', value: char.id }
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        chars: { type: 'append', value: [char.id] },
+                        tutorial: { type: 'append_unique', value: [tutorial] },
+                        battlechar: { type: 'set', value: char.id },
+                    },
                 });
 
                 const row = new ActionRowBuilder<ButtonBuilder>()
@@ -132,7 +142,11 @@ const exportCommand: SlashCommand = {
                     collector.on('collect', async () => {
                         collector.stop();
 
-                        await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                tutorial: { type: 'append_unique', value: [tutorial] },
+                            },
+                        });
 
                         triggerTutorial();
                     });
@@ -140,7 +154,13 @@ const exportCommand: SlashCommand = {
                 });
             } else if (tutorial === 4) {
                 if (stats.dungeon_classes.length) {
-                    await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            tutorial: { type: 'append_unique', value: [tutorial] },
+                        },
+                    });
+
                     triggerTutorial();
                 } else {
                     if (interaction.commandName === "class" && interaction.options.getSubcommand() === "info") {
@@ -199,10 +219,12 @@ const exportCommand: SlashCommand = {
                                 if (stats.dungeon_classes.length === 0) {
                                     const classId = parseInt(r.values[0]);
 
-                                    await updateUsers(interaction.user.id, {
-                                        tutorial: { type: 'append_unique', value: [tutorial] },
-                                        dungeon_classes: { type: 'append_unique', value: [classId] },
-                                        class: { type: 'set', value: classId }
+                                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                        updates: {
+                                            tutorial: { type: 'append_unique', value: [tutorial] },
+                                            dungeon_classes: { type: 'append_unique', value: [classId] },
+                                            class: { type: 'set', value: classId },
+                                        },
                                     });
 
                                     const row = new ActionRowBuilder<ButtonBuilder>()
@@ -230,7 +252,11 @@ const exportCommand: SlashCommand = {
 
                                     });
                                 } else {
-                                    await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                        updates: {
+                                            tutorial: { type: 'append_unique', value: [tutorial] },
+                                        },
+                                    });
 
                                     triggerTutorial();
                                 };
@@ -303,9 +329,12 @@ const exportCommand: SlashCommand = {
 
                         // Update users table
                         stats.equipment.weapon = drop.uniqueid;
-                        await updateUsers(interaction.user.id, {
-                            equipment: { type: "set", value: stats.equipment },
-                            tutorial: { type: 'append_unique', value: [tutorial] }
+
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                equipment: { type: "set", value: stats.equipment },
+                                tutorial: { type: 'append_unique', value: [tutorial] },
+                            },
                         });
 
                         triggerTutorial();
@@ -334,7 +363,11 @@ const exportCommand: SlashCommand = {
                     collector.on('collect', async () => {
                         collector.stop();
 
-                        await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                tutorial: { type: 'append_unique', value: [tutorial] },
+                            },
+                        });
 
                         triggerTutorial();
                     });
@@ -365,7 +398,11 @@ const exportCommand: SlashCommand = {
                     collector.on('collect', async () => {
                         collector.stop();
 
-                        await updateUsers(interaction.user.id, { tutorial: { type: 'append_unique', value: [tutorial] } });
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                tutorial: { type: 'append_unique', value: [tutorial] },
+                            },
+                        });
 
                         // Achievements
                         achievements[50].check(interaction); // A New Adventure

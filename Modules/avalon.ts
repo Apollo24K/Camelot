@@ -137,6 +137,7 @@ export default class Avalon {
             eStatsCC: {},
             tdChance: 0,
             shieldBreak: 0,
+            allowExecution: flags.allowExecution ?? true,
             damageFormula: "default" as "default" | `log_scale_${number}`,
 
             sendWarning: function ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) {

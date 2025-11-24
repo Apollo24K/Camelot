@@ -4,10 +4,12 @@ import { skills } from "../Modules/skills";
 import { userLevel, getClassLvl, searchClass, customEmojis } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, getCachedUserSchema, updateUsersAndCache } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'class',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const subcommand = interaction.options.getSubcommand();
@@ -17,7 +19,7 @@ const exportCommand: SlashCommand = {
             const user = interaction.options.getUser('user') ?? interaction.user;
             const page = interaction.options.getInteger('page') ?? 1;
 
-            const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+            const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
             if (!stats) return interaction.reply("User not found");
 
             let beginner = classes.filter((e) => e.tier === 1).map((c) => `> ${c.emblem} ${c.name}${stats.dungeon_classes.includes(c.id) ? " <a:check:873196253276700682>" : ""}`); //.sort();
@@ -144,8 +146,10 @@ const exportCommand: SlashCommand = {
             if (!author.schema.dungeon_classes.includes(fClass.id)) return interaction.reply(`You don't have the **${fClass.name}** class`);
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                class: { type: "set", value: fClass.id },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    class: { type: "set", value: fClass.id },
+                },
             });
 
             return interaction.reply(`Your class has been changed to **${fClass.name}**`);
@@ -201,8 +205,10 @@ const exportCommand: SlashCommand = {
                     collector.stop();
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        dungeon_classes: { type: "append_unique", value: [parseInt(r.values[0])] },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            dungeon_classes: { type: "append_unique", value: [parseInt(r.values[0])] },
+                        },
                     });
                 });
             });
@@ -243,9 +249,11 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        class: { type: "set", value: fClass.id },
-                        dungeon_classes: { type: "append_unique", value: [fClass.id] },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            class: { type: "set", value: fClass.id },
+                            dungeon_classes: { type: "append_unique", value: [fClass.id] },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`unlocked **${fClass.name}** 🎉`);
@@ -258,7 +266,7 @@ const exportCommand: SlashCommand = {
             const user = interaction.options.getUser('user') ?? interaction.user;
             let choice = interaction.options.getString('class');
 
-            const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+            const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
             if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
 
             if (!choice) {
@@ -322,9 +330,11 @@ const exportCommand: SlashCommand = {
                         };
 
                         // Update users table
-                        await updateUsers(interaction.user.id, {
-                            class: { type: "set", value: parseInt(r.customId) },
-                            dungeon_classes: { type: "append_unique", value: [parseInt(r.customId)] },
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                class: { type: "set", value: parseInt(r.customId) },
+                                dungeon_classes: { type: "append_unique", value: [parseInt(r.customId)] },
+                            },
                         });
 
                         if (interaction.channel?.isSendable()) interaction.channel.send(`unlocked **${classes[parseInt(r.customId)].name}** 🎉`);
@@ -383,9 +393,11 @@ const exportCommand: SlashCommand = {
                     // delete stats.dungeon_classlevels[oldClass.id];
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        gems: { type: "increment", value: -30 },
-                        dungeon_classlevels: { type: "merge_json", value: { [newClass.id]: xp, [oldClass.id]: -xp } },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            gems: { type: "increment", value: -30 },
+                            dungeon_classlevels: { type: "merge_json", value: { [newClass.id]: xp, [oldClass.id]: -xp } },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`Transferred **${xp}** xp from **${oldClass.name}** to **${newClass.name}** 🎉`);
@@ -463,11 +475,13 @@ const exportCommand: SlashCommand = {
                     });
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        gems: { type: "increment", value: -100 },
-                        presets: { type: "set", value: stats.presets },
-                        dungeon_classes: { type: "set", value: stats.dungeon_classes },
-                        dungeon_classlevels: { type: "set", value: stats.dungeon_classlevels },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            gems: { type: "increment", value: -100 },
+                            presets: { type: "set", value: stats.presets },
+                            dungeon_classes: { type: "set", value: stats.dungeon_classes },
+                            dungeon_classlevels: { type: "set", value: stats.dungeon_classlevels },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`unlocked **${fClass.tier === 2 ? newAdvanced.name : newMaster.name}** 🎉`);

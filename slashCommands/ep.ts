@@ -1,9 +1,10 @@
 import { cat1 } from "../Modules/functions";
-import { EmbedBuilder } from 'discord.js';
 import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'ep',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
 
         let hp = interaction.options.getNumber('hp') ?? 1;

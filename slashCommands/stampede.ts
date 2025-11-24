@@ -19,6 +19,8 @@ const dungeonInProgress = new Map();
 const captchaCooldown = new Map();
 
 const EMBED_COLOR = 0xff0000;
+const FIGHT_DURATION = 240; // in seconds
+const MAX_ROUNDS = 120; // max rounds per fight
 
 function participationPrize(rounds: number) {
     const prizePool = {
@@ -396,11 +398,11 @@ const exportCommand: SlashCommand = {
             if (!requestVerification.has(interaction.user.id) && Math.random() < 0.03 && !captchaCooldown.has(interaction.user.id)) requestVerification.set(interaction.user.id, { repeats: 0 });
             if (requestVerification.has(interaction.user.id)) {
                 const captcha = generateCaptcha();
-                clearTimeout(requestVerification.get(interaction.user.id).timeout);
-                requestVerification.set(interaction.user.id, { text: captcha.text, repeats: requestVerification.get(interaction.user.id).repeats + 1, timeout: setTimeout(() => requestVerification.delete(interaction.user.id), 60 * 60 * 1000) });
+                clearTimeout(requestVerification.get(interaction.user.id)?.timeout);
+                requestVerification.set(interaction.user.id, { text: captcha.text, repeats: (requestVerification.get(interaction.user.id)?.repeats ?? 0) + 1, timeout: setTimeout(() => requestVerification.delete(interaction.user.id), 60 * 60 * 1000) });
 
                 // Temp ban
-                if (requestVerification.get(interaction.user.id).repeats > 4) {
+                if ((requestVerification.get(interaction.user.id)?.repeats ?? 0) > 4) {
                     clearTimeout(dungeonTempBan.get(interaction.user.id)?.timeout);
                     dungeonTempBan.set(interaction.user.id, { ends: (dungeonTempBan.get(interaction.user.id)?.ends || Date.now()) + (20 * 60 * 1000), timeout: setTimeout(() => dungeonTempBan.delete(interaction.user.id), ((dungeonTempBan.get(interaction.user.id)?.ends || Date.now()) + (20 * 60 * 1000)) - Date.now()) });
                 };
@@ -432,7 +434,7 @@ const exportCommand: SlashCommand = {
                 if (interaction.channel?.isSendable()) interaction.channel.send(`Please finish your previous fight first or wait 2 minutes.`);
                 return;
             };
-            dungeonInProgress.set(stats.id, Date.now() + (2 * 60 * 1000));
+            dungeonInProgress.set(stats.id, Date.now() + (FIGHT_DURATION * 1000));
 
             // Update users table
             await updateUsers(interaction.user.id, {
@@ -690,7 +692,7 @@ const exportCommand: SlashCommand = {
         if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
 
-        partyStatsC.forEach(async (e, i) => {
+        for (const [i, e] of partyStatsC.entries()) {
             if (e.id in abilities) {
                 partyAbility[i] = _.cloneDeep(abilities[e.id]);
 
@@ -703,7 +705,7 @@ const exportCommand: SlashCommand = {
             } else {
                 partyAbility[i] = undefined;
             };
-        });
+        };
 
         const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
@@ -729,16 +731,16 @@ const exportCommand: SlashCommand = {
                 const Embed = new EmbedBuilder()
                     .setColor(embedColor)
                     .setThumbnail(isCompactEmbed ? eStatsC.image : myStatsC.thumbnail)
-                    .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
+                    .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${FIGHT_DURATION}s` })
                     .setTitle(stampedes[stampede.type].title)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
-                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
-                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill };
                     matchStats.message = msg;
 
@@ -753,7 +755,7 @@ const exportCommand: SlashCommand = {
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
-                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         if (eStats.image !== eStatsC.image) Embed.setImage(eStatsC.image);
                         // await msg.edit({ embeds: [Embed] });
 
@@ -791,6 +793,12 @@ const exportCommand: SlashCommand = {
                     };
 
                     function startNextRound() {
+                        // Force end at MAX_ROUNDS
+                        if (matchStats.round >= MAX_ROUNDS) {
+                            notice.push(`\n🕗 You've reached the end`);
+                            endMatch("l");
+                        };
+
                         if (matchStats.ended) return;
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
@@ -1061,7 +1069,7 @@ const exportCommand: SlashCommand = {
                     });
 
                     atk.on('end', () => {
-                        if (120 + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
+                        if (FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
                             atk.stop(), def.stop(), ability.stop(), cskill.stop();
 
                             resolve(matchResult("t"));
