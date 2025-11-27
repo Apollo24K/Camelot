@@ -25797,6 +25797,14 @@ export const characters: charInfo[] = [
     new charInfo("Volkov Varanov", [], anime[682], "M", "https://i.ibb.co/NnKVDCxT/c.png", 25693, "C"),
     new charInfo("Zuber", [], anime[682], "M", "https://i.ibb.co/yn2v0M3C/c.png", 25694, "C"),
 
+
+    // --- //
+    new charInfo("Bi-Yeon Adolebit Hong", ["Fire Incarnate", "The Avatar of Fire"], anime[687], "F", "https://i.ibb.co/xtYcn2Q2/c.png", 25823, "S"),
+    new charInfo("Yu-Seol Baek", [], anime[687], "M", "https://i.ibb.co/zhJWpGdq/c.png", 25824, "A"),
+    new charInfo("Aiselle Wolf", [], anime[687], "F", "https://i.ibb.co/8g5723vX/c.png", 25825, "A"),
+    new charInfo("Flame", [], anime[687], "F", "https://i.ibb.co/tMp0WCkJ/c.png", 25826, "B"),
+    new charInfo("Yu-Seong Ma", ["Descendant of the Dark Mage King", "Filthy Blood", "Mixed Blood"], anime[687], "M", "https://i.ibb.co/cKJq3tfy/c.png", 25827, "S"),
+
 ];
 
 

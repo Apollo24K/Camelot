@@ -715,6 +715,7 @@ export const anime: animeInfo[] = [
     new animeInfo("Absolute Sword Sense", ['Jeoldaegeomgam', 'Perfect Sword Sense'], 680),
     new animeInfo("Myst, Might, Mayhem", ['Goeryeok Nansin', 'The Chaotic God of Extraordinary Strength'], 681),
     new animeInfo("The Stellar Swordmaster", ['Byeoreul Pumeun Swordmaster', 'Star-Embracing Swordmaster', 'Star-Fostered Swordmaster'], 682),
+    new animeInfo("Blink Master of the Magic Academy", ['I Became a Flashing Genius at the Magic Academy', 'Mabeop Hakgyo Apjeommyeol Cheonjae-ga Doeeotda', "Magic Academy's Genius Blinker", 'Quick Teleporting Genius from Magic School'], 687),
 
 ];
 
