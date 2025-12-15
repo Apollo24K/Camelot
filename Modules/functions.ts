@@ -1302,7 +1302,7 @@ export const getRingSlotsTotal = (stats: Pick<CompactUserSchema, "xp" | "dungeon
     // Beat floor 300
     if ("300" in stats.dungeon_floors && stats.dungeon_floors["300"] > 0) total++;
 
-    return 3;//total;
+    return total;
 };
 
 export const formatNumberWithQuotes = (num: number) => {
@@ -1646,23 +1646,23 @@ export const numberToRoman = (n: number): string => {
 };
 
 export const customEmojis: Record<PrimaryStat, string> = {
-    "hp": "💖",
-    "hp%": "💖",
-    "atk": "⚔️",
-    "atk%": "⚔️",
-    "def": "🛡️",
-    "def%": "🛡️",
-    "md": "🪄",
-    "md%": "🪄",
-    "mr": "👕",
-    "cr": "🎯",
-    "cd": "💥",
-    "dodge": "💨",
-    "br": "🛡️",
-    "mana": "💧",
-    "sm": "💧",
-    "mg": "💦",
-    "shield": "💠",
+    "hp": "<:HP:1062043800979116143>",
+    "hp%": "<:HP:1062043800979116143>",
+    "atk": "<:ATK:1063214925528440832>",
+    "atk%": "<:ATK:1063214925528440832>",
+    "def": "<:DEF:1047269141662417037>",
+    "def%": "<:DEF:1047269141662417037>",
+    "md": "<:magic_dmg:948568336621527040>",
+    "md%": "<:magic_dmg:948568336621527040>",
+    "mr": "<:magic_resistance:1047269149237334086>",
+    "cr": "<:crit_rate:1047269144195776512>",
+    "cd": "<:crit_damage:1047269146511016046>",
+    "dodge": "<:dodge_chance:1047269150948606063>",
+    "br": "<:block_rate:1217949026281066599>",
+    "mana": "<:mana:1047269152957661255>",
+    "sm": "<:mana:1047269152957661255>",
+    "mg": "<:mana_generation:1063215562349629570>",
+    "shield": "<:shield:1062050038211166310>",
 
     // "coins": "<:coins:872926669055356939>",
 };
