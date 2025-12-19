@@ -491,6 +491,9 @@ const exportCommand: SlashCommand = {
             // David versus Goliath
             achievements[88].check(interaction, interaction.user, eStats.ep >= myStats.ep * 5);
 
+            // Relentless
+            achievements[109].check(interaction, interaction.user, stats.dungeon_limit), achievements[110].check(interaction, interaction.user, stats.dungeon_limit), achievements[111].check(interaction, interaction.user, stats.dungeon_limit), achievements[112].check(interaction, interaction.user, stats.dungeon_limit), achievements[113].check(interaction, interaction.user, stats.dungeon_limit);
+
             //* Daily Quests
             // Increasing Danger
             dailies[2].update(interaction, skipRounds);

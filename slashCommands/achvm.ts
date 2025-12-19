@@ -239,6 +239,45 @@ const exportCommand: SlashCommand = {
                     return achvmBar(totalSkillUpgrades / threshold, ` (${totalSkillUpgrades}/${threshold})\n`);
 
                 }
+                case 104: return achvmBar(0);
+                case 105: return achvmBar(0);
+                case 106: return achvmBar(0);
+                case 107: return achvmBar(0);
+                case 108: return achvmBar(0);
+                case 109:
+                case 110:
+                case 111:
+                case 112:
+                case 113: {
+                    const threshold = { 109: 100, 110: 200, 111: 500, 112: 1000, 113: 2000 }[id];
+
+                    return achvmBar(stats.dungeon_limit / threshold, ` (${stats.dungeon_limit}/${threshold})\n`);
+                }
+                case 114:
+                case 115:
+                case 116:
+                case 117:
+                case 118: {
+                    const maxRefinedCount = Object.values(stats.char_ref).filter(ref => ref === 6).length;
+                    const threshold = { 114: 1, 115: 3, 116: 5, 117: 7, 118: 10 }[id];
+
+                    return achvmBar(maxRefinedCount / threshold, ` (${maxRefinedCount}/${threshold})\n`);
+                }
+                case 119:
+                case 120:
+                case 121:
+                case 122:
+                case 123: {
+                    const threshold = { 119: 100, 120: 500, 121: 1000, 122: 5000, 123: 10000 }[id];
+
+                    return achvmBar(stats.pullstotal / threshold, ` (${stats.pullstotal}/${threshold})\n`);
+                }
+                case 124: return achvmBar(0);
+                case 125: return achvmBar(0);
+                case 126: return achvmBar(0);
+                case 127: return achvmBar(0);
+                case 128: return achvmBar(0);
+
 
                 default: return achvmBar(0);
             };

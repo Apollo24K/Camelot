@@ -3,6 +3,7 @@ import { search, getDetailedStats } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsers } from '../Modules/queries';
+import { achievements } from '../Modules/achievements';
 
 const exportCommand: SlashCommand = {
     name: 'refine',
@@ -90,6 +91,19 @@ const exportCommand: SlashCommand = {
                     [shardType]: { type: 'increment', value: -shardAmount },
                     char_ref: { type: 'merge_json', value: { [char.id]: 1 } },
                 });
+
+                // Refined Taste
+                if (invCheck.char_ref[char.id] === 6) {
+                    const maxRefinedCount = Object.values(invCheck.char_ref).filter(ref => ref === 6).length;
+                    achievements[114].check(interaction, interaction.user, maxRefinedCount);
+                    achievements[115].check(interaction, interaction.user, maxRefinedCount);
+                    achievements[116].check(interaction, interaction.user, maxRefinedCount);
+                    achievements[117].check(interaction, interaction.user, maxRefinedCount);
+                    achievements[118].check(interaction, interaction.user, maxRefinedCount);
+                }
+
+                // Gluttony
+                achievements[124].check(interaction, interaction.user, stats2.ep), achievements[125].check(interaction, interaction.user, stats2.ep), achievements[126].check(interaction, interaction.user, stats2.ep), achievements[127].check(interaction, interaction.user, stats2.ep), achievements[128].check(interaction, interaction.user, stats2.ep);
 
                 if (interaction.channel?.isSendable()) interaction.channel.send(`Raised **${char.name}**'s refinement level successfully!`);
             });

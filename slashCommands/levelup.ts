@@ -104,6 +104,9 @@ const exportCommand: SlashCommand = {
 
                 // The Battle is to the Strong II
                 achievements[71].check(interaction, interaction.user, currLvl + up), achievements[72].check(interaction, interaction.user, currLvl + up), achievements[73].check(interaction, interaction.user, currLvl + up), achievements[74].check(interaction, interaction.user, currLvl + up);
+
+                // Gluttony
+                achievements[124].check(interaction, interaction.user, stats2.ep), achievements[125].check(interaction, interaction.user, stats2.ep), achievements[126].check(interaction, interaction.user, stats2.ep), achievements[127].check(interaction, interaction.user, stats2.ep), achievements[128].check(interaction, interaction.user, stats2.ep);
             });
 
             collector.on('end', () => {

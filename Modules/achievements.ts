@@ -316,7 +316,38 @@ export default class achievInfo {
                 case 101: if (list[0] >= 10) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 102: if (list[0] >= 20) this.addRewards(interaction, user), this.notify(interaction); break;
                 case 103: if (list[0] >= 50) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 104: if (list[0] >= "A") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 105: if (list[0] >= "S") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 106: if (list[0] >= "SS") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 107: if (list[0] >= "SSS") this.addRewards(interaction, user), this.notify(interaction); break;
+                case 108: if (list[0] >= "SSS+") this.addRewards(interaction, user), this.notify(interaction); break;
+
+                case 109: if (list[0] >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 110: if (list[0] >= 200) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 111: if (list[0] >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 112: if (list[0] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 113: if (list[0] >= 2000) this.addRewards(interaction, user), this.notify(interaction); break;
+
+                case 114: if (list[0] >= 1) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 115: if (list[0] >= 3) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 116: if (list[0] >= 5) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 117: if (list[0] >= 7) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 118: if (list[0] >= 10) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 
+                case 119: if (stats.pullstotal >= 100) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 120: if (stats.pullstotal >= 500) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 121: if (stats.pullstotal >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 122: if (stats.pullstotal >= 5000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 123: if (stats.pullstotal >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+
+                
+                case 124: if (list[0] >= 1000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 125: if (list[0] >= 10000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 126: if (list[0] >= 100000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 127: if (list[0] >= 1000000) this.addRewards(interaction, user), this.notify(interaction); break;
+                case 128: if (list[0] >= 10000000) this.addRewards(interaction, user), this.notify(interaction); break;
+
                 default: false; break;
             };
         } catch {
@@ -458,7 +489,6 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("Lord of the Rings", "Ascend 7 rings to max ascension", 97, 30, "1,2", "xp|100", "coins|15000"),
     new achievInfo("Lord of the Rings", "Ascend 10 rings to max ascension", 98, 30, "1,2", "xp|150", "coins|25000"),
 
-    // working on this and below
     new achievInfo("Just One More Point", "Upgrade skills 1 time", 99, 31, "1,2", "xp|25", "coins|1000"),
     new achievInfo("Just One More Point", "Upgrade skills 5 times", 100, 31, "1,2", "xp|50", "coins|5000"),
     new achievInfo("Just One More Point", "Upgrade skills 10 times", 101, 31, "1,2", "xp|75", "coins|10000"),
@@ -470,6 +500,30 @@ export const achievements = [ // Type 1: xp, 2: coins, 3: shards, 4: tickets, 5:
     new achievInfo("The Ranker", "Achieve SS rank in rank-up exam", 106, 32, "1,2", "xp|75", "coins|10000"),
     new achievInfo("The Ranker", "Achieve SSS rank in rank-up exam", 107, 32, "1,2", "xp|100", "coins|15000"),
     new achievInfo("The Ranker", "Achieve SSS+ rank in rank-up exam", 108, 32, "1,2", "xp|150", "coins|25000"),
+
+    new achievInfo("Relentless", "Do 100 runs in a single interval", 109, 33, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Relentless", "Do 200 runs in a single interval", 110, 33, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Relentless", "Do 500 runs in a single interval", 111, 33, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("Relentless", "Do 1000 runs in a single interval", 112, 33, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("Relentless", "Do 2000 runs in a single interval", 113, 33, "1,2", "xp|150", "coins|25000"),
+
+    new achievInfo("Refined Taste", "Refine 1 character to max refinement", 114, 34, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Refined Taste", "Refine 3 characters to max refinement", 115, 34, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Refined Taste", "Refine 5 characters to max refinement", 116, 34, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("Refined Taste", "Refine 7 characters to max refinement", 117, 34, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("Refined Taste", "Refine 10 characters to max refinement", 118, 34, "1,2", "xp|150", "coins|25000"),
+
+    new achievInfo("Gacha Connoisseur", "Pull 100 times ", 119, 35, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Gacha Connoisseur", "Pull 500 times ", 120, 35, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Gacha Connoisseur", "Pull 1000 times ", 121, 35, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("Gacha Connoisseur", "Pull 5000 times ", 122, 35, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("Gacha Connoisseur", "Pull 10000 times ", 123, 35, "1,2", "xp|150", "coins|25000"),
+
+    new achievInfo("Gluttony", "Reach 1k EP", 124, 36, "1,2", "xp|25", "coins|1000"),
+    new achievInfo("Gluttony", "Reach 10k EP", 125, 36, "1,2", "xp|50", "coins|5000"),
+    new achievInfo("Gluttony", "Reach 100k EP", 126, 36, "1,2", "xp|75", "coins|10000"),
+    new achievInfo("Gluttony", "Reach 1m EP", 127, 36, "1,2", "xp|100", "coins|15000"),
+    new achievInfo("Gluttony", "Reach 10m EP", 128, 36, "1,2", "xp|150", "coins|25000"),
 
 
 ];

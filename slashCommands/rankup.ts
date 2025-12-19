@@ -16,6 +16,7 @@ import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
 import { getUserSchema, getWeaponSchemas, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 import { customHpBars } from '../Modules/customHpBars';
+import { achievements } from "../Modules/achievements";
 
 const dungeonInProgress = new Set();
 
@@ -203,7 +204,12 @@ const exportCommand: SlashCommand = {
                     rankscore: { type: "set", value: score },
                 });
             };
-
+            
+            achievements[104].check(interaction, interaction.user, getLetterRank(score));
+            achievements[105].check(interaction, interaction.user, getLetterRank(score));
+            achievements[106].check(interaction, interaction.user, getLetterRank(score));
+            achievements[107].check(interaction, interaction.user, getLetterRank(score));
+            achievements[108].check(interaction, interaction.user, getLetterRank(score));
             return new EmbedBuilder()
                 .setColor(embedColor)
                 .setThumbnail(myStatsC.thumbnail)
