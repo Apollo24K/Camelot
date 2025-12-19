@@ -2,12 +2,14 @@ import { fishing } from "../Modules/items";
 import { dailies } from "../Modules/dailyQuests";
 import { achievements } from "../Modules/achievements";
 import { ItemRarity, SlashCommand } from "../types";
-import { updateUsers } from "../Modules/queries";
+import { updateUsersAndCache } from "../Modules/queries";
 
 const fishingCooldown = new Map();
 
 const exportCommand: SlashCommand = {
     name: 'fish',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         // Set up restrictions
@@ -35,17 +37,19 @@ const exportCommand: SlashCommand = {
         // interaction.reply(`🎣 | You've caught a __${caught.grade}__ **${caught.name}** ${caught.emoji}\nAdded **${eventpts}**🍬`);
         interaction.reply(`🎣 | ${caught.grade === "mythical" ? "Wow, you've" : "You've"} caught a __${caught.grade}__ **${caught.name}**${caught.grade === "mythical" ? "!" : ""} ${caught.emoji}`);
 
-        await updateUsers(interaction.user.id, {
-            items: { type: "merge_json", value: { [caught.id]: 1 } },
-            // eventpts: { type: "increment", value: eventpts },
-            // eventpts2: { type: "increment", value: eventpts },
+        await updateUsersAndCache(interaction.client, interaction.user.id, {
+            updates: {
+                items: { type: "merge_json", value: { [caught.id]: 1 } },
+                // eventpts: { type: "increment", value: eventpts },
+                // eventpts2: { type: "increment", value: eventpts },
+            },
         });
 
         // Daily Quests
-        dailies[7].update(interaction); // A Fishy Task
+        dailies[7].update(interaction, interaction.client); // A Fishy Task
         if (caught.grade === "rare" || caught.grade === "unique" || caught.grade === "legendary" || caught.grade === "mythical") {
             setTimeout(() => {
-                dailies[8].update(interaction); // Another Fishy Task
+                dailies[8].update(interaction, interaction.client); // Another Fishy Task
             }, 200);
         };
 

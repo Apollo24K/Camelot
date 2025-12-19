@@ -2,10 +2,12 @@ import { EmbedBuilder } from "discord.js";
 import { achievements } from "../Modules/achievements";
 import { search } from "../Modules/functions";
 import { SlashCommand } from '../types';
-import { updateUsers } from '../Modules/queries';
+import { updateUsersAndCache } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'fav',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const choice = interaction.options.getString('character', true);
@@ -24,8 +26,10 @@ const exportCommand: SlashCommand = {
             .setImage(thumbnail);
         interaction.reply({ embeds: [Embed] });
 
-        await updateUsers(interaction.user.id, {
-            favchar: { type: "set", value: char.id }
+        await updateUsersAndCache(interaction.client, interaction.user.id, {
+            updates: {
+                favchar: { type: "set", value: char.id }
+            },
         });
 
         // Achievements

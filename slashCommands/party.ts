@@ -3,7 +3,7 @@ import { characters } from "../Modules/chars";
 import { abilities } from "../Modules/abilities";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { deleteParty, getPartyMembers, getPartySchema, getUserSchema, insertNewParty, updateParties, updateUsers } from "../Modules/queries";
+import { deleteParty, getPartyMembers, getPartySchema, getUserSchema, insertNewParty, updateParties, updateUsersAndCache } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'party',
@@ -25,8 +25,10 @@ const exportCommand: SlashCommand = {
             const party = await insertNewParty(name, [interaction.user.id]);
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                party: { type: "set", value: party.id },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    party: { type: "set", value: party.id },
+                },
             });
 
             return interaction.reply(`Successfully created party "${name}" <:kawaiicheer:928369628122583050>\nInvite other players to join you!`);
@@ -210,8 +212,10 @@ const exportCommand: SlashCommand = {
                     });
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        party: { type: "set", value: party.id }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            party: { type: "set", value: party.id },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${interaction.user.username}** has joined **${party.name}**!`);
@@ -280,8 +284,10 @@ const exportCommand: SlashCommand = {
                     });
 
                     // Update users table
-                    await updateUsers(user.id, {
-                        party: { type: "set", value: party.id }
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            party: { type: "set", value: party.id },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${user.toString()} has joined **${party.name}**`);
@@ -326,8 +332,10 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        party: { type: "set", value: null }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            party: { type: "set", value: null },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You have left **${party.name}**`);
@@ -368,8 +376,10 @@ const exportCommand: SlashCommand = {
                     });
 
                     // Update users table
-                    await updateUsers(user.id, {
-                        party: { type: "set", value: null }
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            party: { type: "set", value: null },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was kicked from **${party.name}** by ${interaction.user.toString()}`);
@@ -405,8 +415,10 @@ const exportCommand: SlashCommand = {
                     await deleteParty(party.id);
 
                     // Update users table
-                    await updateUsers(party.members, {
-                        party: { type: "set", value: null }
+                    await updateUsersAndCache(interaction.client, party.members, {
+                        updates: {
+                            party: { type: "set", value: null },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You have left **${party.name}**`);

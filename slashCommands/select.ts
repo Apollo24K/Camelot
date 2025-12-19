@@ -2,12 +2,14 @@ import { EmbedBuilder } from "discord.js";
 import { achievements } from "../Modules/achievements";
 import { search } from "../Modules/functions";
 import { SlashCommand } from '../types';
-import { getPartyMembers, getLatestStampede, updateUsers } from '../Modules/queries';
+import { getPartyMembers, getLatestStampede, updateUsersAndCache } from '../Modules/queries';
 
 const dungeonInProgress = new Set();
 
 const exportCommand: SlashCommand = {
     name: 'select',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const choice = interaction.options.getString('character', true);
@@ -46,8 +48,10 @@ const exportCommand: SlashCommand = {
         interaction.reply({ embeds: [Embed] });
 
         // Update db
-        await updateUsers(interaction.user.id, {
-            [mode ? "stampedechar" : "battlechar"]: { type: "set", value: char.id },
+        await updateUsersAndCache(interaction.client, interaction.user.id, {
+            updates: {
+                [mode ? "stampedechar" : "battlechar"]: { type: "set", value: char.id },
+            },
         });
 
         // Achievements

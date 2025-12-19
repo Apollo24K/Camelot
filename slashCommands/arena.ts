@@ -154,7 +154,7 @@ const exportCommand: SlashCommand = {
             }
 
             // Daily Quests
-            dailies[3].update(interaction), dailies[3].update(interaction, 1, user); // Contender
+            dailies[3].update(interaction, interaction.client), dailies[3].update(interaction, interaction.client, 1, user); // Contender
 
             return EmbedR;
         };

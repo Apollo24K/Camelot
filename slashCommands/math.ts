@@ -5,6 +5,8 @@ import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'math',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
         let resp;
         const calculation = interaction.options.getString('calculation') ?? "";

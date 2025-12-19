@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import charInfo, { characters } from "../Modules/chars";
+import { characters } from "../Modules/chars";
 import { abilities } from "../Modules/abilities";
 import { achievements } from "../Modules/achievements";
 import { search, showPage } from "../Modules/functions";
@@ -8,6 +8,8 @@ import { getUserSchema } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'ability',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user') ?? interaction.user;

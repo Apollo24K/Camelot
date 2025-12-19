@@ -4,10 +4,12 @@ import { classes } from "../Modules/classes";
 import { items } from "../Modules/items";
 import { search, searchClass, filterItems, getRingSlotsTotal } from "../Modules/functions";
 import { ItemCategory, ItemType, SlashCommand, UpdateUserOptions } from '../types';
-import { getUserSchema, getUserWeapons, getWeaponSchemas, updateUsers } from '../Modules/queries';
+import { getCachedUserSchema, getUserWeapons, getWeaponSchemas, updateUsersAndCache } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'preset',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const subcommand = interaction.options.getSubcommand();
@@ -15,7 +17,7 @@ const exportCommand: SlashCommand = {
         if (subcommand === "view") {
             const user = interaction.options.getUser('user') ?? interaction.user;
 
-            const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+            const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
             if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
 
             let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
@@ -200,8 +202,10 @@ const exportCommand: SlashCommand = {
             else stats.presets[set] = {};
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                presets: { type: "set", value: stats.presets },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    presets: { type: "set", value: stats.presets },
+                },
             });
 
             return interaction.reply(`Edited preset ${set + 1}`);
@@ -287,7 +291,9 @@ const exportCommand: SlashCommand = {
             if (equipChar) updates.battlechar = { type: "set", value: equipChar };
             if (preset?.class || preset?.class === 0) updates.class = { type: "set", value: preset.class };
 
-            await updateUsers(interaction.user.id, updates);
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates
+            });
 
             return interaction.reply(`Equipped ${equipChar ? `**${characters[equipChar].name}** with ` : ""}preset **${set + 1}**`);
         };

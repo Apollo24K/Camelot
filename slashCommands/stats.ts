@@ -1,7 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { characters, auniq, charactersF, charactersM, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars";
 import { SlashCommand } from '../types';
-import { getUserSchema } from '../Modules/queries';
+import { getCachedUserSchema } from '../Modules/queries';
 
 function padCollected(chars: any[]) {
     let collSS = chars.filter((e) => e.rarity === "SS").length;
@@ -25,9 +25,11 @@ function padCollected(chars: any[]) {
 
 const exportCommand: SlashCommand = {
     name: 'stats',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
         const user = interaction.options.getUser('user') || interaction.user;
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply("User not found");
 
         const chars = [...new Set(stats.chars)].map((e: any) => characters[e]);

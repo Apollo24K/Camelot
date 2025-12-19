@@ -7,6 +7,8 @@ import { ongoingEvent, isEventOngoing } from '../Modules/components';
 
 const exportCommand: SlashCommand = {
     name: 'help',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
 
         let helpCommand = interaction.options.getString('command') ?? "";
@@ -45,7 +47,7 @@ const exportCommand: SlashCommand = {
                 { name: "<:sword:941687282585468958> Dungeon & Progress", value: "`/dungeon` `/select` `/level` `/levelup` `/quests` `/class [info|level|pick|select|switch|transfer|upgrade]`\n`/convert [scrolls|shards]` `/achievements`\n`/curse [info|list]` `/daily` `/weekly` `/disassemble [all|items]` `/merge` `/forge` `/rank` `/ep`\n`/fish` `/feed` `/items [loot|armor|weapon|ring]`\n`/preset [edit|select|view]` `/item [info|equip|unequip|levelup|list|lock|unlock|rename|wishlist]`" },
                 { name: "🎉 Game Modes & Events", value: "`/trial` `/arena` `/top` `/party [create|view|edit|invite|join|kick|leave|dissolve]`\nRecurrent: `/stampede` `/rolling cow`\nSeasonal: `/boss hunt` `/boss rush` `/christmas craze` `/liminal descent`" },
                 { name: "🏰 Guilds & Raids", value: "`/raid` `/rankup exam` `/skill [upgrade|view]` `/guild [create|claim|top|find|view|invite|join|edit|donate|donations|levelup|upgrade|promote|demote|kick|leave|ban|unban]` `/guild shop`" },
-                { name: "🎭 Fun & Cosmetics", value: "`/profile` `/skins` `/backgrounds` `/background search` `/background select` `/changeimg` `/guess character` `/recommend` `/ruin`" },
+                { name: "🎭 Fun & Cosmetics", value: "`/profile` `/skins` `/backgrounds` `/background search` `/background select` `/changeimg` `/guess character` `/ruin`" },
                 { name: "🎐 Utility & Other", value: "`/support` `/terms` `/settings` `/camelot` `/referral` `/avatar` `/delay` `/faq` `/math`" }
             )
                 .setFooter({ text: `Camelot ${Package.version} • Made by Apollo24 & PokeLinker`, iconURL: "https://i.imgur.com/RbLjdQ4.png" });
@@ -376,9 +378,6 @@ const exportCommand: SlashCommand = {
                 break;
             case 'random':
                 Embed.setDescription("**Usage**: `/random`\n\nGet a random character suggestion from the database.");
-                break;
-            case 'recommend':
-                Embed.setDescription("**Usage:** `/recommend`\n\nRecommends an anime for the user to watch.");
                 break;
             case 'ruin':
                 Embed.setDescription("**Usage**: </ruin:1089176605588455594>\n**Options**: `title`\n\nThis command will attempt to ruin your favorite anime by only changing, adding or deleting 1 letter in the title.\n\n**Examples**: Sou**p** Eater, Lucky Sta**b** or Goblin **L**ayer\n\n**Options**\n`title`: The title of the anime you want to ruin");

@@ -3,7 +3,7 @@ import { items } from "../Modules/items";
 import { characters } from "../Modules/chars";
 import { getDetailedStats } from "../Modules/functions";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
 
 const charxpByRarity = {
     "genesis": 50000,
@@ -17,6 +17,8 @@ const charxpByRarity = {
 
 const exportCommand: SlashCommand = {
     name: 'feed',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const selected = parseInt(interaction.options.getString('use', true));
@@ -55,11 +57,13 @@ const exportCommand: SlashCommand = {
         if (addxp >= xpleft) {
             addxp -= xpleft;
 
-            await updateUsers(interaction.user.id, {
-                charxp: { type: 'set', value: addxp },
-                level: { type: 'increment', value: 1 },
-                feedlimit: { type: 'increment', value: amount },
-                items: { type: 'merge_json', value: { [selected]: -amount } }
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    charxp: { type: 'set', value: addxp },
+                    level: { type: 'increment', value: 1 },
+                    feedlimit: { type: 'increment', value: amount },
+                    items: { type: 'merge_json', value: { [selected]: -amount } },
+                },
             });
 
             const stats2 = await getDetailedStats(char.id, inv, inv.dungeon_classlevels, 1);
@@ -76,10 +80,12 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `EP: ${stats.ep} ➜ ${stats2.ep}` });
             return interaction.reply({ embeds: [Embed] });
         } else {
-            await updateUsers(interaction.user.id, {
-                charxp: { type: 'increment', value: addxp },
-                feedlimit: { type: 'increment', value: amount },
-                items: { type: 'merge_json', value: { [selected]: -amount } }
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    charxp: { type: 'increment', value: addxp },
+                    feedlimit: { type: 'increment', value: amount },
+                    items: { type: 'merge_json', value: { [selected]: -amount } },
+                },
             });
 
             return interaction.reply(`**${char.name}** received ${addxp} xp!`);

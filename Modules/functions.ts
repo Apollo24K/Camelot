@@ -207,7 +207,6 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "critbleedlast": 0,
         "heap1": 0,
         "timeout": true,
-        "allowExecution": true,
         "defUsed": 0,
         "lvl": (inv.level ?? 1) + lu,
         "ref": Math.min(6, ((inv.char_ref[id] ?? 0) + (refine ? 1 : 0))),
@@ -634,7 +633,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         selfhealAmount: 0,
         selfhealChance: Math.random(),
         critbleed: attacker.critbleed,
-        execute: attacker.allowExecution,
+        execute: matchStats.allowExecution,
         damageFormula: attacker.damageFormula ?? matchStats.damageFormula,
         canTwinshot: true,
         isLightning: false,
@@ -667,7 +666,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
         // Achievements & Daily Quests
         achievements[13].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak), achievements[14].check(matchStats.interaction, matchStats.interaction.user, target.blockStreak); // Invincible
-        if (target.blockStreak === 2) dailies[6].update(matchStats.interaction); // Impenetrable Defense
+        if (target.blockStreak === 2) dailies[6].update(matchStats.interaction, matchStats.interaction.client); // Impenetrable Defense
         return 0;
     }; /* Reset BlockStreak */ target.blockStreak = 0;
     if (!options.isTest && options.dodge && Math.random() < Math.min(target.dodge, target.dodgeCap ?? target.dodge)) {

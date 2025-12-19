@@ -1,6 +1,6 @@
 import { ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags } from "discord.js";
 import { CompactUserSchema, SlashCommand } from '../types';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
 import { characters } from '../Modules/chars';
 import { showPage } from '../Modules/functions';
 import CustomHpBar, { customHpBars } from '../Modules/customHpBars';
@@ -104,16 +104,20 @@ const exportCommand: SlashCommand = {
                         if (stats.hpbar === hpBarId) stats.hpbar = null;
                         else stats.hpbar = hpBarId;
 
-                        await updateUsers(interaction.user.id, {
-                            hpbar: { type: "set", value: stats.hpbar }
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                hpbar: { type: "set", value: stats.hpbar },
+                            },
                         });
                     };
 
                     if (r.customId === "random_hpbar") {
                         stats.user_settings.random_hp_bar = !stats.user_settings.random_hp_bar;
                         // Update users table
-                        await updateUsers(interaction.user.id, {
-                            user_settings: { type: "merge_json", value: { random_hp_bar: stats.user_settings.random_hp_bar } },
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                user_settings: { type: "merge_json", value: { random_hp_bar: stats.user_settings.random_hp_bar } },
+                            },
                         });
                     };
 

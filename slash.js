@@ -1237,11 +1237,6 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
-			.setName('recommend')
-			.setDescription('Recommends an anime'),
-	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
 			.setName('referral')
 			.setDescription('See your referrals')
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false)),

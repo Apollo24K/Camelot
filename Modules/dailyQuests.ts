@@ -1,5 +1,5 @@
-import { ChatInputCommandInteraction, User } from "discord.js";
-import { getUserSchema, updateUsers } from "./queries.js";
+import { ChatInputCommandInteraction, User, Client } from "discord.js";
+import { getCachedUserSchema, getUserSchema, updateUsersAndCache } from "./queries.js";
 import { isEventOngoing } from "./components.js";
 
 const dailyLock = new Set<string>();
@@ -48,7 +48,7 @@ class dailyQuestInfo {
         return this._check;
     };
 
-    async update(interaction: ChatInputCommandInteraction | undefined, change: number = 1, user: User | { id: string; } = interaction?.user ?? { id: "" }) {
+    async update(interaction: ChatInputCommandInteraction | undefined, client: Client, change: number = 1, user: User | { id: string; } = interaction?.user ?? { id: "" }) {
 
         // Get the user's dailies
         const todaysQuests = getQuests(user.id, dailies.length);
@@ -63,7 +63,7 @@ class dailyQuestInfo {
 
         try {
             // Get user stats
-            const stats = await getUserSchema(user.id);
+            const stats = interaction ? await getCachedUserSchema(user.id, interaction.client) : await getUserSchema(user.id);
             if (!stats) return;
 
             // Check if it's already completed
@@ -83,31 +83,37 @@ class dailyQuestInfo {
 
                 if (todaysQuests.every((quest) => quest.check(stats.dailies[quest.id]))) { // passlevel = passlevel + 1,
 
-                    await updateUsers(user.id, {
-                        xp: { type: "increment", value: 20 },
-                        coins: { type: "increment", value: 1000 },
-                        gems: { type: "increment", value: 4 },
-                        season_keys: { type: "increment", value: 5 },
-                        dailies: { type: "set_json", value: stats.dailies },
-                        ...passlevel
+                    await updateUsersAndCache(client, user.id, {
+                        updates: {
+                            xp: { type: "increment", value: 20 },
+                            coins: { type: "increment", value: 1000 },
+                            gems: { type: "increment", value: 4 },
+                            season_keys: { type: "increment", value: 5 },
+                            dailies: { type: "set_json", value: stats.dailies },
+                            ...passlevel
+                        },
                     });
 
                     if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\nYou have completed all quests of today!\n**Rewards**:\n> You were given **20** XP\n> Added **1000** <:coins:872926669055356939>\n> Added **4** <:genesis_gems:1034179687720681492>`);
                 } else {
 
-                    await updateUsers(user.id, {
-                        xp: { type: "increment", value: 10 },
-                        coins: { type: "increment", value: 500 },
-                        gems: { type: "increment", value: 2 },
-                        dailies: { type: "set_json", value: stats.dailies },
-                        ...passlevel
+                    await updateUsersAndCache(client, user.id, {
+                        updates: {
+                            xp: { type: "increment", value: 10 },
+                            coins: { type: "increment", value: 500 },
+                            gems: { type: "increment", value: 2 },
+                            dailies: { type: "set_json", value: stats.dailies },
+                            ...passlevel
+                        },
                     });
 
                     if (interaction?.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Daily Quest Completed: **${this._title}** <a:starsR:942573194802511923>\n**Rewards**:\n> You were given **10** XP\n> Added **500** <:coins:872926669055356939>\n> Added **2** <:genesis_gems:1034179687720681492>`);
                 };
             } else {
-                await updateUsers(user.id, {
-                    dailies: { type: "set_json", value: stats.dailies }
+                await updateUsersAndCache(client, user.id, {
+                    updates: {
+                        dailies: { type: "set_json", value: stats.dailies }
+                    },
                 });
             };
         } finally {

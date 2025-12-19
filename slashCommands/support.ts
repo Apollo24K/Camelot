@@ -4,7 +4,9 @@ import Package from '../package.json';
 
 const exportCommand: SlashCommand = {
     name: 'support',
-    async execute({ interaction, author }) {
+    skipUserRefetch: true,
+    skipServerRefetch: true,
+    async execute({ interaction }) {
 
         const Embed = new EmbedBuilder()
             .setTitle("Camelot Support")

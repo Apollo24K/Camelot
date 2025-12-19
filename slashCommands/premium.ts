@@ -2,14 +2,16 @@ import fs from 'fs';
 import Package from '../package.json';
 import { EmbedBuilder } from 'discord.js';
 import { SlashCommand } from '../types';
-import { getUserSchema } from '../Modules/queries';
+import { getCachedUserSchema } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'premium',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
         const user = interaction.options.getUser('user') ?? interaction.user;
 
-        const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
+        const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply(user.id === interaction.user.id ? "You don't have an account" : `${user.username} has no account`);
 
         // If the user has premium

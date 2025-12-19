@@ -3,7 +3,7 @@ import { dailies } from "../Modules/dailyQuests";
 import { showPage, searchGuild, getDonationsPageWeek, lastActive, formatNumberWithQuotes, customEmojis, getLetterRank } from "../Modules/functions";
 import { PageRow, OfferRow, donationWeekStart } from "../Modules/components";
 import { GuildSchema, SlashCommand } from "../types";
-import { addGuildDonation, deleteGuild, getGuildDonationSchemas, getGuildSchema, getGuildSchemas, getUserSchema, getUserSchemas, insertNewGuild, updateGuildDonationsGuildId, updateGuilds, updateRaidsGuildId, updateUsers } from "../Modules/queries";
+import { addGuildDonation, deleteGuild, getGuildDonationSchemas, getGuildSchema, getGuildSchemas, getUserSchema, getUserSchemas, insertNewGuild, updateGuildDonationsGuildId, updateGuilds, updateRaidsGuildId, updateUsersAndCache } from "../Modules/queries";
 import { achievements } from "../Modules/achievements";
 
 function lastActiveInDays(timestamp: Date | number) {
@@ -47,9 +47,11 @@ const exportCommand: SlashCommand = {
             const guild = await insertNewGuild(name, interaction.user.id);
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                coins: { type: "increment", value: -fee },
-                guild: { type: "set", value: guild.id },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: "increment", value: -fee },
+                    guild: { type: "set", value: guild.id },
+                },
             });
 
             return interaction.reply(`Successfully created guild "${name}" <:kawaiicheer:928369628122583050>\nOther players can join your guild with the ID: \`${guild.id}\``);
@@ -293,8 +295,10 @@ const exportCommand: SlashCommand = {
                     await updateGuildDonationsGuildId(guild.id, input);
 
                     // Update users table
-                    await updateUsers(guild.members, {
-                        guild: { type: "set", value: input },
+                    await updateUsersAndCache(interaction.client, guild.members, {
+                        updates: {
+                            guild: { type: "set", value: input },
+                        },
                     });
 
                     // Update raids table
@@ -367,9 +371,11 @@ const exportCommand: SlashCommand = {
             if (guild.members.length >= 10 + Math.min(guild.level - 1, 10)) return interaction.reply(`**${guild.name}** has already reached the maximum amount of members it can hold.`);
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                guild: { type: "set", value: code },
-                lastguildjoin: { type: "set", value: new Date() }
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    guild: { type: "set", value: code },
+                    lastguildjoin: { type: "set", value: new Date() }
+                },
             });
 
             // Update guilds table
@@ -422,9 +428,11 @@ const exportCommand: SlashCommand = {
                     if (guild.members.length >= 10 + Math.min(guild.level - 1, 10)) return interaction.reply(`**${guild.name}** has already reached the maximum amount of members it can hold.`);
 
                     // Update users table
-                    await updateUsers(user.id, {
-                        guild: { type: "set", value: guild.id },
-                        lastguildjoin: { type: "set", value: new Date() }
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            guild: { type: "set", value: guild.id },
+                            lastguildjoin: { type: "set", value: new Date() }
+                        },
                     });
 
                     // Update guilds table
@@ -460,8 +468,10 @@ const exportCommand: SlashCommand = {
                         };
 
                         // Update users table
-                        await updateUsers(interaction.user.id, {
-                            guild: { type: "set", value: null },
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                guild: { type: "set", value: null },
+                            },
                         });
 
                         // Update guilds table
@@ -483,8 +493,10 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        guild: { type: "set", value: null },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            guild: { type: "set", value: null },
+                        },
                     });
 
                     // Update guilds table
@@ -523,8 +535,10 @@ const exportCommand: SlashCommand = {
                     confirm.stop(), cancel.stop();
 
                     // Update users table
-                    await updateUsers(user.id, {
-                        guild: { type: "set", value: null },
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            guild: { type: "set", value: null },
+                        },
                     });
 
                     // Update guilds table
@@ -578,8 +592,10 @@ const exportCommand: SlashCommand = {
                     confirm.stop(), cancel.stop();
 
                     // Update users table
-                    await updateUsers(user.id, {
-                        guild: { type: "set", value: null },
+                    await updateUsersAndCache(interaction.client, user.id, {
+                        updates: {
+                            guild: { type: "set", value: null },
+                        },
                     });
 
                     // Update guilds table
@@ -869,16 +885,18 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        [currency]: { type: "increment", value: -donation },
-                        donatedtotal: { type: "increment", value: donation }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            [currency]: { type: "increment", value: -donation },
+                            donatedtotal: { type: "increment", value: donation },
+                        },
                     });
 
                     // Add guild donation
                     await addGuildDonation(guild.id, interaction.user.id, currency, donation);
 
                     // Daily Quests
-                    dailies[9].update(interaction, donation);
+                    dailies[9].update(interaction, interaction.client, donation);
 
                     // Achievements
                     achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);

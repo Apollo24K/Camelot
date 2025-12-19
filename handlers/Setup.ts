@@ -1,7 +1,7 @@
 import fs from "fs";
 import { Client, Collection } from "discord.js";
 import { BotHandler } from "../types";
-import { loadPullResets, loadRanking, updateUsers } from "../Modules/queries";
+import { loadPullResets, loadRanking, updateUsersAndCache } from "../Modules/queries";
 import { getDetailedStats, pullsToResetList, RoK, sleep } from "../Modules/functions";
 
 async function indexRanking() {
@@ -49,7 +49,12 @@ const handler: BotHandler = {
 
                 pullsToResetList.add(user.id);
                 setTimeout(async () => {
-                    await updateUsers(user.id, { pullcount: { type: "set", value: 0 } });
+                    await updateUsersAndCache(client, user.id, {
+                        updates: {
+                            pullcount: { type: "set", value: 0 },
+                        },
+                    });
+
                     pullsToResetList.delete(user.id);
                 }, Math.abs(pullTimer + user.lastpull.getTime() - new Date().getTime()));
             };

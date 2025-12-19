@@ -4,6 +4,8 @@ import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'terms',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
         const Embed = new EmbedBuilder()
             .setTitle('Camelot')

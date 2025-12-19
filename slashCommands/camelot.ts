@@ -16,6 +16,8 @@ function format(sec: number) {
 
 const exportCommand: SlashCommand = {
     name: 'camelot',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction }) {
 
         const playerCount = await getTotalPlayers();

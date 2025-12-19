@@ -1,7 +1,7 @@
 import express from 'express';
 import { Client } from "discord.js";
 import { BotHandler } from "../types";
-import { updateUsers } from '../Modules/queries';
+import { updateUsersAndCache } from '../Modules/queries';
 
 const handler: BotHandler = {
     name: "Stamp",
@@ -44,8 +44,10 @@ const handler: BotHandler = {
                 };
 
                 // Update user's stamps
-                await updateUsers(userId, {
-                    stamps: { type: "increment", value: stamps }
+                await updateUsersAndCache(client, userId, {
+                    updates: {
+                        stamps: { type: "increment", value: stamps },
+                    },
                 });
 
                 console.log(`Added ${stamps} stamps to user ${userId}`);

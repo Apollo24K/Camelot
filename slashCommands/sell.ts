@@ -3,7 +3,7 @@ import { characters } from "../Modules/chars";
 import { search } from "../Modules/functions";
 import { OfferRow, shardEmoji } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 
 const rarPrice = { "EX": 20000, "SS": 5000, "S": 1000, "A": 500, "B": 250, "C": 100, "D": 50 };
 
@@ -75,15 +75,17 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        coins: { type: 'increment', value: price },
-                        ssshard: { type: 'increment', value: shards.SS },
-                        sshard: { type: 'increment', value: shards.S },
-                        ashard: { type: 'increment', value: shards.A },
-                        bshard: { type: 'increment', value: shards.B },
-                        cshard: { type: 'increment', value: shards.C },
-                        dshard: { type: 'increment', value: shards.D },
-                        chars: { type: 'remove', value: finalChars }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            coins: { type: 'increment', value: price },
+                            ssshard: { type: 'increment', value: shards.SS },
+                            sshard: { type: 'increment', value: shards.S },
+                            ashard: { type: 'increment', value: shards.A },
+                            bshard: { type: 'increment', value: shards.B },
+                            cshard: { type: 'increment', value: shards.C },
+                            dshard: { type: 'increment', value: shards.D },
+                            chars: { type: 'remove', value: finalChars },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""} were added to your balance`);
@@ -162,15 +164,17 @@ const exportCommand: SlashCommand = {
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        coins: { type: 'increment', value: price },
-                        ssshard: { type: 'increment', value: shards.SS },
-                        sshard: { type: 'increment', value: shards.S },
-                        ashard: { type: 'increment', value: shards.A },
-                        bshard: { type: 'increment', value: shards.B },
-                        cshard: { type: 'increment', value: shards.C },
-                        dshard: { type: 'increment', value: shards.D },
-                        chars: { type: 'remove', value: chars.map((e) => e.id) }
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            coins: { type: 'increment', value: price },
+                            ssshard: { type: 'increment', value: shards.SS },
+                            sshard: { type: 'increment', value: shards.S },
+                            ashard: { type: 'increment', value: shards.A },
+                            bshard: { type: 'increment', value: shards.B },
+                            cshard: { type: 'increment', value: shards.C },
+                            dshard: { type: 'increment', value: shards.D },
+                            chars: { type: 'remove', value: chars.map((e) => e.id) },
+                        },
                     });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""} were added to your balance`);

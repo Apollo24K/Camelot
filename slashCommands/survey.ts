@@ -47,6 +47,12 @@ const options: SelectMenuComponentOptionData[] = [
         value: 'search',
     },
     {
+        label: 'I don\'t know',
+        description: 'I can\'t recall how I discovered it',
+        emoji: '🤷',
+        value: 'idk',
+    },
+    {
         label: 'Other (please specify)',
         description: 'Another way not listed here',
         emoji: '❓',
@@ -61,6 +67,22 @@ const row = new ActionRowBuilder<StringSelectMenuBuilder>()
             .setPlaceholder('Select how you discovered Camelot...')
             .addOptions(options),
     );
+
+const modal = new ModalBuilder()
+    .setCustomId('survey_modal')
+    .setTitle('Survey: Other')
+    .addComponents([
+        new ActionRowBuilder<TextInputBuilder>().addComponents(
+            new TextInputBuilder()
+                .setCustomId('survey_input')
+                .setLabel("How did you discover Camelot?")
+                .setStyle(TextInputStyle.Short)
+                .setMinLength(3)
+                .setMaxLength(30)
+                .setPlaceholder('Please tell us how you found Camelot...')
+                .setRequired(true),
+        ),
+    ]);
 
 const exportCommand: SlashCommand = {
     name: 'survey',
@@ -93,22 +115,6 @@ const exportCommand: SlashCommand = {
                 const selection = r.values[0];
 
                 if (selection === 'other') {
-                    const modal = new ModalBuilder()
-                        .setCustomId('survey_modal')
-                        .setTitle('Survey: Other')
-                        .addComponents([
-                            new ActionRowBuilder<TextInputBuilder>().addComponents(
-                                new TextInputBuilder()
-                                    .setCustomId('survey_input')
-                                    .setLabel("How did you discover Camelot?")
-                                    .setStyle(TextInputStyle.Short)
-                                    .setMinLength(3)
-                                    .setMaxLength(30)
-                                    .setPlaceholder('Please tell us how you found Camelot...')
-                                    .setRequired(true),
-                            ),
-                        ]);
-
                     await r.showModal(modal);
 
                     interaction.awaitModalSubmit({ filter: (modalR) => modalR.customId === 'survey_modal' && modalR.user.id === interaction.user.id, time: 120000 }).then(async modalInteraction => {

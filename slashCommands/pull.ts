@@ -4,7 +4,7 @@ import { displayPull, pullsToResetList, userLevel, showPage } from "../Modules/f
 import { achievements } from "../Modules/achievements";
 import { dailies } from "../Modules/dailyQuests";
 import { SlashCommand } from "../types";
-import { getGuildSchema, updateUsers } from "../Modules/queries";
+import { getGuildSchema, updateUsersAndCache } from "../Modules/queries";
 
 const headers = {
     "EX": "\n\n<a:EXTRA:1138530846144462968> **Tier**\n",
@@ -70,6 +70,8 @@ function padPulledOverview(chars: charInfo[]) {
 
 const exportCommand: SlashCommand = {
     name: 'pull',
+    skipUserRefetch: true,
+    skipServerRefetch: true,
     async execute({ interaction, author }) {
 
         const stats = author.schema;
@@ -107,7 +109,11 @@ const exportCommand: SlashCommand = {
             pullsToResetList.add(interaction.user.id);
             setTimeout(async () => {
                 pullsToResetList.delete(interaction.user.id);
-                await updateUsers(interaction.user.id, { pullcount: { type: "set", value: 0 } });
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        pullcount: { type: "set", value: 0 }
+                    },
+                });
                 if (stats.pullreminder && interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.toString()} is off </pull:1011014030103674913> cooldown!`);
             }, pullTimer);
         };
@@ -222,7 +228,7 @@ const exportCommand: SlashCommand = {
             });
 
             // Daily Quests
-            dailies[0].update(interaction, left);
+            dailies[0].update(interaction, interaction.client, left);
         } else {
             stats.pullcount++;
 
@@ -252,18 +258,20 @@ const exportCommand: SlashCommand = {
             interaction.reply(displayPull(interaction.user, fChars[num], pullLimit, 1 + stats.chars.filter((e) => e === fChars[num].id).length, stats.pullcount, stats.lastvote, stats.char_ref[fChars[num].id]));
 
             // Daily Quests
-            dailies[0].update(interaction);
+            dailies[0].update(interaction, interaction.client);
         };
 
         // Update db
-        await updateUsers(interaction.user.id, {
-            pullcount: { type: "set", value: stats.pullcount },
-            lastpull: { type: "set", value: new Date() },
-            pullstotal: { type: "set", value: stats.pullstotal },
-            lastss: { type: "set", value: stats.lastss },
-            lasts: { type: "set", value: stats.lasts },
-            xp: { type: "increment", value: add_xp },
-            chars: { type: "append", value: pulledChars.map((e) => e.id) },
+        await updateUsersAndCache(interaction.client, interaction.user.id, {
+            updates: {
+                pullcount: { type: "set", value: stats.pullcount },
+                lastpull: { type: "set", value: new Date() },
+                pullstotal: { type: "set", value: stats.pullstotal },
+                lastss: { type: "set", value: stats.lastss },
+                lasts: { type: "set", value: stats.lasts },
+                xp: { type: "increment", value: add_xp },
+                chars: { type: "append", value: pulledChars.map((e) => e.id) },
+            },
         });
 
         // Achievements

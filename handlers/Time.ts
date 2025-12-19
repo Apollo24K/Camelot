@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { Client } from "discord.js";
 import { BotHandler, UpdateUserOptions } from "../types";
-import { getPlayerbaseStats, insertNewStampede, resetDailyResponses, resetDungeonLimit, updateUsers } from '../Modules/queries';
+import { getPlayerbaseStats, insertNewStampede, resetDailyResponses, resetDungeonLimit, updateUsersAndCache } from '../Modules/queries';
 import { isStampedeMonth } from '../Modules/functions';
 
 const handler: BotHandler = {
@@ -23,7 +23,7 @@ const handler: BotHandler = {
                 userUpdates.cow_rolled_today = { type: "set", value: 0 };
 
                 // Reset Low Responses
-                await resetDailyResponses();
+                await resetDailyResponses(client);
 
                 // Start new Stampede
                 if (now.getDate() === 14 && isStampedeMonth()) {
@@ -44,7 +44,7 @@ const handler: BotHandler = {
             // Every 8 hours
             if (now.getHours() % 8 === 0 && now.getMinutes() === 0) {
                 // Dungeon Reset
-                await resetDungeonLimit();
+                await resetDungeonLimit(client);
             };
 
             // Every 4 hours
@@ -55,9 +55,12 @@ const handler: BotHandler = {
             // Every 2 hours
             if (now.getHours() % 2 === 0 && now.getMinutes() === 0) {
                 // Bosshunt Reset
-                await updateUsers("*", {
-                    bosshuntruns: { type: "increment", value: -1 }
-                }, "bosshuntruns > 0");
+                await updateUsersAndCache(client, "*", {
+                    updates: {
+                        bosshuntruns: { type: "increment", value: -1 },
+                    },
+                    condition: "bosshuntruns > 0",
+                });
             };
 
             // Monthly
@@ -74,15 +77,18 @@ const handler: BotHandler = {
             // Every 5 Minutes
             if ((now.getMinutes() % 5) === 0) {
                 // Stampede Energy
-                await updateUsers("*", {
-                    stampedeenergy: { type: "increment", value: -1 }
-                }, "stampedeenergy > 0");
+                await updateUsersAndCache(client, "*", {
+                    updates: {
+                        stampedeenergy: { type: "increment", value: -1 },
+                    },
+                    condition: "stampedeenergy > 0",
+                });
             };
 
 
             // Apply Updates
             if (Object.keys(userUpdates).length > 0) {
-                await updateUsers("*", userUpdates);
+                await updateUsersAndCache(client, "*", { updates: userUpdates });
             };
 
         }, 60000), 60000 - (Date.now() % 60000));
