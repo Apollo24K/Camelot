@@ -720,6 +720,11 @@ export const anime: animeInfo[] = [
     new animeInfo("Heaven Official's Blessing", ["Heaven's Official Blessing", "Tian Guan Ci Fu"], 685),
     new animeInfo("The Archmage's Restaurant", ["A Wizard's Restaurant", "The Archmages Restaurant", "A Wizards Restaurant"], 686),
     new animeInfo("Blink Master of the Magic Academy", ['I Became a Flashing Genius at the Magic Academy', 'Mabeop Hakgyo Apjeommyeol Cheonjae-ga Doeeotda', "Magic Academy's Genius Blinker", 'Quick Teleporting Genius from Magic School'], 687),
+    new animeInfo("My Status as an Assassin Obviously Exceeds the Hero's", ['Ansatsusha de Aru Ore no Status ga Yuusha yori mo Akiraka ni Tsuyoi no da ga', 'Sutetsuyo', "My Status as an Assassin Is Obviously Stronger Than That of the Hero's"], 688),
+    new animeInfo("Dad is a Hero, Mom is a Spirit, I'm a Reincarnator", ['Chichi wa Eiyuu, Haha wa Seirei, Musume no Watashi wa Tenseisha', 'Hahanoha', 'My Father is a Hero, my Mother is a Spirit and the Daughter (Me) is a Reincarnator.', 'Reincarnated as the Daughter of the Legendary Hero and the Queen of Spirits'], 689),
+    new animeInfo("The Academy's Genius Swordsman", ['Academy Cheonjaekaljabi', "Academy's Genius Swordmaster"], 690),
+    new animeInfo("The Swordmaster's Son", ['Geomsulmyeongga Mangnaeadeul', "Swordmaster's Youngest Son", 'The Youngest Son of a Master Swordsman', 'Youngest Son of the Renowned Swordsmanship Clan'], 691),
+    new animeInfo("How to Use a Returner", ['Hoegwija Sayongseolmyeongseo', 'Regressor Instruction Manual', "RIM"], 692),
 
 ];
 
