@@ -715,6 +715,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Absolute Sword Sense", ['Jeoldaegeomgam', 'Perfect Sword Sense'], 680),
     new animeInfo("Myst, Might, Mayhem", ['Goeryeok Nansin', 'The Chaotic God of Extraordinary Strength'], 681),
     new animeInfo("The Stellar Swordmaster", ['Byeoreul Pumeun Swordmaster', 'Star-Embracing Swordmaster', 'Star-Fostered Swordmaster'], 682),
+    new animeInfo("SHIMONETA: A Boring World Where the Concept of Dirty Jokes Doesn't Exist", ["Shimoneta to Iu Gainen ga Sonzai Shinai Taikutsu na Sekai", "Shimoneta"], 683),
+    new animeInfo("The Water Magician", ["Mizu Zokusei no Mahou Tsukai"], 684),
+    new animeInfo("Heaven Official's Blessing", ["Heaven's Official Blessing", "Tian Guan Ci Fu"], 685),
+    new animeInfo("The Archmage's Restaurant", ["A Wizard's Restaurant", "The Archmages Restaurant", "A Wizards Restaurant"], 686),
     new animeInfo("Blink Master of the Magic Academy", ['I Became a Flashing Genius at the Magic Academy', 'Mabeop Hakgyo Apjeommyeol Cheonjae-ga Doeeotda', "Magic Academy's Genius Blinker", 'Quick Teleporting Genius from Magic School'], 687),
 
 ];
