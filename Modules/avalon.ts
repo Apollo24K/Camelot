@@ -80,6 +80,56 @@ export default class Avalon {
         // return bar;
     };
 
+    /*
+    static stabilityIcon(stability: number) {
+        if (stability === null) return "";
+        if (stability <= 0) return "<:stability0:1439087950314078269>";
+        if (stability <= 25) return "<:stability1:1439088092370960404>";
+        if (stability <= 50) return "<:stability2:1439088127523164220>";
+        if (stability <= 75) return "<:stability3:1439088164101816330>";
+        if (stability <= 100) return "<:stabilityfull:1439088205159993518>";
+        return "";
+    };
+    */
+    static statusIcon(side: DetailedStats) {
+        let iconbar = "";
+
+        // ABILITY-SPECIFIC
+        if (side.stability !== null || side.stability !== false) { // Stability - Yor Forger & Loid Forger
+            switch (true) {
+                case side.stability <= 0: iconbar += "<:stability0:1446880287396200599>"; break;
+                case side.stability <= 25: iconbar += "<:stability1:1446880326029934714>"; break;
+                case side.stability <= 50: iconbar += "<:stability2:1439088127523164220>"; break;
+                case side.stability <= 75: iconbar += "<:stability3:1446880381327376425>"; break;
+                case side.stability <= 100: iconbar += "<:stabilityfull:1446880407579656243>"; break;
+            };
+        };
+
+        if (side.nbs > 0) iconbar += "<:NBS:1449333178765541491>"; // Nightsoul Blessing - Mavuika
+        if (side.hacking) iconbar += "<:9SHack:1373261619924172940>"; // Hacking - 2B & 9S EX
+        if (side.marked > 0) iconbar += "𓇬"; // Mark of Skandha - Nahida
+        if (side.temple > 0) iconbar += "💡"; // Temple - Nahida
+        if (typeof side.dreamState === `number` && side.dreamState > -1) { // Dream State - Kisogi
+            switch (side.dreamState) {
+                case 0: iconbar += ":zzz:"; break;
+                case 1: iconbar += "<:dream2:1449402981320626186>"; break;
+                case 2: iconbar += "<:dream3:1449747554517389413>"; break;
+            };
+        };
+        if (side.formX) { // X-State - X (TBHX)
+            switch (side.formX) {
+                case 1: iconbar += "🚶🏻‍♂️"; break;
+                case 2: iconbar += "<:Xskill:1446886746204799159>"; break;
+            };
+        };
+
+        // GENERAL
+        if (side.timeFrozen) iconbar += "<:noATK:1450109657426300948>";
+
+        // Any future status
+        return iconbar;
+    };
+
     static padStats(stats: DetailedStats) {
         let line1 = customEmojis.atk, line2 = customEmojis.md;
 

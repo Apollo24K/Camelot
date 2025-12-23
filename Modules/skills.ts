@@ -71,8 +71,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(3, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Gunner reduces DEF by 30% for the attack and deals true damage
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { ignoreShield: true, defMultiplier: 0.7 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { ignoreShield: true, defMultiplier: 0.7 });
 
         return AbilityResponse.SUCCESS;
     }),
@@ -96,26 +96,26 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(6, 45, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Assassin deals a guaranteed critical hit
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0 });
 
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(7, 25, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Thief deals 80% ATK and heals himself for 30% of the damage dealt
+        matchStats.turn = matchStats.turnSkill;
         let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 0.8 });
         let sheal = Math.floor(dmg * 0.3);
         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, sheal, {});
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
-        matchStats.turn = matchStats.turnSkill;
         if (!eStats.negateHeal) notice.push(`\n⚜️ **${char.name}** restored **${sheal}** HP`);
 
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(8, 25, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Mage deals 115% Magic Damage
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.15, magicDamage: true, mdChance: 0 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.15, magicDamage: true, mdChance: 0 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -156,6 +156,7 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(11, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Duelist counters the next attack
+        matchStats.turn = matchStats.turnSkill;
         if (myStats.classUsedRound > matchStats.round - 3) {
             myStats.sm += 50;
             noTimeout(matchStats, myStats);
@@ -163,7 +164,6 @@ export const skills: skillInfo[] = [
             return AbilityResponse.FAILURE;
         };
         myStats.counter = 1;
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** prepares to counter the next attack`);
         myStats.classUsedRound = matchStats.round;
 
@@ -180,11 +180,11 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(13, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Holy Knight gains +280 DEF and Magic Resist for 2 rounds
+        matchStats.turn = matchStats.turnSkill;
         mybuff.def.push(new buffInfo("+", 280, 2));
         mybuff.mr.push(new buffInfo("+", 280, 2));
         myStats.def += 280;
         myStats.mr += 280;
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} DEF and Magic Resist by **280** for 3 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -223,9 +223,9 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(15, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Hunter deals 120% dmg and poisons the enemy for 2 rounds
+        matchStats.turn = matchStats.turnSkill;
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.2 });
         ebuff.hp.push(new buffInfo("+", Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04), 2));
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** poisoned the enemy for 2 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -265,10 +265,10 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(17, 45, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Arbalist deals 150% dmg and poisons the enemy for 3 rounds
+        matchStats.turn = matchStats.turnSkill;
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.5 });
         const dmg = Math.floor(eStats.hp > 2 * myStats.hp ? myStats.hp * 0.1 : eStats.hp * 0.05);
         ebuff.hp.push(new buffInfo("+", -dmg, 3));
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** poisoned the enemy for 3 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -278,9 +278,9 @@ export const skills: skillInfo[] = [
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(18, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Marksman deals a guaranteed hit with increased crit rate (+10%)
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0, critBuff: 0.125 });
+        // Marksman deals a guaranteed hit with increased crit rate (+12.5%)
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0, critBuff: 0.125 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -289,9 +289,9 @@ export const skills: skillInfo[] = [
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(19, 20, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Ranger deals a guaranteed hit with increased crit rate (+15%)
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { block: false, dodge: false, critBuff: 0.2 });
+        // Ranger deals a guaranteed hit with increased crit rate (+20%)
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { block: false, dodge: false, critBuff: 0.2 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -301,15 +301,15 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(20, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Shooter deals a guaranteed critical hit
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0 });
 
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(21, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Sniper deals a critical hit with increased crit damage (+20%)
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.2, magicDamage: true, critChance: 0 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.2, magicDamage: true, critChance: 0 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -319,8 +319,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(22, 55, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Ki Master ignores 25% of DEF
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}** ignored **25%** DEF and`, { defMultiplier: 0.75 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}** ignored **25%** DEF and`, { defMultiplier: 0.75 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -463,8 +463,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(28, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Traditionalist deals true damage and ignores 45% of DEF
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { ignoreShield: true, defMultiplier: 0.3 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { ignoreShield: true, defMultiplier: 0.3 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -528,7 +528,7 @@ export const skills: skillInfo[] = [
 
 
     new skillInfo(30, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Outlaw steals the equivalent of 7.5% of his stats from the enemy for 3 rounds
+        // Outlaw steals the equivalent of 10% of his stats from the enemy for 3 rounds
         if (myStats.classUsedRound > matchStats.round - 5) {
             myStats.sm += 40;
             noTimeout(matchStats, myStats);
@@ -536,6 +536,7 @@ export const skills: skillInfo[] = [
             return AbilityResponse.FAILURE;
         };
 
+        matchStats.turn = matchStats.turnSkill;
         const satk = Math.min(Math.floor(myStats.atk * 0.1), eStats.atk); eStats.atk -= satk; myStats.atk += satk;
         const sdef = Math.min(Math.floor(myStats.def * 0.1), eStats.def); eStats.def -= sdef; myStats.def += sdef;
         const smd = Math.min(Math.floor(myStats.md * 0.1), eStats.md); eStats.md -= smd; myStats.md += smd;
@@ -554,7 +555,6 @@ export const skills: skillInfo[] = [
         ebuff.cd.push(new buffInfo("+", -scd, 3)); mybuff.cd.push(new buffInfo("+", scd, 3));
         ebuff.br.push(new buffInfo("+", -sbr, 3)); mybuff.br.push(new buffInfo("+", sbr, 3));
 
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** stole the equivalent of **10%** of his stats from the enemy for 3 rounds`);
         myStats.classUsedRound = matchStats.round;
 
@@ -580,6 +580,7 @@ export const skills: skillInfo[] = [
             return AbilityResponse.FAILURE;
         };
 
+        matchStats.turn = matchStats.turnSkill;
         const satk = Math.min(Math.floor(myStats.atk * 0.2), eStats.atk); eStats.atk -= satk; myStats.atk += satk;
         const sdef = Math.min(Math.floor(myStats.def * 0.2), eStats.def); eStats.def -= sdef; myStats.def += sdef;
         const smd = Math.min(Math.floor(myStats.md * 0.2), eStats.md); eStats.md -= smd; myStats.md += smd;
@@ -598,7 +599,6 @@ export const skills: skillInfo[] = [
         ebuff.cd.push(new buffInfo("+", -scd, 4)); mybuff.cd.push(new buffInfo("+", scd, 4));
         ebuff.br.push(new buffInfo("+", -sbr, 4)); mybuff.br.push(new buffInfo("+", sbr, 4));
 
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** stole the equivalent of **20%** of his stats from the enemy for 4 rounds`);
         myStats.classUsed = myStats.classUsed + 1 || 1;
         myStats.classUsedRound = matchStats.round;
@@ -612,8 +612,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(32, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Barbarian deals 10% more damage after every round
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (1 + Math.min(matchStats.round * 0.1, 1)) });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (1 + Math.min(matchStats.round * 0.1, 1)) });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -622,9 +622,9 @@ export const skills: skillInfo[] = [
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(33, 45, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Berserker deals 15% more damage after every round
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (1 + Math.min(matchStats.round * 0.2, 1.4)) });
+        // Berserker deals 20% more damage after every round
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (1 + Math.min(matchStats.round * 0.2, 1.4)) });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -634,9 +634,9 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(34, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Deathblade deals 150% dmg and causes bleeding for 2 rounds
+        matchStats.turn = matchStats.turnSkill;
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.5 });
         ebuff.hp.push(new buffInfo("+", -Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.05), 2));
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** caused bleeding for 2 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -648,9 +648,9 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(35, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Reaper deals 120% true damage and causes bleeding for 3 rounds
+        matchStats.turn = matchStats.turnSkill;
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.2, ignoreShield: true });
         ebuff.hp.push(new buffInfo("+", -Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.05), 3));
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** caused bleeding for 3 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -662,8 +662,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(36, 45, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Cleric deals more dmg in dungeon
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (list[0] === "arena" ? 1.1 : 1.2), magicDamage: true, mdChance: -1 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (list[0] === "arena" ? 1.1 : 1.2), magicDamage: true, mdChance: -1 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -674,8 +674,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(37, 45, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Sage deals more dmg in dungeon
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (list[0] === "arena" ? 1.15 : 1.3), magicDamage: true, mdChance: -1 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (list[0] === "arena" ? 1.15 : 1.3), magicDamage: true, mdChance: -1 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -822,10 +822,10 @@ export const skills: skillInfo[] = [
             matchStats.sendWarning({ content: `Slayer ability can only be used once every 4 rounds.`, ephemeral: true });
             return AbilityResponse.FAILURE;
         };
+        matchStats.turn = matchStats.turnSkill;
         myStats.classUsedRound = matchStats.round;
 
         myStats.counter = 2;
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** prepares to counter the next 2 attacks`);
 
         return AbilityResponse.SUCCESS;
@@ -851,11 +851,11 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(42, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Paladin gains +200 DEF and Magic Resist for 2 rounds
+        matchStats.turn = matchStats.turnSkill;
         mybuff.def.push(new buffInfo("+", 200, 2));
         mybuff.mr.push(new buffInfo("+", 200, 2));
         myStats.def += 200;
         myStats.mr += 200;
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} DEF and Magic Resist by **200** for 3 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -866,8 +866,8 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(43, 25, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Artillerist ignores 60% of DEF and MR
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1, defMultiplier: 0.4 });
         matchStats.turn = matchStats.turnSkill;
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1, defMultiplier: 0.4 });
 
         return AbilityResponse.SUCCESS;
     }),
@@ -956,9 +956,9 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(47, 35, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Sorcerer deals 125% Magic Damage
+        matchStats.turn = matchStats.turnSkill;
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.25, magicDamage: true, mdChance: 0 });
         ebuff.hp.push(new buffInfo("+", Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03), 2));
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${enemy.name}** will take burning damage for the next 2 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -976,10 +976,10 @@ export const skills: skillInfo[] = [
             return AbilityResponse.FAILURE;
         };
         myStats.classUsedRound = matchStats.round;
+        matchStats.turn = matchStats.turnSkill;
 
         const dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, mdChance: -1 });
         ebuff.hp.push(new buffInfo("+", -Math.floor(dmg / 9), 3)); // 50% over 3 rounds
-        matchStats.turn = matchStats.turnSkill;
         notice.push(`\n⚜️ **${enemy.name}** will take burning damage for the next 3 rounds`);
 
         return AbilityResponse.SUCCESS;
@@ -994,23 +994,64 @@ export const skills: skillInfo[] = [
 
     new skillInfo(49, 10, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Brawler deals 100% dmg +1% for each mana consumed
+        matchStats.turn = matchStats.turnSkill;
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: (1.1 + myStats.sm * 0.01) });
         myStats.sm = 0;
-        matchStats.turn = matchStats.turnSkill;
 
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(50, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Grappler decreases enemy dodge by 100% for 5 rounds
+        // Grappler removes all counter, lowers enemy's dodge to 0% for 7 rounds
+
+        if (myStats.classUsedRound > matchStats.round - 7) {
+            myStats.sm += 60;
+            noTimeout(matchStats, myStats);
+            matchStats.sendWarning({ content: `Grappler's ability can only be used once every 7 rounds.`, ephemeral: true });
+            return AbilityResponse.FAILURE;
+        };
+
+        myStats.classUsedRound = matchStats.round;
+
+        eStats.counter = 0;
         eStats.dodge = 0;
-        ebuff.dodge.push(new buffInfo("=", 0, 4));
-        matchStats.turn = matchStats.turnSkill;
-        notice.push(`\n⚜️ **${char.name}** has decreased enemy dodge chance to **0%**`);
+        ebuff.dodge.push(new buffInfo("=", 0, 7));
+        noTimeout(matchStats, myStats);
+
+        // Free-Flow effects (7 rounds) : Enemy receives 5% more damage for every round the domain lasts, up to 35% by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain.
+        myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            eStats.vulnerabilityDynamic += 0.05;
+
+            return AbilityResponse.SUCCESS;
+        }, 7));
+
+        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 7, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            eStats.vulnerabilityDynamic -= 0.35;
+            notice.push(`\n⚜️ **${char.name}** exited Free-Flow`);
+
+            return AbilityResponse.SUCCESS;
+        }));
+        notice.push(`\n⚜️ **${char.name}** has entered Free-Flow for **7** rounds`);
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        myStats.evadeDeathStrike = 1;
-        myStats.evadeDeathChance = 0.5;
+        eStats.counter ??= 0;
+        eStats.vulnerabilityDynamic ??= 1;
+        myStats.classUsedRound = -8;
+
+        // Evade first 2 lethal hits
+        myStats.evadeDeathStrike ??= 0;
+        myStats.evadeDeathChance ??= 0;
+        myStats.evadeDeathStrike += 2;
+        myStats.evadeDeathChance += 2;
+
+        // Restore 3% missing HP every round if not in free-flow form
+        myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            if (!(myStats.classUsedRound > matchStats.round - 7) || myStats.classUsedRound < 0) {
+                let hhp = Math.floor((myStats.maxhp - myStats.hp) * 0.03);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, {});
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }),
