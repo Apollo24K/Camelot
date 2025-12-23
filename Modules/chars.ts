@@ -25796,7 +25796,7 @@ export const characters: charInfo[] = [
     new charInfo("Ramashut", [], anime[682], "F", "https://i.ibb.co/1JBTSZ61/c.png", 25692, "C"),
     new charInfo("Volkov Varanov", [], anime[682], "M", "https://i.ibb.co/NnKVDCxT/c.png", 25693, "C"),
     new charInfo("Zuber", [], anime[682], "M", "https://i.ibb.co/yn2v0M3C/c.png", 25694, "C"),
-    new charInfo("Kajou Ayame", ["Blue Tundra", "The Blue in Snowfield", "Blue Snow", "Kajou"], anime[683], "F", "https://i.ibb.co/whJTRGJf/c.png", 25695, "SS"),
+    new charInfo("Firefly EX", ["SAM EX"], anime[343], "F", "https://i.ibb.co/ZRw9tB0D/firefly-ex.png", 25695, "EX"),
     new charInfo("Nishikinomiya Anna", ["Anna-senpai", "Chatty Cathy", "Sweet Angel"], anime[683], "F", "https://i.ibb.co/tTTMrhn3/c.png", 25696, "S"),
     new charInfo("Okuma Tanukichi", ["Sentimental Bomber", "Mister Baiter", "Meister Baiter", "Mr. Okuma", "Brother", "Big Brother (Shimoneta)", "Big Bro", "Brother Slave"], anime[683], "M", "https://i.ibb.co/WNRZp0cM/c.png", 25697, "A"),
     new charInfo("Onigashira Kosuri", [], anime[683], "F", "https://i.ibb.co/60ZJ4SL9/c.png", 25698, "A"),
@@ -25977,6 +25977,7 @@ export const characters: charInfo[] = [
     new charInfo("Ha-Yan Jung", [], anime[692], "F", "https://i.ibb.co/zVkvp7kS/c.png", 25873, "S"),
     new charInfo("Hyun-Sung Kim", ["Hyunsung Kim"], anime[692], "M", "https://i.ibb.co/nqqRkGDq/c.png", 25874, "B"),
     new charInfo("Dialugia", [], anime[692], "F", "https://i.ibb.co/7xxr9b5q/c.png", 25875, "S"),
+    new charInfo("Kajou Ayame", ["Blue Tundra", "The Blue in Snowfield", "Blue Snow", "Kajou"], anime[683], "F", "https://i.ibb.co/whJTRGJf/c.png", 25876, "SS"),
 
 ];
 
