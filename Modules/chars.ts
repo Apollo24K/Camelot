@@ -25978,10 +25978,21 @@ export const characters: charInfo[] = [
     new charInfo("Hyun-Sung Kim", ["Hyunsung Kim"], anime[692], "M", "https://i.ibb.co/nqqRkGDq/c.png", 25874, "B"),
     new charInfo("Dialugia", [], anime[692], "F", "https://i.ibb.co/7xxr9b5q/c.png", 25875, "S"),
     new charInfo("Kajou Ayame", ["Blue Tundra", "The Blue in Snowfield", "Blue Snow", "Kajou"], anime[683], "F", "https://i.ibb.co/whJTRGJf/c.png", 25876, "SS"),
+    new charInfo("Vanilla", [], anime[693], "F", "https://i.ibb.co/fY6TXyMp/c.png", 25877, "SS"),
+    new charInfo("Chocola", [], anime[693], "F", "https://i.ibb.co/GDD70jw/c.png", 25878, "SS"),
+    new charInfo("Coconut", [], anime[693], "F", "https://i.ibb.co/Ndp6P8Z4/c.png", 25879, "S"),
+    new charInfo("Cinnamon", [], anime[693], "F", "https://i.ibb.co/STxPz2p/c.png", 25880, "S"),
+    new charInfo("Maple (NP)", [], anime[693], "F", "https://i.ibb.co/kVGrdNgc/c.png", 25881, "S"),
+    new charInfo("Azuki (NP)", [], anime[693], "F", "https://i.ibb.co/LzTBC2FR/c.png", 25882, "S"),
+    new charInfo("Cacao (NP)", ["Kakao"], anime[693], "F", "https://i.ibb.co/hJw74CCR/c.png", 25883, "B"),
+    new charInfo("Shigure Minazuki", ["Shigure Minaduki"], anime[693], "F", "https://i.ibb.co/MxRYMq05/c.png", 25884, "A"),
+    new charInfo("Kashou Minazuki", ["Kashou Minaduki"], anime[693], "M", "https://i.ibb.co/d0D18hKN/c.png", 25885, "B"),
+    new charInfo("Chiyo (NP)", [], anime[693], "F", "https://i.ibb.co/JwnTDFcT/c.png", 25886, "B"),
+    new charInfo("Chiyo's Residence's Cat", ["Chiyo-chan-ke no Neko"], anime[693], "F", "https://i.ibb.co/Wv6xDBC1/c.png", 25887, "B"),
+    new charInfo("Chiyo no Haha", ["Chiyo's Mother"], anime[693], "F", "https://i.ibb.co/wZ8TX5z8/c.png", 25888, "D"),
+    new charInfo("Shitsuji Joshi", ["Butler Woman"], anime[693], "F", "https://i.ibb.co/Z1b0R3nd/c.png", 25889, "D"),
 
 ];
-
-
 
 export const auniq = anime.map((e) => e.name);
 

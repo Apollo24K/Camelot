@@ -725,6 +725,7 @@ export const anime: animeInfo[] = [
     new animeInfo("The Academy's Genius Swordsman", ['Academy Cheonjaekaljabi', "Academy's Genius Swordmaster"], 690),
     new animeInfo("The Swordmaster's Son", ['Geomsulmyeongga Mangnaeadeul', "Swordmaster's Youngest Son", 'The Youngest Son of a Master Swordsman', 'Youngest Son of the Renowned Swordsmanship Clan'], 691),
     new animeInfo("How to Use a Returner", ['Hoegwija Sayongseolmyeongseo', 'Regressor Instruction Manual', "RIM"], 692),
+    new animeInfo("Nekopara", ["NP"], 693),
 
 ];
 
