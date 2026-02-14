@@ -452,6 +452,13 @@ export interface UserSchema {
     discovered_via: string | null;
     created: Date;
 
+    // Frostbound Yule event
+    yule_chapter: number;
+    yule_chapter_failed: boolean;
+    yule_timestamp: Date | null;
+    perpetual_fire: number;
+    perpetual_fragments: number;
+
     chars: number[];
     char_ref: Record<string, number>;
     char_level: Record<string, any>;

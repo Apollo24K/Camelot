@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, Client } from "discord.js";
+import { Client } from "discord.js";
 import { query } from "../postgres";
 import { CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateGuildOptions, UpdatePartyOptions, UpdateStampedeOptions, UpdateUserOptions, UpdateWeaponOptions, UserSchema, UserSchemaForStats, WeaponSchema } from "../types";
 import { donationWeekStart } from "./components";
@@ -64,7 +64,7 @@ export const getMinimalUserSchemas = async (ids: string[]): Promise<Pick<UserSch
     return users;
 };
 
-const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via FROM users`;
+const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments FROM users`;
 
 export const getUserSchema = async (id: string): Promise<CompactUserSchema | undefined> => {
     const [user] = await query(`${SELECT_COMPACT_USER_SCHEMA} WHERE id = $1`, [id]) as [CompactUserSchema];
@@ -953,7 +953,7 @@ export const updateUsers = async (
                             ? 'integer'
                             : 'text'
                         : 'text';
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT array_agg(orig.elem ORDER BY orig.idx)
                         FROM (
                             SELECT elem,
@@ -969,7 +969,7 @@ export const updateUsers = async (
                         ON orig.elem = rem.elem
                         AND orig.rn = rem.rn
                         WHERE rem.elem IS NULL
-                    )`;
+                    ), '{}')`;
                 case 'remove_all':
                     const arrayType = Array.isArray(value) && value.length > 0
                         ? typeof value[0] === 'number'
@@ -1155,7 +1155,7 @@ export const updateGuilds = async (
                             ? 'integer'
                             : 'text'
                         : 'text';
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT array_agg(orig.elem ORDER BY orig.idx)
                         FROM (
                             SELECT elem,
@@ -1171,7 +1171,7 @@ export const updateGuilds = async (
                         ON orig.elem = rem.elem
                         AND orig.rn = rem.rn
                         WHERE rem.elem IS NULL
-                    )`;
+                    ), '{}')`;
                 case 'remove_all':
                     const arrayType = Array.isArray(value) && value.length > 0
                         ? typeof value[0] === 'number'
@@ -1247,7 +1247,7 @@ export const updateParties = async (
                             ? 'integer'
                             : 'text'
                         : 'text';
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT array_agg(orig.elem ORDER BY orig.idx)
                         FROM (
                             SELECT elem,
@@ -1263,7 +1263,7 @@ export const updateParties = async (
                         ON orig.elem = rem.elem
                         AND orig.rn = rem.rn
                         WHERE rem.elem IS NULL
-                    )`;
+                    ), '{}')`;
                 case 'remove_all':
                     const arrayType = Array.isArray(value) && value.length > 0
                         ? typeof value[0] === 'number'

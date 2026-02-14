@@ -285,8 +285,8 @@ const commands = [
 		// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
 		// egg-hunt: See what you find! 🧺 🐰
 		data: new SlashCommandBuilder()
-			.setName('trick-or-treat')
-			.setDescription('Trick, or treat? 👻 🍬')
+			.setName('christmas-present')
+			.setDescription('Unwrap a festive surprise! 🎄 🎁')
 		// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
 		// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
 	}.data.toJSON(),
@@ -297,12 +297,12 @@ const commands = [
 			.addStringOption(option => option.setName('character').setDescription('select a character').setRequired(true))
 			.addStringOption(option => option.setName('image-url').setDescription('Has to be an imgur.com or imgBB.com link | type reset to remove a character\'s image instead').setRequired(true))
 	}.data.toJSON(),
-	// {
-	// 	data: new SlashCommandBuilder()
-	// 		.setName('christmas')
-	// 		.setDescription('christmas craze')
-	// 		.addSubcommand((subcommand) => subcommand.setName('craze').setDescription('Scrap everything you knew, it\'s getting crazy'))
-	// }.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('christmas')
+			.setDescription('christmas craze')
+			.addSubcommand((subcommand) => subcommand.setName('craze').setDescription('Scrap everything you knew, it\'s getting crazy'))
+	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('class')
@@ -512,6 +512,15 @@ const commands = [
 					)
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('frostbound')
+			.setDescription('Winter event commands')
+			.addSubcommand((subcommand) => subcommand
+				.setName('yule')
+				.setDescription('Frostbound Yule story event')
+			),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -952,12 +961,12 @@ const commands = [
 			.addIntegerOption(option => option.setName('page').setDescription('Choose a page to jump to').setRequired(false))
 			.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
-			.setName('liminal')
-			.setDescription('liminal descent')
-			.addSubcommand((subcommand) => subcommand.setName('descent').setDescription('Challenge yourself against bosses with increasing difficulty!'))
-	}.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 		.setName('liminal')
+	// 		.setDescription('liminal descent')
+	// 		.addSubcommand((subcommand) => subcommand.setName('descent').setDescription('Challenge yourself against bosses with increasing difficulty!'))
+	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('lock')

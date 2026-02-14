@@ -1,9 +1,9 @@
 import { ComponentType } from "discord.js";
 import { userLevel, daysSince } from "../Modules/functions";
 import { achievements } from "../Modules/achievements";
-import { OfferRow } from "../Modules/components";
+import { isEventOngoing, OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 
 function dailyCoinAmount(premium: number, xp: number, dailystreak: number) {
     let weight = 1;
@@ -53,11 +53,17 @@ const exportCommand: SlashCommand = {
 
             const dailyCoins = dailyCoinAmount(stats.premium, stats.xp, stats.dailystreak);
 
-            await updateUsers(interaction.user.id, {
-                coins: { type: "increment", value: dailyCoins },
-                dailyclaimed: { type: "set", value: 1 },
-                dailystreak: { type: "increment", value: 1 },
-                lastdaily: { type: "set", value: new Date() }
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: "increment", value: dailyCoins },
+                    dailyclaimed: { type: "set", value: 1 },
+                    dailystreak: { type: "increment", value: 1 },
+                    lastdaily: { type: "set", value: new Date() },
+
+                    ...(isEventOngoing() ? { perpetual_fire: { type: "increment", value: 10 } } : {}),
+                    ...(isEventOngoing() ? { perpetual_fragments: { type: "increment", value: 10 } } : {}),
+                    ...((isEventOngoing() && stats.perpetual_fire <= 0) ? { yule_chapter_failed: { type: "set", value: true } } : {}),
+                },
             });
 
             // Achievements
@@ -98,12 +104,18 @@ const exportCommand: SlashCommand = {
 
                 const dailyCoins = dailyCoinAmount(stats.premium, stats.xp, stats.dailystreak);
 
-                await updateUsers(interaction.user.id, {
-                    coins: { type: "increment", value: dailyCoins },
-                    gems: { type: "increment", value: (r.customId === "confirm" ? -cost : 0) },
-                    dailyclaimed: { type: "set", value: 1 },
-                    dailystreak: { type: "set", value: stats.dailystreak },
-                    lastdaily: { type: "set", value: new Date() }
+                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    updates: {
+                        coins: { type: "increment", value: dailyCoins },
+                        gems: { type: "increment", value: (r.customId === "confirm" ? -cost : 0) },
+                        dailyclaimed: { type: "set", value: 1 },
+                        dailystreak: { type: "set", value: stats.dailystreak },
+                        lastdaily: { type: "set", value: new Date() },
+
+                        ...(isEventOngoing() ? { perpetual_fire: { type: "increment", value: 10 } } : {}),
+                        ...(isEventOngoing() ? { perpetual_fragments: { type: "increment", value: 10 } } : {}),
+                        ...((isEventOngoing() && stats.perpetual_fire <= 0) ? { yule_chapter_failed: { type: "set", value: true } } : {}),
+                    },
                 });
 
                 // Achievements

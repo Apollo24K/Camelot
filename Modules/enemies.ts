@@ -185,7 +185,7 @@ export const crazeMobs2023: enemyInfo[] = [
 
 ];
 
-export const crazeMobs: enemyInfo[] = [
+export const crazeMobs2024: enemyInfo[] = [
     /* 0 - Apofurbyn't: Deal magic damage */ new enemyInfo("His name is NOT Apofurby", "Furby", "a Furby", "M", false, {}, {}, { def: 1000000000 }, [], ["https://i.ibb.co/NmmCjVX/f.png"], [], 0),
     /* 1 - Dormarox: Deal physical damage */ new enemyInfo("Dormarox", "Golem", "the rock-eating Troll", "M", false, {}, {}, { mr: 1000000000 }, [], ["https://i.ibb.co/rs49qwx/t.png"], [], 1),
     /* 2 - Boa Hancock: Use luffy */ new enemyInfo("Boa Hancock", "Human", "the Snake Princess", "F", false, {}, {}, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/3YfY4dd/c.png"], [], 2),
@@ -202,6 +202,24 @@ export const crazeMobs: enemyInfo[] = [
     /* 13 - Fuutarou Uesugi: Try QQ Girls, only one is correct */ new enemyInfo("Fuutarou Uesugi", "Human", "Mr. Honor-Roll", "M", false, {}, {}, {}, [], ["https://i.ibb.co/GT9fLQ8/c.png"], [], 13),
     /* 14 - Mob: Reach round 100 without dealing damage */ new enemyInfo("Mob", "Human", "the Psycho Helmet", "M", false, {}, { atk: 42, md: 42, hp: 99.99 }, { dodge: 0, br: 0 }, [], ["https://i.ibb.co/f8HX8Y9/c.png"], [], 14),
     /* 15 - Sukuna */ new enemyInfo("Sukuna", "Cursed Spirit", "the King of Curses", "M", true, {}, { hp: 333.33, atk: 5, md: 5 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/9p7zvsV/c.png"], [], 15),
+
+];
+
+export const crazeMobs: enemyInfo[] = [
+    /* 0 - Soul Eater: Deal magic damage */ new enemyInfo("Dimensional Soul Eater", "Soul Eater", "a Soul Eater", "M", false, {}, {}, { def: 1000000000 }, [], ["https://i.imgur.com/hgLxMZi.png"], [], 0),
+    /* 1 - Golem: Deal physical damage */ new enemyInfo("Earth Golem", "Golem", "an Earth Golem", "M", false, {}, {}, { mr: 1000000000 }, [], ["https://i.ibb.co/C2fHr5M/gl.png"], [], 1),
+    /* 2 - Mime (E33): Deal true damage */ new enemyInfo("Mime (E33)", "Human", "the mime", "M", false, {}, {}, { def: 1000, mr: 1000, shield: 1000000000 }, [], ["https://i.ibb.co/CKb1nK9q/mime.png"], [], 2),
+    /* 3 - Luffy: Equip a fish */ new enemyInfo("Monkey D. Luffy", "Human", "the Straw Hat Pirate", "M", true, {}, { hp: 56.674 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/kgn4Qpmd/luffy.png"], [], 3),
+    /* 4 - APPLe: Use Ryuk */ new enemyInfo("APPLe", "Apple", "a cursed apple", "M", true, {}, { hp: 56.674 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/996Ls3rX/apple.png"], [], 4),
+    /* 5 - Puss in Boots: Defeat him 9 times */ new enemyInfo("Puss in Boots", "Cat", "the cat in the boots", "M", false, {}, { hp: 3.183 }, { def: 600, mr: 600 }, [], ["https://i.ibb.co/rKF9rqgM/c.png"], [], 5),
+    /* 6 - Thorfinn: Don't fight him */ new enemyInfo("Thorfinn", "Human", "Karlsefni", "M", false, {}, { hp: 53.783, atk: 0, md: 0 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/yB4R9s4L/c.png"], [], 6),
+    /* 7 - Satsuki Kiryuuin: Use Ryuuko with no armor */ new enemyInfo("Satsuki Kiryuuin", "Human", "the Student Council President", "F", false, {}, { hp: 22.674 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/HTTw04X8/c.png"], [], 7),
+    /* 8 - Akaza: Use Tanjiro, Giyuu in party */ new enemyInfo("Akaza", "Demon", "the Upper Moon 3", "M", true, {}, { hp: 62.283, atk: 2, md: 2 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/Kp8ZGj8V/c.png"], [], 8),
+    /* 9 - Land: Use Übel, Serie in party */ new enemyInfo("Land", "Human", "a First Class Mage", "M", true, {}, { hp: 2.883 }, { def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/j9gwjVCX/c.png"], [], 9),
+    /* 10 - World: Use Kanna to eat the world */ new enemyInfo("The World", "Planet", "the World", "NB", true, {}, { hp: Infinity }, { dodge: 1, br: 1, def: 1000000000, mr: 1000000000 }, [], ["https://i.ibb.co/YBtRjWsK/c.png"], [], 10),
+    /* 11 - Reze */ new enemyInfo("Reze", "Devil", "the Bomb Devil", "F", true, {}, { hp: 1.783 }, { def: 600, mr: 600 }, [], ["https://i.ibb.co/8DcRNmCt/c.png"], [], 11),
+    /* 12 - Natsuki Subaru */ new enemyInfo("Natsuki Subaru", "Human", "Barusu", "M", false, {}, {}, {}, [], ["https://i.ibb.co/DbZ2tZR/c.png"], [], 12),
+    /* 13 - Mayuri Shiina - Save her from death */ new enemyInfo("Mayuri Shiina", "Human", "Mayushii", "F", false, {}, {}, {}, [], ["https://i.ibb.co/cch3W45d/c.png"], [], 13),
 
 ];
 

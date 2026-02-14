@@ -11,7 +11,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, UpdateUserOptions } from '../types';
-import { getPartyMembers, updateUsers } from '../Modules/queries';
+import { getPartyMembers, getUserSchema, updateUsersAndCache } from '../Modules/queries';
 import { AbilityResponse } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
 
@@ -20,7 +20,7 @@ const crazeLevelSelected = new Map();
 
 const EMBED_COLOR = 0x034f20;
 
-const startDate = new Date('2024-12-22T00:00:00');
+const startDate = new Date('2025-12-23T00:00:00');
 
 const getCrazeMobCurse = {
     0: 8,
@@ -28,6 +28,8 @@ const getCrazeMobCurse = {
     2: 12,
 
     9: 4,
+
+    11: 7,
 
     13: 8,
 
@@ -51,23 +53,40 @@ const getCrazeMobCurse = {
 //     13: ["Give up, you can't beat him. He's the strongest <:Heh:928368727588757504>", "<:GojoHeart:1194021178029920266>", "But.. maybe you can seal him, with some help."] // Use Getou, with a party member using Prison Realm, let the fight time out
 // };
 
+// const crazeTips = {
+//     0: ["Try dealing magic damage!"], // Infinite DEF
+//     1: ["Try dealing physical damage!"], // Infinite MR
+//     2: ["I wonder who it could be... <:Heh:928368727588757504>"], // Use luffy
+//     3: ["Only those with a higher capacity for magic may stand before her"], // Have a larger mana pool than her
+//     4: ["GMT+13"], // Fight him between 08:00-16:00
+//     5: ["Don't bring anything with you that might weigh you down"], // Don't use weapons or armor
+//     6: ["Now where did this moss head go again?!"], // Zoro got lost
+//     7: ["Despite its appearance, even Pandemonium Larvae can have feelings", "Find a way to charm it :)"], // Use rogue dagger to charm
+//     8: ["He can see anyone's name, so that can't be the answer...", "He can see his opponents, so that can't be the answer...", "Then what if... what if you're already dead?"], // Use Brook
+//     9: ["The geass has a peculiar weakness", "Perhaps someone with a blindfold?"], // Use 2B
+//     10: ["Nuke it!", "And double it!"], // Twinshot Megumin
+//     11: ["Sometimes, the best way to win is...", "...TO RUN AWAY!", "SMOKEY!!!"], // Run away
+//     12: ["Maybe clean it up a bit?"], // Use Arima Kana
+//     13: ["Never give up in love!"], // Try a QQ Girl till you win
+//     14: ["The greatest strength is peace.", "...and patience. GLHF <:MikuHappy:1045096947876368404>"], // Reach round 100 without dealing damage
+//     15: ["First, send the moss head back", "Next, give up. He beat the strongest <:Heh:928368727588757504>", "Or at the very least, you mustn't do any unnecessary moves"], // Sukuna
+// };
+
 const crazeTips = {
     0: ["Try dealing magic damage!"], // Infinite DEF
     1: ["Try dealing physical damage!"], // Infinite MR
-    2: ["I wonder who it could be... <:Heh:928368727588757504>"], // Use luffy
-    3: ["Only those with a higher capacity for magic may stand before her"], // Have a larger mana pool than her
-    4: ["GMT+13"], // Fight him between 08:00-16:00
-    5: ["Don't bring anything with you that might weigh you down"], // Don't use weapons or armor
-    6: ["Now where did this moss head go again?!"], // Zoro got lost
-    7: ["Despite its appearance, even Pandemonium Larvae can have feelings", "Find a way to charm it :)"], // Use rogue dagger to charm
-    8: ["He can see anyone's name, so that can't be the answer...", "He can see his opponents, so that can't be the answer...", "Then what if... what if you're already dead?"], // Use Brook
-    9: ["The geass has a peculiar weakness", "Perhaps someone with a blindfold?"], // Use 2B
-    10: ["Nuke it!", "And double it!"], // Twinshot Megumin
-    11: ["Sometimes, the best way to win is...", "...TO RUN AWAY!", "SMOKEY!!!"], // Run away
-    12: ["Maybe clean it up a bit?"], // Use Arima Kana
-    13: ["Never give up in love!"], // Try a QQ Girl till you win
-    14: ["The greatest strength is peace.", "...and patience. GLHF <:MikuHappy:1045096947876368404>"], // Reach round 100 without dealing damage
-    15: ["First, send the moss head back", "Next, give up. He beat the strongest <:Heh:928368727588757504>", "Or at the very least, you mustn't do any unnecessary moves"], // Sukuna
+    2: ["Try dealing true damage!"], // Infinite shield
+    3: ["Maybe some distraction would do", "Perhaps something to eat..?"], // Equip a fish
+    4: ["If you can't beat him, eat him"], // Use Ryuk
+    5: ["They say cats have many lives..."], // Beat him 9 times
+    6: ["Don't fight him"], // Let the battle time out with no damage dealt
+    7: ["Sometimes less is more", "That armor's looking pretty heavy..."], // Use Ryuuko Matoi with no armor
+    8: ["He's too strong to fight alone"], // Use Tanjiro, Giyuu in party
+    9: ["First find his real body", "Then restrain him"], // Use Übel, Serie in party
+    10: ["No it's not related to jojo's, that's a distraction...", "So.. maybe... try eating it? Man this trick's getting old..."], // Use Kanna to eat the world
+    11: ["There's no way you could hit such a nice girl!", "I mean just watch the movie >_>"], // Reze: First die as Denji, then win as Denji, then win as Makima
+    12: ["Hmm, maybe there's still something he needs to do?", "Or maybe you're in the wrong timeline...", "And the world is a lie, only few have color"], // Subaru revivies after every death
+    13: ["Whatever I try, she's doomed to die...", "We need to reroll into a better timeline..."], // Save her from death
 };
 
 function getModal(uid: string) {
@@ -140,7 +159,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
         crazeMobs.slice(0, levelsUnlocked).forEach((e) => {
             options.push({
                 label: `Level ${e.id + 1}: ${e.name}`,
-                emoji: (e.id in stats.craze_levels) ? stats.craze_levels[e.id] ? '<:check_icon:683671903143067743>' : '<:stop_icon:683671917353369600>' : '<:pause:690939144225947668>',
+                emoji: (e.id in stats.craze_levels) ? (stats.craze_levels[e.id] > 0) ? '<:check_icon:683671903143067743>' : '<:stop_icon:683671917353369600>' : '<:pause:690939144225947668>',
                 // description: `${e.name}`,
                 value: `${e.id}`,
             });
@@ -281,8 +300,10 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        craze_equipment: { type: "set", value: stats.craze_equipment },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            craze_equipment: { type: "set", value: stats.craze_equipment },
+                        },
                     });
 
                     interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
@@ -360,6 +381,9 @@ const exportCommand: SlashCommand = {
         let myChar = characters[stats.battlechar];
         let myStats = await getDetailedStats(myChar.id, stats, stats.dungeon_classlevels);
 
+        // Fix weapon
+        if ("weapon" in stats.craze_equipment) myStats.equipped_weapon_id = stats.craze_equipment.weapon.split(":")[0];
+
         myStats.thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
 
         let myStatsC = { ...myStats };
@@ -370,7 +394,7 @@ const exportCommand: SlashCommand = {
         if (myStats.rune) {
             const rune = items[parseInt(myStats.rune)];
             if (rune instanceof runeInfo) {
-                if (myAbility === undefined) myAbility = rune.ability as Ability;
+                if (myAbility === undefined) myAbility = _.cloneDeep(rune.ability) as Ability;
                 else myAbility = { ...myAbility, ..._.cloneDeep(rune.ability) };
             };
         };
@@ -409,6 +433,9 @@ const exportCommand: SlashCommand = {
             if (resolved) return;
             resolved = true;
 
+            const stats = await getUserSchema(interaction.user.id);
+            if (!stats) return;
+
             const Embed = new EmbedBuilder()
                 .setColor(embedColor) // Blue: 
                 .setThumbnail(myStatsC.thumbnail)
@@ -418,23 +445,140 @@ const exportCommand: SlashCommand = {
                 // Clear restrictions
                 dungeonInProgress.delete(stats.id);
 
+                // Level 11 2025 (Reze)
+                if (level === 11) {
+                    if ((stats.craze_levels[level] || 0) < 1) {
+                        if (myChar.name === "Denji" && myStatsC.hp < 1) {
+                            stats.craze_levels[level] = -1;
+
+                            // Update users table
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    craze_levels: { type: "set", value: stats.craze_levels },
+                                },
+                            });
+                        };
+                    };
+                };
+
+                // Level 13 2025 (Mayuri, save her from death)
+                if (level === 13) {
+                    if ((stats.craze_levels[level] || 0) < 1) {
+                        if (eStatsC.hp < 1) {
+                            stats.craze_levels[level] = -1;
+
+                            // Update users table
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    craze_levels: { type: "set", value: stats.craze_levels },
+                                },
+                            });
+                        };
+                    };
+                };
+
                 if (!(level in stats.craze_levels)) {
-                    stats.craze_levels[level] = 0;
+                    stats.craze_levels[level] ||= 0;
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        craze_levels: { type: "set", value: stats.craze_levels },
+                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                        updates: {
+                            craze_levels: { type: "set", value: stats.craze_levels },
+                        },
                     });
                 };
-                return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
+                return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${Math.max(0, stats.craze_levels[level])}**/${1}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
             };
 
             stats.craze_levels[level] ||= 0;
-            stats.craze_levels[level]++;
+
+            // Level 5 2025 (Puss in Boots has 9 lives)
+            if (level === 5) {
+                if (stats.craze_levels[level] < 1) {
+                    if (stats.craze_levels[level] < -7) {
+                        stats.craze_levels[level] = 0;
+                    } else {
+                        stats.craze_levels[level] -= 2;
+                    };
+                };
+            };
+
+            // Level 9 2025 (Land, must find his real body)
+            if (level === 9) {
+                if (stats.craze_levels[level] < 1) {
+                    if (myChar.name === "Übel" && partyChars.some((e) => e.name === "Serie")) {
+                        stats.craze_levels[level] = 0;
+                    } else {
+                        stats.craze_levels[level] -= 1;
+                    };
+                };
+            };
+
+            // Level 11 2025 (Reze)
+            if (level === 11) {
+                if (stats.craze_levels[level] < 1) {
+                    if (stats.craze_levels[level] === 0) {
+                        stats.craze_levels[level] = -1;
+                    } else if (stats.craze_levels[level] === -1) {
+                        if (myChar.name === "Denji") {
+                            stats.craze_levels[level] = -11;
+                        } else {
+                            stats.craze_levels[level] -= 1;
+                        };
+                    } else if (stats.craze_levels[level] === -10) {
+                        if (myChar.name === "Makima") {
+                            stats.craze_levels[level] = 0;
+                        } else {
+                            stats.craze_levels[level] -= 1;
+                        };
+                    } else {
+                        stats.craze_levels[level] -= 1;
+                    };
+                };
+            };
+
+            // Level 12 2025 (Subaru, returns by death)
+            if (level === 12) {
+                if (stats.craze_levels[level] < 1) {
+                    if (stats.craze_levels[level] === 0) { // Timeline 1
+                        if (myChar.name === "Rintarou Okabe" && myStats.equipped_weapon_id == 90) { // Ancient Dice
+                            // Enter timeline 2
+                            stats.craze_levels[level] = -2;
+                        } else {
+                            delete stats.craze_levels[level];
+                        };
+                    } else if (stats.craze_levels[level] === -1) { // Timeline 2
+                        if (myChar.name === "Emilia" && myStats.equipped_weapon_id == 686) {
+                            stats.craze_levels[level] = -3;
+                        } else {
+                            stats.craze_levels[level] -= 1;
+                        };
+                    } else if (stats.craze_levels[level] === -2) { // Step 3
+                        if (myChar.name === "Ram") {
+                            stats.craze_levels[level] = 0;
+                        } else {
+                            stats.craze_levels[level] -= 1;
+                        };
+                    };
+                };
+
+                // Reset level 13 (Mayuri)
+                if (stats.craze_levels[level + 1] < 1) {
+                    delete stats.craze_levels[level + 1];
+                };
+            };
+
+            // Level 13 2025 (Mayuri, save her from death)
+            // if (level === 13) {
+
+            // };
+
+
+            if (!isNaN(stats.craze_levels[level])) stats.craze_levels[level]++;
 
             // Coins
             let loot = 0;
-            if (stats.craze_levels[level] < 30) {
+            if (stats.craze_levels[level] < 30 && stats.craze_levels[level] > 0) {
                 loot = 40 + Math.floor(Math.random() * 30) + (lootFloor < 100 ? lootFloor * 3 : 300 + (lootFloor * 1.5));
             };
 
@@ -444,15 +588,17 @@ const exportCommand: SlashCommand = {
             };
             if (stats.craze_levels[level] === 1) newUpdates.expulls = { type: "increment", value: 1 };
             if (loot) newUpdates.coins = { type: "increment", value: loot };
-            await updateUsers(interaction.user.id, newUpdates);
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: newUpdates,
+            });
 
             // Disable Loot
             // return Embed
-            //     .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n\`disabled\`: The christmas craze event has long ended. It's been kept open by the request of players to use it as a trial substitude until that gets a better rework <:ThumbsUp:1020442047712350298>`)
+            //     .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${Math.max(0, stats.craze_levels[level] || 0)}**/${1}\n\n<:npbag:929428030554787892> Loot\n\`disabled\`: The christmas craze event has long ended. It's been kept open by the request of players to use it as a trial substitude until that gets a better rework <:ThumbsUp:1020442047712350298>`)
             //     .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ dynamic: true }) + "?size=2048" });
 
             return Embed
-                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${stats.craze_levels[level]}**/${1}\n\n<:npbag:929428030554787892> Loot\n${stats.craze_levels[level] === 1 ? "1x <a:EXTRA:1138530846144462968>, " : ""}${loot ? `${loot}<:coins:872926669055356939>, ` : ""}`)
+                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Level ${level + 1} progress: **${Math.max(0, stats.craze_levels[level] || 0)}**/${1}\n\n<:npbag:929428030554787892> Loot\n${stats.craze_levels[level] === 1 ? "1x <a:EXTRA:1138530846144462968>, " : ""}${loot ? `${loot}<:coins:872926669055356939>, ` : ""}`)
                 .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         };
 
@@ -461,7 +607,7 @@ const exportCommand: SlashCommand = {
         let notice = ["", "", "", ""];
 
         // Apply passives
-        await eAbility.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+        await eAbility.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName, partyChars, stats.craze_levels);
         if (skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
         if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
@@ -515,19 +661,19 @@ const exportCommand: SlashCommand = {
             );
 
         // If Enemy Died
-        if (eStatsC.hp < 1) { // if (myStats.ep/eStats.ep >= 2) {
-            const result = await matchResult("w");
-            if (result) interaction.editReply({ embeds: [result] });;
-            return;
-        };
+        // if (eStatsC.hp < 1) { // if (myStats.ep/eStats.ep >= 2) {
+        //     const result = await matchResult("w");
+        //     if (result) interaction.editReply({ embeds: [result], components: [] });;
+        //     return;
+        // };
 
         // Fight Duration
         let fightDuration = 120;
 
         // Level 14 2024
-        if (level === 14) {
-            fightDuration = 300;
-        };
+        // if (level === 14) {
+        //     fightDuration = 300;
+        // };
 
         const isCompactEmbed = !!author.schema.user_settings.compact_battle_embeds;
         const threatLevelWarning = isCompactEmbed ? "" : `You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n`;
@@ -586,9 +732,19 @@ const exportCommand: SlashCommand = {
                         else matchStats.ended = true;
 
                         // Level 13 2024
+                        // if (level === 13) {
+                        //     //@ts-ignore
+                        //     wORl = eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                        // };
+
+                        // Level 13 2025 (Mayuri, save her from death)
                         if (level === 13) {
-                            //@ts-ignore
-                            wORl = eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                            if (eStatsC.hp > 0 && matchStats.round >= 30) {
+                                wORl = "w";
+                            } else {
+                                wORl = "l";
+                                if (!(stats.craze_levels[level] < 0)) notice.push(`\n⌛ huh? my watch stopped working...`);
+                            };
                         };
 
                         atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
@@ -647,6 +803,13 @@ const exportCommand: SlashCommand = {
                             };
                         };
 
+                        // Level 13 (Mayuri, save her from death)
+                        if (level === 13) {
+                            if (matchStats.round >= 10 && (stats.craze_levels[level - 1] || 0) === 0) {
+                                eStatsC.hp = 0;
+                            };
+                        };
+
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                     };
 
@@ -668,17 +831,17 @@ const exportCommand: SlashCommand = {
                             setTimeout(() => {
 
                                 // Level 14 2024
-                                if (level === 14) {
-                                    const availableEmojis = ['🌼', '🌻', '🌱', '🐝', '🪲', '🐞', '🦋', '🐛', '🐸', '🍡', '🎐'];
-                                    const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
-                                    if (notice[notice.length - 1].length > 5 && !(eStatsC.hp < eStatsC.maxhp)) notice.push(`\n ${randomEmoji}`);
+                                // if (level === 14) {
+                                //     const availableEmojis = ['🌼', '🌻', '🌱', '🐝', '🪲', '🐞', '🦋', '🐛', '🐸', '🍡', '🎐'];
+                                //     const randomEmoji = availableEmojis[Math.floor(Math.random() * availableEmojis.length)];
+                                //     if (notice[notice.length - 1].length > 5 && !(eStatsC.hp < eStatsC.maxhp)) notice.push(`\n ${randomEmoji}`);
 
-                                    matchStats.turn = 1;
-                                    matchStats.round++;
-                                    startNextRound();
-                                    editEmbed();
-                                    return;
-                                };
+                                //     matchStats.turn = 1;
+                                //     matchStats.round++;
+                                //     startNextRound();
+                                //     editEmbed();
+                                //     return;
+                                // };
 
                                 if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
                                     curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
@@ -900,12 +1063,12 @@ const exportCommand: SlashCommand = {
                             matchStats.actionSequence.push("SKIP");
 
                             // Level 11 2024
-                            if (level === 11 && myChar.id === 14982 && partyChars.some((e) => e.name === "Smokey Brown")) {
-                                notice.push(`\n<:dodge_chance:1047269150948606063> NIGERUNDAYO, SMOKEY!`);
-                                endMatch("w");
-                                editEmbed();
-                                return;
-                            };
+                            // if (level === 11 && myChar.id === 14982 && partyChars.some((e) => e.name === "Smokey Brown")) {
+                            //     notice.push(`\n<:dodge_chance:1047269150948606063> NIGERUNDAYO, SMOKEY!`);
+                            //     endMatch("w");
+                            //     editEmbed();
+                            //     return;
+                            // };
 
                             notice.push(`\n<:dodge_chance:1047269150948606063> ${myChar.name} fled the fight`);
                             endMatch("l");
@@ -928,6 +1091,14 @@ const exportCommand: SlashCommand = {
                             // } else {
                             //     resolve(matchResult("l"));
                             // };
+
+                            if (level === 6 && eStatsC.hp >= eStatsC.maxhp) {
+                                notice.push(`\nI have no enemies, none at all.`);
+                                editEmbed();
+                                resolve(matchResult("w"));
+                            } else {
+                                resolve(matchResult("l"));
+                            };
 
                             resolve(matchResult("l"));
                         };

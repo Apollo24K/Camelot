@@ -150,6 +150,13 @@ async function createTables() {
         custom_skins JSONB DEFAULT '{}' NOT NULL,
         discovered_via TEXT,
 
+        -- Frostbound Yule event
+        yule_chapter INT DEFAULT 0 NOT NULL,
+        yule_chapter_failed BOOLEAN DEFAULT FALSE NOT NULL,
+        yule_timestamp TIMESTAMP,
+        perpetual_fire INT DEFAULT 0 NOT NULL,
+        perpetual_fragments INT DEFAULT 0 NOT NULL,
+
         -- Characters table columns
         chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         char_ref JSONB DEFAULT '{}' NOT NULL,          -- renamed from 'ref' to avoid conflicts
@@ -516,6 +523,14 @@ async function alterTables() {
 
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lastvoteserver TIMESTAMP;');
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS custom_skins JSONB DEFAULT '{}' NOT NULL;`);
+
+    // Frostbound Yule event
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS yule_chapter INT DEFAULT 0 NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS yule_chapter_failed BOOLEAN DEFAULT FALSE NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS yule_timestamp TIMESTAMP;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS perpetual_fire INT DEFAULT 0 NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS perpetual_fragments INT DEFAULT 0 NOT NULL;');
+
 
 
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS image_credits INT DEFAULT 0 NOT NULL');

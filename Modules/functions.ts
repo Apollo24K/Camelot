@@ -205,6 +205,7 @@ export const getDetailedStats = async (id: number, inv: UserSchemaForStats, clas
         "selfdmg": 0,
         "critbleed": false,
         "critbleedlast": 0,
+        "counterBonus": 0,
         "heap1": 0,
         "timeout": true,
         "defUsed": 0,
@@ -640,6 +641,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         isPyro: false,
         canCounter: true,
         normalATK: false,
+        flexibleDmg: false,
         turn: 0,
 
         preventRetaliation: false,
@@ -709,8 +711,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     let damage, isCrit = (options.canCrit && (options.critChance < (attacker.cr + options.critBuff)));
     let effectiveDef = target.def * (1 - (attacker.ignoreDefPercent ?? 0)), effectiveMr = target.mr * (1 - (attacker.ignoreMrPercent ?? 0));
     const multipliers = {
-        atk: options.atkMultiplier * attacker.atk,
-        md: options.atkMultiplier * attacker.md,
+        atk: (attacker.flexibleDmg || options.flexibleDmg) ? (attacker.md > attacker.atk ? options.atkMultiplier * attacker.md : options.atkMultiplier * attacker.atk) : options.atkMultiplier * attacker.atk,
+        md: (attacker.flexibleDmg || options.flexibleDmg) ? (attacker.md > attacker.atk ? options.atkMultiplier * attacker.md : options.atkMultiplier * attacker.atk) : options.atkMultiplier * attacker.md,
         def: Math.max(Math.pow(0.99895, options.defReductionCap ? Math.max(effectiveDef - options.defReductionCap, options.defMultiplier * effectiveDef) : (options.defMultiplier * effectiveDef)), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_defcap ?? 0) > 0) && ((options.defMultiplier * effectiveDef) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * effectiveDef) - 2192, options.defMultiplier * target.increase_defcap)) : 1),
         mr: Math.max(Math.pow(0.99895, options.defReductionCap ? Math.max(effectiveMr - options.defReductionCap, options.defMultiplier * effectiveMr) : (options.defMultiplier * effectiveMr)), (target.removeDefCap ? 0 : 0.1)) * ((((target.increase_mrcap ?? 0) > 0) && ((options.defMultiplier * effectiveMr) - 2192 > 0)) ? Math.pow(0.99895, Math.min((options.defMultiplier * effectiveMr) - 2192, options.defMultiplier * target.increase_mrcap)) : 1),
         crit: ((isCrit || attacker.shorekeeperUsedActive) ? (options.critMultiplier * attacker.cd) : 1),
@@ -742,12 +744,29 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Damage Reduction
     if (target.damageReduction) {
+        if (target.mitrecord) target.mitstore += Math.floor(damage * Math.min(1, target.damageReduction));
         damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.damageReduction))));
+    };
+
+    // Phys & MD Mitigation ** NEVER REPLACE, only add/subtract
+    if (target.mdmit) {
+        if (options.magicDamage && options.mdChance < attacker.mdChance) {
+            if (target.mitrecord) target.mitstore += Math.floor(damage * Math.min(1, target.mdMit));
+            damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.mdMit))));
+        }
+    };
+
+    if (target.phymit) {
+        if (!options.magicDamage && options.mdChance >= attacker.mdChance) {
+            if (target.mitrecord) target.mitstore += Math.floor(damage * Math.min(1, target.phyMit));
+            damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.phyMit))));
+        }
     };
 
     // Deflect damage
     if (target.deflectDamage) {
         attacker.hp = Math.floor(attacker.hp - Math.floor(damage * target.deflectDamage));
+        if (target.mitrecord) target.mitstore += Math.floor(damage * Math.min(1, target.deflectDamage));
         damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.deflectDamage))));
         if (attacker.hp < 1) attacker.hp = 0;
     };
@@ -772,7 +791,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (options.canCounter && target.counter > 0 && (!isNaN(target.counterchance) ? target.counterchance : 1) > Math.random() && !attacker.blockCounter) {
         target.counter--;
         notice.push(`\n<:counter:1340459549374546032> **${target.name}** countered the attack!`);
-        if (target.soulfistAtkStack !== undefined) {
+        /*if (target.soulfistAtkStack !== undefined) {
             if (target.soulfistAtkStack++ < 5) {
                 targetBuff.atk.push(new buffInfo("*", 1.03, 9999));
                 targetBuff.md.push(new buffInfo("*", 1.03, 9999));
@@ -780,13 +799,13 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
                 target.sm += 10;
                 if (target.sm > target.mana) target.sm = target.mana;
             };
-        };
+        };*/
 
         // Event Triggers
         matchStats.trigger("counter", attacker, target, attackerBuff, targetBuff, { damage });
         matchStats.trigger("miss", attacker, target, attackerBuff, targetBuff, { turn: matchStats.turn });
 
-        return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, flags);
+        return dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `⚔️ **${target.name}**`, { ...flags, atkMultiplier: 1 * (1 + (target.counterBonus || 0)) });
     };
 
     // Evade Deadly Attack
@@ -843,11 +862,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             };
         };
 
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
         target.hp = Math.floor(target.hp - damage);
         if (target.hp < 1) target.hp = 0;
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${attacker.isLightning ? " lightning" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
     };
 
     // Reflect damage
@@ -898,7 +917,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         attacker.guinaifenStackRounds.push(matchStats.round);
     };
     if (options.isPyro) {
-        targetBuff.hp.push(new buffInfo("+", -Math.round(attacker.atk * 0.04), 3));
+        targetBuff.hp.push(new buffInfo("+", -Math.round(attacker.atk * 0.03), 3));
     };
     // if (attacker.sjwUsedActive) {
     //     if (damage) targetBuff.hp.push(new buffInfo("+", Math.floor(damage * 0.07), 2)); // Beru

@@ -5,6 +5,7 @@ import { achievements } from "../Modules/achievements";
 import { dailies } from "../Modules/dailyQuests";
 import { SlashCommand } from "../types";
 import { getGuildSchema, updateUsersAndCache } from "../Modules/queries";
+import { isEventOngoing } from "../Modules/components";
 
 const headers = {
     "EX": "\n\n<a:EXTRA:1138530846144462968> **Tier**\n",
@@ -271,6 +272,11 @@ const exportCommand: SlashCommand = {
                 lasts: { type: "set", value: stats.lasts },
                 xp: { type: "increment", value: add_xp },
                 chars: { type: "append", value: pulledChars.map((e) => e.id) },
+
+                // yule event
+                ...(isEventOngoing() ? { perpetual_fire: { type: "increment", value: 5 * pulledChars.length } } : {}),
+                ...(isEventOngoing() ? { perpetual_fragments: { type: "increment", value: 5 * pulledChars.length } } : {}),
+                ...((isEventOngoing() && stats.perpetual_fire <= 0) ? { yule_chapter_failed: { type: "set", value: true } } : {}),
             },
         });
 

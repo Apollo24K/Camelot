@@ -75,7 +75,7 @@ const handler: BotHandler = {
             if (chnl?.isTextBased() && 'send' in chnl) chnl.send(`Successfully processed transaction ${donation.txn_id}\nBuyer: <@${donation.buyer_id}> | ${donation.buyer_id}\nBalance: **${stats.jades + jades}**<:eternal_jade:1256124504141201428>\nPrice: **${donation.price} ${donation.currency}**${stats.referred_by ? `\nReferred by: <@${stats.referred_by}> | ${stats.referred_by} (+**${Math.floor(0.2 * jades)}**<:genesis_gems:1034179687720681492>)` : ""}`);
 
             // Send referral reward if any
-            if (stats.referred_by && (stats.transactions.reduce((acc: number, transaction: RankShopTransaction) => acc + parseInt(transaction.price), 0) + parseInt(donation.price)) <= 500) {
+            if (stats.referred_by) { // && (stats.transactions.reduce((acc: number, transaction: RankShopTransaction) => acc + parseInt(transaction.price), 0) + parseInt(donation.price)) <= 500) {
                 const mail = { "type": "9", "rewards": `gems|${Math.floor(0.2 * jades)}`, "message": `Hey <@${stats.referred_by}>! <:MashaWave:928370055354400799>\nA player you have referred has bought some jades, here is your reward <:TohruPoint:928370972132782090>\nThank you for playing <:LoveHeart:928369932683595827>`, "date": Date.now() };
 
                 // Update users table

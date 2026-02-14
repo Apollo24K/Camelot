@@ -63,8 +63,9 @@ export default class curseInfo {
 export const curses = [
     new curseInfo("Self Regeneration", 0, "<:Self_Regeneration:958114013244452884>", 0, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const heal = Math.floor((eStats.maxhp - eStats.hp) * 0.1);
+        let hpBefore = eStats.hp;
         addHeal(eStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, heal, {});
-        notice.push(`\n${curses[0].emblem} **${enemy.name}** has recovered **${heal}** HP`);
+        notice.push(`\n${curses[0].emblem} **${enemy.name}** has recovered **${eStats.hp - hpBefore}** HP`);
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

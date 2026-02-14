@@ -130,5 +130,34 @@ export const customHpBars: CustomHpBar[] = [
         end: { empty: "<:dbr:1431968909585809488>", hp_only: "<:dbrh:1431968913683386452>", mana_only: "<:dbrm:1431968920197136394>", full: "<:dbrhm:1431968917051674755>" },
     }),
 
+    new CustomHpBar("Winter Brew", 9, 0x83b6ff, {
+        start: { empty: "<:dbl:1415266537748828203>", hp_only: "<:dblh:1452624226044608562>", mana_only: "<:dblm:1452624231941668914>", full: "<:dblhm:1452624229496258620>" },
+        middle: { empty: "<:db:1415266524532314272>", hp_only: "<:dbh:1452624218176094248>", mana_only: "<:dbm:1452624233892020224>", full: "<:dbhm:1452624221086945320>" },
+        end: { empty: "<:dbr:1415266560745934848>", hp_only: "<:dbrh:1452624240309305356>", mana_only: "<:dbrm:1452624295078395904>", full: "<:dbrhm:1452624292394045520>" },
+    }),
+
+    new CustomHpBar("Lucky Ribbon", 10, 0x1a0000, {
+        start: { empty: "<:dbl:1452627831417864315>", hp_only: "<:dblh:1452627837256470538>", mana_only: "<:dblm:1452627834232242206>", full: "<:dblhm:1452627828435714099>" },
+        middle: { empty: "<:db:1452627856818438175>", hp_only: "<:dbh:1452627862799650848>", mana_only: "<:dbm:1452627860195115146>", full: "<:dbhm:1452627854096470178>" },
+        end: { empty: "<:dbr:1452627843887530044>", hp_only: "<:dbrh:1452627850979971147>", mana_only: "<:dbrm:1452627846928400589>", full: "<:dbrhm:1452627840871829585>" },
+    }),
+
+    new CustomHpBar("Padoru", 11, 0x0069db, {
+        start: { empty: "<:dbl:1415266537748828203>", hp_only: "<a:dblh:1452628774544998460>", mana_only: "<a:dblm:1452628781339512915>", full: "<a:dblhm:1452628778118414398>" },
+        middle: { empty: "<:db:1415266524532314272>", hp_only: "<a:dbh:1452628798871830630>", mana_only: "<a:dbm:1452628785210855516>", full: "<a:dbhm:1452628804173562018>" },
+        end: { empty: "<:dbr:1415266560745934848>", hp_only: "<a:dbrh:1452628787396218890>", mana_only: "<a:dbrm:1452628794920927343>", full: "<a:dbrhm:1452628791510696028>" },
+    }),
+
+    new CustomHpBar("Neon Heartbeats", 12, 0xff3bad, {
+        start: { empty: "<:dbl:1415266537748828203>", hp_only: "<:dblh:1472230710839345304>", mana_only: "<:dblm:1472230715927036189>", full: "<:dblhm:1472230713742069852>" },
+        middle: { empty: "<:db:1415266524532314272>", hp_only: "<:dbh:1472230705953247264>", mana_only: "<:dbm:1472230718342959176>", full: "<:dbhm:1472230708226297927>" },
+        end: { empty: "<:dbr:1415266560745934848>", hp_only: "<:dbrh:1472230721086029835>", mana_only: "<:dbrm:1472230703340191989>", full: "<:dbrhm:1472230700584538275>" },
+    }),
+
+    new CustomHpBar("Cupid's Pulse", 13, 0x31013c, {
+        start: { empty: "<:dbl:1472231799647109162>", hp_only: "<:dblh:1472231763580551248>", mana_only: "<:dblm:1472231771398734017>", full: "<:dblhm:1472231768177512538>" },
+        middle: { empty: "<:db:1472231789383913482>", hp_only: "<:dbh:1472231792743551138>", mana_only: "<:dbm:1472231774544334954>", full: "<:dbhm:1472231796153384971>" },
+        end: { empty: "<:dbr:1472231777501446316>", hp_only: "<:dbrh:1472231780424749118>", mana_only: "<:dbrm:1472231786535715049>", full: "<:dbrhm:1472231783402836165>" },
+    }),
 
 ];

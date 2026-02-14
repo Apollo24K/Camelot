@@ -10,7 +10,7 @@ import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
 import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, formatNumberWithQuotes } from "../Modules/functions";
-import { requestVerification, dungeonTempBan, AbilityResponse } from "../Modules/components";
+import { requestVerification, dungeonTempBan, AbilityResponse, isEventOngoing } from "../Modules/components";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
@@ -207,7 +207,7 @@ const exportCommand: SlashCommand = {
         if (myStats.rune) {
             const rune = items[parseInt(myStats.rune)];
             if (rune instanceof runeInfo) {
-                if (myAbility === undefined) myAbility = rune.ability as Ability;
+                if (myAbility === undefined) myAbility = _.cloneDeep(rune.ability) as Ability;
                 else myAbility = { ...myAbility, ..._.cloneDeep(rune.ability) };
             };
         };
@@ -344,6 +344,7 @@ const exportCommand: SlashCommand = {
 
             // Crafting Resources
             let craftItem = items[33];
+            const craftItem2 = items[33];
             // if (floor <= 20) craftItem = items[33];
             if (floor <= 50) craftItem = items[34];
             else if (floor <= 90) craftItem = items[35];
@@ -362,7 +363,7 @@ const exportCommand: SlashCommand = {
             let ascItem = items[enemy.loot[Math.floor(Math.random() * enemy.loot.length)]];
 
             let ssShards = 0, sShards = 0, aShards = 0, bShards = 0, cShards = 0, dShards = 0;
-            let craftCount = 0;
+            let craftCount = 0, craftCount2 = 0;
             let ascCount = 0;
 
             // First loot cap
@@ -377,6 +378,7 @@ const exportCommand: SlashCommand = {
 
                 // Crafting Resources
                 craftCount += drops(0.4, 7 * skipRounds);
+                if (floor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
 
                 // Ascension Materials
                 ascCount += drops(0.6, 7 * skipRounds);
@@ -390,6 +392,7 @@ const exportCommand: SlashCommand = {
             else if (dunLim[2] >= stats.dungeon_limit) {
                 // Crafting Resources
                 craftCount += drops(0.12, 4 * skipRounds);
+                if (floor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
 
                 // Ascension Materials
                 ascCount += drops(0.16, 4 * skipRounds);
@@ -423,6 +426,7 @@ const exportCommand: SlashCommand = {
 
             const addNewItems: Record<number, number> = {
                 [craftItem.id]: craftCount ?? 0,
+                [craftItem2.id]: craftCount2 ?? 0,
                 [ascItem.id]: ascCount ?? 0,
             };
 
@@ -449,6 +453,10 @@ const exportCommand: SlashCommand = {
                     dungeon_classlevels: { type: 'set', value: stats.dungeon_classlevels },
                     tutorial: { type: 'append_unique', value: [9] },
                     donatedtotal: { type: "increment", value: tax },
+
+                    ...(isEventOngoing() ? { perpetual_fire: { type: "increment", value: 1 } } : {}),
+                    ...(isEventOngoing() ? { perpetual_fragments: { type: "increment", value: 1 } } : {}),
+                    ...((isEventOngoing() && stats.perpetual_fire <= 0) ? { yule_chapter_failed: { type: "set", value: true } } : {}),
                 },
             });
 
@@ -520,7 +528,7 @@ const exportCommand: SlashCommand = {
                 ? (myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))
                 : 0;
 
-            Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
+            Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
             if (dunLim[0] - stats.dungeon_limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins + loot)} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
             else Embed.setFooter({ text: `${myClass.name} level: ${xpleft < 1 ? myStats.clvl + 1 : myStats.clvl} | XP left: ${xpleft < 1 ? (((myStats.clvl + 1) * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl + 1) * 25))) : xpleft}`, iconURL: xpleft < 1 ? "https://i.ibb.co/Y8k36J1/Nks94u8.gif" : myClass.image });
             return Embed;

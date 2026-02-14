@@ -18221,11 +18221,11 @@ export const characters: charInfo[] = [
     new charInfo("Macht", [], anime[457], "M", "https://i.ibb.co/6PZkcWk/c.png", 18116, "C"),
     new charInfo("Aura", [], anime[457], "F", "https://i.ibb.co/9wHpCk2/c.png", 18117, "S"),
     new charInfo("Denken", [], anime[457], "M", "https://i.ibb.co/mCgHb7M/c.png", 18118, "C"),
-    new charInfo("Serie", [], anime[457], "F", "https://i.ibb.co/JBXzf9S/c.png", 18119, "B"),
+    new charInfo("Serie", [], anime[457], "F", "https://i.ibb.co/3y2wcxQw/c.png", 18119, "B"),
     new charInfo("Linie", [], anime[457], "F", "https://i.ibb.co/z7q9ZV2/c.png", 18120, "B"),
     new charInfo("Sense", [], anime[457], "F", "https://i.ibb.co/NpTBTkr/c.png", 18121, "D"),
     new charInfo("Stoltz", [], anime[457], "M", "https://i.ibb.co/QYGBJkg/c.png", 18122, "C"),
-    new charInfo("Land", [], anime[457], "M", "https://i.ibb.co/2hnMJV9/c.png", 18123, "D"),
+    new charInfo("Land", [], anime[457], "M", "https://i.ibb.co/j9gwjVCX/c.png", 18123, "A"),
     new charInfo("Lügner", [], anime[457], "M", "https://i.ibb.co/9VkpYwc/c.png", 18124, "C"),
     new charInfo("Qual", [], anime[457], "M", "https://i.ibb.co/pjhqgsj/c.png", 18125, "C"),
     new charInfo("Kraft", [], anime[457], "M", "https://i.ibb.co/9NH8YKB/c.png", 18126, "D"),
@@ -26136,7 +26136,7 @@ characters.forEach((e, i) => {
 // // Print
 // {
 //     let totalChars = 0, totalAnime = 0;
-//     for (let i = 674; i < anime.length; i++) {
+//     for (let i = 683; i < anime.length; i++) {
 //         const numberOfChars = characters.filter(char => char.animeInfo.id === anime[i].id).length;
 //         console.log(`  - **${anime[i].name}** (${numberOfChars} chars)`);
 //         totalChars += numberOfChars;

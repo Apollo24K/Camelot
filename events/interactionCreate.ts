@@ -1,5 +1,5 @@
 import { Interaction, PermissionsBitField } from "discord.js";
-import { BotEvent, CompactUserSchema, ServerSchema, SlashCommand } from "../types";
+import { BotEvent, SlashCommand } from "../types";
 import { addUserToServer, getServerSchema, getUserSchema, insertNewServer, insertNewUser, updateUsersAndCache } from "../Modules/queries";
 import { daysSince } from "../Modules/functions";
 
@@ -11,7 +11,7 @@ const event: BotEvent = {
     execute: async (interaction: Interaction) => {
 
         // if (interaction.user.id === "489490486734880774") {
-        //     interaction.user.id = "447160532286570506";
+        //     interaction.user.id = "447160532286570509";
         // };
 
         // Defer Buttons

@@ -29,7 +29,7 @@ const skillDescs: SkillDescription[] = [
     { "active": `Deals a guaranteed critical hit. (Timeout true)`, "passive": `None` },
     { "active": `Deals a guaranteed critical hit with **20%** increased crit damage. (Timeout true)`, "passive": `Your crit rate increases by **+2%** after each round.` },
     { "active": `Deals physical damage ignoring **25%** of enemy DEF. (Timeout true)`, "passive": `Has a **20%** chance of dealing magic damage.` },
-    { "active": `Enters \`Dormant Sage\` for **3** rounds, increasing counter chance to **100%** for **3** rounds. However, in this state the Soulfist's turns are skipped. After leaving the \`Dormant Sage\`, loses all counter chance, where the first **40%** are converted into DEF and MR debuffs on the enemy (max **2.5x** damage) and the next **20%** are converted into crit damage. (1 use, Timeout true)`, "passive": `Has an **18%** chance to counter attacks. For the first 5 successful counters, permanently increases ATK and MD by **3%** each. Afterwards successful counters generate **10** mana each.` },
+    { "active": `Enters \`Dormant Sage\` for **10** rounds, taking **50%** less incoming damage. When attacked, the Soulfist retaliates, dealing **120%** damage (Up to twice every round). This is considered a successful counter *twice*. After leaving the \`Dormant Sage\`, loses all counter chance, but decreases the enemy's DEF & MR by **20%** (max **2.5x** damage) (1 use, Timeout true)`, "passive": `Has an **20%** chance to counter attacks. For the first **5** successful counters, permanently increases ATK and MD by **5%** each. Afterwards successful counters restore **5%** missing HP (Up to once every round). The healing-scaling is increased by **5%** for every round the effect didn't trigger. Up to **25%** can be stored at once.` },
     { "active": `Increases ATK and Magic Damage by **30** permanently. (Timeout false)`, "passive": `Has a **33%** chance of firing a second shot.` },
     { "active": `Summons a beast to fight in your place. The beast will have **75%** of your stats (except for ATK -> only 60%). During this mode your mana generation will halt until the beast is defeated. Once the beast dies, you will continue fighting with your character. (Timeout true)`, "passive": `None` },
     { "active": `Heals self for **20%** of max HP. (Timeout false)`, "passive": `Heals **3%** of current HP after each round.` },
@@ -78,7 +78,8 @@ const skillDescs: SkillDescription[] = [
     { "active": "**Uses**: `Unlimited`\n**Cost**: `10 💧 + unlimited`\n**Timeout**: `Yes`\nDeals **110%** physical damage which increases by **+1%** for every mana consumed above 10.", "passive": `None` },
     { // Grappler
         "active": `Removes the enemy's prepared counters before entering __Free-Flow__ for **7** rounds. During this period, the enemy has **0%** dodge rate, and receives **5%** more damage for every round the domain lasts, up to **35%** by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain. (CD: 7, Timeout false)`,
-        "passive": "Evades the first two lethal hits. When not in __Free-Flow__, restores **3%** missing HP every round." },
+        "passive": "Evades the first two lethal hits. When not in __Free-Flow__, restores **3%** missing HP every round."
+    },
     { "active": `Increases own ATK by **10%** permanently. (Uses: 3, Timeout false)`, "passive": `The user builds up a combo attack increasing their damage by **10%** after every attack. This resets when the user misses their target or uses another action.` },
     { "active": `Increases dodge chance and crit rate by **10%** for 3 rounds. (Timeout false)`, "passive": `Gains a **4%** ATK boost after every dodge lasting 5 rounds.` },
 ];

@@ -28,7 +28,7 @@ const exportCommand: SlashCommand = {
         const ephemeral = interaction.options.getString('ephemeral') ?? "false";
 
         const stats = (user.id === interaction.user.id) ? author.schema : await getUserSchema(user.id);
-        if (!stats) return interaction.reply({ content: `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} characters.`, ephemeral: ephemeral === "true" });
+        if (!stats || stats.chars.length === 0) return interaction.reply({ content: `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} characters.`, ephemeral: ephemeral === "true" });
 
         const invd = new Map<number, number>();
 

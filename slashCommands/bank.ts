@@ -68,6 +68,7 @@ const exportCommand: SlashCommand = {
         if (subcommand === "deposit") {
             if (Math.max(stats.bank, 0) >= cap) return interaction.reply(`Your bank has reached its max capacity. \`/levelup\` your character to increase it further.`);
 
+            const bank = stats.bank;
             let amount = amountFlag.toLowerCase() === "max" ? stats.coins : (parseInt(amountFlag) || 1);
             amount = Math.min(amount, cap - Math.max(stats.bank, 0));
 
@@ -85,12 +86,13 @@ const exportCommand: SlashCommand = {
             // Bank max capacity achievement
             achievements[82].check(interaction, user, cap);
 
-            return interaction.reply(`Deposited **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> in your bank!\nBank balance: \`${formatNumberWithQuotes(stats.bank + (amount + (stats.bank === -1 ? 1 : 0)))}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
+            return interaction.reply(`Deposited **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> in your bank!\nBank balance: \`${formatNumberWithQuotes(bank + (amount + (bank === -1 ? 1 : 0)))}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
         };
 
         if (subcommand === "withdraw") {
             if (stats.bank < 1) return interaction.reply(`You don't have any coins in your bank.`);
 
+            const bank = stats.bank;
             let amount = amountFlag.toLowerCase() === "max" ? stats.bank : (parseInt(amountFlag) || 1);
             amount = Math.min(amount, Math.max(stats.bank, 0));
 
@@ -103,7 +105,7 @@ const exportCommand: SlashCommand = {
                 },
             });
 
-            return interaction.reply(`Withdrew **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> from your bank!\nBank balance: \`${formatNumberWithQuotes(stats.bank - amount)}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
+            return interaction.reply(`Withdrew **${formatNumberWithQuotes(amount)}** <:coins:872926669055356939> from your bank!\nBank balance: \`${formatNumberWithQuotes(bank - amount)}/${formatNumberWithQuotes(cap)}\` <:coins:872926669055356939>`);
         };
     },
 };

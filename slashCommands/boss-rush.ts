@@ -362,7 +362,7 @@ const exportCommand: SlashCommand = {
             if (myStats.rune) {
                 const rune = items[parseInt(myStats.rune)];
                 if (rune instanceof runeInfo) {
-                    if (myAbility === undefined) myAbility = rune.ability as Ability;
+                    if (myAbility === undefined) myAbility = _.cloneDeep(rune.ability) as Ability;
                     else myAbility = { ...myAbility, ..._.cloneDeep(rune.ability) };
                 };
             };

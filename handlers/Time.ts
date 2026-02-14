@@ -3,6 +3,7 @@ import { Client } from "discord.js";
 import { BotHandler, UpdateUserOptions } from "../types";
 import { getPlayerbaseStats, insertNewStampede, resetDailyResponses, resetDungeonLimit, updateUsersAndCache } from '../Modules/queries';
 import { isStampedeMonth } from '../Modules/functions';
+import { isEventOngoing } from '../Modules/components';
 
 const handler: BotHandler = {
     name: "Time",
@@ -74,15 +75,30 @@ const handler: BotHandler = {
                 userUpdates.monthlyshop = { type: "set", value: {} };
             };
 
+            // Every 10 minutes
+            if (now.getMinutes() % 10 === 0) {
+                // Frostbound Yule Event
+                if (isEventOngoing()) {
+                    await updateUsersAndCache(client, "*", {
+                        updates: {
+                            perpetual_fire: { type: "increment", value: -1 }
+                        },
+                        condition: "perpetual_fire > 0",
+                    });
+                }
+            };
+
             // Every 5 Minutes
             if ((now.getMinutes() % 5) === 0) {
                 // Stampede Energy
-                await updateUsersAndCache(client, "*", {
-                    updates: {
-                        stampedeenergy: { type: "increment", value: -1 },
-                    },
-                    condition: "stampedeenergy > 0",
-                });
+                if (isStampedeMonth() && new Date().getDate() <= 7) {
+                    await updateUsersAndCache(client, "*", {
+                        updates: {
+                            stampedeenergy: { type: "increment", value: -1 },
+                        },
+                        condition: "stampedeenergy > 0",
+                    });
+                };
             };
 
 

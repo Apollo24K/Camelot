@@ -4313,12 +4313,20 @@ export const items = [
     new armorInfo("Phantom Warrior Chestplate", "armor", "cuirass", "Phantom Warrior Set", ["chest"], "<:phantom_warrior_chestplate:1081562699172941868>", "https://i.imgur.com/lJXQLOO.png", "def", 17, 181, "mythical", 628),
     new armorInfo("Phantom Warrior Gloves", "armor", "gloves", "Phantom Warrior Set", ["chest"], "<:phantom_warrior_gloves:1081563408748511292>", "https://i.imgur.com/cumtjpE.png", "hp", 107, 2077, "mythical", 629),
     new armorInfo("Phantom Warrior Boots", "armor", "boots", "Phantom Warrior Set", ["chest"], "<:phantom_warrior_boots:1081564030033985616>", "https://i.imgur.com/zQwEY6L.png", "mr", 11, 129, "mythical", 630, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        myStats.mr += 340;
-        mybuff.mr.push(new buffInfo("+", 340, 9999));
-        myStats.shield += 700;
+        myStats.dodge -= 0.33;
+        if (myStats.dodge < 0) myStats.dodge = 0;
+        mybuff.dodge.push(new buffInfo("+", -0.33, 9999));
+        myStats.counterBonus = Math.max(0.33, myStats.counterBonus);
 
+        matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === eStats) {
+                eStats.dodge -= 0.33;
+                if (eStats.dodge < 0) eStats.dodge = 0;
+                ebuff.dodge.push(new buffInfo("+", -0.33, 2));
+            };
+        });
         return AbilityResponse.SUCCESS;
-    }, "The wearer takes **30%** less magic damage. Starts with **+700** shield.\n\n_30% magic damage reduction = 340 MR_"),
+    }, "The wearer reduces own dodge rate by **33%**, but deals **33%** more damage with counters (unstackable). After a successful counter, decreases the enemy's dodge rate by **33%**."),
     new armorInfo("Phantom's Plight Hat", "armor", "helmet", "Phantom's Plight Set", ["chest"], "<:phantoms_plight_hat:1081561787264139376>", "https://i.imgur.com/GPhYEpA.png", "hp", 98, 2025, "mythical", 631),
     new armorInfo("Phantom's Plight Vest", "armor", "cuirass", "Phantom's Plight Set", ["chest"], "<:phantoms_plight_vest:1081562703358857278>", "https://i.imgur.com/negC59m.png", "def", 10, 112, "mythical", 632),
     new armorInfo("Phantom's Plight Gloves", "armor", "gloves", "Phantom's Plight Set", ["chest"], "<:phantoms_plight_gloves:1081563413689417838>", "https://i.imgur.com/uTay7XW.png", "mr", 13, 157, "mythical", 633),
@@ -6375,7 +6383,7 @@ export const items = [
 
             return AbilityResponse.SUCCESS;
         },
-    }, "- Attacks deal magic damage by default.\n- Increases magic damage by **10%**.\n- When using the active ability, deals **200%** magic damage.", "rare", 785),
+    }, "- Attacks deal magic damage by default.\n- Increases magic damage by **10%**.\n- When using the active ability, deals **200%** magic damage. (60 💧, Unlimited uses, Timeout true)", "rare", 785),
     new runeInfo("Coinmark of Riches", ["seasonal shop"], "<:coinmark_of_riches:1420459821362315337>", "https://i.ibb.co/svFFZvQB/Coinmark-of-Riches.png", {
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             matchStats.lootm += 0.1;
@@ -6442,9 +6450,95 @@ export const items = [
 
             return AbilityResponse.SUCCESS;
         },
-    }, "- Once per round after using **ATK**, inflicts `Spooked`, decreasing ATK and MD by **15%** for **2** rounds.\n- When using the active ability, deals **160%** magic damage.", "rare", 789)
+    }, "- Once per round after using **ATK**, inflicts `Spooked`, decreasing ATK and MD by **15%** for **2** rounds.\n- When using the active ability, deals **160%** magic damage.", "rare", 789),
+    new runeInfo("Eirfrost von Neira", ["seasonal shop"], "<:EirfrostvonNeira:1453761105460596888>", "https://i.ibb.co/VcBN52YM/Eirfrost-von-Neira.png", {
+        cost: 80,
+        usage: 3,
+        used: 0,
+        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+            eStats.timeFrozen = true;
+            eStats.frozenMessage = "is frozen in place";
+            eStats.vulnerabilityDynamic += 0.05;
 
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                eStats.timeFrozen = false;
 
+                return AbilityResponse.SUCCESS;
+            }));
+
+            return AbilityResponse.SUCCESS;
+        },
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.vulnerabilityDynamic ??= 0;
+            eStats.vulnerabilityDynamic += 0.1;
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Applies **10%** vulnerability to the enemy.\n- When using the active ability, freezes the enemy for **3** rounds, and increases vulnerability by **+5%** permanently. (80 💧, 3 uses, Timeout true)", "rare", 790),
+    new runeInfo("Voidseer", ["seasonal shop"], "<:Voidseer:1453761099827777707>", "https://i.ibb.co/VccLg1Mj/Voidseer.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.xpboost += 0.1;
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Increases class xp earned from the dungeon by **+10%**.", "rare", 791),
+
+    new runeInfo("Thorn's Contender", ["seasonal shop"], "<:thorns_contender:1472217027459416084>", "https://i.ibb.co/HL1fTdJP/thorns-contender.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.thorns ??= 0;
+            myStats.thornsintertwined = false;
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (target === myStats && !myStats.thornsintertwined) {
+                    myStats.thorns++;
+                    if (myStats.thorns > 100) myStats.thorns = 100;
+                };
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (!myStats.thornsintertwined) {
+                    if (myStats.thorns === 100) {
+                        myStats.thornsintertwined = true;
+                        myStats.thorns = 0;
+                        notice.push(`\n✨ **${char.name}** and **${enemy.name}** became intertwined with thorns...`);
+                    } else {
+                        myStats.sm += 1 * Math.floor(myStats.thorns / 5);
+                        myStats.hp -= Math.floor(myStats.hp * 0.005 * Math.floor(myStats.thorns / 5));
+                    };
+                };
+
+                if (myStats.thornsintertwined) {
+                    let stealMana = Math.floor(eStats.sm * 0.15);
+                    eStats.sm -= stealMana;
+                    myStats.sm += stealMana;
+                };
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Whenever the wearer is attacked, gains **1** <:thorn1:1466828338604802068><:thorn2:1466828379482230873> (Up to 100).\n- At the start of the round, loses **0.5%** current HP but gains **1** 💧 for every **5** <:thorn1:1466828338604802068><:thorn2:1466828379482230873>.\n- When <:thorn1:1466828338604802068><:thorn2:1466828379482230873> reaches **100**, consumes all <:thorn1:1466828338604802068><:thorn2:1466828379482230873> and becomes intertwined with the enemy: No longer gain <:thorn1:1466828338604802068><:thorn2:1466828379482230873>, but instead steals **15%** of the enemy's mana every round.", "rare", 792),
+    new runeInfo("The Fated", ["seasonal shop"], "<:the_fated:1472217039027441674>", "https://i.ibb.co/pj1vtfNd/the-fated.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && target === eStats) {
+                    myStats.cr -= 0.1;
+                    if (myStats.cr < 0) myStats.cr = 0;
+                    mybuff.cr.push(new buffInfo("+", -0.1, 9999));
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `💘 The vow... **${enemy.name}**`, { atkMultiplier: 0.3, flexibleDmg: true });
+                };
+
+                if (caster === eStats && target === myStats) {
+                    eStats.cr -= 0.1;
+                    if (eStats.cr < 0) eStats.cr = 0;
+                    ebuff.cr.push(new buffInfo("+", -0.1, 9999));
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `💘 The vow... **${char.name}**`, { atkMultiplier: 0.3, flexibleDmg: true });
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- The enemy and wearer are pierced by <:cupid1:1467345464499376132><:cupid2:1467345506723168308><:cupid3:1467345548230004854><:cupid4:1467345585328885945> at the start of the fight, where if either lands a critical hit on the other, they lose **10%** critical rate and take **20%** damage (scaling off the other's ATK/MD, whichever is higher).", "rare", 793),
 
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

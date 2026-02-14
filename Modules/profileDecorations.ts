@@ -231,25 +231,67 @@ export const profileSets = [
         new Background("Ai Tease", { gems: 300, coins: 500_000 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/ai-hoshino/ai-tease.gif", url: "https://i.ibb.co/PZYGCQGV/ezgif-6442bffaea6a72.gif" }), { delay: 60 }),
     ]),
 
-    new ProfileSet("Devastation", 14, { jades: 900, gems: 1000, season_keys: 60 }, [
+    new ProfileSet("Devastation", 14, { jades: 900, gems: 1000 }, [
         new Background("Turned to Ashes", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/turned-to-ashes.jpg", url: "https://i.ibb.co/XrRD8krF/20250910-104758-0003.png" })),
         new Background("The Gap", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/the-gap.jpg", url: "https://i.ibb.co/S4Y073nN/20250910-104758-0002.png" })),
         new Background("Grave Horizon", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/grave-horizon.jpg", url: "https://i.ibb.co/MkCbQ61W/20250910-104758-0001.png" })),
         new Background("Black Death", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/devastation/black-death.jpg", url: "https://i.ibb.co/DHcQ6frY/20250910-104758-0000.png" })),
     ]),
 
-    new ProfileSet("Augury", 15, { jades: 900, gems: 1000, season_keys: 60 }, [
+    new ProfileSet("Augury", 15, { jades: 900, gems: 1000 }, [
         new Background("Red Death", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/red-death.jpg", url: "https://i.ibb.co/dsmQqr1k/20250906-233439-0000.png" })),
         new Background("Devil Man", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/devil-man.jpg", url: "https://i.ibb.co/q3HNgJBp/20250906-233439-0001.png" })),
         new Background("The Chapel", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/the-chapel.jpg", url: "https://i.ibb.co/VYTzDxy6/20250906-233439-0002.png" })),
         new Background("Bad Omen", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/augury/bad-omen.jpg", url: "https://i.ibb.co/rRBK5rGJ/20250906-233439-0003.png" })),
     ]),
 
-    new ProfileSet("Festival of Shadows", 16, { jades: 1000, gems: 1200, season_keys: 80 }, [
+    new ProfileSet("Festival of Shadows", 16, { jades: 1000, gems: 1200 }, [
         new Background("Crimson Midnight", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/festival-of-shadows/crimson-midnight.gif", url: "https://i.ibb.co/b54zzhC9/Dalus-Background.gif" }), { delay: 200 }),
         new Background("Silent Lanterns", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/festival-of-shadows/silent-lanterns.gif", url: "https://i.ibb.co/v4njF45n/Mari-Background.gif" }), { delay: 143 }),
         new Background("Harvest Enchantress", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/festival-of-shadows/harvest-enchantress.gif", url: "https://i.ibb.co/93NzZPDQ/Cecilia-Background.gif" }), { delay: 200 }),
     ]),
+
+    new ProfileSet("Echoes of Frost", 17, { jades: 900, gems: 1000 }, [
+        new Background("Veil of Branches", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/echoes-of-frost/veil-of-branches.jpg", url: "https://i.ibb.co/Cs9BrDyH/Nature-blue-white-fog.jpg" })),
+        new Background("The Warmth Within", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/echoes-of-frost/the-warmth-within.jpg", url: "https://i.ibb.co/NnNBVkLY/Nature-blue-white-fog-animals.jpg" })),
+        new Background("Once Upon a Mine", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/echoes-of-frost/once-upon-a-mine.jpg", url: "https://i.ibb.co/hFdDz93M/Blue.jpg" })),
+        new Background("Petal Pond", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/echoes-of-frost/petal-pond.jpg", url: "https://i.ibb.co/HDNNkHvs/Green-nature-water-flowers.jpg" })),
+    ]),
+
+    new ProfileSet("Aurora Borealis", 18, { jades: 900, gems: 1000 }, [
+        new Background("Polar Veil", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/aurora-borealis/polar-veil.jpg", url: "https://i.ibb.co/Q7Z1gVNm/1.jpg" })),
+        new Background("Shimmering Skies", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/aurora-borealis/shimmering-skies.jpg", url: "https://i.ibb.co/B2DYXTPM/2.jpg" })),
+        new Background("Celestial Tides", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/aurora-borealis/celestial-tides.jpg", url: "https://i.ibb.co/fzzVvj9P/3.jpg" })),
+        new Background("Emerald Dusk", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/aurora-borealis/emerald-dusk.jpg", url: "https://i.ibb.co/Hpztt2WX/4.jpg" })),
+    ]),
+
+    new ProfileSet("Winter Solace", 19, { jades: 900, gems: 1000 }, [
+        new Background("Temple of Snow", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/winter-solace/temple-of-snow.jpg", url: "https://i.ibb.co/9mnKmFTw/temple-of-snow.jpg" })),
+        new Background("Moonlit Ridge", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/winter-solace/moonlit-ridge.jpg", url: "https://i.ibb.co/qzWCqbJ/moonlit-ridge.jpg" })),
+        new Background("Frosted Silence", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/winter-solace/frosted-silence.jpg", url: "https://i.ibb.co/1Yfkv8WY/frosted-silence.jpg" })),
+        new Background("Midnight Village", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/winter-solace/midnight-village.jpg", url: "https://i.ibb.co/SDdKgVbQ/midnight-village.jpg" })),
+    ]),
+
+    new ProfileSet("Forever Valentines", 20, { jades: 900, gems: 1200, season_keys: 80 }, [
+        new Background("Love You, Mari", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/forever-valentines/love-you-mari.gif", url: "https://i.ibb.co/zTYsCR9L/love-you-mari.gif" }), { delay: 200 }),
+        new Background("Gazing at the Stars", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/forever-valentines/gazing-at-the-stars.gif", url: "https://i.ibb.co/JFnbxpby/gazing-at-the-stars.gif" }), { delay: 200 }),
+        new Background("Dalus and Kisogi Valentine", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/forever-valentines/dalus-and-kisogi-valentine.gif", url: "https://i.ibb.co/xtQLS8my/dalus-and-kisogi-valentine.gif" }), { delay: 125 }),
+    ]),
+
+    new ProfileSet("Fireworks", 21, { jades: 800, gems: 1200, season_keys: 60 }, [
+        new Background("Vibrant Fireworks", { gems: 400 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/fireworks/vibrant-fireworks.gif", url: "https://i.ibb.co/YBRBhmTv/vibrant-fireworks.gif" }), { delay: 100 }),
+        new Background("Explosive Fireworks", { gems: 400 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/fireworks/explosive-fireworks.gif", url: "https://i.ibb.co/hxCwjfhh/explosive-fireworks.gif" }), { delay: 100 }),
+        new Background("Bright Fireworks", { gems: 400 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/fireworks/bright-fireworks.gif", url: "https://i.ibb.co/rR3Vtr92/bright-fireworks.gif" }), { delay: 80 }),
+        new Background("Midnight Fireworks", { gems: 400 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/fireworks/midnight-fireworks.gif", url: "https://i.ibb.co/DP3gQFx8/midnight-fireworks.gif" }), { delay: 80 }),
+    ]),
+
+    new ProfileSet("Moments", 22, { jades: 800, gems: 1200, season_keys: 70 }, [
+        new Background("Denji's Fantasy", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moments/denjis-fantasy.gif", url: "https://i.ibb.co/VpY4VR3T/denjis-fantasy.gif" }), { delay: 125 }),
+        new Background("Floating Hearts", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moments/floating-hearts.jpg", url: "https://i.ibb.co/8LTcXN9s/floating-hearts.jpg" })),
+        new Background("Midnight Disconnect", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moments/midnight-disconnect.jpg", url: "https://i.ibb.co/8LD8Zjxg/midnight-disconnect.jpg" })),
+        new Background("Eye to Eye", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moments/eye-to-eye.jpg", url: "https://i.ibb.co/whgS7fSz/eye-to-eye.jpg" })),
+    ]),
+
 
 
 

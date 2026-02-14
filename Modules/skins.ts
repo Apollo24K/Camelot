@@ -1,5 +1,6 @@
 import { CostTypes } from "./profileDecorations";
 
+// new skinInfo("Monster Garou", 23390, "fall season 2025", "skykey291", "", { season_keys: 0 }, "https://i.ibb.co/kVP4TCBZ/image.png", 127),
 
 export default class skinInfo {
     private _name: string;
@@ -196,7 +197,7 @@ export const skins: skinInfo[] = [
     new skinInfo("Arlecchino (Fall 2025)", 16195, "fall season 2025", "snowflake.ex", "", {}, "https://i.ibb.co/4g9Szy9z/6-OIIgk-AAAAGSURBVAMAM52-FMGr-QMk-AAAAASUVORK5-CYII.png", 122),
     new skinInfo("Alisa Kujou (Fall 2025)", 22054, "fall season 2025", "snowflake.ex", "", {}, "https://i.ibb.co/Pst5k0Dd/image.png", 123),
     new skinInfo("Apple EX (Fall 2025)", 19275, "fall season 2025", "snowflake.ex", "", {}, "https://i.ibb.co/v4zdkyDC/image.png", 124),
-    new skinInfo("Blade (Fall 2025)", 14909, "fall season 2025", "snowflake.ex", "", {}, "https://i.ibb.co/prQ516M7/image.png", 125),
+    new skinInfo("Blade (HSR) (Fall 2025)", 14909, "fall season 2025", "snowflake.ex", "", {}, "https://i.ibb.co/prQ516M7/image.png", 125),
     new skinInfo("Kyouko Hori (Fall 2025)", 24, "fall season 2025", "kidsad", "", {}, "https://i.ibb.co/GQHT3JS7/Hori-1.png", 126),
 
     /* Halloween 2025 */
@@ -221,9 +222,54 @@ export const skins: skinInfo[] = [
     new skinInfo("Sukuna Ryoumen (Halloween 2025)", 922, "halloween season 2025", "kidsad", "", { season_keys: 40 }, "https://i.ibb.co/NdPqXsDm/Ryoumen.png", 145),
     new skinInfo("Rias Gremory (Halloween 2025)", 2291, "halloween season 2025", "kidsad", "", { season_keys: 35 }, "https://i.ibb.co/35TFLX4P/rias-sweety.png", 146),
 
+    /* Winter 2025 */
+    new skinInfo("Robin (HSR) (Winter 2025)", 23194, "winter season 2025", "skykey291", "", { season_keys: 25 }, "https://i.ibb.co/bg70QGDL/export202510160346094320.png", 147),
+    new skinInfo("Nahida (Winter 2025)", 16199, "winter season 2025", "kaito.1412", "", { season_keys: 25 }, "https://i.ibb.co/0ps6RLcJ/media-1762443986.png", 148),
+    new skinInfo("High Elf Archer (Winter 2025)", 13287, "winter season 2025", "kaito.1412", "", { season_keys: 30 }, "https://i.ibb.co/0jPMFGf4/media-1764670968-2.png", 149),
+    new skinInfo("Acheron EX (Winter 2025)", 21931, "winter season 2025", "snowflake.ex", "", { season_keys: 45 }, "https://i.ibb.co/N2bnMsS5/export202511020320138690.png", 150),
+    new skinInfo("Arlecchino (Winter 2025)", 16195, "winter season 2025", "snowflake.ex", "", { season_keys: 40 }, "https://i.ibb.co/PvjM8rPW/export202511012244108600.png", 151),
+    new skinInfo("Ganyu (Winter 2025)", 690, "winter season 2025", "kidsad", "", { season_keys: 40 }, "https://i.ibb.co/fY5ZQkkR/ggantyu.png", 152),
+    new skinInfo("Sephiroth (Winter 2025)", 19671, "winter season 2025", "kaito.1412", "", { season_keys: 25 }, "https://i.ibb.co/tPJKLBKX/sep.png", 153),
+    new skinInfo("Seishirou Nagi (Winter 2025)", 13314, "winter season 2025", "kaito.1412", "", { season_keys: 30 }, "https://i.ibb.co/Z1LqrCHH/media-1762788177-1.png", 154),
+    new skinInfo("Rukia Kuchiki (Winter 2025)", 9004, "winter season 2025", "youalreadylost7799", "", { season_keys: 30 }, "https://i.ibb.co/ytydFSN/c.png", 155),
+    new skinInfo("Morgan le Fay (Winter 2025)", 500, "winter season 2025", "mercy4afool", "", { season_keys: 30 }, "https://i.ibb.co/V0shnydJ/00040-3715527986.png", 156),
+    new skinInfo("Shenhe (Winter 2025)", 1925, "winter season 2025", "skykey291", "", { season_keys: 45 }, "https://i.ibb.co/7JC5NDZw/export202509292239512810.png", 157),
+    new skinInfo("Cartethyia (Winter 2025)", 24167, "winter season 2025", "skykey291", "", { season_keys: 40 }, "https://i.ibb.co/zhJtmDJw/export202510160303373530.png", 158),
+    new skinInfo("Tetsuya Kuroko (Winter 2025)", 4330, "winter season 2025", "freezerfallen._", "", { season_keys: 35 }, "https://i.ibb.co/zWm31K34/Kuroko-Skin-1.png", 159),
+    new skinInfo("Mikasa Ackerman (Winter 2025)", 275, "winter season 2025", "mercy4afool", "", { season_keys: 25 }, "https://i.ibb.co/m573csv5/1146528660.png", 160),
+    new skinInfo("Mei Mei (Winter 2025)", 941, "winter season 2025", "kidsad", "", { season_keys: 35 }, "https://i.ibb.co/2Jn6n5v/meimei.png", 161),
+    new skinInfo("Tarou Sakamoto (Winter 2025)", 17852, "winter season 2025", "kaito.1412", "", { season_keys: 25 }, "https://i.ibb.co/gFRpY9K9/1763323403286.png", 162),
+    new skinInfo("Blade (HSR) (Winter 2025)", 14909, "winter season 2025", "kaito.1412", "", { season_keys: 35 }, "https://i.ibb.co/Rp6BRFS3/blade.png", 163),
+    new skinInfo("Raviel Ivansia (Winter 2025)", 24463, "winter season 2025", "mercy4afool", "", { season_keys: 30 }, "https://i.ibb.co/KctCKVSz/00002-638227603.png", 164),
+    new skinInfo("Carlotta (Winter 2025)", 24169, "winter season 2025", "youalreadylost7799", "", { season_keys: 30 }, "https://i.ibb.co/W4h96km8/c.png", 165),
+    new skinInfo("The Herta (Winter 2025)", 23225, "winter season 2025", "youalreadylost7799", "", { season_keys: 30 }, "https://i.ibb.co/DdhjC4M/thehertabutnohat.png", 166),
 
+    // Frostbound Yule Event (Christmas 2025)
+    new skinInfo("Aneira (Winter Veil)", 12394, "christmas event 2025", "skykey291", "", {}, "https://i.ibb.co/dsR2s0pM/aneira-bride.png", 167),
+    new skinInfo("Aneira EX (Glacial Waltz)", 25829, "christmas event 2025", "mercy4afool", "", {}, "https://i.ibb.co/hRRz1G6Y/aneira-skin.png", 168),
 
+    /* Valentine's 2026 */
+    new skinInfo("Sang Lang (Valentine's 2026)", 25753, "valentines season 2026", "kaito.1412", "", { season_keys: 25 }, "https://i.ibb.co/fKVMrJ8/c.jpg", 169),
+    new skinInfo("Kaguya Shinomiya (Valentine's 2026)", 2024, "valentines season 2026", "kidsad", "", { season_keys: 40 }, "https://i.ibb.co/kRKcxRp/kaguya2.png", 170),
+    new skinInfo("Frieren (Valentine's 2026)", 18106, "valentines season 2026", "kaito.1412", "", { season_keys: 30 }, "https://i.ibb.co/Myc7bZvX/c.png", 171),
+    new skinInfo("Roy Mustang (Valentine's 2026)", 13054, "valentines season 2026", "kaito.1412", "", { season_keys: 30 }, "https://i.ibb.co/xtkR9QwW/c.jpg", 172),
+    new skinInfo("Reze (Valentine's 2026)", 25890, "valentines season 2026", "mercy4afool", "", { season_keys: 35 }, "https://i.ibb.co/KxdgLnyH/c.png", 173),
+    new skinInfo("Violet Evergarden (Valentine's 2026)", 5000, "valentines season 2026", "kidsad", "", { season_keys: 40 }, "https://i.ibb.co/YBQgwDZV/image.png", 174),
+    new skinInfo("C.C. (Valentine's 2026)", 2360, "valentines season 2026", "kaito.1412", "", { season_keys: 35 }, "https://i.ibb.co/Y7gt7w2b/image.png", 175),
+    new skinInfo("Zero Two (Valentine's 2026)", 861, "valentines season 2026", "ranahunter", "", { season_keys: 30 }, "https://i.ibb.co/ZzcLwrsz/c.jpg", 176),
+    new skinInfo("Mahiru Shiina (Valentine's 2026)", 12400, "valentines season 2026", "truleho", "", { season_keys: 30 }, "https://i.ibb.co/KjHbG6kP/Mahiru-Shiina.png", 177),
+    new skinInfo("Yumeko Jabami (Valentine's 2026)", 3219, "valentines season 2026", "kaito.1412", "", { season_keys: 35 }, "https://i.ibb.co/gMMKwHmK/yumeko.png", 178),
+    new skinInfo("Hae-in Shin (Valentine's 2026)", 25033, "valentines season 2026", "youalreadylost7799", "", { season_keys: 40 }, "https://i.ibb.co/G4dfMcfp/c.png", 179),
+    new skinInfo("Kana Arima (Valentine's 2026)", 4932, "valentines season 2026", "ranahunter", "", { season_keys: 35 }, "https://i.ibb.co/tpm27QkM/kanaarima.png", 180),
+    new skinInfo("Arlecchino (Valentine's 2026)", 16195, "valentines season 2026", "snowflake.ex", "", { season_keys: 30 }, "https://i.ibb.co/KjsDMfFC/c.png", 181),
+    new skinInfo("Ai Hoshino (Valentine's 2026)", 4931, "valentines season 2026", "kaito.1412", "", { season_keys: 30 }, "https://i.ibb.co/hxGyJ6HW/oshiai.png", 182),
+    new skinInfo("Raiden Shogun (Valentine's 2026)", 680, "valentines season 2026", "kaito.1412", "", { season_keys: 30 }, "https://i.ibb.co/Dgr6Yz5q/c.jpg", 183),
+    new skinInfo("Shinobu Kochou (Valentine's 2026)", 161, "valentines season 2026", "kaito.1412", "", { season_keys: 35 }, "https://i.ibb.co/WrwRzjM/ge.png", 184),
+    new skinInfo("Tohru (Valentine's 2026)", 12356, "valentines season 2026", "youalreadylost7799", "", { season_keys: 25 }, "https://i.ibb.co/KMBm9dR/c.png", 185),
+    new skinInfo("Ram (Valentine's 2026)", 5051, "valentines season 2026", "mercy4afool", "", { season_keys: 25 }, "https://i.ibb.co/zWmRsgTL/ram.png", 186),
+    new skinInfo("Rem (Valentine's 2026)", 5050, "valentines season 2026", "cyber_46", "", { season_keys: 30 }, "https://i.ibb.co/R4v5W2Fy/rem.png", 187),
+    new skinInfo("Momo Ayase (Valentine's 2026)", 22416, "valentines season 2026", "youalreadylost7799", "", { season_keys: 30 }, "https://i.ibb.co/Z6y2XHHY/c.png", 188),
 
-    // new skinInfo("Monster Garou", 23390, "fall season 2025", "skykey291", "", { season_keys: 0 }, "https://i.ibb.co/kVP4TCBZ/image.png", 127),
 
 ];
+

@@ -80,6 +80,9 @@ const handler: BotHandler = {
             const stats = await getUserSchema(vote.user_id);
             if (!stats) return;
 
+            // Check if power vote
+            const isPowerVote = !!vote.is_power_vote;
+
             // If server vote
             if (vote.target_type === "server") {
                 // Return if lastvote has been less than 12h ago
@@ -87,7 +90,7 @@ const handler: BotHandler = {
 
                 await updateUsersAndCache(client, vote.user_id, {
                     updates: {
-                        lastvoteserver: { type: "set", value: new Date() },
+                        lastvoteserver: { type: "set", value: new Date(Date.now() + (isPowerVote ? 11 * 60 * 60 * 1000 : 0)) },
                         season_keys: { type: "increment", value: "12" in stats.dailies ? 0 : 5 },
                         dailies: { type: "merge_json", value: { 12: 0 } },
                     },
@@ -103,11 +106,11 @@ const handler: BotHandler = {
             // Update users table
             await updateUsersAndCache(client, vote.user_id, {
                 updates: {
-                    pullresets: { type: "increment", value: 1 },
-                    votestotal: { type: "increment", value: 1 },
-                    lootbox: { type: "increment", value: 3 },
-                    gems: { type: "increment", value: 3 },
-                    lastvote: { type: "set", value: new Date() },
+                    pullresets: { type: "increment", value: isPowerVote ? 2 : 1 },
+                    votestotal: { type: "increment", value: isPowerVote ? 2 : 1 },
+                    lootbox: { type: "increment", value: isPowerVote ? 6 : 3 },
+                    gems: { type: "increment", value: isPowerVote ? 7 : 3 },
+                    lastvote: { type: "set", value: new Date(Date.now() + (isPowerVote ? 11 * 60 * 60 * 1000 : 0)) },
 
                     season_keys: { type: "increment", value: "10" in stats.dailies ? 0 : 5 },
                     dailies: { type: "merge_json", value: { 10: 0 } },
@@ -119,7 +122,7 @@ const handler: BotHandler = {
                 setTimeout(async () => {
                     const dmUser = await client.users.fetch(vote.user_id);
                     if (dmUser) dmUser.send(reminderMessage);
-                }, 12 * 60 * 60 * 1000);
+                }, (isPowerVote ? 23 : 12) * 60 * 60 * 1000);
             };
 
             // Daily Quest
