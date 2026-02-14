@@ -726,6 +726,8 @@ export const anime: animeInfo[] = [
     new animeInfo("The Swordmaster's Son", ['Geomsulmyeongga Mangnaeadeul', "Swordmaster's Youngest Son", 'The Youngest Son of a Master Swordsman', 'Youngest Son of the Renowned Swordsmanship Clan'], 691),
     new animeInfo("How to Use a Returner", ['Hoegwija Sayongseolmyeongseo', 'Regressor Instruction Manual', "RIM"], 692),
     new animeInfo("Nekopara", ["NP"], 693),
+    new animeInfo("Inexpressive Kashiwada and Expressive Oota", ["Expressionless Face Girl and Emotional Face Boy", "Kao ni Denai Kashiwada-san to Kao ni Deru Oota-kun", "Expressionless Kashiwada-san and Emotional Oota-kun"], 694),
+    new animeInfo("Wandance", ["WonDance"], 695),
 
 ];
 
