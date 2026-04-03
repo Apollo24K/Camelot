@@ -728,6 +728,10 @@ export const anime: animeInfo[] = [
     new animeInfo("Nekopara", ["NP"], 693),
     new animeInfo("Inexpressive Kashiwada and Expressive Oota", ["Expressionless Face Girl and Emotional Face Boy", "Kao ni Denai Kashiwada-san to Kao ni Deru Oota-kun", "Expressionless Kashiwada-san and Emotional Oota-kun"], 694),
     new animeInfo("Wandance", ["WonDance"], 695),
+    new animeInfo("The Elusive Samurai", ["Nigewaka", "Nige Jouzu no Wakagimi", "The Young Lord Who Is Skilled at Escaping"], 696),
+    new animeInfo("You and I are Polar Opposites", ["Seihantai na Kimi to Boku", "YaIaPO", "Polar Opposites"], 697),
+    new animeInfo("The Extra's Academy Survival Guide", ["How to Survive at the Academy", "Surviving the Academy"], 698),
+    new animeInfo("Webtoon Character Na Kang Lim", ["Suyo Webtoon-ui Na Kang Lim"], 699),
 
 ];
 
