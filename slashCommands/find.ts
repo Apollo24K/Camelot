@@ -1,10 +1,8 @@
 import { EmbedBuilder, ComponentType } from "discord.js";
-import { search, showPage } from "../Modules/functions";
+import { search, showPage, rarityColor, rarityEmoji } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from '../types';
 import { getFindUsers, getServerSchema, updateUsers } from '../Modules/queries';
-
-const rarEmoji = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
 
 const exportCommand: SlashCommand = {
     name: 'find',
@@ -59,11 +57,11 @@ const exportCommand: SlashCommand = {
         let showUsersF = showPage(currPage, users, elementsPerPage);
 
         const Embed = new EmbedBuilder()
-            .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+            .setColor(rarityColor(char.rarity))
             .setTitle(`Found ${users.length} ${users.length > 1 ? "Players" : "Player"}`)
             .setThumbnail(char.image);
-        if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarEmoji[char.rarity]}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n"))] });
-        return interaction.editReply({ embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarEmoji[char.rarity]}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
+        if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n"))] });
+        return interaction.editReply({ embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
             collector.on('collect', r => {
@@ -77,7 +75,7 @@ const exportCommand: SlashCommand = {
 
                 showUsersF = showPage(currPage, users, elementsPerPage);
 
-                Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarEmoji[char.rarity]}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                 interaction.editReply({ embeds: [Embed], components: [PageRow] });
             });
         });

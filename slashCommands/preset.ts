@@ -112,7 +112,7 @@ const exportCommand: SlashCommand = {
                 });
             };
 
-            if (ringSlotsTotal === 0 && (ring1Choice || ring2Choice || ring3Choice)) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
+            if (ringSlotsTotal === 0 && (ring1Choice || ring2Choice || ring3Choice)) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching account level 20\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\``);
 
             // Collect all ring choices to check for duplicates
             const ringChoices = [ring1Choice, ring2Choice, ring3Choice].filter(Boolean);
@@ -174,7 +174,7 @@ const exportCommand: SlashCommand = {
 
                 preset.ring2 = `${ring2Choice}:${interaction.user.id}`;
             };
-            if (ring2Choice && ringSlotsTotal === 1) return interaction.reply(`You don't have enough ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
+            if (ring2Choice && ringSlotsTotal === 1) return interaction.reply(`You don't have enough ring slots available!\n\nYou can unlock them by:\n- Reaching account level 20\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\``);
 
             if (ring3Choice) {
                 const userItems = await getUserWeapons(interaction.user.id);
@@ -196,7 +196,7 @@ const exportCommand: SlashCommand = {
 
                 preset.ring3 = `${ring3Choice}:${interaction.user.id}`;
             };
-            if (ring3Choice && ringSlotsTotal === 2) return interaction.reply(`You don't have enough ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
+            if (ring3Choice && ringSlotsTotal === 2) return interaction.reply(`You don't have enough ring slots available!\n\nYou can unlock them by:\n- Reaching account level 20\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\``);
 
             if (charChoice || classChoice || itemChoice[0] || ring1Choice || ring2Choice || ring3Choice) stats.presets[set] = preset;
             else stats.presets[set] = {};
@@ -275,7 +275,7 @@ const exportCommand: SlashCommand = {
                         return interaction.reply(`You can't equip the same ring twice in the same preset!`);
                     }
 
-                    if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
+                    if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching account level 20\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\``);
                     type += ringSlot;
                     ringSlot++;
                 };

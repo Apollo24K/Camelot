@@ -1,9 +1,11 @@
 import { EmbedBuilder } from "discord.js";
-import { characters, auniq, charactersF, charactersM, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars";
+import charInfo, { characters, auniq, charactersF, charactersM, charactersVIP, charactersEX, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars";
 import { SlashCommand } from '../types';
 import { getCachedUserSchema } from '../Modules/queries';
 
-function padCollected(chars: any[]) {
+function padCollected(chars: charInfo[]) {
+    let collVIP = chars.filter((e) => e.rarity === "VIP").length;
+    let collEX = chars.filter((e) => e.rarity === "EX").length;
     let collSS = chars.filter((e) => e.rarity === "SS").length;
     let collS = chars.filter((e) => e.rarity === "S").length;
     let collA = chars.filter((e) => e.rarity === "A").length;
@@ -11,12 +13,14 @@ function padCollected(chars: any[]) {
     let collC = chars.filter((e) => e.rarity === "C").length;
     let collD = chars.filter((e) => e.rarity === "D").length;
 
-    let res = []; // SS, A, C, S, B, D
-    let len = Math.max(`${collSS}/${charactersSS.length}`.length, `${collA}/${charactersA.length}`.length, `${collC}/${charactersC.length}`.length);
+    let res = []; // VIP, SS, A, C, EX, S, B, D
+    let len = Math.max(`${collVIP}/${charactersVIP.length}`.length, `${collSS}/${charactersSS.length}`.length, `${collA}/${charactersA.length}`.length, `${collC}/${charactersC.length}`.length);
+    res.push(`\`${collVIP}/${charactersVIP.length}` + " ".repeat(len - `${collVIP}/${charactersVIP.length}`.length) + "`");
     res.push(`\`${collSS}/${charactersSS.length}` + " ".repeat(len - `${collSS}/${charactersSS.length}`.length) + "`");
     res.push(`\`${collA}/${charactersA.length}` + " ".repeat(len - `${collA}/${charactersA.length}`.length) + "`");
     res.push(`\`${collC}/${charactersC.length}` + " ".repeat(len - `${collC}/${charactersC.length}`.length) + "`");
-    len = Math.max(`${collS}/${charactersS.length}`.length, `${collB}/${charactersB.length}`.length, `${collD}/${charactersD.length}`.length);
+    len = Math.max(`${collEX}/${charactersEX.length}`.length, `${collS}/${charactersS.length}`.length, `${collB}/${charactersB.length}`.length, `${collD}/${charactersD.length}`.length);
+    res.push(`\`${collEX}/${charactersEX.length}` + " ".repeat(len - `${collEX}/${charactersEX.length}`.length) + "`");
     res.push(`\`${collS}/${charactersS.length}` + " ".repeat(len - `${collS}/${charactersS.length}`.length) + "`");
     res.push(`\`${collB}/${charactersB.length}` + " ".repeat(len - `${collB}/${charactersB.length}`.length) + "`");
     res.push(`\`${collD}/${charactersD.length}` + " ".repeat(len - `${collD}/${charactersD.length}`.length) + "`");
@@ -53,9 +57,10 @@ const exportCommand: SlashCommand = {
                 `<:Yato:869897062672642118> **Husbando**: \`${chars.filter((e) => e.gender === "M").length}/${charactersM.length} ➜ (${Math.floor((chars.filter((e) => e.gender === "M").length / charactersM.length) * 100)}%)\`\n` +
                 `<:Gawrgura:869894477752447007> **Characters**: \`${chars.length}/${characters.length} ➜ (${Math.floor((chars.length / characters.length) * 100)}%)\`\n\n` +
                 `**Rarity**\n` +
-                `<:SSTier:869316489931546644> **Tier**: ${padded[0]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[3]}\n` +
-                `<:ATier:869316558013464627> **Tier**: ${padded[1]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[4]}\n` +
-                `<:CTier:869316602858991657> **Tier**: ${padded[2]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[5]}`
+                `<a:vip1:1488516064982597732><a:vip2:1488516143307161811> **T**: ${padded[0]}ㅤ<a:EXTRA:1138530846144462968> **Tier**: ${padded[4]}\n` +
+                `<:SSTier:869316489931546644> **Tier**: ${padded[1]}ㅤ<:STier:869316518675095552> **Tier**: ${padded[5]}\n` +
+                `<:ATier:869316558013464627> **Tier**: ${padded[2]}ㅤ<:BTier:869316586803179571> **Tier**: ${padded[6]}\n` +
+                `<:CTier:869316602858991657> **Tier**: ${padded[3]}ㅤ<:DTier:869316616071032843> **Tier**: ${padded[7]}`
             );
         return interaction.reply({ embeds: [Embed] });
     },

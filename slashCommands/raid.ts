@@ -14,8 +14,8 @@ import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, RaidRank, RaidSchema, SlashCommand } from '../types';
 import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateGuilds, updateRaidEnded, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
-import { skillTree } from '../Modules/skillTree';
 import { customHpBars } from '../Modules/customHpBars';
+import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
 

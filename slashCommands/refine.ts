@@ -1,5 +1,5 @@
 import { EmbedBuilder, ComponentType } from "discord.js";
-import { search, getDetailedStats } from "../Modules/functions";
+import { search, getDetailedStats, rarityColor } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsers } from '../Modules/queries';
@@ -40,7 +40,7 @@ const exportCommand: SlashCommand = {
 
         const Embed = new EmbedBuilder()
             .setTitle(char.name.slice(0, 256))
-            .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+            .setColor(rarityColor(char.rarity))
             .setDescription(`Raising ${stats.ref === 5 ? "<:refinement_gold:1046869941011365899>" : "<:refinement:869132309125824552>"} for ${shardStr}**x${shardAmount}** and **${price}**<:coins:872926669055356939>`)
             .addFields(
                 { name: 'HP ️️️💖', value: `${stats.hp} -> **${stats2.hp}**`, inline: true },

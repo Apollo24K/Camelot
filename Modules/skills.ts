@@ -1,6 +1,6 @@
 
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { dealDamage, addHeal, noTimeout } from "./functions";
+import { dealDamage, addHeal, noTimeout, procburn } from "./functions";
 import { items } from "./items";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
@@ -291,7 +291,7 @@ export const skills: skillInfo[] = [
     new skillInfo(19, 20, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Ranger deals a guaranteed hit with increased crit rate (+20%)
         matchStats.turn = matchStats.turnSkill;
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { block: false, dodge: false, critBuff: 0.2 });
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { block: false, dodge: false, magicDamage: true, critBuff: 0.2 });
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -302,7 +302,7 @@ export const skills: skillInfo[] = [
     new skillInfo(20, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Shooter deals a guaranteed critical hit
         matchStats.turn = matchStats.turnSkill;
-        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { critChance: 0 });
+        dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { magicDamage: true, critChance: 0 });
 
         return AbilityResponse.SUCCESS;
     }),
@@ -712,9 +712,18 @@ export const skills: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        if (list[0] !== "arena") mybuff.atk.push(new buffInfo("*", 1.1, 9999));
-        mybuff.hp.push(new buffInfo("*", 1.05, 9999));
-        mybuff.md.push(new buffInfo("*", 1.03, 9999, 0.03, "+", 1.3));
+        //if (list[0] !== "arena") mybuff.atk.push(new buffInfo("*", 1.1, 9999));
+        //mybuff.hp.push(new buffInfo("*", 1.05, 9999));
+        myStats.increaseHealing ??= 0;
+        myStats.increaseHealing += 0.15;
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor((myStats.maxhp - myStats.hp) * 0.05), {});
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+        mybuff.md.push(new buffInfo("*", 1.03, 9999, 0.03, "+", 1.52));
+
 
         return AbilityResponse.SUCCESS;
     }),
@@ -1002,28 +1011,75 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(48, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Wizard
-        if (myStats.classUsedRound > matchStats.round - 3) {
+        if (myStats.classUsedRound > matchStats.round - 10) {
             myStats.sm += 80;
             noTimeout(matchStats, myStats);
-            matchStats.sendWarning({ content: `Wizard ability can only be used once every 3 rounds.`, ephemeral: true });
+            matchStats.sendWarning({ content: `Wizard ability can only be used once every 10 rounds.`, ephemeral: true });
             return AbilityResponse.FAILURE;
         };
         myStats.classUsedRound = matchStats.round;
         matchStats.turn = matchStats.turnSkill;
+        noTimeout(matchStats, myStats);
+        eStats.burnduration += 10;
+        myStats.burncrit = true;
 
-        const dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, mdChance: -1 });
-        ebuff.hp.push(new buffInfo("+", -Math.floor(dmg / 9), 3)); // 50% over 3 rounds
-        notice.push(`\n⚜️ **${enemy.name}** will take burning damage for the next 3 rounds`);
+        matchStats.on("burn", {
+            maxRound: 10,
+            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats) {
+                    let hhp = Math.floor(myStats.maxhp * 0.08);
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, {});
+                };
+            }
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 10, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.burncrit = false;
+            return AbilityResponse.SUCCESS;
+        }));
+
+        notice.push(`\n⚜️ **${char.name}** entered \`Thermal Ignition\` for **10** rounds`);
+
+        // const dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚜️ **${char.name}**`, { atkMultiplier: 1.5, magicDamage: true, mdChance: -1, isLightning: true });
+        // ebuff.hp.push(new buffInfo("+", -Math.floor(dmg / 9), 3)); // 50% over 3 rounds
+        // notice.push(`\n⚜️ **${enemy.name}** will take burning damage for the next 3 rounds`);
+        // let count = 0;
+        // while (eStats.burnduration > 0) {
+        //     count++;
+        //     procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+        //     if (count === 3) break;
+        // };
+        // eStats.burnduration += 3;
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mdChance = 1;
-        mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.2), 9999));
-        myStats.md += Math.floor(myStats.md * 0.2);
+        myStats.lightningcount ??= 0;
+        myStats.burncount ??= 0;
+        //mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.2), 9999));
+        //myStats.md += Math.floor(myStats.md * 0.2);
+
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (myStats.hp / myStats.maxhp < 0.25 && eStats.burnduration >= 5) {
+                eStats.burnduration -= 5;
+                let hhp = Math.floor(myStats.maxhp * 0.15);
+                addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, {});
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
     }),
-
 
     new skillInfo(49, 10, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Brawler deals 100% dmg +1% for each mana consumed
@@ -1647,8 +1703,8 @@ export const crazeBossAbilities2023: skillInfo[] = [
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.removeDefCap = true;
 
-        const setDef: number = { "D": 0, "C": 150, "B": 300, "A": 500, "S": 600, "SS": 800, "EX": 1000 }[char.rarity as CharacterRarity];
-        const multAtk: number = { "D": 3.2, "C": 2, "B": 1.6, "A": 1.2, "S": 0.8, "SS": 0.6, "EX": 0.4 }[char.rarity as CharacterRarity] * ((7 - (items[myStats.weapon]?.gradeValue ?? 0)) / 2);
+        const setDef: number = { "D": 0, "C": 150, "B": 300, "A": 500, "S": 600, "SS": 800, "EX": 1000, "VIP": 1200 }[char.rarity as CharacterRarity];
+        const multAtk: number = { "D": 3.2, "C": 2, "B": 1.6, "A": 1.2, "S": 0.8, "SS": 0.6, "EX": 0.4, "VIP": 0.2 }[char.rarity as CharacterRarity] * ((7 - (items[myStats.weapon]?.gradeValue ?? 0)) / 2);
 
         ebuff.def.push(new buffInfo("=", setDef, 9999));
         eStats.def = setDef;

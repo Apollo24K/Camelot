@@ -1,10 +1,13 @@
-import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable } from "discord.js";
+import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable, ContainerBuilder, AttachmentBuilder, MessageFlags } from "discord.js";
 import { dailies } from "../Modules/dailyQuests";
 import { showPage, searchGuild, getDonationsPageWeek, lastActive, formatNumberWithQuotes, customEmojis, getLetterRank } from "../Modules/functions";
-import { PageRow, OfferRow, donationWeekStart } from "../Modules/components";
-import { GuildSchema, SlashCommand } from "../types";
-import { addGuildDonation, deleteGuild, getGuildDonationSchemas, getGuildSchema, getGuildSchemas, getUserSchema, getUserSchemas, insertNewGuild, updateGuildDonationsGuildId, updateGuilds, updateRaidsGuildId, updateUsersAndCache } from "../Modules/queries";
+import { PageRow, OfferRow, donationWeekStart, embedColor, botPfp, currencyEmojis } from "../Modules/components";
+import { CompactUserSchema, GuildSchema, SlashCommand } from "../types";
+import { addGuildDonation, deleteGuild, getGuildDonationSchemas, getGuildSchema, getGuildSchemas, getUserSchema, getUserSchemas, insertNewGuild, insertNewWeapon, updateGuildDonationsGuildId, updateGuilds, updateRaidsGuildId, updateUsersAndCache } from "../Modules/queries";
 import { achievements } from "../Modules/achievements";
+import { items, ringInfo } from "../Modules/items";
+import { monthlyShopItems } from "../Modules/monthlyShopItems";
+import { classes } from "../Modules/classes";
 
 function lastActiveInDays(timestamp: Date | number) {
     const now = new Date(), date = new Date(timestamp);
@@ -24,6 +27,140 @@ function upgradePrice(level: number): number {
         case 9: return 20_000_000;
         default: return 20_000_000 + (Math.floor(level / 10) * 10_000_000);
     };
+};
+
+type GuildShopTab = 'rings' | 'potions';
+
+const getGuildShopButtonRow = (currentTab: GuildShopTab) => {
+    const rowButtons = [
+        { id: 'rings', label: 'Rings', emoji: '<:abyssal_bloom:1337947536920416306>' },
+        { id: 'potions', label: 'Potions', emoji: '<:small_instant_xp_potion:1411713377511800842>' },
+    ];
+
+    return new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            ...rowButtons.map((button) => {
+                return new ButtonBuilder()
+                    .setCustomId(`tab_${button.id}`)
+                    .setLabel(button.label)
+                    .setEmoji(button.emoji)
+                    .setStyle(currentTab === button.id ? ButtonStyle.Primary : ButtonStyle.Secondary);
+            }),
+        );
+};
+
+const BuyPotionsRow = new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(
+        new ButtonBuilder()
+            .setCustomId('buy_potion_1')
+            .setEmoji("<:small_instant_xp_potion:1411713377511800842>")
+            .setLabel('1')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_potion_2')
+            .setEmoji("<:small_instant_xp_potion:1411713377511800842>")
+            .setLabel('2')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_potion_5')
+            .setEmoji("<:small_instant_xp_potion:1411713377511800842>")
+            .setLabel('5')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_potion_10')
+            .setEmoji("<:small_instant_xp_potion:1411713377511800842>")
+            .setLabel('10')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('buy_potion_max')
+            .setEmoji("<:small_instant_xp_potion:1411713377511800842>")
+            .setLabel('Max')
+            .setStyle(ButtonStyle.Secondary),
+    );
+
+const POTIONS_FOR_SALE = [
+    { desc: "Grants the user **800** class XP", item: monthlyShopItems[67] }, // Small
+    { desc: "Grants the user **2400** class XP", item: monthlyShopItems[68] }, // Large
+    { desc: "Grants the user **8000** class XP", item: monthlyShopItems[69] }, // Huge
+];
+
+const getShopPage = (currentTab: GuildShopTab, stats: CompactUserSchema): ContainerBuilder => {
+    const shopContainer = new ContainerBuilder()
+        .setAccentColor(embedColor)
+        .addSectionComponents(section => section
+            .addTextDisplayComponents(
+                text => text.setContent('# Guild Shop'),
+                text => text.setContent(
+                    `Welcome to the guild shop! You can earn guild marks by regularly participating in a guild </raid:1385675097678942314>, then use them here to purchase exclusive items`
+                ),
+            )
+            .setThumbnailAccessory(thumbnail => thumbnail.setURL(botPfp))
+        )
+        .addSeparatorComponents(separator => separator);
+
+    const allPurchasableRings = items.filter(item => item instanceof ringInfo && item.obtain.includes("guild")) as ringInfo[];
+    const weeklyPurchasableRings = [...allPurchasableRings].sort((a, b) => a.id - b.id).filter((_, i) => [0, 1, 2].map(n => (n + Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 1).getTime()) / (1000 * 60 * 60 * 24 * 7))) % allPurchasableRings.length).includes(i)).slice(0, 3);
+
+    if (currentTab === 'rings') {
+        weeklyPurchasableRings.forEach(ring => shopContainer
+            .addSectionComponents(section => section
+                .addTextDisplayComponents(text => text
+                    .setContent(`${ring.emoji} **${ring.name}** ➜ **200** ${currencyEmojis.guild_marks}\n>>> ${ring.getBuffDesc()}`)
+                )
+                .setButtonAccessory(button => button
+                    .setCustomId(`buy_rings_${ring.id}`)
+                    .setLabel('Buy Now')
+                    .setStyle(ButtonStyle.Primary)
+                )
+            )
+        );
+
+    } else if (currentTab === 'potions') {
+        POTIONS_FOR_SALE.forEach(potion => shopContainer
+            .addSectionComponents(section => section
+                .addTextDisplayComponents(text => text
+                    .setContent(`\`${potion.item.amount - (stats.monthlyshop[potion.item.id] ?? 0)}/${potion.item.amount}\`- **${potion.item.displayName}** ➜ **${potion.item.displayPrice}**\n> ${potion.desc}`)
+                )
+                .setButtonAccessory(button => button
+                    .setCustomId(`buy_potions_${potion.item.id}`)
+                    .setLabel('Buy Now')
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(stats.hpbars.includes(potion.item.id))
+                )
+            )
+        );
+
+    }
+
+    // Add Footer
+    shopContainer
+        .addSeparatorComponents(separator => separator)
+        .addTextDisplayComponents(text => text
+            .setContent(
+                `-# Guild Marks: **${stats.guild_marks}** ${currencyEmojis.guild_marks}` +
+                ` | ` +
+                `**Time left**: ${(() => {
+                    const now = new Date();
+                    if (currentTab === 'rings') {
+                        const startOfYear = new Date(now.getFullYear(), 0, 1);
+                        const currentWeek = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24 * 7));
+                        const nextWeekStart = new Date(startOfYear.getTime() + (currentWeek + 1) * (1000 * 60 * 60 * 24 * 7));
+                        const timeLeft = nextWeekStart.getTime() - now.getTime();
+                        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        return `${days}d ${hours}h`;
+                    } else {
+                        const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                        const timeLeft = nextMonth.getTime() - now.getTime();
+                        const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        return `${days}d ${hours}h`;
+                    }
+                })()}`
+            )
+        );
+
+    return shopContainer;
 };
 
 const exportCommand: SlashCommand = {
@@ -1144,9 +1281,113 @@ const exportCommand: SlashCommand = {
 
             });
         } else if (subcommand === "shop") {
-            const page = interaction.options.getString('page') || "rings";
+            let currentTab: GuildShopTab = interaction.options.getString('page') as GuildShopTab || "rings";
 
-            return interaction.reply({ content: `If you see this message, we probably forgot to add the guild shop <:MikuHappy:1045096947876368404>` });
+            return interaction.reply({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)], flags: MessageFlags.IsComponentsV2 }).then(async (msg) => {
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
+
+                collector.on('collect', async (r) => {
+                    if (r.customId.startsWith('tab_')) {
+                        currentTab = r.customId.split('_')[1] as GuildShopTab;
+
+                        await msg.edit({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)] });
+                    };
+
+                    if (r.customId.startsWith('buy_')) {
+                        if (r.customId.startsWith('buy_rings_')) {
+                            const ringId = parseInt(r.customId.split('_')[2]);
+                            const ring = items[ringId];
+                            const cost = 200;
+                            if (!cost) return;
+
+                            const content = `Are you sure you want to buy **${ring.name}** ${ring.emoji} for **${cost}** ${currencyEmojis.guild_marks}?`;
+                            interaction.followUp({ content, components: [OfferRow] }).then(ms => {
+                                const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                                buyCollector.on('collect', async rr => {
+                                    if (rr.customId !== "confirm") {
+                                        ms.edit({ content: "Action cancelled", components: [] });
+                                        return;
+                                    };
+
+                                    const tempStats = await getUserSchema(interaction.user.id);
+                                    if (!tempStats) return msg.edit("You haven't started playing yet.");
+
+                                    // Return if balance not enough
+                                    if (tempStats.guild_marks < cost) {
+                                        ms.edit({ content: `You don't have enough season keys (**${tempStats.guild_marks}**/${cost} ${currencyEmojis.guild_marks})`, components: [] });
+                                        return;
+                                    };
+
+                                    // Update users table
+                                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                        updates: {
+                                            guild_marks: { type: "increment", value: -cost },
+                                        },
+                                    });
+
+                                    // Add ring
+                                    await insertNewWeapon(interaction.user.id, ring.id, ring.category);
+
+                                    // Edit replies
+                                    ms.edit({ content: "Purchase Successful!", components: [] });
+                                    await msg.edit({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)] });
+                                });
+                            });
+                        };
+
+                        if (r.customId.startsWith('buy_potions_')) {
+                            interaction.followUp({ content: `Please select how many potions you want to purchase`, components: [BuyPotionsRow] }).then(ms => {
+                                const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                                buyCollector.on('collect', async rr => {
+                                    if (!rr.customId.startsWith('buy_potion_')) {
+                                        ms.edit({ content: "Action cancelled", components: [] });
+                                        return;
+                                    };
+
+                                    const tempStats = await getUserSchema(interaction.user.id);
+                                    if (!tempStats) return msg.edit("You haven't started playing yet.");
+
+                                    const potionId = parseInt(r.customId.split('_')[2]);
+                                    const potion = monthlyShopItems[potionId];
+
+                                    const amountStr = rr.customId.split('_')[2];
+                                    const amount = amountStr === 'max' ? (potion.amount - (tempStats.monthlyshop[potion.id] ?? 0)) : parseInt(amountStr);
+                                    const cost = potion.price * amount;
+                                    if (isNaN(amount) || isNaN(cost) || amount <= 0 || (amount > (potion.amount - (tempStats.monthlyshop[potion.id] ?? 0)))) {
+                                        ms.edit({ content: "Invalid input", components: [] });
+                                        return;
+                                    };
+
+                                    // Return if balance not enough
+                                    if (tempStats.guild_marks < cost) {
+                                        ms.edit({ content: `You don't have enough guild marks (**${tempStats.guild_marks}**/${cost} ${currencyEmojis.guild_marks})`, components: [] });
+                                        return;
+                                    };
+
+                                    // Update users table
+                                    if (tempStats.class && potion.custom.xp) {
+                                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                            updates: {
+                                                guild_marks: { type: "increment", value: -cost },
+                                                monthlyshop: { type: "merge_json", value: { [potion.id]: amount } },
+                                                dungeon_classlevels: { type: "merge_json", value: { [tempStats.class]: (amount * potion.custom.xp) } },
+                                            },
+                                        });
+                                    };
+
+                                    // Edit replies
+                                    ms.edit({ content: `Purchase Successful! **${amount * (potion.custom.xp ?? 0)} xp** have been added to your ${classes[tempStats.class ?? 0].emblem} **${classes[tempStats.class ?? 0].name}** class`, components: [] });
+                                    await msg.edit({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)] });
+                                });
+                            });
+                        };
+                    };
+
+                });
+            });
+
         };
     },
     async executeButtonInteraction({ interaction }) {

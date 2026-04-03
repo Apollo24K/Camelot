@@ -1,6 +1,6 @@
 import { EmbedBuilder } from "discord.js";
 import { achievements } from "../Modules/achievements";
-import { search } from "../Modules/functions";
+import { rarityColor, search } from "../Modules/functions";
 import { SlashCommand } from '../types';
 import { getPartyMembers, getLatestStampede, updateUsersAndCache } from '../Modules/queries';
 
@@ -42,7 +42,7 @@ const exportCommand: SlashCommand = {
         };
 
         const Embed = new EmbedBuilder()
-            .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+            .setColor(rarityColor(char.rarity))
             .setDescription(`${mode ? "Stampede" : "Battle"} character set to \n**${char.name}**`)
             .setImage(thumbnail);
         interaction.reply({ embeds: [Embed] });

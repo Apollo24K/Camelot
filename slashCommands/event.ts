@@ -1,5 +1,5 @@
 import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType, ButtonStyle } from 'discord.js';
-import { PageRow, OfferRow, ongoingEvent, isEventOngoing, seasonalEventEnd, seasonalEventStart } from "../Modules/components";
+import { PageRow, OfferRow, ongoingEvent, isEventOngoing, seasonalEventEnd, seasonalEventStart, botPfp } from "../Modules/components";
 import { showPage } from "../Modules/functions";
 import { characters } from "../Modules/chars";
 import { skins } from "../Modules/skins";
@@ -717,13 +717,13 @@ const exportCommand: SlashCommand = {
             const pagesTotal = Math.ceil(milestones.length / elementsPerPage);
             let currPage = 1;
 
-            let showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**🌙${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
+            let showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**<:valentines_choco_2026:1472686937277071442>${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
 
             const Embed = new EmbedBuilder()
-                .setTitle('Anniversary Event Rewards')
+                .setTitle('Valentine\'s Event Rewards')
                 .setColor(0x2aad9d)
-                .setThumbnail("https://i.imgur.com/swyb84q.jpg")
-                .setDescription(`Your balance: **${stats.eventpts}**🌙\n\n` + showF.join("\n"))
+                .setThumbnail(botPfp) // "https://i.imgur.com/swyb84q.jpg"
+                .setDescription(`Your balance: **${stats.eventpts}**<:valentines_choco_2026:1472686937277071442>\n\n` + showF.join("\n"))
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
@@ -737,9 +737,9 @@ const exportCommand: SlashCommand = {
                         else currPage = 1;
                     };
 
-                    showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**🌙${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
+                    showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**<:valentines_choco_2026:1472686937277071442>${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
 
-                    Embed.setDescription(`Your balance: **${stats.eventpts}**🌙\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setDescription(`Your balance: **${stats.eventpts}**<:valentines_choco_2026:1472686937277071442>\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
             });

@@ -227,7 +227,7 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema): Con
                     .addComponents(
                         ...chunk.map((skin, i2) => new ButtonBuilder()
                             .setCustomId(`buy_skin_${skin.id}`)
-                            .setLabel(`${(i1 * 5) + i2 + 1}) ${skin.name.split(" ")[0].length > 4 ? skin.name.split(" ")[0] : skin.name.split(" ")[0] + ` ${skin.name.split(" ")[1] || ""}`}`)
+                            .setLabel(`${(i1 * 5) + i2 + 1}) ${skin.name.split(" ")[0].length > 4 ? skin.name.split(" ")[0] : skin.name.split(" ")[0] + ` ${(!skin.name.split(" ")[1].startsWith("(") ? skin.name.split(" ")[1] : "") || ""}`}`)
                             .setStyle(ButtonStyle.Secondary)
                             .setDisabled(stats.skins.includes(skin.id))
                         )

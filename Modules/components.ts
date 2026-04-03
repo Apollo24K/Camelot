@@ -55,7 +55,7 @@ export const OfferRow = new ActionRowBuilder<ButtonBuilder>()
 
 // Event
 export const ongoingEvent = "valentines" as SeasonalEvent;
-export const seasonalEventStart = new Date('2026-02-15 00:00:00');
+export const seasonalEventStart = new Date('2026-02-16 00:00:00');
 export const seasonalEventLastsDays = 16;
 export const seasonalEventEnd = new Date(seasonalEventStart.getTime() + (seasonalEventLastsDays * 24 * 60 * 60 * 1000));
 export const isEventOngoing = () => seasonalEventStart.getTime() <= Date.now() && Date.now() < seasonalEventEnd.getTime();
@@ -94,6 +94,7 @@ export const currencyEmojis = {
     "coins": "<:coins:1030580480782893197>",
     "lilies": "<:lilium:974057059618291732>",
     "jades": "<:eternal_jade:1256124504141201428>",
+    "guild_marks": "<:guild_mark:1317944450814840923>",
     "season_keys": seasonalKeys.valentines,
     "eventpts": "🌙",
 } as const;

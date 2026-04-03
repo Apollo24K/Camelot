@@ -279,6 +279,14 @@ const exportCommand: SlashCommand = {
                 achievements[34].check(interaction, interaction.user, floor + 1), achievements[35].check(interaction, interaction.user, floor + 1), achievements[36].check(interaction, interaction.user, floor + 1), achievements[37].check(interaction, interaction.user, floor + 1), achievements[38].check(interaction, interaction.user, floor + 1); // Challenger
             };
 
+
+            // XP potions
+            const xpPotions = {
+                782: drops(0.02, 2 * skipRounds),
+                783: drops(0.01, 1 * skipRounds),
+                784: drops(0.005, 1 * skipRounds),
+            };
+
             // Class Level
             let cxpmsg = "You don't have a class";
             if (myClass) {
@@ -316,6 +324,10 @@ const exportCommand: SlashCommand = {
                 cxp = Math.floor(cxp * 1.33);
                 if (enemy.boss) cxp = Math.floor(cxp * 1.5);
                 cxp = Math.floor(cxp * skipRounds);
+
+                // instant XP potions
+                cxp += (xpPotions[782] * 800) + (xpPotions[783] * 2400) + (xpPotions[784] * 8000);
+
                 cxpmsg = `Class XP: **${cxp}** (Boost: x${boost})`; // `Class XP: **${cxp}** (Boost: x${boost}${new Date().getDay() === 6 || new Date().getDay() === 0 ? " weekend" : ""})`;
                 if (myClass.id in stats.dungeon_classlevels) stats.dungeon_classlevels[myClass.id] += cxp;
                 else stats.dungeon_classlevels[myClass.id] = cxp;
@@ -528,7 +540,7 @@ const exportCommand: SlashCommand = {
                 ? (myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))
                 : 0;
 
-            Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}`);
+            Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}${xpPotions[784] ? `, ${items[784].emoji}x${xpPotions[784]}` : ""}${xpPotions[783] ? `, ${items[783].emoji}x${xpPotions[783]}` : ""}${xpPotions[782] ? `, ${items[782].emoji}x${xpPotions[782]}` : ""}`);
             if (dunLim[0] - stats.dungeon_limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins + loot)} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
             else Embed.setFooter({ text: `${myClass.name} level: ${xpleft < 1 ? myStats.clvl + 1 : myStats.clvl} | XP left: ${xpleft < 1 ? (((myStats.clvl + 1) * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl + 1) * 25))) : xpleft}`, iconURL: xpleft < 1 ? "https://i.ibb.co/Y8k36J1/Nks94u8.gif" : myClass.image });
             return Embed;

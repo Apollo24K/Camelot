@@ -55,7 +55,7 @@ const skillDescs: SkillDescription[] = [
     { "active": `Deals **150%** physical damage and causes bleeding for 2 rounds. (Timeout true)`, "passive": `Critical strikes cause bleeding, dealing **5%** damage to the enemy for 2 rounds.` },
     { "active": `Deals **120%** true damage (ignores shield) and causes bleeding for 3 rounds. (Timeout true)`, "passive": `Critical strikes cause bleeding, dealing **5%** damage to the enemy for 3 rounds.` },
     { "active": `Deals **120%** magic damage in dungeon, **110%** in arena. (Timeout true)`, "passive": `Heals for **5%** of current HP after every round.` },
-    { "active": `Deals **130%** magic damage in dungeon, **115%** in arena. (Timeout true)`, "passive": `Has **10%** increased ATK in the dungeon. Heals for **5%** of current HP every round, and increases their own magic damage by **3%** (max **30%**).` },
+    { "active": `Deals **130%** magic damage in dungeon, **115%** in arena. (Timeout true)`, "passive": `Has **15%** increased healing effectiveness. Heals for **5%** of missing HP every round, and increases their own magic damage by **4%** (max **52%**).` },
     { "active": `Blocks the enemy from dodging, blocking and critting for 2 rounds. (Timeout false)`, "passive": `Decreases enemy ATK by **3%** after each round. Has a **20%** chance of dealing magic damage.` },
     { // Demonic
         "active": `Enters Archdemon form, in which HP equal to **4%** of max HP is sacrificed for **10** rounds, to gain **20%** increased ATK, MD, CR and CD. These buffs increase by an additional **2%** per round, up to a total of **40%**. (Uses: 1 [Only starting from the 6th round], Timeout true)`,
@@ -71,8 +71,8 @@ const skillDescs: SkillDescription[] = [
     { "active": `Creates a shield equal to **20%** of max HP. (Timeout false)`, "passive": `When shield breaks down from taking damage, freezes the enemy and increases own ATK and MD by **50%** for **1** round. All attacks deal magic damage by default.` },
     { "active": `Deals **125%** magic damage and causes burning, dealing **6%** damage over 2 rounds. (Timeout true)`, "passive": `All attacks deal magic damage.` },
     { // Wizard
-        "active": `Deals **150%** magic damage and causes burning, dealing an additional **50%** damage over 3 rounds. (CD: 3, Timeout true)`,
-        "passive": `Wizards have **20%** increased MD. All attacks deal magic damage.`
+        "active": `Applies BURNING for **10** rounds. Enters \`Thermal Ignition\` for **10** rounds: All BURNING effects (including alter forms) are guaranteed to critically strike, and recover **8%** max HP for the wizard. (CD: 10, Timeout false)`,
+        "passive": `BURNING effects are replaced by PLASMA [ <a:plasma:1480572957788082267> ], which deals **30%** ATK/MD (whichever is higher) as <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085> magical damage, with its damage scaling increased by **1%** for every **5** burn triggers / <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085> hits landed (Up to 70% in total). All attacks deal magic damage. When below **25%** HP at the start of a round and the enemy has **5** or more rounds of burn, removes **5** rounds of burn from the enemy and recovers **15%** max HP.`
     },
 
     { "active": "**Uses**: `Unlimited`\n**Cost**: `10 💧 + unlimited`\n**Timeout**: `Yes`\nDeals **110%** physical damage which increases by **+1%** for every mana consumed above 10.", "passive": `None` },

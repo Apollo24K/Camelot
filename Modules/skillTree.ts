@@ -332,7 +332,7 @@ export const skillTree: SkillPath[] = [
 
         myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if ((myStats.hp / myStats.maxhp) < threshold) {
-                notice.push(`🛡️ **${myStats.name}** makes a Last Stand!`);
+                notice.push(`\n🛡️ **${myStats.name}** makes a Last Stand!`);
 
                 const defBuff = new buffInfo("*", bonusPercent, duration);
                 defBuff.label = "Extra Skill: Last Stand";
@@ -377,7 +377,7 @@ export const skillTree: SkillPath[] = [
             if ((myStats.hp / myStats.maxhp) < threshold) {
                 const regenAmount = Math.floor(myStats.maxhp * regenPercent);
                 if (regenAmount > 0) {
-                    notice.push(`💖 **${myStats.name}'s** Second Heart kicks in!`);
+                    notice.push(`\n💖 **${myStats.name}'s** Second Heart kicks in!`);
                     mybuff.hp.push(new buffInfo("+", regenAmount, 9999));
                 };
                 //@ts-ignore - accessing private _used property

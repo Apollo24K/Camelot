@@ -226,10 +226,10 @@ async function createTables() {
 
         eventpoints INT DEFAULT 0 NOT NULL,
         bosshuntstage INT DEFAULT 1 NOT NULL,
-        boss1 BIGINT DEFAULT 124080 NOT NULL,
-        boss2 BIGINT DEFAULT 160260 NOT NULL,
-        boss3 BIGINT DEFAULT 113720 NOT NULL,
-        boss4 BIGINT DEFAULT 144640 NOT NULL,
+        boss1 BIGINT DEFAULT 126080 NOT NULL,
+        boss2 BIGINT DEFAULT 168260 NOT NULL,
+        boss3 BIGINT DEFAULT 121720 NOT NULL,
+        boss4 BIGINT DEFAULT 149640 NOT NULL,
         
         lastlevelup TIMESTAMP,
 

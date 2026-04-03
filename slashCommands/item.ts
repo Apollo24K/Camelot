@@ -839,7 +839,7 @@ const exportCommand: SlashCommand = {
                 if (type === "armor" || fItem.type === "shield") type = fItem.type;
                 if (type === "shield" && (stats.premium < 4 && stats.shield_slot === 0)) type = "weapon";
                 if (type === "ring") {
-                    if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\`\n- Reaching account level 100`);
+                    if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching account level 20\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\``);
 
                     let slot = 1;
                     if ("ring1" in stats.equipment) {

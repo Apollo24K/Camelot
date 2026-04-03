@@ -292,6 +292,12 @@ export const profileSets = [
         new Background("Eye to Eye", { gems: 300 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moments/eye-to-eye.jpg", url: "https://i.ibb.co/whgS7fSz/eye-to-eye.jpg" })),
     ]),
 
+    new ProfileSet("Sanguine Reflections", 23, { jades: 2000, gems: 2400 }, [
+        new Background("Fallen Grace", { gems: 600 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/sanguine-reflections/fallen-grace.jpg", url: "https://i.ibb.co/QFW8DDYM/fallen-grace.jpg" })),
+        new Background("Café Rei", { gems: 800 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/sanguine-reflections/cafe-rei.gif", url: "https://i.ibb.co/fGqKMVvc/cafe-rei.gif" }), { delay: 100 }),
+        new Background("Candid Noir", { gems: 800 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/sanguine-reflections/candid-noir.gif", url: "https://i.ibb.co/ks479wKb/candid-noir.gif" }), { delay: 100 }),
+        new Background("Scarlet in the Rain", { gems: 800 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/sanguine-reflections/scarlet-in-the-rain.gif", url: "https://i.ibb.co/PGtTHSvM/scarlet-in-the-rain.gif" }), { delay: 100 }),
+    ]),
 
 
 

@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
-import { splitTitle, rarity, getRefinement } from "../Modules/functions";
+import { splitTitle, rarity, getRefinement, rarityColor } from "../Modules/functions";
 import { CompactUserSchema, SlashCommand } from "../types";
 import { getUserSchema, updateUsers } from "../Modules/queries";
 
@@ -8,7 +8,7 @@ function displayMy(thisChar: charInfo, inv: CompactUserSchema, interaction: Chat
     const dupes = inv.chars.filter((e) => e === thisChar.id).length;
 
     const Embed = new EmbedBuilder()
-        .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[thisChar.rarity])
+        .setColor(rarityColor(thisChar.rarity))
         .setImage(thisChar.image)
         .setThumbnail(rarity(thisChar.rarity))
         .setDescription(`**${thisChar.name}**\n${splitTitle(thisChar.anime)}\n\n**Ref**. ${getRefinement(inv.char_ref[thisChar.id])}`)
@@ -28,22 +28,22 @@ function r1(stats: CompactUserSchema) {
         );
 };
 
-const thumbnail = "https://i.ibb.co/1J71WdPk/yor.gif";
+const thumbnail = "https://i.ibb.co/vx0Qcjsc/c.webp";
 const expity = 24;
 
 const newex: { [key: string]: number; } = {
-    "25828": 0.014, // Yor EX
-    "25829": 0.008, // Aneira EX
+    "25978": 0.009, // Okkotsu EX
+    "25977": 0.009, // Fern & Stark EX
 
-    "17688": 0.003, // Apollo EX
-    "21931": 0.005, // Acheron EX
-    "21930": 0.008, // Lucy EX
-    "18010": 0.01, // Hori EX
-    "17871": 0.006, // Padoru EX
-}; // sum = 0.054
+    "24798": 0.003, // Shorekeeper EX
+    "22612": 0.003, // Itachi Uchiha EX
+    "25695": 0.008, // Firefly EX
+    "19049": 0.008, // Ruminas Valentine EX
+    "17743": 0.006, // Shinpachi EX
+}; // sum = 0.046
 
 const oldex: { [key: string]: number; } = {
-    "18010": 0, // Sara EX
+    "17743": 0, // Shinpachi EX
 }; // sum = 0.0
 
 const expool: { [key: string]: number; } = {
@@ -108,7 +108,7 @@ const exportCommand: SlashCommand = {
         function getDesc() {
             return `Pull for a chance of getting an EX character!\nIncludes the following characters:\n` +
                 // `${Object.keys(newex).map((e) => `**${characters[e as any].name}**`).join(", ")}, ${Object.keys(oldex).map((e) => `**${characters[e as any].name}**`).join(", ")}\n\n` +
-                `**Yor EX**, **Aneira EX**, **Apollo EX**, **Acheron EX**, **Lucy EX**, **Hori EX**, **Padoru EX**\n\n` +
+                `**Yuta Okkotsu EX**, **Fern & Stark EX**, **Itachi Uchiha EX**, **Shorekeeper EX**, **Firefly EX**, **Ruminas Valentine EX**, **Shinpachi EX**\n\n` +
                 `**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **${exDropRate}**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **${50 - exDropRate}**%\n<:STier:869316518675095552> Tier ➜ **50**%\n\n` +
                 `-# Tip: Use up your <a:EXTRA:1138530846144462968> pulls before the next event starts, you'll lose them otherwise!`;
         };

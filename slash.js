@@ -285,10 +285,10 @@ const commands = [
 		// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
 		// egg-hunt: See what you find! 🧺 🐰
 		data: new SlashCommandBuilder()
-			.setName('christmas-present')
-			.setDescription('Unwrap a festive surprise! 🎄 🎁')
-		// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
-		// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
+			.setName('valentines-chocolate')
+			.setDescription('Indulge in a sweet treat! 🍫 🎀')
+			.addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
+			.addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

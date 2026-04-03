@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ButtonInteraction, Message } from "discord.js";
 import charInfo, { characters } from "../Modules/chars.js";
-import { splitTitle, rarity, getRefinement, showPage } from "../Modules/functions.js";
+import { splitTitle, rarity, getRefinement, showPage, rarityColor } from "../Modules/functions.js";
 import { PageRow } from "../Modules/components.js";
 import { SlashCommand } from '../types';
 import { getUserSchema, updateUsers } from "../Modules/queries.js";
@@ -13,7 +13,7 @@ function displayMy(thisChar: charInfo, inv: number[], ref: number, interaction: 
     const img = thisChar.image;
 
     const Embed = new EmbedBuilder()
-        .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d }[thisChar.rarity] || 0xbbffff)
+        .setColor(rarityColor(thisChar.rarity))
         .setImage(img)
         .setThumbnail(rarity(thisChar.rarity))
         .setDescription(`**${thisChar.name}**\n${animeL}\n\n**Ref**. ${refinement}`)

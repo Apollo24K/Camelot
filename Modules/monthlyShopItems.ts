@@ -6,6 +6,7 @@ type MonthlyShopItemCustomOptions = {
     itemid?: number;
     column?: string;
     amount?: number;
+    xp?: number;
 };
 
 export default class MonthlyShopItemInfos {
@@ -146,6 +147,10 @@ export const monthlyShopItems = [
     new MonthlyShopItemInfos("Premium Tier 5", "", "7-Day Premium", 5, 75, "stamps", 64, { tier: 5 }),
     new MonthlyShopItemInfos("Premium Tier 6", "", "7-Day Premium", 5, 120, "stamps", 65, { tier: 6 }),
     new MonthlyShopItemInfos("Premium Tier 7", "", "7-Day Premium", 5, 200, "stamps", 66, { tier: 7 }),
+
+    new MonthlyShopItemInfos("Small Instant XP Potion", "<:small_instant_xp_potion:1411713377511800842> Small Instant XP Potion", "XP Potions", 20, 10, "guild_marks", 67, { itemid: 782, xp: 800 }),
+    new MonthlyShopItemInfos("Large Instant XP Potion", "<:large_instant_xp_potion:1411713396260339873> Large Instant XP Potion", "XP Potions", 10, 35, "guild_marks", 68, { itemid: 783, xp: 2400 }),
+    new MonthlyShopItemInfos("Huge Instant XP Potion", "<:huge_instant_xp_potion:1411713671977107496> Huge Instant XP Potion", "XP Potions", 5, 120, "guild_marks", 69, { itemid: 784, xp: 8000 }),
 
 ];
 

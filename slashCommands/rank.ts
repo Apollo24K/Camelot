@@ -1,6 +1,6 @@
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, showPage, baseEP, RoK } from "../Modules/functions";
+import { getDetailedStats, showPage, baseEP, RoK, rarityEmoji } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { IRoK, SlashCommand } from '../types';
 import { getCachedUserSchema } from '../Modules/queries';
@@ -22,8 +22,6 @@ import { getCachedUserSchema } from '../Modules/queries';
 
     EP = d(HP₁)/dt / d(HP)/dt = (HP₁/(0.99895)^DEF₁)/(100/ATK₁) -> (HP*ATK)/c^DEF
 */
-
-const rarities = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
 
 export const exportCommand: SlashCommand = {
     name: 'rank',
@@ -67,7 +65,7 @@ export const exportCommand: SlashCommand = {
             };
 
             rokS = new Map([...rok.entries()].sort((a, b) => b[1] - a[1]));
-            rokS.forEach((val, key) => sortedArr.push(`${rarities[characters[key].rarity]} ${count++}. ${characters[key].name} - EP: **${val}**`));
+            rokS.forEach((val, key) => sortedArr.push(`${rarityEmoji(characters[key].rarity)} ${count++}. ${characters[key].name} - EP: **${val}**`));
             thumbnail = characters[[...rokS.keys()][0]]?.image || characters[Math.floor(Math.random() * characters.length)].image;
         };
 
@@ -84,7 +82,7 @@ export const exportCommand: SlashCommand = {
             sortedRoK = sortedRoK.filter((e) => e && !interaction.client.blacklist.has(e.id));
             sortedRoK.sort((a, b) => b.ep - a.ep);
 
-            sortedArr = sortedRoK.map((e) => `${rarities[characters[e.char].rarity]} ${count++}. **${characters[e.char].name}** - EP: ${e.ep} => ${e.name}`);
+            sortedArr = sortedRoK.map((e) => `${rarityEmoji(characters[e.char].rarity)} ${count++}. **${characters[e.char].name}** - EP: ${e.ep} => ${e.name}`);
 
             embedTitle = `🏆 ${scope === "server" ? interaction.guild.name : "Camelot"} top characters 🏆`;
 

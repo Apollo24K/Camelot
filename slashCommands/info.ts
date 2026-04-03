@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import { search, splitTitle, baseHP, baseATK, baseDEF, baseEP, baseExpertise, getDetailedStats, rarity, getRefinement, customEmojis, getClassLvl } from "../Modules/functions";
+import { search, splitTitle, baseHP, baseATK, baseDEF, baseEP, baseExpertise, getDetailedStats, rarity, rarityColor, getRefinement, customEmojis, getClassLvl } from "../Modules/functions";
 import { classes } from "../Modules/classes";
 import skinInfo, { skins } from "../Modules/skins";
 import { PageRow } from "../Modules/components";
@@ -44,7 +44,7 @@ const exportCommand: SlashCommand = {
                 expertise = baseExpertise(char.id);
 
                 const Embed = new EmbedBuilder()
-                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                    .setColor(rarityColor(char.rarity))
                     .setImage(char.image)
                     .setThumbnail(rarity(char.rarity))
                     .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n`)
@@ -121,7 +121,7 @@ const exportCommand: SlashCommand = {
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
 
                 const Embed = new EmbedBuilder()
-                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                    .setColor(rarityColor(char.rarity))
                     .setImage(img)
                     .setThumbnail(rarity(char.rarity))
                     .setDescription(
@@ -244,7 +244,7 @@ const exportCommand: SlashCommand = {
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
 
                 const Embed = new EmbedBuilder()
-                    .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                    .setColor(rarityColor(char.rarity))
                     .setThumbnail(img)
                     .setDescription(
                         `**${char.name}** - ${char.anime}\n` +

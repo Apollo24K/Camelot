@@ -2,7 +2,7 @@ import fs from 'fs';
 import { EmbedBuilder, ComponentType, ChatInputCommandInteraction } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
 import { anime } from "../Modules/anime";
-import { splitTitle, rarity, getRefinement, searchItem } from "../Modules/functions";
+import { splitTitle, rarity, getRefinement, searchItem, rarityColor } from "../Modules/functions";
 import { monthlyShopItems } from "../Modules/monthlyShopItems";
 import { achievements } from "../Modules/achievements";
 import { dailies } from "../Modules/dailyQuests";
@@ -20,7 +20,7 @@ function displayMy(thisChar: charInfo, inv: number[], ref: number, interaction: 
     // if (premium[message.author.id] > 3) if (customSettings[message.author.id + message.guild.id] && customSettings[message.author.id + message.guild.id].cimg[thisChar.id]) img = customSettings[message.author.id + message.guild.id].cimg[thisChar.id];
 
     const Embed = new EmbedBuilder()
-        .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[thisChar.rarity])
+        .setColor(rarityColor(thisChar.rarity))
         .setImage(img)
         .setThumbnail(rarity(thisChar.rarity))
         .setDescription(`**${thisChar.name}**\n${animeL}\n\n**Ref**. ${refinement}`)
@@ -117,7 +117,7 @@ const exportCommand: SlashCommand = {
 
                 desc3.sort((a, b) => b.val - a.val);
 
-                Embed.setDescription(desc3.map((e) => e.text).join("\n")).setThumbnail(desc3[0].image).setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[desc3[0].rarity]);
+                Embed.setDescription(desc3.map((e) => e.text).join("\n")).setThumbnail(desc3[0].image).setColor(rarityColor(desc3[0].rarity));
                 interaction.reply({ embeds: [Embed] });
 
                 // Daily Quests

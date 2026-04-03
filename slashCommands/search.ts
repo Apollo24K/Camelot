@@ -1,11 +1,11 @@
 import { EmbedBuilder, ComponentType } from "discord.js";
 import charInfo, { characters, uniqueAnimeCharacters } from "../Modules/chars";
-import { searchAnime, showPage, splitTitle, rarity } from "../Modules/functions";
+import { searchAnime, showPage, splitTitle, rarity, rarityColor, rarityEmoji } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from "../types";
 import { getUserSchema } from "../Modules/queries";
 
-type SortedCharInfos = { "EX": charInfo[], "SS": charInfo[], "S": charInfo[], "A": charInfo[], "B": charInfo[], "C": charInfo[], "D": charInfo[]; };
+type SortedCharInfos = { "VIP": charInfo[], "EX": charInfo[], "SS": charInfo[], "S": charInfo[], "A": charInfo[], "B": charInfo[], "C": charInfo[], "D": charInfo[]; };
 
 const exportCommand: SlashCommand = {
     name: 'search',
@@ -26,7 +26,7 @@ const exportCommand: SlashCommand = {
         if (!fastCheck || !fastCheck.length) return;
         const animeName = fastCheck[0].anime;
 
-        let sorted: SortedCharInfos = { "EX": [], "SS": [], "S": [], "A": [], "B": [], "C": [], "D": [] };
+        let sorted: SortedCharInfos = { "VIP": [], "EX": [], "SS": [], "S": [], "A": [], "B": [], "C": [], "D": [] };
         fastCheck.forEach((b) => {
             if (searchflag !== "missing" || !stats.chars.includes(b.id)) sorted[b.rarity].push(b);
         });
@@ -46,7 +46,7 @@ const exportCommand: SlashCommand = {
             };
 
             const Embed = new EmbedBuilder()
-                .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[allChars[currPage - 1].rarity])
+                .setColor(rarityColor(allChars[currPage - 1].rarity))
                 .setThumbnail(rarity(allChars[currPage - 1].rarity))
                 .setDescription(`**${allChars[currPage - 1].name}**${uniq.includes(allChars[currPage - 1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage - 1].id}`)
                 .setImage(allChars[currPage - 1].image)
@@ -58,7 +58,7 @@ const exportCommand: SlashCommand = {
                     if (r.customId === "prev") currPage > 1 ? currPage-- : currPage = pagesTotal;
                     else currPage < pagesTotal ? currPage++ : currPage = 1;
 
-                    Embed.setThumbnail(rarity(allChars[currPage - 1].rarity)).setDescription(`**${allChars[currPage - 1].name}**${uniq.includes(allChars[currPage - 1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage - 1].id}`).setImage(allChars[currPage - 1].image).setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[allChars[currPage - 1].rarity]).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setThumbnail(rarity(allChars[currPage - 1].rarity)).setDescription(`**${allChars[currPage - 1].name}**${uniq.includes(allChars[currPage - 1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage - 1].id}`).setImage(allChars[currPage - 1].image).setColor(rarityColor(allChars[currPage - 1].rarity)).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     interaction.editReply({ embeds: [Embed] });
                 });
 
@@ -88,10 +88,9 @@ const exportCommand: SlashCommand = {
         // eslint-disable-next-line no-inner-declarations
         function charPage(desc = "") {
             const showChars = showPage(currPage, allChars, elementsPerPage);
-            let sorted: SortedCharInfos = { "EX": [], "SS": [], "S": [], "A": [], "B": [], "C": [], "D": [] };
+            let sorted: SortedCharInfos = { "VIP": [], "EX": [], "SS": [], "S": [], "A": [], "B": [], "C": [], "D": [] };
             showChars.forEach((b) => sorted[b.rarity].push(b));
-            let emoji = { "EX": "<a:EXTRA:1138530846144462968>", "SS": "<:SSTier:869316489931546644>", "S": "<:STier:869316518675095552>", "A": "<:ATier:869316558013464627>", "B": "<:BTier:869316586803179571>", "C": "<:CTier:869316602858991657>", "D": "<:DTier:869316616071032843>" };
-            Object.keys(sorted).forEach((b) => sorted[b as keyof SortedCharInfos].length ? desc += `\n\n${emoji[b as keyof SortedCharInfos]} **Tier**\n> ` + tierNames(sorted[b as keyof SortedCharInfos]).join("\n> ") : false);
+            Object.keys(sorted).forEach((b) => sorted[b as keyof SortedCharInfos].length ? desc += `\n\n${rarityEmoji(b as keyof SortedCharInfos)} **Tier**\n> ` + tierNames(sorted[b as keyof SortedCharInfos]).join("\n> ") : false);
             return desc;
         };
 

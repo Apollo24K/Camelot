@@ -134,7 +134,7 @@ export default class Avalon {
             };
         };
 
-        if (side.wing) {
+        if (side.wing) { // Accelerator
             switch (side.wing) {
                 case 1: iconbar += "<:blackwing:1459920122549633285>"; break;
                 case 2: iconbar += "🪽"; break;
@@ -152,8 +152,28 @@ export default class Avalon {
             };
         };
 
+        if (side.lunarDomain) iconbar += "<a:columult:1480218976184176847>"; // Columbina EX
+
+        if (side.dragonbane >= 0) {
+            switch (Math.floor(side.dragonbane / 5)) {
+                case 0: iconbar += "<a:abi0:1477495568493445272>"; break;
+                case 1: iconbar += "<a:abi1:1477495624638136380>"; break;
+                case 2: iconbar += "<a:abi2:1477495683362721964>"; break;
+                case 3: iconbar += "<a:abi3:1477495734789210112>"; break;
+                default: iconbar += "<a:abi3:1477495734789210112>"; break;
+            };
+        };
+
         // GENERAL
         if (side.timeFrozen) iconbar += "<:noATK:1450109657426300948>";
+        if (side.burnduration > 0) {
+            switch (side.burntype) {
+                case 1: iconbar += "<a:burn:1475075402295803914>"; break; // Default
+                case 2: iconbar += "<a:plasma:1480572957788082267>"; break; // Wizard
+                case 3: iconbar += "<a:vivium:1480572908496490710>"; break; // Arthur Leywin
+                default: iconbar += "<a:burn:1475075402295803914>"; break;
+            };
+        };
 
         // Any future status
         return iconbar;

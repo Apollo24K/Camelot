@@ -5,7 +5,7 @@ import { OfferRow, shardEmoji } from "../Modules/components";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 
-const rarPrice = { "EX": 20000, "SS": 5000, "S": 1000, "A": 500, "B": 250, "C": 100, "D": 50 };
+const rarPrice = { "VIP": 250_000, "EX": 25_000, "SS": 5_000, "S": 1_000, "A": 500, "B": 250, "C": 100, "D": 50 };
 
 const exportCommand: SlashCommand = {
     name: 'sell',
@@ -23,9 +23,9 @@ const exportCommand: SlashCommand = {
             if (subcommand === "all") copies = 0;
             if (copies < 0) copies = 1;
 
-            let tinv: number[], price = 0, shards = { "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
+            let tinv: number[], price = 0, shards = { "VIP": 0, "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
             if (rarity) tinv = stats.chars.filter((e) => characters[e].rarity === rarity);
-            else tinv = stats.chars.filter((e) => characters[e].rarity !== "SS" && characters[e].rarity !== "EX");
+            else tinv = stats.chars.filter((e) => characters[e].rarity !== "SS" && characters[e].rarity !== "EX" && characters[e].rarity !== "VIP");
 
             let uniq = [...new Set(tinv)];
             uniq.forEach((id) => {
@@ -33,7 +33,7 @@ const exportCommand: SlashCommand = {
                 if (amount > copies && !stats.charlock.includes(id) && !stats.animelock.includes(characters[id].animeInfo.id)) {
                     // Calculate price
                     price += rarPrice[characters[id].rarity] * (amount - copies);
-                    shards[characters[id].rarity === "EX" ? "SS" : characters[id].rarity] += 16 * (amount - copies);
+                    shards[["VIP", "EX"].includes(characters[id].rarity) ? "SS" : characters[id].rarity] += 16 * (amount - copies);
                 };
             });
 
@@ -50,17 +50,17 @@ const exportCommand: SlashCommand = {
                     stats.chars = _inv?.chars ?? [];
 
                     if (rarity) tinv = stats.chars.filter((e) => characters[e].rarity === rarity);
-                    else tinv = stats.chars.filter((e) => characters[e].rarity !== "SS" && characters[e].rarity !== "EX");
+                    else tinv = stats.chars.filter((e) => characters[e].rarity !== "SS" && characters[e].rarity !== "EX" && characters[e].rarity !== "VIP");
 
                     const finalChars: number[] = [];
-                    price = 0, shards = { "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
+                    price = 0, shards = { "VIP": 0, "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
                     uniq = [...new Set(tinv)];
                     uniq.forEach((id) => {
                         const amount = tinv.reduce((acc, curr) => acc + (curr === id ? 1 : 0), 0);
                         if (amount > copies && !stats.charlock.includes(id) && !stats.animelock.includes(characters[id].animeInfo.id)) {
                             // Calculate price
                             price += rarPrice[characters[id].rarity] * (amount - copies);
-                            shards[characters[id].rarity === "EX" ? "SS" : characters[id].rarity] += 16 * (amount - copies);
+                            shards[["VIP", "EX"].includes(characters[id].rarity) ? "SS" : characters[id].rarity] += 16 * (amount - copies);
 
                             // Splice from inventory
                             for (let k = 0; k < (amount - copies); k++) {
@@ -102,7 +102,7 @@ const exportCommand: SlashCommand = {
         if (subcommand === "characters") {
             const choices = (interaction.options.getString('characters') || "").split(",").map((e) => e.trim());
 
-            let chars = [], price = 0, shards = { "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
+            let chars = [], price = 0, shards = { "VIP": 0, "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
             for (const c of choices) {
                 const char = search(c, stats.chars.slice(0, stats.chars.length - chars.length), interaction, true);
                 if (!char?.name) continue;
@@ -112,7 +112,7 @@ const exportCommand: SlashCommand = {
 
                 chars.push(char);
                 price += rarPrice[char.rarity];
-                shards[char.rarity === "EX" ? "SS" : char.rarity] += 16;
+                shards[["VIP", "EX"].includes(char.rarity) ? "SS" : char.rarity] += 16;
             };
 
             if (chars.length === 0) return interaction.reply(`No match found`);

@@ -2,7 +2,7 @@ import { Buffs, IbuffInfo, ItemAbility, ItemCategory, ItemRarity, ItemType, Prim
 import { ButtonBuilder, ButtonStyle, ActionRowBuilder } from "discord.js";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
-import { dealDamage, addHeal, noTimeout } from "./functions";
+import { dealDamage, addHeal, noTimeout, procburn } from "./functions";
 import { AbilityResponse } from "./components";
 import { Ability } from "./abilities";
 
@@ -2023,11 +2023,27 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Drains **2.5%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **5%** of the wielders HP instead.", "The legendary sword known as the Draiocht is said to have been forged by the ancient vampire lords, imbued with the power to drain the life force of its victims. Its razor-sharp blade, forged from the purest silver, is capable of slicing through flesh and bone with ease. Those who wield it are said to be blessed with the strength and immortality of the vampire race, but beware, for the sword's thirst for blood is insatiable.", "legendary", 288),
     new weaponInfo("Fafnir's Breath", "weapon", "sword", ["chest"], "<:fafnirs_breath:1068510727352111246>", "https://i.imgur.com/33iwj5O.png", "atk", 50, 820, "cd", 0.08, 0.5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
 
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < 0.35) eStats.burnduration++;
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
         return AbilityResponse.SUCCESS;
-    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielder's HP, it burns the equivalent of **8%** of the wielders HP instead.", "Fafnir's Breath was a powerful sword crafted by the dwarves during the height of their civilization. It is a powerful sword imbued with the fiery breath of the great dragon Fafnir. In battle, it is said to emit a fierce heat that can scorch enemies with the mere touch of its blade.", "legendary", 289),
+    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielder's HP, it burns the equivalent of **8%** of the wielders HP instead. This also has a **35%** chance to apply BURNING [ <a:burn:1475075402295803914> ] for **1** round (stackable)\n\n_`🔎` BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "Fafnir's Breath was a powerful sword crafted by the dwarves during the height of their civilization. It is a powerful sword imbued with the fiery breath of the great dragon Fafnir. In battle, it is said to emit a fierce heat that can scorch enemies with the mere touch of its blade.", "legendary", 289),
     new weaponInfo("Galatine", "weapon", "sword", ["chest"], "<:galatine:1068514102261055508>", "https://i.imgur.com/h7EPRDr.png", "atk", 48, 800, "md", 48, 800, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const atk = eStats.atk, md = eStats.md;
         eStats.atk = md, eStats.md = atk;
@@ -2103,7 +2119,7 @@ export const items = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Fires an electric shock dealing **80%** true damage every 4 rounds.\n\n_true damage: ignores shield_", "The Thunderfork glimmered in the light, its two forks of electric energy crackling with power. It was said that the Thunderfork was crafted by the ancient dwarven smiths of the Stormpeaks, imbued with the power of the skies. In battle, the Thunderfork was a weapon of deadly precision, striking fear into the hearts of enemies. Those who wielded it were said to be able to call down the thunder itself, unleashing its devastating power upon their enemies.", "legendary", 297),
+    }, "Fires an electric shock dealing **80%** true damage every 4 rounds.\n\n`🔎` _true damage: ignores shield_", "The Thunderfork glimmered in the light, its two forks of electric energy crackling with power. It was said that the Thunderfork was crafted by the ancient dwarven smiths of the Stormpeaks, imbued with the power of the skies. In battle, the Thunderfork was a weapon of deadly precision, striking fear into the hearts of enemies. Those who wielded it were said to be able to call down the thunder itself, unleashing its devastating power upon their enemies.", "legendary", 297),
     new weaponInfo("Tizona", "weapon", "sword", ["crafting", "chest"], "<:tizona:1068516021423591534>", "https://i.imgur.com/HLw7Ar8.png", "md", 56, 837, "cd", 0.08, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.mr -= Math.floor(eStats.mr * 0.2);
         ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * 0.2), 9999));
@@ -2137,11 +2153,27 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder gains an additional **30%** magic damage buff when their mana bar is at least **80%** full.", "Aetherius is imbued with the very essence of the skies, channeling the boundless power of the heavens into devastating blasts of magical energy. Those who wield it are said to be able to call down the wrath of the gods themselves, smiting their foes with the fury of the storm.", "legendary", 301),
     new weaponInfo("Avalon's Fury", "weapon", "staff", ["chest"], "<:avalons_fury:1068521931063689316>", "https://i.imgur.com/EMNhQn4.png", "md", 54, 847, "md%", 0.06, 0.18, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
 
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < 0.35) eStats.burnduration++;
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
         return AbilityResponse.SUCCESS;
-    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Avalon's Fury is a staff of ancient power, wielded by the most skilled and powerful of magicians. With a single swing, it can summon forth a storm of lightning and fire, scorching the earth and laying waste to entire armies. Those who dare to wield its power must be prepared to face the fury of the elements, for Avalon's Fury is a weapon not to be trifled with.", "legendary", 302),
+    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead. This also has a **35%** chance to apply BURNING [ <a:burn:1475075402295803914> ] for **1** round (stackable)\n\n_`🔎` BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "Avalon's Fury is a staff of ancient power, wielded by the most skilled and powerful of magicians. With a single swing, it can summon forth a storm of lightning and fire, scorching the earth and laying waste to entire armies. Those who dare to wield its power must be prepared to face the fury of the elements, for Avalon's Fury is a weapon not to be trifled with.", "legendary", 302),
     new weaponInfo("Eye of the Leviathan", "weapon", "staff", ["crafting", "chest"], "<:eye_of_the_leviathan:1068521936340140152>", "https://i.imgur.com/PMu7rOE.png", "md", 50, 820, "cd", 0.08, 0.5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const def = eStats.def, mr = eStats.mr;
         eStats.def = mr;
@@ -2264,7 +2296,7 @@ export const items = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Stings the enemy every 4 rounds dealing **60%** true damage.\n\n_true damage: ignores shield_", "The Venomshank staff is imbued with the deadly powers of venom. With each strike, it unleashes a toxic blast that corrupts all those it touches. Beware the wrath of the Venomshank, for its sting is fatal.", "legendary", 317),
+    }, "Stings the enemy every 4 rounds dealing **60%** true damage.\n\n`🔎` _true damage: ignores shield_", "The Venomshank staff is imbued with the deadly powers of venom. With each strike, it unleashes a toxic blast that corrupts all those it touches. Beware the wrath of the Venomshank, for its sting is fatal.", "legendary", 317),
     new weaponInfo("Verdant Vortex", "weapon", "staff", ["crafting", "chest"], "<:verdant_vortex:1068529325806194698>", "https://i.imgur.com/HbyZLLj.png", "md", 51, 833, "dodge", 0.03, 0.14, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.dodgeHeal += 0.05;
 
@@ -2286,12 +2318,23 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder has **100%** crit rate during the first 4 rounds.", "As Death's Bite descends upon its foes, its sharp blade glints in the light, ready to deliver the final blow. With each swing, the axe unleashes a powerful and deadly force, tearing through armor and flesh with ease. Those who dare to face it in combat will feel the cold embrace of death in its devastating strikes.", "legendary", 320),
     new weaponInfo("Death's Fragrance", "weapon", "axe", ["chest"], "<:deaths_fragrance:1068531128065077389>", "https://i.imgur.com/bXI5QCd.png", "atk", 60, 884, "cd", 0.05, 0.37, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.03);
         ebuff.hp.push(new buffInfo("+", -burn, 5));
         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:deaths_fragrance:1068531128065077389> **${char.name}**`, { atkMultiplier: 1.6, magicDamage: true });
+        eStats.burnduration += 5;
 
         return AbilityResponse.SUCCESS;
-    }, "Immediately after the battle begins, deals **160%** damage to the enemy. Then burns **3%** of max HP from the enemy for the next 5 rounds. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **6%** of the wielders HP instead.", "As Death's Fragrance cleaves through the air, the scent of decay and destruction follows in its wake. Those who dare to stand against its wielder are met with a swift and brutal end, their bodies left to rot as a warning to others. In the heat of battle, this fearsome axe is a harbinger of death, bringing forth the end of all who oppose it.", "legendary", 321),
+    }, "Immediately after the battle begins, deals **160%** damage to the enemy. Then burns **3%** of max HP from the enemy for the next 5 rounds. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **6%** of the wielders HP instead. The enemy will also be applied with BURNING for **5** rounds (stackable)\n\n_`🔎` BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "As Death's Fragrance cleaves through the air, the scent of decay and destruction follows in its wake. Those who dare to stand against its wielder are met with a swift and brutal end, their bodies left to rot as a warning to others. In the heat of battle, this fearsome axe is a harbinger of death, bringing forth the end of all who oppose it.", "legendary", 321),
     new weaponInfo("Demonic Gram", "weapon", "axe", ["chest"], "<:demonic_gram:1068531132099993751>", "https://i.imgur.com/a1aoIZP.png", "atk", 56, 847, "md", 39, 683, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.def -= Math.floor(Math.min(eStats.def * (0.04 * Math.min(10, matchStats.round)), 1055));
@@ -2339,7 +2382,7 @@ export const items = [
         myStats.atk += Math.floor(myStats.atk * 0.15);
 
         return AbilityResponse.SUCCESS;
-    }, "All attacks deal true damage. The wielder has **15%** increased attack.\n\n_true damage: ignores shield_", "Forged in the depths of a cursed land, the Scourgeborne axe was once wielded by a ruthless warlord who sought to spread destruction and misery wherever he went. Those who face it in combat are met with a slow and brutal death, as the Scourgeborne cleaves through their armor and flesh. Only the strongest and bravest warriors dare to wield this weapon, for it is known to consume the souls of those who wield it for too long.", "legendary", 327),
+    }, "All attacks deal true damage. The wielder has **15%** increased attack.\n\n`🔎` _true damage: ignores shield_", "Forged in the depths of a cursed land, the Scourgeborne axe was once wielded by a ruthless warlord who sought to spread destruction and misery wherever he went. Those who face it in combat are met with a slow and brutal death, as the Scourgeborne cleaves through their armor and flesh. Only the strongest and bravest warriors dare to wield this weapon, for it is known to consume the souls of those who wield it for too long.", "legendary", 327),
     new weaponInfo("Skull Splitter", "weapon", "axe", ["chest"], "<:skull_splitter:1068531151897120768>", "https://i.imgur.com/pcPfdy9.png", "atk", 60, 877, "br", 0.05, 0.17, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.blockBuffDef += 155;
 
@@ -2533,7 +2576,7 @@ export const items = [
         myStats.ignoreShield = true;
 
         return AbilityResponse.SUCCESS;
-    }, "Decreases enemy defense by **10%**. All attacks deal true damage.\n\n_true damage: ignores shield_", "With its gleaming, razor-sharp edge and sturdy handle, Cleaver of Titans is a weapon of pure destruction. Those who wield it are able to slice through even the toughest of foes with ease, leaving a trail of vanquished giants in their wake. Some say it was forged from the very essence of the earth itself, imbued with the strength of the titans it was meant to fell. Whether wielded by a hero or a villain, the Cleaver of Titans is a force to be reckoned with.", "legendary", 349),
+    }, "Decreases enemy defense by **10%**. All attacks deal true damage.\n\n`🔎` _true damage: ignores shield_", "With its gleaming, razor-sharp edge and sturdy handle, Cleaver of Titans is a weapon of pure destruction. Those who wield it are able to slice through even the toughest of foes with ease, leaving a trail of vanquished giants in their wake. Some say it was forged from the very essence of the earth itself, imbued with the strength of the titans it was meant to fell. Whether wielded by a hero or a villain, the Cleaver of Titans is a force to be reckoned with.", "legendary", 349),
     new weaponInfo("Death Adder", "weapon", "lance", ["crafting", "chest"], "<:death_adder:1068648978637410355>", "https://i.imgur.com/WxHCVu9.png", "atk", 56, 856, "cd", 0.08, 0.44, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const addcr = Math.min(myStats.cr, 0.25);
         mybuff.cr.push(new buffInfo("+", addcr, 8));
@@ -2550,11 +2593,27 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder has twice as much crit damage during the first 8 rounds (max +40%).", "The Life Subtractor is a weapon of death and destruction, crafted with the sole purpose of draining the life force from its victims. With a single strike, this lance can leave even the strongest of warriors on the brink of death, their life essence siphoned away by its dark power. Wield it with caution, for the Life Subtractor has a thirst for blood that can never be quenched.", "legendary", 351),
     new weaponInfo("Ignis Aureus", "weapon", "lance", ["chest"], "<:ignis_aureus:1068648981925728407>", "https://i.imgur.com/KHXDQ6i.png", "atk", 52, 837, "sm", 2, 10, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
 
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < 0.35) eStats.burnduration++;
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
         return AbilityResponse.SUCCESS;
-    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Forged in the flames of Mount Vesuvius, the Ignis Aureus is a weapon of unmatched power and beauty. Its golden patterns shimmer in the sunlight, striking fear into the hearts of enemies. With a single thrust, this lance can unleash a devastating inferno, incinerating anything in its path. Those who wield the Ignis Aureus are truly masters of fire, commanding its destructive power with precision and grace.", "legendary", 352),
+    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead. This also has a **35%** chance to apply BURNING [ <a:burn:1475075402295803914> ] for **1** round (stackable)\n\n_`🔎` BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "Forged in the flames of Mount Vesuvius, the Ignis Aureus is a weapon of unmatched power and beauty. Its golden patterns shimmer in the sunlight, striking fear into the hearts of enemies. With a single thrust, this lance can unleash a devastating inferno, incinerating anything in its path. Those who wield the Ignis Aureus are truly masters of fire, commanding its destructive power with precision and grace.", "legendary", 352),
     new weaponInfo("Ildathach", "weapon", "lance", ["crafting", "chest"], "<:ildathach:1068648986405261374>", "https://i.imgur.com/tiqy8WE.png", "atk", 54, 840, "cd", 0.06, 0.4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.critbleed = true;
         myStats.critbleedlast = 3;
@@ -2594,7 +2653,7 @@ export const items = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Fires an electric shock dealing **60%** true damage every 3 rounds.\n\n_true damage: ignores shield_", "As the skies darken and the winds howl, the Stormbolt crackles with energy. With each thundering thrust, it unleashes a devastating bolt of lightning, striking fear into the hearts of its enemies. In the midst of the tempest, this weapon is a master of the storm.", "legendary", 357),
+    }, "Fires an electric shock dealing **60%** true damage every 3 rounds.\n\n`🔎` _true damage: ignores shield_", "As the skies darken and the winds howl, the Stormbolt crackles with energy. With each thundering thrust, it unleashes a devastating bolt of lightning, striking fear into the hearts of its enemies. In the midst of the tempest, this weapon is a master of the storm.", "legendary", 357),
     new weaponInfo("Swan Song", "weapon", "lance", ["crafting", "chest"], "<:swan_song:1068649157105037352>", "https://i.imgur.com/AhmnR5p.png", "atk", 53, 842, "mg", 1, 4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.atk += Math.floor(myStats.atk * 0.1);
         myStats.md += Math.floor(myStats.md * 0.1);
@@ -2697,11 +2756,26 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Drains **6%** HP from the enemy and adds it to the wielder every 3rd round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **12%** of the wielders HP instead.", "Forged in the fiery depths of Elysium, Elysium's Edge is a weapon of pure grace and precision. Its sharp, glistening blade is imbued with the power of the gods, capable of slicing through even the toughest armor with ease. In the hands of a skilled warrior, this dagger is a weapon of true destruction, capable of striking fear into the hearts of even the bravest of foes.", "legendary", 369),
     new weaponInfo("Ember's Kiss", "weapon", "dagger", ["chest"], "<:embers_kiss:1068703206391164998>", "https://i.imgur.com/j9ahUSM.png", "atk", 52, 834, "cd", 0.07, 0.48, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         const burn = Math.floor(Math.min(eStats.maxhp, myStats.maxhp * 2) * 0.04);
         ebuff.hp.push(new buffInfo("+", -burn, 9999));
 
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < 0.35) eStats.burnduration++;
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
         return AbilityResponse.SUCCESS;
-    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead.", "Ember's Kiss is a fiery, glowing dagger that burns with the intensity of a thousand suns. Its handle is forged from the finest mithril, and its edge able to cut through fire. Those who wield this weapon feel a burning passion in their hearts, and their strikes are imbued with the power of the flames. In battle, Ember's Kiss leaves a trail of scorched earth and smoldering ashes, marking the path of its wielder's relentless assault.", "legendary", 370),
+    }, "Burns **4%** of max HP from the enemy every round. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **8%** of the wielders HP instead. This also has a **35%** chance to apply BURNING [ <a:burn:1475075402295803914> ] for **1** round (stackable)\n\n_`🔎` BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "Ember's Kiss is a fiery, glowing dagger that burns with the intensity of a thousand suns. Its handle is forged from the finest mithril, and its edge able to cut through fire. Those who wield this weapon feel a burning passion in their hearts, and their strikes are imbued with the power of the flames. In battle, Ember's Kiss leaves a trail of scorched earth and smoldering ashes, marking the path of its wielder's relentless assault.", "legendary", 370),
     new weaponInfo("Fianta", "weapon", "dagger", ["crafting", "chest"], "<:fianta:1068703209557864478>", "https://i.imgur.com/KJtG6Ag.png", "md", 51, 827, "atk", 42, 658, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.atk += Math.floor(myStats.atk * Math.min(0.1 * Math.floor(matchStats.round / 4), 0.4));
@@ -3175,18 +3249,29 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Drains **3%** HP from the enemy and adds it to the wielder every round. If enemy HP is more than twice of the wielders HP, it drains the equivalent of **6%** of the wielders HP instead.", "The Nightwing Myst bow is a sleek and deadly weapon, perfectly balanced and designed for speed and accuracy. Its dark finish is nearly impossible to see in the shadows, making it the perfect tool for stealthy and deadly archery. The Nightwing Myst is a favorite among assassins and other shadowy figures, who rely on its quick strike and silent power to eliminate their targets without being detected. With the Nightwing Myst in hand, you can strike fear into the hearts of your enemies and leave them trembling in the darkness.", "mythical", 413),
     new weaponInfo("Sagitta Solis", "weapon", "bow", ["chest"], "<:sagitta_solis:1069016593356566528>", "https://i.imgur.com/xZmQlxx.png", "atk", 104, 1052, "md", 86, 857, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         myStats.replaceButton.atk = {
             "emoji": "<:sagitta_solis:1069016593356566528>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:sagitta_solis:1069016593356566528> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 3));
+                if (Math.random() < 0.35) eStats.burnduration += 2;
 
                 return AbilityResponse.SUCCESS;
             },
         };
 
         return AbilityResponse.SUCCESS;
-    }, "Normal attacks additionally burn the enemy, dealing **12.5%** true damage for 3 rounds.\n\n_true damage = ignores shield_", "The Sagitta Solis, also known as the Arrow of the Sun, is a weapon of great power and beauty. Crafted by powerful spirits of light, its gleaming golden bowstring is imbued with the warmth and radiance of the sun itself. As it flies true and swift, it brings forth a blazing trail of light, illuminating the battlefield and striking fear into the hearts of the enemy. In the hands of a skilled archer, the Sagitta Solis is a weapon of unparalleled precision and might.", "mythical", 414),
+    }, "Normal attacks are altered to deal **100%** damage, before inflicting a DoT equal to **12.5%** of your normal attack as true damage for **3** rounds. This has a **35%** chance to apply BURNING [ <a:burn:1475075402295803914> ] for **2** rounds (stackable)\n\n`🔎` _true damage = ignores shield_ | _BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "The Sagitta Solis, also known as the Arrow of the Sun, is a weapon of great power and beauty. Crafted by powerful spirits of light, its gleaming golden bowstring is imbued with the warmth and radiance of the sun itself. As it flies true and swift, it brings forth a blazing trail of light, illuminating the battlefield and striking fear into the hearts of the enemy. In the hands of a skilled archer, the Sagitta Solis is a weapon of unparalleled precision and might.", "mythical", 414),
     new weaponInfo("Tundral", "weapon", "bow", ["chest"], "<:tundral:1069017127874461810>", "https://i.imgur.com/Pt7OKU8.png", "atk", 86, 948, "mg", 1, 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         if (myStats.sm >= (myStats.mana * 0.6)) {
             myStats.atk += Math.floor(myStats.atk * 0.33);
@@ -3326,7 +3411,7 @@ export const items = [
         //Object.keys(ebuff).forEach((e) => ebuff[e as keyof Buffs] = []);
 
         return AbilityResponse.SUCCESS;
-    }, "The wielder begins battles with **10x** `🥩` and `🦴`.\nOn the **9th** round, the abyss consumes all `🥩` and `🦴`. For every `🥩` consumed, raises own MD by **2%** for **2** rounds. For every `🦴`, raises own critical damage by **4%** for **2** rounds. After that, the abyss rests for **10** rounds before engulfing again. The wielder deals magic damage by default.\n\n_This item is synergistic with other `Flesh and Bone` items._", "The Abyssal Shard is a weapon of pure darkness, forged in the depths of the underworld by a powerful demon. Its jagged edge glints with malevolent intent, and those who wield it are said to be consumed by a thirst for destruction and power. Those who face the Abyssal Shard in combat are often struck with fear, knowing that they are facing the wrath of the abyss itself.", "mythical", 422),
+    }, "The wielder begins battles with **10x** `🥩` and `🦴`.\nOn the **9th** round, the abyss consumes all `🥩` and `🦴`. For every `🥩` consumed, raises own MD by **2%** for **2** rounds. For every `🦴`, raises own critical damage by **4%** for **2** rounds. After that, the abyss rests for **10** rounds before engulfing again. The wielder deals magic damage by default.\n\n`🔎` _This item is synergistic with other `Flesh and Bone` items._", "The Abyssal Shard is a weapon of pure darkness, forged in the depths of the underworld by a powerful demon. Its jagged edge glints with malevolent intent, and those who wield it are said to be consumed by a thirst for destruction and power. Those who face the Abyssal Shard in combat are often struck with fear, knowing that they are facing the wrath of the abyss itself.", "mythical", 422),
 
     new weaponInfo("Arcane Slicer", "weapon", "dagger", ["chest"], "<:arcane_slicer:1069019806881284137>", "https://i.imgur.com/MbSEzOA.png", "md", 96, 1085, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.arcaneSlice = 0;
@@ -3353,18 +3438,29 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Non-critical hits on the enemy grant **1x** `Slice` (Up to **10**, can be procced once every round). Every `Slice` raises MD by **3%**. After any non-critical hit, if the wielder has **10x** `Slice`, consumes **10x** to unleash mystic arcane power, dealing **120%** undodgeable MD. This attack will not break combos.", "The Arcane Slicer is a dagger imbued with ancient magic, capable of slicing through even the toughest of defenses. Its razor-sharp blade glows with a faint, otherworldly light, making it a formidable weapon in the hands of those skilled in the arcane arts.", "mythical", 423),
     new weaponInfo("Flaming Fomor", "weapon", "dagger", ["chest"], "<:flaming_fomor:1069020248398897202>", "https://i.imgur.com/7sryILJ.png", "atk", 108, 1137, "cd", 0.12, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         myStats.replaceButton.atk = {
             "emoji": "<:flaming_fomor:1069020248398897202>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:flaming_fomor:1069020248398897202> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.16), 2));
+                eStats.burnduration++;
 
                 return AbilityResponse.SUCCESS;
             },
         };
 
         return AbilityResponse.SUCCESS;
-    }, "Normal attacks additionally burn the enemy, dealing **16%** true damage for 2 rounds (stackable).\n\n_true damage = ignores shield_", "Forged in the fiery depths of the Otherworld, the Flaming Fomor is said to be imbued with the power of flames. Its blade is made from pure molten lava, and is said to be capable of scorching the earth itself. Those who wield it are said to be favored by the Fomorians, and can call down the wrath of the inferno upon their enemies.", "mythical", 424),
+    }, "Normal attacks are altered to deal **100%** damage. This also deals **16%** of the attack's damage as true damage for **2** rounds (stackable). This also applies BURNING [ <a:burn:1475075402295803914> ] for **1** round (stackable)\n\n`🔎` _true damage = ignores shield_ | _BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "Forged in the fiery depths of the Otherworld, the Flaming Fomor is said to be imbued with the power of flames. Its blade is made from pure molten lava, and is said to be capable of scorching the earth itself. Those who wield it are said to be favored by the Fomorians, and can call down the wrath of the inferno upon their enemies.", "mythical", 424),
     new weaponInfo("Jade Spine", "weapon", "dagger", ["chest"], "<:jade_spine:1069020251775303680>", "https://i.imgur.com/gQV5NkI.png", "atk", 109, 1172, "cr", 0.08, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if (matchStats.round % 5 === 0) {
@@ -3396,7 +3492,7 @@ export const items = [
         mybuff.cd.push(new buffInfo("+", 0.123, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Normal attacks deal **123%** true damage. The wielder has **12.3%** increased crit rate and crit damage.\n\n_true damage = ignores shield_", "The Oath of Shifting Worlds is a mythical weapon that is said to have been forged by the powerful beings of the spirit realm. It is said that the dagger was created to be wielded by a chosen champion who would use its powers to maintain balance between the mortal world and the spirit realm. The blade of the Oath of Shifting Worlds is made of a shimmering, otherworldly metal that is said to be able to cut through any material and even damage the very essence of a being's soul. However, it is also said that those who misuse the dagger's power will be punished by the spirits, who will strip them of their ability to wield the weapon and banish them from the spirit realm forever. Despite its great power, the Oath of Shifting Worlds is said to be a weapon of last resort, used only in times of great crisis when the balance between the mortal world and the spirit realm is threatened. It is a weapon of great responsibility, and only those who are truly worthy and selfless are able to wield it without succumbing to its power.", "mythical", 426),
+    }, "Normal attacks deal **123%** true damage. The wielder has **12.3%** increased crit rate and crit damage.\n\n`🔎` _true damage = ignores shield_", "The Oath of Shifting Worlds is a mythical weapon that is said to have been forged by the powerful beings of the spirit realm. It is said that the dagger was created to be wielded by a chosen champion who would use its powers to maintain balance between the mortal world and the spirit realm. The blade of the Oath of Shifting Worlds is made of a shimmering, otherworldly metal that is said to be able to cut through any material and even damage the very essence of a being's soul. However, it is also said that those who misuse the dagger's power will be punished by the spirits, who will strip them of their ability to wield the weapon and banish them from the spirit realm forever. Despite its great power, the Oath of Shifting Worlds is said to be a weapon of last resort, used only in times of great crisis when the balance between the mortal world and the spirit realm is threatened. It is a weapon of great responsibility, and only those who are truly worthy and selfless are able to wield it without succumbing to its power.", "mythical", 426),
     new weaponInfo("Silver Scar", "weapon", "dagger", ["chest"], "<:silver_scar:1069020244653383680>", "https://i.imgur.com/icaEOtQ.png", "atk", 86, 1086, "atk%", 0.08, 0.22, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.cr += 0.2;
         if (myStats.cr > 1) myStats.cr = 1;
@@ -3517,31 +3613,55 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "The wielder decreases the enemy's MR by **1%** for every **2%** critical rate, up to **-45%**. (Capped at 3x DMG). Heals the wielder by **8%** of the damage dealt.", "The Sacred Lifemender staff is a powerful tool, as with a single touch, it can mend even the most severe injuries... But what gives off such power of pain soothing? The delicate smiles after every revitalization, the bewildered faces after every rekindlement, the stream of praises after every relaxation... Perhaps healing has its costs, Mari guesses wildly, gently brushing off the layers of dust covering this staff. Just maybe, such power does not come from the staff, but the wielder, its capabilities of compassion and care, spreading the eagerness of repairing the broken, rejuvenating the old, and in the same way, reigniting that inner passion.", "genesis", 436),
     new weaponInfo("Vermillion Vane", "weapon", "staff", ["chest"], "<:vermillion_vane:1069025800965324882>", "https://i.imgur.com/ccvhu0B.png", "md", 227, 1306, "mr", 64, 254, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
         myStats.replaceButton.atk = {
             "emoji": "<:vermillion_vane:1069025800965324882>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vermillion_vane:1069025800965324882> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
+                let atkScale = eStats.burnduration ? 1 : 0.8;
+                const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vermillion_vane:1069025800965324882> **${char.name}**`, { atkMultiplier: atkScale, magicDamage: true });
                 ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.25), 2));
-                ebuff.dodge.push(new buffInfo("=", 0, 2));
-                ebuff.br.push(new buffInfo("=", 0, 2));
+                if (Math.random() < 0.75) eStats.burnduration += 2;
 
                 return AbilityResponse.SUCCESS;
             },
         };
 
-        return AbilityResponse.SUCCESS;
-    }, "Normal attacks ignite the enemy, dealing **25%** true damage for 2 rounds. While on fire, reduces enemy dodge chance and block rate to 0.\n\n_true damage = ignores shield_", "The Vermillion Vane is a powerful magic staff imbued with the fiery essence of the sun. Its intricate carvings of molten rocks dance and twist along its length, radiating heat and energy. In the hands of a skilled pyromancer, the Vermillion Vane becomes a deadly weapon, capable of unleashing devastating blasts of searing fire, said to burn hotter than the deepest flames of hell.", "genesis", 437),
-    new weaponInfo("Vestiges of Brilliant Light", "weapon", "staff", ["chest"], "<:vestiges_of_brilliant_light:1069025804064915486>", "https://i.imgur.com/ltd5Uqs.png", "md", 196, 1204, "md%", 0.12, 0.26, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (matchStats.round % 3 === 0) {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vestiges_of_brilliant_light:1069025804064915486> **${char.name}**`, { atkMultiplier: 1.2, mdChance: -1, magicDamage: true });
+            if (eStats.burnduration > 0) {
+                eStats.dodge = 0;
+                eStats.br = 0;
             };
 
             return AbilityResponse.SUCCESS;
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Fires an attack dealing **120%** magic damage every 3 rounds.", "The Vestiges of Brilliant Light glows with a fierce, unyielding light, as if it has been imbued with the very essence of the sun itself. Its ancient, intricately carved runes pulsate with power, and those who wield it are said to be gifted with the ability to unleash devastating spells of pure, radiant energy. Some say that the staff was crafted by the gods themselves, as a gift to their most faithful servants, and that its power has been passed down through the ages to those who are worthy of its might.", "genesis", 438),
+    }, "Normal attacks are altered to deal **80%** damage (**100%** when the enemy is BURNING), before inflicting DoT equal to **25%** of your normal attack as true damage for **2** rounds. This has a **75%** chance to apply BURNING [ <a:burn:1475075402295803914> ] for **2** rounds. While BURNING, the enemy's dodge chance and block rate to **0**.\n\n`🔎` _true damage = ignores shield_ | _BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "The Vermillion Vane is a powerful magic staff imbued with the fiery essence of the sun. Its intricate carvings of molten rocks dance and twist along its length, radiating heat and energy. In the hands of a skilled pyromancer, the Vermillion Vane becomes a deadly weapon, capable of unleashing devastating blasts of searing fire, said to burn hotter than the deepest flames of hell.", "genesis", 437),
+    new weaponInfo("Vestiges of Brilliant Light", "weapon", "staff", ["chest"], "<:vestiges_of_brilliant_light:1069025804064915486>", "https://i.imgur.com/ltd5Uqs.png", "md", 196, 1204, "md%", 0.12, 0.26, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.vulnerabilityDynamic ??= 1;
+        myStats.vestigesOBL = 0;
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (matchStats.round % 3 === 0) {
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:vestiges_of_brilliant_light:1069025804064915486> **${char.name}**`, { atkMultiplier: 1.2, mdChance: -1, magicDamage: true });
+                if (myStats.vestigesOBL !== 4) {
+                    myStats.vestigesOBL++;
+                    eStats.vulnerabilityDynamic += 0.05;
+                };
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, "Fires a stroke of blinding light dealing **120%** magic damage every **3** rounds. The first **4** activations additionally increase the enemy's vulnerability rate by **5%** (take 5% more damage)", "The Vestiges of Brilliant Light glows with a fierce, unyielding light, as if it has been imbued with the very essence of the sun itself. Its ancient, intricately carved runes pulsate with power, and those who wield it are said to be gifted with the ability to unleash devastating spells of pure, radiant energy. Some say that the staff was crafted by the gods themselves, as a gift to their most faithful servants, and that its power has been passed down through the ages to those who are worthy of its might.", "genesis", 438),
 
     // Weapons - Genesis Axe
     new weaponInfo("Elegy of the Glacial Heart", "weapon", "axe", ["chest"], "<:elegy_of_the_glacial_heart:1069026954671570984>", "https://i.imgur.com/2nHR7qm.png", "atk", 213, 1275, "def", 56, 187, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -3591,11 +3711,22 @@ export const items = [
 
     // Weapons - Genesis Bow
     new weaponInfo("Flames of Valyria", "weapon", "bow", ["chest"], "<:flames_of_valyria:1069028632065998888>", "https://i.imgur.com/oGn5Whz.png", "atk", 212, 1187, "atk%", 0.12, 0.28, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:flames_of_valyria:1069028632065998888> **${char.name}**`, { atkMultiplier: 2, magicDamage: true });
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
+        const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:flames_of_valyria:1069028632065998888> **${char.name}**`, { atkMultiplier: 2, magicDamage: true, dodge: false });
         ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.2), 15));
+        eStats.burnduration += 15;
 
         return AbilityResponse.SUCCESS;
-    }, "Fires a burning shot at the start of the battle, immediately dealing **200%** damage and burns the enemy dealing **40%** true damage each round for 15 rounds.\n\n_true damage = ignores shield_", "The Flames of Valyria is a bow of legends forged in the fiery pits of the ancient city of Valyria. It is said that the bow was crafted by the greatest blacksmiths of the Valyrian Freehold, imbuing it with the power of dragonfire. The bow is made of Valyrian steel, a rare and highly sought-after metal known for its strength and ability to hold a sharp edge. The bowstring of the Flames of Valyria is made from the sinew of a dragon, giving it the ability to launch arrows with incredible speed and accuracy.\nIn the days of the Valyrian Freehold, the Flames of Valyria was wielded by the greatest dragonriders, who used it to hunt the fearsome beasts of the land. But with the downfall of Valyria, the bow was lost to the ages, its whereabouts and true power unknown. Adventurers and warriors from all over the realm have set out to find the Flames of Valyria, seeking to wield its power for themselves and become the greatest archer the world has ever known.", "genesis", 441),
+    }, "Fires a burning shot at the start of the battle, immediately dealing **200%** damage and burns the enemy dealing **40%** true damage each round for **15** rounds. This also applies BURNING [ <a:burn:1475075402295803914> ] for **15** rounds (stackable).\n\n`🔎` _true damage = ignores shield_ | _BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "The Flames of Valyria is a bow of legends forged in the fiery pits of the ancient city of Valyria. It is said that the bow was crafted by the greatest blacksmiths of the Valyrian Freehold, imbuing it with the power of dragonfire. The bow is made of Valyrian steel, a rare and highly sought-after metal known for its strength and ability to hold a sharp edge. The bowstring of the Flames of Valyria is made from the sinew of a dragon, giving it the ability to launch arrows with incredible speed and accuracy.\nIn the days of the Valyrian Freehold, the Flames of Valyria was wielded by the greatest dragonriders, who used it to hunt the fearsome beasts of the land. But with the downfall of Valyria, the bow was lost to the ages, its whereabouts and true power unknown. Adventurers and warriors from all over the realm have set out to find the Flames of Valyria, seeking to wield its power for themselves and become the greatest archer the world has ever known.", "genesis", 441),
     new weaponInfo("Heartseeker", "weapon", "bow", ["chest"], "<:heartseeker:1069028625019576320>", "https://i.imgur.com/UoZXFTQ.png", "atk", 777, 1333, "hp", 77, 777, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.replaceButton.atk = {
             "emoji": "<:heartseeker:1069028625019576320>",
@@ -3721,11 +3852,21 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Every odd round the wielder takes **40%** reduced physical damage, and every even round **40%** reduced magic damage. The wielder gets **+25%** more class xp in the dungeon after a win.\n\n_A reduction of 40% = 486 DEF|MR_", "Roots of Yggdrasil is a weapon of great significance, crafted from the roots of Yggdrasil, the great tree that holds the universe together. Its surface is decorated with intricate patterns and symbols that represent the different realms and creatures. When wielded in combat, it can provide powerful protection and support to its user.", "genesis", 449),
     new weaponInfo("Wyrmfire Wall", "weapon", "shield", ["chest"], "<:wyrmfire_wall:1069033761481703504>", "https://i.imgur.com/5Z7mChd.png", "shield", 248, 1526, "br", 0.08, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype ??= 1;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
         myStats.blockBurn = 0.05;
         matchStats.xpboost += 0.25;
 
         return AbilityResponse.SUCCESS;
-    }, "Burns **5%** of max HP from the enemy after every successful block. If enemy HP is more than twice of the wielders HP, it burns the equivalent of **10%** of the wielders HP instead. The wielder gets **+25%** more class xp in the dungeon after a win.", "This massive shield is made of dragon scales, imbued with the fiery power of the great beasts. It is said to be able to deflect even the hottest of flames, making it a formidable weapon against dragon attackers.", "genesis", 450),
+    }, "Burns **5%** of max HP from the enemy after every successful block. This also applies BURNING [ <a:burn:1475075402295803914> ] for **1** round (stackable). If enemy HP is more than twice of the wielders HP, it burns the equivalent of **10%** of the wielders HP instead. The wielder gets **+25%** more class xp in the dungeon after a win.\n\n`🔎` _BURNING - Deals **20%** ATK/MD (whichever is higher) every round as magical damage_", "This massive shield is made of dragon scales, imbued with the fiery power of the great beasts. It is said to be able to deflect even the hottest of flames, making it a formidable weapon against dragon attackers.", "genesis", 450),
 
     // Chests
     new chestInfo("Common Chest", "loot", "chest", ["dungeon", "shop"], "<:common_chest:1069067835193688144>", "<:common_chest_open:1069067831792111657>", "https://i.imgur.com/BYa9PhS.png", "https://i.imgur.com/90NHVz7.png", 2, { "normal": 20, "special": 60, "rare": 18, "unique": 2 }, "normal", 451),
@@ -4092,7 +4233,7 @@ export const items = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "Every non-critical hit grants **1x** `🥩` (Up to 20), while every critical hit grants **1x** `🦴` (Up to 20). At the start of the round, for every `🥩`, increases MD by **1.2%**, for every `🦴`, increases ATK by **1.2%**\n\n_This item is synergistic with other `Flesh and Bone` items._"),
+    }, "Every non-critical hit grants **1x** `🥩` (Up to 20), while every critical hit grants **1x** `🦴` (Up to 20). At the start of the round, for every `🥩`, increases MD by **1.2%**, for every `🦴`, increases ATK by **1.2%**\n\n`🔎` _This item is synergistic with other `Flesh and Bone` items._"),
     new armorInfo("Hood of Divine Aspect", "armor", "helmet", "Set of Divine Aspect", ["crafting", "chest"], "<:hood_of_divine_aspect:1081545910477135932>", "https://i.imgur.com/MKHmr9j.png", "mr", 12, 135, "legendary", 563),
     new armorInfo("Robe of Divine Aspect", "armor", "cuirass", "Set of Divine Aspect", ["crafting", "chest"], "<:robe_of_divine_aspect:1081546631029211267>", "https://i.imgur.com/LGFZrAs.png", "hp", 51, 1654, "legendary", 564),
     new armorInfo("Gloves of Divine Aspect", "armor", "gloves", "Set of Divine Aspect", ["crafting", "chest"], "<:gloves_of_divine_aspect:1081547383659307078>", "https://i.imgur.com/dNndcaj.png", "hp", 52, 1660, "legendary", 565),
@@ -4396,19 +4537,43 @@ export const items = [
     new armorInfo("Dragon's Bane Chestplate", "armor", "cuirass", "Dragon's Bane Set", ["chest"], "<:dragons_bane_chestplate:1081565481955237908>", "https://i.imgur.com/YMGa5wS.png", "hp", 217, 2468, "genesis", 652),
     new armorInfo("Dragon's Bane Gloves", "armor", "gloves", "Dragon's Bane Set", ["chest"], "<:dragons_bane_gloves:1081565845643333732>", "https://i.imgur.com/fFZgfa1.png", "def", 54, 213, "genesis", 653),
     new armorInfo("Dragon's Bane Boots", "armor", "boots", "Dragon's Bane Set", ["chest"], "<:dragons_bane_boots:1081566270467604620>", "https://i.imgur.com/277hrFr.png", "hp", 212, 2379, "genesis", 654, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        myStats.replaceButton.def = {
-            "emoji": "<:dragons_bane_gloves:1081565845643333732>",
-            "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (myStats.damageTaken > 5 * Math.max(myStats.atk, myStats.md)) myStats.damageTaken = 5 * Math.max(myStats.atk, myStats.md);
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:dragons_bane_gloves:1081565845643333732> **${char.name}**`, { atkMultiplier: myStats.damageTaken / Math.max(myStats.atk, myStats.md), magicDamage: true });
-                myStats.damageTaken = 0;
+        // myStats.replaceButton.def = {
+        //     "emoji": "<:dragons_bane_gloves:1081565845643333732>",
+        //     "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        //         if (myStats.damageTaken > 5 * Math.max(myStats.atk, myStats.md)) myStats.damageTaken = 5 * Math.max(myStats.atk, myStats.md);
+        //         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:dragons_bane_gloves:1081565845643333732> **${char.name}**`, { atkMultiplier: myStats.damageTaken / Math.max(myStats.atk, myStats.md), magicDamage: true });
+        //         myStats.damageTaken = 0;
 
-                return AbilityResponse.SUCCESS;
-            },
-        };
+        //         return AbilityResponse.SUCCESS;
+        //     },
+        // };
+
+        myStats.deflectDamage ??= 0;
+        myStats.deflectDamage += 0.1; // default
+        myStats.dragonbane = 0;
+
+        matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (myStats.dragonbane < 16) myStats.dragonbane++;
+            switch (myStats.dragonbane) {
+                case 5: (myStats.atk > myStats.md) ? mybuff.atk.push(new buffInfo("*", 1.125, 9999)) : mybuff.md.push(new buffInfo("*", 1.125, 9999)); break;
+                case 10: myStats.deflectDamage += 0.1; break;
+                case 15: (myStats.atk > myStats.md) ? mybuff.atk.push(new buffInfo("*", 1.125, 9999)) : mybuff.md.push(new buffInfo("*", 1.125, 9999)); break;
+                default: break;
+            };
+        });
+
+        matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (myStats.dragonbane < 16) myStats.dragonbane++;
+            switch (myStats.dragonbane) {
+                case 5: (myStats.atk > myStats.md) ? mybuff.atk.push(new buffInfo("*", 1.125, 9999)) : mybuff.md.push(new buffInfo("*", 1.125, 9999)); break;
+                case 10: myStats.deflectDamage += 0.1; break;
+                case 15: (myStats.atk > myStats.md) ? mybuff.atk.push(new buffInfo("*", 1.125, 9999)) : mybuff.md.push(new buffInfo("*", 1.125, 9999)); break;
+                default: break;
+            };
+        });
 
         return AbilityResponse.SUCCESS;
-    }, "Records **100%** of the damage taken from the enemy and releases it when the wearer uses the DEF button (max 500% ATK|MD). DoT type of damages are excluded, and the wearer can't block.\n\n_DoT = Damage over Time_"),
+    }, "After every **5** uses of ability / class skill, increases its ascension tier by **1**, up to **4**.\n> <a:abi0:1477495568493445272>  (default) -> <a:abi1:1477495624638136380> -> <a:abi2:1477495683362721964> -> <a:abi3:1477495734789210112> ). Higher ascensions keep the previous ascension buffs.\n<a:abi0:1477495568493445272> : Deflects **10%** damage (default)\n<a:abi1:1477495624638136380> : Gains **12.5%** ATK/MD permanently depending on which is higher\n<a:abi2:1477495683362721964> : Deflects **+10%** damage\n<a:abi3:1477495734789210112> Gains **12.5%** ATK/MD permanently depending on which is higher: \n\n_Deflect = Mitigate incoming damage and reflect that amount to the enemy_"),
     new armorInfo("Jade Long Helmet", "armor", "helmet", "Jade Long Set", ["chest"], "<:jade_long_helmet:1081564891766345738>", "https://i.imgur.com/MMWwM39.png", "def", 44, 173, "genesis", 655),
     new armorInfo("Jade Long Chestplate", "armor", "cuirass", "Jade Long Set", ["chest"], "<:jade_long_chestplate:1081565485696569344>", "https://i.imgur.com/E3UsKOC.png", "hp", 337, 3428, "genesis", 656),
     new armorInfo("Jade Long Vambrace", "armor", "gloves", "Jade Long Set", ["chest"], "<:jade_long_vambrace:1081565735639339129>", "https://i.imgur.com/vjqtUCE.png", "hp", 329, 3322, "genesis", 657),
@@ -4484,7 +4649,7 @@ export const items = [
     }, "Critical strikes inflict a poison, dealing **3%** damage to the enemy for 3 rounds (or **6%** of own HP if enemy has more than twice your HP). Additionally, the wielder takes **15%** less damage.\n\n_A reduction of 15% = 155 DEF|MR_", "This dagger is as deadly elegant as its namesake, forged by celestial blacksmiths guided by the goddess Serket, who is associated with scorpions and protection. More than just a weapon, Serket's Sting is a representation of the heavenly might and protection. With an iridescent sheen like to a scorpion's exoskeleton, its blade is crafted from an unearthly metal. Its edge is so sharp that it seems to pierce both the earthly and spiritual planes. Its real strength comes from its affinity with the goddess herself. The dagger gains the ability to extend the goddess's divine will during terrible circumstances or when the wielder calls upon Serket. The blows it delivers have the power of a skilled killer combined with the protective edge of a kind guardian angel. Wielding Serket's Sting is a sacred duty, and those chosen to bear it are considered both guardians and avengers under the watchful eyes of the Divine Viper.", "mythical", 685),
 
     // Loot - Valentine's
-    new lootInfo("Valentine's Chocolate", "loot", "event exclusive item", ["valentine's event"], "<:valentines_chocolate:1207055321839960194>", "https://i.ibb.co/hXP3CkT/Valentine-s-Chocolate.png", "mythical", 686, false, false, false, "Crafted with the finest cocoa and infused with a touch of magic, this Valentine's Chocolate is not only a sweet treat but also a source of strength and affection. It's a coveted item among heroes seeking to strengthen bonds or mend broken hearts."),
+    new lootInfo("Valentine's Chocolate (2024)", "loot", "event exclusive item", ["valentine's event"], "<:valentines_chocolate:1207055321839960194>", "https://i.ibb.co/hXP3CkT/Valentine-s-Chocolate.png", "mythical", 686, false, false, false, "Crafted with the finest cocoa and infused with a touch of magic, this Valentine's Chocolate is not only a sweet treat but also a source of strength and affection. It's a coveted item among heroes seeking to strengthen bonds or mend broken hearts."),
 
     // Additional Weapons
     new weaponInfo("Sacred Life Salamander", "weapon", "staff", ["chest"], "<:sacred_life_salamander:1274884340840665088>", "https://i.imgur.com/OGnmcD7.png", "md", 173, 976, "mr", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -4732,9 +4897,10 @@ export const items = [
     new ringInfo("Skyward Rune", "ring", "ring", ["raid"], "<:skyward_rune:1333991494725664789>", "https://i.ibb.co/wrjvXSh4/Skyward-Rune.png", 2, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Duo
 
         myStats.nimbleGuardian = myStats.dodge;
+        myStats.damageReduction ??= 0;
         // On turn 10/7: damageReduction += dodge rate difference
         myStats.delayedBuffs.push(new delayedBuffs([10, 7][level - 1], async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            myStats.damageReduction = (myStats.damageReduction ?? 0) + Math.abs(myStats.dodge - myStats.nimbleGuardian);
+            myStats.damageReduction += Math.abs(myStats.dodge - myStats.nimbleGuardian);
             if (myStats.damageReduction > 0.7) myStats.damageReduction = 0.7;
             notice.push(`\n<:skyward_rune:1333991494725664789> **${char.name}** will take **${Math.floor(myStats.damageReduction * 100)}%** less DMG.`);
 
@@ -5555,6 +5721,7 @@ export const items = [
         myStats.maxRevivals = 1;
         myStats.rev = 1;
         myStats.revhp = 0.1;
+        myStats.damageReduction ??= 0;
 
         matchStats.on("revival", {
             maxUsage: 1,
@@ -5566,10 +5733,10 @@ export const items = [
                     myStats.atk += Math.floor(myStats.atk * atkBuff);
                     myStats.md += Math.floor(myStats.md * atkBuff);
 
-                    myStats.damageReduction = 1;
+                    myStats.damageReduction += 1;
                     const lastUntil = matchStats.round + 1 + [2, 3, 4, 5][level - 1];
                     myStats.delayedBuffs.push(new delayedBuffs(lastUntil, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        myStats.damageReduction = 0;
+                        myStats.damageReduction -= 1;
                         myStats.hp = 0;
 
                         return AbilityResponse.SUCCESS;
@@ -5618,7 +5785,7 @@ export const items = [
     }, (level) => `Reduces max HP by **20%**, but follows up any magical hits with an additional attack dealing **${[20, 22.5, 25, 27.5, 30][level - 1]}%** magic damage (at most once per round).`, "The Toxic Enigma enthralls with its grotesquely beautiful design, the dark metal resembling twisted roots enveloping a vibrant green orb that pulses with a venomous light. Strange, delicate patterns cascade around the band, hinting at forbidden knowledge and alchemical secrets. This ring grants its wearer the power to manipulate poison, enhancing efficacy and creating virulent concoctions. However, the knowledge it offers is perilous; every use of its powers sows the seeds of decay within the user—mind and body alike. A perfect artifact for rogue alchemists or dark sorcerers, it walks the razor's edge between power and madness.", "legendary", 743),
     new ringInfo("Enchanter's Sigil", "ring", "ring", ["raid"], "<:enchanters_sigil:1336504712572305478>", "https://i.ibb.co/0VjRRfCh/Enchanter-s-Sigil.png", 5, (level) => async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => { //* Dusty
 
-        myStats.damageReduction = Math.min(0.2, eStats.cr * [0.2, 0.25, 0.3, 0.35, 0.4][level - 1]);
+        myStats.damageReduction += Math.min(0.2, eStats.cr * [0.2, 0.25, 0.3, 0.35, 0.4][level - 1]);
 
         eStats.cr = 0;
         ebuff.cr.push(new buffInfo("=", 0, [2, 3, 4, 5, 6][level - 1]));
@@ -6469,7 +6636,7 @@ export const items = [
             return AbilityResponse.SUCCESS;
         },
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            eStats.vulnerabilityDynamic ??= 0;
+            eStats.vulnerabilityDynamic ??= 1;
             eStats.vulnerabilityDynamic += 0.1;
 
             return AbilityResponse.SUCCESS;
@@ -6520,8 +6687,11 @@ export const items = [
     }, "- Whenever the wearer is attacked, gains **1** <:thorn1:1466828338604802068><:thorn2:1466828379482230873> (Up to 100).\n- At the start of the round, loses **0.5%** current HP but gains **1** 💧 for every **5** <:thorn1:1466828338604802068><:thorn2:1466828379482230873>.\n- When <:thorn1:1466828338604802068><:thorn2:1466828379482230873> reaches **100**, consumes all <:thorn1:1466828338604802068><:thorn2:1466828379482230873> and becomes intertwined with the enemy: No longer gain <:thorn1:1466828338604802068><:thorn2:1466828379482230873>, but instead steals **15%** of the enemy's mana every round.", "rare", 792),
     new runeInfo("The Fated", ["seasonal shop"], "<:the_fated:1472217039027441674>", "https://i.ibb.co/pj1vtfNd/the-fated.png", {
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.theFatedUsed = -1;
             matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (myStats.theFatedUsed === matchStats.round) return AbilityResponse.FAILURE;
                 if (caster === myStats && target === eStats) {
+                    myStats.theFatedUsed = matchStats.round;
                     myStats.cr -= 0.1;
                     if (myStats.cr < 0) myStats.cr = 0;
                     mybuff.cr.push(new buffInfo("+", -0.1, 9999));
@@ -6529,6 +6699,7 @@ export const items = [
                 };
 
                 if (caster === eStats && target === myStats) {
+                    myStats.theFatedUsed = matchStats.round;
                     eStats.cr -= 0.1;
                     if (eStats.cr < 0) eStats.cr = 0;
                     ebuff.cr.push(new buffInfo("+", -0.1, 9999));
@@ -6538,7 +6709,70 @@ export const items = [
 
             return AbilityResponse.SUCCESS;
         },
-    }, "- The enemy and wearer are pierced by <:cupid1:1467345464499376132><:cupid2:1467345506723168308><:cupid3:1467345548230004854><:cupid4:1467345585328885945> at the start of the fight, where if either lands a critical hit on the other, they lose **10%** critical rate and take **20%** damage (scaling off the other's ATK/MD, whichever is higher).", "rare", 793),
+    }, "- The enemy and wearer are pierced by <:cupid1:1467345464499376132><:cupid2:1467345506723168308><:cupid3:1467345548230004854><:cupid4:1467345585328885945> at the start of the fight, where if either lands a critical hit on the other, they lose **10%** critical rate and take **20%** damage (scaling off the other's ATK/MD, whichever is higher). This can occur once every round.", "rare", 793),
+
+    // Loot - Valentine's
+    new lootInfo("Valentine's Chocolate (2026)", "loot", "event exclusive item", ["valentine's event"], "<:valentines_choco_2026:1472686937277071442>", "https://i.ibb.co/MkRxRQpf/valentine-s-choco.png", "mythical", 794, false, false, false, "Crafted with the finest cocoa and infused with a touch of magic, this Valentine's Chocolate is not only a sweet treat but also a source of strength and affection. It's a coveted item among heroes seeking to strengthen bonds or mend broken hearts."),
+
+    // Easter Runes 2026
+    new runeInfo("Hunt of the Leporine", ["seasonal shop"], "<:the_fated:1472217039027441674>", "https://i.ibb.co/pj1vtfNd/the-fated.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.hotlrabbit = 0;
+            myStats.hotl = -1;
+            matchStats.on("heal", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (target === myStats && myStats.hotlrabbit < 50 && matchStats.hotl !== matchStats.round) {
+                    matchStats.hotl = matchStats.round;
+                    myStats.hotlrabbit++;
+                    ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.atk > myStats.md ? myStats.atk * 0.005 : myStats.md * 0.005), 9999));
+                    if (myStats.hotlrabbit === 50) {
+                        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ` **Leporines**`, { atkMultiplier: 0.1 });
+
+                            return AbilityResponse.SUCCESS;
+                        }, 9999));
+                    };
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Summons **1** `Rabbit` every healing instance (Up to once per round), inflicting a **0.5%** ATK/MD (whichever is higher at the time) DoT on the enemy for the rest of the fight.\n- Stops summoning `Rabbit` when there are **50** of them. Instead, deal **10%** damage every round.", "rare", 795),
+    new runeInfo("Unravelling", ["seasonal shop"], "<:the_fated:1472217039027441674>", "https://i.ibb.co/pj1vtfNd/the-fated.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.unravelling = 3;
+            myStats.damageReduction ??= 0;
+            myStats.damageReduction += 0.24;
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.damageReduction -= 0.24;
+
+                return AbilityResponse.SUCCESS;
+            }));
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (myStats.hp / myStats.maxhp < 0.33 && myStats.unravelling > 0) {
+                    myStats.unravelling -= 1;
+                    addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🥚 **${char.name}** broke a layer of protection and`, { atkMultiplier: 0.4 });
+                };
+
+                if (myStats.unravelling > 0) {
+                    let prot = 0.08 * myStats.unravelling;
+                    myStats.damageReduction += prot;
+                    // Remove damageReduction
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        myStats.damageReduction -= prot;
+
+                        return AbilityResponse.SUCCESS;
+                    }));
+                };
+                return AbilityResponse.SUCCESS;
+            }));
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Enters battles with **3** layers of protection cover, each increasing damage mitigation by **8%**.\n- Upon falling below **33%** HP, sacrifices a layer to recover **10%** max HP, and deal **40%** damage to the enemy.", "rare", 796),
+
+
 
 
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

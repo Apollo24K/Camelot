@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ModalBuilder, TextInputBuilder, ComponentType, ButtonStyle, TextInputStyle } from "discord.js";
 import charInfo, { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars";
-import { splitTitle } from "../Modules/functions";
+import { rarityColor, splitTitle } from "../Modules/functions";
 import { dailies } from "../Modules/dailyQuests";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
@@ -118,7 +118,7 @@ const exportCommand: SlashCommand = {
         };
 
         const Embed = new EmbedBuilder()
-            .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
+            .setColor(rarityColor(pick.rarity))
             .setImage(pick.image)
             .setTitle("Guess the Character")
             .setDescription(`**Anime**: ${animeTitle}\n${scores}`)
@@ -148,7 +148,7 @@ const exportCommand: SlashCommand = {
                             if (!stats) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
 
                             const Embed = new EmbedBuilder()
-                                .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
+                                .setColor(rarityColor(pick.rarity))
                                 .setThumbnail(pick.image)
                                 .setTitle("You got it! 🎉")
                                 .setDescription(`**Name**: ${pick.name}\n**Anime**: ${pick.anime}\nYou've gained **${points}** <:lilium:974057059618291732>`)
@@ -216,7 +216,7 @@ const exportCommand: SlashCommand = {
                     hintAnime.stop(), hintLetter.stop(), collector.stop();
 
                     const Embed = new EmbedBuilder()
-                        .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[pick.rarity])
+                        .setColor(rarityColor(pick.rarity))
                         .setThumbnail(pick.image)
                         .setTitle("Time's up!")
                         .setDescription(`And no one got it right <:BigSad:928369010217746442>\n**Name**: ||${pick.name}||\n**Anime**: ${hintAnime.collected ? pick.anime : `||${pick.anime}||`}\nNo lilies were earned <:lilium:974057059618291732>`);

@@ -1,7 +1,7 @@
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { achievements } from "../Modules/achievements";
-import { getDetailedStats } from "../Modules/functions";
+import { getDetailedStats, rarityColor } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from '../types';
 import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
@@ -51,7 +51,7 @@ const exportCommand: SlashCommand = {
         const thumbnail = char.getImage(inv.premium, inv.custom_skins[char.id], inv.char_skin[char.id]);
 
         const Embed = new EmbedBuilder()
-            .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+            .setColor(rarityColor(char.rarity))
             .setDescription(`**${char.name}**\nLevel up from ${currLvl} ➜ **${currLvl + up}** for **${price}**<:coins:872926669055356939>`)
             .addFields(
                 { name: 'HP ️️️💖', value: `${stats.hp} ➜ **${stats2.hp}**`, inline: true },

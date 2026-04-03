@@ -36,9 +36,9 @@ const exportCommand: SlashCommand = {
                         anniversary: "🌙 Anniversary Event",
                         halloween: "🎃 Halloween Event",
                         christmas: "🎄 Christmas Event",
-                        valentines: "💖 Valentines Event",
+                        valentines: "💖 Valentine's Event",
                         easter: "🐣 Easter Event",
-                    }[ongoingEvent], value: "`/christmas craze` `/frostbound yule` `/seasonal shop`\n`/christmas-present` `/event pass` `/ex pull`"
+                    }[ongoingEvent], value: "`/boss hunt` `/valentines-chocolate` `/seasonal shop`\n`/event pass` `/event rewards` `/ex pull`"
                 },
             );
             Embed.addFields(
@@ -136,7 +136,7 @@ const exportCommand: SlashCommand = {
                 Embed.setDescription("**Usage**: </inventory:1012393731695050852>\n**Options**: `sort`, `page`, `user`, `ephemeral`\n\nSee your character inventory. Characters will be sorted by rarity by default. Characters with the ✨ icon have abilities. See `/help ability` for more information on abilities, and characters with 🔒icon means they are locked characters. \n\n**Options**\n`sort`: Choose in what order your characters should be listed\n`page`: Directly jump to the page you want to see\n`user`: See another players characters\n`ephemeral:` Choose whether other people can see you using the command.\n\n**Sorting Options**\n`alphabetical`: Sort by name\n`chronological`: Sort by the time acquired\n`rarity`: Sort by rarity\n`dupes`: Sort by rarity & number of duplicates");
                 break;
             case 'level':
-                Embed.setDescription("**Usage:** `/level` \n**Options:** `user`\n\nSee your current level and how much more XP you need to level up alongside a progress bar. XP is obtained via `/pull`, `/quests`, and `/achievements`. \nYou get **1-10** XP for each pull when using `/pull`. <:STier:869316518675095552>-Tier characters will give you twice the amount of XP, and <:SSTier:869316489931546644>-Tier characters give an extra **20** XP on top of what you would've gotten. When using `/pull all` all cards give 5 XP per pull regardless of rarity. Leveling up helps unlock classes (`/help class list`) every 10 levels; Furthermore, it unlocks a ring slot at level 100. Finally, every +1 Account Level increases your `/daily` coins by +10.\n\n**Options**\n`user:` Select the user whose level you want to see.");
+                Embed.setDescription("**Usage:** `/level` \n**Options:** `user`\n\nSee your current level and how much more XP you need to level up alongside a progress bar. XP is obtained via `/pull`, `/quests`, and `/achievements`. \nYou get **1-10** XP for each pull when using `/pull`. <:STier:869316518675095552>-Tier characters will give you twice the amount of XP, and <:SSTier:869316489931546644>-Tier characters give an extra **20** XP on top of what you would've gotten. When using `/pull all` all cards give 5 XP per pull regardless of rarity. Leveling up helps unlock classes (`/help class list`) every 10 levels; Furthermore, it unlocks a ring slot at level 20. Finally, every +1 Account Level increases your `/daily` coins by +10.\n\n**Options**\n`user:` Select the user whose level you want to see.");
                 break;
             case 'list':
                 Embed.setDescription("**Usage:** `/list `\n**Options:** `rarity`, `filter`, `page`, `user`\n\nGet a list of all characters of a rarity. The characters will be shown together with their series and sorted accordingly. Owned characters will have a check mark next to them <a:check:873196253276700682>\n\n**Options**\n`rarity:` Choose the rarity of characters you want to check, ranging from D to EX.\n`filter:unowned` See all the unowned characters of that rarity. \n`page:` Directly jump to the page of the character list you want to see.\n`user:` See the list of characters of other users.");

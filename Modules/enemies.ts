@@ -149,10 +149,10 @@ export const enemies: enemyInfo[] = [
 ];
 
 export const bossMobs: enemyInfo[] = [
-    new enemyInfo("Rumbleguard", "Golem", "a Golem", "M", true, {}, {}, { mana: 120 }, [], ["https://i.imgur.com/06ZhghA.png"], [], 0),
-    new enemyInfo("Sylvanoss", "Treant", "a Treant", "M", true, {}, {}, { mana: 160 }, [], ["https://i.imgur.com/uev7lLN.png"], [], 1),
-    new enemyInfo("Celestion", "Dragon", "a Dragon", "M", true, {}, {}, { mana: 200 }, [], ["https://i.imgur.com/a8JPnUA.png"], [], 2),
-    new enemyInfo("Malevokar", "Demon", "a Demon", "M", true, {}, {}, { mana: 300 }, [], ["https://i.imgur.com/PNUriwl.png"], [], 3),
+    new enemyInfo("Rumbleguard", "Golem", "a Golem", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/5g62cgWT/c.png"], [], 0),
+    new enemyInfo("Sylvanoss", "Treant", "a Treant", "M", true, {}, {}, { mana: 160 }, [], ["https://i.ibb.co/r2p7SJyM/c.png"], [], 1),
+    new enemyInfo("Celestion", "Dragon", "a Dragon", "M", true, {}, {}, { mana: 200 }, [], ["https://i.ibb.co/992ngL1c/image.png"], [], 2),
+    new enemyInfo("Malevokar", "Demon", "a Demon", "M", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/mC7txbTX/image.png"], [], 3),
 
     new enemyInfo("Goblin King", "Goblin", "the Goblin King", "M", true, {}, {}, { mana: 300 }, [], ["https://i.imgur.com/my5sSRm.png"], [], 4),
     new enemyInfo("Goblin General", "Goblin", "a Goblin General", "M", true, {}, {}, { mana: 300 }, [], ["https://i.imgur.com/wOPVWnw.png"], [], 5),

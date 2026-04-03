@@ -1,7 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { items } from "../Modules/items";
 import { characters } from "../Modules/chars";
-import { getDetailedStats } from "../Modules/functions";
+import { getDetailedStats, rarityColor } from "../Modules/functions";
 import { SlashCommand } from '../types';
 import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
 
@@ -69,7 +69,7 @@ const exportCommand: SlashCommand = {
             const stats2 = await getDetailedStats(char.id, inv, inv.dungeon_classlevels, 1);
 
             const Embed = new EmbedBuilder()
-                .setColor({ D: 0x7a7a7a, C: 0x44d53a, B: 0xf2591c, A: 0x2cdfe5, S: 0xfef300, SS: 0x9952eb, EX: 0x2aad9d, default: 0xbbffff }[char.rarity])
+                .setColor(rarityColor(char.rarity))
                 .setDescription(`**${char.name}** has reached level **${currLvl + 1}**!`)
                 .addFields(
                     { name: 'HP ️️️💖', value: `${stats.hp} ➜ **${stats2.hp}**`, inline: true },

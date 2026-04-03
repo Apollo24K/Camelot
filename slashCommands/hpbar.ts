@@ -7,8 +7,8 @@ import CustomHpBar, { customHpBars } from '../Modules/customHpBars';
 import { botPfp, PageRow } from '../Modules/components';
 
 const getHpBarPage = ({ hpBars, stats, thmbnl, currPage, pagesTotal, isInteractionOwner }: {
-    hpBars: CustomHpBar[],
-    stats: CompactUserSchema,
+    hpBars: CustomHpBar[];
+    stats: CompactUserSchema;
     thmbnl: string;
     currPage: number;
     pagesTotal: number;
@@ -85,7 +85,7 @@ const exportCommand: SlashCommand = {
                 currPage = page;
             };
 
-            return interaction.reply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])], flags: MessageFlags.IsComponentsV2 }).then(msg => {
+            return interaction.reply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars, elementsPerPage), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])], flags: MessageFlags.IsComponentsV2 }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async (r) => {
@@ -121,7 +121,7 @@ const exportCommand: SlashCommand = {
                         });
                     };
 
-                    interaction.editReply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])] });
+                    interaction.editReply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars, elementsPerPage), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])] });
                 });
             });
         };

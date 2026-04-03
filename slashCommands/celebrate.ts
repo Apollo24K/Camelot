@@ -67,9 +67,9 @@ export const exportCommand: SlashCommand = {
                         .setStyle(ButtonStyle.Danger),
                 );
 
-            return interaction.reply({ content: `Are you sure you want to give __Valentine's Chocolate__ <:valentines_chocolate:1207055321839960194> to **${user.username}**?\n⚠️ This command can only be used once!\nAttached message:\n> ${message || "`None`"}`, components: [ValentinesRow], ephemeral: true }).then(msg => {
-                const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "confirm" || r.customId === "anonymous"), componentType: ComponentType.Button, time: 15000 });
-                const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
+            return interaction.reply({ content: `Are you sure you want to give __Valentine's Chocolate__ <:valentines_choco_2026:1472686937277071442> to **${user.username}**?\n⚠️ This command can only be used once!\nAttached message:\n> ${message || "`None`"}`, components: [ValentinesRow], ephemeral: true }).then(msg => {
+                const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "confirm" || r.customId === "anonymous"), componentType: ComponentType.Button, time: 120000 });
+                const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 120000 });
 
                 confirm.on('collect', async (r) => {
                     confirm.stop(), cancel.stop();
@@ -80,13 +80,13 @@ export const exportCommand: SlashCommand = {
                     await updateUsers(interaction.user.id, {
                         valentine: { type: 'set', value: user.id }
                     });
-                    await updateUsers(interaction.user.id, {
-                        items: { type: 'merge_json', value: { [686]: 1 } }
+                    await updateUsers(user.id, {
+                        items: { type: 'merge_json', value: { [794]: 1 } }
                     });
 
                     interaction.followUp({ content: `**${user.username}** has received your chocolate!`, ephemeral: true });
 
-                    user.send(`You have received some <:valentines_chocolate:1207055321839960194> __Valentine's Chocolate__${r.customId === "confirm" ? ` from ${interaction.user.toString()}` : ""}!${message ? `\n> ${message}` : ""}`);
+                    user.send(`You have received some <:valentines_choco_2026:1472686937277071442> __Valentine's Chocolate__${r.customId === "confirm" ? ` from ${interaction.user.toString()}` : ""}!${message ? `\n> ${message}` : ""}`);
                 });
 
                 cancel.on('collect', () => {

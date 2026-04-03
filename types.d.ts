@@ -5,7 +5,7 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
 export type Gender = 'M' | 'F' | 'NB';
 
-export type CharacterRarity = 'EX' | 'SS' | 'S' | 'A' | 'B' | 'C' | 'D';
+export type CharacterRarity = 'VIP' | 'EX' | 'SS' | 'S' | 'A' | 'B' | 'C' | 'D';
 
 export type ItemRarity = 'genesis' | 'mythical' | 'legendary' | 'unique' | 'rare' | 'special' | 'normal';
 
@@ -666,7 +666,7 @@ export interface ITrigger {
     set used(used: number);
 };
 
-export type TriggerEvents = "attack" | "crit" | "noncrit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade" | "stabilRefresh";
+export type TriggerEvents = "attack" | "crit" | "noncrit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade" | "stabilRefresh" | "burn";
 
 export type TriggerCallback = ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any);
 

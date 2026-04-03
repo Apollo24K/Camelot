@@ -6,18 +6,19 @@ import { bossMobs } from "../Modules/enemies";
 import { armorInfo, items, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { skills, eventBossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, baseEP } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, SlashCommand, UpdateUserOptions } from '../types';
 import { getGuildSchema, getUserSchema, updateGuilds, updateUsers } from '../Modules/queries';
-import { AbilityResponse } from '../Modules/components';
+import { AbilityResponse, isEventOngoing, ongoingEvent } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
+import { skillTree } from '../Modules/skillTree';
 
 const dungeonInProgress = new Set();
 
-const bossBaseHP = [124080, 160260, 113720, 144640];
+const bossBaseHP = [126080, 168260, 121720, 149640];
 
 function toOrdinal(num: number) {
     if (num % 100 >= 11 && num % 100 <= 13) return num + "th";
@@ -138,13 +139,11 @@ function adjustDEF(myStatsC: DetailedStats) { // {274: x2 atk -> x1.5 dmg, 340: 
     return Math.max(myStatsC.atk, myStatsC.md) > 128 ? Math.floor(((Math.log(Math.max(myStatsC.atk, myStatsC.md)) / Math.log(2)) - 7) * 395) : 0;
 };
 
-const isEventActive = false;
-
 const exportCommand: SlashCommand = {
     name: 'boss-hunt',
     async execute({ interaction, author }) {
 
-        if (!isEventActive) {
+        if (!isEventOngoing() || !(ongoingEvent === "valentines" && new Date().getFullYear() === 2026)) {
             return interaction.reply("This is an event game mode, but there is currently no ongoing event.\nPlease see our </support:1011293280702578694> server for more information.");
         };
 
@@ -167,11 +166,11 @@ const exportCommand: SlashCommand = {
         if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
 
         // Set up restrictions
-        if ((stats.bosshuntruns ?? stats.bosshuntruns) === 5) {
+        if (stats.bosshuntruns === 5) {
             if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in ${timeLeftToNextEvenHour()}`);
             return;
         };
-        if (dungeonInProgress.has(stats.id)) return interaction.editReply("You already have a run in progress, please finish it before attempting to start a new round.");
+        if (dungeonInProgress.has(stats.id)) return interaction.editReply({ content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
         dungeonInProgress.add(stats.id);
         const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
 
@@ -184,7 +183,7 @@ const exportCommand: SlashCommand = {
 
         // Update users table
         await updateUsers(interaction.user.id, {
-            bosshuntruns: { type: "increment", value: -1 },
+            bosshuntruns: { type: "increment", value: 1 },
         });
 
         // User stats
@@ -192,6 +191,17 @@ const exportCommand: SlashCommand = {
         let myStats = await getDetailedStats(myChar.id, stats, stats.dungeon_classlevels);
 
         myStats.thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
+
+        // Add Guild Perks
+        myStats.atk += Math.floor(myStats.atk * (guild.atkbuff * 0.2));
+        myStats.md += Math.floor(myStats.md * (guild.atkbuff * 0.2));
+        myStats.hp += Math.floor(myStats.hp * (guild.hpbuff * 0.2));
+        myStats.maxhp += Math.floor(myStats.maxhp * (guild.hpbuff * 0.2));
+        const defBuff = guild.defbuff * 100;
+        myStats.def += defBuff;
+        myStats.mr += defBuff;
+        myStats.increase_defcap += defBuff;
+        myStats.increase_mrcap += defBuff;
 
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
@@ -244,37 +254,37 @@ const exportCommand: SlashCommand = {
         // Adjust enemy stats
         if (enemy.id === 0) {
             eStats.shield = Math.floor(eStats.hp * 0.01);
-            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.16 + (guild.bosshuntstage * 0.018), 0.35));
-            eStats.md = Math.floor(myStatsC.hp * Math.min(0.14 + (guild.bosshuntstage * 0.015), 0.32));
-            eStats.def = 350 * (0.9 + (guild.bosshuntstage * 0.1));
-            eStats.mr = 350 * (0.9 + (guild.bosshuntstage * 0.1));
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.16 + (guild.bosshuntstage * 0.022), 0.35));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.14 + (guild.bosshuntstage * 0.018), 0.32));
+            eStats.def = 350 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.mr = 350 * (0.9 + (guild.bosshuntstage * 0.12));
             eStats.cr = 0.22;
             eStats.cd = 1.33;
         } else if (enemy.id === 1) {
-            eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.004) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * (0.15 + Math.min(guild.bosshuntstage * 0.015), 0.34));
-            eStats.md = Math.floor(myStatsC.hp * (0.14 + Math.min(guild.bosshuntstage * 0.013), 0.32));
-            eStats.def = 250 * (0.9 + (guild.bosshuntstage * 0.1));
-            eStats.mr = 250 * (0.9 + (guild.bosshuntstage * 0.1));
+            eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.003) : 0;
+            eStats.atk = Math.floor(myStatsC.hp * (0.15 + Math.min(guild.bosshuntstage * 0.019), 0.34));
+            eStats.md = Math.floor(myStatsC.hp * (0.14 + Math.min(guild.bosshuntstage * 0.016), 0.32));
+            eStats.def = 250 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.mr = 250 * (0.9 + (guild.bosshuntstage * 0.12));
             eStats.cr = 0.1;
             eStats.cd = 1.4;
             eStats.mana = 160;
         } else if (enemy.id === 2) {
             eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.003) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.018), 0.36));
-            eStats.md = Math.floor(myStatsC.hp * Math.min(0.18 + (guild.bosshuntstage * 0.019), 0.4));
-            eStats.def = 200 * (0.9 + (guild.bosshuntstage * 0.1));
-            eStats.mr = 200 * (0.9 + (guild.bosshuntstage * 0.1));
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.024), 0.36));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.18 + (guild.bosshuntstage * 0.023), 0.4));
+            eStats.def = 200 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.mr = 200 * (0.9 + (guild.bosshuntstage * 0.12));
             eStats.cr = 0.33;
             eStats.cd = 1.6;
             eStats.mdChance = 1;
             eStats.mana = 200;
         } else if (enemy.id === 3) {
             eStats.shield = (guild.bosshuntstage >= 3) ? Math.floor(eStats.hp * 0.003) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.02), 0.36));
-            eStats.md = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.02), 0.36));
-            eStats.def = 250 * (0.9 + (guild.bosshuntstage * 0.1));
-            eStats.mr = 250 * (0.9 + (guild.bosshuntstage * 0.1));
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.026), 0.36));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.025), 0.36));
+            eStats.def = 250 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.mr = 250 * (0.9 + (guild.bosshuntstage * 0.12));
             eStats.cr = 0.285;
             eStats.cd = 1.4;
             eStats.mdChance = 0.5;
@@ -337,16 +347,13 @@ const exportCommand: SlashCommand = {
                     default: false; break;
                 };
 
-                // Weekend Buff
-                if (new Date().getDay() === 6 || new Date().getDay() === 0) boost *= 2;
-
                 // Guild Buff
                 if (guild) boost += (0.2 * guild.xpbuff);
 
                 boost = Math.round(boost * 100) / 100;
                 let cxp = 100;
                 if (enemy.boss) cxp = Math.floor(cxp * 1.5);
-                cxpmsg = `Class XP: **${cxp}** (Boost: x${boost}${new Date().getDay() === 6 || new Date().getDay() === 0 ? " weekend" : ""})`;
+                cxpmsg = `Class XP: **${cxp}** (Boost: x${boost})`;
                 if (myClass.id in stats.dungeon_classlevels) stats.dungeon_classlevels[myClass.id] += cxp;
                 else stats.dungeon_classlevels[myClass.id] = cxp;
             };
@@ -552,7 +559,7 @@ const exportCommand: SlashCommand = {
                         ...milestones[stats.eventrewreceived].query,
                     });
 
-                    rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}🌙` : ""}`;
+                    rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}<:valentines_choco_2026:1472686937277071442>` : ""}`;
                     Embed.setImage(milestones[stats.eventrewreceived]?.image || null);
                 } else {
                     rewMessage = `\nNext reward: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived].required}`;
@@ -565,7 +572,7 @@ const exportCommand: SlashCommand = {
                 .setThumbnail(myStatsC.thumbnail)
                 .setTitle(`Boss Hunt (${enemy.name})`)
                 .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) })
-                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${guild[`boss${enemy.id + 1 as 1 | 2 | 3 | 4}`] - eStatsC.hp}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> Crescent Moon: ${eventpts}🌙\n\n<:npbag:929428030554787892> **Loot**: ${loot}<:coins:872926669055356939>\n${rewMessage}`);
+                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${guild[`boss${enemy.id + 1 as 1 | 2 | 3 | 4}`] - eStatsC.hp}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> Valentine's Chocolate: ${eventpts}<:valentines_choco_2026:1472686937277071442>\n\n<:npbag:929428030554787892> **Loot**: ${loot}<:coins:872926669055356939>\n${rewMessage}`);
 
             // Add Stage rewards
             if (r === "w" && boss.id === 3) {
@@ -613,6 +620,11 @@ const exportCommand: SlashCommand = {
         // Adjust DEF
         eStatsC.def += adjustDEF(myStatsC);
         eStatsC.mr += adjustDEF(myStatsC);
+
+        // Apply skill tree
+        for (const [skill, level] of Object.entries(stats.skill_tree)) {
+            await skillTree[parseInt(skill)].passive(level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        };
 
         // Apply passives
         if (skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
