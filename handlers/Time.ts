@@ -17,12 +17,15 @@ const handler: BotHandler = {
 
             // Daily
             if (now.getHours() === 0 && now.getMinutes() === 0) {
-
-                // Daily Reset
-                userUpdates.dailyclaimed = { type: "set", value: 0 };
-                userUpdates.dailies = { type: "set", value: {} };
-                userUpdates.feedlimit = { type: "set", value: 0 };
-                userUpdates.cow_rolled_today = { type: "set", value: 0 };
+                // Fast daily reset
+                await updateUsersAndCache(client, "*", {
+                    updates: {
+                        dailyclaimed: { type: "set", value: 0 },
+                        dailies: { type: "set", value: {} },
+                        feedlimit: { type: "set", value: 0 },
+                        cow_rolled_today: { type: "set", value: 0 },
+                    },
+                });
 
                 // Reset Low Responses
                 await resetDailyResponses(client);

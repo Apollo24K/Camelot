@@ -10,7 +10,7 @@ import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
 import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, formatNumberWithQuotes } from "../Modules/functions";
-import { addGuildDonation, getCachedUserSchema, getGuildSchema, getUserSchema, updateUsersAndCache } from '../Modules/queries';
+import { addGuildDonation, getGuildSchema, getUserSchema, updateUsersAndCache } from '../Modules/queries';
 import { requestVerification, dungeonTempBan, AbilityResponse, isEventOngoing } from "../Modules/components";
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
@@ -92,17 +92,20 @@ const exportCommand: SlashCommand = {
     name: 'dungeon',
     skipUserRefetch: true,
     skipServerRefetch: true,
-    async execute({ interaction, author }) {
+    async execute({ interaction, author, customFlag }) {
 
-        try {
-            await interaction.deferReply();
-        } catch (err) {
-            return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
+        if (!customFlag?.repeatMessage) {
+            try {
+                await interaction.deferReply();
+            } catch (err) {
+                return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
+            };
         };
 
-        let choice = interaction.options.getInteger('floor');
-        let floorDiff = parseInt(interaction.options.getString('difficulty') || "-1");
-        let flag = interaction.options.getString('flag');
+        const repeatFloor = customFlag?.repeatFloor as number | undefined;
+        let choice = repeatFloor ? ((repeatFloor - 1) % 100) + 1 : interaction.options.getInteger('floor');
+        let floorDiff = repeatFloor ? Math.floor((repeatFloor - 1) / 100) : parseInt(interaction.options.getString('difficulty') || "-1");
+        let flag = repeatFloor ? null : interaction.options.getString('flag');
 
         const stats = author.schema;
         if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
@@ -241,6 +244,14 @@ const exportCommand: SlashCommand = {
 
         let buffs = Avalon.getBuffs();
         let eBuffs = Avalon.getBuffs();
+
+        const ResultsRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`ref-dungeon-${floor}-${interaction.user.id}`)
+                .setEmoji("🔁")
+                .setLabel(`Repeat Floor ${floor}`)
+                .setStyle(ButtonStyle.Secondary)
+        );
 
         let resolved = false;
         async function matchResult(r: "w" | "l") {
@@ -593,7 +604,7 @@ const exportCommand: SlashCommand = {
         if ((flag === "skip" || flag === "all") && stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) {
             if (myStats.ep > eStats.ep) {
                 const result = await matchResult("w");
-                if (result) interaction.editReply({ embeds: [result] });
+                if (result) interaction.editReply({ embeds: [result], components: [ResultsRow] });
                 return;
             };
             notice.push("\n<:info:1131679799207796756> You need more EP than your enemy to skip a fight");
@@ -602,7 +613,7 @@ const exportCommand: SlashCommand = {
         // If Enemy Died
         if (eStatsC.hp < 1) {// if (myStats.ep/eStats.ep >= 2) {
             const result = await matchResult("w");
-            if (result) interaction.editReply({ embeds: [result] });
+            if (result) interaction.editReply({ embeds: [result], components: [ResultsRow] });
             return;
         };
 
@@ -950,11 +961,46 @@ const exportCommand: SlashCommand = {
                 });
 
             });
-            if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result] });
+            if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result], components: [ResultsRow] });
         };
 
         newFight();
 
+    },
+    async executeButtonInteraction({ interaction }) {
+        const [, , floorString, userId] = interaction.customId.split("-");
+        if (interaction.user.id !== userId) {
+            return interaction.followUp({ content: "Only the player who completed this dungeon can repeat it.", ephemeral: true });
+        };
+
+        const floor = parseInt(floorString);
+        if (!Number.isInteger(floor) || floor < 1 || floor > 300 || !interaction.channel?.isSendable()) return;
+
+        const stats = await getUserSchema(interaction.user.id);
+        if (!stats) return interaction.followUp({ content: "Couldn't find your player data.", ephemeral: true });
+
+        const Embed = new EmbedBuilder()
+            .setColor(0x44454c)
+            .setDescription("<a:loading_square:1501264680314998995> Restarting...");
+        const message = await interaction.channel.send({ embeds: [Embed] });
+        const repeatInteraction = new Proxy(interaction, {
+            get(target, property) {
+                if (property === "commandName") return "dungeon";
+                if (property === "deferReply") return async () => undefined;
+                if (property === "editReply") return (options: Parameters<typeof message.edit>[0]) => message.edit(options);
+
+                const value = Reflect.get(target, property, target);
+                return typeof value === "function" ? value.bind(target) : value;
+            },
+        }) as unknown as ChatInputCommandInteraction;
+
+        return exportCommand.execute({
+            interaction: repeatInteraction,
+            author: { schema: stats },
+            server: {},
+            locale: "en_US",
+            customFlag: { repeatFloor: floor, repeatMessage: true },
+        });
     },
 };
 
