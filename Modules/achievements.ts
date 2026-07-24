@@ -1,12 +1,27 @@
 import { characters, auniq } from "./chars.js";
 import { ChatInputCommandInteraction, User } from "discord.js";
-import { getCachedUserSchema, updateUsersAndCache } from "./queries.js";
+import { getCachedUserSchema, getOwnedCharacterIds, updateUsersAndCache } from "./queries.js";
 import { items } from "./items.js";
 import { raidRankIndices } from "./components.js";
 import { RaidRank, UpdateUserOptions } from "../types.js";
 
 // Set to track ongoing achievement checks (userId:achievementId)
 const achvmLock = new Set<string>();
+const ownedCharactersByInteraction = new WeakMap<ChatInputCommandInteraction, Map<string, Promise<number[]>>>();
+
+function getAchievementOwnedCharacterIds(interaction: ChatInputCommandInteraction, userId: string, normalCharacterIds: number[]) {
+    let users = ownedCharactersByInteraction.get(interaction);
+    if (!users) {
+        users = new Map();
+        ownedCharactersByInteraction.set(interaction, users);
+    };
+    let ownedCharacters = users.get(userId);
+    if (!ownedCharacters) {
+        ownedCharacters = getOwnedCharacterIds(userId, normalCharacterIds);
+        users.set(userId, ownedCharacters);
+    };
+    return ownedCharacters;
+};
 
 export default class achievInfo {
     private _title: string;
@@ -162,12 +177,13 @@ export default class achievInfo {
             const stats = await getCachedUserSchema(user.id, interaction.client);
             if (!stats) return;
             if (stats.achievements.includes(this.id)) return;
+            const getOwnedIds = () => getAchievementOwnedCharacterIds(interaction, user!.id, stats.chars);
 
             switch (this.id) {
                 case 0: if (stats.pullstotal >= 1) await this.unlock(interaction, user); break;
-                case 1: if (new Set(stats.chars).size >= 500) await this.unlock(interaction, user); break;
-                case 2: if (new Set(stats.chars).size >= 2000) await this.unlock(interaction, user); break;
-                case 3: if (new Set(stats.chars).size >= 5000) await this.unlock(interaction, user); break;
+                case 1: if ((await getOwnedIds()).length >= 500) await this.unlock(interaction, user); break;
+                case 2: if ((await getOwnedIds()).length >= 2000) await this.unlock(interaction, user); break;
+                case 3: if ((await getOwnedIds()).length >= 5000) await this.unlock(interaction, user); break;
                 case 4: if (list[0] > 0) await this.unlock(interaction, user); break;
                 case 5: if (list[0] > 0) await this.unlock(interaction, user); break;
                 case 6: if (stats.arenawins >= 1) await this.unlock(interaction, user); break;
@@ -189,7 +205,7 @@ export default class achievInfo {
                 case 22:
                 case 23: {
                     let completed = 0;
-                    let chars = [...new Set(stats.chars)].map((e) => characters[e]);
+                    let chars = (await getOwnedIds()).map((e) => characters[e]);
                     auniq.forEach((a) => { if (characters.filter((e) => e.anime === a).length === chars.filter((e) => e.anime === a).length) completed++; });
                     if (this.id === 19) if (completed) await this.unlock(interaction, user);
                     if (this.id === 20) if (completed >= 10) await this.unlock(interaction, user);

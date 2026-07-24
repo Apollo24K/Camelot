@@ -2,7 +2,7 @@ import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { formatNumberWithQuotes } from "../Modules/functions";
 import { SlashCommand } from '../types';
-import { getUserSchema } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'balance',
@@ -13,7 +13,8 @@ const exportCommand: SlashCommand = {
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.reply("User not found");
 
-        let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
+        const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+        let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image || "https://i.imgur.com/Ta2YDBN.png";
         if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, "", stats.char_skin[stats.favchar]);
 
         const Embed = new EmbedBuilder()

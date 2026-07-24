@@ -1,7 +1,20 @@
 import { Client } from "discord.js";
-import { query } from "../postgres";
+import { query, withTransaction } from "../postgres";
 import { AuctionBidSchema, AuctionSchema, CharacterSchema, CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateGuildOptions, UpdatePartyOptions, UpdateStampedeOptions, UpdateUserOptions, UpdateWeaponOptions, UserSchema, UserSchemaForStats, WeaponSchema } from "../types";
 import { donationWeekStart } from "./components";
+import LRUCache from "./LRUCache";
+
+const CHARACTER_CACHE_TTL = 5 * 60 * 1000;
+const characterCache = new LRUCache<string, { characters: CharacterSchema[]; expiresAt: number; }>(10_000);
+const pendingCharacterQueries = new Map<string, Promise<CharacterSchema[]>>();
+const characterCacheVersions = new Map<string, number>();
+
+export const invalidateCharacterCache = (...userIds: string[]) => {
+    for (const userId of userIds) {
+        characterCache.cache.delete(userId);
+        characterCacheVersions.set(userId, (characterCacheVersions.get(userId) ?? 0) + 1);
+    };
+};
 
 function fixBigintForUser(value: Partial<UserSchema>) {
     if ("rowid" in value) value.rowid = Number(value.rowid);
@@ -287,17 +300,17 @@ export const getPastStampedes = async (past: number): Promise<StampedeSchema[]> 
     return stampedes;
 };
 
-export const getUserRanking = async (scope: "server" | "global", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation"): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
+export const getUserRanking = async (scope: "server" | "global", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation"): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
     let orderByClause: string;
-    let selectClause = "name, id, xp, coins, lilies, pullstotal, favchar, premium, chars, char_skin, battlechar, dungeon_classlevels, achievements, dungeon_floors, eventpts, cow_participation, custom_skins";
+    let selectClause = "name, id, xp, coins, lilies, pullstotal, favchar, premium, chars, char_skin, battlechar, dungeon_classlevels, achievements, dungeon_floors, eventpts, cow_participation, custom_skins, ARRAY(SELECT c.charid FROM characters c WHERE c.id = users.id) AS vip_chars";
     let whereClause = "";
 
     switch (orderBy) {
         case "uniqueChars":
-            orderByClause = "COALESCE(array_length(array(select distinct unnest(chars)), 1), 0) DESC";
+            orderByClause = "(SELECT COUNT(DISTINCT owned_id) FROM unnest(chars || ARRAY(SELECT c.charid FROM characters c WHERE c.id = users.id)) AS owned_id) DESC";
             break;
         case "chars":
-            orderByClause = "COALESCE(array_length(chars, 1), 0) DESC";
+            orderByClause = "(COALESCE(cardinality(chars), 0) + (SELECT COUNT(*) FROM characters c WHERE c.id = users.id)) DESC";
             break;
         case "class":
             selectClause += `, (
@@ -317,7 +330,7 @@ export const getUserRanking = async (scope: "server" | "global", user_ids: strin
             break;
         case "anime":
             // Completed anime count will be calculated in the application
-            orderByClause = "COALESCE(array_length(chars, 1), 0) DESC";
+            orderByClause = "(SELECT COUNT(DISTINCT owned_id) FROM unnest(chars || ARRAY(SELECT c.charid FROM characters c WHERE c.id = users.id)) AS owned_id) DESC";
             break;
         case "achievements":
             orderByClause = "COALESCE(array_length(achievements, 1), 0) DESC";
@@ -358,18 +371,22 @@ export const getUserRanking = async (scope: "server" | "global", user_ids: strin
     const result = await query(
         `SELECT ${selectClause} FROM users ${scope === "server" ? `WHERE id = ANY($1)` : "WHERE 1=1"} ${whereClause} ORDER BY ${orderByClause} LIMIT 1501`,
         scope === "server" ? [user_ids] : []
-    ) as (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[];
+    ) as (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[];
     return result ?? [];
 };
 
-export const getFindUsers = async (ids: string[] | "*", charId: number): Promise<Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars">[]> => {
-    const query_str = `SELECT id, name, findoption, chars FROM users WHERE findoption != 2 AND chars @> ARRAY[${charId}]`;
+export const getFindUsers = async (ids: string[] | "*", charId: number): Promise<(Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[]> => {
+    const query_str = `SELECT u.id, u.name, u.findoption, u.chars,
+        COALESCE((SELECT COUNT(*)::int FROM characters c WHERE c.id = u.id AND c.charid = $1), 0) AS vip_copies
+        FROM users u
+        WHERE u.findoption != 2
+        AND (u.chars @> ARRAY[$1] OR EXISTS (SELECT 1 FROM characters c WHERE c.id = u.id AND c.charid = $1))`;
 
     if (ids === "*") {
-        const users = await query(query_str, []) as Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars">[];
+        const users = await query(query_str, [charId]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
         return users;
     } else {
-        const users = await query(`${query_str} AND id = ANY($1)`, [ids]) as Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars">[];
+        const users = await query(`${query_str} AND u.id = ANY($2)`, [charId, ids]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
         return users;
     };
 };
@@ -478,8 +495,36 @@ export const getUserTransaction = async (userId: string): Promise<Pick<UserSchem
 };
 
 export const getCharacterSchemasOfUser = async (userId: string): Promise<CharacterSchema[]> => {
-    const characters = await query(`SELECT * FROM characters WHERE id = $1`, [userId]) as CharacterSchema[];
-    return characters;
+    const cached = characterCache.get(userId);
+    if (cached && cached.expiresAt > Date.now()) return cached.characters;
+    if (cached) characterCache.cache.delete(userId);
+
+    const pending = pendingCharacterQueries.get(userId);
+    if (pending) return pending;
+
+    const queryVersion = characterCacheVersions.get(userId) ?? 0;
+    const characterQuery = (async () => {
+        const characters = await query(`SELECT * FROM characters WHERE id = $1`, [userId]) as CharacterSchema[];
+        if ((characterCacheVersions.get(userId) ?? 0) === queryVersion) {
+            characterCache.set(userId, { characters, expiresAt: Date.now() + CHARACTER_CACHE_TTL });
+        };
+        return characters;
+    })().finally(() => {
+        pendingCharacterQueries.delete(userId);
+        characterCacheVersions.delete(userId);
+    });
+    pendingCharacterQueries.set(userId, characterQuery);
+    return characterQuery;
+};
+
+export const getOwnedCharacterIds = async (userId: string, normalCharacterIds: number[] = []): Promise<number[]> => {
+    const vipCharacters = await getCharacterSchemasOfUser(userId);
+    return [...new Set([...normalCharacterIds, ...vipCharacters.map((character) => character.charid)])];
+};
+
+export const ownsCharacter = async (userId: string, normalCharacterIds: number[], charId: number): Promise<boolean> => {
+    if (normalCharacterIds.includes(charId)) return true;
+    return (await getCharacterSchemasOfUser(userId)).some((character) => character.charid === charId);
 };
 
 export const getCharacterSchema = async (charId: number, print: number): Promise<CharacterSchema | undefined> => {
@@ -665,6 +710,7 @@ export const insertNewFAQ = async (id: string, name: string, body: string): Prom
 
 export const insertNewCharacter = async (userid: string, charId: number, rarity: number, is_tradeable?: boolean): Promise<CharacterSchema> => {
     const { rows: [character] } = await query(`INSERT INTO characters (id, charid, rarity, is_tradeable) VALUES ($1, $2, $3, $4) RETURNING *`, [userid, charId, rarity, is_tradeable ?? true]) as { rows: CharacterSchema[]; };
+    invalidateCharacterCache(userid);
     return character;
 };
 
@@ -712,6 +758,61 @@ export const deleteWeapons = async (uniqueIds: string[]): Promise<void> => {
     await query(`DELETE FROM weapons WHERE uniqueid = ANY($1)`, [uniqueIds]);
 };
 
+export const deleteCharacter = async (userId: string, charId: number, print: number): Promise<CharacterSchema | undefined> => {
+    const { rows: [character] } = await query(
+        `DELETE FROM characters WHERE id = $1 AND charid = $2 AND print = $3 RETURNING *`,
+        [userId, charId, print]
+    ) as { rows: CharacterSchema[]; };
+    if (character) invalidateCharacterCache(userId);
+    return character;
+};
+
+export const sellCharacterCopies = async (
+    userId: string,
+    normalCharacterIds: number[],
+    vipCharacters: Pick<CharacterSchema, "charid" | "print">[],
+    rewards: Pick<UserSchema, "coins" | "ssshard" | "sshard" | "ashard" | "bshard" | "cshard" | "dshard">,
+): Promise<boolean> => {
+    try {
+        await withTransaction(async (client) => {
+            const { rows: [user] } = await client.query<{ chars: number[]; }>(`SELECT chars FROM users WHERE id = $1 FOR UPDATE`, [userId]);
+            if (!user) throw new Error(`User ${userId} not found while selling characters`);
+
+            const remainingNormalCharacters = [...user.chars];
+            for (const charId of normalCharacterIds) {
+                const index = remainingNormalCharacters.indexOf(charId);
+                if (index === -1) throw new Error(`Normal character ${charId} is no longer owned by ${userId}`);
+                remainingNormalCharacters.splice(index, 1);
+            };
+
+            if (vipCharacters.length) {
+                const charIds = vipCharacters.map((character) => character.charid);
+                const prints = vipCharacters.map((character) => character.print);
+                const { rowCount } = await client.query(
+                    `DELETE FROM characters c
+                    USING unnest($2::int[], $3::int[]) AS requested(charid, print)
+                    WHERE c.id = $1 AND c.charid = requested.charid AND c.print = requested.print`,
+                    [userId, charIds, prints]
+                );
+                if (rowCount !== vipCharacters.length) throw new Error(`VIP inventory changed while ${userId} was selling characters`);
+            };
+
+            await client.query(
+                `UPDATE users SET chars = $2, coins = coins + $3, ssshard = ssshard + $4,
+                    sshard = sshard + $5, ashard = ashard + $6, bshard = bshard + $7,
+                    cshard = cshard + $8, dshard = dshard + $9
+                WHERE id = $1`,
+                [userId, remainingNormalCharacters, rewards.coins, rewards.ssshard, rewards.sshard, rewards.ashard, rewards.bshard, rewards.cshard, rewards.dshard]
+            );
+        });
+        if (vipCharacters.length) invalidateCharacterCache(userId);
+        return true;
+    } catch (error) {
+        console.error(error);
+        return false;
+    };
+};
+
 //---------------------------------------------//
 //             TRANSFER STATEMENTS             //
 //---------------------------------------------//
@@ -725,6 +826,7 @@ export const transferAccount = async (oldId: string, newId: string): Promise<voi
     await query(`UPDATE weapons SET id = $1, uniqueid = SUBSTRING(uniqueid, 1, POSITION(':' IN uniqueid)) || $1 WHERE id = $2`, [newId, oldId]);
     await query(`UPDATE trades SET id = $1 WHERE id = $2`, [newId, oldId]);
     await query(`UPDATE trades SET receiver = $1 WHERE receiver = $2`, [newId, oldId]);
+    invalidateCharacterCache(oldId, newId);
 
     const stats = await getUserSchema(newId);
     if (stats) {
@@ -770,7 +872,9 @@ export const transferAccount = async (oldId: string, newId: string): Promise<voi
 };
 
 export const transferCharacter = async (userid: string, charId: number, print: number): Promise<CharacterSchema | undefined> => {
+    const previous = await getCharacterSchema(charId, print);
     const { rows: [character] } = await query(`UPDATE characters SET id = $1 WHERE charid = $2 AND print = $3 RETURNING *`, [userid, charId, print]) as { rows: CharacterSchema[]; };
+    if (character) invalidateCharacterCache(userid, ...(previous ? [previous.id] : []));
     return character;
 };
 
@@ -1127,12 +1231,19 @@ export const updateUsersAndCache = async (client: Client, userIds: string | stri
                                     user.o[key] = [...new Set(user.o[key])];
                                     break;
                                 case 'remove':
-                                    //@ts-ignore
-                                    user.o[key] = user.o[key]?.filter((item: any) => item !== value);
+                                    if (Array.isArray((user.o as any)[key])) {
+                                        const values = Array.isArray(value) ? value : [value];
+                                        for (const entry of values) {
+                                            const entryIndex = (user.o as any)[key].indexOf(entry);
+                                            if (entryIndex !== -1) (user.o as any)[key].splice(entryIndex, 1);
+                                        };
+                                    };
                                     break;
                                 case 'remove_all':
-                                    //@ts-ignore
-                                    user.o[key] = user.o[key]?.filter((item: any) => item !== value);
+                                    if (Array.isArray((user.o as any)[key])) {
+                                        const values = new Set<any>(Array.isArray(value) ? value : [value]);
+                                        (user.o as any)[key] = (user.o as any)[key].filter((item: any) => !values.has(item));
+                                    };
                                     break;
                                 case 'set_json':
                                     //@ts-ignore

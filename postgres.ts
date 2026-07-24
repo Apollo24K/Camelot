@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, PoolClient } from 'pg';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -365,6 +365,22 @@ async function createIndexes() {
     await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_guild_donations_userid ON guild_donations(userid)`);
     await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
     await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
+    await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_characters_owner_charid ON characters(id, charid)`);
+};
+
+export const withTransaction = async <T>(callback: (client: PoolClient) => Promise<T>): Promise<T> => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await callback(client);
+        await client.query('COMMIT');
+        return result;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    };
 };
 
 async function createTriggerWeaponUniqueId() {

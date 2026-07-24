@@ -3,7 +3,7 @@ import { items } from "../Modules/items";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, rarityColor } from "../Modules/functions";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
+import { getUserSchema, ownsCharacter, updateUsersAndCache } from '../Modules/queries';
 
 const charxpByRarity = {
     "genesis": 50000,
@@ -33,7 +33,7 @@ const exportCommand: SlashCommand = {
         if (inv.feedlimit >= 20) return interaction.reply(`Your character is full, please try again tomorrow!`);
 
         const char = characters[inv.battlechar];
-        if (!inv.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
+        if (!(await ownsCharacter(interaction.user.id, inv.chars, char.id))) return interaction.reply(`You don't have a copy of **${char.name}**`);
 
         let stats = await getDetailedStats(char.id, inv, inv.dungeon_classlevels);
         let currLvl = stats.lvl;

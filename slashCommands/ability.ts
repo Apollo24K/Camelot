@@ -4,7 +4,7 @@ import { abilities } from "../Modules/abilities";
 import { achievements } from "../Modules/achievements";
 import { search, showPage } from "../Modules/functions";
 import { SlashCommand } from "../types";
-import { getUserSchema } from "../Modules/queries";
+import { getOwnedCharacterIds, getUserSchema } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'ability',
@@ -21,6 +21,7 @@ const exportCommand: SlashCommand = {
 
         const inv = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!inv) return interaction.reply("Couldn't find user with that ID.");
+        const ownedCharacterIds = new Set(await getOwnedCharacterIds(user.id, inv.chars));
 
         let charsID = Object.keys(abilities).filter((e: any) => filter ? filter in abilities[e] : true);
         let chars = charsID.map((e: any) => characters[e]);
@@ -33,7 +34,7 @@ const exportCommand: SlashCommand = {
             charsInAnime.sort();
             showChars.push(`**${uniq[i]}**`);
             for (let j = 0; j < charsInAnime.length; j++) {
-                if (inv.chars.includes(charsInAnime[j].id)) {
+                if (ownedCharacterIds.has(charsInAnime[j].id)) {
                     showChars.push(`> ${charsInAnime[j].name} <a:check:873196253276700682>`);
                 } else {
                     showChars.push(`> ${charsInAnime[j].name}`);

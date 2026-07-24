@@ -9,7 +9,7 @@ import { achievements } from "../Modules/achievements";
 import { items } from "../Modules/items";
 import { Asset } from "../Modules/assets";
 import { CompactUserSchema, ProfileImageArguments, SlashCommand } from '../types';
-import { getGuildSchema, getPartySchema, getUserSchema, insertNewWeapon, updateUsers } from '../Modules/queries';
+import { getGuildSchema, getOwnedCharacterIds, getPartySchema, getUserSchema, insertNewWeapon, updateUsers } from '../Modules/queries';
 import { ExternalLinks, profileColors } from '../Modules/components';
 import path from 'path';
 
@@ -447,7 +447,8 @@ const exportCommand: SlashCommand = {
         // Get User Schema
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
-        if (!stats.chars.length) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
+        const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+        if (!ownedCharacterIds.length) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
         if (!stats.battlechar) return interaction.editReply("You don't have a battle character selected. Please use `/select` first");
         if (color) stats.profilecolor = color === "null" ? null : color;
 
@@ -465,7 +466,7 @@ const exportCommand: SlashCommand = {
             });
         };
 
-        const chars = [...new Set(stats.chars)].map((e) => characters[e]);
+        const chars = ownedCharacterIds.map((e) => characters[e]);
 
         // Anime Completed
         let aniCompleted = 0;

@@ -22,7 +22,9 @@ const exportCommand: SlashCommand = {
         const servers = await getServerSchema(interaction.guild.id);
         const user_ids = servers?.user_ids ?? [];
 
-        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
+        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
+        const allCharacterIds = (user: typeof stats[number]) => [...user.chars, ...(user.vip_chars ?? [])];
+        const uniqueCharacterIds = (user: typeof stats[number]) => [...new Set(allCharacterIds(user))];
         let count = 1, showUsers: string[] = [];
         switch (flag) {
             case "level":
@@ -36,16 +38,16 @@ const exportCommand: SlashCommand = {
             case "chars":
                 stats = await getUserRanking(scope, user_ids, "chars");
                 stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
-                showUsers = stats.map((e) => `${count++}) **${e.name}** - has **${e.chars.length}** characters`); break;
+                showUsers = stats.map((e) => `${count++}) **${e.name}** - has **${allCharacterIds(e).length}** characters`); break;
             case "uchars":
                 stats = await getUserRanking(scope, user_ids, "uniqueChars");
                 stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
-                showUsers = stats.map((e) => `${count++}) **${e.name}** - has **${[...new Set(e.chars)].length}** unique characters`); break;
+                showUsers = stats.map((e) => `${count++}) **${e.name}** - has **${uniqueCharacterIds(e).length}** unique characters`); break;
             case "progress":
                 stats = await getUserRanking(scope, user_ids, "uniqueChars");
                 stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => {
-                    const uniqueChars = [...new Set(e.chars)].length;
+                    const uniqueChars = uniqueCharacterIds(e).length;
                     const progressPercentage = Math.floor((uniqueChars / characters.length) * 1000) / 10;
                     return `${count++}) **${e.name}** - has completed **${progressPercentage}%**`;
                 });
@@ -60,7 +62,7 @@ const exportCommand: SlashCommand = {
                 }, {} as Record<string, number>);
 
                 stats.forEach((user) => {
-                    const userChars = [...new Set(user.chars)]; // Get unique characters
+                    const userChars = uniqueCharacterIds(user);
                     const charsPerAnime: Record<string, number> = {};
 
                     // Count characters per anime for this user
@@ -170,7 +172,7 @@ const exportCommand: SlashCommand = {
 
         if (!stats[0]) return interaction.editReply("Empty leaderboard");
 
-        const topChars = (typeof stats[0].chars === "string") ? JSON.parse(stats[0].chars) : stats[0].chars;
+        const topChars = allCharacterIds(stats[0]);
         let thumbnail = characters[topChars[Math.floor(Math.random() * topChars.length)]]?.image || "https://i.ibb.co/jZ7fHSj/camelot.png";
         if (stats[0].favchar !== null) thumbnail = characters[stats[0].favchar].getImage(stats[0].premium, stats[0].custom_skins[stats[0].favchar], stats[0].char_skin[stats[0].favchar]);
 

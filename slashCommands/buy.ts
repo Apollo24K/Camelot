@@ -142,7 +142,7 @@ const exportCommand: SlashCommand = {
                 dailies[4].update(interaction, interaction.client);
             } else if (item === "6") {
                 if (stats.coins < 2000) return interaction.reply("You don't have enough coins");
-                let newChars = characters.filter((e) => !stats.chars.includes(e.id) && e.rarity !== "SS" && e.rarity !== "EX");
+                let newChars = characters.filter((e) => !stats.chars.includes(e.id) && e.rarity !== "VIP" && e.rarity !== "SS" && e.rarity !== "EX");
                 if (newChars.length < 200) return interaction.reply("Morpheus' Blessing can't be used once you have less than 200 characters left.");
                 sub_coins = 2000;
 

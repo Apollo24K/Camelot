@@ -11,7 +11,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, SlashCommand, UpdateUserOptions } from '../types';
-import { getGuildSchema, getUserSchema, updateGuilds, updateUsers } from '../Modules/queries';
+import { getGuildSchema, getOwnedCharacterIds, getUserSchema, ownsCharacter, updateGuilds, updateUsers } from '../Modules/queries';
 import { AbilityResponse, isEventOngoing, ongoingEvent } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
@@ -152,7 +152,7 @@ const exportCommand: SlashCommand = {
         });
 
         let stats = author.schema;
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         if (!guild) return interaction.editReply(`You need to be in a guild to participate in this event!\nYou can find one using \`/guild find\` or create your own using \`/guild create\``);
@@ -163,7 +163,8 @@ const exportCommand: SlashCommand = {
         if (selection === -1) return;
 
         stats = await getUserSchema(interaction.user.id) ?? stats;
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         // Set up restrictions
         if (stats.bosshuntruns === 5) {
@@ -1016,7 +1017,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

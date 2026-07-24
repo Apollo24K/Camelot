@@ -4,7 +4,7 @@ import { classes } from "../Modules/classes";
 import skinInfo, { skins } from "../Modules/skins";
 import { PageRow } from "../Modules/components";
 import { DetailedStats, SlashCommand } from '../types';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getCharacterSchemasOfUser, getUserSchema, updateUsers } from '../Modules/queries';
 import charInfo from '../Modules/chars';
 
 const exportCommand: SlashCommand = {
@@ -17,6 +17,8 @@ const exportCommand: SlashCommand = {
 
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
+        const vipChars = await getCharacterSchemasOfUser(user.id);
+        const ownedCharacterIds = new Set([...stats.chars, ...vipChars.map((entry) => entry.charid)]);
 
         if (choice === "") choice = `${stats.battlechar ?? ""}`;
 
@@ -112,10 +114,10 @@ const exportCommand: SlashCommand = {
             for (const char of chars) {
                 let img = char.image;
 
-                if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
+                if (!ownedCharacterIds.has(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
                 charstats = await getDetailedStats(char.id, stats, stats.dungeon_classlevels);
                 cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
-                dupes = stats.chars.filter((e) => e === char.id).length;
+                dupes = stats.chars.filter((e) => e === char.id).length + vipChars.filter((e) => e.charid === char.id).length;
 
                 img = char.getImage(stats.premium, stats.custom_skins[char.id], stats.char_skin[char.id]);
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
@@ -236,7 +238,7 @@ const exportCommand: SlashCommand = {
             for (const char of chars) {
                 let img = char.image;
 
-                if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
+                if (!ownedCharacterIds.has(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
                 let charstats = await getDetailedStats(char.id, stats, stats.dungeon_classlevels);
                 let cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
 

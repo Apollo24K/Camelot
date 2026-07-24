@@ -1,7 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
-import { getCachedUserSchema } from '../Modules/queries';
+import { getCachedUserSchema, getOwnedCharacterIds } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'level',
@@ -21,7 +21,7 @@ const exportCommand: SlashCommand = {
             level++;
         };
 
-        let uniq = [...new Set(stats.chars)];
+        let uniq = await getOwnedCharacterIds(user.id, stats.chars);
         let thumbnail = characters[uniq[Math.floor(Math.random() * uniq.length)]]?.image || "https://i.ibb.co/jZ7fHSj/camelot.png";
         if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 

@@ -13,7 +13,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, RaidRank, RaidSchema, SlashCommand } from '../types';
-import { cancelRaid, getGuildSchema, getLatestRaid, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, updateGuilds, updateRaidEnded, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
+import { cancelRaid, getGuildSchema, getLatestRaid, getOwnedCharacterIds, getRaidByRaidRowId, getUserSchemas, getWeaponSchemas, insertNewRaid, ownsCharacter, updateGuilds, updateRaidEnded, updateRaidParticipation, updateRaidPhase, updateUsers } from '../Modules/queries';
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
 import { achievements } from '../Modules/achievements';
@@ -298,7 +298,7 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
                     if (support1) {
                         let getChar = search(support1, stats.chars, interaction, true);
                         if (getChar?.name) {
-                            if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                            if (!(await ownsCharacter(interaction.user.id, stats.chars, getChar.id))) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
                             if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
                             stats.raid_supports[0] = getChar.id;
                         };
@@ -308,7 +308,7 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
                     if (support2) {
                         let getChar = search(support2, stats.chars, interaction, true);
                         if (getChar?.name) {
-                            if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                            if (!(await ownsCharacter(interaction.user.id, stats.chars, getChar.id))) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
                             if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
                             if (stats.raid_supports[0] !== 0) stats.raid_supports[1] = getChar.id;
                             else stats.raid_supports[0] = getChar.id;
@@ -726,7 +726,8 @@ const exportCommand: SlashCommand = {
 
         // Check if user has a battle character
         const stats = author.schema;
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         if (!stats.guild || !guild) {
@@ -1386,7 +1387,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

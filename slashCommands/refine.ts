@@ -2,7 +2,7 @@ import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, getDetailedStats, rarityColor } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getUserSchema, ownsCharacter, updateUsers } from '../Modules/queries';
 import { achievements } from '../Modules/achievements';
 
 const exportCommand: SlashCommand = {
@@ -16,16 +16,17 @@ const exportCommand: SlashCommand = {
 
         let char = search(choice, author.schema.chars, interaction);
         if (!char?.name) return;
-        if (!author.schema.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
+        if (!(await ownsCharacter(interaction.user.id, author.schema.chars, char.id))) return interaction.reply(`You don't have a copy of **${char.name}**`);
 
         let stats = await getDetailedStats(char.id, author.schema, author.schema.dungeon_classlevels);
         if (stats.ref > 5) return interaction.reply(`**${char.name}** has already reached the max refinement level`);
         let stats2 = await getDetailedStats(char.id, author.schema, author.schema.dungeon_classlevels, 0, true);
 
-        let shardRarity = char.rarity === "EX" ? "ss" : char.rarity.toLowerCase();
+        let shardRarity = char.rarity === "EX" || char.rarity === "VIP" ? "ss" : char.rarity.toLowerCase();
         let shardType = shardRarity + "shard" as 'ssshard' | 'sshard' | 'ashard' | 'bshard' | 'cshard' | 'dshard';
         let shardAmount = 16 * (stats.ref + 1), price = 0, shardStr = "";
         switch (char.rarity) {
+            case "VIP":
             case "EX": shardStr = "<:ss_shard:917203009543503892>"; price = 2500 * (stats.ref + 1); break;
             case "SS": shardStr = "<:ss_shard:917203009543503892>"; price = 1500 * (stats.ref + 1); break;
             case "S": shardStr = "<:s_shard:917202925514817566>"; price = 750 * (stats.ref + 1); break;

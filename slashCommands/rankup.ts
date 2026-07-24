@@ -13,7 +13,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
-import { getUserSchema, getWeaponSchemas, updateUsers } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema, getWeaponSchemas, ownsCharacter, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 import { customHpBars } from '../Modules/customHpBars';
 import { achievements } from '../Modules/achievements';
@@ -81,11 +81,12 @@ const exportCommand: SlashCommand = {
             const currentRank = getLetterRank(stats.rankscore);
             for (const id of [99, 100, 101, 102, 103]) await achievements[id].check(interaction, interaction.user, currentRank);
         };
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) {
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) {
             await interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
             await checkRankAchievements();
             return;
         };
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const userItemSchemas = await getWeaponSchemas([stats.equipment.weapon, stats.equipment.shield, stats.equipment.helmet, stats.equipment.cuirass, stats.equipment.gloves, stats.equipment.boots].filter((e) => e));
         const userItems = userItemSchemas.map((e) => items[e.itemid]);
@@ -579,7 +580,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

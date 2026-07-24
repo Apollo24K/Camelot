@@ -10,7 +10,7 @@ import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
 import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, formatNumberWithQuotes } from "../Modules/functions";
-import { addGuildDonation, getGuildSchema, getUserSchema, updateUsersAndCache } from '../Modules/queries';
+import { addGuildDonation, getGuildSchema, getOwnedCharacterIds, getUserSchema, ownsCharacter, updateUsersAndCache } from '../Modules/queries';
 import { requestVerification, dungeonTempBan, AbilityResponse, isEventOngoing } from "../Modules/components";
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
@@ -108,7 +108,8 @@ const exportCommand: SlashCommand = {
         let flag = repeatFloor ? null : interaction.options.getString('flag');
 
         const stats = author.schema;
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
 
@@ -191,6 +192,13 @@ const exportCommand: SlashCommand = {
             // stats.dungeon_limit++;
         };
         let skippedTotal = skipRounds;
+
+        // Snapshot run eligibility
+        const runEligibility = {
+            loot: dunLim[0] >= stats.dungeon_limit + skipRounds,
+            progress: dunLim[1] >= stats.dungeon_limit + skipRounds,
+            secondaryLoot: dunLim[2] >= stats.dungeon_limit + skipRounds,
+        };
 
         // Update users table
         await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -281,7 +289,7 @@ const exportCommand: SlashCommand = {
             else Embed.setFooter({ text: `${myClass.name} level: ${myStats.clvl} | XP left: ${(myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))}`, iconURL: myClass.image });
             if (r === "l") return Embed.setDescription(`💀 **${interaction.user.toString()}** lost 💀\n<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.dungeon_floors[floor]}**/${floors[floor]?.winsNeeded}\n${runsLeftStr}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
 
-            if (dunLim[1] - stats.dungeon_limit >= 0 || stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) stats.dungeon_floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
+            if (runEligibility.progress || stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) stats.dungeon_floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
 
             let unlocked = `<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.dungeon_floors[floor]}**/${floors[floor]?.winsNeeded}`;
             if (stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded && floor !== 300) {
@@ -332,7 +340,7 @@ const exportCommand: SlashCommand = {
                 if (guild) boost += (0.2 * guild.xpbuff);
 
                 // Loot run buff
-                if (dunLim[0] >= stats.dungeon_limit) boost *= 5;
+                if (runEligibility.loot) boost *= 5;
 
                 boost = Math.round(boost * 100) / 100;
                 let cxp = Math.floor(((floor < 100 ? floor : 100 + (floor / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
@@ -355,7 +363,7 @@ const exportCommand: SlashCommand = {
 
             // Coins
             let loot = 0;
-            if (dunLim[0] >= stats.dungeon_limit) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
+            if (runEligibility.loot) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
             if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
             loot *= matchStats.lootm;
             loot += matchStats.loot;
@@ -394,7 +402,7 @@ const exportCommand: SlashCommand = {
             let ascCount = 0;
 
             // First loot cap
-            if (dunLim[0] >= stats.dungeon_limit) {
+            if (runEligibility.loot) {
                 // Shards
                 ssShards += drops(0.012, 3 * skipRounds);
                 sShards += drops(0.018, 5 * skipRounds);
@@ -416,7 +424,7 @@ const exportCommand: SlashCommand = {
                 chestDrops[2] += drops(0.027, skipRounds);
                 chestDrops[3] += drops(0.012, skipRounds);
             } // Second Loot Cap
-            else if (dunLim[2] >= stats.dungeon_limit) {
+            else if (runEligibility.secondaryLoot) {
                 // Crafting Resources
                 craftCount += drops(0.12, 4 * skipRounds);
                 if (floor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
@@ -632,7 +640,7 @@ const exportCommand: SlashCommand = {
                     .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
                     .setTitle(`Dungeon Floor ${(floor - 1) % 100 + 1} ${enemy.boss ? "(Boss)" : ""}`)
-                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}\n${myClass ? myClass.emblem : ""}${interaction.user.username} (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
+                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}\n${myClass ? myClass.emblem : ""}${interaction.user.toString()} (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eImage);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
@@ -649,7 +657,7 @@ const exportCommand: SlashCommand = {
 
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
-                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}\n${myClass ? myClass.emblem : ""}${interaction.user.username} (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}\n${myClass ? myClass.emblem : ""}${interaction.user.toString()} (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         // await msg.edit({ embeds: [Embed] });
 
@@ -923,7 +931,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

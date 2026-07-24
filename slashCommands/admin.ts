@@ -6,7 +6,7 @@ import { OfferRow, PageRow, activeAuctions, auctionChannelId, cowSettings } from
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { AuctionSchema, CharacterSchema, SlashCommand, UserSchema } from '../types';
-import { deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
+import { deleteCharacter, deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
 import { query } from '../postgres';
 import { createResponseGraph, getResponseData } from '../Modules/responseGraph';
 
@@ -318,8 +318,8 @@ const exportCommand: SlashCommand = {
             const char = search(args.join(" "), [0], interaction, true);
             if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
 
-            // Update users table
-            await updateUsers(user.id, {
+            if (char.rarity === "VIP") await insertNewCharacter(user.id, char.id, char.rarityValue);
+            else await updateUsers(user.id, {
                 chars: { type: "append", value: [char.id] },
             });
 
@@ -331,12 +331,15 @@ const exportCommand: SlashCommand = {
             if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add all chars user:@user\`\n\n**Options**\n\`user\`: User to add the characters to`, ephemeral });
 
             // Get all character IDs at once
-            const allCharIds = characters.map(char => char.id);
+            const allCharIds = characters.filter((char) => char.rarity !== "VIP").map(char => char.id);
 
             // Single database call to append all characters
             await updateUsers(user.id, {
                 chars: { type: "append", value: allCharIds }
             });
+            for (const char of characters.filter((entry) => entry.rarity === "VIP")) {
+                await insertNewCharacter(user.id, char.id, char.rarityValue);
+            };
 
             return interaction.reply({ content: `Action Successful: Added all characters to ${user.toString()}`, ephemeral });
         };
@@ -349,13 +352,16 @@ const exportCommand: SlashCommand = {
             const char = search(args.join(" "), [0], interaction, true);
             if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
 
-            const inv = await getUserSchema(user.id);
-            if (!inv?.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
-
-            // Update users table
-            await updateUsers(user.id, {
-                chars: { type: "remove", value: [char.id] },
-            });
+            if (char.rarity === "VIP") {
+                const print = Number(args.join(" ").match(/#\s*(\d+)$/)?.[1]);
+                if (!print || !(await deleteCharacter(user.id, char.id, print))) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have that VIP print. Use \`${char.name}#<print>\`.`, ephemeral });
+            } else {
+                const inv = await getUserSchema(user.id);
+                if (!inv?.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
+                await updateUsers(user.id, {
+                    chars: { type: "remove", value: [char.id] },
+                });
+            };
 
             return interaction.reply({ content: `Action Successful: Removed **${char.name}** from ${user.toString()}`, ephemeral });
         };

@@ -1,11 +1,47 @@
 import { ComponentType } from "discord.js";
-import { characters } from "../Modules/chars";
+import charInfo, { characters } from "../Modules/chars";
 import { search } from "../Modules/functions";
 import { OfferRow, shardEmoji } from "../Modules/components";
-import { SlashCommand } from "../types";
-import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
+import { CharacterSchema, CompactUserSchema, SlashCommand } from "../types";
+import { getCharacterSchemasOfUser, getUserSchema, sellCharacterCopies, updateUsersAndCache } from "../Modules/queries";
 
 const rarPrice = { "VIP": 250_000, "EX": 25_000, "SS": 5_000, "S": 1_000, "A": 500, "B": 250, "C": 100, "D": 50 };
+
+type SellCharacter = { char: charInfo; print?: number; };
+
+function parsePrintChoice(choice: string) {
+    const match = choice.trim().match(/^(.*?)`?\s*#\s*(\d+)`?$/);
+    if (!match) return { name: choice.trim() };
+    return { name: match[1].trim(), print: Number(match[2]) };
+};
+
+function resolveSellCharacter(choice: string, stats: CompactUserSchema, vipChars: CharacterSchema[], selected: SellCharacter[], interaction: Parameters<SlashCommand["execute"]>[0]["interaction"]): SellCharacter | undefined {
+    const parsed = parsePrintChoice(choice);
+    const char = search(choice, stats.chars, interaction, true);
+    if (!char) return;
+
+    if (char.rarity === "VIP") {
+        if (parsed.print === undefined) return;
+        if (vipChars.some((entry) => entry.charid === char.id && entry.print === parsed.print) && !selected.some((entry) => entry.char.id === char.id && entry.print === parsed.print)) {
+            return { char, print: parsed.print };
+        };
+        return;
+    };
+
+    const alreadySelected = selected.filter((entry) => entry.char.id === char.id && entry.print === undefined).length;
+    if (alreadySelected < stats.chars.filter((id) => id === char.id).length) return { char };
+};
+
+function getBulkVipCharacters(vipChars: CharacterSchema[], stats: CompactUserSchema, copiesToKeep: number): CharacterSchema[] {
+    const grouped = new Map<number, CharacterSchema[]>();
+    for (const entry of vipChars) {
+        if (stats.charlock.includes(entry.charid) || stats.animelock.includes(characters[entry.charid].animeInfo.id)) continue;
+        const entries = grouped.get(entry.charid) ?? [];
+        entries.push(entry);
+        grouped.set(entry.charid, entries);
+    };
+    return [...grouped.values()].flatMap((entries) => entries.sort((a, b) => a.print - b.print).slice(copiesToKeep));
+};
 
 const exportCommand: SlashCommand = {
     name: 'sell',
@@ -22,6 +58,41 @@ const exportCommand: SlashCommand = {
             let copies = interaction.options.getInteger('copies') ?? 1;
             if (subcommand === "all") copies = 0;
             if (copies < 0) copies = 1;
+
+            if (rarity === "VIP") {
+                const vipChars = getBulkVipCharacters(await getCharacterSchemasOfUser(interaction.user.id), stats, copies);
+                const price = vipChars.length * rarPrice.VIP;
+                const ssShards = vipChars.length * 16;
+                if (!vipChars.length) return interaction.reply(copies === 1 ? "You don't have any VIP duplicates." : `You don't have any VIP duplicates with more than ${copies} copies.`);
+
+                return interaction.reply({ content: `Are you sure you want to sell ${vipChars.length} VIP card${vipChars.length === 1 ? "" : "s"} for **${price}**<:coins:872926669055356939>, ${shardEmoji.SS}**x${ssShards}**?`, components: [OfferRow] }).then((msg) => {
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
+                    collector.on('collect', async (r) => {
+                        collector.stop();
+                        if (r.customId === "cancel") return interaction.channel?.isSendable() && interaction.channel.send("Action cancelled");
+
+                        const currentStats = await getUserSchema(interaction.user.id);
+                        if (!currentStats) return;
+                        const currentVipChars = getBulkVipCharacters(await getCharacterSchemasOfUser(interaction.user.id), currentStats, copies);
+                        const expectedPrints = vipChars.map((entry) => `${entry.charid}:${entry.print}`).sort().join(",");
+                        const currentPrints = currentVipChars.map((entry) => `${entry.charid}:${entry.print}`).sort().join(",");
+                        if (currentPrints !== expectedPrints) return interaction.channel?.isSendable() && interaction.channel.send("Your VIP inventory changed. Please try again.");
+
+                        const sold = await sellCharacterCopies(interaction.user.id, [], currentVipChars, {
+                            coins: price,
+                            ssshard: ssShards,
+                            sshard: 0,
+                            ashard: 0,
+                            bshard: 0,
+                            cshard: 0,
+                            dshard: 0,
+                        });
+                        if (!sold) return interaction.channel?.isSendable() && interaction.channel.send("Your VIP inventory changed. Please try again.");
+                        interaction.client.userCache.delete(interaction.user.id);
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`**${price}**<:coins:872926669055356939>, ${shardEmoji.SS}**x${ssShards}** were added to your balance`);
+                    });
+                });
+            };
 
             let tinv: number[], price = 0, shards = { "VIP": 0, "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
             if (rarity) tinv = stats.chars.filter((e) => characters[e].rarity === rarity);
@@ -101,16 +172,17 @@ const exportCommand: SlashCommand = {
 
         if (subcommand === "characters") {
             const choices = (interaction.options.getString('characters') || "").split(",").map((e) => e.trim());
+            const vipChars = await getCharacterSchemasOfUser(interaction.user.id);
 
-            let chars = [], price = 0, shards = { "VIP": 0, "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
+            let chars: SellCharacter[] = [], price = 0, shards = { "VIP": 0, "EX": 0, "SS": 0, "S": 0, "A": 0, "B": 0, "C": 0, "D": 0 };
             for (const c of choices) {
-                const char = search(c, stats.chars.slice(0, stats.chars.length - chars.length), interaction, true);
-                if (!char?.name) continue;
+                const entry = resolveSellCharacter(c, stats, vipChars, chars, interaction);
+                if (!entry) continue;
+                const char = entry.char;
 
                 if (stats.charlock.includes(char.id) || stats.animelock.includes(char.animeInfo.id)) return interaction.reply(`⚠️ You're trying to sell a locked character, please \`/unlock\` **${char.name}** first.`);
-                if ((chars.filter((e) => e.id === char.id).length >= stats.chars.filter((e) => e === char.id).length)) return interaction.reply(`You don't have enough copies of **${char.name}** to sell`);
 
-                chars.push(char);
+                chars.push(entry);
                 price += rarPrice[char.rarity];
                 shards[["VIP", "EX"].includes(char.rarity) ? "SS" : char.rarity] += 16;
             };
@@ -118,7 +190,7 @@ const exportCommand: SlashCommand = {
             if (chars.length === 0) return interaction.reply(`No match found`);
             if (chars.length > 40) return interaction.reply(`You can't sell more than 40 characters at once`);
 
-            return interaction.reply({ content: `Are you sure you want to sell ${chars.map((e) => `**${e.name.slice(0, 20)}**`).join(", ")} for **${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""}?`, components: [OfferRow] }).then(msg => {
+            return interaction.reply({ content: `Are you sure you want to sell ${chars.map((e) => `**${e.char.name.slice(0, 20)}${e.print !== undefined ? `#${e.print}` : ""}**`).join(", ")} for **${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""}?`, components: [OfferRow] }).then(msg => {
 
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
@@ -127,22 +199,19 @@ const exportCommand: SlashCommand = {
                     confirm.stop(), cancel.stop();
                     const _inv = await getUserSchema(interaction.user.id);
                     stats.chars = _inv?.chars ?? [];
+                    const currentVipChars = await getCharacterSchemasOfUser(interaction.user.id);
 
-                    let chars = [], newPrice = 0;
+                    let chars: SellCharacter[] = [], newPrice = 0;
                     for (const c of choices) {
-                        const char = search(c, stats.chars.slice(0, stats.chars.length - chars.length), interaction, true);
-                        if (!char?.name) continue;
+                        const entry = resolveSellCharacter(c, stats, currentVipChars, chars, interaction);
+                        if (!entry) continue;
+                        const char = entry.char;
 
                         if (stats.charlock.includes(char.id) || stats.animelock.includes(char.animeInfo.id)) {
                             if (interaction.channel?.isSendable()) interaction.channel.send(`⚠️ You're trying to sell a locked character, please \`/unlock\` **${char.name}** first.`);
                             return;
                         };
-                        if ((chars.filter((e) => e.id === char.id).length >= stats.chars.filter((e) => e === char.id).length)) {
-                            if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough copies of **${char.name}** to sell`);
-                            return;
-                        };
-
-                        chars.push(char);
+                        chars.push(entry);
                         newPrice += rarPrice[char.rarity];
                     };
 
@@ -159,23 +228,22 @@ const exportCommand: SlashCommand = {
                         return;
                     };
 
-                    for (const char of chars) {
-                        stats.chars.splice(stats.chars.indexOf(char.id), 1);
-                    };
-
-                    // Update users table
-                    await updateUsersAndCache(interaction.client, interaction.user.id, {
-                        updates: {
-                            coins: { type: 'increment', value: price },
-                            ssshard: { type: 'increment', value: shards.SS },
-                            sshard: { type: 'increment', value: shards.S },
-                            ashard: { type: 'increment', value: shards.A },
-                            bshard: { type: 'increment', value: shards.B },
-                            cshard: { type: 'increment', value: shards.C },
-                            dshard: { type: 'increment', value: shards.D },
-                            chars: { type: 'remove', value: chars.map((e) => e.id) },
-                        },
+                    const normalCharacterIds = chars.filter((entry) => entry.print === undefined).map((entry) => entry.char.id);
+                    const vipCharacters = chars.filter((entry): entry is SellCharacter & { print: number; } => entry.print !== undefined).map((entry) => ({ charid: entry.char.id, print: entry.print }));
+                    const sold = await sellCharacterCopies(interaction.user.id, normalCharacterIds, vipCharacters, {
+                        coins: price,
+                        ssshard: shards.SS,
+                        sshard: shards.S,
+                        ashard: shards.A,
+                        bshard: shards.B,
+                        cshard: shards.C,
+                        dshard: shards.D,
                     });
+                    if (!sold) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send("Your character inventory changed. Please try again.");
+                        return;
+                    };
+                    interaction.client.userCache.delete(interaction.user.id);
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""} were added to your balance`);
                 });
