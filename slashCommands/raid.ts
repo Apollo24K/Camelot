@@ -1027,8 +1027,7 @@ const exportCommand: SlashCommand = {
 
         for (const sid of new Set(stats.raid_supports)) {
             if (sid !== undefined && sid !== null && sid !== stats.battlechar) {
-                const myStatsP = { ...myStatsC };
-                myStatsP.name = characters[sid].name;
+                const myStatsP = await getDetailedStats(sid, stats, stats.dungeon_classlevels);
 
                 const runeAbility = stats.equipment[`rune:${sid}`] ? items[parseInt(stats.equipment[`rune:${sid}`])] as runeInfo : undefined;
                 if (runeAbility && runeAbility.party) {
