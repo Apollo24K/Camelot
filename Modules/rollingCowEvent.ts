@@ -2,6 +2,7 @@ import fs from 'fs';
 import { Client } from 'discord.js';
 import { cowSettings } from './components';
 import { updateUsersAndCache } from './queries';
+import { sendEventStartMail } from './eventMail';
 
 export async function startRollingCow(client: Client): Promise<void> {
     await updateUsersAndCache(client, "*", {
@@ -15,4 +16,5 @@ export async function startRollingCow(client: Client): Promise<void> {
 
     cowSettings.start = Date.now();
     await fs.promises.writeFile('Storage/rolling.json', JSON.stringify(cowSettings));
+    await sendEventStartMail(client, "Rolling Cow");
 }

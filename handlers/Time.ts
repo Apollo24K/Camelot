@@ -1,11 +1,12 @@
 import fs from 'fs';
 import { Client } from "discord.js";
 import { BotHandler, UpdateUserOptions } from "../types";
-import { getAuctionSchema, getAuctionWinner, getPlayerbaseStats, insertNewStampede, resetDailyResponses, resetDungeonLimit, transferCharacter, updateUsersAndCache } from '../Modules/queries';
+import { getAuctionSchema, getAuctionWinner, getPlayerbaseStats, insertNewStampede, removeExpiredMail, resetDailyResponses, resetDungeonLimit, transferCharacter, updateUsersAndCache } from '../Modules/queries';
 import { isStampedeMonth } from '../Modules/functions';
 import { activeAuctions, auctionChannelId, isEventOngoing } from '../Modules/components';
 import { characters } from '../Modules/chars';
 import { startRollingCow } from '../Modules/rollingCowEvent';
+import { sendEventStartMail } from '../Modules/eventMail';
 
 const handler: BotHandler = {
     name: "Time",
@@ -34,6 +35,11 @@ const handler: BotHandler = {
                 // Start new Stampede
                 if (now.getDate() === 14 && isStampedeMonth()) {
                     await insertNewStampede();
+                };
+
+                // Announce Stampede when it becomes available at the start of its month.
+                if (now.getDate() === 1 && isStampedeMonth()) {
+                    await sendEventStartMail(client, "Stampede");
                 };
 
                 // Start Rolling Cow on the first day of alternating months.
@@ -83,6 +89,9 @@ const handler: BotHandler = {
 
                 // Reset monthly shop
                 userUpdates.monthlyshop = { type: "set", value: {} };
+
+                // Remove mails older than 30 days
+                await removeExpiredMail(client);
             };
 
             // Every 10 minutes
