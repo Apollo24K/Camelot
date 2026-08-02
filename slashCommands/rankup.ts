@@ -7,7 +7,7 @@ import { armorInfo, itemInfo, items, ringInfo, runeInfo, weaponInfo } from "../M
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, customEmojis, dealDamage, getClassLvl, formatNumberWithQuotes, getLetterRank } from "../Modules/functions";
-import { AbilityResponse, dungeonTempBan, raidRankLetters, raidRankIndices } from "../Modules/components";
+import { AbilityResponse, dungeonTempBan } from "../Modules/components";
 import delayedBuffs from "../Modules/delayedBuffs";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
@@ -17,6 +17,7 @@ import { getOwnedCharacterIds, getUserSchema, getWeaponSchemas, ownsCharacter, u
 import { skillTree } from '../Modules/skillTree';
 import { customHpBars } from '../Modules/customHpBars';
 import { achievements } from '../Modules/achievements';
+import { ACTION_SEQUENCE_ERROR_MESSAGE, ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, applyActionSequence, parseActionSequence } from '../Modules/actionSequence';
 
 const dungeonInProgress = new Set();
 
@@ -76,6 +77,10 @@ const exportCommand: SlashCommand = {
     name: 'rankup',
     async execute({ interaction, author }) {
 
+        const parsedActionSequence = parseActionSequence(interaction.options.getString('sequence'));
+        if (parsedActionSequence === null) return interaction.reply(ACTION_SEQUENCE_ERROR_MESSAGE);
+        const actionSequence = parsedActionSequence;
+
         const stats = author.schema;
         const checkRankAchievements = async () => {
             const currentRank = getLetterRank(stats.rankscore);
@@ -95,7 +100,10 @@ const exportCommand: SlashCommand = {
         stats.dungeon_classlevels = Object.fromEntries(Array.from({ length: classes.length }, (_, i) => [i, Math.max(0, ...Object.values(stats.dungeon_classlevels))]));
 
         // Overview
-        const startPromise = rankupOverview(interaction, stats, userItems);
+        const startPromise = actionSequence.length > 0
+            ? interaction.deferReply().then(() => 1)
+            : rankupOverview(interaction, stats, userItems);
+
         await checkRankAchievements();
         let start = await startPromise;
         if (start === -1) return;
@@ -227,7 +235,7 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         };
 
-        let matchStats = Avalon.getMatchStats(interaction);
+        let matchStats = Avalon.getMatchStats(interaction, { actionSequence });
         let notice = ["", "", "", ""];
 
         // Apply skill tree
@@ -373,6 +381,7 @@ const exportCommand: SlashCommand = {
                         };
 
                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                        if (actionSequence.length > 0) autoApply();
                     };
 
                     function attack() {
@@ -415,7 +424,7 @@ const exportCommand: SlashCommand = {
                                     };
                                 };
                                 if (matchStats.counter > 0) matchStats.counter--;
-                            }, aDelay);
+                            }, actionSequence.length > 0 ? 0 : aDelay);
                         };
                     };
 
@@ -425,7 +434,7 @@ const exportCommand: SlashCommand = {
                         editEmbed();
                     };
 
-                    atk.on('collect', async () => {
+                    const userAttack = async () => {
                         if (matchStats.turn === 1) {
                             matchStats.turn = 0;
 
@@ -461,10 +470,14 @@ const exportCommand: SlashCommand = {
                                 else attack();
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                    };
+                    atk.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
+                        await userAttack();
                     });
 
-                    def.on('collect', async () => {
+                    const userDefense = async () => {
                         if (matchStats.turn === 1) {
                             matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
@@ -483,7 +496,7 @@ const exportCommand: SlashCommand = {
 
                             // Use defense
                             else {
-                                if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
+                                if (++matchStats.defUsed === 10) matchStats.sendWarning({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
                                 if (matchStats.defUsed > 10) {
                                     notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
                                 } else {
@@ -505,11 +518,15 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                    };
+                    def.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
+                        await userDefense();
                     });
 
-                    ability.on('collect', async () => {
-                        if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+                    const userAbility = async () => {
+                        if (myStatsC.isAbilityBlocked) return matchStats.sendWarning({ content: `You currently can't use your character ability`, ephemeral: true });
 
                         // If ability was replaced
                         if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
@@ -528,10 +545,10 @@ const exportCommand: SlashCommand = {
                         }
 
                         else {
-                            if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
+                            if (!myAbility?.ability) return matchStats.sendWarning({ content: `You don't have an ability`, ephemeral: true });
                             if (myAbility.used < myAbility.usage) {
                                 if (matchStats.turn === 1) {
-                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                    if (myAbility.cost > myStatsC.sm) matchStats.sendWarning({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
                                     else {
                                         matchStats.turn = 0;
                                         myStatsC.attackStreak = 0;
@@ -548,12 +565,16 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                            } else matchStats.sendWarning({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
+                    };
+                    ability.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
+                        await userAbility();
                     });
 
-                    cskill.on('collect', async () => {
+                    const userSkill = async () => {
 
                         // If class active was replaced
                         if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
@@ -573,9 +594,9 @@ const exportCommand: SlashCommand = {
 
                         // Class active
                         else {
-                            if (!skill) return interaction.followUp({ content: `You don't have a class skill`, ephemeral: true });
-                            if (myChar.id === 4767) return interaction.followUp({ content: "Asta can't use any abilities", ephemeral: true });
-                            if (skill.cost > myStatsC.sm) return interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
+                            if (!skill) return matchStats.sendWarning({ content: `You don't have a class skill`, ephemeral: true });
+                            if (myChar.id === 4767) return matchStats.sendWarning({ content: "Asta can't use any abilities", ephemeral: true });
+                            if (skill.cost > myStatsC.sm) return matchStats.sendWarning({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
                             else {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
@@ -590,20 +611,28 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
                             };
                         };
+                    };
+                    cskill.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
+                        await userSkill();
                     });
 
-                    skip.on('collect', () => {
+                    const userSkip = async () => {
                         if (matchStats.turn == 1) {
                             notice.push(`\n<:dodge_chance:1047269150948606063> ${myChar.name} fled the fight`);
                             endMatch("l");
                             editEmbed();
                         } else {
                             matchStats.turn = 1;
-                            interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
                         };
+                    };
+                    skip.on('collect', async () => {
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
+                        await userSkip();
                     });
 
                     atk.on('end', () => {
@@ -614,6 +643,17 @@ const exportCommand: SlashCommand = {
                             editEmbed();
                         };
                     });
+
+                    const autoApply = async () => {
+                        await applyActionSequence(actionSequence, {
+                            atk: userAttack,
+                            def: userDefense,
+                            ability: userAbility,
+                            skill: userSkill,
+                            skip: userSkip,
+                        }, () => !matchStats.ended && matchStats.turn !== 0);
+                    };
+                    autoApply();
 
                 });
 

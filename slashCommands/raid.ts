@@ -17,6 +17,7 @@ import { cancelRaid, getGuildSchema, getLatestRaid, getOwnedCharacterIds, getRai
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
 import { achievements } from '../Modules/achievements';
+import { ACTION_SEQUENCE_ERROR_MESSAGE, ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, applyActionSequence, parseActionSequence } from '../Modules/actionSequence';
 
 const dungeonInProgress = new Set();
 
@@ -580,141 +581,10 @@ const exportCommand: SlashCommand = {
         let skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
 
 
-        const actionMapping = {
-            "atk": ["1", "atk", "attack", "a"],
-            "def": ["2", "def", "defense", "d"],
-            "ability": ["3", "ability", "abil", "ab"],
-            "skill": ["4", "skill", "sk", "s", "class", "cl", "c"],
-            "skip": ["5", "skip", "flee", "escape", "esc"],
-        };
-
-        // Enhanced Action Sequence Parser
         const sequence = interaction.options.getString('sequence') ?? null;
-
-        // Safety constants
-        const MAX_SEQUENCE_LENGTH = 5000;    // Maximum total actions allowed
-        const MAX_REPEAT_COUNT = 200;        // Maximum repeat count for any single pattern
-        const MAX_NESTING_DEPTH = 5;         // Maximum parentheses nesting depth
-        const MAX_EXPANSION_ITERATIONS = 50; // Maximum iterations to prevent infinite loops
-
-        function expandParentheses(str: string): string | null {
-            let result = str;
-            let changed = true;
-            let iterations = 0;
-
-            // Check nesting depth
-            let maxDepth = 0;
-            let currentDepth = 0;
-            for (const char of str) {
-                if (char === '(') {
-                    currentDepth++;
-                    maxDepth = Math.max(maxDepth, currentDepth);
-                } else if (char === ')') {
-                    currentDepth--;
-                };
-            };
-            if (maxDepth > MAX_NESTING_DEPTH) {
-                return null; // Too deeply nested
-            };
-
-            while (changed && iterations < MAX_EXPANSION_ITERATIONS) {
-                changed = false;
-                iterations++;
-
-                // First, handle parentheses with repeat notation: (content):number
-                const parenthesesWithRepeatRegex = /\(([^()]+)\):(\d+)/g;
-                result = result.replace(parenthesesWithRepeatRegex, (match, content, countStr) => {
-                    const count = parseInt(countStr);
-                    if (isNaN(count) || count <= 0) return match; // Invalid count, leave as is
-                    if (count > MAX_REPEAT_COUNT) return match; // Count too high, leave as is
-
-                    // Check if expansion would create too many items
-                    const contentItems = content.split(',').length;
-                    const resultItems = result.split(',').length;
-                    const newItems = contentItems * count;
-                    if (resultItems + newItems > MAX_SEQUENCE_LENGTH) {
-                        return match; // Would exceed limit, leave as is
-                    }
-
-                    // Repeat the content
-                    const repeated = Array(count).fill(content).join(',');
-                    changed = true;
-                    return repeated;
-                });
-
-                // Then, handle parentheses without repeat notation: (content) - treat as (content):1
-                const parenthesesWithoutRepeatRegex = /\(([^()]+)\)(?!:)/g;
-                result = result.replace(parenthesesWithoutRepeatRegex, (match, content) => {
-                    changed = true;
-                    return content; // Just remove the parentheses, equivalent to :1
-                });
-
-                // Safety check: if result is getting too long, abort
-                if (result.split(',').length > MAX_SEQUENCE_LENGTH) {
-                    return null;
-                };
-            };
-
-            // If we hit the iteration limit, it might be an infinite loop
-            if (iterations >= MAX_EXPANSION_ITERATIONS) {
-                return null;
-            };
-
-            return result;
-        };
-
-        function parseActionSequence(input: string | null): (string | null)[] {
-            if (!input) return [];
-
-            // First expand all parentheses notations
-            const expandedSequence = expandParentheses(input);
-            if (expandedSequence === null) {
-                return [null]; // Expansion failed due to safety limits
-            };
-
-            // Then parse individual actions
-            const actions = expandedSequence.split(',').map((e) => e.trim().toLowerCase()).flatMap((e) => {
-                const trimmed = e.trim().toLowerCase();
-
-                // Check if it has a repeat notation like "atk:3"
-                if (trimmed.includes(':')) {
-                    const [action, countStr] = trimmed.split(':');
-                    const count = parseInt(countStr);
-
-                    // Validate count
-                    if (isNaN(count) || count <= 0) return [null];
-                    if (count > MAX_REPEAT_COUNT) return [null]; // Safety limit
-
-                    // Find the action key
-                    let actionKey = null;
-                    for (const [key, value] of Object.entries(actionMapping)) {
-                        if (value.includes(action)) {
-                            actionKey = key;
-                            break;
-                        };
-                    };
-
-                    // Return the action repeated count times
-                    return Array(count).fill(actionKey);
-                } else {
-                    // Normal single action
-                    for (const [key, value] of Object.entries(actionMapping)) {
-                        if (value.includes(trimmed)) return [key];
-                    };
-                    return [null];
-                };
-            });
-
-            // Final safety check
-            if (actions.length > MAX_SEQUENCE_LENGTH) {
-                return [null];
-            };
-
-            return actions;
-        };
-
-        const actionSequence = parseActionSequence(sequence);
-        if (actionSequence.includes(null)) return interaction.reply("Error in action sequence. Please use the format `atk:3,def,ability,skill,skip` or `(atk,def):3` for patterns.\n**Restrictions**: Max 5000 actions, max 200 repeats, max 5 nesting levels, max 50 iterations");
+        const parsedActionSequence = parseActionSequence(sequence);
+        if (parsedActionSequence === null) return interaction.reply(ACTION_SEQUENCE_ERROR_MESSAGE);
+        const actionSequence = parsedActionSequence;
 
         // Skip by default if action sequence is used
         if (actionSequence.length > 0 && interaction.options.getBoolean('skip-overview') !== false) skipOverview = true;
@@ -1259,7 +1129,7 @@ const exportCommand: SlashCommand = {
                         } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
                     };
                     atk.on('collect', async () => {
-                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
                         await userAttack();
                     });
 
@@ -1307,7 +1177,7 @@ const exportCommand: SlashCommand = {
                         } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
                     };
                     def.on('collect', async () => {
-                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
                         await userDefense();
                     });
 
@@ -1356,7 +1226,7 @@ const exportCommand: SlashCommand = {
                         };
                     };
                     ability.on('collect', async () => {
-                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
                         await userAbility();
                     });
 
@@ -1402,7 +1272,7 @@ const exportCommand: SlashCommand = {
                         };
                     };
                     cskill.on('collect', async () => {
-                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
                         await userSkill();
                     });
 
@@ -1417,7 +1287,7 @@ const exportCommand: SlashCommand = {
                         };
                     };
                     skip.on('collect', async () => {
-                        if (actionSequence.length > 0) return interaction.followUp({ content: "Please wait until the action sequence is finished", ephemeral: true });
+                        if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
                         await userSkip();
                     });
 
@@ -1432,18 +1302,13 @@ const exportCommand: SlashCommand = {
 
                     // Auto apply existing action sequence
                     const autoApply = async () => {
-                        while (actionSequence.length > 0 && !matchStats.ended) {
-                            const action = actionSequence.shift();
-                            switch (action) {
-                                case "atk": await userAttack(); break;
-                                case "def": await userDefense(); break;
-                                case "ability": await userAbility(); break;
-                                case "skill": await userSkill(); break;
-                                case "skip": await userSkip(); break;
-                            };
-
-                            if (matchStats.turn === 0) break;
-                        };
+                        await applyActionSequence(actionSequence, {
+                            atk: userAttack,
+                            def: userDefense,
+                            ability: userAbility,
+                            skill: userSkill,
+                            skip: userSkip,
+                        }, () => !matchStats.ended && matchStats.turn !== 0);
                     };
                     autoApply();
 

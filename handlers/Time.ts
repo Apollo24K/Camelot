@@ -5,6 +5,7 @@ import { getAuctionSchema, getAuctionWinner, getPlayerbaseStats, insertNewStampe
 import { isStampedeMonth } from '../Modules/functions';
 import { activeAuctions, auctionChannelId, isEventOngoing } from '../Modules/components';
 import { characters } from '../Modules/chars';
+import { startRollingCow } from '../Modules/rollingCowEvent';
 
 const handler: BotHandler = {
     name: "Time",
@@ -33,6 +34,11 @@ const handler: BotHandler = {
                 // Start new Stampede
                 if (now.getDate() === 14 && isStampedeMonth()) {
                     await insertNewStampede();
+                };
+
+                // Start Rolling Cow on the first day of alternating months.
+                if (now.getDate() === 1 && !isStampedeMonth()) {
+                    await startRollingCow(client);
                 };
 
                 // Daily Stats

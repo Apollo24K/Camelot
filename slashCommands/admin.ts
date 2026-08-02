@@ -9,6 +9,7 @@ import { AuctionSchema, CharacterSchema, SlashCommand, UserSchema } from '../typ
 import { deleteCharacter, deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
 import { query } from '../postgres';
 import { createResponseGraph, getResponseData } from '../Modules/responseGraph';
+import { startRollingCow } from '../Modules/rollingCowEvent';
 
 const exportCommand: SlashCommand = {
     name: 'admin',
@@ -778,21 +779,36 @@ const exportCommand: SlashCommand = {
 
         // Edit Rolling Cow
         if (cmd === "cow") {
-            if (!args[0]) return interaction.reply({ content: `Start or edit \`/rolling cow\` settings\n\n**Usage**: \`/cow [start|view|edit] --flags:<param>\`\n\n**Flags**\n\`days\`: number\n\`rollsPerDay\`: number\n\`fightsPerCharacter\`: number\n\`timeInMinutes\`: number\n\`level\`: number\n\`clvl\`: number\n\`goldenCowChance\`: number (0-1)`, ephemeral });
+            if (!args[0]) return interaction.reply({ content: `Start, cancel or edit \`/rolling cow\` settings\n\n**Usage**: \`/cow [start|cancel|view|edit] --flags:<param>\`\n\n**Flags**\n\`days\`: number\n\`rollsPerDay\`: number\n\`fightsPerCharacter\`: number\n\`timeInMinutes\`: number\n\`level\`: number\n\`clvl\`: number\n\`goldenCowChance\`: number (0-1)`, ephemeral });
+
+            if (args[0] === "cancel") {
+                const previousStart = cowSettings.start;
+                const eventDays = Number.isFinite(Number(cowSettings.days)) ? Math.max(1, Math.floor(Number(cowSettings.days))) : 5;
+
+                // Put the event beyond its reward day before clearing participants.
+                cowSettings.start = Date.now() - ((eventDays + 1) * 24 * 60 * 60 * 1000);
+                try {
+                    await fs.promises.writeFile('Storage/rolling.json', JSON.stringify(cowSettings));
+                } catch (err) {
+                    cowSettings.start = previousStart;
+                    console.error(err);
+                    return interaction.reply({ content: `Failed to persist the Rolling Cow cancellation. No player data was changed.`, ephemeral });
+                };
+
+                await updateUsersAndCache(interaction.client, "*", {
+                    updates: {
+                        cow_participation: { type: "set", value: null },
+                        cow_chars: { type: "set", value: [] },
+                        cow_timer: { type: "set", value: null },
+                        cow_rolled_today: { type: "set", value: 0 },
+                    },
+                });
+
+                return interaction.reply({ content: `Cancelled \`/rolling cow\` without sending rewards. Player event data was cleared and parties were unlocked.`, ephemeral });
+            };
 
             if (args[0] === "start") {
-                // Update users table
-                await updateUsers("*", {
-                    cow_participation: { type: "set", value: null },
-                    cow_chars: { type: "set", value: [] },
-                    cow_timer: { type: "set", value: null },
-                    cow_rolled_today: { type: "set", value: 0 },
-                });
-
-                cowSettings.start = Date.now();
-                fs.writeFile('Storage/rolling.json', JSON.stringify(cowSettings), (err) => {
-                    if (err) console.error(err);
-                });
+                await startRollingCow(interaction.client);
 
                 return interaction.reply({ content: `Reset and started \`/rolling cow\` with settings:\n\n${JSON.stringify(cowSettings)}`, ephemeral });
             };
