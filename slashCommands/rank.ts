@@ -3,7 +3,7 @@ import { characters } from "../Modules/chars";
 import { getDetailedStats, showPage, baseEP, RoK, rarityEmoji } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { IRoK, SlashCommand } from '../types';
-import { getCachedUserSchema } from '../Modules/queries';
+import { getCachedUserSchema, getOwnedCharacterIds } from '../Modules/queries';
 
 /*
     Formula                         | P0 100  1  0  EP:   1.00
@@ -56,7 +56,7 @@ export const exportCommand: SlashCommand = {
             } else {
                 const inv = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
                 if (!inv) return interaction.editReply(`${user.username} hasn't started playing yet.`);
-                const uniq = [...new Set(inv.chars)];
+                const uniq = await getOwnedCharacterIds(user.id, inv.chars);
                 for (const id of uniq) {
                     const bStats = await getDetailedStats(id, inv, inv.dungeon_classlevels);
                     rok.set(id, bStats.ep);

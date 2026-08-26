@@ -11,7 +11,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { DetailedStats, SlashCommand, UpdateUserOptions } from '../types';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema, ownsCharacter, updateUsers } from '../Modules/queries';
 import { AbilityResponse } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
 
@@ -42,7 +42,8 @@ const exportCommand: SlashCommand = {
         });
 
         const stats = author.schema;
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         // Set up restrictions
         const cooldown = 15 * 60 * 1000;
@@ -730,7 +731,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

@@ -10,6 +10,7 @@ import { dailies } from "../Modules/dailyQuests";
 import { getDetailedStats, customEmojis, dealDamage } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
+import { getOwnedCharacterIds, ownsCharacter } from '../Modules/queries';
 import _ from 'lodash';
 import { DetailedStats, SlashCommand } from "../types";
 import { enemyInfo } from "../Modules/enemies";
@@ -24,7 +25,8 @@ const exportCommand: SlashCommand = {
     async execute({ interaction, author }) {
 
         const stats = author.schema;
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.reply("You need to choose a battle character first. Use `/select <char>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.reply("You need to choose a battle character first. Use `/select <char>` to choose one.");
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         // Set up restrictions
         if (dungeonInProgress.has(stats.id)) return interaction.reply("You already have a run in progress, please finish it before attempting to start a new round.");
@@ -464,7 +466,7 @@ const exportCommand: SlashCommand = {
                                 if (matchStats.turn === 1) {
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

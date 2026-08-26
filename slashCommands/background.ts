@@ -7,7 +7,7 @@ import { CompactUserSchema, ProfileImageArguments, SlashCommand } from '../types
 import { items } from '../Modules/items';
 import { classes } from '../Modules/classes';
 import { currencyEmojis, profileColors } from '../Modules/components';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema, updateUsers } from '../Modules/queries';
 
 function getPageRow(background: ProfileDecorations, cachedImages: Record<number, AttachmentBuilder>, stats: CompactUserSchema) {
     return new ActionRowBuilder<ButtonBuilder>()
@@ -137,7 +137,7 @@ const exportCommand: SlashCommand = {
             });
 
             const stats = author.schema;
-            if (!stats.chars.length) return interaction.editReply(interaction.user.id === interaction.user.id ? "You don't have any characters" : `${interaction.user.username} has no characters`);
+            if (!(await getOwnedCharacterIds(interaction.user.id, stats.chars)).length) return interaction.editReply("You don't have any characters");
             if (!stats.battlechar) return interaction.editReply("You don't have a battle character selected. Please use `/select` first");
 
             // Free BGs
@@ -286,7 +286,7 @@ const exportCommand: SlashCommand = {
             });
 
             const stats = author.schema;
-            if (!stats.chars.length) return interaction.editReply(interaction.user.id === interaction.user.id ? "You don't have any characters" : `${interaction.user.username} has no characters`);
+            if (!(await getOwnedCharacterIds(interaction.user.id, stats.chars)).length) return interaction.editReply("You don't have any characters");
             if (!stats.battlechar) return interaction.editReply("You don't have a battle character selected. Please use `/select` first");
 
             // Free BGs

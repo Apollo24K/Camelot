@@ -6,7 +6,7 @@ import { profileSets } from "../Modules/profileDecorations";
 import { skins } from "../Modules/skins";
 import { createCanvas, Image, loadImage } from "@napi-rs/canvas";
 import { characters } from "../Modules/chars";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
 import { items, runeInfo } from "../Modules/items";
 
 type SeasonalShopTab = 'runes' | 'hpbars' | 'backgrounds' | 'skins';
@@ -372,9 +372,11 @@ export const exportCommand: SlashCommand = {
                                 };
 
                                 // Update users table
-                                await updateUsers(interaction.user.id, {
-                                    gems: { type: "increment", value: -cost },
-                                    season_keys: { type: "increment", value: amount },
+                                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                    updates: {
+                                        gems: { type: "increment", value: -cost },
+                                        season_keys: { type: "increment", value: amount },
+                                    },
                                 });
 
                                 stats.gems -= cost;
@@ -413,9 +415,11 @@ export const exportCommand: SlashCommand = {
                                 };
 
                                 // Update users table
-                                await updateUsers(interaction.user.id, {
-                                    season_keys: { type: "increment", value: -cost },
-                                    items: { type: "merge_json", value: { [rune.id]: 1 } },
+                                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                    updates: {
+                                        season_keys: { type: "increment", value: -cost },
+                                        items: { type: "merge_json", value: { [rune.id]: 1 } },
+                                    },
                                 });
 
                                 // Edit replies
@@ -455,9 +459,11 @@ export const exportCommand: SlashCommand = {
                                 stats.hpbars.push(hpBarId);
 
                                 // Update users table
-                                await updateUsers(interaction.user.id, {
-                                    season_keys: { type: "increment", value: -cost },
-                                    hpbars: { type: "append_unique", value: [hpBarId] }
+                                await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                    updates: {
+                                        season_keys: { type: "increment", value: -cost },
+                                        hpbars: { type: "append_unique", value: [hpBarId] }
+                                    },
                                 });
 
                                 // Edit replies

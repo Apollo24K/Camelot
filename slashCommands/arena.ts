@@ -11,7 +11,7 @@ import { getDetailedStats, customEmojis, deleteReplyIn, dealDamage, getRefinemen
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema, ownsCharacter, updateUsers } from '../Modules/queries';
 import { AbilityResponse, OfferRow } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
 
@@ -36,8 +36,9 @@ const exportCommand: SlashCommand = {
         const stats2 = await getUserSchema(user.id);
         if (!stats2) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
 
-        if (stats.battlechar === null || !stats.chars.includes(stats.battlechar)) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
-        if (stats2.battlechar === null || !stats2.chars.includes(stats2.battlechar)) return interaction.reply(`**${user.username}** has to choose a battle character first. Use \`/select <char name>\` to choose one.`);
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats2.battlechar === null || !(await ownsCharacter(user.id, stats2.chars, stats2.battlechar))) return interaction.reply(`**${user.username}** has to choose a battle character first. Use \`/select <char name>\` to choose one.`);
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         if (user.id === interaction.user.id) return interaction.reply("Please don't fight yourself <:Heh:869656740667469864>");
         if (user.bot && user.id !== "706183309943767112") return interaction.reply("You can't fight bots... or.. maybe you want...");
@@ -563,7 +564,7 @@ const exportCommand: SlashCommand = {
                                     matchStats.user = matchStats.interaction.user.id;
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

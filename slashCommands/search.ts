@@ -3,7 +3,7 @@ import charInfo, { characters, uniqueAnimeCharacters } from "../Modules/chars";
 import { searchAnime, showPage, splitTitle, rarity, rarityColor, rarityEmoji } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema } from "../Modules/queries";
+import { getCharacterSchemasOfUser, getUserSchema } from "../Modules/queries";
 
 type SortedCharInfos = { "VIP": charInfo[], "EX": charInfo[], "SS": charInfo[], "S": charInfo[], "A": charInfo[], "B": charInfo[], "C": charInfo[], "D": charInfo[]; };
 
@@ -19,7 +19,9 @@ const exportCommand: SlashCommand = {
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet`);
 
-        let uniq = [...new Set(stats.chars)];
+        const vipChars = await getCharacterSchemasOfUser(user.id);
+        let uniq = [...new Set([...stats.chars, ...vipChars.map((entry) => entry.charid)])];
+        const ownedCharacterIds = new Set(uniq);
         let chars = uniq.map((e) => characters[e]);
 
         let fastCheck = searchAnime(anime, stats.chars, interaction);
@@ -28,7 +30,7 @@ const exportCommand: SlashCommand = {
 
         let sorted: SortedCharInfos = { "VIP": [], "EX": [], "SS": [], "S": [], "A": [], "B": [], "C": [], "D": [] };
         fastCheck.forEach((b) => {
-            if (searchflag !== "missing" || !stats.chars.includes(b.id)) sorted[b.rarity].push(b);
+            if (searchflag !== "missing" || !ownedCharacterIds.has(b.id)) sorted[b.rarity].push(b);
         });
         let allChars = sorted["VIP"].concat(sorted["EX"]).concat(sorted["SS"]).concat(sorted["S"]).concat(sorted["A"]).concat(sorted["B"]).concat(sorted["C"]).concat(sorted["D"]);
         let charsOwned = chars.filter((b) => b.anime === animeName);
@@ -77,7 +79,8 @@ const exportCommand: SlashCommand = {
         function tierNames(t: charInfo[], arr: string[] = []) {
             for (let h = 0; h < t.length; h++) {
                 if (uniq.includes(t[h].id)) {
-                    arr.push(`${t[h].name} <a:check:873196253276700682> x${stats?.chars.reduce((acc, val) => acc + (val === t[h].id ? 1 : 0), 0)}`);
+                    const copies = stats!.chars.reduce((acc, val) => acc + (val === t[h].id ? 1 : 0), 0) + vipChars.filter((entry) => entry.charid === t[h].id).length;
+                    arr.push(`${t[h].name} <a:check:873196253276700682> x${copies}`);
                 } else {
                     arr.push(t[h].name);
                 };

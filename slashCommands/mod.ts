@@ -6,7 +6,7 @@ import { showPage, search, classLevelToXP, searchClass } from "../Modules/functi
 import { PageRow } from "../Modules/components";
 import { PassThrough } from 'stream';
 import { SlashCommand } from '../types';
-import { deleteFAQ, getAllTrades, getFAQSchemaByName, getMinimalUserSchema, getMinimalUserSchemas, getPastStampedes, getResponseTimes, getTradesOfUser, getUsersByName, getUserSchema, insertNewFAQ, updateFAQBody, updateUsers } from '../Modules/queries';
+import { deleteCharacter, deleteFAQ, getAllTrades, getFAQSchemaByName, getMinimalUserSchema, getMinimalUserSchemas, getPastStampedes, getResponseTimes, getTradesOfUser, getUsersByName, getUserSchema, insertNewCharacter, insertNewFAQ, updateFAQBody, updateUsers } from '../Modules/queries';
 import { getResponseData } from '../Modules/responseGraph';
 
 const OfferRow = new ActionRowBuilder<ButtonBuilder>()
@@ -344,10 +344,13 @@ const exportCommand: SlashCommand = {
                 newChars.push(char);
             };
 
-            // Update users table
-            await updateUsers(user.id, {
-                chars: { type: "append", value: newChars.map((e) => e.id) },
+            const normalChars = newChars.filter((char) => char.rarity !== "VIP");
+            if (normalChars.length) await updateUsers(user.id, {
+                chars: { type: "append", value: normalChars.map((e) => e.id) },
             });
+            for (const char of newChars.filter((entry) => entry.rarity === "VIP")) {
+                await insertNewCharacter(user.id, char.id, char.rarityValue);
+            };
 
             // Mod Log
             const chnl = interaction.client.channels.cache.find(channel => channel.id === "1239976849866752041");
@@ -367,13 +370,16 @@ const exportCommand: SlashCommand = {
             const char = search(args.join(" "), [0], interaction, true);
             if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/mod remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
 
-            const inv = await getUserSchema(user.id);
-            if (!inv || !inv.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
-
-            // Update users table
-            await updateUsers(user.id, {
-                chars: { type: "remove", value: [char.id] },
-            });
+            if (char.rarity === "VIP") {
+                const print = Number(args.join(" ").match(/#\s*(\d+)$/)?.[1]);
+                if (!print || !(await deleteCharacter(user.id, char.id, print))) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have that VIP print. Use \`${char.name}#<print>\`.`, ephemeral });
+            } else {
+                const inv = await getUserSchema(user.id);
+                if (!inv || !inv.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
+                await updateUsers(user.id, {
+                    chars: { type: "remove", value: [char.id] },
+                });
+            };
 
             // Mod Log
             const chnl = interaction.client.channels.cache.find(channel => channel.id === "1239976849866752041");

@@ -12,7 +12,7 @@ import Avalon from "../Modules/avalon.js";
 import buffInfo from "../Modules/buffs.js";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, StampedeSchema, UpdateUserOptions } from '../types.js';
-import { getGuildSchema, getLatestStampede, getPartyMembers, getUserSchema, getUserSchemas, updateStampedeParticipation, updateStampedes, updateUsers } from '../Modules/queries.js';
+import { getGuildSchema, getLatestStampede, getOwnedCharacterIds, getPartyMembers, getUserSchema, getUserSchemas, ownsCharacter, updateStampedeParticipation, updateStampedes, updateUsers } from '../Modules/queries.js';
 import { customHpBars } from '../Modules/customHpBars.js';
 
 const dungeonInProgress = new Map();
@@ -309,7 +309,8 @@ const exportCommand: SlashCommand = {
         const skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
 
         const stats = author.schema;
-        if (stats.stampedechar === null || !stats.chars.includes(stats.stampedechar)) return interaction.editReply("You have to choose a battle character first. Use `/select <char name> mode:stampede` to choose one.");
+        if (stats.stampedechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.stampedechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name> mode:stampede` to choose one.");
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         const stampede = await getLatestStampede();
@@ -1054,7 +1055,7 @@ const exportCommand: SlashCommand = {
                                     matchStats.actionSequence.push("⚜️");
                                     myStatsC.sm -= skill.cost;
                                     myStatsC.attackStreak = 0;
-                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
 
                                     // Event Triggers
                                     if (response === AbilityResponse.SUCCESS) {

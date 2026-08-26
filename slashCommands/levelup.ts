@@ -4,7 +4,7 @@ import { achievements } from "../Modules/achievements";
 import { getDetailedStats, rarityColor } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
+import { getUserSchema, ownsCharacter, updateUsersAndCache } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'levelup',
@@ -19,7 +19,7 @@ const exportCommand: SlashCommand = {
 
         const char = characters[inv.battlechar];
         if (!char?.name) return;
-        if (!inv.chars.includes(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
+        if (!(await ownsCharacter(interaction.user.id, inv.chars, char.id))) return interaction.reply(`You don't have a copy of **${char.name}**`);
 
         let stats = await getDetailedStats(char.id, inv, inv.dungeon_classlevels);
         let currLvl = stats.lvl;

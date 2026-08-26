@@ -4,7 +4,7 @@ import { PageRow } from "../Modules/components";
 import { showPage } from "../Modules/functions";
 import { abilities } from "../Modules/abilities";
 import { SlashCommand } from "../types";
-import { getCachedUserSchema } from "../Modules/queries";
+import { getCachedUserSchema, getOwnedCharacterIds } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'list',
@@ -20,10 +20,12 @@ const exportCommand: SlashCommand = {
         const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply("User not found");
 
+        const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+        const ownedCharacterIdSet = new Set(ownedCharacterIds);
         let chars = characters.filter((e) => e.rarity === rarity);
-        if (filter === "unowned") chars = chars.filter((e) => !stats.chars.includes(e.id));
+        if (filter === "unowned") chars = chars.filter((e) => !ownedCharacterIdSet.has(e.id));
 
-        let userInvUniq = [...new Set(stats.chars)];
+        let userInvUniq = ownedCharacterIds;
         let userChars = userInvUniq.map((e) => characters[e]);
         userChars = userChars.filter((e) => e.rarity === rarity);
 

@@ -4,7 +4,7 @@ import { classes } from "../Modules/classes";
 import { items } from "../Modules/items";
 import { search, searchClass, filterItems, getRingSlotsTotal } from "../Modules/functions";
 import { ItemCategory, ItemType, SlashCommand, UpdateUserOptions } from '../types';
-import { getCachedUserSchema, getUserWeapons, getWeaponSchemas, updateUsersAndCache } from '../Modules/queries';
+import { getCachedUserSchema, getOwnedCharacterIds, getUserWeapons, getWeaponSchemas, ownsCharacter, updateUsersAndCache } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'preset',
@@ -20,7 +20,8 @@ const exportCommand: SlashCommand = {
             const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
             if (!stats) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
 
-            let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
+            const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+            let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image;
             if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
             const userItems = await getUserWeapons(user.id);
@@ -83,7 +84,7 @@ const exportCommand: SlashCommand = {
                 const char = search(charChoice, stats.chars, interaction);
                 if (!char) return;
 
-                if (stats.chars.includes(char.id)) preset.character = char.id;
+                if (await ownsCharacter(interaction.user.id, stats.chars, char.id)) preset.character = char.id;
                 else return interaction.reply(`You don't have a copy of **${char.name}**`);
             };
 
@@ -229,7 +230,7 @@ const exportCommand: SlashCommand = {
                 const char = search(charChoice, stats.chars, interaction);
                 if (!char) return;
 
-                if (stats.chars.includes(char.id)) equipChar = char.id;
+                if (await ownsCharacter(interaction.user.id, stats.chars, char.id)) equipChar = char.id;
                 else return interaction.reply(`You don't have a copy of **${char.name}**`);
             };
 

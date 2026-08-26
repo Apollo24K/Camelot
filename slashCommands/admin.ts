@@ -6,9 +6,10 @@ import { OfferRow, PageRow, activeAuctions, auctionChannelId, cowSettings } from
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import { armorInfo, entryInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { AuctionSchema, CharacterSchema, SlashCommand, UserSchema } from '../types';
-import { deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
+import { deleteCharacter, deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
 import { query } from '../postgres';
 import { createResponseGraph, getResponseData } from '../Modules/responseGraph';
+import { startRollingCow } from '../Modules/rollingCowEvent';
 
 const exportCommand: SlashCommand = {
     name: 'admin',
@@ -361,8 +362,8 @@ const exportCommand: SlashCommand = {
             const char = search(args.join(" "), [0], interaction, true);
             if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
 
-            // Update users table
-            await updateUsers(user.id, {
+            if (char.rarity === "VIP") await insertNewCharacter(user.id, char.id, char.rarityValue);
+            else await updateUsers(user.id, {
                 chars: { type: "append", value: [char.id] },
             });
 
@@ -374,12 +375,15 @@ const exportCommand: SlashCommand = {
             if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add all chars user:@user\`\n\n**Options**\n\`user\`: User to add the characters to`, ephemeral });
 
             // Get all character IDs at once
-            const allCharIds = characters.map(char => char.id);
+            const allCharIds = characters.filter((char) => char.rarity !== "VIP").map(char => char.id);
 
             // Single database call to append all characters
             await updateUsers(user.id, {
                 chars: { type: "append", value: allCharIds }
             });
+            for (const char of characters.filter((entry) => entry.rarity === "VIP")) {
+                await insertNewCharacter(user.id, char.id, char.rarityValue);
+            };
 
             return interaction.reply({ content: `Action Successful: Added all characters to ${user.toString()}`, ephemeral });
         };
@@ -392,13 +396,16 @@ const exportCommand: SlashCommand = {
             const char = search(args.join(" "), [0], interaction, true);
             if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin remove char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be removed`, ephemeral });
 
-            const inv = await getUserSchema(user.id);
-            if (!inv?.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
-
-            // Update users table
-            await updateUsers(user.id, {
-                chars: { type: "remove", value: [char.id] },
-            });
+            if (char.rarity === "VIP") {
+                const print = Number(args.join(" ").match(/#\s*(\d+)$/)?.[1]);
+                if (!print || !(await deleteCharacter(user.id, char.id, print))) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have that VIP print. Use \`${char.name}#<print>\`.`, ephemeral });
+            } else {
+                const inv = await getUserSchema(user.id);
+                if (!inv?.chars.includes(char.id)) return interaction.reply({ content: `**ERROR**: ${user.toString()} does not have a copy of **${char.name}**`, ephemeral });
+                await updateUsers(user.id, {
+                    chars: { type: "remove", value: [char.id] },
+                });
+            };
 
             return interaction.reply({ content: `Action Successful: Removed **${char.name}** from ${user.toString()}`, ephemeral });
         };
@@ -854,21 +861,36 @@ const exportCommand: SlashCommand = {
 
         // Edit Rolling Cow
         if (cmd === "cow") {
-            if (!args[0]) return interaction.reply({ content: `Start or edit \`/rolling cow\` settings\n\n**Usage**: \`/cow [start|view|edit] --flags:<param>\`\n\n**Flags**\n\`days\`: number\n\`rollsPerDay\`: number\n\`fightsPerCharacter\`: number\n\`timeInMinutes\`: number\n\`level\`: number\n\`clvl\`: number\n\`goldenCowChance\`: number (0-1)`, ephemeral });
+            if (!args[0]) return interaction.reply({ content: `Start, cancel or edit \`/rolling cow\` settings\n\n**Usage**: \`/cow [start|cancel|view|edit] --flags:<param>\`\n\n**Flags**\n\`days\`: number\n\`rollsPerDay\`: number\n\`fightsPerCharacter\`: number\n\`timeInMinutes\`: number\n\`level\`: number\n\`clvl\`: number\n\`goldenCowChance\`: number (0-1)`, ephemeral });
+
+            if (args[0] === "cancel") {
+                const previousStart = cowSettings.start;
+                const eventDays = Number.isFinite(Number(cowSettings.days)) ? Math.max(1, Math.floor(Number(cowSettings.days))) : 5;
+
+                // Put the event beyond its reward day before clearing participants.
+                cowSettings.start = Date.now() - ((eventDays + 1) * 24 * 60 * 60 * 1000);
+                try {
+                    await fs.promises.writeFile('Storage/rolling.json', JSON.stringify(cowSettings));
+                } catch (err) {
+                    cowSettings.start = previousStart;
+                    console.error(err);
+                    return interaction.reply({ content: `Failed to persist the Rolling Cow cancellation. No player data was changed.`, ephemeral });
+                };
+
+                await updateUsersAndCache(interaction.client, "*", {
+                    updates: {
+                        cow_participation: { type: "set", value: null },
+                        cow_chars: { type: "set", value: [] },
+                        cow_timer: { type: "set", value: null },
+                        cow_rolled_today: { type: "set", value: 0 },
+                    },
+                });
+
+                return interaction.reply({ content: `Cancelled \`/rolling cow\` without sending rewards. Player event data was cleared and parties were unlocked.`, ephemeral });
+            };
 
             if (args[0] === "start") {
-                // Update users table
-                await updateUsers("*", {
-                    cow_participation: { type: "set", value: null },
-                    cow_chars: { type: "set", value: [] },
-                    cow_timer: { type: "set", value: null },
-                    cow_rolled_today: { type: "set", value: 0 },
-                });
-
-                cowSettings.start = Date.now();
-                fs.writeFile('Storage/rolling.json', JSON.stringify(cowSettings), (err) => {
-                    if (err) console.error(err);
-                });
+                await startRollingCow(interaction.client);
 
                 return interaction.reply({ content: `Reset and started \`/rolling cow\` with settings:\n\n${JSON.stringify(cowSettings)}`, ephemeral });
             };

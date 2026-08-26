@@ -50,22 +50,16 @@ const exportCommand: SlashCommand = {
         const ephemeral = interaction.options.getString('ephemeral') ?? "false";
 
         const stats = (user.id === interaction.user.id) ? author.schema : await getUserSchema(user.id);
-        if (!stats || stats.chars.length === 0) return interaction.reply({ content: `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} characters.`, ephemeral: ephemeral === "true" });
-
+        if (!stats) return interaction.reply({ content: `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} characters.`, ephemeral: ephemeral === "true" });
         const vipChars = await getCharacterSchemasOfUser(user.id);
-        // stats.chars.push(...vipChars.map((e) => e.charid));
-
-        if (filter) {
-            if (filter === "ability") {
-                stats.chars = stats.chars.filter((e) => e in abilities);
-            } else if (filter === "non-ability") {
-                stats.chars = stats.chars.filter((e) => !(e in abilities));
-            };
-        };
+        if (stats.chars.length === 0 && vipChars.length === 0) return interaction.reply({ content: `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} characters.`, ephemeral: ephemeral === "true" });
 
         let uniq = [...new Set(stats.chars)];
         const vipEntries: InventoryEntry[] = vipChars.map((e) => ({ char: characters[e.charid], print: e.print }));
-        const entries: InventoryEntry[] = [...uniq.map((e) => ({ char: characters[e] })), ...vipEntries];
+        let entries: InventoryEntry[] = [...uniq.map((e) => ({ char: characters[e] })), ...vipEntries];
+        if (filter === "ability") entries = entries.filter((entry) => entry.char.id in abilities);
+        if (filter === "non-ability") entries = entries.filter((entry) => !(entry.char.id in abilities));
+        if (entries.length === 0) return interaction.reply({ content: "No characters match that filter.", ephemeral: ephemeral === "true" });
         let charNames = entries.map(formatCharacterName);
         let chars: InventoryEntry[] = [];
         const invd = new Map<number, number>();
@@ -95,8 +89,9 @@ const exportCommand: SlashCommand = {
         if (sort === "dupes") {
             stats.chars.forEach((e) => invd.set(e, (invd.get(e) ?? 0) + 1));
 
-            const dupeEntries: InventoryEntry[] = [...invd.entries()].filter(([, count]) => count > 1).map(([id]) => ({ char: characters[id] }));
-            chars = [...dupeEntries, ...vipEntries].sort((aEntry, bEntry) => {
+            const visibleNormalIds = new Set(entries.filter((entry) => entry.print === undefined).map((entry) => entry.char.id));
+            const dupeEntries: InventoryEntry[] = [...invd.entries()].filter(([id, count]) => count > 1 && visibleNormalIds.has(id)).map(([id]) => ({ char: characters[id] }));
+            chars = [...dupeEntries, ...entries.filter((entry) => entry.print !== undefined)].sort((aEntry, bEntry) => {
                 const a = aEntry.char;
                 const b = bEntry.char;
                 if (b.rarityValue === a.rarityValue) {

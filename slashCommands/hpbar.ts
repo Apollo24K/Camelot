@@ -1,6 +1,6 @@
 import { ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags } from "discord.js";
 import { CompactUserSchema, SlashCommand } from '../types';
-import { getUserSchema, updateUsersAndCache } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema, updateUsersAndCache } from '../Modules/queries';
 import { characters } from '../Modules/chars';
 import { showPage } from '../Modules/functions';
 import CustomHpBar, { customHpBars } from '../Modules/customHpBars';
@@ -73,7 +73,8 @@ const exportCommand: SlashCommand = {
             if (!stats) return interaction.reply("User not found");
             if (stats.hpbars.length === 0) return interaction.reply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** doesn't have any`} HP bars`);
 
-            let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || ExternalLinks.BotPfp;
+            const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+            let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image || ExternalLinks.BotPfp;
             if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
             const hpBars = stats.hpbars.map(id => customHpBars[id]);

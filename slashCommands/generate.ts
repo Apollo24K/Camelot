@@ -3,7 +3,7 @@ import { SlashCommand } from '../types';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, Message, MessageFlags } from 'discord.js';
 import { characters } from "../Modules/chars";
 import { formatNumberWithQuotes } from "../Modules/functions";
-import { getUserSchema, updateUsers } from "../Modules/queries";
+import { getOwnedCharacterIds, getUserSchema, updateUsers } from "../Modules/queries";
 import { generateText } from '../Modules/openrouter';
 import { generateImages, removeBackground } from '../Modules/runwareDirectApi';
 
@@ -39,7 +39,8 @@ const exportCommand: SlashCommand = {
             : Math.max(1, Math.min(9, interaction.options.getInteger('count') ?? 3));
 
         if (type === null) {
-            let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
+            const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
+            let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image || "https://i.imgur.com/Ta2YDBN.png";
             if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, "", stats.char_skin[stats.favchar]);
 
             const Embed = new EmbedBuilder()

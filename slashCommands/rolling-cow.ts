@@ -279,6 +279,8 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: RcUserS
                     return interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
                 };
 
+                if (r.customId !== "play") return;
+
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
                     return;
@@ -296,9 +298,14 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: RcUserS
     });
 };
 
-async function sendRollingRewards() {
+async function sendRollingRewards(eventStart: number) {
 
     const participants = await loadCowParticipants();
+    if (eventStart !== cowSettings.start) return;
+    if (participants.length === 0) {
+        console.log("Rolling cow rewards skipped: no participants found.");
+        return;
+    };
     participants.forEach((e) => {
         e.points = e.party
             ? participants.reduce((acc, curr) => acc + ((curr.party === e.party) ? (curr.cow_participation ?? 0) : 0), 0)
@@ -308,6 +315,7 @@ async function sendRollingRewards() {
 
     let rank = 1, party = participants[0].party;
     for (const player of participants) {
+        if (eventStart !== cowSettings.start) return;
         const participationPoints = Math.ceil(100 * (player.cow_chars.length / (cowSettings.days * (cowSettings.rollsPerDay + 1) * cowSettings.fightsPerCharacter)));
         const paricipationRewards = participationPrize(participationPoints);
 
@@ -343,7 +351,7 @@ let interval = () => setInterval(function () {
         const day = Math.floor((now.getTime() - started.getTime()) / (24 * 60 * 60 * 1000)) + 1;
 
         if (day === cowSettings.days + 1) {
-            sendRollingRewards();
+            sendRollingRewards(cowSettings.start);
         };
     };
 }, 60000);
@@ -353,6 +361,7 @@ const exportCommand: SlashCommand = {
     name: 'rolling',
     async execute({ interaction, author }) {
 
+        const eventStart = cowSettings.start;
         const stats = author.schema as RcUserSchema;
         stats.cow_char = stats.cow_chars.length ? stats.cow_chars[stats.cow_chars.length - 1] : undefined;
         stats.cow_enemy_index = getCowEnemyIndex(stats.cow_timer ?? 0, rollingCowMobs.length);
@@ -385,6 +394,9 @@ const exportCommand: SlashCommand = {
         // Level Selection
         let level = await levelSelection(interaction, stats, userItems, partySchema);
         if (level === -1) return;
+        if (eventStart !== cowSettings.start) {
+            return interaction.editReply({ content: "This Rolling Cow event was cancelled.", embeds: [], components: [] });
+        };
 
 
         // Set up restrictions
@@ -477,6 +489,10 @@ const exportCommand: SlashCommand = {
                 .setColor(embedColor) // Blue: 
                 .setThumbnail(myStatsC.thumbnail)
                 .setFooter({ text: `Balance: ${stats.coins} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+
+            if (eventStart !== cowSettings.start) {
+                return Embed.setDescription(`### <a:RollingCowL:1241776030398677093> Rolling Cow <a:RollingCowR:1241776039093338132>\nThis event was cancelled. No points were awarded.`);
+            };
 
             // Update cow stats
             let pointsEarned = 0;

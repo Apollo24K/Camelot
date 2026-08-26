@@ -23,6 +23,7 @@ const exportCommand: SlashCommand = {
 
         const inv = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!inv) return interaction.reply("Couldn't find user with that ID.");
+        const ownedCharacterIds = new Set(await getOwnedCharacterIds(user.id, inv.chars));
 
         // Enemy detection and trait formatting
         let isEnemy = false;
@@ -149,7 +150,7 @@ const exportCommand: SlashCommand = {
             charsInAnime.sort();
             showChars.push(`**${uniq[i]}**`);
             for (let j = 0; j < charsInAnime.length; j++) {
-                if (inv.chars.includes(charsInAnime[j].id)) {
+                if (ownedCharacterIds.has(charsInAnime[j].id)) {
                     showChars.push(`> ${charsInAnime[j].name} <a:check:873196253276700682>`);
                 } else {
                     showChars.push(`> ${charsInAnime[j].name}`);
