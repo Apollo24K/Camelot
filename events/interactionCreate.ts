@@ -6,6 +6,26 @@ import { daysSince } from "../Modules/functions";
 const userCooldown = new Map();
 const channelCooldown = new Set();
 
+function checkUserSpam(userId: string, commandName: string): "warn" | "block" | undefined {
+    const bypassedCommands = ["admin", "balance", "buy", "camelot", "guess", "info", "item", "mod", "pull", "rp", "shop"];
+    if (userCooldown.has(userId)) {
+        const cd = userCooldown.get(userId);
+        if (!bypassedCommands.includes(commandName)) cd.count++;
+
+        if (cd.count >= 4) {
+            clearTimeout(cd.timeout);
+            cd.timeout = setTimeout(() => userCooldown.delete(userId), 3200);
+            if (cd.count === 4 || cd.count === 10) return "warn";
+            if (cd.count > 10) return "block";
+        };
+    } else {
+        userCooldown.set(userId, {
+            count: 1,
+            timeout: setTimeout(() => userCooldown.delete(userId), 7500)
+        });
+    };
+}
+
 const event: BotEvent = {
     name: "interactionCreate",
     execute: async (interaction: Interaction) => {
@@ -29,6 +49,14 @@ const event: BotEvent = {
             await interaction.deferUpdate().catch(() => {
                 console.log(`ERROR Interaction Failed 'deferUpdate()' on "${interaction.customId}"`);
             });
+
+
+            if (interaction.customId?.startsWith("ref-dungeon-")) {
+                const spamResult = checkUserSpam(interaction.user.id, "dungeon");
+                if (spamResult === "warn") return interaction.followUp({ content: "Woah, you're being too fast! Please wait a few seconds.", ephemeral: true });
+                if (spamResult === "block") return;
+            };
+
 
             if (interaction.customId?.startsWith("ref-")) {
                 const [, commandName] = interaction.customId.split("-");
@@ -63,23 +91,9 @@ const event: BotEvent = {
             };
 
             // Spam Control (User)
-            const bypassedCommands = ["admin", "balance", "buy", "camelot", "guess", "info", "item", "mod", "pull", "rp", "shop"];
-            if (userCooldown.has(interaction.user.id)) {
-                const cd = userCooldown.get(interaction.user.id);
-                if (!bypassedCommands.includes(interaction.commandName)) cd.count++;
-
-                if (cd.count >= 4) {
-                    clearTimeout(cd.timeout);
-                    cd.timeout = setTimeout(() => userCooldown.delete(interaction.user.id), 3200);
-                    if (cd.count === 4 || cd.count === 10) return interaction.reply({ content: `Woah, you're being too fast! Please wait a few seconds.`, ephemeral: true });
-                    if (cd.count > 10) return;
-                };
-            } else {
-                userCooldown.set(interaction.user.id, {
-                    count: 1,
-                    timeout: setTimeout(() => userCooldown.delete(interaction.user.id), 7500)
-                });
-            };
+            const spamResult = checkUserSpam(interaction.user.id, interaction.commandName);
+            if (spamResult === "warn") return interaction.reply({ content: `Woah, you're being too fast! Please wait a few seconds.`, ephemeral: true });
+            if (spamResult === "block") return;
 
             // Spam Control (Channel)
             if (interaction.channel) {

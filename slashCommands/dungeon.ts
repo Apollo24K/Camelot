@@ -96,17 +96,20 @@ const exportCommand: SlashCommand = {
     name: 'dungeon',
     skipUserRefetch: true,
     skipServerRefetch: true,
-    async execute({ interaction, author }) {
+    async execute({ interaction, author, customFlag }) {
 
-        try {
-            await interaction.deferReply();
-        } catch (err) {
-            return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
+        if (!customFlag?.repeatMessage) {
+            try {
+                await interaction.deferReply();
+            } catch (err) {
+                return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
+            };
         };
 
-        let choice = interaction.options.getInteger('floor');
-        let floorDiff = parseInt(interaction.options.getString('difficulty') || "-1");
-        let flag = interaction.options.getString('flag');
+        const repeatFloor = customFlag?.repeatFloor as number | undefined;
+        let choice = repeatFloor ? ((repeatFloor - 1) % 100) + 1 : interaction.options.getInteger('floor');
+        let floorDiff = repeatFloor ? Math.floor((repeatFloor - 1) / 100) : parseInt(interaction.options.getString('difficulty') || "-1");
+        let flag = repeatFloor ? null : interaction.options.getString('flag');
 
         const stats = author.schema;
         if (!stats.hidden_dungeon) (stats as any).hidden_dungeon = {};
@@ -200,12 +203,16 @@ const exportCommand: SlashCommand = {
             captchaCooldown.set(interaction.user.id, Date.now());
             setTimeout(() => captchaCooldown.delete(interaction.user.id), 10 * 60 * 1000);
 
-            return interaction.editReply({ content: `${dungeonTempBan.has(interaction.user.id) ? `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>\n` : ""}Use </captcha:1114616338581823568> to enter the code`, files: [captcha.attachement] });
+            return interaction.editReply({
+                content: `${dungeonTempBan.has(interaction.user.id) ? `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>\n` : ""}Use </captcha:1114616338581823568> to enter the code`,
+                files: [captcha.attachement],
+                embeds: [],
+            });
         };
 
         // Set up restrictions
-        if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply(`You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`);
-        if (dungeonInProgress.has(stats.id)) return interaction.editReply("You already have a run in progress, please finish it before attempting to start a new round.");
+        if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply({ content: `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`, embeds: [] });
+        if (dungeonInProgress.has(stats.id)) return interaction.editReply({ content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
         dungeonInProgress.add(stats.id);
         const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 300000);
 
@@ -218,6 +225,12 @@ const exportCommand: SlashCommand = {
             // stats.dungeon_limit++;
         };
         let skippedTotal = skipRounds;
+        // Snapshot run eligibility
+        const runEligibility = {
+            loot: dunLim[0] >= stats.dungeon_limit + skipRounds,
+            progress: dunLim[1] >= stats.dungeon_limit + skipRounds,
+            secondaryLoot: dunLim[2] >= stats.dungeon_limit + skipRounds,
+        };
 
         // Update users table
         await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -314,6 +327,14 @@ const exportCommand: SlashCommand = {
         let buffs = Avalon.getBuffs();
         let eBuffs = Avalon.getBuffs();
 
+        const ResultsRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`ref-dungeon-${floor}-${interaction.user.id}`)
+                .setEmoji("🔁")
+                .setLabel(`Repeat Floor ${floor}`)
+                .setStyle(ButtonStyle.Secondary)
+        );
+
         let resolved = false;
         async function matchResult(r: "w" | "l") {
             if (resolved) return;
@@ -339,846 +360,815 @@ const exportCommand: SlashCommand = {
             else Embed.setFooter({ text: `${myClass.name} level: ${myStats.clvl} | XP left: ${(myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))}`, iconURL: myClass.image });
 
             if (r === "l") {
-                if (isHiddenFloor) {
-                    const progress = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
-                    const winsNeeded = hiddenFloors[floor]?.winsNeeded;
-                    return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Floor ${floor} progress: **${progress}**/${winsNeeded}\n${runsLeftStr}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
-                } else {
-                    const progress = stats.dungeon_floors[floor] ?? 0;
-                    const winsNeeded = floors[floor]?.winsNeeded;
-                    return Embed.setDescription(`💀 **${myChar.name}** lost 💀\n<a:arrow_green:916716811842621450> Floor ${floor} progress: **${progress}**/${winsNeeded}\n${runsLeftStr}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
-                } else {
-                if (runEligibility.progress || stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) stats.dungeon_floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
+                const progress = isHiddenFloor ? (stats.hidden_dungeon[hiddenFloorKey] ?? 0) : stats.dungeon_floors[floor];
+                const winsNeeded = isHiddenFloor ? hiddenFloors[floor]?.winsNeeded : floors[floor]?.winsNeeded;
+                return Embed.setDescription(`💀 **${interaction.user.toString()}** lost 💀\n<a:arrow_green:916716811842621450> Floor ${floor} progress: **${progress}**/${winsNeeded}\n${runsLeftStr}\n<a:arrow_red:916716702618767401> ${eStats.ep > myStats.ep ? `**${enemy.name}** was ${Math.floor((eStats.ep / myStats.ep) * 10000) / 100}% stronger` : "Better luck next time"}`);
             };
-        };
 
-        let unlocked: string;
-        if (isHiddenFloor) {
-            const hiddenIncrement = (skipRounds > 0 && skipRounds < 30) ? skipRounds : 1;
-            const prevProgress = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
-            if (dunLim[1] - stats.dungeon_limit >= 0 || prevProgress >= hiddenFloors[floor]?.winsNeeded) stats.hidden_dungeon[hiddenFloorKey] = prevProgress + hiddenIncrement;
-            const progress = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
-            unlocked = `<a:arrow_green:916716811842621450> Hidden Floor ${floor} progress: **${progress}**/${hiddenFloors[floor]?.winsNeeded}`;
+            let unlocked: string;
+            if (isHiddenFloor) {
+                const hiddenIncrement = (skipRounds > 0 && skipRounds < 30) ? skipRounds : 1;
+                const prevProgress = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
+                if (runEligibility.progress || prevProgress >= hiddenFloors[floor]?.winsNeeded) stats.hidden_dungeon[hiddenFloorKey] = prevProgress + hiddenIncrement;
+                const progress = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
+                unlocked = `<a:arrow_green:916716811842621450> Hidden Floor ${floor} progress: **${progress}**/${hiddenFloors[floor]?.winsNeeded}`;
 
-            if (progress >= hiddenFloors[floor]?.winsNeeded && prevProgress < hiddenFloors[floor]?.winsNeeded) {
-                unlocked = `🔑 Hidden Floor **${floor}** Cleared!`;
-            };
-        } else {
-            if (dunLim[1] - stats.dungeon_limit >= 0 || stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) stats.dungeon_floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
-
-            unlocked = `<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.dungeon_floors[floor]}**/${floors[floor]?.winsNeeded}`;
-
-            if (stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded && floor < 300) {
-
-                if (stats.dungeon_floors[floor] === floors[floor]?.winsNeeded) {
-                    unlocked = `🔑 Floor **${floor + 1}** has been unlocked`;
-                    stats.dungeon_floors[floor + 1] = 0;
+                if (progress >= hiddenFloors[floor]?.winsNeeded && prevProgress < hiddenFloors[floor]?.winsNeeded) {
+                    unlocked = `🔑 Hidden Floor **${floor}** Cleared!`;
                 };
+            } else {
+                if (runEligibility.progress || stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded) stats.dungeon_floors[floor] += ((skipRounds > 0 && skipRounds < 30) ? skipRounds : 1);
 
-                // Achievements
-                achievements[34].check(interaction, interaction.user, floor + 1), achievements[35].check(interaction, interaction.user, floor + 1), achievements[36].check(interaction, interaction.user, floor + 1), achievements[37].check(interaction, interaction.user, floor + 1), achievements[38].check(interaction, interaction.user, floor + 1); // Challenger
+                unlocked = `<a:arrow_green:916716811842621450> Floor ${floor} progress: **${stats.dungeon_floors[floor]}**/${floors[floor]?.winsNeeded}`;
+
+                if (stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded && floor < 300) {
+
+                    if (stats.dungeon_floors[floor] === floors[floor]?.winsNeeded) {
+                        unlocked = `🔑 Floor **${floor + 1}** has been unlocked`;
+                        stats.dungeon_floors[floor + 1] = 0;
+                    };
+
+                    // Achievements
+                    achievements[34].check(interaction, interaction.user, floor + 1), achievements[35].check(interaction, interaction.user, floor + 1), achievements[36].check(interaction, interaction.user, floor + 1), achievements[37].check(interaction, interaction.user, floor + 1), achievements[38].check(interaction, interaction.user, floor + 1); // Challenger
+                };
             };
-        };
 
 
-        // XP potions
-        const xpPotions = {
-            782: drops(0.02, 2 * skipRounds),
-            783: drops(0.01, 1 * skipRounds),
-            784: drops(0.005, 1 * skipRounds),
-        };
+            // XP potions
+            const xpPotions = {
+                782: drops(0.02, 2 * skipRounds),
+                783: drops(0.01, 1 * skipRounds),
+                784: drops(0.005, 1 * skipRounds),
+            };
 
-        // Class Level
-        let cxpmsg = "You don't have a class";
-        if (myClass) {
-            let boost = 1 + matchStats.xpboost;
-            stats.dungeon_classes.map((e) => classes[e].tier).forEach((e) => {
-                switch (e) {
-                    case 2: boost += 0.05; break;
-                    case 3: boost += 0.15; break;
-                    case 4: boost += 0.25; break;
+            // Class Level
+            let cxpmsg = "You don't have a class";
+            if (myClass) {
+                let boost = 1 + matchStats.xpboost;
+                stats.dungeon_classes.map((e) => classes[e].tier).forEach((e) => {
+                    switch (e) {
+                        case 2: boost += 0.05; break;
+                        case 3: boost += 0.15; break;
+                        case 4: boost += 0.25; break;
+                        default: false; break;
+                    };
+                });
+
+                // Premium Buff
+                switch (stats.premium) {
+                    case 3: boost += 0.2; break;
+                    case 4: boost += 0.3; break;
+                    case 5: boost += 0.5; break;
+                    case 6: boost += 0.75; break;
+                    case 7: boost += 1; break;
                     default: false; break;
                 };
-            });
 
-            // Premium Buff
-            switch (stats.premium) {
-                case 3: boost += 0.2; break;
-                case 4: boost += 0.3; break;
-                case 5: boost += 0.5; break;
-                case 6: boost += 0.75; break;
-                case 7: boost += 1; break;
-                default: false; break;
+                // Weekend Buff
+                // if (new Date().getDay() === 6 || new Date().getDay() === 0) boost *= 2;
+
+                // Guild Buff
+                if (guild) boost += (0.2 * guild.xpbuff);
+
+                // Loot run buff
+                if (runEligibility.loot) boost *= 5;
+
+                boost = Math.round(boost * 100) / 100;
+
+                let cxp = Math.floor(((floor < 100 ? floor : 100 + (Math.min(floor, 300) / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
+
+                cxp = Math.floor(cxp * 1.33);
+                if (enemy.boss) cxp = Math.floor(cxp * 1.5);
+                cxp = Math.floor(cxp * skipRounds);
+
+                // instant XP potions
+                cxp += (xpPotions[782] * 800) + (xpPotions[783] * 2400) + (xpPotions[784] * 8000);
+
+                cxpmsg = `Class XP: **${cxp}** (Boost: x${boost})`; // `Class XP: **${cxp}** (Boost: x${boost}${new Date().getDay() === 6 || new Date().getDay() === 0 ? " weekend" : ""})`;
+                if (myClass.id in stats.dungeon_classlevels) stats.dungeon_classlevels[myClass.id] += cxp;
+                else stats.dungeon_classlevels[myClass.id] = cxp;
             };
 
-            // Weekend Buff
-            // if (new Date().getDay() === 6 || new Date().getDay() === 0) boost *= 2;
-
-            // Guild Buff
-            if (guild) boost += (0.2 * guild.xpbuff);
-
-            // Loot run buff
-            if (dunLim[0] >= stats.dungeon_limit) boost *= 5;
-
-            boost = Math.round(boost * 100) / 100;
-
-            let cxp = Math.floor(((floor < 100 ? floor : 100 + (Math.min(floor, 300) / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
-
-            cxp = Math.floor(cxp * 1.33);
-            if (enemy.boss) cxp = Math.floor(cxp * 1.5);
-            cxp = Math.floor(cxp * skipRounds);
-
-            // instant XP potions
-            cxp += (xpPotions[782] * 800) + (xpPotions[783] * 2400) + (xpPotions[784] * 8000);
-
-            cxpmsg = `Class XP: **${cxp}** (Boost: x${boost})`; // `Class XP: **${cxp}** (Boost: x${boost}${new Date().getDay() === 6 || new Date().getDay() === 0 ? " weekend" : ""})`;
-            if (myClass.id in stats.dungeon_classlevels) stats.dungeon_classlevels[myClass.id] += cxp;
-            else stats.dungeon_classlevels[myClass.id] = cxp;
-        };
-
-        // Achievements
-        if (floors[floor]?.boss) achievements[27].check(interaction, interaction.user, stats.dungeon_floors[floor]), achievements[28].check(interaction, interaction.user, stats.dungeon_floors[floor]), achievements[29].check(interaction, interaction.user, stats.dungeon_floors[floor]); // Coming Back
-        achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
-        achievements[55].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded), achievements[56].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded), achievements[57].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded), achievements[58].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded); // Challenger II
-
-        // Coins
-        let loot = 0;
-        if (dunLim[0] >= stats.dungeon_limit) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
-        if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
-        loot *= matchStats.lootm;
-        loot += matchStats.loot;
-        loot = Math.floor(loot * skipRounds);
-        if (loot > 1_000_000) loot = 42187;
-
-        // Guild Tax
-        const tax = Math.max(0, Math.floor(loot * ((guild?.tax ?? 0) / 100)));
-        if (loot > 0 && guild && guild.tax) {
-            loot = Math.floor(loot - tax);
-            await addGuildDonation(guild.id, interaction.user.id, "coins", tax);
-        };
-
-        // Crafting Resources
-        let craftItem = items[33];
-        const craftItem2 = items[33];
-        // if (floor <= 20) craftItem = items[33];
-        if (floor <= 50) craftItem = items[34];
-        else if (floor <= 90) craftItem = items[35];
-        else if (floor <= 120) craftItem = items[36];
-        else if (floor <= 190) craftItem = items[37];
-        else if (floor <= 270) craftItem = items[38];
-        else if (floor <= 300) craftItem = items[39];
-
-        // Chests
-        let chestRarities = [451, 452, 453, 454];
-        if (floor > 200) chestRarities = [453, 454, 456, 457];
-        else if (floor > 100) chestRarities = [452, 453, 454, 456];
-        let chestDrops = [0, 0, 0, 0];
-
-        // Ascension Material
-        let ascItem = items[enemy.loot[Math.floor(Math.random() * enemy.loot.length)]];
-
-        let ssShards = 0, sShards = 0, aShards = 0, bShards = 0, cShards = 0, dShards = 0;
-        let craftCount = 0, craftCount2 = 0;
-        let ascCount = 0;
-
-        // First loot cap
-        if (dunLim[0] >= stats.dungeon_limit) {
-            // Shards
-            ssShards += drops(0.012, 3 * skipRounds);
-            sShards += drops(0.018, 5 * skipRounds);
-            aShards += drops(0.03, 7 * skipRounds);
-            bShards += drops(0.072, 9 * skipRounds);
-            cShards += drops(0.1, 12 * skipRounds);
-            dShards += drops(0.14, 15 * skipRounds);
-
-            // Crafting Resources
-            craftCount += drops(0.4, 7 * skipRounds);
-            if (floor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
-
-            // Ascension Materials
-            ascCount += drops(0.6, 7 * skipRounds);
-
-            // Chests
-            chestDrops[0] += drops(0.11, skipRounds);
-            chestDrops[1] += drops(0.055, skipRounds);
-            chestDrops[2] += drops(0.027, skipRounds);
-            chestDrops[3] += drops(0.012, skipRounds);
-        } // Second Loot Cap
-        else if (dunLim[2] >= stats.dungeon_limit) {
-            // Crafting Resources
-            craftCount += drops(0.12, 4 * skipRounds);
-            if (floor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
-
-            // Ascension Materials
-            ascCount += drops(0.16, 4 * skipRounds);
-
-            // Chests
-            chestDrops[0] += drops(0.086, skipRounds);
-            chestDrops[1] += drops(0.047, skipRounds);
-            chestDrops[2] += drops(0.025, skipRounds);
-            chestDrops[3] += drops(0.008, skipRounds);
-        };
-
-        // Levelup mats
-        let levelupMats = {
-            "50": floor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
-            "51": floor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
-            "52": floor <= 100 ? drops(0.18, 2 * skipRounds) : floor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
-            "53": floor <= 100 ? drops(0.18, 4 * skipRounds) : floor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
-            "54": floor > 200 ? drops(0.3, 4 * skipRounds) : floor > 100 ? drops(0.18, 2 * skipRounds) : 0,
-            "55": floor > 200 ? drops(0.3, 8 * skipRounds) : floor > 100 ? drops(0.18, 4 * skipRounds) : 0,
-            "56": floor > 200 ? drops(0.18, 2 * skipRounds) : 0,
-            "57": floor > 200 ? drops(0.18, 4 * skipRounds) : 0,
-        };
-
-        let lootArr = [];
-        if (ssShards) lootArr.push(`<:ss_shard:917203009543503892>x${ssShards}`);
-        if (sShards) lootArr.push(`<:s_shard:917202925514817566>x${sShards}`);
-        if (aShards) lootArr.push(`<:a_shard:917202904862052392>x${aShards}`);
-        if (bShards) lootArr.push(`<:b_shard:917202862851899392>x${bShards}`);
-        if (cShards) lootArr.push(`<:c_shard:917202862499582002>x${cShards}`);
-        if (dShards) lootArr.push(`<:d_shard:917202840563363891>x${dShards}`);
-
-        const addNewItems: Record<number, number> = {
-            [craftItem.id]: craftCount ?? 0,
-            [craftItem2.id]: craftCount2 ?? 0,
-            [ascItem.id]: ascCount ?? 0,
-        };
-
-        Object.entries(levelupMats).forEach((e) => {
-            addNewItems[e[0] as any] = e[1] ?? 0;
-        });
-
-        chestRarities.forEach((e, i) => {
-            addNewItems[e] = chestDrops[i] ?? 0;
-        });
-
-        // Update users table
-        await updateUsersAndCache(interaction.client, interaction.user.id, {
-            updates: {
-                coins: { type: 'increment', value: loot },
-                ssshard: { type: 'increment', value: ssShards },
-                sshard: { type: 'increment', value: sShards },
-                ashard: { type: 'increment', value: aShards },
-                bshard: { type: 'increment', value: bShards },
-                cshard: { type: 'increment', value: cShards },
-                dshard: { type: 'increment', value: dShards },
-                items: { type: 'merge_json', value: addNewItems },
-                dungeon_floors: { type: 'set', value: stats.dungeon_floors },
-                hidden_dungeon: { type: 'set', value: stats.hidden_dungeon },
-                dungeon_classlevels: { type: 'set', value: stats.dungeon_classlevels },
-                tutorial: { type: 'append_unique', value: [9] },
-                donatedtotal: { type: "increment", value: tax },
-
-                ...(isEventOngoing() ? { perpetual_fire: { type: "increment", value: 1 } } : {}),
-                ...(isEventOngoing() ? { perpetual_fragments: { type: "increment", value: 1 } } : {}),
-                ...((isEventOngoing() && stats.perpetual_fire <= 0) ? { yule_chapter_failed: { type: "set", value: true } } : {}),
-            },
-        });
-
-        // Tutorial
-        if (!stats.tutorial.includes(9)) {
-            const row = new ActionRowBuilder<ButtonBuilder>()
-                .addComponents(
-                    new ButtonBuilder()
-                        .setCustomId('continue')
-                        .setLabel('Finish Tutorial!')
-                        .setStyle(ButtonStyle.Success),
-                    new ButtonBuilder()
-                        .setLabel('Any Questions? Join our Support Server!')
-                        .setStyle(ButtonStyle.Link)
-                        .setURL('https://discord.gg/myy9PBCdEW')
-                );
-            const Embed = new EmbedBuilder()
-                .setColor(0xbbffff)
-                .setTitle("Congratulations!")
-                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                .setDescription("You've defeated your first enemy <:RemWink:928370529742757960>\nIt seems you have obtained some valuable items <:Woah:928370799965003826> Here's what they're used for:\n\n<:coins:872926669055356939> **Coins**: The standard currency used in Camelot. It can be used in the `/shop`, to `/levelup` characters and more <:ClaraThumbsUp:1034899843505721514>\n<:ss_shard:917203009543503892> **Shards**: These are used to `/refine` your characters\n<:sublime_chest_open:1069287041843593266> **Chests**: Chests drop items of varying rarities.\n<:goblin_mask:1046080758466490398> **Resources**: There are crafting <:iron:1033037750821212232>, levelup <:common_weapon_levelup_material:1047535549814165535> and ascension <:slime_concentrate:1046083943428001964> materials that can drop in the dungeon <:wow:1020442064409874462>\n\nAdditionally, you'll gain experience with your class which can be upgraded once you reach level **40**. The deeper you enter the dungeon the better the rewards you'll get!");
-            // if (r === "l") Embed.setTitle("Seems it's quite challenging").setDescription("But let's try again!");
-            setTimeout(() => {
-                if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then((msg) => {
-                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 180000 });
-                    collector.on('collect', async () => {
-                        const Embed = new EmbedBuilder()
-                            .setColor(0xbbffff)
-                            .setTitle("Seems you are ready to set out now!")
-                            .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
-                            .setDescription("There is nothing more I can teach you, for you have mastered all that I know and more. Now it is time for you to go out on your own journey. To follow your own path, and create your own tales!\n\nMay the spirits guard your path. Until we meet again <:MashaWave:928370055354400799>");
-                        msg.edit({ embeds: [Embed], components: [] });
-
-                        // Finish Tutorial
-                        await updateUsersAndCache(interaction.client, interaction.user.id, {
-                            updates: {
-                                tutorial: { type: 'append_unique', value: [9] },
-                            },
-                        });
-
-                        // Achievements
-                        achievements[51].check(interaction); // A New Adventure
-                    });
-                });
-            }, 1200);
-        } else {
             // Achievements
-            achievements[51].check(interaction); // A New Adventure
-        };
+            if (floors[floor]?.boss) achievements[27].check(interaction, interaction.user, stats.dungeon_floors[floor]), achievements[28].check(interaction, interaction.user, stats.dungeon_floors[floor]), achievements[29].check(interaction, interaction.user, stats.dungeon_floors[floor]); // Coming Back
+            achievements[39].check(interaction, interaction.user, myStatsC.hp), achievements[40].check(interaction, interaction.user, myStatsC.hp), achievements[41].check(interaction, interaction.user, myStatsC.hp); // Under Pressure
+            achievements[55].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded), achievements[56].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded), achievements[57].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded), achievements[58].check(interaction, interaction.user, floor, stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded); // Challenger II
 
-        //* Achievements
-        // Guild donation achievement
-        achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);
+            // Coins
+            let loot = 0;
+            if (runEligibility.loot) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
+            if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
+            loot *= matchStats.lootm;
+            loot += matchStats.loot;
+            loot = Math.floor(loot * skipRounds);
+            if (loot > 1_000_000) loot = 42187;
 
-        // Ascension material achievement
-        achievements[67].check(interaction, interaction.user), achievements[68].check(interaction, interaction.user), achievements[69].check(interaction, interaction.user), achievements[70].check(interaction, interaction.user);
+            // Guild Tax
+            const tax = Math.max(0, Math.floor(loot * ((guild?.tax ?? 0) / 100)));
+            if (loot > 0 && guild && guild.tax) {
+                loot = Math.floor(loot - tax);
+                await addGuildDonation(guild.id, interaction.user.id, "coins", tax);
+            };
 
-        // Zero to Hero
-        achievements[75].check(interaction, interaction.user, floor, myChar.rarity), achievements[76].check(interaction, interaction.user, floor, myChar.rarity), achievements[77].check(interaction, interaction.user, floor, myChar.rarity);
+            // Crafting Resources
+            let craftItem = items[33];
+            const craftItem2 = items[33];
+            // if (floor <= 20) craftItem = items[33];
+            if (floor <= 50) craftItem = items[34];
+            else if (floor <= 90) craftItem = items[35];
+            else if (floor <= 120) craftItem = items[36];
+            else if (floor <= 190) craftItem = items[37];
+            else if (floor <= 270) craftItem = items[38];
+            else if (floor <= 300) craftItem = items[39];
 
-        // David versus Goliath
-        achievements[88].check(interaction, interaction.user, eStats.ep >= myStats.ep * 5);
+            // Chests
+            let chestRarities = [451, 452, 453, 454];
+            if (floor > 200) chestRarities = [453, 454, 456, 457];
+            else if (floor > 100) chestRarities = [452, 453, 454, 456];
+            let chestDrops = [0, 0, 0, 0];
 
-        // No Rest for the Strong
-        for (const id of [104, 105, 106, 107, 108]) await achievements[id].check(interaction, interaction.user, stats.dungeon_limit);
+            // Ascension Material
+            let ascItem = items[enemy.loot[Math.floor(Math.random() * enemy.loot.length)]];
 
-        //* Daily Quests
-        // Increasing Danger
-        dailies[2].update(interaction, interaction.client, skipRounds);
+            let ssShards = 0, sShards = 0, aShards = 0, bShards = 0, cShards = 0, dShards = 0;
+            let craftCount = 0, craftCount2 = 0;
+            let ascCount = 0;
 
-        let xpleft = myClass
-            ? (myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))
+            // First loot cap
+            if (runEligibility.loot) {
+                // Shards
+                ssShards += drops(0.012, 3 * skipRounds);
+                sShards += drops(0.018, 5 * skipRounds);
+                aShards += drops(0.03, 7 * skipRounds);
+                bShards += drops(0.072, 9 * skipRounds);
+                cShards += drops(0.1, 12 * skipRounds);
+                dShards += drops(0.14, 15 * skipRounds);
 
-            : 0;
-        // Check for extreme item drop (hidden floors 1-20)
-        let drop = "\n";
-        const extremeDropFloor = isHiddenFloor ? parseInt(hiddenFloorKey) : 0;
-        if (isHiddenFloor && hasExtremeItemDrop(extremeDropFloor)) {
-            const itemDrop = getExtremeItemDrop(extremeDropFloor);
-            if (itemDrop && Math.random() < 0.0005) {
-                try {
-                    // Add the item directly to player's inventory
-                    if (itemDrop.itemType !== "rune") {
-                        await insertNewWeapon(interaction.user.id, itemDrop.itemId, itemDrop.itemType, undefined, 1, 0);
-                    } else {
-                        await updateUsersAndCache(interaction.client, interaction.user.id, {
-                            updates: {
-                                items: { type: "merge_json", value: { [itemDrop.itemId]: 1 } },
-                            },
+                // Crafting Resources
+                craftCount += drops(0.4, 7 * skipRounds);
+                if (floor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
+
+                // Ascension Materials
+                ascCount += drops(0.6, 7 * skipRounds);
+
+                // Chests
+                chestDrops[0] += drops(0.11, skipRounds);
+                chestDrops[1] += drops(0.055, skipRounds);
+                chestDrops[2] += drops(0.027, skipRounds);
+                chestDrops[3] += drops(0.012, skipRounds);
+            } // Second Loot Cap
+            else if (runEligibility.secondaryLoot) {
+                // Crafting Resources
+                craftCount += drops(0.12, 4 * skipRounds);
+                if (floor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
+
+                // Ascension Materials
+                ascCount += drops(0.16, 4 * skipRounds);
+
+                // Chests
+                chestDrops[0] += drops(0.086, skipRounds);
+                chestDrops[1] += drops(0.047, skipRounds);
+                chestDrops[2] += drops(0.025, skipRounds);
+                chestDrops[3] += drops(0.008, skipRounds);
+            };
+
+            // Levelup mats
+            let levelupMats = {
+                "50": floor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
+                "51": floor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
+                "52": floor <= 100 ? drops(0.18, 2 * skipRounds) : floor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
+                "53": floor <= 100 ? drops(0.18, 4 * skipRounds) : floor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
+                "54": floor > 200 ? drops(0.3, 4 * skipRounds) : floor > 100 ? drops(0.18, 2 * skipRounds) : 0,
+                "55": floor > 200 ? drops(0.3, 8 * skipRounds) : floor > 100 ? drops(0.18, 4 * skipRounds) : 0,
+                "56": floor > 200 ? drops(0.18, 2 * skipRounds) : 0,
+                "57": floor > 200 ? drops(0.18, 4 * skipRounds) : 0,
+            };
+
+            let lootArr = [];
+            if (ssShards) lootArr.push(`<:ss_shard:917203009543503892>x${ssShards}`);
+            if (sShards) lootArr.push(`<:s_shard:917202925514817566>x${sShards}`);
+            if (aShards) lootArr.push(`<:a_shard:917202904862052392>x${aShards}`);
+            if (bShards) lootArr.push(`<:b_shard:917202862851899392>x${bShards}`);
+            if (cShards) lootArr.push(`<:c_shard:917202862499582002>x${cShards}`);
+            if (dShards) lootArr.push(`<:d_shard:917202840563363891>x${dShards}`);
+
+            const addNewItems: Record<number, number> = {
+                [craftItem.id]: craftCount ?? 0,
+                [craftItem2.id]: craftCount2 ?? 0,
+                [ascItem.id]: ascCount ?? 0,
+            };
+
+            Object.entries(levelupMats).forEach((e) => {
+                addNewItems[e[0] as any] = e[1] ?? 0;
+            });
+
+            chestRarities.forEach((e, i) => {
+                addNewItems[e] = chestDrops[i] ?? 0;
+            });
+
+            // Update users table
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    coins: { type: 'increment', value: loot },
+                    ssshard: { type: 'increment', value: ssShards },
+                    sshard: { type: 'increment', value: sShards },
+                    ashard: { type: 'increment', value: aShards },
+                    bshard: { type: 'increment', value: bShards },
+                    cshard: { type: 'increment', value: cShards },
+                    dshard: { type: 'increment', value: dShards },
+                    items: { type: 'merge_json', value: addNewItems },
+                    dungeon_floors: { type: 'set', value: stats.dungeon_floors },
+                    hidden_dungeon: { type: 'set', value: stats.hidden_dungeon },
+                    dungeon_classlevels: { type: 'set', value: stats.dungeon_classlevels },
+                    tutorial: { type: 'append_unique', value: [9] },
+                    donatedtotal: { type: "increment", value: tax },
+
+                    ...(isEventOngoing() ? { perpetual_fire: { type: "increment", value: 1 } } : {}),
+                    ...(isEventOngoing() ? { perpetual_fragments: { type: "increment", value: 1 } } : {}),
+                    ...((isEventOngoing() && stats.perpetual_fire <= 0) ? { yule_chapter_failed: { type: "set", value: true } } : {}),
+                },
+            });
+
+            // Tutorial
+            if (!stats.tutorial.includes(9)) {
+                const row = new ActionRowBuilder<ButtonBuilder>()
+                    .addComponents(
+                        new ButtonBuilder()
+                            .setCustomId('continue')
+                            .setLabel('Finish Tutorial!')
+                            .setStyle(ButtonStyle.Success),
+                        new ButtonBuilder()
+                            .setLabel('Any Questions? Join our Support Server!')
+                            .setStyle(ButtonStyle.Link)
+                            .setURL('https://discord.gg/myy9PBCdEW')
+                    );
+                const Embed = new EmbedBuilder()
+                    .setColor(0xbbffff)
+                    .setTitle("Congratulations!")
+                    .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                    .setDescription("You've defeated your first enemy <:RemWink:928370529742757960>\nIt seems you have obtained some valuable items <:Woah:928370799965003826> Here's what they're used for:\n\n<:coins:872926669055356939> **Coins**: The standard currency used in Camelot. It can be used in the `/shop`, to `/levelup` characters and more <:ClaraThumbsUp:1034899843505721514>\n<:ss_shard:917203009543503892> **Shards**: These are used to `/refine` your characters\n<:sublime_chest_open:1069287041843593266> **Chests**: Chests drop items of varying rarities.\n<:goblin_mask:1046080758466490398> **Resources**: There are crafting <:iron:1033037750821212232>, levelup <:common_weapon_levelup_material:1047535549814165535> and ascension <:slime_concentrate:1046083943428001964> materials that can drop in the dungeon <:wow:1020442064409874462>\n\nAdditionally, you'll gain experience with your class which can be upgraded once you reach level **40**. The deeper you enter the dungeon the better the rewards you'll get!");
+                // if (r === "l") Embed.setTitle("Seems it's quite challenging").setDescription("But let's try again!");
+                setTimeout(() => {
+                    if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then((msg) => {
+                        const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 180000 });
+                        collector.on('collect', async () => {
+                            const Embed = new EmbedBuilder()
+                                .setColor(0xbbffff)
+                                .setTitle("Seems you are ready to set out now!")
+                                .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
+                                .setDescription("There is nothing more I can teach you, for you have mastered all that I know and more. Now it is time for you to go out on your own journey. To follow your own path, and create your own tales!\n\nMay the spirits guard your path. Until we meet again <:MashaWave:928370055354400799>");
+                            msg.edit({ embeds: [Embed], components: [] });
+
+                            // Finish Tutorial
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    tutorial: { type: 'append_unique', value: [9] },
+                                },
+                            });
+
+                            // Achievements
+                            achievements[51].check(interaction); // A New Adventure
                         });
+                    });
+                }, 1200);
+            } else {
+                // Achievements
+                achievements[51].check(interaction); // A New Adventure
+            };
+
+            //* Achievements
+            // Guild donation achievement
+            achievements[59].check(interaction, interaction.user), achievements[60].check(interaction, interaction.user), achievements[61].check(interaction, interaction.user), achievements[62].check(interaction, interaction.user), achievements[63].check(interaction, interaction.user);
+
+            // Ascension material achievement
+            achievements[67].check(interaction, interaction.user), achievements[68].check(interaction, interaction.user), achievements[69].check(interaction, interaction.user), achievements[70].check(interaction, interaction.user);
+
+            // Zero to Hero
+            achievements[75].check(interaction, interaction.user, floor, myChar.rarity), achievements[76].check(interaction, interaction.user, floor, myChar.rarity), achievements[77].check(interaction, interaction.user, floor, myChar.rarity);
+
+            // David versus Goliath
+            achievements[88].check(interaction, interaction.user, eStats.ep >= myStats.ep * 5);
+
+            // No Rest for the Strong
+            for (const id of [104, 105, 106, 107, 108]) await achievements[id].check(interaction, interaction.user, stats.dungeon_limit);
+
+            //* Daily Quests
+            // Increasing Danger
+            dailies[2].update(interaction, interaction.client, skipRounds);
+
+            let xpleft = myClass
+                ? (myStats.clvl * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl - 1) * 25))
+
+                : 0;
+            // Check for extreme item drop (hidden floors 1-20)
+            let drop = "\n";
+            const extremeDropFloor = isHiddenFloor ? parseInt(hiddenFloorKey) : 0;
+            if (isHiddenFloor && hasExtremeItemDrop(extremeDropFloor)) {
+                const itemDrop = getExtremeItemDrop(extremeDropFloor);
+                if (itemDrop && Math.random() < 0.0005) {
+                    try {
+                        // Add the item directly to player's inventory
+                        if (itemDrop.itemType !== "rune") {
+                            await insertNewWeapon(interaction.user.id, itemDrop.itemId, itemDrop.itemType, undefined, 1, 0);
+                        } else {
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    items: { type: "merge_json", value: { [itemDrop.itemId]: 1 } },
+                                },
+                            });
+                        };
+                        // Get item info for notification
+                        const item = items[itemDrop.itemId];
+                        if (item) {
+                            const itemTypeText = itemDrop.itemType === "weapon" ? "WEAPON" :
+                                itemDrop.itemType === "armor" ? "ARMOR" :
+                                    itemDrop.itemType === "ring" ? "RING" : "RUNE";
+                            drop += `<:barm:1398660875740647464> **EXTREME ${itemTypeText} DROP!** You received **__${item.name}__** ${item.emoji}!`;
+                        }
+                    } catch (error) {
+                        console.error(`Error adding extreme item ${itemDrop.itemId} (${itemDrop.itemType}) to user ${interaction.user.id}:`, error);
                     };
-                    // Get item info for notification
-                    const item = items[itemDrop.itemId];
-                    if (item) {
-                        const itemTypeText = itemDrop.itemType === "weapon" ? "WEAPON" :
-                            itemDrop.itemType === "armor" ? "ARMOR" :
-                                itemDrop.itemType === "ring" ? "RING" : "RUNE";
-                        drop += `<:barm:1398660875740647464> **EXTREME ${itemTypeText} DROP!** You received **__${item.name}__** ${item.emoji}!`;
-                    }
-                } catch (error) {
-                    console.error(`Error adding extreme item ${itemDrop.itemId} (${itemDrop.itemType}) to user ${interaction.user.id}:`, error);
                 };
+            };
+
+
+            Embed.setDescription(`<:stars_v2:917023655840591963> **${interaction.user.toString()}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot${drop}\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}${xpPotions[784] ? `, ${items[784].emoji}x${xpPotions[784]}` : ""}${xpPotions[783] ? `, ${items[783].emoji}x${xpPotions[783]}` : ""}${xpPotions[782] ? `, ${items[782].emoji}x${xpPotions[782]}` : ""}`);
+
+            if (dunLim[0] - stats.dungeon_limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins + loot)} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+            else Embed.setFooter({ text: `${myClass.name} level: ${xpleft < 1 ? myStats.clvl + 1 : myStats.clvl} | XP left: ${xpleft < 1 ? (((myStats.clvl + 1) * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl + 1) * 25))) : xpleft}`, iconURL: xpleft < 1 ? "https://i.ibb.co/Y8k36J1/Nks94u8.gif" : myClass.image });
+            return Embed;
+        };
+
+        let matchStats = Avalon.getMatchStats(interaction);
+        let notice = ["", "", "", ""];
+
+        // Apply passives
+
+        if (eAbility) await eAbility.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+
+        if (skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
+        if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        if (myStats.helmet && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.cuirass] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.gloves] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.boots] as armorInfo)?.setname) await (items?.[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+
+        if (myStats.rune && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) await (items[parseInt(myStats.rune)] as runeInfo)?.buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+
+        if (!(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
+            if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+            if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+        }
+
+        // Apply skill tree
+        for (const [skill, level] of Object.entries(stats.skill_tree)) {
+            // Only allow utility skills
+            if (skillTree[parseInt(skill)].category === "utility") {
+                await skillTree[parseInt(skill)].passive(level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
             };
         };
 
 
-        Embed.setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot${drop}\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}${xpPotions[784] ? `, ${items[784].emoji}x${xpPotions[784]}` : ""}${xpPotions[783] ? `, ${items[783].emoji}x${xpPotions[783]}` : ""}${xpPotions[782] ? `, ${items[782].emoji}x${xpPotions[782]}` : ""}`);
+        const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
+            DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
+            ABILITY_EMOJI = myStatsC.replaceButton?.ability?.emoji || '✨',
+            SKILL_EMOJI = myStatsC.replaceButton?.cskill?.emoji || '⚜️',
+            SKIP_EMOJI = myStatsC.replaceButton?.skip?.emoji || '⏩';
 
-        if (dunLim[0] - stats.dungeon_limit >= 0 || !myClass) Embed.setFooter({ text: `Balance: ${formatNumberWithQuotes(stats.coins + loot)} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
-        else Embed.setFooter({ text: `${myClass.name} level: ${xpleft < 1 ? myStats.clvl + 1 : myStats.clvl} | XP left: ${xpleft < 1 ? (((myStats.clvl + 1) * 50) - (stats.dungeon_classlevels[myClass.id] - (myStats.clvl * (myStats.clvl + 1) * 25))) : xpleft}`, iconURL: xpleft < 1 ? "https://i.ibb.co/Y8k36J1/Nks94u8.gif" : myClass.image });
-        return Embed;
-    };
+        const row = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(
+                new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle(ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled((myAbility && "ability" in myAbility) ? false : true),
+                new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
+                new ButtonBuilder().setCustomId('SKIP').setEmoji(SKIP_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(dunLim[0] - stats.dungeon_limit >= 0 ? false : true),
+            );
 
-    let matchStats = Avalon.getMatchStats(interaction);
-    let notice =["", "", "", ""];
-
-    // Apply passives
-
-    if(eAbility) await eAbility.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
-
-    if(skill && myChar.id !== 4767) await skill.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user, interaction.commandName);
-if (myAbility?.passive) await myAbility.passive(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-if (myStats.weapon !== -1) await (items[myStats.weapon] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-if (myStats.shieldid) await (items[myStats.shieldid] as weaponInfo).buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-if (myStats.helmet && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.cuirass] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.gloves] as armorInfo)?.setname && (items?.[myStats.helmet] as armorInfo).setname === (items?.[myStats.boots] as armorInfo)?.setname) await (items?.[myStats.boots] as armorInfo)?.buff?.(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-
-if (myStats.rune && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) await (items[parseInt(myStats.rune)] as runeInfo)?.buff(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-
-if (!(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
-    if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-    if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-    if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-}
-
-// Apply skill tree
-for (const [skill, level] of Object.entries(stats.skill_tree)) {
-    // Only allow utility skills
-    if (skillTree[parseInt(skill)].category === "utility") {
-        await skillTree[parseInt(skill)].passive(level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-    };
-};
-
-
-const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
-    DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',
-    ABILITY_EMOJI = myStatsC.replaceButton?.ability?.emoji || '✨',
-    SKILL_EMOJI = myStatsC.replaceButton?.cskill?.emoji || '⚜️',
-    SKIP_EMOJI = myStatsC.replaceButton?.skip?.emoji || '⏩';
-
-const row = new ActionRowBuilder<ButtonBuilder>()
-    .addComponents(
-        new ButtonBuilder().setCustomId('ATK').setEmoji(ATK_EMOJI).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('DEF').setEmoji(DEF_EMOJI).setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId('ABILITY').setEmoji(ABILITY_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled((myAbility && "ability" in myAbility) ? false : true),
-        new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
-        new ButtonBuilder().setCustomId('SKIP').setEmoji(SKIP_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(dunLim[0] - stats.dungeon_limit >= 0 ? false : true),
-    );
-
-// Skip Fight
-const skipCompleted = isHiddenFloor ? (stats.hidden_dungeon[hiddenFloorKey] ?? 0) >= hiddenFloors[floor]?.winsNeeded : stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded;
-if ((flag === "skip" || flag === "all") && skipCompleted) {
-    if (isHiddenFloor) {
-        // Hidden floors allow skip if cleared
-    } else if (floor > 300) {
-        // Check if user has completed this floor and moved to the next one
-        const currentFloor = parseInt(Object.keys(stats.dungeon_floors)[Object.keys(stats.dungeon_floors).length - 1]);
-        const hasCompletedFloor = stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded;
-        const hasMovedBeyond = currentFloor > floor;
-        if (!hasCompletedFloor || !hasMovedBeyond) {
-            notice.push(`\n<:info:1131679799207796756> You can only skip floors that you have manually cleared and progressed beyond. Complete Floor ${floor} first to unlock skipping for this floor!`);
-            return;
-        };
-    };
-
-    if (myStats.ep > eStats.ep) {
-        const result = await matchResult("w");
-        if (result) interaction.editReply({ embeds: [result] });
-        return;
-    };
-    notice.push("\n<:info:1131679799207796756> You need more EP than your enemy to skip a fight");
-};
-
-// If Enemy Died
-if (eStatsC.hp < 1) {// if (myStats.ep/eStats.ep >= 2) {
-    const result = await matchResult("w");
-    if (result) interaction.editReply({ embeds: [result] });
-    return;
-};
-
-const isCompactEmbed = !!author.schema.user_settings.compact_battle_embeds;
-const showEnemyStats = !!author.schema.user_settings.display_enemy_stats;
-const threatLevelWarning = isCompactEmbed ? "" : `You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n`;
-
-async function newFight() {
-    let timestart = new Date().getTime();
-    let result = await new Promise<EmbedBuilder | undefined>((resolve) => {
-        const Embed = new EmbedBuilder()
-            .setColor(embedColor)
-            .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
-            .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
-            .setTitle(isHiddenFloor ? `Hidden Dungeon Floor ${floor} ${enemy.boss ? "(Boss)" : ""}` : `Dungeon Floor ${(floor - 1) % 100 + 1} ${enemy.boss ? "(Boss)" : ""}`)
-            .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
-            .setImage(isCompactEmbed ? null : eImage);
-        interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
-
-            const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 300000 });
-            const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 300000 });
-            const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 300000 });
-            const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 300000 });
-            const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 300000 });
-            matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
-
-
-            // Use passives
-            if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-
-            let timeout: NodeJS.Timeout | undefined;
-            async function editEmbed() {
-                Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
-                Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${Math.max(0, 120 + Math.floor((timestart - new Date().getTime()) / 1000))}s` });
-                // await msg.edit({ embeds: [Embed] });
-
-                // Debounce
-                clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    msg.edit({ embeds: [Embed] });
-                }, 600);
-            };
-
-            function minionDefeated(side: "my" | "enemy") {
-                if (side === "my") {
-                    myStatsC = { ...matchStats.myStatsCC } as DetailedStats;
-                    matchStats.currentCharacter = 0;
-                    Embed.setThumbnail(myStatsC.thumbnail);
-                    startNextRound();
-                } else {
-                    eStatsC = { ...matchStats.eStatsCC };
-                    matchStats.currentOpponent = 0;
-                    Embed.setImage(eImage);
-                    attack();
-                };
-            };
-
-            function endMatch(wORl: "w" | "l") {
-                if (matchStats.ended) return;
-                else matchStats.ended = true;
-
-                atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
-                if (wORl === "l") notice.push(`\n💀 **${myChar.name}** lost`);
-                else notice.push(`\n🎉 **${myChar.name}** won`);
-                editEmbed();
-                matchStats.turn = 1;
-                resolve(matchResult(wORl));
-            };
-
-            function startNextRound() {
-                if (matchStats.ended) return;
-                if (matchStats.round === matchStats.roundCheck) return;
-                matchStats.roundCheck = matchStats.round;
-
-                // Consume Mana
-                Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myStatsC.thumbnail);
-
-                // Reset Buffs
-                if (matchStats.currentCharacter === 0) myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
-                if (matchStats.currentOpponent === 0) eStatsC.atk = eStats.atk, eStatsC.md = eStats.md, eStatsC.def = eStats.def, eStatsC.mr = eStats.mr, eStatsC.cd = eStats.cd, eStatsC.cr = eStats.cr, eStatsC.dodge = eStats.dodge, eStatsC.br = eStats.br, eStatsC.mg = eStats.mg;
-
-                // Apply Buffs
-                if (matchStats.currentCharacter === 0) Avalon.applyBuffs(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice);
-                if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eStatsC, eStatsC, eBuffs, buffs, matchStats, notice);
-
-                // Fix Stats
-                if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
-                else if (myStatsC.hp < 0) myStatsC.hp = 0;
-                else myStatsC.hp = Math.floor(myStatsC.hp);
-                if (eStatsC.hp > eStatsC.maxhp) eStatsC.hp = eStatsC.maxhp;
-                else if (eStatsC.hp < 0) eStatsC.hp = 0;
-                else eStatsC.hp = Math.floor(eStatsC.hp);
-
-                // Check and run delayed buffs
-                if (matchStats.currentCharacter === 0) {
-                    for (let i = myStatsC.delayedBuffs.length - 1; i >= 0; i--) {
-                        if (myStatsC.delayedBuffs[i].round <= matchStats.round) {
-                            myStatsC.delayedBuffs[i].run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                            if (myStatsC.delayedBuffs[i].last <= 1 || myStatsC.delayedBuffs[i].used >= myStatsC.delayedBuffs[i].usage) {
-                                myStatsC.delayedBuffs.splice(i, 1);
-                            } else {
-                                myStatsC.delayedBuffs[i].decrement();
-                            };
-                        };
-                    };
-                };
-
-                Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-            };
-
-            function checkPlayerFrozen() {
-                if (matchStats.ended) return false;
-                if (myStatsC.timeFrozen && matchStats.turn === 1) {
-                    if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and skips their turn!`);
-                    if (matchStats.ended) return true;
-                    editEmbed();
-                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                    matchStats.turn = 0;
-                    attack();
-                    return true;
-                };
-
-                return false;
-            };
-
-            function attack() {
-                if (matchStats.turn === 1) return;
-                if (eStatsC.timeFrozen && eStats.name !== "McBurn") {
-                    if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
-                    matchStats.turn = 1;
-                    matchStats.round++;
-                    startNextRound();
-                    editEmbed();
-
-                    if (matchStats.playerPausingRounds > 0) {
-                        matchStats.playerPausingRounds--;
-                        attack();
-                    };
-                } else {
-                    setTimeout(() => {
-                        if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
-                            curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                            eStatsC.sm -= curse.cost;
-                            matchStats.trigger("curse", eStatsC, myStatsC, eBuffs, buffs);
-                            editEmbed();
-                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                            attack();
-                        } else if (matchStats.blockAbilities-- < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5) {
-                            eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                            matchStats.trigger("ABILITY", eStatsC, myStatsC, eBuffs, buffs);
-                            editEmbed();
-                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                            attack();
-
-                        } else if (eStatsC.refuseATK) {
-                            let notif = `✨ **${enemy.name}** refuses to ATK`;
-                            if (eStatsC.refuseATKMessage) {
-                                if (Array.isArray(eStatsC.refuseATKMessage)) {
-                                    notif = `${eStatsC.refuseATKMessage[Math.floor(Math.random() * eStatsC.refuseATKMessage.length)]}`;
-                                } else {
-                                    notif = eStatsC.refuseATKMessage;
-                                };
-                            };
-                            notice.push(`\n${notif}`);
-
-                            matchStats.turn = 1;
-                            matchStats.round++;
-                            startNextRound();
-                            editEmbed();
-                            if (matchStats.playerPausingRounds > 0) {
-                                matchStats.playerPausingRounds--;
-                                attack();
-                            };
-                        } else {
-                            if (eStatsC.replaceButton?.atk?.run !== undefined) {
-                                eStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-                            } else dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                            matchStats.turn = 1;
-                            matchStats.round++;
-                            startNextRound();
-                            editEmbed();
-                            if (matchStats.playerPausingRounds > 0) {
-                                matchStats.playerPausingRounds--;
-                                attack();
-                            };
-                        };
-                        if (matchStats.counter > 0) matchStats.counter--;
-                    }, aDelay);
-                };
-            };
-
-            // Write passive actions if any
-            if (notice.length > 4) {
-                Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                if (!matchStats.ended) editEmbed();
-            };
-            checkPlayerFrozen();
-            atk.on('collect', async () => {
-                if (matchStats.turn === 1) {
-                    if (myStatsC.timeFrozen) {
-                        if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
-                        editEmbed();
-                        matchStats.turn = 0;
-                        attack();
-                        return;
-                    };
-                    matchStats.turn = 0;
-
-                    if (matchStats.costForAction > 0) {
-                        if (myStatsC.sm < matchStats.costForAction) {
-                            myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                            if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
-                            notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                        } else myStats.sm -= matchStats.costForAction;
-                    };
-
-                    // If attack was replaced
-                    if (myStatsC.replaceButton.atk?.run && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
-                        myStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-
-                        // Event Triggers
-                        matchStats.actionSequence.push("ATK");
-                        matchStats.trigger("ATK", myStatsC, eStatsC, buffs, eBuffs);
-                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
-
-                        editEmbed();
-                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                        if (matchStats.turn === 0) attack();
-                    }
-
-                    // Normal attack
-                    else {
-                        dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-
-                        // Event Triggers
-                        matchStats.actionSequence.push("ATK");
-                        matchStats.trigger("ATK", myStatsC, eStatsC, buffs, eBuffs);
-                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
-
-                        editEmbed();
-                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                        attack();
-                    }
-
-                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-            });
-
-            def.on('collect', async () => {
-                if (matchStats.turn === 1) {
-                    if (myStatsC.timeFrozen) {
-                        if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
-                        editEmbed();
-                        matchStats.turn = 0;
-                        attack();
-                        return;
-                    };
-
-                    matchStats.turn = 0;
-                    myStatsC.attackStreak = 0;
-
-                    if (matchStats.costForAction > 0) {
-                        if (myStatsC.sm < matchStats.costForAction) {
-                            myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                            if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
-                            notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                        } else myStats.sm -= matchStats.costForAction;
-                    };
-
-                    // If defense was replaced
-                    if (myStatsC.replaceButton.def?.run) {
-                        myStatsC.replaceButton.def.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-
-                        // Event Triggers
-                        matchStats.actionSequence.push("DEF");
-                        matchStats.trigger("DEF", myStatsC, eStatsC, buffs, eBuffs);
-                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
-
-
-                        editEmbed();
-                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                        if (matchStats.turn === 0) attack();
-                    }
-
-                    // Use defense
-                    else {
-                        if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
-                        if (matchStats.defUsed > 10) {
-                            // notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
-                        } else {
-                            let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
-                            let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
-                            buffs.def.push(new buffInfo("+", adddef, 9999));
-                            buffs.mr.push(new buffInfo("+", addmr, 9999));
-                            myStatsC.def += adddef;
-                            myStatsC.mr += addmr;
-                            notice.push(`\n🛡️ **${myChar.name}** has increased DEF by **${adddef}** and MR by **${addmr}**`);
-                        };
-                        myStatsC.usedBlockRound = matchStats.round;
-                        // Event Triggers
-                        matchStats.actionSequence.push("DEF");
-                        matchStats.trigger("DEF", myStatsC, eStatsC, buffs, eBuffs);
-                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
-
-                        editEmbed();
-                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                        attack();
-                    }
-                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-            });
-
-            ability.on('collect', async () => {
-                if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
-                if (myStatsC.timeFrozen) {
-                    if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
-                    editEmbed();
-                    matchStats.turn = 0;
-                    attack();
+        // Skip Fight
+        const skipCompleted = isHiddenFloor ? (stats.hidden_dungeon[hiddenFloorKey] ?? 0) >= hiddenFloors[floor]?.winsNeeded : stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded;
+        if ((flag === "skip" || flag === "all") && skipCompleted) {
+            if (isHiddenFloor) {
+                // Hidden floors allow skip if cleared
+            } else if (floor > 300) {
+                // Check if user has completed this floor and moved to the next one
+                const currentFloor = parseInt(Object.keys(stats.dungeon_floors)[Object.keys(stats.dungeon_floors).length - 1]);
+                const hasCompletedFloor = stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded;
+                const hasMovedBeyond = currentFloor > floor;
+                if (!hasCompletedFloor || !hasMovedBeyond) {
+                    notice.push(`\n<:info:1131679799207796756> You can only skip floors that you have manually cleared and progressed beyond. Complete Floor ${floor} first to unlock skipping for this floor!`);
                     return;
                 };
+            };
 
-                if (matchStats.costForAction > 0) {
-                    if (myStatsC.sm < matchStats.costForAction) {
-                        myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                        if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
-                        notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                    } else myStats.sm -= matchStats.costForAction;
-                };
+            if (myStats.ep > eStats.ep) {
+                const result = await matchResult("w");
+                if (result) interaction.editReply({ embeds: [result], components: [ResultsRow] });
+                return;
+            };
+            notice.push("\n<:info:1131679799207796756> You need more EP than your enemy to skip a fight");
+        };
 
-                // If ability was replaced
-                if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
-                    matchStats.turn = 0;
-                    myStatsC.attackStreak = 0;
-                    const response = await myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+        // If Enemy Died
+        if (eStatsC.hp < 1) {// if (myStats.ep/eStats.ep >= 2) {
+            const result = await matchResult("w");
+            if (result) interaction.editReply({ embeds: [result], components: [ResultsRow] });
+            return;
+        };
 
-                    // Event Triggers
-                    if (response === AbilityResponse.SUCCESS) {
-                        matchStats.actionSequence.push("ABILITY");
-                        matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
-                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+        const isCompactEmbed = !!author.schema.user_settings.compact_battle_embeds;
+        const showEnemyStats = !!author.schema.user_settings.display_enemy_stats;
+        const threatLevelWarning = isCompactEmbed ? "" : `You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n`;
+
+        async function newFight() {
+            let timestart = new Date().getTime();
+            let result = await new Promise<EmbedBuilder | undefined>((resolve) => {
+                const Embed = new EmbedBuilder()
+                    .setColor(embedColor)
+                    .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
+                    .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: 120s` })
+                    .setTitle(isHiddenFloor ? `Hidden Dungeon Floor ${floor} ${enemy.boss ? "(Boss)" : ""}` : `Dungeon Floor ${(floor - 1) % 100 + 1} ${enemy.boss ? "(Boss)" : ""}`)
+                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}${interaction.user.toString()} (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
+                    .setImage(isCompactEmbed ? null : eImage);
+                interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
+
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 300000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 300000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 300000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 300000 });
+                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 300000 });
+                    matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
+
+
+                    // Use passives
+                    if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+
+                    let timeout: NodeJS.Timeout | undefined;
+                    async function editEmbed() {
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}${interaction.user.toString()} (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${Math.max(0, 120 + Math.floor((timestart - new Date().getTime()) / 1000))}s` });
+                        // await msg.edit({ embeds: [Embed] });
+
+                        // Debounce
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => {
+                            msg.edit({ embeds: [Embed] });
+                        }, 600);
                     };
 
-                    editEmbed();
-                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                    attack();
-                }
+                    function minionDefeated(side: "my" | "enemy") {
+                        if (side === "my") {
+                            myStatsC = { ...matchStats.myStatsCC } as DetailedStats;
+                            matchStats.currentCharacter = 0;
+                            Embed.setThumbnail(myStatsC.thumbnail);
+                            startNextRound();
+                        } else {
+                            eStatsC = { ...matchStats.eStatsCC };
+                            matchStats.currentOpponent = 0;
+                            Embed.setImage(eImage);
+                            attack();
+                        };
+                    };
 
-                else {
-                    if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
-                    if (myAbility.used < myAbility.usage) {
+                    function endMatch(wORl: "w" | "l") {
+                        if (matchStats.ended) return;
+                        else matchStats.ended = true;
+
+                        atk.stop(), def.stop(), skip?.stop(), ability?.stop(), cskill?.stop();
+                        if (wORl === "l") notice.push(`\n💀 **${myChar.name}** lost`);
+                        else notice.push(`\n🎉 **${myChar.name}** won`);
+                        editEmbed();
+                        matchStats.turn = 1;
+                        resolve(matchResult(wORl));
+                    };
+
+                    function startNextRound() {
+                        if (matchStats.ended) return;
+                        if (matchStats.round === matchStats.roundCheck) return;
+                        matchStats.roundCheck = matchStats.round;
+
+                        // Consume Mana
+                        Avalon.consumeActiveMana(matchStats, myStatsC, buffs, myChar, notice, Embed, myStatsC.thumbnail);
+
+                        // Reset Buffs
+                        if (matchStats.currentCharacter === 0) myStatsC.atk = myStats.atk, myStatsC.md = myStats.md, myStatsC.def = myStats.def, myStatsC.mr = myStats.mr, myStatsC.cd = myStats.cd, myStatsC.cr = myStats.cr, myStatsC.dodge = myStats.dodge, myStatsC.br = myStats.br, myStatsC.mg = myStats.mg;
+                        if (matchStats.currentOpponent === 0) eStatsC.atk = eStats.atk, eStatsC.md = eStats.md, eStatsC.def = eStats.def, eStatsC.mr = eStats.mr, eStatsC.cd = eStats.cd, eStatsC.cr = eStats.cr, eStatsC.dodge = eStats.dodge, eStatsC.br = eStats.br, eStatsC.mg = eStats.mg;
+
+                        // Apply Buffs
+                        if (matchStats.currentCharacter === 0) Avalon.applyBuffs(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice);
+                        if (matchStats.currentOpponent === 0) Avalon.applyBuffs(eStatsC, eStatsC, eBuffs, buffs, matchStats, notice);
+
+                        // Fix Stats
+                        if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
+                        else if (myStatsC.hp < 0) myStatsC.hp = 0;
+                        else myStatsC.hp = Math.floor(myStatsC.hp);
+                        if (eStatsC.hp > eStatsC.maxhp) eStatsC.hp = eStatsC.maxhp;
+                        else if (eStatsC.hp < 0) eStatsC.hp = 0;
+                        else eStatsC.hp = Math.floor(eStatsC.hp);
+
+                        // Check and run delayed buffs
+                        if (matchStats.currentCharacter === 0) {
+                            for (let i = myStatsC.delayedBuffs.length - 1; i >= 0; i--) {
+                                if (myStatsC.delayedBuffs[i].round <= matchStats.round) {
+                                    myStatsC.delayedBuffs[i].run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                    if (myStatsC.delayedBuffs[i].last <= 1 || myStatsC.delayedBuffs[i].used >= myStatsC.delayedBuffs[i].usage) {
+                                        myStatsC.delayedBuffs.splice(i, 1);
+                                    } else {
+                                        myStatsC.delayedBuffs[i].decrement();
+                                    };
+                                };
+                            };
+                        };
+
+                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                    };
+
+                    function checkPlayerFrozen() {
+                        if (matchStats.ended) return false;
+                        if (myStatsC.timeFrozen && matchStats.turn === 1) {
+                            if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and skips their turn!`);
+                            if (matchStats.ended) return true;
+                            editEmbed();
+                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                            matchStats.turn = 0;
+                            attack();
+                            return true;
+                        };
+
+                        return false;
+                    };
+
+                    function attack() {
+                        if (matchStats.turn === 1) return;
+                        if (eStatsC.timeFrozen && eStats.name !== "McBurn") {
+                            if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
+                            matchStats.turn = 1;
+                            matchStats.round++;
+                            startNextRound();
+                            editEmbed();
+
+                            if (matchStats.playerPausingRounds > 0) {
+                                matchStats.playerPausingRounds--;
+                                attack();
+                            };
+                        } else {
+                            setTimeout(() => {
+                                if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
+                                    curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                    eStatsC.sm -= curse.cost;
+                                    matchStats.trigger("curse", eStatsC, myStatsC, eBuffs, buffs);
+                                    editEmbed();
+                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                    attack();
+                                } else if (matchStats.blockAbilities-- < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5) {
+                                    eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                    matchStats.trigger("ABILITY", eStatsC, myStatsC, eBuffs, buffs);
+                                    editEmbed();
+                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                    attack();
+
+                                } else if (eStatsC.refuseATK) {
+                                    let notif = `✨ **${enemy.name}** refuses to ATK`;
+                                    if (eStatsC.refuseATKMessage) {
+                                        if (Array.isArray(eStatsC.refuseATKMessage)) {
+                                            notif = `${eStatsC.refuseATKMessage[Math.floor(Math.random() * eStatsC.refuseATKMessage.length)]}`;
+                                        } else {
+                                            notif = eStatsC.refuseATKMessage;
+                                        };
+                                    };
+                                    notice.push(`\n${notif}`);
+
+                                    matchStats.turn = 1;
+                                    matchStats.round++;
+                                    startNextRound();
+                                    editEmbed();
+                                    if (matchStats.playerPausingRounds > 0) {
+                                        matchStats.playerPausingRounds--;
+                                        attack();
+                                    };
+                                } else {
+                                    if (eStatsC.replaceButton?.atk?.run !== undefined) {
+                                        eStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+                                    } else dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                    matchStats.turn = 1;
+                                    matchStats.round++;
+                                    startNextRound();
+                                    editEmbed();
+                                    if (matchStats.playerPausingRounds > 0) {
+                                        matchStats.playerPausingRounds--;
+                                        attack();
+                                    };
+                                };
+                                if (matchStats.counter > 0) matchStats.counter--;
+                            }, aDelay);
+                        };
+                    };
+
+                    // Write passive actions if any
+                    if (notice.length > 4) {
+                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                        if (!matchStats.ended) editEmbed();
+                    };
+                    checkPlayerFrozen();
+                    atk.on('collect', async () => {
                         if (matchStats.turn === 1) {
-                            if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
-                            else {
+                            if (myStatsC.timeFrozen) {
+                                if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
+                                editEmbed();
                                 matchStats.turn = 0;
-                                myStatsC.attackStreak = 0;
-                                myAbility.used++;
-                                const response = await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
-                                myStatsC.sm -= myAbility.cost;
+                                attack();
+                                return;
+                            };
+                            matchStats.turn = 0;
+
+                            if (matchStats.costForAction > 0) {
+                                if (myStatsC.sm < matchStats.costForAction) {
+                                    myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                    notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
+                                } else myStats.sm -= matchStats.costForAction;
+                            };
+
+                            // If attack was replaced
+                            if (myStatsC.replaceButton.atk?.run && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
+                                myStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                                 // Event Triggers
-                                if (response === AbilityResponse.SUCCESS) {
-                                    matchStats.actionSequence.push("ABILITY");
-                                    matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
-                                    matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
-                                };
+                                matchStats.actionSequence.push("ATK");
+                                matchStats.trigger("ATK", myStatsC, eStatsC, buffs, eBuffs);
+                                matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                if (matchStats.turn === 0) attack();
+                            }
+
+                            // Normal attack
+                            else {
+                                dealDamage(eStatsC, myStatsC, eBuffs, buffs, matchStats, notice, `⚔️ **${myChar.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+
+                                // Event Triggers
+                                matchStats.actionSequence.push("ATK");
+                                matchStats.trigger("ATK", myStatsC, eStatsC, buffs, eBuffs);
+                                matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
 
                                 editEmbed();
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                 attack();
-                            };
+                            }
+
                         } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                    } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
-                };
-            });
+                    });
 
-            cskill.on('collect', async () => {
-                if (myStatsC.timeFrozen) {
-                    if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
-                    editEmbed();
-                    matchStats.turn = 0;
-                    attack();
-                    return;
-                };
-
-                if (matchStats.costForAction > 0) {
-                    if (myStatsC.sm < matchStats.costForAction) {
-                        myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                        if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
-                        notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                    } else myStats.sm -= matchStats.costForAction;
-                };
-
-                // If class active was replaced
-                if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
-                    matchStats.turn = 0;
-                    myStatsC.attackStreak = 0;
-                    const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
-
-                    // Event Triggers
-                    if (response === AbilityResponse.SUCCESS) {
-                        matchStats.actionSequence.push("CSKILL");
-                        matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
-                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
-                    };
-
-                    editEmbed();
-                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                    if (matchStats.turn === 0) attack();
-                }
-
-                // Class active
-                else {
-                    if (!skill) return interaction.followUp({ content: `You don't have a class skill`, ephemeral: true });
-                    if (myChar.id === 4767) return interaction.followUp({ content: "Asta can't use any abilities", ephemeral: true });
-                    if (skill.cost > myStatsC.sm) return interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
-                    else {
+                    def.on('collect', async () => {
                         if (matchStats.turn === 1) {
-                            myStatsC.sm -= skill.cost;
+                            if (myStatsC.timeFrozen) {
+                                if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
+                                editEmbed();
+                                matchStats.turn = 0;
+                                attack();
+                                return;
+                            };
+
+                            matchStats.turn = 0;
                             myStatsC.attackStreak = 0;
-                            const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, stats.chars);
+
+                            if (matchStats.costForAction > 0) {
+                                if (myStatsC.sm < matchStats.costForAction) {
+                                    myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                    notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
+                                } else myStats.sm -= matchStats.costForAction;
+                            };
+
+                            // If defense was replaced
+                            if (myStatsC.replaceButton.def?.run) {
+                                myStatsC.replaceButton.def.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+
+                                // Event Triggers
+                                matchStats.actionSequence.push("DEF");
+                                matchStats.trigger("DEF", myStatsC, eStatsC, buffs, eBuffs);
+                                matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+
+
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                if (matchStats.turn === 0) attack();
+                            }
+
+                            // Use defense
+                            else {
+                                if (++matchStats.defUsed === 10) interaction.followUp({ content: `You have used DEF 10 times and won't get any ${customEmojis.def} or ${customEmojis.mr} from now on!`, ephemeral: true });
+                                if (matchStats.defUsed > 10) {
+                                    // notice.push(`\n🛡️ **${myChar.name}** can't increase DEF/MR anymore`);
+                                } else {
+                                    let adddef = 60 + Math.floor(30 * Math.random()) - ((matchStats.defUsed - 1) * 5);
+                                    let addmr = Math.floor((myClass ? 60 * myClass.stats.mr[0] : 60) + (30 * Math.random())) - ((matchStats.defUsed - 1) * 5);
+                                    buffs.def.push(new buffInfo("+", adddef, 9999));
+                                    buffs.mr.push(new buffInfo("+", addmr, 9999));
+                                    myStatsC.def += adddef;
+                                    myStatsC.mr += addmr;
+                                    notice.push(`\n🛡️ **${myChar.name}** has increased DEF by **${adddef}** and MR by **${addmr}**`);
+                                };
+                                myStatsC.usedBlockRound = matchStats.round;
+                                // Event Triggers
+                                matchStats.actionSequence.push("DEF");
+                                matchStats.trigger("DEF", myStatsC, eStatsC, buffs, eBuffs);
+                                matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+
+                                editEmbed();
+                                Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                attack();
+                            }
+                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                    });
+
+                    ability.on('collect', async () => {
+                        if (myStatsC.isAbilityBlocked) return interaction.followUp({ content: `You currently can't use your character ability`, ephemeral: true });
+                        if (myStatsC.timeFrozen) {
+                            if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
+                            editEmbed();
+                            matchStats.turn = 0;
+                            attack();
+                            return;
+                        };
+
+                        if (matchStats.costForAction > 0) {
+                            if (myStatsC.sm < matchStats.costForAction) {
+                                myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
+                            } else myStats.sm -= matchStats.costForAction;
+                        };
+
+                        // If ability was replaced
+                        if (myStatsC.replaceButton.ability?.run && matchStats.turn === 1) {
+                            matchStats.turn = 0;
+                            myStatsC.attackStreak = 0;
+                            const response = await myStatsC.replaceButton.ability.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
+
+                            // Event Triggers
+                            if (response === AbilityResponse.SUCCESS) {
+                                matchStats.actionSequence.push("ABILITY");
+                                matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                                matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+                            };
+
+                            editEmbed();
+                            Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                            attack();
+                        }
+
+                        else {
+                            if (!myAbility?.ability) return interaction.followUp({ content: `You don't have an ability`, ephemeral: true });
+                            if (myAbility.used < myAbility.usage) {
+                                if (matchStats.turn === 1) {
+                                    if (myAbility.cost > myStatsC.sm) interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${myAbility.cost}${customEmojis.mana})`, ephemeral: true });
+                                    else {
+                                        matchStats.turn = 0;
+                                        myStatsC.attackStreak = 0;
+                                        myAbility.used++;
+                                        const response = await myAbility.ability(myStatsC, myStats, eStatsC, eStats, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, msg);
+                                        myStatsC.sm -= myAbility.cost;
+
+                                        // Event Triggers
+                                        if (response === AbilityResponse.SUCCESS) {
+                                            matchStats.actionSequence.push("ABILITY");
+                                            matchStats.trigger("ABILITY", myStatsC, eStatsC, buffs, eBuffs);
+                                            matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+                                        };
+
+                                        editEmbed();
+                                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                        attack();
+                                    };
+                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
+                        };
+                    });
+
+                    cskill.on('collect', async () => {
+                        if (myStatsC.timeFrozen) {
+                            if (myStatsC.frozenMessage) notice.push(`\n✨ **${myChar.name}** ${myStatsC.frozenMessage} and can't act!`);
+                            editEmbed();
+                            matchStats.turn = 0;
+                            attack();
+                            return;
+                        };
+
+                        if (matchStats.costForAction > 0) {
+                            if (myStatsC.sm < matchStats.costForAction) {
+                                myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
+                            } else myStats.sm -= matchStats.costForAction;
+                        };
+
+                        // If class active was replaced
+                        if (myStatsC.replaceButton.cskill?.run && matchStats.turn === 1) {
+                            matchStats.turn = 0;
+                            myStatsC.attackStreak = 0;
+                            const response = await myStatsC.replaceButton.cskill.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
                             // Event Triggers
                             if (response === AbilityResponse.SUCCESS) {
@@ -1189,54 +1179,113 @@ async function newFight() {
 
                             editEmbed();
                             Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                            attack();
+                            if (matchStats.turn === 0) attack();
+                        }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                    };
-                };
+                        // Class active
+                        else {
+                            if (!skill) return interaction.followUp({ content: `You don't have a class skill`, ephemeral: true });
+                            if (myChar.id === 4767) return interaction.followUp({ content: "Asta can't use any abilities", ephemeral: true });
+                            if (skill.cost > myStatsC.sm) return interaction.followUp({ content: `You don't have enough mana! (**${myStatsC.sm}**/${skill.cost}${customEmojis.mana})`, ephemeral: true });
+                            else {
+                                if (matchStats.turn === 1) {
+                                    myStatsC.sm -= skill.cost;
+                                    myStatsC.attackStreak = 0;
+                                    const response = await skill.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user, ownedCharacterIds);
+
+                                    // Event Triggers
+                                    if (response === AbilityResponse.SUCCESS) {
+                                        matchStats.actionSequence.push("CSKILL");
+                                        matchStats.trigger("CSKILL", myStatsC, eStatsC, buffs, eBuffs);
+                                        matchStats.trigger("action", myStatsC, eStatsC, buffs, eBuffs);
+                                    };
+
+                                    editEmbed();
+                                    Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                                    attack();
+
+                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            };
+                        };
+                    });
+
+                    skip.on('collect', () => {
+                        if (matchStats.turn == 1) {
+
+                            if (matchStats.costForAction > 0) {
+                                if (myStatsC.sm < matchStats.costForAction) {
+                                    myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                    notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
+                                } else myStats.sm -= matchStats.costForAction;
+                            };
+
+                            notice.push(`\n⏩ Skipping to results...`);
+                            editEmbed();
+                            matchStats.turn = 0;
+                            matchStats.actionSequence.push("SKIP");
+                            while (eStatsC.hp > 0 && myStatsC.hp > 0) {
+                                if (Math.random() > 0.02 + (0.1 * (eStatsC.ep / myStatsC.ep))) eStatsC.hp -= Math.floor((myStatsC.atk * Math.pow(0.99895, eStatsC.def)) * (1 - (0.2 * Math.random())));
+                                if (eStatsC.hp < 0) eStatsC.hp = 0;
+                                if (eStatsC.hp > 0) myStatsC.hp -= Math.floor((eStatsC.atk * Math.pow(0.99895, myStatsC.def)) * (1 - (0.2 * Math.random())));
+                                if (myStatsC.hp < 0) myStatsC.hp = 0;
+
+                                // Break if it takes too long
+                                if (matchStats.round++ > 1000) myStatsC.hp = 0;
+                            };
+                            setTimeout(() => {
+                                Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
+                            }, aDelay);
+                        } else {
+                            matchStats.turn = 1;
+                            interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        };
+                    });
+
+                });
+
             });
+            if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result], components: [ResultsRow] });
+        };
 
-            skip.on('collect', () => {
-                if (matchStats.turn == 1) {
+        newFight();
 
-                    if (matchStats.costForAction > 0) {
-                        if (myStatsC.sm < matchStats.costForAction) {
-                            myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                            if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
-                            notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                        } else myStats.sm -= matchStats.costForAction;
-                    };
+    },
 
-                    notice.push(`\n⏩ Skipping to results...`);
-                    editEmbed();
-                    matchStats.turn = 0;
-                    matchStats.actionSequence.push("SKIP");
-                    while (eStatsC.hp > 0 && myStatsC.hp > 0) {
-                        if (Math.random() > 0.02 + (0.1 * (eStatsC.ep / myStatsC.ep))) eStatsC.hp -= Math.floor((myStatsC.atk * Math.pow(0.99895, eStatsC.def)) * (1 - (0.2 * Math.random())));
-                        if (eStatsC.hp < 0) eStatsC.hp = 0;
-                        if (eStatsC.hp > 0) myStatsC.hp -= Math.floor((eStatsC.atk * Math.pow(0.99895, myStatsC.def)) * (1 - (0.2 * Math.random())));
-                        if (myStatsC.hp < 0) myStatsC.hp = 0;
+    async executeButtonInteraction({ interaction }) {
+        const [, , floorString, userId] = interaction.customId.split("-");
+        if (interaction.user.id !== userId) {
+            return interaction.followUp({ content: "Only the player who completed this dungeon can repeat it.", ephemeral: true });
+        };
 
-                        // Break if it takes too long
-                        if (matchStats.round++ > 1000) myStatsC.hp = 0;
-                    };
-                    setTimeout(() => {
-                        Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
-                    }, aDelay);
-                } else {
-                    matchStats.turn = 1;
-                    interaction.followUp({ content: "Please wait a moment", ephemeral: true });
-                };
-            });
+        const floor = parseInt(floorString);
+        if (!Number.isInteger(floor) || floor < 1 || floor > 300 || !interaction.channel?.isSendable()) return;
 
+        const stats = await getUserSchema(interaction.user.id);
+        if (!stats) return interaction.followUp({ content: "Couldn't find your player data.", ephemeral: true });
+
+        const Embed = new EmbedBuilder()
+            .setColor(0x44454c)
+            .setDescription("<a:loading_square:1501264680314998995> Restarting...");
+        const message = await interaction.channel.send({ embeds: [Embed] });
+        const repeatInteraction = new Proxy(interaction, {
+            get(target, property) {
+                if (property === "commandName") return "dungeon";
+                if (property === "deferReply") return async () => undefined;
+                if (property === "editReply") return (options: Parameters<typeof message.edit>[0]) => message.edit(options);
+
+                const value = Reflect.get(target, property, target);
+                return typeof value === "function" ? value.bind(target) : value;
+            },
+        }) as unknown as ChatInputCommandInteraction;
+
+        return exportCommand.execute({
+            interaction: repeatInteraction,
+            author: { schema: stats },
+            server: {},
+            locale: "en_US",
+            customFlag: { repeatFloor: floor, repeatMessage: true },
         });
-
-    });
-    if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result] });
-};
-
-newFight();
-
     },
 };
 

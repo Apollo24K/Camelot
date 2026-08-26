@@ -464,7 +464,7 @@ export interface UserSchema {
 
     // Phantasmagoria Gamemode
     phantasmagoria_supports: number[];
-    phantasmagoria_boss_data: Record<string, { best_damage: number; best_phases: number }>;
+    phantasmagoria_boss_data: Record<string, { best_damage: number; best_phases: number; }>;
     phantasmagoria_selected_boss: number;
     echo: number;
     echo_purchases: Record<string, number>;

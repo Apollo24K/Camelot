@@ -31,9 +31,7 @@ const exportCommand: SlashCommand = {
             guildName = guildSchema.name;
         }
 
-        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
-        const allCharacterIds = (user: typeof stats[number]) => [...user.chars, ...(user.vip_chars ?? [])];
-        const uniqueCharacterIds = (user: typeof stats[number]) => [...new Set(allCharacterIds(user))];
+        let stats: (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[] = [];
         let count = 1, showUsers: string[] = [];
         switch (flag) {
             case "level":
