@@ -42,7 +42,7 @@
     "patreon-discord": "^0.0.5",
     "pg": "^8.11.1",
     "postgres": "^3.3.4",
-    "sharp": "^0.32.6",
+    "sharp": "^0.35.3",
     "topgg-autoposter": "^2.0.1"
   },
   "devDependencies": {

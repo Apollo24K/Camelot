@@ -519,15 +519,15 @@ const commands = [
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
-			.setName('frostbound')
-			.setDescription('Winter event commands')
-			.addSubcommand((subcommand) => subcommand
-				.setName('yule')
-				.setDescription('Frostbound Yule story event')
-			),
-	}.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 		.setName('frostbound')
+	// 		.setDescription('Winter event commands')
+	// 		.addSubcommand((subcommand) => subcommand
+	// 			.setName('yule')
+	// 			.setDescription('Frostbound Yule story event')
+	// 		),
+	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('generate')
@@ -1257,7 +1257,10 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('rankup')
 			.setDescription('Take the rank-up exam')
-			.addSubcommand((subcommand) => subcommand.setName('exam').setDescription('Take the rank-up exam'))
+			.addSubcommand((subcommand) => subcommand
+				.setName('exam')
+				.setDescription('Take the rank-up exam')
+				.addStringOption(option => option.setName('sequence').setDescription('Pre-select an action sequence, separated by comma (,)').setRequired(false)))
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

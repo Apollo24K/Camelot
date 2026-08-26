@@ -3,7 +3,7 @@ import charInfo, { characters } from "../Modules/chars.js";
 import { splitTitle, rarity, getRefinement, showPage, rarityColor } from "../Modules/functions.js";
 import { PageRow } from "../Modules/components.js";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsers } from "../Modules/queries.js";
+import { getOwnedCharacterIds, getUserSchema, updateUsers } from "../Modules/queries.js";
 
 function displayMy(thisChar: charInfo, inv: number[], ref: number, interaction: any) {
     const animeL = splitTitle(thisChar.anime);
@@ -94,7 +94,8 @@ const exportCommand: SlashCommand = {
         let stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.reply(`${user.id === interaction.user.id ? "You don't" : `**${user.username}** doesn't`} have any tickets`);
 
-        let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
+        const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+        let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image || "https://i.imgur.com/Ta2YDBN.png";
         if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, "", stats.char_skin[stats.favchar]);
 
         function r1() {

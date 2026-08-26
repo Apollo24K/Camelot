@@ -4,7 +4,7 @@ import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { showPage, getItemLevel, customEmojis } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { ItemRarity, SlashCommand, WeaponSchema } from '../types';
-import { getUserSchema, getUserWeapons } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema, getUserWeapons } from '../Modules/queries';
 
 function getAscension(lvl: number) {
     let asc = "";
@@ -127,7 +127,8 @@ const exportCommand: SlashCommand = {
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
 
-        let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
+        const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
+        let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image;
         if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         if (subcommand === "loot") {

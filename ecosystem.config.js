@@ -2,6 +2,7 @@ module.exports = {
     apps: [
         {
             name: "camelot",
+            cwd: "/srv/apps/Camelot",
             script: "build/camelot.js",
             node_args: "--max-old-space-size=8192",
             autorestart: true,

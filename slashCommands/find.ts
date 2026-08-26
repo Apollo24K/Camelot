@@ -36,7 +36,7 @@ const exportCommand: SlashCommand = {
         const userCounts: { name: string, count: number; }[] = [];
         let totalCopies = 0;
         stats.forEach((user) => {
-            const copies = user.chars.filter((e) => e === char.id).length;
+            const copies = user.chars.filter((e) => e === char.id).length + Number(user.vip_copies);
             totalCopies += copies;
             if ((!interaction.client.blacklist.has(user.id)) && ((user.findoption === 0 && copies > 0) || (user.findoption === 1 && copies > 1))) userCounts.push({ name: user.name, count: copies });
         });

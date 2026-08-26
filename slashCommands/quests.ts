@@ -3,7 +3,7 @@ import { characters } from "../Modules/chars";
 import { EmbedBuilder } from "discord.js";
 import { SlashCommand } from '../types';
 import { currencyEmojis } from '../Modules/components';
-import { updateUsersAndCache } from '../Modules/queries';
+import { getOwnedCharacterIds, updateUsersAndCache } from '../Modules/queries';
 
 function getHash(key: string, hash: number) {
     for (let i = 0; i < key.length; i++) {
@@ -56,7 +56,8 @@ const exportCommand: SlashCommand = {
             stats.dailies[12] = 1;
         };
 
-        let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image || "https://i.imgur.com/Ta2YDBN.png";
+        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
+        let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image || "https://i.imgur.com/Ta2YDBN.png";
         if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
 
         const todaysQuests = getQuests(user.id, dailies.length);

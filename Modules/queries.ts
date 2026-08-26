@@ -626,6 +626,47 @@ export const loadCowParticipants = async (): Promise<(Pick<CompactUserSchema, "i
     return users;
 };
 
+export const removeExpiredMail = async (client: Client, maxAgeMs: number = 30 * 24 * 60 * 60 * 1000): Promise<void> => {
+    const cutoff = Date.now() - maxAgeMs;
+
+    await query(`
+        WITH mailbox_entries AS (
+            SELECT
+                users.id,
+                COALESCE(users.mailreceived, 0) AS mailreceived,
+                entry.mail,
+                entry.position,
+                CASE
+                    WHEN jsonb_typeof(entry.mail->'date') = 'number'
+                        THEN (entry.mail->>'date')::NUMERIC >= $1::NUMERIC
+                    ELSE TRUE
+                END AS keep
+            FROM users
+            CROSS JOIN LATERAL unnest(users.mailbox) WITH ORDINALITY AS entry(mail, position)
+        ),
+        cleaned_mailboxes AS (
+            SELECT
+                id,
+                COALESCE(
+                    array_agg(mail ORDER BY position) FILTER (WHERE keep),
+                    ARRAY[]::JSONB[]
+                ) AS mailbox,
+                COUNT(*) FILTER (WHERE keep AND position <= mailreceived)::INT AS mailreceived
+            FROM mailbox_entries
+            GROUP BY id
+        )
+        UPDATE users
+        SET
+            mailbox = cleaned_mailboxes.mailbox,
+            mailreceived = cleaned_mailboxes.mailreceived
+        FROM cleaned_mailboxes
+        WHERE users.id = cleaned_mailboxes.id
+            AND cardinality(users.mailbox) <> cardinality(cleaned_mailboxes.mailbox)
+    `, [cutoff]);
+
+    client.userCache.clear();
+};
+
 
 //-------------------------------------------//
 //             INSERT STATEMENTS             //

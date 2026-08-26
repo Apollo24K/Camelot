@@ -2,7 +2,7 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "disc
 import { search, getDimensions } from "../Modules/functions";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
-import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
+import { getUserSchema, ownsCharacter, updateUsersAndCache } from "../Modules/queries";
 
 const exportCommand: SlashCommand = {
     name: 'changeimg',
@@ -16,7 +16,7 @@ const exportCommand: SlashCommand = {
 
         const char = search(choice, stats.chars, interaction);
         if (!char) return;
-        if (!stats.chars.includes(char.id)) return interaction.reply(`You don't have a copy of ${char.name}`);
+        if (!(await ownsCharacter(interaction.user.id, stats.chars, char.id))) return interaction.reply(`You don't have a copy of ${char.name}`);
 
         if (imgurl.toLowerCase() === "reset") {
             if (stats.custom_skins[char.id]) {

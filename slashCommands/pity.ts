@@ -1,7 +1,7 @@
 import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
-import { getUserSchema } from '../Modules/queries';
+import { getOwnedCharacterIds, getUserSchema } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'pity',
@@ -12,8 +12,8 @@ const exportCommand: SlashCommand = {
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
         if (!stats) return interaction.reply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
 
-        const chars = [...new Set(stats.chars)].map((e) => characters[e]);
-        let thumbnail = chars[Math.floor(Math.random() * chars.length)].image || "https://i.imgur.com/Ta2YDBN.png";
+        const chars = (await getOwnedCharacterIds(user.id, stats.chars)).map((e) => characters[e]);
+        let thumbnail = chars[Math.floor(Math.random() * chars.length)]?.image || "https://i.imgur.com/Ta2YDBN.png";
         if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, "", stats.char_skin[stats.favchar]);
 
         let sPit = 120;

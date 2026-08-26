@@ -3,7 +3,7 @@ import charInfo, { characters, auniq } from "../Modules/chars";
 import { showPage } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getCachedUserSchema } from "../Modules/queries";
+import { getCachedUserSchema, getOwnedCharacterIds } from "../Modules/queries";
 
 function itemsToShow(show: string[], chars: charInfo[]) {
     let showAnime = [];
@@ -39,7 +39,7 @@ const exportCommand: SlashCommand = {
         if (!stats) return interaction.reply({ content: `${user.username} hasn't started playing yet`, ephemeral: true });
 
         let uniq = [...new Set(auniq.sort())];
-        let chars = [...new Set(stats.chars)].map((e) => characters[e]);
+        let chars = (await getOwnedCharacterIds(user.id, stats.chars)).map((e) => characters[e]);
 
         let aniCompleted = 0;
         for (let i = uniq.length - 1; i >= 0; i--) {
