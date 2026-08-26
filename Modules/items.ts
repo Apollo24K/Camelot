@@ -7515,7 +7515,7 @@ export const items = [
     }, "- Increases coins earned from the dungeon by **15%**. The wearer has **+12%** ATK and DEF.", "mythical", 853),
 
     new lootInfo("Pyrite", "loot", "ascension material", ["crafting", "dungeon (extreme)"], "<:pyrite:1525886129759584329>", "https://i.ibb.co/C3FxK0Km/pyrite.png", "mythical", 854),
-    new runeInfo("The Sereflame", ["seasonal shop"], "<:The_Sereflame:1525886180919050240>", "https://i.ibb.co/6Xk1Z7g/Pyrites-Blessing.png", {
+    new runeInfo("The Sereflame", ["seasonal shop"], "<:The_Sereflame:1542177375880487043>", "https://i.ibb.co/N2RxsyQ0/The-Sereflame.png", {
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.burnbonus ??= 0;
             eStats.burntype ??= 1;
@@ -7542,7 +7542,7 @@ export const items = [
             return AbilityResponse.SUCCESS;
         },
     }, "- Triggering BURNING will inflict the enemy with another round of BURNING and permanently increase burning damage by **1%** (Max: 20 triggers)", "rare", 855),
-    new runeInfo("Tideborn Keep", ["seasonal shop"], "<:arcane_rebirth:1419634455911596163>", "https://i.ibb.co/0yN5xDSD/Arcane-Rebirth.png", {
+    new runeInfo("Tideborn Keep", ["seasonal shop"], "<:Tideborn_Keep:1542177925145567332>", "https://i.ibb.co/0ptnVcgc/Tideborn-Keep.png", {
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.shield += Math.floor(myStats.maxhp * 0.25);
 
@@ -7553,7 +7553,7 @@ export const items = [
                         myStats.hp -= Math.floor(myStats.hp * 0.25);
                         myStats.shield = 0;
                         myStats.shield += Math.floor(myStats.maxhp * ((myStats.sm / myStats.mana > 0.5) ? 0.35 : 0.25));
-                        notice.push(`\n<:arcane_rebirth:1419634455911596163> **${char.name}** sacrifices **25%** of their current HP to refresh their shield!`);
+                        notice.push(`\n<:Tideborn_Keep:1542177925145567332> **${char.name}** sacrifices **25%** of their current HP to refresh their shield!`);
                         return true;
                     };
                 }
@@ -7564,7 +7564,7 @@ export const items = [
                     myStats.sm += 4;
                     if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
                     if (typeof myStats.manaGained !== "undefined") myStats.manaGained += 4;
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:arcane_rebirth:1419634455911596163> **${char.name}**'s shield reflects damage`, { atkMultiplier: 0.15, flexibleDmg: true });
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:Tideborn_Keep:1542177925145567332> **${char.name}**'s shield reflects damage`, { atkMultiplier: 0.15, flexibleDmg: true });
                 };
             });
 
