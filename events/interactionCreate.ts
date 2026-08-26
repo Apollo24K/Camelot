@@ -26,26 +26,6 @@ function checkUserSpam(userId: string, commandName: string): "warn" | "block" | 
     };
 }
 
-function checkUserSpam(userId: string, commandName: string): "warn" | "block" | undefined {
-    const bypassedCommands = ["admin", "balance", "buy", "camelot", "guess", "info", "item", "mod", "pull", "rp", "shop"];
-    if (userCooldown.has(userId)) {
-        const cd = userCooldown.get(userId);
-        if (!bypassedCommands.includes(commandName)) cd.count++;
-
-        if (cd.count >= 4) {
-            clearTimeout(cd.timeout);
-            cd.timeout = setTimeout(() => userCooldown.delete(userId), 3200);
-            if (cd.count === 4 || cd.count === 10) return "warn";
-            if (cd.count > 10) return "block";
-        };
-    } else {
-        userCooldown.set(userId, {
-            count: 1,
-            timeout: setTimeout(() => userCooldown.delete(userId), 7500)
-        });
-    };
-}
-
 const event: BotEvent = {
     name: "interactionCreate",
     execute: async (interaction: Interaction) => {
@@ -111,9 +91,6 @@ const event: BotEvent = {
             };
 
             // Spam Control (User)
-            const spamResult = checkUserSpam(interaction.user.id, interaction.commandName);
-            if (spamResult === "warn") return interaction.reply({ content: `Woah, you're being too fast! Please wait a few seconds.`, ephemeral: true });
-            if (spamResult === "block") return;
             const spamResult = checkUserSpam(interaction.user.id, interaction.commandName);
             if (spamResult === "warn") return interaction.reply({ content: `Woah, you're being too fast! Please wait a few seconds.`, ephemeral: true });
             if (spamResult === "block") return;
