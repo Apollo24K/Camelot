@@ -6965,7 +6965,7 @@ export const items = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, "After using ATK, has a **25%** chance to apply **+2** rounds of burn. When the enemy is burning, **doubles** own critical damage.", "After Kamish's death, his massive corpse was preserved under the Federal Bureau of Hunters (FBH) headquarters, symbolizing human triumph. Master blacksmiths crafted Kamish's Wrath from his fangs: one dagger from a primary fang and the other from a secondary one, making them mana-sensitive weapons with high attack power—the strongest known at the time. These light orange daggers with blood-red edges emit intense pressure, instilling fear in enemies no matter the encounter.", "mythical", 800),
+    }, "After using ATK, has a **25%** chance to apply **+2** rounds of burn. When the enemy is BURNING, **doubles** own critical damage.", "After Kamish's death, his massive corpse was preserved under the Federal Bureau of Hunters (FBH) headquarters, symbolizing human triumph. Master blacksmiths crafted Kamish's Wrath from his fangs: one dagger from a primary fang and the other from a secondary one, making them mana-sensitive weapons with high attack power—the strongest known at the time. These light orange daggers with blood-red edges emit intense pressure, instilling fear in enemies no matter the encounter.", "mythical", 800),
     new weaponInfo("Thalokorn", "weapon", "shield", ["crafting", "extreme dungeon drop"], "<:Kamish_Wrath:1501029380443476171>", "https://i.ibb.co/nsSpGcqg/image0.png", "shield", 204, 1287, "cd", 0.08, 0.45, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let buff = 15;
         // Get user inventory to check for megalodon
@@ -7515,6 +7515,62 @@ export const items = [
     }, "- Increases coins earned from the dungeon by **15%**. The wearer has **+12%** ATK and DEF.", "mythical", 853),
 
     new lootInfo("Pyrite", "loot", "ascension material", ["crafting", "dungeon (extreme)"], "<:pyrite:1525886129759584329>", "https://i.ibb.co/C3FxK0Km/pyrite.png", "mythical", 854),
+    new runeInfo("The Sereflame", ["seasonal shop"], "<:The_Sereflame:1525886180919050240>", "https://i.ibb.co/6Xk1Z7g/Pyrites-Blessing.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.burnbonus ??= 0;
+            eStats.burntype ??= 1;
+            if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+                eStats.burnduration = 0;
+                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
+
+                    return AbilityResponse.SUCCESS;
+                }, 9999));
+            };
+
+            matchStats.on("burn", {
+                maxUsage: 20,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (caster === myStats) {
+                        eStats.burnduration++;
+                        myStats.burnbonus += 0.01;
+                        return true;
+                    };
+                }
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Triggering BURNING will inflict the enemy with another round of BURNING and permanently increase burning damage by **1%** (Max: 20 triggers)", "rare", 855),
+    new runeInfo("Tideborn Keep", ["seasonal shop"], "<:arcane_rebirth:1419634455911596163>", "https://i.ibb.co/0yN5xDSD/Arcane-Rebirth.png", {
+        buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.shield += Math.floor(myStats.maxhp * 0.25);
+
+            matchStats.on("shieldBreak", {
+                maxUsage: 1,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (target === myStats) {
+                        myStats.hp -= Math.floor(myStats.hp * 0.25);
+                        myStats.shield = 0;
+                        myStats.shield += Math.floor(myStats.maxhp * ((myStats.sm / myStats.mana > 0.5) ? 0.35 : 0.25));
+                        notice.push(`\n<:arcane_rebirth:1419634455911596163> **${char.name}** sacrifices **25%** of their current HP to refresh their shield!`);
+                        return true;
+                    };
+                }
+            });
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (target === myStats && myStats.shield > 0) {
+                    myStats.sm += 4;
+                    if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+                    if (typeof myStats.manaGained !== "undefined") myStats.manaGained += 4;
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:arcane_rebirth:1419634455911596163> **${char.name}**'s shield reflects damage`, { atkMultiplier: 0.15, flexibleDmg: true });
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Begins battles with a **25%** max HP shield\n- When the enemy attacks you while you have a shield, you gain **4** 💧 and they take **15%** damage (scaling off the other's ATK/MD, whichever is higher).\n- For the first time when a shield breaks, sacrifices **25%** current HP for another **25%** max HP shield. If you have more than **50%** of your mana pool filled, increases the shield's HP to **35%**.", "rare", 856),
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     myStats.boneCap ??= 30;
     //     myStats.flesh ??= 0;

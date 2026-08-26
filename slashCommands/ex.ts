@@ -28,19 +28,19 @@ function r1(stats: CompactUserSchema) {
         );
 };
 
-const thumbnail = "https://i.ibb.co/Ncyrbr7/arthur.gif";
+const thumbnail = "https://i.ibb.co/5xwLj3xr/c.png";
 const expity = 24;
 
 const newex: { [key: string]: number; } = {
-    "26199": 0.008, // Arthur Leywin EX
-    "26200": 0.008, // Columbina EX
+    "26272": 0.008, // Hiyuki EX
+    "26273": 0.008, // Lloyd EX
 
-    "19277": 0.003, // Sung Jin Woo EX
-    "21928": 0.003, // Boa Hancock EX
-    "21929": 0.006, // Urashima EX
-    "21930": 0.008, // Lucyna EX
-    "19276": 0.009, // Mai EX
-    "18011": 0.005, // Lria EX
+    "21931": 0.003, // Acheron EX
+    "19050": 0.003, // Raiden Shogun EX
+    "17686": 0.006, // Escanor EX
+    "17687": 0.008, // Fischl EX
+    "19275": 0.009, // APPLe EX
+    "17742": 0.005, // Gintoki EX
 }; // sum = 0.05
 
 const oldex: { [key: string]: number; } = {
@@ -109,7 +109,7 @@ const exportCommand: SlashCommand = {
         function getDesc() {
             return `Pull for a chance of getting an EX character!\nIncludes the following characters:\n` +
                 // `${Object.keys(newex).map((e) => `**${characters[e as any].name}**`).join(", ")}, ${Object.keys(oldex).map((e) => `**${characters[e as any].name}**`).join(", ")}\n\n` +
-                `**Arthur Leywin EX**, **Columbina EX**, **Sung Jin Woo EX**, **Boa Hancock EX**, **Urashima EX**, **Lria EX**, **Lucyna EX**, **Mai EX**\n\n` +
+                `**Hiyuki EX**, **Lloyd Frontera EX**, **Acheron EX**, **Raiden Shogun EX**, **Gintoki EX**, **Escanor EX**, **APPLe EX**, **Fischl EX**\n\n` +
                 `**Drop Rates**:\n<a:EXTRA:1138530846144462968> Tier ➜ **${exDropRate}**% | Pity: **${stats.expity}**/${expity}\n<:SSTier:869316489931546644> Tier ➜ **${50 - exDropRate}**%\n<:STier:869316518675095552> Tier ➜ **50**%\n\n` +
                 `-# Tip: Use up your <a:EXTRA:1138530846144462968> pulls before the next event starts, you'll lose them otherwise!`;
         };

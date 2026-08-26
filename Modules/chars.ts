@@ -26387,7 +26387,8 @@ export const characters: charInfo[] = [
     new charInfo("Hailey (JSL)", [], anime[702], "F", "https://i.ibb.co/1GhTKWYF/c.png", 26269, "D"),
     new charInfo("Leo (JSL)", [], anime[702], "M", "https://i.ibb.co/fVyVfxrc/c.png", 26270, "D"),
     new charInfo("Luminous VIP", ["Lumine VIP", "Lumi VIP"], anime[242], "F", "https://i.ibb.co/vbdmBfg/lumi.gif", 26271, "VIP"),
-
+    new charInfo("Hiyuki EX", ["Feixue EX"], anime[560], "F", "https://i.ibb.co/5xwLj3xr/c.png", 26272, "EX"),
+    new charInfo("Lloyd Frontera EX", ["Lloyd EX"], anime[375], "M", "https://i.ibb.co/Q3rnnqRy/c.png", 26273, "EX"),
 ];
 
 export const auniq = anime.map((e) => e.name);

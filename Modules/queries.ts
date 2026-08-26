@@ -287,7 +287,7 @@ export const getPastStampedes = async (past: number): Promise<StampedeSchema[]> 
     return stampedes;
 };
 
-export const getUserRanking = async (scope: "server" | "global" | "guild", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation", guildId?: string): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
+export const getUserRanking = async (scope: "server" | "global" | "guild", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation", guildId?: string): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
     let orderByClause: string;
     let selectClause = "name, id, xp, coins, lilies, pullstotal, favchar, premium, chars, char_skin, battlechar, dungeon_classlevels, achievements, dungeon_floors, eventpts, cow_participation, custom_skins";
     let whereClause = "";
@@ -356,14 +356,13 @@ export const getUserRanking = async (scope: "server" | "global" | "guild", user_
     // It's because of the way it's sorted and the limit of 1500 users
 
     const result = await query(
-        `SELECT ${selectClause} FROM users ${
-            scope === "server" ? `WHERE id = ANY($1)` :
+        `SELECT ${selectClause} FROM users ${scope === "server" ? `WHERE id = ANY($1)` :
             scope === "guild" ? `WHERE guild = $1` :
-            "WHERE 1=1"
+                "WHERE 1=1"
         } ${whereClause} ORDER BY ${orderByClause} LIMIT 1501`,
         scope === "server" ? [user_ids] :
-        scope === "guild" ? [guildId] :
-        []
+            scope === "guild" ? [guildId] :
+                []
     ) as (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[];
     return result ?? [];
 };

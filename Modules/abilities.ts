@@ -3294,132 +3294,132 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    // "14126": {
-    //     usage: 1,
-    //     used: 0,
-    //     cost: 250,
-    //     desc: "**Total Usage**: `1`\n**Cost**: `250 💧`\n**Timeout**: `No`\n**Role**: `DPS (Stability)`\n\nAs one of the most formidable espers in the city, Accelerator is masterful at manipulating vectors, whilst computing combat calculations through the Misaka Network.\n\nAt the outset of the battle, he interacts with the <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> [ <a:stability:1451561886339436675> ] mechanic, which starts off at **50%**. When it reaches **0%** or **100%**, refreshes back to **50%** after **4** rounds. This can be changed with his actions:\n\nHis `ATK` deals **90%** damage and raises critical rate by **2%**, while losing **10%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> in the process. On the otherhand, his `DEF` recovers **5%** max HP and deflects **33%** of incoming damage, before recovering **10%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>\n\n> At **100%**, he gains __White :wing:__ (w/ DEF)\n> At **0%**, he gains __Black <:blackwing:1459920122549633285>__ (w/ ATK)\n> Else, he is __Wingless__\n\nHis `ATK` w/ <:blackwing:1459920122549633285> have enhanced effects: When at **100%** critical rate, it deals **140%** damage, recovers **15%** max HP, then lowers critical rate by **10%**. Else, it simply deals **110%** damage. As for his `DEF`, it too has enhanced effects w/ :wing:, recovering **8%** max HP and deflecting **66%** of incoming damage instead of the default amount.\n\nHis active casts Spear of Imaginary Vectors, piercing through the enemy. This deals **20%** damage for every **5%** of missing <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self, and grants him a protective shield equal to **5%** max HP for every **5%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self. Alas, the sheer power of vectors nflict a permanent **12%** vulnerability effect on the enemy (take +12% damage)\n\nIn a party, he initially harms allies, costing them **5%** max HP every round for **20** rounds. However by having a change of heart, he transitions into a role of protection, with a **20%** chance to counter incoming hits for them.\n\n-# Note: His <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> effect can only be triggered once at a time, i.e. When it is awaiting a refresh, other stability-burst effects (e.g. Weakpoint) will not be triggered, vice versa.",
-    //     shortdesc: "**Uses**: `1`\n**Cost**: `250 💧`\n**Timeout**: `No`\n**Role**: `DPS (Stability)`\n\n__**Passive**__:\n<:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> [ <a:stability:1451561886339436675> ] : Starts off at **50%**. When it reaches **0%** or **100%** through his actions, refreshes back to **50%** after **4** rounds. This can be changed with his actions:\n\nATK: Deals **90%** damage and raises critical rate by **2%**, then loses **10%** stability\n\nDEF: Recovers **5%** max HP and deflects **33%** of incoming damage, then gains **10%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>\n\n> At **100%**, he gains __White :wing:__ (w/ DEF)\n> At **0%**, he gains __Black <:blackwing:1459920122549633285>__ (w/ ATK)\n> Else, he is __Wingless__\n\nATK w/ <:blackwing:1459920122549633285>:\n- When at **100%** critical rate: Deal **140%** damage, recover **15%** max HP, then lose **10%** critical rate\n- Else: Deal **110%** damage\n\nDEF w/ :wing::\n- Recover **8%** max HP and deflect **66%** of incoming damage\n\n__**Active**__ (:sparkles:) - Spear of Imaginary Vectors\n- Deals **20%** damage for every **5%** of missing <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self.\n- Gains a protective shield equal to **5%** max HP for every **5%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self.\n- Inflict a permanent **12%** vulnerability effect on the enemy\n\n__**Party ability** (:busts_in_silhouette:)__:\n- Allies lose **5%** max HP every round for the first **20** rounds.\n- After that, he has a **20%** chance to counter incoming hits for allies.\n\n-# Note: His <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> effect can only be triggered once at a time, i.e. When it is awaiting a refresh, other stability-burst effects (e.g. Weakpoint) will not be triggered, vice versa.",
-    //     ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-    //         // Accelerator
-    //         // Deal 20% damage for every 5% missing STAB. Gain 5% max HP shield for every 5% STAB
-    //         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.2 * Math.floor((100 - myStats.stability) / 5) });
-    //         myStats.shield += Math.floor((myStats.maxhp * 0.05) * Math.floor(myStats.stability / 5));
+    "14126": {
+        usage: 1,
+        used: 0,
+        cost: 250,
+        desc: "**Total Usage**: `1`\n**Cost**: `250 💧`\n**Timeout**: `No`\n**Role**: `DPS (Stability)`\n\nAs one of the most formidable espers in the city, Accelerator is masterful at manipulating vectors, whilst computing combat calculations through the Misaka Network.\n\nAt the outset of the battle, he interacts with the <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> [ <a:stability:1451561886339436675> ] mechanic, which starts off at **50%**. When it reaches **0%** or **100%**, refreshes back to **50%** after **4** rounds. This can be changed with his actions:\n\nHis `ATK` deals **90%** damage and raises critical rate by **2%**, while losing **10%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> in the process. On the otherhand, his `DEF` recovers **5%** max HP and deflects **33%** of incoming damage, before recovering **10%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>\n\n> At **100%**, he gains __White :wing:__ (w/ DEF)\n> At **0%**, he gains __Black <:blackwing:1459920122549633285>__ (w/ ATK)\n> Else, he is __Wingless__\n\nHis `ATK` w/ <:blackwing:1459920122549633285> have enhanced effects: When at **100%** critical rate, it deals **140%** damage, recovers **15%** max HP, then lowers critical rate by **10%**. Else, it simply deals **110%** damage. As for his `DEF`, it too has enhanced effects w/ :wing:, recovering **8%** max HP and deflecting **66%** of incoming damage instead of the default amount.\n\nHis active casts Spear of Imaginary Vectors, piercing through the enemy. This deals **20%** damage for every **5%** of missing <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self, and grants him a protective shield equal to **5%** max HP for every **5%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self. Alas, the sheer power of vectors nflict a permanent **12%** vulnerability effect on the enemy (take +12% damage)\n\nIn a party, he initially harms allies, costing them **5%** max HP every round for **20** rounds. However by having a change of heart, he transitions into a role of protection, with a **20%** chance to counter incoming hits for them.\n\n-# Note: His <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> effect can only be triggered once at a time, i.e. When it is awaiting a refresh, other stability-burst effects (e.g. Weakpoint) will not be triggered, vice versa.",
+        shortdesc: "**Uses**: `1`\n**Cost**: `250 💧`\n**Timeout**: `No`\n**Role**: `DPS (Stability)`\n\n__**Passive**__:\n<:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> [ <a:stability:1451561886339436675> ] : Starts off at **50%**. When it reaches **0%** or **100%** through his actions, refreshes back to **50%** after **4** rounds. This can be changed with his actions:\n\nATK: Deals **90%** damage and raises critical rate by **2%**, then loses **10%** stability\n\nDEF: Recovers **5%** max HP and deflects **33%** of incoming damage, then gains **10%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>\n\n> At **100%**, he gains __White :wing:__ (w/ DEF)\n> At **0%**, he gains __Black <:blackwing:1459920122549633285>__ (w/ ATK)\n> Else, he is __Wingless__\n\nATK w/ <:blackwing:1459920122549633285>:\n- When at **100%** critical rate: Deal **140%** damage, recover **15%** max HP, then lose **10%** critical rate\n- Else: Deal **110%** damage\n\nDEF w/ :wing::\n- Recover **8%** max HP and deflect **66%** of incoming damage\n\n__**Active**__ (:sparkles:) - Spear of Imaginary Vectors\n- Deals **20%** damage for every **5%** of missing <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self.\n- Gains a protective shield equal to **5%** max HP for every **5%** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> on self.\n- Inflict a permanent **12%** vulnerability effect on the enemy\n\n__**Party ability** (:busts_in_silhouette:)__:\n- Allies lose **5%** max HP every round for the first **20** rounds.\n- After that, he has a **20%** chance to counter incoming hits for allies.\n\n-# Note: His <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> effect can only be triggered once at a time, i.e. When it is awaiting a refresh, other stability-burst effects (e.g. Weakpoint) will not be triggered, vice versa.",
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
+            // Accelerator
+            // Deal 20% damage for every 5% missing STAB. Gain 5% max HP shield for every 5% STAB
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.2 * Math.floor((100 - myStats.stability) / 5) });
+            myStats.shield += Math.floor((myStats.maxhp * 0.05) * Math.floor(myStats.stability / 5));
 
-    //         eStats.vulnerabilityDynamic += 0.12;
+            eStats.vulnerabilityDynamic += 0.12;
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-    //         myStats.stability = 50;
-    //         eStats.ignoreSTABILITY = false;
-    //         eStats.vulnerabilityDynamic = Math.max(eStats.vulnerabilityDynamic, 1);
-    //         myStats.wing = 0; // (1 = Black, 2 = White)
+            return AbilityResponse.SUCCESS;
+        },
+        passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            myStats.stability = 50;
+            eStats.ignoreSTABILITY = false;
+            eStats.vulnerabilityDynamic = Math.max(eStats.vulnerabilityDynamic, 1);
+            myStats.wing = 0; // (1 = Black, 2 = White)
 
-    //         // Fun text
-    //         notice.push(`\n<a:stability:1451561886339436675> The <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> effect has been activated`);
+            // Fun text
+            notice.push(`\n<a:stability:1451561886339436675> The <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> effect has been activated`);
 
-    //         // Alters ATK
-    //         myStats.replaceButton.atk = {
-    //             "emoji": "<:blackwing:1459920122549633285>",
-    //             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                 switch (true) {
-    //                     case (myStats.wing === 1 && myStats.cr >= 1):
-    //                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 1.4, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15));
-    //                         myStats.cr -= 0.1;
-    //                         if (myStats.cr < 0) myStats.cr = 0;
-    //                         mybuff.cr.push(new buffInfo("+", -0.1, 9999));
-    //                         break;
-    //                     case (myStats.wing === 1 && myStats.cr <= 1):
-    //                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 1.1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                         break;
-    //                     default:
-    //                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.9, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
-    //                         myStats.cr += 0.02;
-    //                         mybuff.cr.push(new buffInfo("+", 0.02, 9999));
-    //                         myStats.stability -= 10;
-    //                         if (myStats.stability <= 0 && !eStats.ignoreSTABILITY) {
-    //                             eStats.ignoreSTABILITY = true;
-    //                             myStats.wing = 1;
-    //                             notice.push(`\n<:blackwing:1459920122549633285> **${char.name}** lost all <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> and gained __Black Wings__`);
-    //                             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                                 myStats.stability = 50;
-    //                                 eStats.ignoreSTABILITY = false;
-    //                                 myStats.wing = 0;
-    //                                 notice.push(`\n<a:stability:1451561886339436675> **${char.name}** regained **50** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>`);
-    //                                 matchStats.trigger("stabilRefresh", myStats, myStats, mybuff, mybuff);
-    //                                 return AbilityResponse.SUCCESS;
-    //                             }));
-    //                         };
-    //                 };
-    //                 return AbilityResponse.SUCCESS;
-    //             },
-    //         };
+            // Alters ATK
+            myStats.replaceButton.atk = {
+                "emoji": "<:blackwing:1459920122549633285>",
+                "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    switch (true) {
+                        case (myStats.wing === 1 && myStats.cr >= 1):
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 1.4, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.15));
+                            myStats.cr -= 0.1;
+                            if (myStats.cr < 0) myStats.cr = 0;
+                            mybuff.cr.push(new buffInfo("+", -0.1, 9999));
+                            break;
+                        case (myStats.wing === 1 && myStats.cr <= 1):
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 1.1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                            break;
+                        default:
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}**`, { atkMultiplier: 0.9, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                            myStats.cr += 0.02;
+                            mybuff.cr.push(new buffInfo("+", 0.02, 9999));
+                            myStats.stability -= 10;
+                            if (myStats.stability <= 0 && !eStats.ignoreSTABILITY) {
+                                eStats.ignoreSTABILITY = true;
+                                myStats.wing = 1;
+                                notice.push(`\n<:blackwing:1459920122549633285> **${char.name}** lost all <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> and gained __Black Wings__`);
+                                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    myStats.stability = 50;
+                                    eStats.ignoreSTABILITY = false;
+                                    myStats.wing = 0;
+                                    notice.push(`\n<a:stability:1451561886339436675> **${char.name}** regained **50** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>`);
+                                    matchStats.trigger("stabilRefresh", myStats, myStats, mybuff, mybuff);
+                                    return AbilityResponse.SUCCESS;
+                                }));
+                            };
+                    };
+                    return AbilityResponse.SUCCESS;
+                },
+            };
 
-    //         // Alters DEF
-    //         myStats.replaceButton.def = {
-    //             "emoji": "🪽",
-    //             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                 switch (true) {
-    //                     case (myStats.wing === 2):
-    //                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.08));
-    //                         myStats.deflectDamage = 0.66;
-    //                         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                             myStats.deflectDamage = 0;
-    //                             return AbilityResponse.SUCCESS;
-    //                         }));
-    //                         break;
-    //                     default:
-    //                         addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05));
-    //                         myStats.deflectDamage = 0.33;
-    //                         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                             myStats.deflectDamage = 0;
-    //                             return AbilityResponse.SUCCESS;
-    //                         }));
-    //                         myStats.stability += 10;
-    //                         if (myStats.stability >= 100 && !eStats.ignoreSTABILITY) {
-    //                             eStats.ignoreSTABILITY = true;
-    //                             notice.push(`\n🪽 **${char.name}** reached maximum <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> and gained __White Wings__.`);
-    //                             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //                                 myStats.stability = 50;
-    //                                 eStats.ignoreSTABILITY = false;
-    //                                 notice.push(`\n<a:stability:1451561886339436675> **${char.name}** regained **50** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>`);
-    //                                 matchStats.trigger("stabilRefresh", myStats, myStats, mybuff, mybuff);
-    //                                 return AbilityResponse.SUCCESS;
-    //                             }));
-    //                         };
-    //                         break;
-    //                 };
-    //                 return AbilityResponse.SUCCESS;
-    //             },
-    //         };
+            // Alters DEF
+            myStats.replaceButton.def = {
+                "emoji": "🪽",
+                "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    switch (true) {
+                        case (myStats.wing === 2):
+                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.08));
+                            myStats.deflectDamage = 0.66;
+                            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.deflectDamage = 0;
+                                return AbilityResponse.SUCCESS;
+                            }));
+                            break;
+                        default:
+                            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05));
+                            myStats.deflectDamage = 0.33;
+                            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.deflectDamage = 0;
+                                return AbilityResponse.SUCCESS;
+                            }));
+                            myStats.stability += 10;
+                            if (myStats.stability >= 100 && !eStats.ignoreSTABILITY) {
+                                eStats.ignoreSTABILITY = true;
+                                notice.push(`\n🪽 **${char.name}** reached maximum <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866> and gained __White Wings__.`);
+                                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 4, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                    myStats.stability = 50;
+                                    eStats.ignoreSTABILITY = false;
+                                    notice.push(`\n<a:stability:1451561886339436675> **${char.name}** regained **50** <:stab1:1464513839323414549><:stab2:1464513732926509161><:stab3:1464513789935353866>`);
+                                    matchStats.trigger("stabilRefresh", myStats, myStats, mybuff, mybuff);
+                                    return AbilityResponse.SUCCESS;
+                                }));
+                            };
+                            break;
+                    };
+                    return AbilityResponse.SUCCESS;
+                },
+            };
 
-    //         // Get WINGS based off stability at the start of the round
-    //         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             switch (myStats.stability) {
-    //                 case (100): myStats.wing = 2; break;
-    //                 case (0): myStats.wing = 1; break;
-    //                 default: myStats.wing = 0; break;
-    //             };
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+            // Get WINGS based off stability at the start of the round
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                switch (myStats.stability) {
+                    case (100): myStats.wing = 2; break;
+                    case (0): myStats.wing = 1; break;
+                    default: myStats.wing = 0; break;
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    //     party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.counter ??= 0;
-    //         mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.05), 20));
-    //         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 20, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //             if (Math.random() < 0.2) {
-    //                 myStats.counter++;
-    //             };
-    //             return AbilityResponse.SUCCESS;
-    //         }, 9999));
+            return AbilityResponse.SUCCESS;
+        },
+        party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.counter ??= 0;
+            mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.maxhp * 0.05), 20));
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 20, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (Math.random() < 0.2) {
+                    myStats.counter++;
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
 
-    //         return AbilityResponse.SUCCESS;
-    //     },
-    // },
+            return AbilityResponse.SUCCESS;
+        },
+    },
     "14903": {
         usage: 9999,
         used: 0,
@@ -8771,7 +8771,7 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    "1": {
+    "26272": {
         usage: 9999,
         used: 0,
         pause: 0,
@@ -8898,7 +8898,7 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
     },
-    "2": {
+    "26273": {
         usage: 9999,
         used: 0,
         pause: 0,
@@ -8910,7 +8910,7 @@ export const abilities: Record<number, Ability> = {
         desc: "**Total Usage**: `Unlimited`\n**Cost**: `60 💧`\n**Timeout**: `False`\n**Tags**: `DPS / Support`\n\n## New companions\nEvery **15** rounds, starting from the 10th. **+10%** ATK -> **+10%** DEF -> **+10%** critical rate -> **+10%** dodge rate -> **+10%** critical damage -> **+10%** ATK\n\n## Mana Circles\nFor every **250** (non-raid battles) / **450** (raid battles) mana gained (includes overflow), he gets a new mana circle [ <a:manacircle:1505922588277477540> ], giving him **12%** ATK.\n\n## Ability\nUsing his ability, Lloyd may choose a skill to utilize by using ATK, DEF or ACTIVE (:sparkles:) again. However if he doesn't have at least **1** <a:manacircle:1505922588277477540>, he can only use his ACTIVE again.\n\n- :crossed_swords: : Mana Blast\n> Timeout true. Deals **15%** damage. This is repeated for every <a:manacircle:1505922588277477540> he currently has (Max: **5** hits).\n\n- :shield: : Demon Possessed Singer\n> Timeout true. Stuns the enemy for **1** round. Decreases their dodge chance by **10%** for every time this skill was used\n\n- :sparkles: : Supercharge\n> Can be used up to **2** times. Timeout false.  **+20** mana regeneration for **5** rounds. Boosts the damage scaling of Mana Blast by **10%** permanently\n\n## Additional passives\nHe has an array of passives to aid his performance. To start, he increases critical rate to **100%** for **1** round and reduces the enemy's DEF & MR by **33%** every **10** rounds. Moreover, he receives **20%** less damage from physical and magical hits when below **50%** hp. This stacks with general damage mitigation. At last, he revives once with **60%** of this HP, ensuring a window of final strikes under high threats.",
         shortdesc: "__**Passive**__:\n> Gains companion buffs every **15** rounds, starting from the **10th**.\n- 10th: **+10%** ATK\n- 25th: **+10%** DEF\n- 40th: **+10%** critical rate\n- 55th: **+10%** dodge rate\n- 70th: **+10%** critical damage\n- 95th: **+10%** ATK\n\n__**Core Mechanic**__:\n- For every **250** (non-raid battles) / **450** (raid battles) mana gained (includes overflow), he gets a new mana circle [ <a:manacircle:1505922588277477540> ], giving him **12%** ATK\n\n__**Active**__\n`Uses`: `Unlimited`\n`Cost`: `60 💧`\n`Timeout`: `False`\n> Lloyd may choose a skill to utilize by using ATK, DEF or ACTIVE (:sparkles:) again. However if he doesn't have at least **1** <a:manacircle:1505922588277477540>, he can only use his ACTIVE again.\n\n:crossed_swords: : Mana Blast\n`Timeout`: `True`\n- Deals **15%** damage. This is repeated for every <a:manacircle:1505922588277477540> he currently has (Max: 5 hits).\n\n:shield: : Demon Possessed Singer\n`Timeout`: `True`\n- Stuns the enemy for **1** round\n- Decreases their dodge chance by **10%** for every time this skill was used\n\n:sparkles: Supercharge\n`Max Uses` : `2`\n`Timeout`: `False`\n- **+20** mana regeneration for **5** rounds\n- Boosts the damage scaling of __Mana Blast__ by **10%** permanently\n\n__**Side passives**__:\n- Every **10** rounds: Increases critical rate to **100%** for **1** round, and reduces the enemy's DEF & MR by **33%**\n- Receives **20%** less damage from physical and magical hits when below **50%** hp. This stacks with general damage mitigation\n- Revives once with **60%** of this HP",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
-            // Lloyd Frontera EX
+            // Lloyd Frontera EX | Lloyd EX
             if (matchStats.round < this.cd) {
                 noTimeout(matchStats, myStats);
                 this.used--;
