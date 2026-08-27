@@ -504,21 +504,26 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 			.setName('forge')
-			.setDescription('Buy an item from the forgery')
-			.addStringOption(option => option.setName('item').setDescription('Write the name or ID of the item to forge').setRequired(false))
-			.addStringOption(option =>
-				option.setName('grade')
-					.setDescription('filter for a specific grade')
-					.setRequired(false)
-					.addChoices(
-						{ name: 'legendary', value: 'legendary' },
-						{ name: 'unique', value: 'unique' },
-						{ name: 'rare', value: 'rare' },
-						{ name: 'special', value: 'special' },
-						{ name: 'normal', value: 'normal' },
-					)
+			.setDescription('Forging related commands')
+			.addSubcommand((subcommand) => subcommand.setName('catalog').setDescription('View forge catalog')
+			.addStringOption(option => option.setName('grade').setDescription('filter for a specific grade').setRequired(false)
+				.addChoices(
+					{ name: 'legendary', value: 'legendary' },
+					{ name: 'unique', value: 'unique' },
+					{ name: 'rare', value: 'rare' },
+					{ name: 'special', value: 'special' },
+					{ name: 'normal', value: 'normal' },
+				)
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			)
+			.addSubcommand((subcommand) => subcommand.setName('craft').setDescription('Craft an item')
+			.addStringOption(option => option.setName('item').setDescription('Name or ID of the item to craft').setRequired(true))
+			)
+			.addSubcommand((subcommand) => subcommand.setName('merge').setDescription('Rune merging')
+			.addStringOption(option => option.setName('rune').setDescription('Rune to view or merge').setRequired(false))
+			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			)
 	}.data.toJSON(),
 	// {
 	// 	data: new SlashCommandBuilder()

@@ -392,7 +392,7 @@ export const getFindUsers = async (ids: string[] | "*", charId: number): Promise
         const users = await query(query_str, [charId]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
         return users;
     } else {
-        const users = await query(`${query_str} AND id = ANY($1)`, [charId, ids]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
+        const users = await query(`${query_str} AND id = ANY($2)`, [charId, ids]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
         return users;
     };
 };

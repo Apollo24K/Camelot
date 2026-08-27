@@ -584,11 +584,49 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                                 newEchoPurchases = { ...(userRow.echo_purchases ?? {}), [itemId]: actualPurchases + qty };
                             }
 
-                            // Perform user update
+                            // Perform user update (deduct echo and optionally set purchases)
                             if (newEchoPurchases) {
                                 await client.query(`UPDATE users SET echo = echo - $1, echo_purchases = $2 WHERE id = $3`, [totalCost, newEchoPurchases, interaction.user.id]);
                             } else {
                                 await client.query(`UPDATE users SET echo = echo - $1 WHERE id = $2`, [totalCost, interaction.user.id]);
+                            }
+
+                            // Apply other prepared updates atomically inside the same transaction
+                            try {
+                                if (update.coins) {
+                                    await client.query(`UPDATE users SET coins = COALESCE(coins, 0) + $1 WHERE id = $2`, [update.coins.value, interaction.user.id]);
+                                }
+                                if (update.expulls) {
+                                    await client.query(`UPDATE users SET expulls = COALESCE(expulls, 0) + $1 WHERE id = $2`, [update.expulls.value, interaction.user.id]);
+                                }
+                                if (update.dungeon_classlevels) {
+                                    // Match updateUsers 'merge_json' behavior: numeric keys are summed when both are numbers
+                                    await client.query(`UPDATE users SET dungeon_classlevels = (
+                                        SELECT jsonb_object_agg(key,
+                                            CASE
+                                                WHEN dungeon_classlevels->key IS NOT NULL AND $1::jsonb->key IS NOT NULL
+                                                    AND jsonb_typeof(dungeon_classlevels->key) = 'number'
+                                                    AND jsonb_typeof($1::jsonb->key) = 'number' THEN
+                                                        to_jsonb((dungeon_classlevels->key)::numeric + ($1::jsonb->key)::numeric)
+                                                WHEN $1::jsonb->key IS NOT NULL THEN
+                                                    $1::jsonb->key
+                                                ELSE
+                                                    dungeon_classlevels->key
+                                            END
+                                        )
+                                        FROM jsonb_each(COALESCE(dungeon_classlevels, '{}'::jsonb) || $1::jsonb)
+                                    ) WHERE id = $2`, [update.dungeon_classlevels.value, interaction.user.id]);
+                                }
+                                if (update.hpbars) {
+                                    const ids: number[] = update.hpbars.value ?? [];
+                                    for (const v of ids) {
+                                        // append unique: only append if not already present
+                                        await client.query(`UPDATE users SET hpbars = array_append(hpbars, $1) WHERE id = $2 AND NOT (hpbars @> ARRAY[$1])`, [v, interaction.user.id]);
+                                    }
+                                }
+                            } catch (e) {
+                                // If any of these fail, let the outer transaction handler rollback
+                                throw e;
                             }
 
                             // Insert granted items (if any) using transactional client to ensure atomicity

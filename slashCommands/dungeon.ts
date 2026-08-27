@@ -1037,10 +1037,12 @@ const exportCommand: SlashCommand = {
 
                             if (matchStats.costForAction > 0) {
                                 if (myStatsC.sm < matchStats.costForAction) {
-                                    myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                    if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                    myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                     notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                                } else myStats.sm -= matchStats.costForAction;
+                                } else {
+                                    myStatsC.sm -= matchStats.costForAction;
+                                }
                             };
 
                             // If defense was replaced
@@ -1097,10 +1099,12 @@ const exportCommand: SlashCommand = {
 
                         if (matchStats.costForAction > 0) {
                             if (myStatsC.sm < matchStats.costForAction) {
-                                myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                 notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                            } else myStats.sm -= matchStats.costForAction;
+                            } else {
+                                myStatsC.sm -= matchStats.costForAction;
+                            }
                         };
 
                         // If ability was replaced
@@ -1160,10 +1164,12 @@ const exportCommand: SlashCommand = {
 
                         if (matchStats.costForAction > 0) {
                             if (myStatsC.sm < matchStats.costForAction) {
-                                myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                 notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                            } else myStats.sm -= matchStats.costForAction;
+                            } else {
+                                myStatsC.sm -= matchStats.costForAction;
+                            }
                         };
 
                         // If class active was replaced
@@ -1216,11 +1222,13 @@ const exportCommand: SlashCommand = {
 
                             if (matchStats.costForAction > 0) {
                                 if (myStatsC.sm < matchStats.costForAction) {
-                                    myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                    if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                        myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                        if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                     notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                                } else myStats.sm -= matchStats.costForAction;
-                            };
+                                    } else {
+                                        myStatsC.sm -= matchStats.costForAction;
+                                    }
+                                };
 
                             notice.push(`\n⏩ Skipping to results...`);
                             editEmbed();

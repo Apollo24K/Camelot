@@ -708,7 +708,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             const steal = Math.min(attacker.sm, target.stealManaOnDodge);
             attacker.sm -= steal;
             target.sm += steal;
-            if (typeof target.manaGained !== undefined) target.manaGained += steal;
+            if (typeof target.manaGained !== "undefined") target.manaGained += steal;
             if (target.sm > target.mana) target.sm = target.mana;
         };
 
@@ -953,7 +953,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (attacker.critmana && isCrit) {
         attacker.sm += attacker.critmana;
         if (attacker.sm > attacker.mana) attacker.sm = attacker.mana;
-        if (typeof attacker.manaGained !== undefined) attacker.manaGained += attacker.critmana;
+        if (typeof attacker.manaGained !== "undefined") attacker.manaGained += attacker.critmana;
     };
     if (options.selfheal && attacker.selfheal && attacker.lastSelfHealRoundCapped !== matchStats.round) {
         let selfHealedTotal = 0;
