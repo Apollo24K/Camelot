@@ -10,6 +10,7 @@ const commands = [
 			.setName('ability')
 			.setDescription('Look up characters with abilities')
 			.addStringOption(option => option.setName('character').setDescription('Get more information about a character\'s ability').setRequired(false))
+			.addStringOption(option => option.setName('enemy').setDescription('Get more information about an enemy').setRequired(false))
 			.addBooleanOption(option => option.setName('compact').setDescription('Display in compact view').setRequired(false))
 			.addStringOption(option =>
 				option.setName('filter')
@@ -793,6 +794,8 @@ const commands = [
 						)
 				)
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
+			.addSubcommand((subcommand) => subcommand.setName('entry').setDescription('Entry item info')
+				.addStringOption(option => option.setName('name').setDescription('Name or ID of the entry item').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('info').setDescription('See detailed info about an item')
 				.addStringOption(option => option.setName('items').setDescription('Select items to view, use commas (,) to view multiple items at once.').setRequired(true))
 				.addStringOption(option =>
@@ -1514,6 +1517,7 @@ const commands = [
 					.addChoices(
 						{ name: 'Use Compact Battle Embeds', value: 'compact_battle_embeds' },
 						{ name: 'Battle Log Length', value: 'battle_log_length' },
+						{ name: 'Display Enemy Stats', value: 'display_enemy_stats' },
 					)
 			)
 			.addStringOption(option => option.setName('input').setDescription('Input value').setRequired(true))
@@ -1570,6 +1574,13 @@ const commands = [
 			.setName('stampede')
 			.setDescription('A recurring special battle event')
 			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the stampede overview and go directly into battle').setRequired(false))
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
+			.setName('phantasm')
+			.setDescription('Phantasmagoria boss challenges')
+			.addStringOption(option => option.setName('action').setDescription('Action to take | e.g., overview, fight').setRequired(false))
+			.addIntegerOption(option => option.setName('boss').setDescription('Boss index to target').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()

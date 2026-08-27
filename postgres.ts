@@ -25,6 +25,21 @@ export const query = async (text: string, params?: any[]) => {
     };
 };
 
+export const withTransaction = async <T>(cb: (client: PoolClient) => Promise<T>): Promise<T> => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result = await cb(client);
+        await client.query('COMMIT');
+        return result;
+    } catch (err) {
+        try { await client.query('ROLLBACK'); } catch (e) { console.error('Rollback failed', e); }
+        throw err;
+    } finally {
+        client.release();
+    }
+};
+
 async function createTables() {
     // Users table
     await query(`CREATE SEQUENCE IF NOT EXISTS users_rowid_seq`);

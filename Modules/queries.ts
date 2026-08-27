@@ -682,7 +682,7 @@ export const insertNewServer = async (id: string, name: string, userId: string):
     return server;
 };
 
-export const insertNewWeapon = async (userId: string, itemId: number, itemType: string, uniqueId?: string, level?: number, ascension?: number): Promise<WeaponSchema> => {
+export const insertNewWeapon = async (userId: string, itemId: number, itemType: string, uniqueId?: string, level?: number, ascension?: number, client?: any): Promise<WeaponSchema> => {
     const columns = ['id', 'itemid', 'item_type'];
     const values = [userId, itemId, itemType];
 
@@ -700,7 +700,8 @@ export const insertNewWeapon = async (userId: string, itemId: number, itemType: 
     };
 
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-    const { rows: [weapon] } = await query(
+    const exec = client ? client.query.bind(client) : query;
+    const { rows: [weapon] } = await exec(
         `INSERT INTO weapons (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`,
         values
     ) as { rows: WeaponSchema[]; };

@@ -13,7 +13,7 @@ import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand, WeaponSchema } from '../types';
 import { getUserSchemas, getWeaponSchemas, updateUsers, updateUsersAndCache, insertNewWeapon } from '../Modules/queries';
-import { query } from '../postgres';
+import { query, withTransaction } from '../postgres';
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
 import { phantasmagoriaBosses } from '../Modules/enemies';
@@ -550,9 +550,12 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                         return;
                     }
 
+                    // Prepare update object for echo deduction and optional JSON updates
                     let update: Record<string, any> = {
                         echo: { type: "increment", value: -totalCost },
                     };
+
+                    let newEchoPurchases: Record<string, number> | undefined;
 
                     if (shopItem.xp && stats.class !== null) {
                         update.dungeon_classlevels = { type: "merge_json", value: { [stats.class]: shopItem.xp * qty } };
@@ -563,47 +566,60 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                     } else if (shopItem.hpbarId !== undefined) {
                         update.hpbars = { type: "append_unique", value: [shopItem.hpbarId] };
                     } else if (shopItem.grantItemId) {
-                        // Defer actual granting until after the atomic DB update succeeds
+                        // Will grant inside transaction
                         pendingGrant = { itemId: shopItem.grantItemId, itemType: shopItem.grantItemType ?? "weapon", qty };
                     };
 
-                    if (shopItem.maxPurchases) {
-                        const [purchasesRow] = await query('SELECT echo_purchases FROM users WHERE id = $1', [interaction.user.id]) as [{ echo_purchases: Record<string, number>; }];
-                        const actualPurchases = purchasesRow?.echo_purchases?.[itemId] ?? 0;
-                        if ((actualPurchases + qty) > shopItem.maxPurchases) {
-                            await modalSubmit.followUp({ content: `Purchase cap reached! Only **${shopItem.maxPurchases - actualPurchases}** more **${shopItem.name}** available!`, ephemeral: true });
-                            return;
-                        }
-                        const newEchoPurchases = { ...stats.echo_purchases, [itemId]: actualPurchases + qty };
-                        update.echo_purchases = { type: "set_json", value: newEchoPurchases };
-                    };
+                    try {
+                        // Run a DB transaction that locks the user row, checks balance and purchase caps, updates the user, and inserts items
+                        await withTransaction(async (client) => {
+                            const { rows: [userRow] } = await client.query(`SELECT echo, echo_purchases FROM users WHERE id = $1 FOR UPDATE`, [interaction.user.id]) as { rows: { echo: number; echo_purchases: Record<string, number>; }[] };
+                            if (!userRow) throw new Error('User not found');
 
-                    await updateUsersAndCache(interaction.client, interaction.user.id, {
-                        updates: update,
-                        condition: `echo >= ${totalCost}`,
-                    });
+                            if (userRow.echo < totalCost) throw new Error('INSUFFICIENT_ECHO');
 
-                    // Verify the atomic deduction succeeded (no concurrent purchase stole echo)
-                    const [verifyRow] = await query('SELECT echo FROM users WHERE id = $1', [interaction.user.id]) as [{ echo: number; }];
-                    if (verifyRow.echo === actualEcho) {
-                        await modalSubmit.followUp({ content: `Purchase failed due to a concurrent transaction. Please try again.`, ephemeral: true });
-                        return;
-                    }
+                            if (shopItem.maxPurchases) {
+                                const actualPurchases = userRow.echo_purchases?.[itemId] ?? 0;
+                                if ((actualPurchases + qty) > shopItem.maxPurchases) throw new Error('PURCHASE_CAP_REACHED');
+                                newEchoPurchases = { ...(userRow.echo_purchases ?? {}), [itemId]: actualPurchases + qty };
+                            }
 
-                    if (!stats.echo_purchases) stats.echo_purchases = {};
-                    stats.echo_purchases[itemId] = currentPurchases + qty;
-                    stats.echo = verifyRow.echo;
+                            // Perform user update
+                            if (newEchoPurchases) {
+                                await client.query(`UPDATE users SET echo = echo - $1, echo_purchases = $2 WHERE id = $3`, [totalCost, newEchoPurchases, interaction.user.id]);
+                            } else {
+                                await client.query(`UPDATE users SET echo = echo - $1 WHERE id = $2`, [totalCost, interaction.user.id]);
+                            }
 
-                    // Perform deferred grants after the atomic update succeeded
-                    if (pendingGrant) {
-                        for (let i = 0; i < pendingGrant.qty; i++) {
-                            await insertNewWeapon(interaction.user.id, pendingGrant.itemId, pendingGrant.itemType ?? "weapon");
-                        }
+                            // Insert granted items (if any) using transactional client to ensure atomicity
+                            if (pendingGrant) {
+                                for (let i = 0; i < pendingGrant.qty; i++) {
+                                    await insertNewWeapon(interaction.user.id, pendingGrant.itemId, pendingGrant.itemType ?? "weapon", undefined, undefined, undefined, client);
+                                }
+                            }
+                        });
+
+                        // Evict cache and update local stats snapshot
+                        interaction.client.userCache.delete(interaction.user.id);
+                        const [postRow] = await query('SELECT echo, echo_purchases FROM users WHERE id = $1', [interaction.user.id]) as [{ echo: number; echo_purchases: Record<string, number>; }];
+                        stats.echo = postRow?.echo ?? 0;
+                        stats.echo_purchases = postRow?.echo_purchases ?? stats.echo_purchases;
+
+                        // Clear pending grant
                         pendingGrant = null;
-                    }
 
-                    await modalSubmit.followUp({ content: `Successfully purchased **${qty}x** ${shopItem.emoji} **${shopItem.name}** for **${totalCost}** <a:echo:1510653732029857802>!`, ephemeral: true });
-                    await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, false), getShopSelectRow()] });
+                        await modalSubmit.followUp({ content: `Successfully purchased **${qty}x** ${shopItem.emoji} **${shopItem.name}** for **${totalCost}** <a:echo:1510653732029857802>!`, ephemeral: true });
+                        await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, false), getShopSelectRow()] });
+                    } catch (err) {
+                        if ((err as Error).message === 'INSUFFICIENT_ECHO') {
+                            await modalSubmit.followUp({ content: `Your balance changed! Need **${totalCost}** but you don't have enough Echoes.`, ephemeral: true });
+                        } else if ((err as Error).message === 'PURCHASE_CAP_REACHED') {
+                            await modalSubmit.followUp({ content: `Purchase cap reached! Please try again later.`, ephemeral: true });
+                        } else {
+                            console.error(err);
+                            await modalSubmit.followUp({ content: `Purchase failed. Please try again later.`, ephemeral: true });
+                        }
+                    }
                 } catch {
                     // Modal timed out or was dismissed
                 }
