@@ -596,7 +596,16 @@ async function alterTables() {
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_boss_data JSONB DEFAULT \'{}\'::jsonb NOT NULL;');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_selected_boss INT DEFAULT 0 NOT NULL;');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS echo INT DEFAULT 0 NOT NULL');
-    await query(`UPDATE users SET phantasmagoria_boss_data = jsonb_build_object('0', jsonb_build_object('best_damage', phantasmagoria_best_damage, 'best_phases', phantasmagoria_best_phases)) WHERE phantasmagoria_best_damage > 0 OR phantasmagoria_best_phases > 0`);
+    // Only migrate legacy phantasmagoria columns if they exist to avoid failing on a clean DB
+    await query(`DO $$
+    BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'phantasmagoria_best_damage')
+           OR EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'phantasmagoria_best_phases') THEN
+            UPDATE users
+            SET phantasmagoria_boss_data = jsonb_build_object('0', jsonb_build_object('best_damage', phantasmagoria_best_damage, 'best_phases', phantasmagoria_best_phases))
+            WHERE COALESCE(phantasmagoria_best_damage, 0) > 0 OR COALESCE(phantasmagoria_best_phases, 0) > 0;
+        END IF;
+    END$$;`);
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS echo_purchases JSONB DEFAULT \'{}\' NOT NULL');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_strategy INT DEFAULT 0 NOT NULL');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_class INT DEFAULT NULL');

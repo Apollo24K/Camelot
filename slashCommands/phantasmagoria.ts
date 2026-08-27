@@ -536,6 +536,9 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
 
                     const totalCost = shopItem.price * qty;
 
+                    // Defer granting items until after the atomic users update succeeds
+                    let pendingGrant: { itemId: number; itemType?: string; qty: number } | null = null;
+
                     await modalSubmit.deferUpdate();
                     if (adjusted) await modalSubmit.followUp({ content: `Quantity adjusted to **${qty}** (max affordable with current balance).`, ephemeral: true });
 
@@ -560,9 +563,8 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                     } else if (shopItem.hpbarId !== undefined) {
                         update.hpbars = { type: "append_unique", value: [shopItem.hpbarId] };
                     } else if (shopItem.grantItemId) {
-                        for (let i = 0; i < qty; i++) {
-                            await insertNewWeapon(interaction.user.id, shopItem.grantItemId, shopItem.grantItemType ?? "weapon");
-                        }
+                        // Defer actual granting until after the atomic DB update succeeds
+                        pendingGrant = { itemId: shopItem.grantItemId, itemType: shopItem.grantItemType ?? "weapon", qty };
                     };
 
                     if (shopItem.maxPurchases) {
@@ -591,6 +593,14 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                     if (!stats.echo_purchases) stats.echo_purchases = {};
                     stats.echo_purchases[itemId] = currentPurchases + qty;
                     stats.echo = verifyRow.echo;
+
+                    // Perform deferred grants after the atomic update succeeded
+                    if (pendingGrant) {
+                        for (let i = 0; i < pendingGrant.qty; i++) {
+                            await insertNewWeapon(interaction.user.id, pendingGrant.itemId, pendingGrant.itemType ?? "weapon");
+                        }
+                        pendingGrant = null;
+                    }
 
                     await modalSubmit.followUp({ content: `Successfully purchased **${qty}x** ${shopItem.emoji} **${shopItem.name}** for **${totalCost}** <a:echo:1510653732029857802>!`, ephemeral: true });
                     await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, false), getShopSelectRow()] });

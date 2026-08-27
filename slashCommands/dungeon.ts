@@ -983,12 +983,14 @@ const exportCommand: SlashCommand = {
 
                             if (matchStats.costForAction > 0) {
                                 if (myStatsC.sm < matchStats.costForAction) {
-                                    myStats.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                    if (myStatsC.hp > myStats.maxhp) myStatsC.hp = myStats.maxhp;
+                                    myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                     notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                                } else myStats.sm -= matchStats.costForAction;
+                                } else {
+                                    myStatsC.sm -= matchStats.costForAction;
+                                }
                             };
-
+                        
                             // If attack was replaced
                             if (myStatsC.replaceButton.atk?.run && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
                                 myStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
