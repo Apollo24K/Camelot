@@ -139,7 +139,7 @@ const exportCommand: SlashCommand = {
             floor = parseInt(Object.keys(stats.dungeon_floors)[Object.keys(stats.dungeon_floors).length - 1]);
             if (stats.dungeon_floors[floor] >= floors[floor]?.winsNeeded && floor < 300) stats.dungeon_floors[++floor] = 0;
             if (floorDiff === -1) floorDiff = Math.floor((floor - 1) / 100);
-            if (floorDiff > 2) floorDiff = 2;
+            if (floorDiff > 3) floorDiff = 3;
 
             if (choice) {
                 if (choice < 1) return interaction.editReply(`There is no floor ${choice} <:EmiliaWot:868996542080622603>`);
@@ -150,16 +150,16 @@ const exportCommand: SlashCommand = {
         };
 
         // Increase limit
-        let dunLim = [10, 20]; // [0] -> loot, [1] -> progress
+        let dunLim = [10, 20, 500]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
         if (stats.premium) {
             switch (stats.premium) {
-                case 1: dunLim = [12, 23]; break;
-                case 2: dunLim = [13, 25]; break;
-                case 3: dunLim = [15, 30]; break;
-                case 4: dunLim = [15, 32]; break;
-                case 5: dunLim = [16, 35]; break;
-                case 6: dunLim = [18, 36]; break;
-                case 7: dunLim = [20, 40]; break;
+                case 1: dunLim = [12, 23, 500]; break;
+                case 2: dunLim = [13, 25, 500]; break;
+                case 3: dunLim = [15, 30, 500]; break;
+                case 4: dunLim = [15, 32, 500]; break;
+                case 5: dunLim = [16, 35, 500]; break;
+                case 6: dunLim = [18, 36, 500]; break;
+                case 7: dunLim = [20, 40, 500]; break;
                 default: false; break;
             };
         };

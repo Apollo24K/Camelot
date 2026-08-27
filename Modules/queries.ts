@@ -1206,7 +1206,7 @@ export const updateUsers = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE
@@ -1303,7 +1303,7 @@ export const updateUsersAndCache = async (client: Client, userIds: string | stri
                                     //@ts-ignore
                                     for (const [k, v] of Object.entries(value)) {
                                         //@ts-ignore
-                                        mergedJson[k] = user.o[key][k] + v;
+                                        mergedJson[k] = Math.max(0, (user.o[key][k] ?? 0) + v);
                                     };
                                     //@ts-ignore
                                     user.o[key] = mergedJson;
@@ -1415,7 +1415,7 @@ export const updateGuilds = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE
@@ -1507,7 +1507,7 @@ export const updateParties = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE
@@ -1563,7 +1563,7 @@ export const updateStampedes = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE

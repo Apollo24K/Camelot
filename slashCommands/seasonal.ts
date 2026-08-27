@@ -499,6 +499,12 @@ export const exportCommand: SlashCommand = {
                             const tempStats = await getUserSchema(interaction.user.id);
                             if (!tempStats) return msg.edit("You haven't started playing yet.");
 
+                            // Return if already owned
+                            if (tempStats.skins.includes(skinId)) {
+                                ms.edit({ content: `You already own this skin!`, components: [] });
+                                return;
+                            };
+
                             // Return if balance not enough
                             if (tempStats.season_keys < cost) {
                                 ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });

@@ -800,7 +800,8 @@ const commands = [
 				)
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('entry').setDescription('Entry item info')
-				.addStringOption(option => option.setName('name').setDescription('Name or ID of the entry item').setRequired(false)))
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('info').setDescription('See detailed info about an item')
 				.addStringOption(option => option.setName('items').setDescription('Select items to view, use commas (,) to view multiple items at once.').setRequired(true))
 				.addStringOption(option =>
