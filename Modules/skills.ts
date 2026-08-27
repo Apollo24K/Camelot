@@ -1060,10 +1060,10 @@ export const skills: skillInfo[] = [
         //mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.2), 9999));
         //myStats.md += Math.floor(myStats.md * 0.2);
 
-        myStats.burntype = 2;
-        if (typeof myStats.burnduration !== "number") {// Trigger burn every round
-            myStats.burnduration = 0;
-            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burntype = 2;
+        if (typeof eStats.burnduration !== "number") {// Trigger burn every round
+            eStats.burnduration = 0;
+            eStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
 
                 return AbilityResponse.SUCCESS;
@@ -1748,7 +1748,7 @@ export const bossAbilities: skillInfo[] = [
         });
 
         matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (target.eStats && options.special === true) {
+            if (target === eStats && options.special === true) {
                 eStats.negateHeal = 1;
                 dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.maxhp * 0.05), magicDamage: true });
                 myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
@@ -2252,6 +2252,7 @@ export const bossAbilities: skillInfo[] = [
                                 return AbilityResponse.SUCCESS;
                             },
                         };
+                        break;
                     };
                     case 5:
                     case 6: {

@@ -147,7 +147,7 @@ export const exportCommand: SlashCommand = {
         ];
 
         const message = {
-            anniversary: "🎂 Happy 3rd Anniversary! 🎉",
+            anniversary: "🎂 Happy 4th Anniversary! 🎉",
             halloween: "🎃 Treat! 🍬",
             christmas: "🎄 Merry Christmas! ❄️",
             valentines: "🍫 Indulge in a sweet treat! 🎀",

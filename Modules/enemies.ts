@@ -5,7 +5,6 @@ import delayedBuffs from "./delayedBuffs";
 import { dealDamage, addHeal, customEmojis } from "./functions";
 import skillInfo from "./skills";
 import { AbilityResponse } from "./components";
-import { emitKeypressEvents } from "node:readline";
 
 export class enemyInfo implements IenemyInfo {
     private _name: string;
@@ -2419,8 +2418,8 @@ export const phantasmagoriaBosses: enemyInfo[] = [
         new skillInfo(0, 0, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // Cost
             if (!eStats.usedActive) {
-                myStats.hp -= Math.floor(myStats.hp * eStats.liminalKey ? 0.15 : 0.3);
-                eStats.hp -= Math.floor(eStats.hp * eStats.liminalKey ? 0 : 0.15);
+                myStats.hp -= Math.floor(myStats.hp * (eStats.liminalKey ? 0.15 : 0.3));
+                eStats.hp -= Math.floor(eStats.hp * (eStats.liminalKey ? 0 : 0.15));
                 eStats.liminalKey--;
 
                 eStats.usedActive = true;
@@ -2440,7 +2439,7 @@ export const phantasmagoriaBosses: enemyInfo[] = [
                 }));
             } else if (eStats.liminalKey) { // Mimick effects
                 eStats.liminalKey--;
-                let effectIndex = Math.floor(Math.random() * 10);
+                let effectIndex = Math.floor(Math.random() * 9);
                 switch (effectIndex) {
                     case 0: {
                         // Isolde EX
@@ -2514,16 +2513,6 @@ export const phantasmagoriaBosses: enemyInfo[] = [
                         dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Izkuu Mirodiya?** uses nOe fro All at **???**%! He`, { atkMultiplier: 1.2, magicDamage: true, block: false });
                         // Sacrifice
                         addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, -(eStats.hp * 0.07), {});
-                        break;
-                    };
-                    case 10: {
-                        // Kafka
-                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Kkafa?**`, { atkMultiplier: 1.2, magicDamage: false });
-                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Kkafa?**`, { atkMultiplier: 0.7, magicDamage: true, mdChance: -1 });
-
-                        mybuff.hp.forEach((buff) => {
-                            if ((buff.type === "*" && buff.val < 1) || (buff.type === "+" && buff.val < 0)) mybuff.hp.push(new buffInfo(buff.type, buff.val, Math.min(2, buff.last), buff.change, buff.ctype));
-                        });
                         break;
                     };
                 };

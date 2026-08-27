@@ -99,7 +99,7 @@ const exportCommand: SlashCommand = {
 
         if (subcommand === "dungeon") {
             const value = interaction.options.getInteger('value', true);
-            if (value < 1 || value > 330) return interaction.reply("Please provide a value between 1 and 330");
+            if (value < 1 || value > 300) return interaction.reply("Please provide a value between 1 and 300");
 
             // Import floors to get winsNeeded values
             const { floors } = await import('../Modules/enemies');

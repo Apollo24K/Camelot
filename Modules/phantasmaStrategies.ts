@@ -353,7 +353,7 @@ export const phantasmaStrategies: PhantasmaStrategy[] = [
                     noTimeout(matchStats, myStats);
                     myStats.energy -= maxcost;
                     myStats.mirageUltCount++;
-                    mybuff.dodge = [];
+                    mybuff.dodge = mybuff.dodge.filter(b => !b.isDebuff);
                     myStats.dodge += 0.1;
                     if (myStats.dodge > 1) myStats.dodge = 1;
                     mybuff.dodge.push(new buffInfo("+", 0.1, 4));
@@ -419,6 +419,7 @@ export const phantasmaStrategies: PhantasmaStrategy[] = [
                     myStats.energy -= maxcost;
                     myStats.br = 0;
                     myStats.putDamageOnHold = 1;
+                    matchStats._formBlockActive = false;
                     notice.push(`\n<a:energy:1511169619086409829> ♁ ₊ ☁️ ｡˚ ₊ ENERGY OVERLOAD!! ₊ ˚｡ ☁️ ₊ ♁ <a:energy:1511169619086409829>`);
                     notice.push(`\n<a:strategy:1510907688169504788> __Form in Tessellation__: Damage held. All attacks trigger block effects this round.`);
 
@@ -429,6 +430,7 @@ export const phantasmaStrategies: PhantasmaStrategy[] = [
                         };
                         myStats.putDamageOnHold = 0;
                         myStats.damageOnHold = 0;
+                        matchStats._formBlockActive = false;
 
                         return AbilityResponse.SUCCESS;
                     }, 0));
@@ -789,6 +791,7 @@ export const phantasmaStrategies: PhantasmaStrategy[] = [
                         myStats.skipFail = true;
                         matchStats.sendWarning({ content: `You don't have enough energy! (${myStats.energy}/${cost} <a:energy:1511169619086409829>)\n-# Clicking again this round will instead let you flee the battle.`, ephemeral: true });
                     } else {
+                        noTimeout(matchStats, myStats);
                         myStats.forceLoose = true;
                         notice.push(`\n<a:exit:1511883591532019804> ${char.name} fled the fight`);
                     };
@@ -864,6 +867,7 @@ export const phantasmaStrategies: PhantasmaStrategy[] = [
                     };
                     myStats.reserves -= expended;
                     if (myStats.reserves < 0) myStats.reserves = 0;
+                    myStats.skipFail = false;
                     return AbilityResponse.SUCCESS;
                 };
 

@@ -19,6 +19,7 @@ import _ from 'lodash';
 import { Buffs, CharacterRarity, ClassStats, CompactUserSchema, DetailedStats, Expertise, GuildDonationSchema, GuildSchema, IRoK, MatchStats, PrimaryStat, RaidRank, UserSchemaForStats, WeaponSchema } from '../types';
 import { curses } from './curses';
 import { getWeaponSchema } from './queries';
+import { isExtremeWeapon, getExtremeWeaponConfig, isExtremeItem, getExtremeItemConfig } from './extremeWeaponDrops';
 
 const statsOp: { base: { hp: Record<number, number>; atk: Record<number, number>; def: Record<number, number>; expertise: Record<number, string>; }; } = {
     "base": {
@@ -739,9 +740,9 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Removed redundant line: crit scaling now handled in multipliers.crit
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
-        damage = options.overwriteDamage || Math.floor(multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
+        damage = options.overwriteDamage || Math.floor(multipliers.burn * multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     } else {
-        damage = options.overwriteDamage || Math.floor(multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
+        damage = options.overwriteDamage || Math.floor(multipliers.burn * multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
     };
     if (attacker.critbonus && (isCrit || attacker.shorekeeperUsedActive)) damage = Math.floor(damage * (1 + attacker.critbonus));
     attacker.crittedTotal ||= 0;
@@ -776,9 +777,6 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             if (attacker.damageRescaling) damage = Math.floor(damage * attacker.damageRescaling);
         };
     };
-
-    // Overwrite damage (moved before mitigation so overwritten damage gets mitigated)
-    damage = options.overwriteDamage || damage;
 
     // Damage Reduction
     if (target.damageReduction) {
@@ -1168,8 +1166,6 @@ export const getAscensionMaterial = (id: string | number, ascItems: lootInfo[]) 
 };
 
 export const getForgeMaterialCosts = (itemId: number): { ascension: number, crafting: number, ascensionMaterialId?: number; } => {
-    // Import extreme weapon functions
-    const { isExtremeWeapon, getExtremeWeaponConfig } = require('./extremeWeaponDrops');
     const isExtreme = isExtremeWeapon(itemId);
 
     // Default costs for normal weapons
@@ -1217,9 +1213,10 @@ export const filterItems = (userItems: WeaponSchema[], choice: string[], exclude
         };
 
         const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
-        const { isExtremeItem, getExtremeItemConfig } = require('./extremeWeaponDrops');
         const extremeConfig = isExtremeItem(fItem.id) ? getExtremeItemConfig(fItem.id) : null;
-        const craftItem = extremeConfig ? items[extremeConfig.ascensionMaterialId] as lootInfo : items.find((e) => e.type === "crafting material" && e.grade === fItem.grade) as lootInfo;
+        const craftItem = extremeConfig?.ascensionMaterialId !== undefined
+            ? items[extremeConfig.ascensionMaterialId] as lootInfo
+            : items.find((e) => e.type === "crafting material" && e.grade === fItem.grade) as lootInfo;
         const levelItem = items[fItem.category === "weapon" ? 56 : 57];
         const awakenItem = items[683];
 

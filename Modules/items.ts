@@ -6827,7 +6827,7 @@ export const items = [
                     myStats.hotlrabbit++;
                     ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.atk > myStats.md ? myStats.atk * 0.005 : myStats.md * 0.005), 9999));
                     if (myStats.hotlrabbit === 50) {
-                        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ` **Leporines**`, { atkMultiplier: 0.1 });
 
                             return AbilityResponse.SUCCESS;
@@ -6978,7 +6978,7 @@ export const items = [
                     if (dmg && buff) {
                         buff--;
                         myStats.atk += Math.floor(myStats.atk * 0.01);
-                        myStats.md += Math.floor(myStats.atk * 0.01);
+                        myStats.md += Math.floor(myStats.md * 0.01);
                         mybuff.atk.push(new buffInfo("*", 1.01, 9999));
                         mybuff.md.push(new buffInfo("*", 1.01, 9999));
                     };
@@ -7269,7 +7269,7 @@ export const items = [
                 };
             });
 
-            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                 if (myStats.silverLux >= 20) {
                     //@ts-ignore
                     this._used++;
@@ -7337,7 +7337,7 @@ export const items = [
 
     new weaponInfo("Gorgoneion Aegis", "weapon", "shield", ["crafting", "dungeon (extreme)"], "<:Gorgoneion_Aegis:1515880104373391371>", "https://i.ibb.co/ZRdmdR6k/Gorgoneion-Aegis.png", "shield", 200, 1200, "br", 0.04, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            if (matchStats.round % (matchStats.interaction.commandName === "rollingcow" ? 8 : 5) === 0) {
+            if (matchStats.round % (matchStats.interaction.commandName === "rolling cow" ? 8 : 5) === 0) {
                 eStats.timeFrozen = true;
                 let oldMsg = eStats.frozenMessage;
                 eStats.frozenMessage = "is petrified";
@@ -7366,7 +7366,7 @@ export const items = [
         myStats.critbleedlast = 3;
         myStats.critbleedAmount = 0.01;
 
-        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             if (matchStats.round % 8 === 0) {
                 //@ts-ignore
                 this._used++;
@@ -7401,6 +7401,51 @@ export const items = [
                 return AbilityResponse.SUCCESS;
             },
         };
+
+        // Effect 4 - Register listeners once
+        matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
+                myStats.chosenTimeout = matchStats.round;
+                if (Math.random() < 0.28) {
+                    noTimeout(matchStats, myStats);
+                    notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
+                };
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
+                myStats.chosenTimeout = matchStats.round;
+                if (Math.random() < 0.28) {
+                    noTimeout(matchStats, myStats);
+                    notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
+                };
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
+                myStats.chosenTimeout = matchStats.round;
+                if (Math.random() < 0.28) {
+                    noTimeout(matchStats, myStats);
+                    notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
+                }
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
+                myStats.chosenTimeout = matchStats.round;
+                if (Math.random() < 0.28) {
+                    noTimeout(matchStats, myStats);
+                    notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
+                }
+            };
+            return AbilityResponse.SUCCESS;
+        });
 
         // Effects 1 to 3
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -7439,51 +7484,6 @@ export const items = [
                 default: break;
             };
 
-            // Effect 4
-            matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
-                    myStats.chosenTimeout = matchStats.round;
-                    if (Math.random() < 0.28) {
-                        noTimeout(matchStats, myStats);
-                        notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
-                    };
-                };
-                return AbilityResponse.SUCCESS;
-            });
-
-            matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
-                    myStats.chosenTimeout = matchStats.round;
-                    if (Math.random() < 0.28) {
-                        noTimeout(matchStats, myStats);
-                        notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
-                    };
-                };
-                return AbilityResponse.SUCCESS;
-            });
-
-            matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
-                    myStats.chosenTimeout = matchStats.round;
-                    if (Math.random() < 0.28) {
-                        noTimeout(matchStats, myStats);
-                        notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
-                    }
-                };
-                return AbilityResponse.SUCCESS;
-            });
-
-            matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-                if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
-                    myStats.chosenTimeout = matchStats.round;
-                    if (Math.random() < 0.28) {
-                        noTimeout(matchStats, myStats);
-                        notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
-                    }
-                };
-                return AbilityResponse.SUCCESS;
-            });
-
             return AbilityResponse.SUCCESS;
         }, 9999));
 
@@ -7495,8 +7495,8 @@ export const items = [
             matchStats.lootm += 0.08;
             myStats.atk += Math.floor(myStats.atk * 0.08);
             myStats.def += Math.floor(myStats.def * 0.08);
-            mybuff.atk.push(new buffInfo("*", 0.08, 9999));
-            mybuff.def.push(new buffInfo("*", 0.08, 9999));
+            mybuff.atk.push(new buffInfo("*", 1.08, 9999));
+            mybuff.def.push(new buffInfo("*", 1.08, 9999));
 
             return AbilityResponse.SUCCESS;
         },
@@ -7507,8 +7507,8 @@ export const items = [
             matchStats.lootm += 0.15;
             myStats.atk += Math.floor(myStats.atk * 0.12);
             myStats.def += Math.floor(myStats.def * 0.12);
-            mybuff.atk.push(new buffInfo("*", 0.12, 9999));
-            mybuff.def.push(new buffInfo("*", 0.12, 9999));
+            mybuff.atk.push(new buffInfo("*", 1.12, 9999));
+            mybuff.def.push(new buffInfo("*", 1.12, 9999));
 
             return AbilityResponse.SUCCESS;
         },

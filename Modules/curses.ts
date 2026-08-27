@@ -447,7 +447,7 @@ export const curses = [
 
         return AbilityResponse.SUCCESS;
     }, "https://i.ibb.co/nM7pMPz9/content-1.png", "Saps **100** 💧 from you. If you have less than **100** 💧, instead reduces your max HP by **10%**.", "The monster and you have **+20** and **+10** mana-regen respectively. On round **15**, the monster gains all your mana-regen, while yours is set to **0**."),
-    new curseInfo("Bane of the Powerful", 20, "<:Bane_of_the_Powerful:1516679506255937619>", 2, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new curseInfo("Bane of the Powerful", 23, "<:Bane_of_the_Powerful:1516679506255937619>", 2, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         const baneClvl = matchStats.baneClvl ?? myStats.lvl;
         const dmg = baneClvl * 100;
         if (dmg >= myStats.hp) {

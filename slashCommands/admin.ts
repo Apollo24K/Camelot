@@ -244,7 +244,7 @@ const exportCommand: SlashCommand = {
             const promptEmbed = new EmbedBuilder()
                 .setColor(0xff4444)
                 .setTitle("⚠️ Confirm Phantasmagoria Reset")
-                .setDescription(`This will reset the following for ${targetLabel}:\n\n• Damage → \`0\`\n• Phases → \`0\`\n• Purchase History → \`Cleared\`\n• Strategy → \`None\`\n• Class → \`None\`\n• Equipment → \`Cleared\``)
+                .setDescription(`This will reset the following for ${targetLabel}:\n\n• Damage → \`0\`\n• Phases → \`0\`\n• Supports → \`Cleared\`\n• Echo → \`0\`\n• Purchase History → \`Cleared\`\n• Strategy → \`None\`\n• Class → \`None\`\n• Equipment → \`Cleared\``)
                 .setFooter({ text: `Requested by ${interaction.user.tag}` });
             const msg = await interaction.reply({ embeds: [promptEmbed], components: [confirmRow], ephemeral, fetchReply: true });
             const btn = await msg.awaitMessageComponent({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 }).catch(() => null);
@@ -255,6 +255,8 @@ const exportCommand: SlashCommand = {
             await updateUsers(target, {
                 phantasmagoria_boss_data: { type: "set", value: {} },
                 phantasmagoria_selected_boss: { type: "set", value: 0 },
+                phantasmagoria_supports: { type: "set", value: [] },
+                echo: { type: "set", value: 0 },
                 echo_purchases: { type: "set", value: {} },
                 phantasmagoria_strategy: { type: "set", value: 0 },
                 phantasmagoria_class: { type: "set", value: null },
@@ -267,6 +269,8 @@ const exportCommand: SlashCommand = {
                     { name: "Target", value: targetLabel, inline: true },
                     { name: "Damage", value: "`0`", inline: true },
                     { name: "Phases", value: "`0`", inline: true },
+                    { name: "Supports", value: "`Cleared`", inline: true },
+                    { name: "Echo", value: "`0`", inline: true },
                     { name: "Purchase History", value: "`Cleared`", inline: true },
                     { name: "Strategy", value: "`None`", inline: true },
                     { name: "Class", value: "`None`", inline: true },

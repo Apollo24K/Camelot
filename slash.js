@@ -1585,7 +1585,8 @@ const commands = [
 			.setName('phantasm')
 			.setDescription('Phantasmagoria boss challenges')
 			.addStringOption(option => option.setName('action').setDescription('Action to take | e.g., overview, fight').setRequired(false))
-			.addIntegerOption(option => option.setName('boss').setDescription('Boss index to target').setRequired(false)),
+			.addIntegerOption(option => option.setName('boss').setDescription('Boss index to target').setRequired(false))
+			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the overview and go directly into battle').setRequired(false)),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -1639,6 +1640,7 @@ const commands = [
 					.addChoices(
 						{ name: 'server', value: 'server' },
 						{ name: 'global', value: 'global' },
+						{ name: 'guild', value: 'guild' },
 					)
 			)
 			.addStringOption(option =>

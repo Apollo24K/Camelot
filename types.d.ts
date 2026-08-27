@@ -490,7 +490,7 @@ export interface UserSchema {
 
 export type CompactUserSchema = Omit<UserSchema, "transactions" | "char_level" | "char_class" | "char_equipment" | "dungeon_responsetime" | "stampede_responsetime">;
 
-export type UserSchemaForStats = Pick<CompactUserSchema, "id" | "name" | "xp" | "premium" | "battlechar" | "level" | "bank" | "char_ref" | "equipment" | "shield_slot" | "class" | "dungeon_classlevels" | "dungeon_floors" | "hidden_dungeon">;
+export type UserSchemaForStats = Pick<CompactUserSchema, "id" | "name" | "xp" | "premium" | "battlechar" | "level" | "bank" | "char_ref" | "equipment" | "shield_slot" | "class" | "dungeon_classlevels" | "dungeon_floors" | "hidden_dungeon" | "phantasmagoria_supports" | "phantasmagoria_boss_data" | "phantasmagoria_selected_boss" | "echo" | "echo_purchases" | "phantasmagoria_strategy" | "phantasmagoria_class" | "phantasmagoria_equipment">;
 
 export interface ServerSchema {
     rowid: number;

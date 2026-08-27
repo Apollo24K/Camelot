@@ -8795,7 +8795,7 @@ export const abilities: Record<number, Ability> = {
                 notice.push(`\n<a:hiyukiabil:1504285592404627526> **${char.name}** entered __Iai__ state [ <a:Iai:1504133875813584996> ]`);
             } else if (myStats.hiyukiState === 3 && myStats.Iaicount === 3) {// Liberation
                 const flair2 = ["May the Sakura incinerate...", "Burn this self away.", "For all wishes spoken...", "This vessel I offer.", "Roam above the Inferno...", "Gazing at the snow."];
-                notice.push(`\n<a:flut1:1504306163167002655><a:flut2:1504306260303151234> ***${flair2[Math.round(Math.random() * 2)]}*** <a:flut3:1504306344390430841><a:flut4:1504306445888524318>`);
+                notice.push(`\n<a:flut1:1504306163167002655><a:flut2:1504306260303151234> ***${flair2[Math.floor(Math.random() * flair2.length)]}*** <a:flut3:1504306344390430841><a:flut4:1504306445888524318>`);
                 dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<a:hiyukiabil:1504285592404627526> **${char.name}**`, { atkMultiplier: 4, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, dodge: false });
                 myStats.hiyukiState = 1;
                 notice.push(`\n**${char.name}** returns to her default state.`);
@@ -8848,7 +8848,7 @@ export const abilities: Record<number, Ability> = {
                     } else if (myStats.hiyukiState === 3) {// Iai
                         myStats.Iaicount++;
                         dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<a:hiyukiATK:1504297578731405504> **${char.name}**'s Iaido strike`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, dodge: false });
-                        eStats.frost += 2;
+                        eStats.frost += 1;
                         if (eStats.frost >= 10 && !eStats.timeFrozen) {
                             eStats.frost -= 10;
                             notice.push(`\n🧊 Consumed **10x** Glacio Chafe to freeze the enemy!`);
@@ -8932,6 +8932,7 @@ export const abilities: Record<number, Ability> = {
                 if (!myStats.manaCircle) return AbilityResponse.SUCCESS; // Return if no mana circles
             } else if (this.superchargeUsed === 2) {// Return if using active again (proccing supercharge)
                 noTimeout(matchStats, myStats);
+                myStats.sm += 60;
                 matchStats.sendWarning({ content: `Supercharge can only be used twice in battle.`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             } else {// Using supercharge
@@ -9027,15 +9028,6 @@ export const abilities: Record<number, Ability> = {
                     myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                         myStats.physMit -= 0.2;
                         myStats.mdMit -= 0.2;
-
-                        return AbilityResponse.SUCCESS;
-                    }));
-                } else {
-                    myStats.physMit -= 0.2;
-                    myStats.mdMit -= 0.2;
-                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                        myStats.physMit += 0.2;
-                        myStats.mdMit += 0.2;
 
                         return AbilityResponse.SUCCESS;
                     }));
