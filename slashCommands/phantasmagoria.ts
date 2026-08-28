@@ -621,7 +621,7 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                                     const ids: number[] = update.hpbars.value ?? [];
                                     for (const v of ids) {
                                         // append unique: only append if not already present
-                                        await client.query(`UPDATE users SET hpbars = array_append(hpbars, $1) WHERE id = $2 AND NOT (hpbars @> ARRAY[$1])`, [v, interaction.user.id]);
+                                        await client.query(`UPDATE users SET hpbars = array_append(hpbars, $1::int) WHERE id = $2 AND NOT (hpbars @> ARRAY[$1::int])`, [v, interaction.user.id]);
                                     }
                                 }
                             } catch (e) {
