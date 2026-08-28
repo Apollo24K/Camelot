@@ -55,7 +55,7 @@ export const OfferRow = new ActionRowBuilder<ButtonBuilder>()
 
 // Event
 export const ongoingEvent = "anniversary" as SeasonalEvent;
-export const seasonalEventStart = new Date('2026-08-28 00:00:00');
+export const seasonalEventStart = new Date('2026-08-29 00:00:00');
 export const seasonalEventLastsDays = 16;
 export const seasonalEventEnd = new Date(seasonalEventStart.getTime() + (seasonalEventLastsDays * 24 * 60 * 60 * 1000));
 export const isEventOngoing = () => seasonalEventStart.getTime() <= Date.now() && Date.now() < seasonalEventEnd.getTime();
