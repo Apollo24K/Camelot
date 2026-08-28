@@ -5,6 +5,7 @@ import { showPage, customEmojis, getAscensionMaterial, searchItem, getForgeMater
 import { ItemRarity, SlashCommand } from "../types";
 import { getUserSchema, insertNewWeapon, updateUsers } from "../Modules/queries";
 import { runeMergeRecipes } from "../Modules/runeMergeRecipes";
+import { withTransaction } from "../postgres";
 
 function forgeryEmbed(elements: (itemInfo)[]) {
     const Embed = new EmbedBuilder()
@@ -129,28 +130,49 @@ const exportCommand: SlashCommand = {
 
                 confirm.on('collect', async () => {
                     confirm.stop(), cancel.stop();
-                    const stats = await getUserSchema(interaction.user.id);
-                    if (!stats) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send("Couldn't find user");
-                        return;
+                    try {
+                        await withTransaction(async (client) => {
+                            const { rows: [userRow] } = await client.query(`SELECT items FROM users WHERE id = $1 FOR UPDATE`, [interaction.user.id]);
+                            if (!userRow) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send("Couldn't find user");
+                                return;
+                            };
+
+                            const userItems = userRow.items ?? {};
+                            if ((userItems[ascItem.id] || 0) < costs.ascension) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough of ${ascItem.emoji} **__${ascItem.name}__** (**${userItems[ascItem.id] || 0}**/${costs.ascension})`);
+                                throw new Error('INSUFFICIENT_ITEMS');
+                            };
+                            if ((userItems[craftItem.id] || 0) < costs.crafting) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough of ${craftItem.emoji} **__${craftItem.name}__** (**${userItems[craftItem.id] || 0}**/${costs.crafting})`);
+                                throw new Error('INSUFFICIENT_ITEMS');
+                            };
+
+                            const mergeValue: Record<string, number> = { [ascItem.id]: -costs.ascension, [craftItem.id]: -costs.crafting };
+                            await client.query(`UPDATE users SET items = (
+                                SELECT jsonb_object_agg(key,
+                                    CASE
+                                        WHEN items->key IS NOT NULL AND $1::jsonb->key IS NOT NULL
+                                            AND jsonb_typeof(items->key) = 'number'
+                                            AND jsonb_typeof($1::jsonb->key) = 'number' THEN
+                                                to_jsonb(GREATEST(0, (items->key)::numeric + ($1::jsonb->key)::numeric))
+                                        WHEN $1::jsonb->key IS NOT NULL THEN
+                                            $1::jsonb->key
+                                        ELSE
+                                            items->key
+                                    END
+                                )
+                                FROM jsonb_each(COALESCE(items, '{}'::jsonb) || $1::jsonb)
+                            ) WHERE id = $2`, [mergeValue, interaction.user.id]);
+
+                            await insertNewWeapon(interaction.user.id, fItem.id, fItem.category, undefined, undefined, undefined, client);
+
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully crafted ${fItem.emoji} **__${fItem.name}__**!`);
+                        });
+                    } catch (e) {
+                        if (e instanceof Error && e.message === 'INSUFFICIENT_ITEMS') return;
+                        console.error('Forge craft transaction failed:', e);
                     };
-
-                    if ((stats.items[ascItem.id] || 0) < costs.ascension) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough of ${ascItem.emoji} **__${ascItem.name}__** (**${stats.items[ascItem.id] || 0}**/${costs.ascension})`);
-                        return;
-                    };
-                    if ((stats.items[craftItem.id] || 0) < costs.crafting) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough of ${craftItem.emoji} **__${craftItem.name}__** (**${stats.items[craftItem.id] || 0}**/${costs.crafting})`);
-                        return;
-                    };
-
-                    await updateUsers(interaction.user.id, {
-                        items: { type: "merge_json", value: { [ascItem.id]: -costs.ascension, [craftItem.id]: -costs.crafting } },
-                    });
-
-                    await insertNewWeapon(interaction.user.id, fItem.id, fItem.category);
-
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully crafted ${fItem.emoji} **__${fItem.name}__**!`);
                 });
 
                 cancel.on('collect', () => {
@@ -269,42 +291,59 @@ const exportCommand: SlashCommand = {
 
                 confirm.on('collect', async () => {
                     confirm.stop(), cancel.stop();
-                    const stats = await getUserSchema(interaction.user.id);
-                    if (!stats) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send("Couldn't find user");
-                        return;
-                    };
+                    try {
+                        await withTransaction(async (client) => {
+                            const { rows: [userRow] } = await client.query(`SELECT items, coins FROM users WHERE id = $1 FOR UPDATE`, [interaction.user.id]);
+                            if (!userRow) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send("Couldn't find user");
+                                return;
+                            };
 
-                    // Re-check inventory
-                    for (const [id, qty] of Object.entries(recipe.inputs)) {
-                        if ((stats.items[id] || 0) < qty) {
-                            const inp = items[parseInt(id)];
-                            if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${inp ? `${inp.emoji} **${inp.name}**` : `ID ${id}`}.`);
-                            return;
-                        };
-                    };
-                    if (recipe.coinCost && (stats.coins < recipe.coinCost)) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough <:coins:872926669055356939>. Need **${recipe.coinCost}**, have **${stats.coins}**.`);
-                        return;
-                    };
+                            const userItems = userRow.items ?? {};
+                            for (const [id, qty] of Object.entries(recipe.inputs)) {
+                                if ((userItems[id] || 0) < qty) {
+                                    const inp = items[parseInt(id)];
+                                    if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${inp ? `${inp.emoji} **${inp.name}**` : `ID ${id}`}.`);
+                                    throw new Error('INSUFFICIENT_ITEMS');
+                                };
+                            };
+                            if (recipe.coinCost && ((userRow.coins ?? 0) < recipe.coinCost)) {
+                                if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough <:coins:872926669055356939>. Need **${recipe.coinCost}**, have **${userRow.coins}**.`);
+                                throw new Error('INSUFFICIENT_ITEMS');
+                            };
 
-                    // Deduct inputs and add output in one call
-                    const mergeValue: Record<string, number> = {};
-                    for (const [id, qty] of Object.entries(recipe.inputs)) {
-                        mergeValue[id] = -qty;
-                    };
-                    mergeValue[recipe.output] = 1;
+                            const mergeValue: Record<string, number> = {};
+                            for (const [id, qty] of Object.entries(recipe.inputs)) {
+                                mergeValue[id] = -qty;
+                            };
+                            mergeValue[recipe.output] = 1;
 
-                    const updates: any = {
-                        items: { type: "merge_json", value: mergeValue },
-                    };
-                    if (recipe.coinCost) {
-                        updates.coins = { type: 'increment', value: -recipe.coinCost };
-                    };
+                            await client.query(`UPDATE users SET items = (
+                                SELECT jsonb_object_agg(key,
+                                    CASE
+                                        WHEN items->key IS NOT NULL AND $1::jsonb->key IS NOT NULL
+                                            AND jsonb_typeof(items->key) = 'number'
+                                            AND jsonb_typeof($1::jsonb->key) = 'number' THEN
+                                                to_jsonb(GREATEST(0, (items->key)::numeric + ($1::jsonb->key)::numeric))
+                                        WHEN $1::jsonb->key IS NOT NULL THEN
+                                            $1::jsonb->key
+                                        ELSE
+                                            items->key
+                                    END
+                                )
+                                FROM jsonb_each(COALESCE(items, '{}'::jsonb) || $1::jsonb)
+                            ) WHERE id = $2`, [mergeValue, interaction.user.id]);
 
-                    await updateUsers(interaction.user.id, updates);
+                            if (recipe.coinCost) {
+                                await client.query(`UPDATE users SET coins = coins - $1 WHERE id = $2`, [recipe.coinCost, interaction.user.id]);
+                            };
 
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully merged into ${outItem.emoji} **__${outItem.name}__**!`);
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully merged into ${outItem.emoji} **__${outItem.name}__**!`);
+                        });
+                    } catch (e) {
+                        if (e instanceof Error && e.message === 'INSUFFICIENT_ITEMS') return;
+                        console.error('Forge merge transaction failed:', e);
+                    };
                 });
 
                 cancel.on('collect', () => {
