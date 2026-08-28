@@ -16,10 +16,11 @@ const exportCommand: SlashCommand = {
         if (subcommand === "list") {
             const page = interaction.options.getInteger('page') ?? 1;
 
-            const rare = curses.filter((e) => e.tier).map((c) => `> ${c.emblem} ${c.name}`).sort();
+            const unique = curses.filter((e) => e.tier === 2).map((c) => `> ${c.emblem} ${c.name}`).sort();
+            const rare = curses.filter((e) => e.tier === 1).map((c) => `> ${c.emblem} ${c.name}`).sort();
             const common = curses.filter((e) => e.tier === 0).map((c) => `> ${c.emblem} ${c.name}`).sort();
 
-            const showC = ["**Rare Curses** <:Rare_Curse:952175947409408041>", ...rare, "", "**Common Curses** <:Common_Curse:952175936554557530>", ...common];
+            const showC = ["**Unique Curses** <:Unique_Curse:1498138679510565024>", ...unique, "", "**Rare Curses** <:Rare_Curse:952175947409408041>", ...rare, "", "**Common Curses** <:Common_Curse:952175936554557530>", ...common];
 
             const elementsPerPage = 15;
             const pagesTotal = Math.ceil(showC.length / elementsPerPage);
@@ -67,7 +68,7 @@ const exportCommand: SlashCommand = {
             const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
                 .setTitle(curse.name)
-                .setDescription(`**Cost**: ${curse.cost}\\💧\n**Rarity**: ${curse.tier ? "Rare" : "Common"}\n\n**Active**: ${curse.descA}\n\n**Passive**: ${curse.descP}`)
+                .setDescription(`**Cost**: ${curse.cost}\\💧\n**Rarity**: ${curse.tier === 2 ? "Unique" : curse.tier ? "Rare" : "Common"}\n\n**Active**: ${curse.descA}\n\n**Passive**: ${curse.descP}`)
                 .setThumbnail(curse.image)
                 .setFooter({ text: `ID: #${curse.id}` });
             return interaction.reply({ embeds: [Embed] });

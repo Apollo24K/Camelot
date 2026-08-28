@@ -41,7 +41,7 @@ const skillDescs: SkillDescription[] = [
     },
     { // Asura
         "active": `Heals and increases max HP by **10%**. (Uses: 12, Timeout true)`,
-        "passive": `Normal attacks reduce max HP by **5%**, but increase ATK by **8%** permanently. Asuras can't block or dodge, nor can they use character abilities.`
+        "passive": `Normal attacks deal physical damage, reduce max HP by **5%**, but increase ATK by **8%** permanently. Asuras can't block or dodge, nor can they use character abilities.`
     },
 
     { "active": `Steals the equivalent of **10%** of his stats from the enemy for **3** rounds. (Timeout true)`, "passive": `Has a **33%** chance of healing for **10%** of damage dealt.` },
@@ -75,13 +75,13 @@ const skillDescs: SkillDescription[] = [
         "passive": `BURNING effects are replaced by PLASMA [ <a:plasma:1480572957788082267> ], which deals **30%** ATK/MD (whichever is higher) as <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085> magical damage, with its damage scaling increased by **1%** for every **5** burn triggers / <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085> hits landed (Up to 70% in total). All attacks deal magic damage. When below **25%** HP at the start of a round and the enemy has **5** or more rounds of burn, removes **5** rounds of burn from the enemy and recovers **15%** max HP.`
     },
 
-    { "active": "**Uses**: `Unlimited`\n**Cost**: `10 💧 + unlimited`\n**Timeout**: `Yes`\nDeals **110%** physical damage which increases by **+1%** for every mana consumed above 10.", "passive": `None` },
+    { "active": "Deals **110%** physical damage which increases by **+1%** for every mana consumed above 10. (Timeout true)", "passive": `None` },
     { // Grappler
         "active": `Removes the enemy's prepared counters before entering __Free-Flow__ for **7** rounds. During this period, the enemy has **0%** dodge rate, and receives **5%** more damage for every round the domain lasts, up to **35%** by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain. (CD: 7, Timeout false)`,
         "passive": "Evades the first two lethal hits. When not in __Free-Flow__, restores **3%** missing HP every round."
     },
     { "active": `Increases own ATK by **10%** permanently. (Uses: 3, Timeout false)`, "passive": `The user builds up a combo attack increasing their damage by **10%** after every attack. This resets when the user misses their target or uses another action.` },
-    { "active": `Increases dodge chance and crit rate by **10%** for 3 rounds. (Timeout false)`, "passive": `Gains a **4%** ATK boost after every dodge lasting 5 rounds.` },
+    { "active": `Increases dodge chance and crit rate by **10%** for 3 and 4 rounds respectively. (Timeout false)`, "passive": `Gains a **4%** ATK boost after every dodge lasting 5 rounds.` },
 ];
 
 export default class classInfo {

@@ -11,7 +11,7 @@ export type ItemRarity = 'genesis' | 'mythical' | 'legendary' | 'unique' | 'rare
 
 export type PrimaryStat = 'hp' | 'hp%' | 'atk' | 'atk%' | 'def' | 'def%' | 'md' | 'md%' | 'mr' | 'cr' | 'cd' | 'dodge' | 'br' | 'mana' | 'sm' | 'mg' | 'shield';
 
-export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring" | "rune" | "consumable";
+export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring" | "rune" | "consumable" | "dungeon access";
 
 export type ItemType =
     | "fish"
@@ -26,7 +26,10 @@ export type ItemType =
     | "shield" | "helmet" | "cuirass" | "gloves" | "boots"
     | "ring"
     | "rune"
-    | "potion";
+    | "potion"
+    | "entry item";
+
+export type Emoji = `<:${string}:${number}>` | `<a:${string}:${number}>`;
 
 export type RaidRank = 'F-' | 'F' | 'F+' | 'E-' | 'E' | 'E+' | 'D-' | 'D' | 'D+' | 'C-' | 'C' | 'C+' | 'B-' | 'B' | 'B+' | 'A-' | 'A' | 'A+' | 'S-' | 'S' | 'S+' | 'SS-' | 'SS' | 'SS+' | 'SSS-' | 'SSS' | 'SSS+' | 'EX-' | 'EX' | 'EX+';
 
@@ -459,6 +462,16 @@ export interface UserSchema {
     perpetual_fire: number;
     perpetual_fragments: number;
 
+    // Phantasmagoria Gamemode
+    phantasmagoria_supports: number[];
+    phantasmagoria_boss_data: Record<string, { best_damage: number; best_phases: number; }>;
+    phantasmagoria_selected_boss: number;
+    echo: number;
+    echo_purchases: Record<string, number>;
+    phantasmagoria_strategy: number;
+    phantasmagoria_class: number | null;
+    phantasmagoria_equipment: Record<string, number>;
+
     chars: number[];
     char_ref: Record<string, number>;
     char_level: Record<string, any>;
@@ -467,6 +480,7 @@ export interface UserSchema {
     char_equipment: Record<string, any>;
 
     dungeon_floors: Record<string, number>;
+    hidden_dungeon: Record<string, number>;
     dungeon_limit: number;
     dungeon_classes: number[];
     dungeon_classlevels: Record<string, number>;
@@ -476,7 +490,7 @@ export interface UserSchema {
 
 export type CompactUserSchema = Omit<UserSchema, "transactions" | "char_level" | "char_class" | "char_equipment" | "dungeon_responsetime" | "stampede_responsetime">;
 
-export type UserSchemaForStats = Pick<CompactUserSchema, "id" | "name" | "xp" | "premium" | "battlechar" | "level" | "bank" | "char_ref" | "equipment" | "shield_slot" | "class" | "dungeon_classlevels" | "dungeon_floors">;
+export type UserSchemaForStats = Pick<CompactUserSchema, "id" | "name" | "xp" | "premium" | "battlechar" | "level" | "bank" | "char_ref" | "equipment" | "shield_slot" | "class" | "dungeon_classlevels" | "dungeon_floors" | "hidden_dungeon" | "phantasmagoria_supports" | "phantasmagoria_boss_data" | "phantasmagoria_selected_boss" | "echo" | "echo_purchases" | "phantasmagoria_strategy" | "phantasmagoria_class" | "phantasmagoria_equipment">;
 
 export interface ServerSchema {
     rowid: number;
@@ -693,7 +707,7 @@ export interface ITrigger {
     set used(used: number);
 };
 
-export type TriggerEvents = "attack" | "crit" | "noncrit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade" | "stabilRefresh" | "burn";
+export type TriggerEvents = "attack" | "crit" | "noncrit" | "counter" | "dodge" | "block" | "miss" | "execute" | "shieldBreak" | "ATK" | "DEF" | "ABILITY" | "CSKILL" | "minionDeath" | "revival" | "heal" | "deathEvade" | "stabilRefresh" | "burn" | "action" | "phaseChange" | "curse";
 
 export type TriggerCallback = ((args: { trigger: ITrigger, caster: DetailedStats, target: DetailedStats, casterBuff: Buffs, targetBuff: Buffs, matchStats: MatchStats, options: any; }) => any);
 

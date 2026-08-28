@@ -50,11 +50,13 @@ const event: BotEvent = {
                 console.log(`ERROR Interaction Failed 'deferUpdate()' on "${interaction.customId}"`);
             });
 
+
             if (interaction.customId?.startsWith("ref-dungeon-")) {
                 const spamResult = checkUserSpam(interaction.user.id, "dungeon");
                 if (spamResult === "warn") return interaction.followUp({ content: "Woah, you're being too fast! Please wait a few seconds.", ephemeral: true });
                 if (spamResult === "block") return;
             };
+
 
             if (interaction.customId?.startsWith("ref-")) {
                 const [, commandName] = interaction.customId.split("-");

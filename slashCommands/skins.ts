@@ -19,6 +19,18 @@ const exportCommand: SlashCommand = {
         const stats = user.id === interaction.user.id ? author.schema : await getCachedUserSchema(user.id, interaction.client);
         if (!stats) return interaction.reply(`**${user.username}** has not started playing yet`);
 
+        // Build map of equipped skin IDs → character names
+        const equippedMap = new Map<number, string[]>();
+        for (const [charId, skinId] of Object.entries(stats.char_skin ?? {})) {
+            if (typeof skinId === 'number') {
+                const char = characters[Number(charId)];
+                const charName = char?.name ?? `#${charId}`;
+                const arr = equippedMap.get(skinId) ?? [];
+                arr.push(charName);
+                equippedMap.set(skinId, arr);
+            }
+        }
+
         // Filter
         const fSkins = skins.filter((skin) => {
             return !filter || (
@@ -41,7 +53,8 @@ const exportCommand: SlashCommand = {
 
             for (let j = 0; j < skinsInAnime.length; j++) {
                 const { length } = characters[skinsInAnime[j].cid].name;
-                showSkins.push(`> **${skinsInAnime[j].name.slice(0, length)}** ${skinsInAnime[j].name.slice(length)}${stats.skins.includes(skinsInAnime[j].id) ? ` <a:check:873196253276700682>` : ""}`);
+                const equipped = equippedMap.get(skinsInAnime[j].id);
+                showSkins.push(`> **${skinsInAnime[j].name.slice(0, length)}** ${skinsInAnime[j].name.slice(length)}${stats.skins.includes(skinsInAnime[j].id) ? ` <a:check:873196253276700682>` : ""}${equipped ? ` *(equipped)*` : ""}`);
             };
             showSkins.push("");
         };

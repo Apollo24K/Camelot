@@ -1,5 +1,5 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
-import { armorInfo, chestInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
+import { armorInfo, chestInfo, entryInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel, getRingSlotsTotal } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
@@ -818,6 +818,18 @@ const exportCommand: SlashCommand = {
                     const fItem = searchItem(itemChoice, interaction);
                     if (!fItem) return;
 
+                    // Match Entry Item
+                    if (fItem instanceof entryInfo) {
+                        if (!(stats.items[fItem.id] && stats.items[fItem.id] > 0)) {
+                            return interaction.reply(`You don't have ${fItem.emoji} **${fItem.name}**`);
+                        };
+
+                        stats.equipment["entry"] = `${fItem.id}`;
+                        equipped.push(`${fItem.emoji} **__${fItem.name}__**`);
+
+                        continue;
+                    };
+
                     // Match Rune
                     if (fItem instanceof runeInfo) {
                         if (!(stats.items[fItem.id] && stats.items[fItem.id] > 0)) {
@@ -1016,6 +1028,68 @@ const exportCommand: SlashCommand = {
             });
 
             return interaction.reply(`Added ${fItem.emoji} __${fItem.name}__ to your wish list!`);
+        };
+
+        if (subcommand === "entry") {
+            await interaction.deferReply();
+            const targetUser = interaction.options.getUser('user') ?? interaction.user;
+            const page = interaction.options.getInteger('page') || 1;
+            const stats = targetUser.id === interaction.user.id ? author.schema : await getUserSchema(targetUser.id);
+            if (!stats) return interaction.editReply(`${targetUser.id === interaction.user.id ? "You don't have any" : `**${targetUser.username}** has no`} items.`);
+
+            let thumbnail = characters[stats.chars[Math.floor(Math.random() * stats.chars.length)]].image;
+            if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
+
+            let entryItems = Object.entries(stats.items).filter(([id, qty]) => items[parseInt(id)] instanceof entryInfo && qty > 0);
+
+            if (!entryItems.length) return interaction.editReply(`${targetUser.id === interaction.user.id ? "You don't have any" : `**${targetUser.username}** has no`} entry items.`);
+
+            entryItems.sort((a, b) => (items[parseInt(a[0])] as entryInfo).floor - (items[parseInt(b[0])] as entryInfo).floor);
+
+            let elementsPerPage = 10;
+            let pagesTotal = Math.ceil(entryItems.length / elementsPerPage);
+            let currPage = 1;
+            if (page <= pagesTotal && page > 0) currPage = page;
+
+            let showItems = showPage(currPage, entryItems, elementsPerPage);
+
+            let desc = "\n\n<:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162>\n";
+            desc += showItems.map(([id, qty]: [string, number]) => {
+                const item = items[parseInt(id)] as entryInfo;
+                return `${item.bar}${item.name} | ${item.emoji} x${qty} — Floor **${item.floor}**`;
+            }).join("\n");
+
+            const Embed = new EmbedBuilder()
+                .setColor(0xbbffff)
+                .setAuthor({ name: `${targetUser.username}'s entry items`, iconURL: targetUser.displayAvatarURL({ size: 512 }) })
+                .setThumbnail(thumbnail)
+                .setDescription(desc)
+                .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+
+            if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed] });
+            return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then(msg => {
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+
+                collector.on('collect', async r => {
+                    if (r.customId === "prev") {
+                        if (currPage > 1) currPage--;
+                        else currPage = pagesTotal;
+                    } else {
+                        if (currPage < pagesTotal) currPage++;
+                        else currPage = 1;
+                    };
+
+                    showItems = showPage(currPage, entryItems, elementsPerPage);
+                    desc = "\n\n<:mythical1:1041726768530329690><:mythical2:1041726767188168724><:mythical3:1041726765577556039><:mythical4:1041726763862065162>\n";
+                    desc += showItems.map(([id, qty]: [string, number]) => {
+                        const item = items[parseInt(id)] as entryInfo;
+                        return `${item.bar}${item.name} | ${item.emoji} x${qty} — Floor **${item.floor}**`;
+                    }).join("\n");
+
+                    Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                });
+            });
         };
 
     },

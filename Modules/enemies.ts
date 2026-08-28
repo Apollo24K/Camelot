@@ -146,6 +146,26 @@ export const enemies: enemyInfo[] = [
     new enemyInfo("Vaision", "Dragon", "a Dragon Lord", "M", true, {}, {}, {}, [49, 667], ["https://i.ibb.co/DDVwf6b/pdl.png"], [98], 46),
     new enemyInfo("Ainz Ooal Gown", "Overlord", "the Overlord", "M", true, { mdChance: 1 }, {}, { mana: 120 }, [673], ["https://i.ibb.co/9NZgKGJ/aog.png"], [99], 47),
     new enemyInfo("Veldora", "True Dragon", "a True Dragon", "M", true, { mdChance: 0.75 }, {}, {}, [48, 667], ["https://i.ibb.co/ds61TGkm/veldora.png"], [100], 48),
+    new enemyInfo("Ciel", "Lord of Wisdom", "a Manas", "NB", true, {}, {}, {}, [829], ["https://i.ibb.co/cXVv40nn/ciel.png"], [101], 49),
+    new enemyInfo("McBurn", "The Blazing Demon", "the Beyond", "M", true, {}, {}, { mana: 120 }, [798], ["https://i.ibb.co/Y4Jhf9vF/mcburnsta1.png"], [102], 50),
+    new enemyInfo("Father", "Homunculus", "the Dwarf in the Flask", "M", true, {}, {}, {}, [90, 804], ["https://i.ibb.co/xR0gfYT/Father-51.jpg"], [103], 51),
+    new enemyInfo("Eliza (alter)", "Merchant", "the Dealer", "F", true, {}, {}, {}, [664, 854], ["https://i.ibb.co/0mR9Lpy/c.png"], [104], 52),
+    new enemyInfo("Antares", "Dragon", "The Monarch of Destruction", "M", true, {}, {}, {}, [48, 667, 831], ["https://i.ibb.co/bgSjmKSC/Solo-leveling.webp"], [105], 53),
+    new enemyInfo("Nereid", "Sea Nymph", "the Unyielding", "F", true, {}, {}, {}, [88, 830], ["https://i.ibb.co/n8sNFd3f/content.jpg"], [106], 54),
+    new enemyInfo("Ryomen Sukuna", "Fingers", "the King of Curses", "M", true, { mg: 50 }, {}, {}, [663, 803], ["https://i.ibb.co/bMHzQvfy/images-7.webp"], [107], 55),
+    new enemyInfo("Aneira (alter)", "Human", "the Queen of Frost", "F", true, {}, {}, {}, [832], ["https://i.ibb.co/bXW0gcv/examiner.png"], [108], 56),
+    new enemyInfo("Rainee (alter)", "Human", "a Healer", "F", true, {}, {}, {}, [666, 825], ["https://i.ibb.co/bXW0gcv/examiner.png"], [109], 57),
+    new enemyInfo("Sung Jin Woo", "Human", "the Shadow Monarch", "M", true, {}, {}, {}, [92, 663, 833], ["https://i.ibb.co/Vb8bdLg/Gt-Bam-O3-WEAISL7z.jpg"], [110], 58),
+    new enemyInfo("Oktavia von Seckendorff", "Witch", "the Mermaid Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/JR1CZ7f5/image-1.jpg"], [111], 59),
+    new enemyInfo("Ophelia", "Witch", "the Wudan Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/dw0kfh5L/image-3.jpg"], [112], 60),
+    new enemyInfo("Candeloro", "Witch", "the Dress-up Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/qLFJ70mk/image-4.jpg"], [113], 61),
+    new enemyInfo("Homulily", "Witch", "the Nutcracker Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/nMjbdtjv/image-5.jpg"], [114], 62),
+    new enemyInfo("Kriemhild Gretchen", "Witch", "the Witch of Salvation", "F", true, {}, {}, { mana: 200 }, [834], ["https://i.ibb.co/qMBdXLzC/image-9.jpg"], [115], 63),
+    new enemyInfo("Medusa", "Gorgon", "the Petrifying Gorgon", "F", true, {}, {}, {}, [827], ["https://i.ibb.co/bXW0gcv/examiner.png"], [116], 64),
+    new enemyInfo("Kuronosu", "Human", "the Time Manipulator", "M", true, { mana: 500 }, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [117], 65),
+    new enemyInfo("Espathera (alter)", "Human", "the Pathfinder", "F", true, {}, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [118], 66),
+    new enemyInfo("Iustitia", "Celestial", "the Arbiter", "F", true, {}, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [119], 67),
+    new enemyInfo("Luxuria (alter)", "Human", "the Magnetic", "NB", true, { mana: 300 }, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [120], 68),
 ];
 
 export const bossMobs: enemyInfo[] = [
@@ -2192,7 +2212,359 @@ export const nightmareMobs: enemyInfo[] = [
     ),
 ];
 
+export const phantasmagoriaBosses: enemyInfo[] = [
+    new enemyInfo("Feyra", "Phantom", "the Monolith's Guard", "F", true, { mana: 1000, mg: 30 }, {}, {}, [], ["https://i.ibb.co/35LSQJRZ/Feyra.png"], [], 0,
+        new skillInfo(0, 300, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Feyra
+            if (eStats.abilityUsed >= 4) {
+                // Finale
+                myStats.dodge -= 0.1;
+                mybuff.dodge.push(new buffInfo("+", -0.1, 9999));
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    // Uses Finale the round after the next round
+                    let level = Math.min(Math.floor(eStats.finaleCount / 10), 6);
+                    let atkBuff = Math.min(0.15 * (eStats.phase - 1), 8);
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **${enemy.name}**'s finale`, { atkMultiplier: atkBuff, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, canCounter: false });
+                    eStats.counter++;
+                    eStats.finaleCount++;
+                    if (level === 6) {
+                        eStats.sm += 50;
+                        myStats.vulnerabilityDynamic += 0.01;
+                    };
+                    return AbilityResponse.SUCCESS;
+                }));
+                notice.push(`\n<a:info:1514630864594665524> **${enemy.name}** is about to unleash her Finale!`);
 
+            } else if (eStats.abilityUsed < eStats.maxActs) {
+                eStats.abilityUsed++;
+                eStats.applyAct(eStats.abilityUsed);
+            };
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.phase = 1;
+            eStats.maxphase = 201;
+            eStats.abilityUsed = 0;
+            eStats.maxActs = 4;
+            eStats.finaleCount = 0;
+            eStats.counter ??= 0;
+            eStats.replaceButton = {};
+            //eStats.thrill ??= 0;
+            eStats.damageReduction ??= 0;
+            //myStats.lastCountered ??= -2;
+            eStats.feyraHits ??= 0;
+            eStats.vulnerabilityDynamic ??= 1;
+            myStats.vulnerabilityDynamic ??= 1;
+            let flairProgress = 0;
+            const flair = [
+                `The Liminal Descent? It was never her fault.`,
+                `She didn’t wish to leave the Phantasm -- the entry to the descent untended.`,
+                `She was to be sleepless, in front of a “gate”, that kept the nameless spiral away.`,
+                `Humans continue to be confused, and wander into danger in the spirit of adventurism.`,
+                `Guarding the gate was her ~~job~~ unending sentence.`,
+                `Even time pities her stillness amidst the wear and tear.`,
+                `Rust climbs her body, chaining her to the very gates that shall not be passed.`,
+                `Yet a charm from the descent steals her gaze.`,
+                `“Does the loneliness not sting?”`,
+                `“Is this truly necessary?”`,
+                `“They are to meet their fated doom of age regardless, why stand for them?”`,
+                `“Do you even remember the vows of your Lord?”`,
+                `She resists the tears that stream--  or maybe she simply couldn’t cry...`,
+                `Her muscles have long been stiff, and her eyes were calcified.`,
+                `Only then did she decide to move- paving way for the the Liminal Descent to initiate their hunt.`,
+                `The monolith has moved, and the apex predator has finally awakened.`
+            ];
+
+            notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** enters Act (I)`);
+
+            eStats.replaceButton.atk = {
+                "run": async (eStats, eStatsFixed, myStats, ebuff, mybuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<a:phanATK:1512108126109827172> **${enemy.name}**`, { atkMultiplier: 1.2, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, normalATK: true });
+
+                    return AbilityResponse.SUCCESS;
+                }
+            };
+
+            eStats.applyAct = (num: number) => {
+                switch (num) {
+                    case 1: {
+                        eStats.damageReduction += 0.15;
+                        // matchStats.on("crit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                        //     if (caster === eStats && options.normalATK) eStats.thrill += 3;
+                        // });
+                        // matchStats.on("noncrit", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                        //     if (caster === eStats && options.normalATK) eStats.thrill += 1;
+                        // });
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** moves to Act (II)`);
+                        break;
+                    };
+                    case 2: {
+                        // eStats.mg += 50;
+                        // ebuff.mg.push(new buffInfo("+", 50, 9999));
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** moves to Act (III)`);
+                        break;
+                    };
+                    case 3: {
+                        eStats.cr += 0.5;
+                        if (eStats.cr > 1) eStats.cr = 1;
+                        eStats.cd += 1;
+                        // const newManaPool = Math.max(Math.floor(myStats.mana / 2), 1);
+                        // myStats.mana = newManaPool;
+                        // if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+                        // mybuff.mana.push(new buffInfo("=", newManaPool, 9999));
+                        ebuff.cr.push(new buffInfo("+", 0.5, 9999));
+                        ebuff.cd.push(new buffInfo("+", 1, 9999));
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** moves to Act (IV)`);
+                        break;
+                    };
+                    case 4: {
+                        // matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                        //     if (target === eStats) {
+                        //         if (eStats.replaceButton?.atk?.run !== undefined) {
+                        //             eStats.replaceButton.atk.run(myStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user);
+                        //         } else dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                        //     };
+                        // });
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** moves to her Final Act!`);
+                        break;
+                    };
+                };
+            };
+
+            // Scale sub-linearly
+            matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === eStats) {
+                    eStats.maxhp = Math.floor(2000 * eStats.phase + 1000 * Math.pow(eStats.phase, 1.05));
+                    ebuff.atk.push(new buffInfo("*", 1.05, 9999));
+                    ebuff.md.push(new buffInfo("*", 1.05, 9999));
+                    notice.push(`\n<:tally:1403331476916801566> Current Phase: **${eStats.phase}**`);
+                    if (eStats.phase % 3 === 0 && eStats.phase <= 48) {
+                        notice.push(`\n✧ *${flair[flairProgress]}* ✧`);
+                        flairProgress++;
+                    };
+                    const newMaxActs = Math.min(Math.floor(eStats.phase / 10), 4);
+                    while (eStats.abilityUsed < newMaxActs) {
+                        eStats.abilityUsed++;
+                        eStats.applyAct(eStats.abilityUsed);
+                    };
+                    if (newMaxActs > eStats.maxActs) eStats.maxActs = newMaxActs;
+
+                    return AbilityResponse.SUCCESS;
+                };
+            });
+
+            // matchStats.on("counter", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            //     if (caster === myStats) {
+            //         myStats.lastCountered = matchStats.round;
+
+            //         return AbilityResponse.SUCCESS;
+            //     };
+            // });
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === eStats) {
+                    eStats.feyraHits++;
+
+                    if (eStats.feyraHits % 5 === 0) {
+                        // Spectral Dislocation
+                        eStats.shield += Math.floor(eStats.maxhp * 0.1);
+                        myStats.feyraShBreakBuff = matchStats.round;
+                        notice.push(`\n<a:phanDEF:1511752314095141076> **${enemy.name}** gains a shield from Spectral Dislocation...`);
+                    };
+
+                    return AbilityResponse.SUCCESS;
+                };
+            });
+
+            matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (target === eStats && myStats.feyraShBreakBuff + 2 > matchStats.round) {
+                    eStats.vulnerabilityDynamic += 0.25;
+                    notice.push(`\n<a:phanDEF:1511752314095141076> Ego break! **${enemy.name}** takes **25%** more damage for **2** rounds!`);
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        eStats.vulnerabilityDynamic -= 0.25;
+
+                        return AbilityResponse.SUCCESS;
+                    }));
+
+                    return AbilityResponse.SUCCESS;
+                };
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Act (II)
+                // if (eStats.abilityUsed >= 1) eStats.damageReduction = Math.min(0.01 * Math.floor(eStats.thrill / 10), 0.25);
+
+                // Act (III)
+                if (eStats.abilityUsed >= 2) {
+                    if (eStats.counter >= 20) {
+                        eStats.invertHealing = 1;
+                        //eStats.invertHealCrit = true;
+                    } else {
+                        eStats.invertHealing = 0;
+                        //eStats.invertHealCrit = false;
+                    };
+                };
+
+                // Act (V)
+                if (eStats.abilityUsed >= 4 && Math.random() < 0.33) eStats.counter++;
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["After **5** successful hits, gains a **10%** max HP shield. Breaking her shield this or the next round causes her to take **25%** more damage for **2** rounds", "Active (**300** 💧) : Progresses an Act. Starts off in Act (I), and ending with Act (V). New acts carry the passives from previous acts. When already in the final act, simply casts __Finale___\n\n-# Act (I) : ATK deals **120%** damage (default).\n-# Act (II) : Takes **15%** less damage\n-# Act (III) : When counter attempts (counter the next hit effects) reach **20+**, opponent's healing instead deals damage.\n-# Act (IV) : **+50%** crit. rate, **+100%** critical damage.\n-# Act (V) : **33%** chance to counter a hit every round.\n\n__Finale__ :\n- Decreases the opponent's dodge by **10%** permanently. Deals **15%** uncounterable damage for every phase defeated in a single strike (Max: 800%), and counters the next hit (stackable). After **10** uses, using this refunds **50** 💧. The opponent also takes **1%** more damage permanently, up to **+99%**."]])
+    ),
+    // Morgath - Shadow Weaver (Phantasm Boss 2)
+    new enemyInfo("Morgath", "Shadow Weaver", "the Liminal Descent", "M", true, { mana: 100, mg: 0 }, {}, {}, [], ["https://i.ibb.co/mrhR9F5q/The-Descent.png"], [], 1,
+        new skillInfo(0, 0, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Cost
+            if (!eStats.usedActive) {
+                myStats.hp -= Math.floor(myStats.hp * (eStats.liminalKey ? 0.15 : 0.3));
+                eStats.hp -= Math.floor(eStats.hp * (eStats.liminalKey ? 0 : 0.15));
+                eStats.liminalKey--;
+
+                eStats.usedActive = true;
+
+                let oldAtk = myStats.atk;
+                myStats.atk = myStats.md;
+                ebuff.atk.push(new buffInfo("=", myStats.md, 9999));
+                myStats.md = oldAtk;
+                ebuff.md.push(new buffInfo("=", oldAtk, 9999));
+                myStats.maxhp -= Math.floor(myStats.maxhp * 0.04);
+
+                notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** sends the battle into a separate dimension...`);
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 6, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.usedActive = false;
+
+                    return AbilityResponse.SUCCESS;
+                }));
+            } else if (eStats.liminalKey) { // Mimick effects
+                eStats.liminalKey--;
+                let effectIndex = Math.floor(Math.random() * 9);
+                switch (effectIndex) {
+                    case 0: {
+                        // Isolde EX
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Ioslde?**`, { overwriteDamage: Math.floor((eStats.maxhp - eStats.hp) * 0.25), magicDamage: true, dodge: false });
+                        addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor((eStats.maxhp - eStats.hp) * 0.25), {});
+                        break;
+                    };
+                    case 1: {
+                        // Cid Kagenou
+                        notice.push(`\n<:atomic:1076326318565765150> _**I?... AM... AOTMCI**_`);
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Cid Kagneuo?**`, { atkMultiplier: 2, magicDamage: true, dodge: false, block: false });
+                        break;
+                    };
+                    case 2: {
+                        // Sinon
+                        if (myStats.mr < myStats.def) {
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Sionn?**`, { atkMultiplier: 0.95 + myStats.dodge, magicDamage: true, mdChance: -1, critChance: 0, dodge: false });
+                        } else {
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Sionn?**`, { atkMultiplier: 0.95 + myStats.dodge, critChance: 0, dodge: false });
+                        };
+                        break;
+                    };
+                    case 3: {
+                        // Gilgamesh
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **Giglmaesh?** began charging Ea?????`);
+                        dealDamage(myStats, myStats, ebuff, mybuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Giglmaesh?** used Ea! He`, { atkMultiplier: 2.5, magicDamage: true, dodge: false });
+                        break;
+                    };
+                    case 4: {
+                        // Luminous (alter)
+                        const sacrifice = Math.ceil(eStats.maxhp * 0.24);
+                        addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, -sacrifice, {});
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Luinmous (atler)?**`, { atkMultiplier: 1.4, selfheal: false });
+                        break;
+                    };
+                    case 5: {
+                        eStats.counter += 2;
+                        // Nao Tomori
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Noa Toomir?**`, { atkMultiplier: 1.2, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                        break;
+                    };
+                    case 6: {
+                        // Albedo (GI) increases his ATK by 25% of his current DEF
+                        let inc = Math.floor(myStats.def / 4);
+                        myStats.atk += inc;
+                        mybuff.atk.push(new buffInfo("+", inc, 9999));
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **Abledo (GI)?** has increased his **ATK** by **25%** of his **DEF** (**+${inc}**)`);
+                        break;
+                    };
+                    case 7: {
+                        // Shalltear Bloodfallen
+                        const drain = Math.floor(eStats.maxhp * 0.08);
+                        myStats.hp -= drain;
+                        addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, drain, { showNotif: true });
+                        if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
+                        if (myStats.hp < 0) myStats.hp = 0;
+                        notice.push(`\n<a:phanABILITY:1511752352942657626> **Sallthear Boolfadllen?** has drained **${drain}**HP from **${char.name}**`);
+                        break;
+                    };
+                    case 8: {
+                        // Rosalia
+                        const dmg = dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Roslaia?**`, { atkMultiplier: 1.15, magicDamage: true, mdChance: -1 });
+                        if (dmg && Math.random() < 0.5) {
+                            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.maxhp * 0.04), 2));
+                            notice.push(`\n<a:phanCSKILL:1511752392591409412> **Roslaia?** caused bleeding for 2 rounds`);
+                        };
+                        break;
+                    };
+                    case 9: {
+                        // Izuku Midoriya
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<a:phanABILITY:1511752352942657626> **Izkuu Mirodiya?** uses nOe fro All at **???**%! He`, { atkMultiplier: 1.2, magicDamage: true, block: false });
+                        // Sacrifice
+                        addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, -(eStats.hp * 0.07), {});
+                        break;
+                    };
+                };
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.phase = 1;
+            eStats.maxphase = 201;
+            eStats.mg = 0;
+            eStats.liminalKey = 0;
+            eStats.usedActive = false;
+            eStats.counter ??= 0;
+            ebuff.mg.push(new buffInfo("=", 0, 9999));
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                eStats.sm += 10;
+                if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
+                return AbilityResponse.SUCCESS;
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.sm >= 50) {
+                    eStats.sm -= 50;
+                    eStats.liminalKey++;
+                    eStats.cr += 0.1;
+                    eStats.cd += 0.2;
+                    if (eStats.cr > 1) eStats.cr = 1;
+                    ebuff.cr.push(new buffInfo("+", 0.1, 2));
+                    ebuff.cd.push(new buffInfo("+", 0.2, 2));
+                    notice.push(`\n<a:info:1514630864594665524> **${enemy.name}** has gained a Liminal Key`);
+                };
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            notice.push(`\n<a:phanABILITY:1511752352942657626> **${enemy.name}** emerges from the gates of Liminality...`);
+
+            matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                if (caster === eStats) {
+                    eStats.maxhp = Math.floor(1800 * eStats.phase + 800 * Math.pow(eStats.phase, 1.05));
+                    ebuff.atk.push(new buffInfo("*", 1.04, 9999));
+                    ebuff.md.push(new buffInfo("*", 1.04, 9999));
+                    notice.push(`\n<:tally:1403331476916801566> Current Phase: **${eStats.phase}**`);
+                    return AbilityResponse.SUCCESS;
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["Doesn't regenerate mana normally, but gains **10** :droplet: every time an attack lands on him or you.", "At the start of the round, converts **50** :droplet:to **1x** `Liminal Key` and gains **10%** critical rate and **20%** critical damage, lasting for **2** rounds.", "Active : Its :sparkles: costs **15%** current HP of both itself and the player to enter a separate dimension for **6** rounds. If it has a `Liminal Key`, consumes it to not lose HP, but the player loses double. Every time you enter the dimension, your ATK and MD stat is swapped, and you have **-4%** max HP.\n\nWhile in the dimension, the boss can spend **1x** `Liminal Key` to use :sparkles: again, following up with random mimicks...",]])
+    ),
+];
 
 export class floorInfo {
     private _floor: number;
@@ -2582,6 +2954,31 @@ export const floors: floorInfo[] = [
     new floorInfo(298, true, 5, [46], { "hp": 80808, "atk": 14000, "def": 420, "md": 15000, "mr": 460 }),
     new floorInfo(299, true, 5, [47], { "hp": 88470, "atk": 14578, "def": 367, "md": 15205, "mr": 424 }),
     new floorInfo(300, true, 5, [48], { "hp": 99999, "atk": 18250, "def": 464, "md": 19999, "mr": 518 }),
+];
+
+// Hidden Dungeon Floors (1-20) — isolated from normal progression, accessed via entry items
+export const hiddenFloors: floorInfo[] = [
+    new floorInfo(0, false, 0, [], {}),
+    new floorInfo(1, true, 5, [49], { "hp": 150000, "atk": 22000, "def": 660, "md": 25000, "mr": 660, "cr": 0.4, "cd": 1.5, "shield": 2000 }),
+    new floorInfo(2, true, 5, [50], { "hp": 150000, "atk": 22000, "def": 660, "md": 25000, "mr": 660, "cr": 0.4, "cd": 1.5, "shield": 2000 }),
+    new floorInfo(3, true, 5, [51], { "hp": 110000, "atk": 22000, "def": 660, "md": 22000, "mr": 660, "cr": 0.4, "cd": 1.5 }),
+    new floorInfo(4, true, 5, [52], { "hp": 150000, "atk": 25000, "def": 625, "md": 27000, "mr": 625, "cr": 0.45, "cd": 1.6 }),
+    new floorInfo(5, true, 5, [53], { "hp": 150000, "atk": 26000, "def": 650, "md": 28000, "mr": 650, "cr": 0.45, "cd": 1.6 }),
+    new floorInfo(6, true, 5, [54], { "hp": 120000, "atk": 26000, "def": 675, "md": 26000, "mr": 675, "cr": 0.45, "cd": 1.6 }),
+    new floorInfo(7, true, 5, [55], { "hp": 150000, "atk": 26000, "def": 700, "md": 26000, "mr": 700, "cr": 0.48, "cd": 1.65 }),
+    new floorInfo(8, true, 5, [56], { "hp": 135000, "atk": 26000, "def": 700, "md": 26000, "mr": 700, "cr": 0.48, "cd": 1.65 }),
+    new floorInfo(9, true, 5, [57], { "hp": 140000, "atk": 26000, "def": 700, "md": 26000, "mr": 700, "cr": 0.48, "cd": 1.65 }),
+    new floorInfo(10, true, 5, [58], { "hp": 145000, "atk": 26000, "def": 700, "md": 26000, "mr": 700, "cr": 0.5, "cd": 1.7 }),
+    new floorInfo(11, true, 5, [59], { "hp": 100000, "atk": 26000, "def": 700, "md": 30000, "mr": 700, "cr": 0.5, "cd": 1.7 }),
+    new floorInfo(12, true, 5, [60], { "hp": 100000, "atk": 26000, "def": 700, "md": 30000, "mr": 700, "cr": 0.5, "cd": 1.7 }),
+    new floorInfo(13, true, 5, [61], { "hp": 160000, "atk": 26000, "def": 725, "md": 30000, "mr": 725, "cr": 0.55, "cd": 1.75 }),
+    new floorInfo(14, true, 5, [62], { "hp": 80000, "atk": 26000, "def": 725, "md": 30000, "mr": 725, "cr": 0.55, "cd": 1.75 }),
+    new floorInfo(15, true, 5, [63], { "hp": 200000, "atk": 28000, "def": 725, "md": 30000, "mr": 725, "cr": 0.55, "cd": 1.75 }),
+    new floorInfo(16, true, 5, [64], { "hp": 175000, "atk": 37000, "def": 725, "md": 39000, "mr": 725, "cr": 0.55, "cd": 1.8 }),
+    new floorInfo(17, true, 5, [65], { "hp": 180000, "atk": 38000, "def": 725, "md": 38000, "mr": 725, "cr": 0.6, "cd": 1.8 }),
+    new floorInfo(18, true, 5, [66], { "hp": 130000, "atk": 34000, "def": 725, "md": 34000, "mr": 725, "cr": 0.6, "cd": 1.8 }),
+    new floorInfo(19, true, 5, [67], { "hp": 190000, "atk": 40000, "def": 1000, "md": 42000, "mr": 1050, "cr": 0.48, "cd": 1.86, "shield": 14000 }),
+    new floorInfo(20, true, 5, [68], { "hp": 195000, "atk": 41000, "def": 1025, "md": 43000, "mr": 1075, "cr": 0.49, "cd": 1.88, "shield": 14500 }),
 ];
 
 // Loot Drops

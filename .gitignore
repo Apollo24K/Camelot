@@ -42,3 +42,9 @@ response_time_plot.png
 
 # Poke
 slashCommands/fluxadmin.ts
+
+# Remove committed DB dump
+mydb.dump
+
+# Session SQL dump
+Camelot.session.sql

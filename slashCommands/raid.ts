@@ -132,12 +132,16 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
                     .setLabel(`Confirm`)
                     .setStyle(ButtonStyle.Success)
                     .setDisabled(currentlySelected === undefined),
-            ).addComponents(
+                new ButtonBuilder()
+                    .setCustomId('rankdown')
+                    .setLabel(`Decrease Rank`)
+                    .setStyle(ButtonStyle.Primary)
+                    .setDisabled(currentlySelected === undefined || currentRankUp <= 0),
                 new ButtonBuilder()
                     .setCustomId('rankup')
                     .setLabel(`Increase Rank`)
                     .setStyle(ButtonStyle.Primary)
-                    .setDisabled(currentlySelected === undefined),
+                    .setDisabled(currentlySelected === undefined || (raids[currentlySelected].rankValue + currentRankUp + 1) > raids[currentlySelected].maxRankValue),
             );
     };
 
@@ -147,14 +151,44 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
             `\n\n**Selected Raid**: ${(currentlySelected !== undefined && raidRewards) ? `${raids[currentlySelected].name} (${raids[currentlySelected].phasesTotal} ${raids[currentlySelected].phasesTotal === 1 ? "phase" : "phases"})\n**Total HP**: ${formatNumberWithQuotes(raids[currentlySelected].getTotalRankHp(raidRankLetters[raids[currentlySelected].rankValue + currentRankUp]))} <:HP:1062043800979116143>\n**Recommended Rank**: ${raidRankLetters[raids[currentlySelected].rankValue + currentRankUp]}\n### Reward Pool:\n>>> -# **${formatNumberWithQuotes(raidRewards.coins)}x** <:coins:872926669055356939>\n-# **${formatNumberWithQuotes(raidRewards.guild_marks)}x** <:guild_mark:1317944450814840923>\n-# **${formatNumberWithQuotes(raidRewards.skill_points)}x** <:skill_point:1351505460301136014>\n-# **${formatNumberWithQuotes(raidRewards.glorious_chest)}x** <:glorious_chest:1069076067081539726>\n-# **${formatNumberWithQuotes(raidRewards.luxurious_chest)}x** <:luxurious_chest:1069300112364404817>\n-# **${formatNumberWithQuotes(raidRewards.royal_chest)}x** <:royal_chest:1069301128711376976>${raidRewards.deluxe_chest > 0 ? `\n-# **${formatNumberWithQuotes(raidRewards.deluxe_chest)}x** <:deluxe_chest:1069301259603026061>` : ""}\n-# **${formatNumberWithQuotes(raidRewards.featured_ring)}x** ${raids[currentlySelected ?? 0].loot.map((e) => items[e].emoji).join(" | ")}` : "`None`"}`;
     };
 
+    function getRankOptions(): SelectMenuComponentOptionData[] {
+        if (currentlySelected === undefined) return [{ label: "Select a boss first", value: "0" }];
+        const baseVal = raids[currentlySelected].rankValue;
+        const maxVal = raids[currentlySelected].maxRankValue;
+        const options: SelectMenuComponentOptionData[] = [];
+        for (let i = baseVal; i <= maxVal; i++) {
+            const offset = i - baseVal;
+            options.push({
+                label: raidRankLetters[i],
+                value: offset + "",
+                description: `HP: ${formatNumberWithQuotes(raids[currentlySelected].getTotalRankHp(raidRankLetters[i]))}`,
+                default: offset === currentRankUp,
+            });
+        };
+        return options;
+    };
+
+    function getRankRow() {
+        return new ActionRowBuilder<StringSelectMenuBuilder>()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId('rank_select')
+                    .setPlaceholder(currentlySelected === undefined ? 'Select a rank...' : `Rank: ${raidRankLetters[raids[currentlySelected].rankValue + currentRankUp]}`)
+                    .setDisabled(currentlySelected === undefined)
+                    .addOptions(getRankOptions()),
+            );
+    };
+
     const Embed = new EmbedBuilder()
         .setColor(0xff3838)
         .setDescription(getDesc());
-    interaction.reply({ embeds: [Embed], components: [selection, getButtonRow()] }).then((msg) => {
+    interaction.reply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] }).then((msg) => {
 
         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "raid_selection", componentType: ComponentType.StringSelect, time: 120000 });
         const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 120000 });
         const rankup = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "rankup", componentType: ComponentType.Button, time: 120000 });
+        const rankdown = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "rankdown", componentType: ComponentType.Button, time: 120000 });
+        const rankSelect = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "rank_select", componentType: ComponentType.StringSelect, time: 120000 });
 
         collector.on('collect', async r => {
             await r.deferUpdate().catch(() => {
@@ -168,11 +202,11 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
                 .setDescription(getDesc())
                 .setThumbnail(raids[currentlySelected].enemy.image[0])
                 .setColor(raids[currentlySelected].accentColor as ColorResolvable);
-            interaction.editReply({ embeds: [Embed], components: [selection, getButtonRow()] });
+            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
         confirm.on('collect', async () => {
-            collector.stop(); confirm.stop(); rankup.stop();
+            collector.stop(); confirm.stop(); rankup.stop(); rankdown.stop(); rankSelect.stop();
 
             if (currentlySelected === undefined) return interaction.followUp({ content: "Please select a raid first", ephemeral: true });
 
@@ -204,7 +238,33 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
 
             // Update embed
             Embed.setDescription(getDesc());
-            interaction.editReply({ embeds: [Embed], components: [selection, getButtonRow()] });
+            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+        });
+
+        rankdown.on('collect', async () => {
+            if (currentlySelected === undefined) return interaction.followUp({ content: "Please select a raid first", ephemeral: true });
+
+            if (currentRankUp <= 0) {
+                return interaction.followUp({ content: "You are already at the base rank for this raid", ephemeral: true });
+            };
+
+            currentRankUp--;
+
+            Embed.setDescription(getDesc());
+            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+        });
+
+        rankSelect.on('collect', async r => {
+            await r.deferUpdate().catch(() => {
+                console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
+            });
+
+            if (currentlySelected === undefined) return;
+
+            currentRankUp = parseInt(r.values[0]);
+
+            Embed.setDescription(getDesc());
+            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
     });
@@ -232,6 +292,8 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
 
         const attemptsLeft = attemptsTotal - attemptsUsed;
 
+        const memberIds = new Set<string>();
+
         const getDesc = (): string => {
             if (tab === "overview") {
                 return `### Raid Overview`
@@ -252,12 +314,23 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
                     + `\n\n-# Attempts left: ${attemptsLeft}/${attemptsTotal}`;
                 // + `\n\n-# <:info:1131679799207796756> ${tips[Math.floor(Math.random() * tips.length)]}`;
             } else if (tab === "ranking") {
-                return `### Raid Ranking`
-                    + `\n${Object.keys(raid.participation).length ? Object.entries(raid.participation)
-                        .sort(([, a], [, b]) => b[0] - a[0]) // Sort by damage dealt (first element in value array)
+                const ranked = Object.keys(raid.participation).length
+                    ? Object.entries(raid.participation)
+                        .sort(([, a], [, b]) => b[0] - a[0])
                         .map(([userId, [damage, rounds]], i) => `-# ${i + 1}. <@${userId}> - **${formatNumberWithQuotes(damage)}** damage in **${rounds}**/${attemptsTotal} attempts`)
-                        .join('\n') : `-# No participants yet`}`
-                    + `\n\n-# Attempts left: ${attemptsLeft}/${attemptsTotal}`;
+                        .join('\n')
+                    : `-# No participants yet`;
+
+                const unattempted = memberIds.size
+                    ? [...memberIds].filter(id => !raid.participation[id])
+                        .map(id => `<@${id}>`)
+                    : [];
+
+                const unattemptedText = unattempted.length
+                    ? `\n**Unattempted**: ${unattempted.join(' · ')}`
+                    : '';
+
+                return `### Raid Ranking\n${ranked}${unattemptedText}\n\n-# Attempts left: ${attemptsLeft}/${attemptsTotal}`;
             };
 
             return "";
@@ -268,6 +341,12 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
             .setThumbnail(currentRaid.enemy.image[0])
             .setDescription(getDesc());
         interaction.reply({ embeds: [Embed], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] }).then((msg) => {
+            if (interaction.guild) {
+                interaction.guild.members.fetch().then(members => {
+                    members.forEach(m => { if (!m.user.bot) memberIds.add(m.user.id); });
+                }).catch(() => { });
+            };
+
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "play", componentType: ComponentType.Button, time: 90000 });
             const ranking = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ranking", componentType: ComponentType.Button, time: 90000 });
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
@@ -927,6 +1006,7 @@ const exportCommand: SlashCommand = {
             );
 
         const isCompactEmbed = !!author.schema.user_settings.compact_battle_embeds;
+        const showEnemyStats = !!author.schema.user_settings.display_enemy_stats;
         const threatLevelWarning = isCompactEmbed ? "" : `You encountered ${enemy.title.split(" ")[0]} **${enemy.title.split(" ").slice(1).join(" ")}**!\n${difficulty}\n\n`;
 
         async function newFight() {
@@ -937,7 +1017,7 @@ const exportCommand: SlashCommand = {
                     .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
                     .setFooter({ text: `Enemy EP: ${eStatsC.ep} | round 1 | time left: ${FIGHT_DURATION}s` })
                     .setTitle(`Guild Raid ${isTestRun ? "(TEST RUN)" : ""}  `)
-                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
+                    .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eImage);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
@@ -954,7 +1034,7 @@ const exportCommand: SlashCommand = {
 
                     let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
-                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
+                        Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         // await msg.edit({ embeds: [Embed] });
 

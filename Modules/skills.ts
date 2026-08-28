@@ -1,10 +1,11 @@
 
+
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
-import { dealDamage, addHeal, noTimeout, procburn } from "./functions";
+import { dealDamage, addHeal, noTimeout, procburn, userLevel } from "./functions";
 import { items } from "./items";
 import buffInfo from "./buffs";
 import delayedBuffs from "./delayedBuffs";
-import { CharacterRarity, ClassAbility, IskillInfo } from "../types";
+import { Buffs, CharacterRarity, ClassAbility, IskillInfo } from "../types";
 import { getUserSchema } from "./queries";
 import { AbilityResponse } from "./components";
 
@@ -478,7 +479,7 @@ export const skills: skillInfo[] = [
             myStats.sm += 40;
             return AbilityResponse.FAILURE;
         };
-        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, {});
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, { showNotif: true });
         mybuff.mg.push(new buffInfo("+", -2, 9999));
         myStats.mg -= 2;
         if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
@@ -1062,7 +1063,7 @@ export const skills: skillInfo[] = [
         eStats.burntype = 2;
         if (typeof eStats.burnduration !== "number") {// Trigger burn every round
             eStats.burnduration = 0;
-            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
 
                 return AbilityResponse.SUCCESS;
@@ -1167,11 +1168,11 @@ export const skills: skillInfo[] = [
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(52, 25, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Wardancer increases dodge chance and crit rate by +10% for 3 rounds
+        // Wardancer increases dodge chance and crit rate by +10% for 3 and 4 rounds respective
         myStats.dodge += 0.1;
         myStats.cr += 0.1;
         mybuff.dodge.push(new buffInfo("+", 0.1, 2));
-        mybuff.cr.push(new buffInfo("+", 0.1, 2));
+        mybuff.cr.push(new buffInfo("+", 0.1, 3));
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} dodge chance and crit rate by **+10%** each`);
 
         return AbilityResponse.SUCCESS;
@@ -1421,6 +1422,1339 @@ export const bossAbilities: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, async () => AbilityResponse.SUCCESS, [100, "Veldora makes a complete recovery"]),
+    new skillInfo(37, 0, async () => {
+        return AbilityResponse.FAILURE;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        mybuff.atk.push(new buffInfo("*", 0.88, 9999));
+        mybuff.md.push(new buffInfo("*", 0.88, 9999));
+        mybuff.cr.push(new buffInfo("+", -0.12, 9999));
+        mybuff.cd.push(new buffInfo("+", -0.12, 9999));
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            mybuff.atk.push(new buffInfo("*", 0.88, 9999));
+            mybuff.md.push(new buffInfo("*", 0.88, 9999));
+            mybuff.cr.push(new buffInfo("+", -0.12, 9999));
+            mybuff.cd.push(new buffInfo("+", -0.12, 9999));
+            if (matchStats.round === 14 && !(myStats.name === "Rimuru Tempest" || myStats.name === "Raphael EX")) {
+                // On 8th round: Nihility Collapse
+                matchStats.on("action", {
+                    maxRound: 1,
+                    maxUsage: 1,
+                    callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                        if (caster === myStats) {
+                            if (eStats.timeFrozen) {
+                                eStats.timeFrozen = false;
+                                notice.push(`\n✧ __Thought Acceleration__: Stun possibility denied. ✧`);
+                            };
+                            if (myStats.evadeDeathStrike || myStats.evadeDeathChance) {
+                                notice.push(`\n✧ __Thought Acceleration__: Death Evasion possibility denied. ✧`);
+                                myStats.evadeDeathStrike = 0;
+                                myStats.evadeDeathChance = 0;
+                            };
+                            if (myStats.rev || myStats.maxRevivals) {
+                                notice.push(`\n✧ __Thought Acceleration__: Revival possibility denied. ✧`);
+                                myStats.rev = 0;
+                                myStats.maxRevivals = 0;
+                            };
+                            if (myStats.counter) {
+                                notice.push(`\n✧ __Thought Acceleration__: Counter possibility denied. ✧`);
+                                myStats.counter = 0;
+                            };
+                            if (myStats.dodge >= 0 || myStats.block >= 0) {
+                                notice.push(`\n✧ __Thought Acceleration__: Dodge/Block possibility denied. ✧`);
+                                myStats.dodge = 0;
+                                myStats.block = 0;
+                            };
+                            let dmg = Math.floor(myStats.maxhp * 30 + (Math.random() * 10));
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** used Nihilty Collapse and`, { overwriteDamage: dmg, ignoreShield: true, dodge: false, block: false });
+                        };
+                        return true;
+                    }
+                });
+            };
+            return AbilityResponse.SUCCESS;
+        }, 14));
+
+        return AbilityResponse.SUCCESS;
+    }, [301, "Decreases enemy's ATK & MD by **12%** every round for the first **14** rounds (stacked multiplicatively)", "Decreases enemy's critical rate and critical damage by **12%** every round for the first **14** rounds", "On round **14**, uses __Thought Acceleration__: Removes any immobilization (e.g.stun/freeze) from self. Negates dodge, block, revival, death evasion, counter", "After which, deals **3000%** of enemy's max HP as true damage"]),
+    new skillInfo(38, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        let dmg = Math.floor(myStats.hp * 0.5);
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:Angbar:1498001499975061554> Turn up the heat! **${enemy.name}** cast purgatory and`, { overwriteDamage: dmg, ignoreShield: true, dodge: false, block: false });
+        mybuff.hp.push(new buffInfo("*", 0.95, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.burnResistance = 1;
+        notice.push(`\n✧ Lame. I sure hope you aren't just a waste of time. ✧`);
+        let notif = 0;
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (matchStats.round % 4 === 0) {
+                // Every 4th round: Blazing Demon (Stat buff)
+                eStats.atk *= 2;
+                eStats.md *= 2;
+                eStats.cr = 1;
+                eStats.cd += 2;
+                eStats.shield += 2000;
+                notice.push(`\n🔥 **${enemy.name}** used __Blazing Demon__ and greatly boosted their stats this round`);
+            };
+
+            if (eStats.hp / eStats.maxhp < 0.75 && notif === 0) {
+                notice.push(`\n✧ Oh, you aren't half as bad as I thought you'd be. ✧`);
+                embed.setImage(`https://i.ibb.co/zVy3Yzc3/mcburnsta2.png`);
+                notif = 1;
+            };
+
+            if (eStats.hp / eStats.maxhp < 0.5 && notif === 1) {
+                notice.push(`\n✧ Now things are getting fun! I feel like getting more serious now. ✧`);
+                let dmg = dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:Angbar:1498001499975061554> **${enemy.name}** cast __Incandescent Hellfire__ and`, { atkMultiplier: 2 });
+                if (dmg) Object.keys(mybuff).forEach((e) => mybuff[e as keyof Buffs] = []);
+                embed.setImage(`https://i.ibb.co/vxpMN5GD/mcburnsta3.png`);
+                notif = 2;
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [302, "Immune to immobilization effects (e.g. stun/freeze)", "Immune to burn damage", "Curse is set to Scorched Earth (<:Scorched_Earth:1502126250594930831>)", "At the start of the round, if he has less than **50%** HP, uses __Incandescent Hellfire__ (at most once per fight): Deals **200%** damage and clears all enemy buffs", "Every **4** rounds: Uses __Blazing Demon__: **Doubles** ATK & MD, increases critical rate to **100%** and increases CRIT DMG by **200%**. Then, gains **2000** shield", "**Active**: Deals **50%** of enemy's current HP as true damage, and applies a **5%** HP DoT (stacked multiplicatively) to the enemy permanently\n\n**Lore**:\n> He has amnesia and lost his purpose, but in the meantime seeks strong opponents to fight against. Hired by Ouroboros, he is tasked with various missions, but gets bored easily when no strong opponents await him there. When one does come across though, he gets overjoyed to not hold back anymore."]),
+    new skillInfo(39, 0, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+        return AbilityResponse.FAILURE;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.phase = 1;
+        eStats.maxphase = 2;
+        eStats.phaseNotif = ["Return to stone..."];
+        eStats.removeDefCap = true;
+        eStats.refuseATK = false;
+        eStats.refuseATKMessage = ["✧ The promised day... I await. ✧", "✧ Return to your origins... ✧", "✧ I honestly don't care. ✧", "✧ This is a waste of time. ✧", "✧ I can always create another stone... ✧", "✧ I'm not through, there are more! ✧"];
+
+        // Phase transition
+        matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                eStats.shield += Math.floor(eStats.maxhp / 2);
+                eStats.def = 660;
+                eStats.phaseChangeTurn = matchStats.round;
+                myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    if (matchStats.round > 30) {
+                        myStats.maxhp -= 500;
+                        eStats.maxhp += 500;
+                    };
+                    switch (matchStats.round) {
+                        case (eStats.phaseChangeTurn + 1): {
+                            eStats.shield = 0;
+                            myStats.dodge -= 0.5;
+                            if (myStats.dodge < 0) myStats.dodge = 0;
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:The_Flawed:1498701713983668415> **${enemy.name}** unleashes the power of GOD and`, { atkMultiplier: (myStats.usedBlockRound === matchStats.round || myStats.shield > 0) ? 4 : 8, ignoreShield: true });
+                            break;
+                        };
+                        case (eStats.phaseChangeTurn + 2): {
+                            eStats.damageReduction = 1;
+                            eStats.invisCount = 0;
+                            eStats.refuseATK = true;
+                            notice.push(`\n✧ Mere humans can barely lay a finger on me... **${enemy.name}** gained __INVINCIBILITY__ ✧`);
+
+                            // Remove INVINCIBILITY
+                            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                                if (target === eStats && eStats.invisCount < 30) {
+                                    eStats.invisCount++;
+                                    switch (eStats.invisCount) {
+                                        case 20: notice.push(`\n✧ I just wanted this world's knowledge for my own! ✧`); break;
+                                        case 25: notice.push(`\n✧ Why should I be punished for that?! ✧`); break;
+                                        case 30: {
+                                            eStats.damageReduction = 0;
+                                            eStats.vulnerabilityDynamic ??= 0;
+                                            eStats.vulnerabilityDynamic += 0.5;
+                                            notice.push(`\n✧ **${enemy.name}** lost __INVINCIBILITY__ and became __CARBONIZED__ ✧`);
+                                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:The_Flawed:1498701713983668415> **${enemy.name}** launches a frantic attack and`, { atkMultiplier: 4, canCounter: false, dodge: false, block: false, ignoreShield: true });
+                                            eStats.refuseATK = false;
+                                            break;
+                                        };
+                                    };
+                                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:The_Flawed:1498701713983668415> **${enemy.name}** retaliated and`, { atkMultiplier: 0.8 });
+                                };
+                            });
+                            break;
+                        };
+                        default: break;
+                    };
+
+                    return AbilityResponse.SUCCESS;
+                }, 9999));
+            };
+        });
+
+        // Phase 1: Increases max HP by 5% every time he receives a physical hit
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (eStats.phase === 1 && target === eStats && !options.magicDamage) eStats.maxhp += Math.floor(eStats.maxhp * 0.05);
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (eStats.phase === 1) {
+                eStats.def = 1000000000; // Phase 1: Immune to physical damage
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [303, "Multiphase (2 phases)", "Immune to physical damage (Phase 1)", "Increases max HP by **5%** upon receiving a physical hit (Phase 1)", "Upon transitioning to Phase 2, summons a shield of **50%** max HP", "On the next round, breaks the shield, reduces your dodge rate by **50%**, and deals **800%** true damage. The damage scaling is halved if the player used DEF the last round or has a shield", "On the next round, Becomes __INVINCIBLE__ (takes 0% damage). Does not attack. Upon receiving an attack, retaliates and deals **80%** damage.", "After taking **30** hits, loses __INVINCIBILITY__ and deals **400%** uncounterable undodgeable unblockable true damage.", "Then becomes __CARBONIZED__, taking **+50%** damage.", "If he manages to stay alive for more than **30** rounds, begins to steal **500** HP from you and adds it to his own max HP every round."]),
+    new skillInfo(40, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Active: Debt Shield - 60 mana, sets mana to 0, generates shield/heal based on coins taken
+        myStats.sm = 0;
+        const healPer2k = Math.floor(eStats.aneiraCoinsTaken / 2000);
+
+        if (healPer2k > 0) {
+            const amount = Math.floor(eStats.maxhp * 0.01) * healPer2k;
+            eStats.shield += amount;
+            addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, amount, {});
+            if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
+            notice.push(`\n💰 **${enemy.name}** cast **Debt Shield** and gained **${amount}** shield and HP from **${eStats.aneiraCoinsTaken}** coins`);
+        } else {
+            eStats.sm += 30;
+            notice.push(`\n💰 **${enemy.name}** cast **Debt Shield**! You lost all mana! (< 2000 coins taken)`);
+        };
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Initialize enemy state
+        eStats.aneiraCoinsTaken = 0;
+        notice.push(`\n✧ Return everything you were bestowed upon... ✧`);
+        matchStats.lootm = 0;
+
+        // Eliza interaction - double ATK and MD
+        if (char.name === "Eliza") {
+            myStats.atk *= 2;
+            myStats.md *= 2;
+            mybuff.atk.push(new buffInfo("*", 2, 9999));
+            mybuff.md.push(new buffInfo("*", 2, 9999));
+            notice.push(`\n💰 **Eliza** doubled her own ATK and MD!`);
+        };
+
+        // Passive: steal 500 coins when enemy takes damage
+        matchStats.on("attack", ({ trigger, caster, target }) => {
+            if (target === eStats && caster === myStats) {
+                eStats.aneiraCoinsTaken += 500;
+                matchStats.loot -= 500;
+                notice.push(`\n💰 **${enemy.name}** stole **500** coins! Total: **${eStats.aneiraCoinsTaken}**`);
+            };
+        });
+
+        return AbilityResponse.SUCCESS;
+    }, [304, "Steals **500** coins when damaged (can go negative)", "**Active (60 💧)**: Sets mana to **0**, gains **1%** shield and heal **1%** HP per **2000** coins stolen. If she has stolen less than **2000** coins, restores **30** 💧", "Gold bonuses are disabled"]),
+    new skillInfo(41, 25, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Calculate damage: 80% true damage + 10% per Dragon Mark + 20% if burning
+        const dragonMarks = myStats.dragonMarks || 0;
+        const isBurning = eStats.burn > 0;
+        const baseMultiplier = isBurning ? 1.0 : 0.8;
+        const markMultiplier = 0.1 * dragonMarks;
+        const totalMultiplier = baseMultiplier + markMultiplier;
+
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🔥 **${enemy.name}**`, { ignoreShield: true, atkMultiplier: totalMultiplier, magicDamage: true });
+        // Grant 2 Dragon Marks
+        myStats.dragonMarks += 2;
+        notice.push(`\n🔥 **${enemy.name}** used __Breadth of Destruction__!`);
+        notice.push(`\n🐉 **Dragon Marks**: ${myStats.dragonMarks}/3`);
+        // Check for Dragon Mark explosion (3 marks)
+        if (myStats.dragonMarks >= 3) {
+            // Explode all stacks: 80% true damage + 5% vulnerability for 1 round
+            myStats.dragonMarks -= 3;
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `💥 **${enemy.name}** ignited all Dragon Marks!`, { ignoreShield: true, atkMultiplier: 0.8, magicDamage: true });
+            // Apply vulnerability and prevent blocking/dodging
+            myStats.vulnerabilityDynamic += 0.05;
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.vulnerabilityDynamic -= 0.05;
+                return AbilityResponse.SUCCESS;
+            }));
+        };
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Initialize Antares state
+        myStats.dragonMarks = 0;
+        myStats.vulnerabilityDynamic ??= 1;
+        notice.push(`\n✧ Kneel, or burn. I offer no third option. ✧`);
+        eStats.deathMessage = "✧ You have not won. You have only... delayed the inevitable. ✧";
+        eStats.playerDeathMessage = "✧ Pathetic. I expected more from your kind! ✧";
+        // Passive: Fire Magic - immune to burning, only magic damage
+        eStats.burnResistance = 1;
+        eStats.mdChance = 1;
+        if (char.name === "Sung Jin Woo" || char.name === "SJW EX") {
+            myStats.atk *= 2;
+            myStats.md *= 2;
+            mybuff.atk.push(new buffInfo("*", 2, 9999));
+            mybuff.md.push(new buffInfo("*", 2, 9999));
+        };
+        // Passive: Every 3rd attack adds Dragon Mark
+        eStats.dragonCount = 0;
+        myStats.attackCount = 0;
+        matchStats.on("attack", ({ trigger, caster, target }) => {
+            if (caster === myStats && target === eStats) {
+                eStats.dragonCount++;
+                myStats.attackCount++;
+                if (myStats.attackCount % 3 === 0) {
+                    myStats.dragonMarks++;
+                    notice.push(`\n🐉 **${enemy.name}** applied **Dragon Mark** (${myStats.dragonMarks}/3)`);
+                    // Check for Dragon Mark explosion (3 marks)
+                    if (myStats.dragonMarks >= 3) {
+                        // Explode all stacks: 80% true damage + 5% vulnerability for 1 round
+                        myStats.dragonMarks -= 3;
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `💥 **${enemy.name}** ignited all Dragon Marks!`, { ignoreShield: true, atkMultiplier: 0.8, magicDamage: true });
+                        // Apply vulnerability and prevent blocking/dodging
+                        myStats.vulnerabilityDynamic += 0.05;
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.vulnerabilityDynamic -= 0.05;
+                            return AbilityResponse.SUCCESS;
+                        }));
+                    };
+                };
+            };
+        });
+        // If enemy is vulnerable = cant block/dodge
+        myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            if (myStats.vulnerabilityDynamic > 1 || myStats.vulnerability > 1) {
+                myStats.dodge = 0;
+                myStats.block = 0;
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [305, "Only deals magical damage, and is immune to BURNING", "Curse is set to Dragon Manipulation (<:Dragon_Manipulation:1502126144080838749>)", "Every 3rd attack applies `Dragon Mark`", "Upon reaching **3** `Dragon Marks`: Ignites player, deals **80%** true damage, and applies **5%** vulnerability", "When the enemy is vulnerable, they cannot block/dodge", "**Active (60 💧)**: Breadth of Destruction - Deals **80%** true damage (**100%** if burning) + **10%** per `Dragon Mark`, before applying **2** `Dragon Marks`"]),
+    new skillInfo(42, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Nereid
+        myStats.shield += 300;
+        matchStats.trigger("shieldBreak", eStats, myStats, ebuff, mybuff);
+        if (eStats.shield > 0) matchStats.trigger("shieldBreak", myStats, eStats, mybuff, ebuff);
+        const dmg = Math.floor(eStats.atk * 0.3 + eStats.maxhp * 0.000005 * (myStats.shield + eStats.shield));
+        myStats.shield = 0;
+        eStats.shield = 0;
+        myStats.SPshield = 0;
+        eStats.SPshield = 0;
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** broke all shield and`, { overwriteDamage: dmg, magicDamage: true });
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.SPshield ??= 0;
+        myStats.SPshield ??= 0;
+        eStats.SPshieldType = 1;
+        eStats.shield += Math.floor(eStats.maxhp * 0.2);
+        eStats.SPshield += Math.floor(eStats.maxhp * 0.1);
+
+        matchStats.on("curse", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === eStats) {
+                eStats.SPshield += (eStats.maxhp * 0.05);
+                notice.push(`\n<:spshield1:1501752295182827560> **${enemy.name}** gains a special shield of **5%** max HP`);
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("shieldBreak", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (target === eStats && options.special === true) {
+                eStats.negateHeal = 1;
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { overwriteDamage: Math.floor(myStats.maxhp * 0.05), magicDamage: true });
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+                    eStats.negateHeal = 0;
+                    return AbilityResponse.SUCCESS;
+                }, 9999));
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+        return AbilityResponse.SUCCESS;
+    }, [306, "Starts battles with a **20%** max HP shield, and another layer of **10%** max HP special shield.", "Special shield [ <:spshield1:1501752295182827560> ]: Has same features as a normal shield, but also reduces damage taken by **50%**, and reflects damage to the attacker by **2x** (**4x** if it is true damage). Upon breaking, deals **5%** of opponent's max HP and halts healing on the opponent", "Upon using a curse, gains **5%** max HP worth of special shield", "Curse is set to Mermaid Murmur (<:Mermaid_Murmur:1502126075117834310>)", "Active (60 💧) : Grants the opponent **300** shield, before breaking all normal & special shield on both sides, dealing **50%** true dmg + **0.0005%** max HP dmg for every **1** shield destroyed this way."]),
+    new skillInfo(43, 0, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (eStats.ce < 800) {
+            return AbilityResponse.FAILURE;
+        } else {
+            eStats.ce -= 800;
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** uses his World Cutting Slash and`, { atkMultiplier: 3, magicDamage: true, canCounter: false });
+            myStats.timeFrozen = true;
+            myStats.frozenMessage = `is immobilized by **${enemy.name}**`;
+
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.timeFrozen = false;
+
+                return AbilityResponse.SUCCESS;
+            }));
+        };
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Initialize enemy state
+        eStats.ce ??= 0;
+        eStats.ce += 2000;
+        eStats.ceCap ??= 2500;
+        let notif = 1;
+
+        // Cursed energy conversion
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            let manaConvert = Math.floor(eStats.sm * 0.8);
+            eStats.sm -= manaConvert;
+            eStats.ce += manaConvert;
+            if (eStats.ce > eStats.ceCap) eStats.ce = eStats.ceCap; // Cap at 2000 by default
+            notice.push(`\n<a:ceanimated:1468216281768661093> ${enemy.name} now has ${eStats.ce} <:ce:1466817050860191817>`);
+
+            if (eStats.hp / eStats.maxhp < 0.5 && notif) {
+                notif--;
+                notice.push(`\n✧ Stand proud. You're strong. ✧`);
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        notice.push(`\n<a:ceanimated:1468216281768661093> **${enemy.name}** will store and manipulate Cursed Energy [ <:ce:1466817050860191817> ]...`);
+        notice.push(`\n✧ Gambare, gambare... ✧`);
+
+        // Special Grade interaction
+        if (char.name === "Gojou Satoru EX" || char.name === "Yuta Okkotsu EX") {
+            eStats.mg = Math.floor(eStats.mg / 2);
+            ebuff.mg.push(new buffInfo("*", 0.5, 9999));
+            if (char.name === "Gojou Satoru EX") notice.push(`\n✧ A nameless fish huh? ✧`);
+            if (char.name === "Yuta Okkotsu EX") notice.push(`\n✧ So, how far can you go? ✧`);
+            notice.push(`\n✨ **${enemy.name}** has halved mana regeneration and has his Reversed Cursed Technique disabled.`);
+        } else {
+            // Heal 5% max HP when landing a hit
+            matchStats.on("attack", ({ trigger, caster, target }) => {
+                if (caster === eStats) {
+                    addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor((eStats.maxhp - eStats.hp) * 0.05), {});
+                    if (Math.random() < 0.33) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** cleaves and dismantles. He`, { atkMultiplier: 1, magicDamage: true, ignoreShield: true });
+                };
+            });
+        };
+        return AbilityResponse.SUCCESS;
+    }, [307, "Upon landing a hit, activates __Reversed Cursed Technique__,  recovering **5%** missing HP. After which, he has a **33%** chance to follow-up with Cleave & Dismantle, dealing **70%** true damage.", "Curse is set to Malevolent Shrine []", "Regenerates **50** 💧 every round. Converts **80%** of mana owned at the start of every round into Cursed Energy [ <:ce:1466817050860191817> ] (up to 2000). He starts out the fight with max Cursed Energy.", "**Active (1000 <:ce:1466817050860191817>)**: His World Cutting Slash deals **300%** uncounterable damage, and stuns the opponent for **2** rounds.\n\n**Lore**:\n> King of Curses of the Heian era, who had sealed himself away due to lack of worthy opponents, has returned after 1000 years... in search for a worthy opponent."]),
+    new skillInfo(44, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Aneira (alter)
+        eStats.abilCount++;
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** unleashed an Avalanche and`, { atkMultiplier: 0.3 * eStats.abilCount, magicDamage: true });
+        ebuff.mg.push(new buffInfo("+", 1, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.anatkCount = 0;
+        eStats.abilCount = 0;
+        myStats.vulnerabilityDynamic ??= 1;
+        notice.push(`\n✧ Curses... Curses to all.. CURSES TO ALL! ✧`);
+
+        if (char.name === "Aneira EX" || char.name === "Aneira") {
+            eStats.atk *= 1.3;
+            eStats.md *= 1.3;
+            eStats.def *= 0.7;
+            eStats.mr *= 0.7;
+            ebuff.atk.push(new buffInfo("*", 1.3, 9999));
+            ebuff.md.push(new buffInfo("*", 1.3, 9999));
+            ebuff.def.push(new buffInfo("*", 0.7, 9999));
+            ebuff.mr.push(new buffInfo("*", 0.7, 9999));
+            notice.push(`\n✧ Great... even my alternate forms have dared to trespasss... ✧`);
+        };
+
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === eStats) {
+                eStats.anatkCount++;
+                if (eStats.anatkCount % 5 === 0) {
+                    myStats.timeFrozen = true;
+                    myStats.frozenMessage = `is immobilized by **${enemy.name}**`;
+                    myStats.mg = 0;
+                    mybuff.mg.push(new buffInfo("=", 0, 1));
+                    eStats.negateHeal = 1;
+                    myStats.vulnerabilityDynamic += 0.33;
+
+                    // Reset
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        myStats.timeFrozen = false;
+                        eStats.negateHeal = 0;
+                        myStats.vulnerabilityDynamic -= 0.33;
+
+                        return AbilityResponse.SUCCESS;
+                    }));
+                };
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+        return AbilityResponse.SUCCESS;
+    }, [308, "After landing every **5** hits, freezes the opponent for **1** round, where they cannot make an action, heal, or generate mana, while taking **+33%** damage", "When fighting against Aneira EX / Aneira, gains **+30%** ATK & MD, but loses **30%** DEF & MR", "Curse is set to Chilling Cold (<:Chilling_Cold:1503414323857330357>)", "Active (50 💧) : Deals **30%** damage for every time this was used. This also permanently increases her mana-regen by **1** 💦"]),
+    new skillInfo(45, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Rainee (alter)
+        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** used her healing powers...`, Math.floor(myStats.maxhp * 0.05), { showNotif: true });
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.stayAlive ??= 0;
+        myStats.stayAlive += 1;
+        myStats.hp = Math.floor(myStats.maxhp / 2);
+        matchStats.winconInvert = true;
+        eStats.deathMessage = ["✧ The sanctionary of healing.... remains open. ✧"];
+        let notif = 1;
+        notice.push(`\n✧ You're in the right place for some healing... ✧`);
+        eStats.replaceButton = {};
+        eStats.replaceButton.atk = {
+            "run": async (eStats, eStatsFixed, myStats, ebuff, mybuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, `💖 **${enemy.name}** applied a healing dosage...`, Math.floor(eStats.maxhp * 0.05), {});
+
+                return AbilityResponse.SUCCESS;
+            },
+        };
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.05), {});
+            if (myStats.hp / myStats.maxhp < 0.25 && notif) {
+                notif--;
+                notice.push(`\n✧ Y- You're hurt.. you're really hurt... ✧`);
+            };
+            if (myStats.hp === myStats.maxhp) {
+                myStats.forceLoose = true;
+                notice.push(`\n✧ Healing completed, you may leave now. ✧`);
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        matchStats.on("heal", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (target === myStats && !target.forceLoose) {
+                if (target.hp === target.maxhp) {
+                    target.forceLoose = true;
+                    notice.push(`\n✧ Healing completed, you may leave now. ✧`);
+                };
+                return AbilityResponse.SUCCESS;
+            };
+        });
+
+        return AbilityResponse.SUCCESS;
+    }, [309, "Win condition is inverted. Additionally, when the player reaches full health, loses.", "Opponent starts out at **50%** HP, and is healed **5%** max HP every round", "Upon death, opponent recovers **50%** max HP instead. This bypasses insta-death effects.", "Curse is set to Benevolence (<:Mermaid_Murmur:1502126075117834310>)", "Active (30 💧) : Restores **5%** max HP to the opponent\n**Lore**:\n> All life is invaluable. This strong conviction of Rainee made her a protector of all living beings. Her very being has carnal, spiritual and metaphysical healing effects to her surroundings. It is not just sunshine and roses though. As the world is full of people falling victim to mortal sins and hurting others for personal gains, she gets grief-stricken regularly. Depending on severity, the sky cries for long periods of time, plants just wither away and pestilence spreads out. That makes Rainee even more so a protector of all living beings unbeknownst to humans who are busy with drivel and vanity."]),
+    new skillInfo(46, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (eStats.phase === 1) {
+            eStats.dodge = 1;
+            eStats.cr = 1;
+            notice.push(`\n✨ **${enemy.name}** gains Stealth and will have **100%** critical rate and dodge rate this round.`);
+        } else {
+            notice.push(`\n✨ **${enemy.name}** summoned his Monarch Domain and deployed **+1** shadow...`);
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s shadows provided their aid and`, { atkMultiplier: 0.25, magicDamage: true });
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.phase = 1;
+        eStats.maxphase = 2;
+        eStats.phaseNotif = ["You should’ve walked away while you still could."];
+        notice.push(`\n✧ Are you sure you want to fight me? ✧`);
+
+        // Phase transition
+        matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                eStats.atk *= 1.5;
+                eStats.md *= 1.5;
+                eStats.def *= 1.5;
+                eStats.mr *= 1.5;
+                eStats.cr *= 1.5;
+                eStats.cd *= 1.5;
+                eStats.dodge *= 1.5;
+                eStats.br *= 1.5;
+                eStats.maxhp += Math.floor(eStats.maxhp / 2);
+                ebuff.atk.push(new buffInfo("*", 1.5, 9999));
+                ebuff.md.push(new buffInfo("*", 1.5, 9999));
+                ebuff.def.push(new buffInfo("*", 1.5, 9999));
+                ebuff.mr.push(new buffInfo("*", 1.5, 9999));
+                ebuff.cr.push(new buffInfo("*", 1.5, 9999));
+                ebuff.cd.push(new buffInfo("*", 1.5, 9999));
+                ebuff.dodge.push(new buffInfo("*", 1.5, 9999));
+                ebuff.br.push(new buffInfo("*", 1.5, 9999));
+                return AbilityResponse.SUCCESS;
+            };
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (eStats.phase === 1) {
+                eStats.atk *= 1.02;
+                eStats.md *= 1.02;
+                ebuff.atk.push(new buffInfo("*", 1.02, 9999));
+                ebuff.md.push(new buffInfo("*", 1.02, 9999));
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [310, "Multiphase (2 phases)", "Increases ATK & MD by **2%** every round (Phase 1)", "Upon phase change, all stats of his are increased by **50%**", "Active (60 💧) : If in phase 1, gains stealth, increasing dodge rate and critical rate to **100%**. If in phase 2, casts Monarch Domain, summoning **+1** shadow, dealing **25%** damage every round till the end of the fight"]),
+    new skillInfo(47, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (eStats.phase === 1) {
+            eStats.sm += 100;
+            return AbilityResponse.FAILURE;
+        } else {
+            eStats.counterChanceDynamic += 1;
+            eStats.counterBonus += 0.28;
+            matchStats.on("counter", {
+                maxUsage: 10,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (target === eStats) {
+                        eStats.counterChanceDynamic -= 0.1;
+                    };
+                    return true;
+                }
+            });
+            notice.push(`\n✨ **${enemy.name}** parries in the form of soundwaves...`);
+        };
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.phase = 1;
+        eStats.maxphase = 2;
+        eStats.phaseNotif = ["Servant defeated!"];
+        eStats.servantActive = true;
+        eStats.counterChanceDynamic ??= 0;
+        eStats.counterBonus ??= 0;
+        eStats.replaceButton = {};
+
+        matchStats.on("ATK", {
+            maxRound: 1,
+            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && matchStats.round === 1) {
+                    notice.push(`\n✨ You've decided to fight the boss head on...`);
+                    eStats.phase = 2;
+                    eStats.servantActive = false;
+                    matchStats.trigger("phaseChange", eStats, myStats, ebuff, mybuff, {});
+                    return true;
+                };
+            }
+        });
+
+        // Phase transition
+        matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                embed.setImage(`https://i.ibb.co/gYxpRGH/image.jpg`);
+                eStats.maxhp += Math.floor(eStats.maxhp * 1.5);
+                eStats.hp = eStats.maxhp;
+                if (!eStats.servantActive) {
+                    eStats.servantActive = true;
+                } else eStats.servantActive = false;
+                eStats.replaceButton.atk = {
+                    "run": async (eStats, eStatsFixed, myStats, ebuff, mybuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        if (Math.random() < 0.5) {
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**'s summoned blade`, { atkMultiplier: 0.5, mdChance: -1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**'s whirling blade`, { atkMultiplier: 0.5, mdChance: -1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**'s jabbing blade`, { atkMultiplier: 0.5, mdChance: -1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                        } else dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}** used Sword Slash and`, { atkMultiplier: 1.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+
+                        return AbilityResponse.SUCCESS;
+                    },
+                };
+                return AbilityResponse.SUCCESS;
+            };
+        });
+
+        // Loses 3% stats every round
+        mybuff.atk.push(new buffInfo("*", 0.97, 9999));
+        mybuff.md.push(new buffInfo("*", 0.97, 9999));
+        mybuff.def.push(new buffInfo("*", 0.97, 9999));
+        mybuff.mr.push(new buffInfo("*", 0.97, 9999));
+        mybuff.cr.push(new buffInfo("*", 0.97, 9999));
+        mybuff.cd.push(new buffInfo("*", 0.97, 9999));
+        mybuff.dodge.push(new buffInfo("*", 0.97, 9999));
+        mybuff.br.push(new buffInfo("*", 0.97, 9999));
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (eStats.servantActive) {
+                mybuff.atk.push(new buffInfo("*", 0.97, 9999));
+                mybuff.md.push(new buffInfo("*", 0.97, 9999));
+                mybuff.def.push(new buffInfo("*", 0.97, 9999));
+                mybuff.mr.push(new buffInfo("*", 0.97, 9999));
+                mybuff.cr.push(new buffInfo("*", 0.97, 9999));
+                mybuff.cd.push(new buffInfo("*", 0.97, 9999));
+                mybuff.dodge.push(new buffInfo("*", 0.97, 9999));
+                mybuff.br.push(new buffInfo("*", 0.97, 9999));
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [311, "Multiphase (2 phases)", "__Rules of Madoka Magica__: Using ATK (⚔️) on the first round will skip the first phase (servant), and directly enter phase 2 (the witch). However, forced skips this way will cause the servant's passive to linger throughout the battle... and may have unexpected synergies.", "The opponent loses **3%** of all stats every round (Servant passive)", "ATK is altered to either deal **3** hits of **50%** magical damage, or deal **1** hit of **150%** physical damage.", "Active (100 💧) : Only usable in phase 2 (by the witch). Permanently increases counter damage by **28%**. Then, increases counter chance to **100%**, and she can counter regardless of whether she had counter attempts available. This chance is reduced by **10%** every time she successfully counters, down to at most **0%**."]),
+    new skillInfo(48, 1000000, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        return AbilityResponse.FAILURE;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.phase = 1;
+        eStats.maxphase = 2;
+        eStats.phaseNotif = ["Servant defeated!"];
+        eStats.servantActive = true;
+        eStats.replaceButton = {};
+        eStats.deflectDamage ??= 0;
+
+        eStats.replaceButton.atk = {
+            "run": async (eStats, eStatsFixed, myStats, ebuff, mybuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.phase === 2) {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, normalATK: true });
+                } else if (matchStats.round % 7 !== 0) {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**`, { atkMultiplier: 0.2 * matchStats.round, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                } else {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**`, { atkMultiplier: 1, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
+                };
+                return AbilityResponse.SUCCESS;
+            },
+        };
+
+        myStats.burntype = 1;
+        if (typeof myStats.burnduration !== "number") {// Trigger burn every round
+            myStats.burnduration = 0;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                procburn(myStats, eStats, mybuff, ebuff, matchStats, notice, ``, {});
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+        };
+
+        matchStats.on("ATK", {
+            maxRound: 1,
+            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && matchStats.round === 1) {
+                    notice.push(`\n✨ You've decided to fight the boss head on...`);
+                    eStats.phase = 2;
+                    eStats.servantActive = false;
+                    eStats.deflectDamage += 0.36;
+                    matchStats.trigger("phaseChange", eStats, myStats, ebuff, mybuff, {});
+                    return true;
+                };
+            }
+        });
+
+        // Phase transition
+        matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                embed.setImage(`https://i.ibb.co/gYxpRGH/image.jpg`);
+                eStats.maxhp += Math.floor(eStats.maxhp * 1.5);
+                eStats.hp = eStats.maxhp;
+                if (!eStats.servantActive) {
+                    eStats.servantActive = true;
+                } else eStats.servantActive = false;
+                eStats.deflectDamage += 0.18;
+                eStats.dodge += 0.2;
+                ebuff.dodge.push(new buffInfo("+", 0.2, 9999));
+                matchStats.on("dodge", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+                    if (target === eStats) {
+                        myStats.def -= Math.floor(myStats.def * 0.35);
+                        myStats.mr -= Math.floor(myStats.mr * 0.35);
+                        if (eStats.sm >= 70) {
+                            eStats.sm -= 70;
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s returning slash`, { atkMultiplier: 1.75, magicDamage: true, dodge: false, ignoreShield: true });
+                        };
+                        return AbilityResponse.SUCCESS;
+                    };
+                });
+                return AbilityResponse.SUCCESS;
+            };
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (eStats.servantActive && matchStats.round % 3 === 0) {
+                myStats.burnduration += 8;
+                for (let i = 0; i < 4; i++) {
+                    procburn(myStats, eStats, mybuff, ebuff, matchStats, notice, ``, {});
+                };
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [312, "Multiphase (2 phases)", "__Rules of Madoka Magica__: Using ATK (⚔️) on the first round will skip the first phase (servant), and directly enter phase 2 (the witch). However, forced skips this way will cause the servant's passive to linger throughout the battle... and may have unexpected synergies.", "Every **3** rounds, inflicts **8** rounds of BURNING on the opponent, and immediately triggers **4** of them. (Servant passive)", "Every **7** rounds, own ATK is altered to deal **20%** damage for every round survived (Servant passive)", "Deflects **18%** damage. This is tripled if the servant is alive (Witch passive)", "Has **+20%** dodge rate. After a successful dodge, decreases the opponent's DEF/MR by **35%**, and if the witch has at least **70** 💧, consumes it to slash, dealing **175%** undodgeable true damage (Witch passive)"]),
+    new skillInfo(49, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (eStats.candnotif !== 1) {
+            notice.push(`\n✧ You leave me with no choice. ✧`);
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: 4, magicDamage: true, dodge: false, ignoreShield: true });
+            return AbilityResponse.SUCCESS;
+        } else {
+            eStats.sm += 60;
+            return AbilityResponse.FAILURE;
+        };
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.refuseATK = true;
+        eStats.lastroundHP = eStats.hp;
+        eStats.mdChance = 1;
+        eStats.candnotif = 1;
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < 0.75) {
+                eStats.sm += 20;
+                if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
+            };
+            if (eStats.hp < eStats.lastroundHP) {
+                eStats.md *= 1.05;
+                ebuff.md.push(new buffInfo("*", 1.05, 9999));
+                eStats.def *= 0.985;
+                ebuff.def.push(new buffInfo("*", 0.985, 9999));
+            };
+            eStats.lastroundHP = eStats.hp;
+            if (eStats.hp / eStats.maxhp < 0.5) {
+                if (eStats.candnotif > 0) {
+                    notice.push(`\n✧ Why, why do you have to ruin our party... ✧`);
+                    eStats.candnotif--;
+                };
+                addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor(eStats.maxhp / 2), {});
+                notice.push(`\n✧ This party... has to go on! ✧`);
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [313, "Multiphase (2 phases)", "__Rules of Madoka Magica__: There is no servant for this floor, meaning you are led to the witch directly", "The kind witch does not attack normally, but all her potential hits are magical (scaling off MD)", "Has **+80%** dodge rate, and has a **75%** chance to additionally gain **20** 💧 at the start of the round", "When below **50%** HP at the start of the round, recovers **50%** max HP", "If the witch's HP is lower than that the last round, gains **1x** Suppressed Anger and Vulnerability, gaining **+5%** MD but loosing **1.5%** DEF", "Active (140 💧) : Only usable after healing from her passive the first time. Deals **400%** undodgeable true damage."]),
+    new skillInfo(50, 1000000, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        return AbilityResponse.FAILURE;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Homulily
+        eStats.phase = 1;
+        eStats.maxphase = 6;
+        eStats.phaseNotif = ["The guilty Homulily retreats...", "Servant defeated!", "Servant defeated!", "Homulily has **75%** HP left!", "Homulily has **50%** HP left!", "Homulily has **25%** HP left!"];
+        myStats.vulnerabilityDynamic ??= 1;
+        let roleAssign = Math.random();
+        if (roleAssign < 0.33) {
+            myStats.atk += Math.floor(myStats.atk * 0.3);
+            myStats.md += Math.floor(myStats.md * 0.3);
+            mybuff.atk.push(new buffInfo("*", 1.3, 9999));
+            mybuff.md.push(new buffInfo("*", 1.3, 9999));
+            notice.push(`\n✧ Your assigned role is **Executioner** ✧`);
+            myStats.dodge -= 0.3;
+            if (myStats.dodge < 0) myStats.dodge = 0;
+            mybuff.dodge.push(new buffInfo("+", 0.3, 9999));
+        } else if (roleAssign < 0.67) {
+            myStats.evadeDeathStrike ??= 0;
+            myStats.evadeDeathChance ??= 0;
+            myStats.evadeDeathStrike += 2;
+            myStats.evadeDeathChance += 2;
+            notice.push(`\n✧ Your assigned role is **Bystander** ✧`);
+            myStats.dodge -= 0.3;
+            if (myStats.dodge < 0) myStats.dodge = 0;
+            mybuff.dodge.push(new buffInfo("+", 0.3, 9999));
+        } else {
+            myStats.dodge -= 0.15;
+            if (myStats.dodge < 0) myStats.dodge = 0;
+            mybuff.dodge.push(new buffInfo("+", 0.15, 9999));
+            notice.push(`\n✧ Your assigned role is **Friend?** ✧`);
+        };
+
+        matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                switch (eStats.phase) {
+                    case 2: {
+                        notice.push(`\n✧ Fated be my return... ✧`);
+                        notice.push(`\n✧ Servant: **Clara Doll** takes on the battlefield! ✧`);
+                        embed.setImage(`https://i.ibb.co/YB1pZFyL/image-6.jpg`);
+                        break;
+                    };
+                    case 3: {
+                        notice.push(`\n✧ Execution... noone else but me... ✧`);
+                        notice.push(`\n✧ Servant: **Lotte** takes on the battlefield! ✧`);
+                        embed.setImage(`https://i.ibb.co/xqTNLrpp/image-7.jpg`);
+                        break;
+                    };
+                    case 4: {
+                        embed.setImage(`https://i.ibb.co/jv1W0cHc/image-8.jpg`);
+                        eStats.replaceButton = {};
+                        eStats.replaceButton.atk = {
+                            "run": async (eStats, eStatsFixed, myStats, ebuff, mybuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${enemy.name}**`, { atkMultiplier: 2.5, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true, mdChance: -1 });
+                                return AbilityResponse.SUCCESS;
+                            },
+                        };
+                        break;
+                    };
+                    case 5:
+                    case 6: {
+                        notice.push(`\n✧ Is it...  hopeless? ✧`);
+                        eStats.atk *= 1.25;
+                        eStats.md *= 1.25;
+                        ebuff.atk.push(new buffInfo("*", 1.25, 9999));
+                        ebuff.md.push(new buffInfo("*", 1.25, 9999));
+                        myStats.dodge += 0.05;
+                        mybuff.dodge.push(new buffInfo("+", 0.05, 9999));
+                        if (eStats.sm >= 100) {
+                            eStats.sm -= 100;
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s comeback lash`, { atkMultiplier: 2.5, magicDamage: true, dodge: false, mdChance: -1 });
+                            myStats.timeFrozen = true;
+                            myStats.frozenMessage = `is immobilized by **${enemy.name}**`;
+
+                            // Reset
+                            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                                myStats.timeFrozen = false;
+
+                                return AbilityResponse.SUCCESS;
+                            }));
+                        };
+                        break;
+                    };
+                };
+
+                return AbilityResponse.SUCCESS;
+            };
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            switch (eStats.phase) {
+                case 1: {
+                    eStats.atk *= 0.5;
+                    eStats.md *= 0.5;
+                    eStats.def *= 0.5;
+                    eStats.mr *= 0.5;
+                    break;
+                };
+                case 2: {
+                    if (matchStats.round % 5 === 0) {
+                        let buffVal = Math.floor(Math.random() * 2500);
+                        eStats.atk += buffVal;
+                        eStats.md += buffVal;
+                        eStats.def += buffVal;
+                        eStats.mr += buffVal;
+                        ebuff.atk.push(new buffInfo("+", buffVal, 9999));
+                        ebuff.md.push(new buffInfo("+", buffVal, 9999));
+                        ebuff.def.push(new buffInfo("+", buffVal, 9999));
+                        ebuff.mr.push(new buffInfo("+", buffVal, 9999));
+                    };
+                    break;
+                };
+                case 3: {
+                    if (myStats.hp / myStats.maxhp < 0.5) {
+                        myStats.vulnerabilityDynamic += 0.4;
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.vulnerabilityDynamic -= 0.4;
+                            return AbilityResponse.SUCCESS;
+                        }));
+                    };
+                    break;
+                };
+                case 4:
+                case 5:
+                case 6: {
+                    if (matchStats.round % 2 === 0) { eStats.refuseATK = true; } else eStats.refuseATK = false;
+                    myStats.dodge += 0.1;
+                    if (matchStats.round % 15 === 0) { myStats.dodge -= 0.1; mybuff.dodge.push(new buffInfo("+", -0.1, 9999)); };
+                    break;
+                };
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [314, "Multiphase (6 phases)", "__Rules of Madoka Magica__: There is no choice for this floor, as you must fight all servants to reach the witch. (Homulily -> Clara Dolls -> Lotte -> Homulilly Awakened [3 phases])", "Has halved ATK, MD, DEF and MR (Homulily passive)", "Increases ATK, MD, DEF and MR by **0** to **2500** randomly every **5** rounds (Clara doll passive)", "When the opponent is below **50%** HP, they take **40%** more damage (Lotte passive)", "Only attacks every **2** rounds, but deals **250%** magical damage per ATK. The opponent has **+10%** dodge rate, but it is reduced by **10%** every **15** rounds, down to **0%** at most. Upon phase change, increases own ATK/MD by **25%**, and boosts the opponent's dodge rate by **5%**", "Active (100 💧) : Can be used immediately after phase change of Homulily Awakened. Deals **250%** undodgeable true damage, and stuns the opponent for **3** rounds"]),
+    new skillInfo(51, 150, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Kriemhild Gretchen
+        notice.push(`\n✨ The Witch's Salvation has begun!`);
+        matchStats.blockAbilities = 11;
+        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 10, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (myStats.kriemGrief > 0) {
+                notice.push(`\n✧ Grief SWALLOWS YOU! ✧`);
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: 2, magicDamage: true });
+                myStats.kriemAbsorb = 6;
+            } else myStats.kriemAbsorb = 4;
+
+            return AbilityResponse.SUCCESS;
+        }));
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.kriemGrief = 10;
+        eStats.kriemGrieftaken = 0;
+
+        matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) myStats.kriemGrief += 5;
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) myStats.kriemGrief -= 2;
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) myStats.kriemGrief += 7;
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) myStats.kriemGrief += 7;
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (target === eStats && myStats.kriemAbsorb > 0) {
+                eStats.hp += Math.floor(options.damage * 0.51);
+                if (eStats.hp > eStats.maxhp) eStats.hp = eStats.maxhp;
+                myStats.hp -= Math.floor(options.damage * 0.49);
+                if (myStats.hp < 0) myStats.hp = 0;
+                notice.push(`\n✧ Taste your grief! ✧`);
+            };
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (myStats.kriemAbsorb > 0) myStats.kriemAbsorb--;
+            eStats.reduceHealing = myStats.kriemGrief * 0.015;
+            eStats.damageReduction = Math.min(myStats.kriemGrief * 0.025, 0.75);
+            if (myStats.kriemGrief <= 0) {
+                myStats.atk *= 1.5;
+                myStats.md *= 1.5;
+                notice.push(`\n✧ Cleansed of sin... come forth. ✧`);
+            };
+            if (matchStats.round % 10 === 0) {
+                let griefTaken = Math.floor(myStats.kriemGrief * 0.2);
+                eStats.kriemGrieftaken += griefTaken;
+                myStats.kriemGrief -= griefTaken;
+                notice.push(`✧ **${enemy.name}** took **20%** of your Grief (${griefTaken}) ✧`);
+            };
+            let buffVal = 0.02 * eStats.kriemGrieftaken;
+            eStats.atk += Math.floor(eStats.atk * buffVal);
+            eStats.md += Math.floor(eStats.md * buffVal);
+            eStats.def += Math.floor(eStats.def * buffVal);
+            eStats.mr += Math.floor(eStats.mr * buffVal);
+            eStats.dodge += buffVal;
+            eStats.cr += buffVal;
+            eStats.cd += buffVal;
+
+            return AbilityResponse.SUCCESS;
+        }));
+
+        return AbilityResponse.SUCCESS;
+    }, [315, "__Rules of Madoka Magica__: There is no servant for this floor, meaning you are led to the witch directly. Beware of the stacking and absorption of the unique status `Grief`...", "The user starts with **10** `Grief`. ATK: +5 `Grief` | DEF: -2 `Grief` | Active (✨): +7 `Grief` | Class Skill (⚜️): +7 `Grief`", "Every **1** `Grief` lowers opponent's heals by **2%** (can be negative), and increases the witch's damage mitigation by **2.5%**, up to **75%**. Yet if the opponent has no `Grief`, the opponent has **+50%** ATK.", "Every **10** rounds, the witch takes **20%** of the `Grief`. The witch gains a **2%** stat bonus for every `Grief` taken this way permanently.", "Active: Witch's Salvation (150 💧) : Starts a **10** round countdown. By the end of the countdown, should the opponent have any `Grief`, she deals **200%** magic damage and marks the user with __ABSORPTION__ for **5** rounds. Else, only marks them with the effect for **3** rounds.\n\n__ABSORPTION__: For the next rounds, attacks will heal the witch by **51%** of the damage while reflecting back the other **49%** as damage."]),
+    new skillInfo(52, 70, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Medusa
+        let hpLoss = myStats.maxhp * 0.1;
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { overwriteDamage: hpLoss, magicDamage: true, dodge: false });
+        myStats.maxhp -= Math.floor(hpLoss);
+        notice.push(`\n✨ **${enemy.name}** reduced your max HP... The end is near.`);
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.counter ??= 0;
+        notice.push(`\n✧ It seems particularly dark here... ✧`);
+
+        // 5% chance to turn to stone every round
+        if (Math.random() < 0.05) {
+            myStats.hp = 0;
+            myStats.rev = 0;
+            notice.push(`\n✧ Is something glowing up ahead? ✧`);
+            notice.push(`\n✨ **${char.name}** is turned into stone...`);
+            return AbilityResponse.FAILURE;
+        } else {
+            eStats.counter++;
+        };
+
+        matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) notice.push(`\n✧ Sure, swinging your hands at the dark... very wise. ✧`);
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) notice.push(`\n✧ Am I supposed to clap and applaud? ✧`);
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        matchStats.on("CSKILL", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+            if (caster === myStats) notice.push(`\n✧ As if that would... nevermind. ✧`);
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // 5% chance to turn to stone every round
+            if (Math.random() < 0.05) {
+                myStats.hp = 0;
+                myStats.rev = 0;
+                notice.push(`\n✧ Is something glowing up ahead? ✧`);
+                notice.push(`\n✨ **${char.name}** is turned into stone...`);
+                return AbilityResponse.FAILURE;
+            } else eStats.counter++;
+
+            // On round 4: DEF check -> Petrify
+            if (matchStats.round === 4 && matchStats.defUsed < 3) {
+                myStats.hp = 0;
+                myStats.rev = 0;
+                notice.push(`\n✧ Is something glowing up ahead? ✧`);
+                notice.push(`\n✨ **${char.name}** is turned into stone...`);
+                return AbilityResponse.FAILURE;
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [316, "- Has a **5%** chance every round to turn the opponent into stone, forcing them to immediately lose. If this doesn't trigger, instead counters the next hit.\n- If the opponent has used less than **3** DEFs by round **4**, they are turned to stone immediately\n- **Active** (70 :droplet:) : Deals **10%** of opponent's max HP to them, then reduce opponent's max HP by **10%**\n\n**Lore**:\n> As one of the Gorgons, Medusa lived a happy life until the fateful day when her life turned to a nightmare. Since then, she found a way to protect herself, but fate just would not have it for her. In times to come, she will be known as evil when in truth, she was only a victim of something very tragic."]),
+    new skillInfo(53, 250, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Kuronosu Active Skill: Replaces a random button permanently
+        const targetKeys: (keyof typeof myStats.replaceButton)[] = ["atk", "def", "ability", "cskill", "skip"];
+        const randomKey = targetKeys[Math.floor(Math.random() * targetKeys.length)];
+
+        myStats.replaceButton[randomKey] = {
+            "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Heals the boss (eStats) to full HP
+                addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, eStats.maxhp, {});
+                notice.push(`\n✧ Time rewind... **${enemy.name}** recovers all HP ✧`);
+                return AbilityResponse.SUCCESS;
+            },
+        };
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Boss Passive Setup
+        eStats.kuroAwait = false;
+        eStats.kuroSequence = [];
+        eStats.playerDeathMessage = "✧ See? The battle was over before it even began. ✧";
+        notice.push(`\n✧ Oh my, would you look at the time! ✧`);
+
+        const pool: string[] = ["ATK", "DEF", "ABILITY", "CSKILL", "SKIP"];
+
+        const generateList = (): string[] => {
+            return Array.from({ length: 5 }, () => pool[Math.floor(Math.random() * pool.length)]);
+        };
+
+        // Persistent event listener with strict state boundaries
+        matchStats.on("action", async ({ trigger, caster, target, casterBuff, targetBuff, options }) => {
+            // Guard: Only execute during an active Chronostasis sequence triggered by the player
+            if (caster !== myStats || !eStats.kuroAwait) return AbilityResponse.SUCCESS;
+
+            const currentIndex = matchStats.actionSequence.length - 1;
+            const expectedAction = eStats.kuroSequence[currentIndex];
+            const actualAction = matchStats.actionSequence[currentIndex];
+
+            // 1. Verify misalignment for the CURRENT action step
+            if (actualAction !== expectedAction) {
+                let hpLoss = Math.floor(myStats.maxhp * 0.25);
+                myStats.hp -= hpLoss;
+                notice.push(`\n✧ ERROR: OFF-SCRIPT DETECTED (-${hpLoss} HP, 25% Max HP) ✧`);
+            } else {
+                // Maintain timeout false behavior while the player stays perfectly aligned
+                noTimeout(matchStats, myStats);
+                notice.push(`\n✧ Go on... ✧`);
+            };
+
+            // 2. Wrap-up check: Triggers unconditionally exactly when 5 actions are reached
+            if (matchStats.actionSequence.length === 5) {
+                eStats.kuroAwait = false;
+                matchStats.actionSequence = [];
+                notice.push(`\n✧ Chronostasis: SEQUENCE ENDED ✧`);
+
+                // Heals 33% of MISSING HP
+                addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, `⏩ Time Elapse!`, Math.floor((eStats.maxhp - eStats.hp) * 0.33), {});
+
+                // Deals 4 hits of 100% damage with scaling lifesteal
+                for (let i = 0; i < 4; i++) {
+                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⏩ **${enemy.name}**'s **entangled timelines**`, { magicDamage: true, selfheal: true, selfhealAmount: (myStats.hp / myStats.maxhp) < 0.5 ? 0.8 : 0.4 });
+                };
+            };
+
+            return AbilityResponse.SUCCESS;
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Initiates every 3 rounds
+            if (matchStats.round % 3 === 0) {
+                eStats.kuroAwait = true;
+                eStats.kuroSequence = generateList();
+                matchStats.actionSequence = []; // Purge prior round entries
+                notice.push(`\n✧ Chronostasis: ${eStats.kuroSequence.join(" -> ")} ✧`);
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [317, "Initiates [Chronostasis] at the start of every **3** rounds\n\n[Chronostasis] :\n- A brief sequence of **5** actions will appear. The next **5** actions of the opponent will be timeout false.\n- If any action of the opponent misaligns with the sequence, the opponent looses **25%** max HP.\n- After **5** actions, exits the sequence. The boss recovers **33%** missing HP and deals **4** hits of **100%** damage with **40%** lifesteal. Lifesteal is doubled if the player is under **50%** HP.\n\nActive (250 :droplet:) : Replaces a random button of the opponent permanently, to heal itself to full HP.\n\n**Lore**:\n> At some point in life one may ask themselves: What is time? Most may say it is the temporal aspect of events happening in order; that all life experiences and memories are contained within it. There is a strict causality. The consequence of an action cannot happen before the action itself. Some may say it is a measurement of motion. The faster something is, the less time it needs to move a certain distance. Some others may say it is motion itself. All that exist is depending on motion on the smallest scales. And what brings everything in motion is friction through temperature. No temperature means no time exists. The longer Kuronosu thought about it, the more headaches he got. But one day, time seemed to move differently around him, but he did not understand why. To a certain extent, he was able to control it, but most of it was not up to him."]),
+    new skillInfo(54, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Espathera (alter) - Active: 15% damage per death evasion; round 30+ ends fight
+        const dmg = 0.15 * eStats.espatheraTotalEvasions;
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: dmg, magicDamage: true });
+
+        if (matchStats.round >= 30) {
+            myStats.hp = 0;
+            myStats.rev = 0;
+            notice.push(`\n⏳ Time's up. **${enemy.name}** ends the fight.`);
+            return AbilityResponse.FAILURE;
+        }
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Espathera (alter) - Passives
+        eStats.espatheraTotalEvasions ??= 0;
+        eStats.evadeDeathStrike ??= 0;
+        eStats.evadeDeathChance ??= 0;
+        eStats.phase = 1;
+        eStats.maxphase = 2;
+        eStats.indifference ??= 0;
+
+        notice.push(`\n✧ Art thou worthy? ✧`);
+
+        // Alters ATK
+        eStats.replaceButton = {};
+        eStats.replaceButton.atk = {
+            run: async (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any[]) => {
+                const missingRatio = (eStats.maxhp - eStats.hp) / eStats.maxhp;
+                const hits = Math.max(1, Math.floor(missingRatio / 0.2));
+                for (let i = 0; i < hits; i++) {
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌿 **${enemy.name}**'s Letting go...`, { atkMultiplier: 0.44, magicDamage: true });
+                    myStats.maxhp -= Math.floor(myStats.maxhp * 0.04);
+                };
+                return AbilityResponse.SUCCESS;
+            }
+        };
+
+        // Gain indifference (P1)
+        matchStats.on("attack", {
+            callback: ({ target, matchStats }) => {
+                if (target === eStats && matchStats.round % 2 === 0 && eStats.phase === 1) {
+                    eStats.indifference += 1 + Math.floor(Math.random() * 5);
+                };
+                return true;
+            }
+        });
+
+        // Phase 2: Death evasion → steal 5% CD from opponent
+        matchStats.on("deathEvade", {
+            callback: ({ target, matchStats }) => {
+                if (target === eStats && target.phase === 2) {
+                    myStats.cd -= 0.05;
+                    eStats.cd += 0.05;
+                    mybuff.cd.push(new buffInfo("+", -0.05, 9999));
+                    ebuff.cd.push(new buffInfo("+", 0.05, 9999));
+                    eStats.espatheraTotalEvasions++;
+                };
+                return true;
+            }
+        });
+
+        eStats.refuseATKMessage = ["✧ Cultivating... ✧", "✧ Meditating on the path... ✧"];
+
+        // Cultivation passive
+        eStats.refuseATK = true;
+        eStats.atk += Math.floor(eStats.atk * 0.04);
+        eStats.md += Math.floor(eStats.md * 0.04);
+        ebuff.atk.push(new buffInfo("*", 1.04, 9999));
+        ebuff.md.push(new buffInfo("*", 1.04, 9999));
+
+        matchStats.on("phaseChange", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }: any) => {
+            if (caster === eStats) {
+                eStats.evadeDeathStrike = eStats.indifference;
+                eStats.evadeDeathChance = eStats.indifference;
+                eStats.refuseATK = false;
+            };
+            return AbilityResponse.SUCCESS;
+        });
+
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (eStats.phase === 1) {
+                if (matchStats.round % 2 === 1) {
+                    // [Cultivation] — odd rounds: no ATK, +4% ATK/MD
+                    eStats.refuseATK = true;
+                    eStats.atk += Math.floor(eStats.atk * 0.04);
+                    eStats.md += Math.floor(eStats.md * 0.04);
+                    ebuff.atk.push(new buffInfo("*", 1.04, 9999));
+                    ebuff.md.push(new buffInfo("*", 1.04, 9999));
+                } else {
+                    // [Letting go...] — even rounds: boss ATK fires normally
+                    eStats.refuseATK = false;
+                };
+            } else {
+                myStats.negateHeal = 1;
+                eStats.dodge = 0;
+            };
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [318, "Altered ATKs, rings and runes are disabled", "On **odd** rounds, gains [Cultivation], refusing to ATK but increasing own ATK & MD by **4%** permanently. (Phase 1)", "- On **even** rounds, gains [Letting go...], ATK hits **1** time for every **20%** missing HP, dealing **44%** damage and reducing opponent's max HP by **4%**. A successful hit grants **1-5x** `Indifference`. (Phase 1)", "Upon entering phase 2, evades the next number of lethal hits equal to owned `Indifference`", "Cannot heal or dodge. After every death evasion, steals **5%** crit damage from the opponent. (Phase 2)\n- **Active** (80 :droplet:) : Deals **15%** damage for each death evasion. If round **30+**, ends the fight.\n\n**Lore**:\n> On the path of finding wisdom, Espathera found herself in the field of Stoics. Acknowledging that some things could not be under her control, she focused her way of life on things she could change. Doing so, she obtained an epiphany that allowed her to enter a higher plane of existence."]),
+    new skillInfo(55, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Iustitia
+        matchStats.baneLvl = (matchStats.baneLvl ?? myStats.lvl) + 10;
+        notice.push(`\n⚖️ **${enemy.name}** elevates your profile level by **10**`);
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        matchStats.baneClvl ??= myStats.lvl;
+        const baneStats = await getUserSchema(user.id);
+        matchStats.baneLvl ??= baneStats ? userLevel(baneStats.xp) : myStats.lvl;
+
+        eStats.rev = 1;
+        eStats.maxRevivals = 2;
+        eStats.revhp = 0.5;
+        notice.push(`\n⚖️ **${enemy.name}** puts you on trial...`);
+
+        matchStats.on("revival", {
+            callback: ({ caster, matchStats }) => {
+                if (caster === eStats) {
+                    matchStats.baneClvl += 10;
+                    matchStats.baneLvl += 20;
+                    mybuff.hp.push(new buffInfo("+", 60, 9999));
+                    mybuff.atk.push(new buffInfo("+", 30, 9999, 30, "+"));
+                    mybuff.def.push(new buffInfo("+", 20, 9999, 20, "+"));
+                    notice.push(`\n⚖️ Your power grows — clvl +**10**, lvl +**20**`);
+                };
+                return true;
+            }
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            matchStats.baneClvl += 5;
+            myStats.maxhp += 30;
+            myStats.hp += 30;
+            mybuff.atk.push(new buffInfo("+", 15, 1));
+            mybuff.def.push(new buffInfo("+", 10, 1));
+            notice.push(`\n⚖️ Level up! clvl +**5** (total: **${matchStats.baneClvl}**)`);
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [319, "- Every round, raises the opponent's character level by **5**\n- Can revive **2** times. On each revival, raises opponent's character level by **10** and profile level by **20**.\n- Curse is set to <:Bane_of_the_Powerful:1516679506255937619>\n- **Active** (100 :droplet:) : Raises the opponent's profile level by **10**.\n\n**Lore**:\n> Strength. Most people yearn to possess this trait. To protect themselves, to protect people dear to them, to protect other important things dear to them. Or to rule over others. It is neither inherently good or inherently bad. It is up to the respective person what to do with it. But going up in the hierarchy comes with greater responsibilities. Humans tend to leave the righteous path when they amass a lot of this strength. Or rather, their strength corrupted to power. Iustitia is putting humans on trial if they are worthy and responsible enough to possess this trait."]),
+    new skillInfo(56, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Luxuria (alter)
+        myStats.timeFrozen = true;
+        myStats.frozenMessage = `is immobilized by **${enemy.name}**`;
+        myStats.def -= Math.floor(myStats.def * 0.5);
+        myStats.mr -= Math.floor(myStats.mr * 0.5);
+
+        // Reset
+        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.timeFrozen = false;
+
+            return AbilityResponse.SUCCESS;
+        }));
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        matchStats.costForAction ??= 0;
+        matchStats.costForAction += 12;
+
+        // Alters ATK
+        eStats.replaceButton = {};
+        eStats.replaceButton.atk = {
+            run: async (myStats: any, myStatsFixed: any, eStats: any, mybuff: any, ebuff: any, char: any, enemy: any, matchStats: any, notice: any, embed: any, user: any, ...list: any[]) => {
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `⚔️ **${enemy.name}**`, { atkMultiplier: 0.9 + (0.04 * matchStats.round), magicDamage: true });
+
+                return AbilityResponse.SUCCESS;
+            }
+        };
+
+        // Skip a round upon healing
+        matchStats.on("heal", {
+            callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (target === myStats) {
+                    myStats.timeFrozen = true;
+                    myStats.frozenMessage = `is immobilized by **${enemy.name}**`;
+
+                    // Reset
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        myStats.timeFrozen = false;
+
+                        return AbilityResponse.SUCCESS;
+                    }));
+                };
+            }
+        });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            if (Math.random() < 0.4) matchStats.costForAction++;
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [320, "Every healing instance on the opponent will stun themselves (skip 1 round)", "Every action of the opponent costs **12** 💧. This has a **40%** chance to be increased by **1** every round. If the opponent has insufficient mana, they loose **8%** max HP permanently.", "ATK is altered to deal **90%** damage. The damage-scaling is increased by **4%** after every round.\n\n**Lore**:\n> Agility and protection are important in fights. But where is the right balance? And what if they are used against oneself? Luxuria made it her specialty to exploit the reliance of common sense."]),
 ];
 
 export const eventBossAbilities: skillInfo[] = [
@@ -2447,7 +3781,4 @@ export const rollingCowAbilities: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }, ["Jesterbull", "Swaps buttons during the fight."]),
-
-
-
 ];

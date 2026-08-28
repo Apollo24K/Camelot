@@ -10,6 +10,7 @@ const commands = [
 			.setName('ability')
 			.setDescription('Look up characters with abilities')
 			.addStringOption(option => option.setName('character').setDescription('Get more information about a character\'s ability').setRequired(false))
+			.addStringOption(option => option.setName('enemy').setDescription('Get more information about an enemy').setRequired(false))
 			.addBooleanOption(option => option.setName('compact').setDescription('Display in compact view').setRequired(false))
 			.addStringOption(option =>
 				option.setName('filter')
@@ -503,21 +504,26 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 			.setName('forge')
-			.setDescription('Buy an item from the forgery')
-			.addStringOption(option => option.setName('item').setDescription('Write the name or ID of the item to forge').setRequired(false))
-			.addStringOption(option =>
-				option.setName('grade')
-					.setDescription('filter for a specific grade')
-					.setRequired(false)
-					.addChoices(
-						{ name: 'legendary', value: 'legendary' },
-						{ name: 'unique', value: 'unique' },
-						{ name: 'rare', value: 'rare' },
-						{ name: 'special', value: 'special' },
-						{ name: 'normal', value: 'normal' },
-					)
+			.setDescription('Forging related commands')
+			.addSubcommand((subcommand) => subcommand.setName('catalog').setDescription('View forge catalog')
+			.addStringOption(option => option.setName('grade').setDescription('filter for a specific grade').setRequired(false)
+				.addChoices(
+					{ name: 'legendary', value: 'legendary' },
+					{ name: 'unique', value: 'unique' },
+					{ name: 'rare', value: 'rare' },
+					{ name: 'special', value: 'special' },
+					{ name: 'normal', value: 'normal' },
+				)
 			)
 			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			)
+			.addSubcommand((subcommand) => subcommand.setName('craft').setDescription('Craft an item')
+			.addStringOption(option => option.setName('item').setDescription('Name or ID of the item to craft').setRequired(true))
+			)
+			.addSubcommand((subcommand) => subcommand.setName('merge').setDescription('Rune merging')
+			.addStringOption(option => option.setName('rune').setDescription('Rune to view or merge').setRequired(false))
+			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+			)
 	}.data.toJSON(),
 	// {
 	// 	data: new SlashCommandBuilder()
@@ -792,6 +798,9 @@ const commands = [
 							{ name: 'shield', value: 'shield' },
 						)
 				)
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
+			.addSubcommand((subcommand) => subcommand.setName('entry').setDescription('Entry item info')
+				.addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(false))
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false)))
 			.addSubcommand((subcommand) => subcommand.setName('info').setDescription('See detailed info about an item')
 				.addStringOption(option => option.setName('items').setDescription('Select items to view, use commas (,) to view multiple items at once.').setRequired(true))
@@ -1514,6 +1523,7 @@ const commands = [
 					.addChoices(
 						{ name: 'Use Compact Battle Embeds', value: 'compact_battle_embeds' },
 						{ name: 'Battle Log Length', value: 'battle_log_length' },
+						{ name: 'Display Enemy Stats', value: 'display_enemy_stats' },
 					)
 			)
 			.addStringOption(option => option.setName('input').setDescription('Input value').setRequired(true))
@@ -1573,6 +1583,14 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('phantasm')
+			.setDescription('Phantasmagoria boss challenges')
+			.addStringOption(option => option.setName('action').setDescription('Action to take | e.g., overview, fight').setRequired(false))
+			.addIntegerOption(option => option.setName('boss').setDescription('Boss index to target').setRequired(false))
+			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the overview and go directly into battle').setRequired(false)),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('stats')
 			.setDescription('See some stats of camelot')
 			.addUserOption(option => option.setName('user').setDescription('Show card game stats of a user')),
@@ -1623,6 +1641,7 @@ const commands = [
 					.addChoices(
 						{ name: 'server', value: 'server' },
 						{ name: 'global', value: 'global' },
+						{ name: 'guild', value: 'guild' },
 					)
 			)
 			.addStringOption(option =>

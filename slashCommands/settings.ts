@@ -57,6 +57,22 @@ const exportCommand: SlashCommand = {
             return interaction.reply(`🎉 Random HP Bar is now **${input.toLowerCase() === "true" ? "enabled" : "disabled"}**!`);
         };
 
+        // Display Enemy Stats
+        if (setting === "display_enemy_stats") {
+            if (input.toLowerCase() !== "true" && input.toLowerCase() !== "false") {
+                return interaction.reply("Please input either `true` or `false`");
+            };
+
+            // Update users table
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    user_settings: { type: "merge_json", value: { display_enemy_stats: input.toLowerCase() === "true" ? true : false } },
+                },
+            });
+
+            return interaction.reply(`🎉 Display enemy stats is now **${input.toLowerCase() === "true" ? "enabled" : "disabled"}**!`);
+        };
+
     },
 };
 

@@ -1,5 +1,5 @@
 import { classLevelToXP, formatNumberWithQuotes, userLevelToXP } from '../Modules/functions';
-import { updateGuilds, updateUsers } from '../Modules/queries';
+import { updateGuilds, updateUsers, updateUsersAndCache } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
 import { SlashCommand } from '../types';
 
@@ -8,7 +8,7 @@ const exportCommand: SlashCommand = {
     async execute({ interaction, author }) {
 
         // Command can only be used in the test bot
-        if (interaction.client.user.id !== "695286837568340119") return interaction.reply("This command can only be used in Elder");
+        if (interaction.client.user.id !== "1283335641563926559" && interaction.client.user.id !== "695286837568340119") return interaction.reply("This command can only be used in Elder");
 
         const subcommand = interaction.options.getSubcommand();
 
@@ -16,9 +16,12 @@ const exportCommand: SlashCommand = {
             const value = interaction.options.getInteger('value', true);
             if (value < 1 || value > 2000) return interaction.reply("Please provide a value between 1 and 2'000");
 
-            // Update users table
-            await updateUsers(interaction.user.id, {
-                level: { type: "set", value },
+            // Update users table and bypass cache
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    level: { type: "set", value },
+                },
+                evictCache: true,
             });
 
             return interaction.reply(`Successfully set your level to **${formatNumberWithQuotes(value)}**`);
@@ -31,10 +34,13 @@ const exportCommand: SlashCommand = {
             const currentClass = author.schema.class;
             if (!currentClass) return interaction.reply("You don't have a class equipped");
 
-            // Update users table
+            // Update users table and cache immediately
             author.schema.dungeon_classlevels[currentClass] = classLevelToXP(value);
-            await updateUsers(interaction.user.id, {
-                dungeon_classlevels: { type: "set", value: author.schema.dungeon_classlevels },
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    dungeon_classlevels: { type: "set", value: author.schema.dungeon_classlevels },
+                },
+                evictCache: true,
             });
 
             return interaction.reply(`Successfully set your class level to **${formatNumberWithQuotes(value)}**`);
@@ -89,6 +95,31 @@ const exportCommand: SlashCommand = {
             } else {
                 return interaction.reply("Please provide a valid value: `max` or `reset`");
             };
+        };
+
+        if (subcommand === "dungeon") {
+            const value = interaction.options.getInteger('value', true);
+            if (value < 1 || value > 300) return interaction.reply("Please provide a value between 1 and 300");
+
+            // Import floors to get winsNeeded values
+            const { floors } = await import('../Modules/enemies');
+
+            // Create dungeon_floors object simulating full clear up to specified floor
+            const dungeonFloors: Record<string, number> = {};
+            for (let i = 1; i <= value; i++) {
+                const floorInfo = floors.find(f => f.floor === i);
+                dungeonFloors[i] = (i === value) ? 0 : (floorInfo?.winsNeeded || 1); // Current floor: 0 progress, Previous floors: completed
+            }
+
+            // Update users table and cache immediately
+            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                updates: {
+                    dungeon_floors: { type: "set", value: dungeonFloors },
+                },
+                evictCache: true,
+            });
+
+            return interaction.reply(`Successfully set your dungeon progression to floor **${formatNumberWithQuotes(value)}**`);
         };
 
     },

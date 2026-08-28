@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags, AttachmentBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags, AttachmentBuilder, StringSelectMenuBuilder } from "discord.js";
 import { CompactUserSchema, SlashCommand } from "../types";
 import { ExternalLinks, currencyEmojis, OfferRow } from "../Modules/components";
 import { customHpBars } from "../Modules/customHpBars";
@@ -18,9 +18,9 @@ const SEASON_END_DATE = new Date('2026-08-15 00:00:00');
 const loadedImages: Record<string | number, Image> = {};
 
 const RUNES_FOR_SALE = [
-    { name: "Valkyrie Sigil", item: items[787] as runeInfo, price: 60, isNew: false },
-    { name: "Hollow Crown", item: items[788] as runeInfo, price: 60, isNew: false },
-    { name: "Wailing Lantern", item: items[789] as runeInfo, price: 60, isNew: false },
+    { name: "The Sereflame", item: items[855] as runeInfo, price: 80, isNew: true },
+    { name: "Tideborn Keep", item: items[856] as runeInfo, price: 80, isNew: true },
+    { name: "Arcane Rebirth", item: items[785] as runeInfo, price: 60, isNew: false },
 ] as const; // Total cost: 220
 
 const HP_BARS_FOR_SALE = [
@@ -37,6 +37,10 @@ const BACKGROUNDS_FOR_SALE = [
 ] as const; // Total cost: 230
 
 const SKIN_SEASON = "summer season 2026"; // Total cost: 640
+// Keep each skins page below Discord's 40-component limit. A page of 25
+// skins creates five action rows, which exceeds the limit once the container's
+// other components are included.
+const SKINS_PER_PAGE = 20;
 
 const BuyKeysRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -67,8 +71,8 @@ const BuyKeysRow = new ActionRowBuilder<ButtonBuilder>()
             .setStyle(ButtonStyle.Secondary),
     );
 
-async function getSeasonalSkinsImage({ columns }: { columns: number; }): Promise<AttachmentBuilder> {
-    const skinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON);
+async function getSeasonalSkinsImage({ columns, page = 0 }: { columns: number; page?: number; }): Promise<AttachmentBuilder> {
+    const skinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON).slice(page * SKINS_PER_PAGE, (page + 1) * SKINS_PER_PAGE);
 
     const tileW = 225, tileH = 350, gap = 20;
     const cols = Math.min(columns, Math.max(1, skinsForSale.length));
@@ -184,7 +188,7 @@ const getSeasonalShopButtonRow = (currentTab: SeasonalShopTab) => {
         );
 };
 
-const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema): ContainerBuilder => {
+const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema, skinPage = 0): ContainerBuilder => {
     const shopContainer = new ContainerBuilder()
         .setAccentColor(EMBED_COLOR)
         .addSectionComponents(section => section
@@ -244,7 +248,8 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema): Con
         );
 
     } else if (currentTab === 'skins') {
-        const skinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON);
+        const allSkinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON);
+        const skinsForSale = allSkinsForSale.slice(skinPage * SKINS_PER_PAGE, (skinPage + 1) * SKINS_PER_PAGE);
 
         // The composed image will be attached to the message
         shopContainer.addMediaGalleryComponents(media => media
@@ -253,37 +258,42 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema): Con
             )
         );
 
-        const skinChunks = [];
-        for (let i = 0; i < skinsForSale.length; i += 5) {
-            skinChunks.push(skinsForSale.slice(i, i + 5));
+        // Skin selection dropdown
+        const skinSelect = new StringSelectMenuBuilder()
+            .setCustomId('skin_select')
+            .setPlaceholder('Select a skin to purchase')
+            .addOptions(
+                skinsForSale.map((skin, index) => ({
+                    label: `${skinPage * SKINS_PER_PAGE + index + 1}) ${skin.name}`,
+                    value: `buy_skin_${skin.id}`,
+                    description: `${(skin as any).cost?.season_keys ?? 0} ${currencyEmojis.season_keys}`,
+                    // default: stats.skins.includes(skin.id),
+                }))
+            );
+
+        if (skinsForSale.length > 0) {
+            shopContainer.addActionRowComponents(actionRow => actionRow.addComponents(skinSelect));
         }
 
-        skinChunks.forEach((chunk, i1) => shopContainer
-            .addActionRowComponents(
-                actionRow => actionRow
-                    .addComponents(
-                        ...chunk.map((skin, i2) => new ButtonBuilder()
-                            .setCustomId(`buy_skin_${skin.id}`)
-                            .setLabel(`${(i1 * 5) + i2 + 1}) ${skin.name.split(" ")[0].length > 4 ? skin.name.split(" ")[0] : skin.name.split(" ")[0] + ` ${(!skin.name.split(" ")[1].startsWith("(") ? skin.name.split(" ")[1] : "") || ""}`}`)
-                            .setStyle(ButtonStyle.Secondary)
-                            .setDisabled(stats.skins.includes(skin.id))
-                        )
-                    )
-            )
-        );
+        if (allSkinsForSale.length > SKINS_PER_PAGE) {
+            const totalPages = Math.ceil(allSkinsForSale.length / SKINS_PER_PAGE);
+            const pageButtons: ButtonBuilder[] = [];
+            for (let i = 0; i < totalPages; i++) {
+                pageButtons.push(
+                    new ButtonBuilder()
+                        .setCustomId(`skin_page_${i}`)
+                        .setLabel(`Page ${i + 1}`)
+                        .setStyle(i === skinPage ? ButtonStyle.Primary : ButtonStyle.Secondary)
+                );
+            }
+            shopContainer.addActionRowComponents(actionRow => actionRow.addComponents(...pageButtons));
+        }
 
-    };
+    }
 
-    // Add Footer
+    // Footer: Season Keys + Buy More Keys (shown on all tabs)
     shopContainer
         .addSeparatorComponents(separator => separator)
-        // .addTextDisplayComponents(
-        //     text => text.setContent(
-        //         `-# Season Keys: **${stats.season_keys}** ${currencyEmojis.season_keys}` +
-        //         ` | ` +
-        //         `**Time left**: <t:${Math.floor(SEASON_END_DATE.getTime() / 1000)}:R>`
-        //     )
-        // )
         .addSectionComponents(section => section
             .addTextDisplayComponents(text => text
                 .setContent(
@@ -307,20 +317,30 @@ export const exportCommand: SlashCommand = {
     async execute({ interaction, author, server, locale }) {
 
         let currentTab: SeasonalShopTab = 'runes';
+        let skinPage = 0;
         const stats = author.schema;
 
-        return interaction.reply({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)], flags: MessageFlags.IsComponentsV2 }).then(async (msg) => {
-            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
+        return interaction.reply({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)], flags: MessageFlags.IsComponentsV2 }).then(async (msg) => {
+            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, time: 120000 });
 
             collector.on('collect', async (r) => {
                 if (r.customId.startsWith('tab_')) {
                     currentTab = r.customId.split('_')[1] as SeasonalShopTab;
+                    skinPage = 0;
 
                     let files: AttachmentBuilder[] = [];
                     if (currentTab === 'skins') {
-                        files.push(await getSeasonalSkinsImage({ columns: 7 }));
+                        files.push(await getSeasonalSkinsImage({ columns: 7, page: skinPage }));
                     };
-                    await msg.edit({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)], files });
+                    await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)], files });
+                };
+
+                if (r.customId.startsWith('skin_page_')) {
+                    skinPage = parseInt(r.customId.split('_')[2]);
+                    await msg.edit({
+                        components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)],
+                        files: [await getSeasonalSkinsImage({ columns: 7, page: skinPage })],
+                    });
                 };
 
                 if (r.customId.startsWith('buy_')) {
@@ -364,7 +384,7 @@ export const exportCommand: SlashCommand = {
 
                                 // Edit replies
                                 ms.edit({ content: "Purchase Successful!", components: [] });
-                                await msg.edit({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)] });
+                                await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
                             });
                         });
                     };
@@ -404,7 +424,7 @@ export const exportCommand: SlashCommand = {
 
                                 // Edit replies
                                 ms.edit({ content: "Purchase Successful!", components: [] });
-                                await msg.edit({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)] });
+                                await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
                             });
                         });
                     };
@@ -448,54 +468,66 @@ export const exportCommand: SlashCommand = {
 
                                 // Edit replies
                                 ms.edit({ content: "Purchase Successful!", components: [] });
-                                await msg.edit({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)] });
+                                await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
                             });
                         });
                     };
+                };
 
-                    if (r.customId.startsWith('buy_skin_')) {
-                        const skinId = parseInt(r.customId.split('_')[2]);
-                        const skin = skins[skinId];
-                        const cost = skin.cost.season_keys;
-                        if (!cost) return;
+                if (r.customId === 'skin_select' && r.isStringSelectMenu()) {
+                    await r.deferUpdate().catch((err) => {
+                        console.log(`ERROR Interaction Failed 'deferUpdate()' on "${r.customId}":`, err);
+                    });
+                    const selectedValue = r.values[0]; // e.g., "buy_skin_209"
+                    if (!selectedValue.startsWith('buy_skin_')) return;
 
-                        const content = `Are you sure you want to buy **${skin.name}** for **${cost}** ${currencyEmojis.season_keys}?`;
-                        interaction.followUp({ content, components: [OfferRow] }).then(ms => {
-                            const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                    const skinId = parseInt(selectedValue.split('_')[2]);
+                    const skin = skins[skinId];
+                    const cost = skin.cost.season_keys;
+                    if (!cost) return;
 
-                            buyCollector.on('collect', async rr => {
-                                if (rr.customId !== "confirm") {
-                                    ms.edit({ content: "Action cancelled", components: [] });
-                                    return;
-                                };
+                    const content = `Are you sure you want to buy **${skin.name}** for **${cost}** ${currencyEmojis.season_keys}?`;
+                    interaction.followUp({ content, components: [OfferRow] }).then(ms => {
+                        const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                                const tempStats = await getUserSchema(interaction.user.id);
-                                if (!tempStats) return msg.edit("You haven't started playing yet.");
+                        buyCollector.on('collect', async rr => {
+                            if (rr.customId !== "confirm") {
+                                ms.edit({ content: "Action cancelled", components: [] });
+                                return;
+                            };
 
-                                // Return if balance not enough
-                                if (tempStats.season_keys < cost) {
-                                    ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
-                                    return;
-                                };
+                            const tempStats = await getUserSchema(interaction.user.id);
+                            if (!tempStats) return msg.edit("You haven't started playing yet.");
 
-                                // Add background
-                                tempStats.skins.push(skinId);
-                                stats.skins.push(skinId);
+                            // Return if already owned
+                            if (tempStats.skins.includes(skinId)) {
+                                ms.edit({ content: `You already own this skin!`, components: [] });
+                                return;
+                            };
 
-                                // Update users table
-                                await updateUsersAndCache(interaction.client, interaction.user.id, {
-                                    updates: {
-                                        season_keys: { type: "increment", value: -cost },
-                                        skins: { type: "append_unique", value: [skinId] },
-                                    },
-                                });
+                            // Return if balance not enough
+                            if (tempStats.season_keys < cost) {
+                                ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
+                                return;
+                            };
 
-                                // Edit replies
-                                ms.edit({ content: "Purchase Successful!", components: [] });
-                                await msg.edit({ components: [getShopPage(currentTab, stats), getSeasonalShopButtonRow(currentTab)] });
+                            // Add skin
+                            tempStats.skins.push(skinId);
+                            stats.skins.push(skinId);
+
+                            // Update users table
+                            await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    season_keys: { type: "increment", value: -cost },
+                                    skins: { type: "append_unique", value: [skinId] },
+                                },
                             });
+
+                            // Edit replies
+                            ms.edit({ content: "Purchase Successful!", components: [] });
+                            await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
                         });
-                    };
+                    });
                 };
 
                 if (r.customId.startsWith('redirect_bg_')) {

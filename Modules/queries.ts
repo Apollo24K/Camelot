@@ -2,6 +2,7 @@ import { Client } from "discord.js";
 import { query, withTransaction } from "../postgres";
 import { AuctionBidSchema, AuctionSchema, CharacterSchema, CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateGuildOptions, UpdatePartyOptions, UpdateStampedeOptions, UpdateUserOptions, UpdateWeaponOptions, UserSchema, UserSchemaForStats, WeaponSchema } from "../types";
 import { donationWeekStart } from "./components";
+
 import LRUCache from "./LRUCache";
 
 const CHARACTER_CACHE_TTL = 5 * 60 * 1000;
@@ -77,7 +78,7 @@ export const getMinimalUserSchemas = async (ids: string[]): Promise<Pick<UserSch
     return users;
 };
 
-const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments FROM users`;
+const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, hidden_dungeon, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments, phantasmagoria_supports, phantasmagoria_boss_data, phantasmagoria_selected_boss, echo, echo_purchases, phantasmagoria_strategy, phantasmagoria_class, phantasmagoria_equipment FROM users`;
 
 export const getUserSchema = async (id: string): Promise<CompactUserSchema | undefined> => {
     const [user] = await query(`${SELECT_COMPACT_USER_SCHEMA} WHERE id = $1`, [id]) as [CompactUserSchema];
@@ -300,7 +301,7 @@ export const getPastStampedes = async (past: number): Promise<StampedeSchema[]> 
     return stampedes;
 };
 
-export const getUserRanking = async (scope: "server" | "global", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation"): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
+export const getUserRanking = async (scope: "server" | "global" | "guild", user_ids: string[], orderBy: "xp" | "coins" | "lilies" | "pullstotal" | "chars" | "uniqueChars" | "class" | "anime" | "achievements" | "dungeon" | "stampede" | "referrals" | "event" | "cow_participation", guildId?: string): Promise<(Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[]> => {
     let orderByClause: string;
     let selectClause = "name, id, xp, coins, lilies, pullstotal, favchar, premium, chars, char_skin, battlechar, dungeon_classlevels, achievements, dungeon_floors, eventpts, cow_participation, custom_skins, ARRAY(SELECT c.charid FROM characters c WHERE c.id = users.id) AS vip_chars";
     let whereClause = "";
@@ -369,8 +370,13 @@ export const getUserRanking = async (scope: "server" | "global", user_ids: strin
     // It's because of the way it's sorted and the limit of 1500 users
 
     const result = await query(
-        `SELECT ${selectClause} FROM users ${scope === "server" ? `WHERE id = ANY($1)` : "WHERE 1=1"} ${whereClause} ORDER BY ${orderByClause} LIMIT 1501`,
-        scope === "server" ? [user_ids] : []
+        `SELECT ${selectClause} FROM users ${scope === "server" ? `WHERE id = ANY($1)` :
+            scope === "guild" ? `WHERE guild = $1` :
+                "WHERE 1=1"
+        } ${whereClause} ORDER BY ${orderByClause} LIMIT 1501`,
+        scope === "server" ? [user_ids] :
+            scope === "guild" ? [guildId] :
+                []
     ) as (Pick<UserSchema, "name" | "id" | "xp" | "coins" | "lilies" | "pullstotal" | "favchar" | "premium" | "chars" | "char_skin" | "battlechar" | "dungeon_classlevels" | "achievements" | "dungeon_floors" | "eventpts" | "cow_participation" | "custom_skins"> & { vip_chars: number[]; cl?: string; clvl?: number; anime?: number; stampede?: number; referral_count?: number; })[];
     return result ?? [];
 };
@@ -386,7 +392,7 @@ export const getFindUsers = async (ids: string[] | "*", charId: number): Promise
         const users = await query(query_str, [charId]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
         return users;
     } else {
-        const users = await query(`${query_str} AND u.id = ANY($2)`, [charId, ids]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
+        const users = await query(`${query_str} AND id = ANY($2)`, [charId, ids]) as (Pick<CompactUserSchema, "id" | "name" | "findoption" | "chars"> & { vip_copies: number; })[];
         return users;
     };
 };
@@ -611,7 +617,7 @@ export const loadVoteReminders = async (): Promise<Pick<UserSchema, "id" | "last
 };
 
 export const loadRanking = async (pass: number, batchSize: number): Promise<UserSchemaForStats[]> => {
-    const users = await query(`SELECT id, name, xp, premium, battlechar, level, bank, char_ref, equipment, shield_slot, class, dungeon_classlevels, dungeon_floors FROM users WHERE battlechar IS NOT NULL ORDER BY rowid LIMIT $1 OFFSET $2`, [batchSize, pass * batchSize]) as UserSchemaForStats[];
+    const users = await query(`SELECT id, name, xp, premium, battlechar, level, bank, char_ref, equipment, shield_slot, class, dungeon_classlevels, dungeon_floors, hidden_dungeon, phantasmagoria_supports, phantasmagoria_boss_data, phantasmagoria_selected_boss, echo, echo_purchases, phantasmagoria_strategy, phantasmagoria_class, phantasmagoria_equipment FROM users WHERE battlechar IS NOT NULL ORDER BY rowid LIMIT $1 OFFSET $2`, [batchSize, pass * batchSize]) as UserSchemaForStats[];
     return users;
 };
 
@@ -676,7 +682,7 @@ export const insertNewServer = async (id: string, name: string, userId: string):
     return server;
 };
 
-export const insertNewWeapon = async (userId: string, itemId: number, itemType: string, uniqueId?: string, level?: number, ascension?: number): Promise<WeaponSchema> => {
+export const insertNewWeapon = async (userId: string, itemId: number, itemType: string, uniqueId?: string, level?: number, ascension?: number, client?: any): Promise<WeaponSchema> => {
     const columns = ['id', 'itemid', 'item_type'];
     const values = [userId, itemId, itemType];
 
@@ -694,7 +700,8 @@ export const insertNewWeapon = async (userId: string, itemId: number, itemType: 
     };
 
     const placeholders = values.map((_, i) => `$${i + 1}`).join(', ');
-    const { rows: [weapon] } = await query(
+    const exec = client ? client.query.bind(client) : query;
+    const { rows: [weapon] } = await exec(
         `INSERT INTO weapons (${columns.join(', ')}) VALUES (${placeholders}) RETURNING *`,
         values
     ) as { rows: WeaponSchema[]; };
@@ -1199,7 +1206,7 @@ export const updateUsers = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE
@@ -1296,7 +1303,7 @@ export const updateUsersAndCache = async (client: Client, userIds: string | stri
                                     //@ts-ignore
                                     for (const [k, v] of Object.entries(value)) {
                                         //@ts-ignore
-                                        mergedJson[k] = user.o[key][k] + v;
+                                        mergedJson[k] = Math.max(0, (user.o[key][k] ?? 0) + v);
                                     };
                                     //@ts-ignore
                                     user.o[key] = mergedJson;
@@ -1408,7 +1415,7 @@ export const updateGuilds = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE
@@ -1500,7 +1507,7 @@ export const updateParties = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE
@@ -1556,7 +1563,7 @@ export const updateStampedes = async (
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
                                     AND jsonb_typeof(${key}->key) = 'number' 
                                     AND jsonb_typeof($${paramIndex}::jsonb->key) = 'number' THEN
-                                        to_jsonb((${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric)
+                                        to_jsonb(GREATEST(0, (${key}->key)::numeric + ($${paramIndex}::jsonb->key)::numeric))
                                 WHEN $${paramIndex}::jsonb->key IS NOT NULL THEN
                                     $${paramIndex}::jsonb->key
                                 ELSE

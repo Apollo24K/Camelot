@@ -75,6 +75,11 @@ export default class CustomHpBar {
 };
 
 export const customHpBars: CustomHpBar[] = [
+    // new CustomHpBar("Default", 0, 0x000000, {
+    //     start: { empty: "<:dbl:944322994585612319>", hp_only: "<:dblh:944322994895990855>", mana_only: "<:dblm:944322994971476038>", full: "<:dblhm:944322994749210735>" },
+    //     middle: { empty: "<:db:944322995067957288>", hp_only: "<:dbh:944322995336409128>", mana_only: "<:dbm:944322995088916541>", full: "<:dbhm:944322994942144542>" },
+    //     end: { empty: "<:dbr:944322994778554400>", hp_only: "<:dbrh:944322995122503750>", mana_only: "<:dbrm:944322995135086602>", full: "<:dbrhm:944322997144158318>" },
+    // }),
     new CustomHpBar("Default", 0, 0x000000, {
         start: { empty: "<:dbl:944322994585612319>", hp_only: "<:dblh:944322994895990855>", mana_only: "<:dblm:944322994971476038>", full: "<:dblhm:944322994749210735>" },
         middle: { empty: "<:db:944322995067957288>", hp_only: "<:dbh:944322995336409128>", mana_only: "<:dbm:944322995088916541>", full: "<:dbhm:944322994942144542>" },
@@ -177,5 +182,10 @@ export const customHpBars: CustomHpBar[] = [
         end: { empty: "<:dbr:1415266560745934848>", hp_only: "<:dbrh:1516036477870669934>", mana_only: "<:dbrm:1516036492366053486>", full: "<:dbrhm:1516036484669505597>" }
     }),
 
+    new CustomHpBar("Liminal Clover", 17, 0xa8a7a2, {
+        start: { empty: "<:dbl:1512302196551848046>", hp_only: "<:dblh:1512302238280978463>", mana_only: "<:dblm:1512302261416624188>", full: "<:dblhm:1512302294308491284>" },
+        middle: { empty: "<:db:1512302332312944650>", hp_only: "<:dbh:1512302356832977136>", mana_only: "<:dbm:1512302397160947864>", full: "<:dbhm:1512302426433257554>" },
+        end: { empty: "<:dbr:1512302468338548917>", hp_only: "<:dbrh:1512302491016892416>", mana_only: "<:dbrm:1512302519194222683>", full: "<:dbrhm:1512302542602899546>" },
+    }),
 
 ];

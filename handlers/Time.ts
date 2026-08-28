@@ -19,6 +19,7 @@ const handler: BotHandler = {
 
             // Daily
             if (now.getHours() === 0 && now.getMinutes() === 0) {
+
                 // Fast daily reset
                 await updateUsersAndCache(client, "*", {
                     updates: {

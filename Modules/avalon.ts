@@ -13,23 +13,68 @@ export default class Avalon {
     };
 
     static checkIfEnded(myStatsC: DetailedStats, eStatsC: DetailedStats, mybuffs: Buffs, ebuffs: Buffs, matchStats: MatchStats, notice: string[], interaction: ChatInputCommandInteraction, minionDefeated: any, editEmbed: any, endMatch: any) {
+        if (myStatsC.forceLoose) {
+            endMatch("l");
+            return;
+        };
         if (myStatsC.hp < 1) {
             if (matchStats.currentCharacter) {
                 matchStats.trigger("minionDeath", myStatsC, eStatsC, mybuffs, ebuffs, {});
                 return minionDefeated("my");
+            };
+            if (myStatsC.stayAlive > 0) {
+                myStatsC.stayAlive--;
+                myStatsC.hp = Math.floor(myStatsC.maxhp / 2);
+                notice.push(`\n➕ ${myStatsC.name} stays alive...`);
+                matchStats.turn = 1;
+                editEmbed();
+                return;
             };
             if (!eStatsC.blockRevival && myStatsC.revivedTotal < myStatsC.maxRevivals && myStatsC.rev > Math.random()) {
                 myStatsC.revivedTotal++;
                 myStatsC.hp = Math.floor(myStatsC.maxhp * myStatsC.revhp);
                 notice.push(`\n🪽 ${myStatsC.name} survived! Restored **${myStatsC.hp}** HP`);
                 matchStats.trigger("revival", myStatsC, eStatsC, mybuffs, ebuffs, {});
-                matchStats.turn === 1;
+                myStatsC.timeFrozen = false;
+                matchStats.turn = 1;
                 editEmbed();
 
                 // Achievements
                 achievements[24].check(interaction, interaction.user, myStatsC.revivedTotal), achievements[25].check(interaction, interaction.user, myStatsC.revivedTotal), achievements[26].check(interaction, interaction.user, myStatsC.revivedTotal); // The Show Must Go On
             } else {
-                endMatch("l");
+                if (eStatsC.playerDeathMessage) {
+                    if (Array.isArray(eStatsC.playerDeathMessage)) {
+                        notice.push(`\n${eStatsC.playerDeathMessage[Math.floor(Math.random() * eStatsC.playerDeathMessage.length)]}`);
+                    } else notice.push(`\n${eStatsC.playerDeathMessage}`);
+                };
+                // Player dies — but also check if enemy died simultaneously
+                if (eStatsC.hp < 1) {
+                    if (matchStats.currentOpponent) {
+                        matchStats.trigger("minionDeath", eStatsC, myStatsC, ebuffs, mybuffs, {});
+                        minionDefeated("e");
+                    } else {
+                        if (!myStatsC.blockRevival && eStatsC.revivedTotal < eStatsC.maxRevivals && eStatsC.rev > Math.random()) {
+                            eStatsC.revivedTotal++;
+                            eStatsC.hp = Math.floor(eStatsC.maxhp * eStatsC.revhp);
+                            notice.push(`\n<:revival:1341347208590790759> ${eStatsC.name} survived! Restored **${eStatsC.hp}** HP`);
+                            matchStats.trigger("revival", eStatsC, myStatsC, ebuffs, mybuffs, {});
+                        } else if (eStatsC.phase && eStatsC.maxphase && eStatsC.phase < eStatsC.maxphase) {
+                            eStatsC.hp = Math.max(eStatsC.maxhp, 1);
+                            notice.push(`\n🔄️ **PHASE CHANGE!** ${(eStatsC.phaseNotif) ? eStatsC.phaseNotif[eStatsC.phase - 1] : `${eStatsC.name} recovered all health.`}`);
+                            eStatsC.phase++;
+                            matchStats.trigger("phaseChange", eStatsC, myStatsC, ebuffs, mybuffs, {});
+                        } else {
+                            if (eStatsC.deathMessage) {
+                                if (Array.isArray(eStatsC.deathMessage)) {
+                                    notice.push(`\n${eStatsC.deathMessage[Math.floor(Math.random() * eStatsC.deathMessage.length)]}`);
+                                } else notice.push(`\n${eStatsC.deathMessage}`);
+                            };
+                            endMatch(matchStats.winconInvert ? "l" : "w");
+                            return;
+                        };
+                    };
+                };
+                endMatch(matchStats.winconInvert ? "w" : "l");
             };
         } else if (eStatsC.hp < 1) {
             if (matchStats.currentOpponent) {
@@ -41,10 +86,24 @@ export default class Avalon {
                 eStatsC.hp = Math.floor(eStatsC.maxhp * eStatsC.revhp);
                 notice.push(`\n<:revival:1341347208590790759> ${eStatsC.name} survived! Restored **${eStatsC.hp}** HP`);
                 matchStats.trigger("revival", eStatsC, myStatsC, ebuffs, mybuffs, {});
-                matchStats.turn === 1;
+                matchStats.turn = 1;
+                editEmbed();
+                return;
+            }
+            else if (eStatsC.phase && eStatsC.maxphase && eStatsC.phase < eStatsC.maxphase) {
+                eStatsC.hp = Math.max(eStatsC.maxhp, 1);
+                notice.push(`\n🔄️ **PHASE CHANGE!** ${(eStatsC.phaseNotif) ? eStatsC.phaseNotif[eStatsC.phase - 1] : `${eStatsC.name} recovered all health.`}`);
+                eStatsC.phase++;
+                matchStats.trigger("phaseChange", eStatsC, myStatsC, ebuffs, mybuffs, {});
+                matchStats.turn = 1;
                 editEmbed();
             } else {
-                endMatch("w");
+                if (eStatsC.deathMessage) {
+                    if (Array.isArray(eStatsC.deathMessage)) {
+                        notice.push(`\n${eStatsC.deathMessage[Math.floor(Math.random() * eStatsC.deathMessage.length)]}`);
+                    } else notice.push(`\n${eStatsC.deathMessage}`);
+                };
+                endMatch(matchStats.winconInvert ? "l" : "w");
             };
         };
     };
@@ -80,17 +139,6 @@ export default class Avalon {
         // return bar;
     };
 
-    /*
-    static stabilityIcon(stability: number) {
-        if (stability === null) return "";
-        if (stability <= 0) return "<:stability0:1439087950314078269>";
-        if (stability <= 25) return "<:stability1:1439088092370960404>";
-        if (stability <= 50) return "<:stability2:1446880353263423528>";
-        if (stability <= 75) return "<:stability3:1439088164101816330>";
-        if (stability <= 100) return "<:stabilityfull:1439088205159993518>";
-        return "";
-    };
-    */
     static statusIcon(side: DetailedStats) {
         let iconbar = "";
 
@@ -164,14 +212,31 @@ export default class Avalon {
             };
         };
 
+        if (side.hiyukiState) { // Hiyuki EX
+            switch (side.hiyukiState) {
+                case 2: iconbar += "<:Foreclaimed:1504133701737517208>"; break;
+                case 3: iconbar += "<a:Iai:1504133875813584996>"; break;
+            };
+        };
+
+        if (side.manaCircle) iconbar += "<a:manacircle:1505922588277477540>";
+
         // GENERAL
         if (side.timeFrozen) iconbar += "<:noATK:1450109657426300948>";
+
         if (side.burnduration > 0) {
             switch (side.burntype) {
                 case 1: iconbar += "<a:burn:1475075402295803914>"; break; // Default
                 case 2: iconbar += "<a:plasma:1480572957788082267>"; break; // Wizard
                 case 3: iconbar += "<a:vivium:1480572908496490710>"; break; // Arthur Leywin
                 default: iconbar += "<a:burn:1475075402295803914>"; break;
+            };
+        };
+
+        if (side.SPshield) {
+            switch (side.SPshieldType) {
+                case 1: iconbar += "<:spshield1:1501752295182827560>"; break; // NereID
+                default: break;
             };
         };
 
@@ -347,6 +412,7 @@ export default class Avalon {
             if (obj[stat].length) obj[stat] = obj[stat].filter((buff) => buff.last);
         });
         stats.sm += stats.mg;
+        if (typeof stats.manaGained !== 'undefined') stats.manaGained += stats.mg;
         if (stats.sm > stats.mana) stats.sm = stats.mana;
     };
 

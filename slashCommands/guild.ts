@@ -213,6 +213,7 @@ const exportCommand: SlashCommand = {
                 status: e.id === guild.master ? " (Guild Master)" : guild?.elders.includes(e.id) ? " (Elder)" : "",
                 value: e.id === guild.master ? 2 : guild?.elders.includes(e.id) ? 1 : 0,
                 donated: 0,
+                guild_marks: e.guild_marks,
             }));
             members.sort((a, b) => b.value - a.value);
 
@@ -239,6 +240,8 @@ const exportCommand: SlashCommand = {
                 detailsTab = { name: "Exam Rank", value: `${members.map((e) => `__${getLetterRank(e.rankscore)}__`).join("\n")}`, inline: true };
             } else if (details === "id") {
                 detailsTab = { name: "User ID", value: `${members.map((e) => `__${e.id}__`).join("\n")}`, inline: true };
+            } else if (details === "guild_marks") {
+                detailsTab = { name: "Guild Marks", value: `${members.map((e) => `__${formatNumberWithQuotes(e.guild_marks)}__ <:guild_mark:1317944450814840923>`).join("\n")}`, inline: true };
             } else {
                 detailsTab = { name: "Last Online", value: `${members.map((e) => `__${lastActive(e.lastdaily ?? 0)}__`).join("\n")}`, inline: true };
             };
