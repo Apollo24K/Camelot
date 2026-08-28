@@ -506,23 +506,23 @@ const commands = [
 			.setName('forge')
 			.setDescription('Forging related commands')
 			.addSubcommand((subcommand) => subcommand.setName('catalog').setDescription('View forge catalog')
-			.addStringOption(option => option.setName('grade').setDescription('filter for a specific grade').setRequired(false)
-				.addChoices(
-					{ name: 'legendary', value: 'legendary' },
-					{ name: 'unique', value: 'unique' },
-					{ name: 'rare', value: 'rare' },
-					{ name: 'special', value: 'special' },
-					{ name: 'normal', value: 'normal' },
+				.addStringOption(option => option.setName('grade').setDescription('filter for a specific grade').setRequired(false)
+					.addChoices(
+						{ name: 'legendary', value: 'legendary' },
+						{ name: 'unique', value: 'unique' },
+						{ name: 'rare', value: 'rare' },
+						{ name: 'special', value: 'special' },
+						{ name: 'normal', value: 'normal' },
+					)
 				)
-			)
-			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 			)
 			.addSubcommand((subcommand) => subcommand.setName('craft').setDescription('Craft an item')
-			.addStringOption(option => option.setName('item').setDescription('Name or ID of the item to craft').setRequired(true))
+				.addStringOption(option => option.setName('item').setDescription('Name or ID of the item to craft').setRequired(true))
 			)
 			.addSubcommand((subcommand) => subcommand.setName('merge').setDescription('Rune merging')
-			.addStringOption(option => option.setName('rune').setDescription('Rune to view or merge').setRequired(false))
-			.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
+				.addStringOption(option => option.setName('rune').setDescription('Rune to view or merge').setRequired(false))
+				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 			)
 	}.data.toJSON(),
 	// {
@@ -1585,8 +1585,6 @@ const commands = [
 		data: new SlashCommandBuilder()
 			.setName('phantasm')
 			.setDescription('Phantasmagoria boss challenges')
-			.addStringOption(option => option.setName('action').setDescription('Action to take | e.g., overview, fight').setRequired(false))
-			.addIntegerOption(option => option.setName('boss').setDescription('Boss index to target').setRequired(false))
 			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the overview and go directly into battle').setRequired(false)),
 	}.data.toJSON(),
 	{
