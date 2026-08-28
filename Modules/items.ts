@@ -6827,7 +6827,7 @@ export const items = [
                     myStats.hotlrabbit++;
                     ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.atk > myStats.md ? myStats.atk * 0.005 : myStats.md * 0.005), 9999));
                     if (myStats.hotlrabbit === 50) {
-            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+                        myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
                             dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, ` **Leporines**`, { atkMultiplier: 0.1 });
 
                             return AbilityResponse.SUCCESS;
@@ -7514,7 +7514,7 @@ export const items = [
         },
     }, "- Increases coins earned from the dungeon by **15%**. The wearer has **+12%** ATK and DEF.", "mythical", 853),
 
-    new lootInfo("Pyrite", "loot", "ascension material", ["crafting", "dungeon (extreme)"], "<:pyrite:1525886129759584329>", "https://i.ibb.co/C3FxK0Km/pyrite.png", "mythical", 854),
+    new lootInfo("Pyrite", "loot", "ascension material", ["dungeon (extreme)"], "<:pyrite:1525886129759584329>", "https://i.ibb.co/C3FxK0Km/pyrite.png", "mythical", 854),
     new runeInfo("The Sereflame", ["seasonal shop"], "<:The_Sereflame:1542177375880487043>", "https://i.ibb.co/N2RxsyQ0/The-Sereflame.png", {
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.burnbonus ??= 0;
