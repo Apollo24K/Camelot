@@ -169,6 +169,7 @@ const exportCommand: SlashCommand = {
 
                             if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully crafted ${fItem.emoji} **__${fItem.name}__**!`);
                         });
+                        interaction.client.userCache.delete(interaction.user.id);
                     } catch (e) {
                         if (e instanceof Error && e.message === 'INSUFFICIENT_ITEMS') return;
                         console.error('Forge craft transaction failed:', e);
@@ -340,6 +341,7 @@ const exportCommand: SlashCommand = {
 
                             if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully merged into ${outItem.emoji} **__${outItem.name}__**!`);
                         });
+                        interaction.client.userCache.delete(interaction.user.id);
                     } catch (e) {
                         if (e instanceof Error && e.message === 'INSUFFICIENT_ITEMS') return;
                         console.error('Forge merge transaction failed:', e);
