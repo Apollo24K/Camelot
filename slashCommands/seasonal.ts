@@ -13,7 +13,7 @@ type SeasonalShopTab = 'runes' | 'hpbars' | 'backgrounds' | 'skins';
 
 const EMBED_COLOR = 0x2aad9d;
 
-const SEASON_END_DATE = new Date('2026-08-15 00:00:00');
+const SEASON_END_DATE = new Date('2026-10-20 00:00:00');
 
 const loadedImages: Record<string | number, Image> = {};
 
