@@ -251,13 +251,21 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                 const myFresh = rows.find((p) => p.id === interaction.user.id);
                 stats.phantasmagoria_boss_data = myFresh?.phantasmagoria_boss_data ?? {};
                 const ranked = rows
-                    .filter((p) => (p.phantasmagoria_boss_data?.[bossId]?.best_damage ?? 0) > 0)
-                    .sort((a, b) => ((b.phantasmagoria_boss_data?.[bossId]?.best_damage) ?? 0) - ((a.phantasmagoria_boss_data?.[bossId]?.best_damage) ?? 0))
+                    .filter((p) => {
+                        const dmg = p.phantasmagoria_boss_data?.[bossId]?.best_damage;
+                        return !isNaN(dmg) && (dmg ?? 0) > 0;
+                    })
+                    .sort((a, b) => {
+                        const dmgA = a.phantasmagoria_boss_data?.[bossId]?.best_damage;
+                        const dmgB = b.phantasmagoria_boss_data?.[bossId]?.best_damage;
+                        return (isNaN(dmgB) ? 0 : (dmgB ?? 0)) - (isNaN(dmgA) ? 0 : (dmgA ?? 0));
+                    })
                     .slice(0, 20);
                 rankingLines = ranked.length
                     ? ranked.map((p, i) => {
                         const bossData = p.phantasmagoria_boss_data?.[bossId] ?? {};
-                        return `-# ${i + 1}. <@${p.id}> — **${formatNumberWithQuotes(bossData.best_damage ?? 0)}** damage (Phase ${bossData.best_phases ?? 0})`;
+                        const dmg = isNaN(bossData.best_damage) ? 0 : (bossData.best_damage ?? 0);
+                        return `-# ${i + 1}. <@${p.id}> — **${formatNumberWithQuotes(dmg)}** damage (Phase ${bossData.best_phases ?? 0})`;
                     })
                     : [`-# No participants yet`];
                 interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: getRaidButtonRow(tab, EVENT_ACTIVE) });
@@ -822,7 +830,8 @@ const exportCommand: SlashCommand = {
             };
 
             // Damage dealt
-            const damageDealt = Math.max(0, (eStatsC.cumulativePhaseHp ?? 0) + Math.max(0, eStatsC.maxhp - eStatsC.hp));
+            const rawDamageDealt = (eStatsC.cumulativePhaseHp ?? 0) + Math.max(0, eStatsC.maxhp - (isNaN(eStatsC.hp) ? eStatsC.maxhp : eStatsC.hp));
+            const damageDealt = isNaN(rawDamageDealt) ? 0 : Math.max(0, rawDamageDealt);
             const phasesCleared = Math.max(0, (eStatsC.phase ?? 1) - 1);
 
             // Echo reward: 100 per new phase defeated (max 200 phases per battle)
@@ -836,8 +845,10 @@ const exportCommand: SlashCommand = {
 
             // Save best score & grant echo
             const bossData = { ...freshBossData };
+            // If previous best was NaN, replace it with current damage
+            const prevBestDamage = isNaN(prevBest.best_damage) ? 0 : (prevBest.best_damage ?? 0);
             bossData[String(bossId)] = {
-                best_damage: Math.max(prevBest.best_damage ?? 0, damageDealt),
+                best_damage: Math.max(prevBestDamage, isNaN(damageDealt) ? 0 : damageDealt),
                 best_phases: Math.max(prevBest.best_phases ?? 0, phasesCleared),
             };
             await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -1016,8 +1027,8 @@ const exportCommand: SlashCommand = {
                         if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                         else if (myStatsC.hp < 0) myStatsC.hp = 0;
                         else myStatsC.hp = Math.floor(myStatsC.hp);
-                        if (eStatsC.hp > eStatsC.maxhp) eStatsC.hp = eStatsC.maxhp;
-                        else if (eStatsC.hp < 0) eStatsC.hp = 0;
+                        if (isNaN(eStatsC.hp) || eStatsC.hp < 0) eStatsC.hp = 0;
+                        else if (eStatsC.hp > eStatsC.maxhp) eStatsC.hp = eStatsC.maxhp;
                         else eStatsC.hp = Math.floor(eStatsC.hp);
 
                         // Check and run delayed buffs

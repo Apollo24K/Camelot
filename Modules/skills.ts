@@ -1071,7 +1071,7 @@ export const skills: skillInfo[] = [
         eStats.burntype = 2;
         if (typeof eStats.burnduration !== "number") {// Trigger burn every round
             eStats.burnduration = 0;
-            eStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
 
                 return AbilityResponse.SUCCESS;

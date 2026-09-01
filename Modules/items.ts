@@ -3314,7 +3314,7 @@ export const items = [
             "emoji": "<:sagitta_solis:1069016593356566528>",
             "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const burn = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:sagitta_solis:1069016593356566528> **${char.name}**`, { atkMultiplier: 1, magicDamage: true });
-                ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 3));
+                if (burn) ebuff.hp.push(new buffInfo("+", -Math.floor(burn * 0.125), 3));
                 if (Math.random() < 0.35) eStats.burnduration += 2;
 
                 return AbilityResponse.SUCCESS;
@@ -6875,7 +6875,7 @@ export const items = [
     }, "- Enters battles with **3** layers of protection cover, each increasing damage mitigation by **8%**.\n- Upon falling below **33%** HP, sacrifices a layer to recover **10%** max HP, and deal **40%** damage to the enemy.", "rare", 796),
 
     // Extreme Dungeon Weapons
-    new weaponInfo("Angbar", "weapon", "sword", ["crafting", "extreme dungeon drop"], "<:Angbar:1498001499975061554>", "https://i.ibb.co/Wv1LB0SD/Angbar.png", "atk", 98, 1067, "atk%", 0.08, 0.22, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Angbar", "weapon", "sword", ["extreme dungeon drop"], "<:Angbar:1498001499975061554>", "https://i.ibb.co/Wv1LB0SD/Angbar.png", "atk", 98, 1067, "atk%", 0.08, 0.22, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.burnbonus ? myStats.burnbonus += 0.33 : myStats.burnbonus = 0.33;
 
         eStats.burntype ??= 1;
@@ -6915,7 +6915,7 @@ export const items = [
 
     new lootInfo("Zemurian Ore", "loot", "ascension material", ["dungeon", "floor 2 (extreme)"], "<:zemurian_ore:1498328476678099056>", "https://i.ibb.co/908rXJG/zemurianss-1-1-1-1.webp", "rare", 798),
 
-    new weaponInfo("The Flawed", "weapon", "shield", ["crafting", "extreme dungeon drop"], "<:The_Flawed:1498701713983668415>", "https://i.ibb.co/ym13HdK1/The-Flawed.png", "shield", 204, 1287, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("The Flawed", "weapon", "shield", ["extreme dungeon drop"], "<:The_Flawed:1498701713983668415>", "https://i.ibb.co/ym13HdK1/The-Flawed.png", "shield", 204, 1287, "cr", 0.07, 0.25, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.theflawed = 0;
         // Conducts equivalent exchange every 8 rounds
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -6942,7 +6942,7 @@ export const items = [
 
         return AbilityResponse.SUCCESS;
     }, "Conducts an equivalent exchange every **8** rounds, losing **20%** current HP to become __INVINCIBLE__, taking no damage from any hit for that round. Every exchange also boosts the wielder's ATK & MD by **5%** permanently (first 5 times only).", "The First Law of Alchemy: Humankind cannot gain anything without first giving something in return. To obtain, something of equal value must be lost.\n\nWhat will you sacrifice?\nYour entire body?\n...\nHumans must pay a steep price for their arrogance, that is truth.", "mythical", 799),
-    new weaponInfo("Kamish's Wrath", "weapon", "dagger", ["crafting", "extreme dungeon drop"], "<:Kamish_Wrath:1501029380443476171>", "https://i.ibb.co/nsSpGcqg/image0.png", "atk", 145, 1204, "mg", 1, 5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Kamish's Wrath", "weapon", "dagger", ["extreme dungeon drop"], "<:Kamish_Wrath:1501029380443476171>", "https://i.ibb.co/nsSpGcqg/image0.png", "atk", 145, 1204, "mg", 1, 5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.burntype ??= 1;
         if (typeof eStats.burnduration !== "number") {// Trigger burn every round
             eStats.burnduration = 0;
@@ -6966,7 +6966,7 @@ export const items = [
 
         return AbilityResponse.SUCCESS;
     }, "After using ATK, has a **25%** chance to apply **+2** rounds of burn. When the enemy is BURNING, **doubles** own critical damage.", "After Kamish's death, his massive corpse was preserved under the Federal Bureau of Hunters (FBH) headquarters, symbolizing human triumph. Master blacksmiths crafted Kamish's Wrath from his fangs: one dagger from a primary fang and the other from a secondary one, making them mana-sensitive weapons with high attack power—the strongest known at the time. These light orange daggers with blood-red edges emit intense pressure, instilling fear in enemies no matter the encounter.", "mythical", 800),
-    new weaponInfo("Thalokorn", "weapon", "shield", ["crafting", "extreme dungeon drop"], "<:Kamish_Wrath:1501029380443476171>", "https://i.ibb.co/nsSpGcqg/image0.png", "shield", 204, 1287, "cd", 0.08, 0.45, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Thalokorn", "weapon", "shield", ["extreme dungeon drop"], "<:Kamish_Wrath:1501029380443476171>", "https://i.ibb.co/nsSpGcqg/image0.png", "shield", 204, 1287, "cd", 0.08, 0.45, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         let buff = 15;
         // Get user inventory to check for megalodon
         const inv = await getUserSchema(matchStats.user);
@@ -6989,7 +6989,7 @@ export const items = [
 
         return AbilityResponse.SUCCESS;
     }, "At the start of every round, summons a Megalodon, dealing **10%** dmg for each Megalodon owned (Max: 30%). If it hits, increases ATK and MD by **1%** (Stacked multiplicatively, up to **15** times)", "", "mythical", 801),
-    new weaponInfo("Kamutoke", "weapon", "dagger", ["crafting", "extreme dungeon drop"], "<:Kamutoke:1503049753947017428>", "https://i.ibb.co/9m6fsTVH/Kamutoke.png", "atk", 118, 1098, "cr", 0.09, 0.3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Kamutoke", "weapon", "dagger", ["extreme dungeon drop"], "<:Kamutoke:1503049753947017428>", "https://i.ibb.co/9m6fsTVH/Kamutoke.png", "atk", 118, 1098, "cr", 0.09, 0.3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.tempLightningBuff ??= 0;
         myStats.tempLightningBuffActive ??= 0;
 
@@ -7065,10 +7065,10 @@ export const items = [
     new lootInfo("Purified Venom", "loot", "ascension material", ["dungeon (extreme)"], "<:Purified_Venom:1515892308254523505>", "https://i.ibb.co/4hHzP8v/Purified-Venom.png", "mythical", 833),
     new lootInfo("Grief Seed", "loot", "ascension material", ["dungeon (extreme)"], "<:Grief_Seed:1515915727712948294>", "https://i.ibb.co/Qjm2HKjk/Grief-Seed.png", "mythical", 834),
 
-    new armorInfo("Marguerite Noire Hat", "armor", "helmet", "Marguerite Noire Set", ["crafting", "extreme dungeon drop"], "<:Marguerite_Noire_Hat:1508996761232871534>", "https://i.ibb.co/SwFNB2Xf/Nutcracker-Hat.png", "hp", 78, 1704, "mythical", 835),
-    new armorInfo("Marguerite Noire Robe", "armor", "cuirass", "Marguerite Noire Set", ["crafting", "extreme dungeon drop"], "<:Marguerite_Noire_Robe:1508996430768115772>", "https://i.ibb.co/LzLPmgZV/Wudan-Robe.png", "def", 12, 139, "mythical", 836),
-    new armorInfo("Marguerite Noire Vambrace", "armor", "gloves", "Marguerite Noire Set", ["crafting", "extreme dungeon drop"], "<:Marguerite_Noire_Vambrace:1508996360379174923>", "https://i.ibb.co/ZzMcpZ1k/Merm-Vambrace.png", "hp", 110, 2103, "mythical", 837),
-    new armorInfo("Marguerite Noire Boots", "armor", "boots", "Marguerite Noire Set", ["crafting", "extreme dungeon drop"], "<:Marguerite_Noire_Boot:1508996496626810971>", "https://i.ibb.co/Sw49CrsR/Dressup-Boot.png", "mr", 11, 131, "mythical", 838, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new armorInfo("Marguerite Noire Hat", "armor", "helmet", "Marguerite Noire Set", ["extreme dungeon drop"], "<:Marguerite_Noire_Hat:1508996761232871534>", "https://i.ibb.co/SwFNB2Xf/Nutcracker-Hat.png", "hp", 78, 1704, "mythical", 835),
+    new armorInfo("Marguerite Noire Robe", "armor", "cuirass", "Marguerite Noire Set", ["extreme dungeon drop"], "<:Marguerite_Noire_Robe:1508996430768115772>", "https://i.ibb.co/LzLPmgZV/Wudan-Robe.png", "def", 12, 139, "mythical", 836),
+    new armorInfo("Marguerite Noire Vambrace", "armor", "gloves", "Marguerite Noire Set", ["extreme dungeon drop"], "<:Marguerite_Noire_Vambrace:1508996360379174923>", "https://i.ibb.co/ZzMcpZ1k/Merm-Vambrace.png", "hp", 110, 2103, "mythical", 837),
+    new armorInfo("Marguerite Noire Boots", "armor", "boots", "Marguerite Noire Set", ["extreme dungeon drop"], "<:Marguerite_Noire_Boot:1508996496626810971>", "https://i.ibb.co/Sw49CrsR/Dressup-Boot.png", "mr", 11, 131, "mythical", 838, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.atkmarg = 0;
         myStats.defmarg = 0;
         myStats.abimarg = 0;
@@ -7140,7 +7140,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "After using ATK, DEF, active (:sparkles:) and Class Skill (:fleur_de_lis:) once each, slows the enemy, where for the round the next **2** actions are timeout false. (CD: 4 rounds). For every round the user doesn't use ATK, increases ATK by **10%** (Max: 30%). This is reset by the end of the slowing round."),
 
-    new runeInfo("Soul Gem", ["crafting", "extreme dungeon drop"], "<:Soul_Gem:1508996066828091583>", "https://i.ibb.co/p9RGR1B/Soul-Gem.png", {
+    new runeInfo("Soul Gem", ["extreme dungeon drop"], "<:Soul_Gem:1508996066828091583>", "https://i.ibb.co/p9RGR1B/Soul-Gem.png", {
         passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 let purityOwned = 100 - matchStats.round;
@@ -7252,14 +7252,14 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, (level) => `After dodging, increases own and enemy's damage taken by **1%**, up to **${[8, 12, 16, 20, 24][level - 1]}%** (stackable vulnerability)`, "Spun of smoke and gilded with silver, glimpses of a paradise that never was.\n\nLord, I would want a break.\n*The path is drawn elsewhere.*\n\nLord, may I return?\n*..*\n\nLord?", "mythical", 841),
 
-    new weaponInfo("Ciel's Blessing", "weapon", "staff", ["crafting", "dungeon (extreme)"], "<:Ciels_Blessing:1515357473173798944>", "https://i.ibb.co/zVYM9Vyc/Ciel-s-Blessing.png", "md", 84, 964, "br", 0.03, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Ciel's Blessing", "weapon", "staff", ["dungeon (extreme)"], "<:Ciels_Blessing:1515357473173798944>", "https://i.ibb.co/zVYM9Vyc/Ciel-s-Blessing.png", "md", 84, 964, "br", 0.03, 0.15, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.mdChance = 1;
         matchStats.xpboost += 0.28;
 
         return AbilityResponse.SUCCESS;
     }, "The wielder always deals magical damage, and gets **+28%** more class XP in the dungeon after a win.", "", "mythical", 842),
 
-    new runeInfo("Silverlux Cascade", ["crafting", "dungeon (extreme)"], "<:Silverlux_Cascade:1515379939787145419>", "https://i.ibb.co/KpPFx2Qq/Silverlux-Cascade.png", {
+    new runeInfo("Silverlux Cascade", ["dungeon (extreme)"], "<:Silverlux_Cascade:1515379939787145419>", "https://i.ibb.co/KpPFx2Qq/Silverlux-Cascade.png", {
         passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.silverLux ??= 0;
 
@@ -7284,7 +7284,7 @@ export const items = [
         },
     }, "- After landing any hit, grants **1** Lux (4 if it is a frost hit).\n- Upon reaching **20** Lux, deals **300%** undodgeable unblockable frost damage, and boosts own ATK & MD by **12%** permanently.", "mythical", 843),
 
-    new runeInfo("Sweet Surprise", ["crafting", "dungeon (extreme)"], "<:Sweet_Surprise:1515867196327333899>", "https://i.ibb.co/ZRkq12CP/i.png", {
+    new runeInfo("Sweet Surprise", ["dungeon (extreme)"], "<:Sweet_Surprise:1515867196327333899>", "https://i.ibb.co/ZRkq12CP/i.png", {
         cost: 60,
         usage: 9999,
         used: 0,
@@ -7335,7 +7335,7 @@ export const items = [
         }
     }, "- Player starts with **25%** of their max HP. When reaching full HP, deal **25%** of their max HP as absolute damage. (CD: 4)\n\nActive (60 💧): Heals the opponent for **2.5%** of the player's max HP every round for **10** rounds. After the last heal, deal *twice* the healed amount as absolute damage.", "mythical", 844),
 
-    new weaponInfo("Gorgoneion Aegis", "weapon", "shield", ["crafting", "dungeon (extreme)"], "<:Gorgoneion_Aegis:1515880104373391371>", "https://i.ibb.co/ZRdmdR6k/Gorgoneion-Aegis.png", "shield", 200, 1200, "br", 0.04, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Gorgoneion Aegis", "weapon", "shield", ["dungeon (extreme)"], "<:Gorgoneion_Aegis:1515880104373391371>", "https://i.ibb.co/ZRdmdR6k/Gorgoneion-Aegis.png", "shield", 200, 1200, "br", 0.04, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             if (matchStats.round % (matchStats.interaction.commandName === "rolling cow" ? 8 : 5) === 0) {
                 eStats.timeFrozen = true;
@@ -7361,7 +7361,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Petrifies the opponent for **1** round every **5** (8 in Rolling Cow) rounds with a **10%** chance to shatter them. Shatter deals **200%** of the player's max HP as absolute damage.", "Forged from the petrified scales and divine wrath of the Gorgon herself, the Gorgoneion Aegis is a testament to Medusa's ~~undying malice~~ unending tragedy. This impenetrable shield turns the horrors of the damned back upon their source, returning any attack with a blinding, stony gaze that halts any foe in their tracks.", "mythical", 845),
 
-    new weaponInfo("Kasaka's Venom Fang", "weapon", "dagger", ["crafting", "dungeon (extreme)"], "<:Kasakas_Venom_Fang:1515886210617442404>", "https://i.ibb.co/v6CqWXqX/Kasaka-s-Venom-Fang.png", "atk", 110, 1150, "cr", 0.04, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new weaponInfo("Kasaka's Venom Fang", "weapon", "dagger", ["dungeon (extreme)"], "<:Kasakas_Venom_Fang:1515886210617442404>", "https://i.ibb.co/v6CqWXqX/Kasaka-s-Venom-Fang.png", "atk", 110, 1150, "cr", 0.04, 0.24, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.critbleed = true;
         myStats.critbleedlast = 3;
         myStats.critbleedAmount = 0.01;
@@ -7379,12 +7379,12 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "Critical strikes inflict a venom, dealing **1%** of the enemy's max HP as damage to the enemy for **3** rounds (or **2%** of own HP if enemy has more than twice your HP). The damage scaling is increased by **1%** every **8** rounds, up to **5%** and **10%** respectively.", "Forged from the razor-sharp fang of the Blue Venom-Fanged Kasaka, this iconic dagger became Sung Jinwoo’s first major breakthrough weapon. Its menacing, curved design hints at its deadly biological origins, as the sinister blade drips with potent serpent venom capable of bleeding and paralyzing its targets.", "mythical", 846),
 
-    new lootInfo("Witch Essence", "loot", "ascension material", ["crafting", "dungeon (extreme)"], "<:Witch_Essence:1515921085152104458>", "https://i.ibb.co/TqdxwYBM/Witch-Essence.png", "mythical", 847),
+    new lootInfo("Witch Essence", "loot", "ascension material", ["dungeon (extreme)"], "<:Witch_Essence:1515921085152104458>", "https://i.ibb.co/TqdxwYBM/Witch-Essence.png", "mythical", 847),
 
-    new armorInfo("The Chosen One Helmet", "armor", "helmet", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Helmet_of_the_Chosen_One:1516708125397221446>", "https://i.ibb.co/dsPQKVJ0/Helmet-of-the-Chosen-One.png", "hp", 88, 2110, "mythical", 848),
-    new armorInfo("The Chosen One Chestplate", "armor", "cuirass", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Chestplate_of_the_Chosen_One:1516708199078826134>", "https://i.ibb.co/hxJ13LFR/Chestplate-of-the-Chosen-one.png", "hp", 96, 2450, "mythical", 849),
-    new armorInfo("The Chosen One Gloves", "armor", "gloves", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Gloves_of_the_Chosen_One:1516708293442146385>", "https://i.ibb.co/xKM6WWgy/Gloves-of-the-Chosen-one.png", "def", 15, 175, "mythical", 850),
-    new armorInfo("The Chosen One Boots", "armor", "boots", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Boots_of_the_Chosen_One:1516708449516257330>", "https://i.ibb.co/4ZybjkF9/Boots-of-the-Chosen-one.png", "mr", 13, 150, "mythical", 851, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new armorInfo("The Chosen One Helmet", "armor", "helmet", "The Chosen One Set", ["extreme dungeon drop"], "<:Helmet_of_the_Chosen_One:1516708125397221446>", "https://i.ibb.co/dsPQKVJ0/Helmet-of-the-Chosen-One.png", "hp", 88, 2110, "mythical", 848),
+    new armorInfo("The Chosen One Chestplate", "armor", "cuirass", "The Chosen One Set", ["extreme dungeon drop"], "<:Chestplate_of_the_Chosen_One:1516708199078826134>", "https://i.ibb.co/hxJ13LFR/Chestplate-of-the-Chosen-one.png", "hp", 96, 2450, "mythical", 849),
+    new armorInfo("The Chosen One Gloves", "armor", "gloves", "The Chosen One Set", ["extreme dungeon drop"], "<:Gloves_of_the_Chosen_One:1516708293442146385>", "https://i.ibb.co/xKM6WWgy/Gloves-of-the-Chosen-one.png", "def", 15, 175, "mythical", 850),
+    new armorInfo("The Chosen One Boots", "armor", "boots", "The Chosen One Set", ["extreme dungeon drop"], "<:Boots_of_the_Chosen_One:1516708449516257330>", "https://i.ibb.co/4ZybjkF9/Boots-of-the-Chosen-one.png", "mr", 13, 150, "mythical", 851, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.chosenOneState = 1;
         myStats.chosenOneLastUsed = -1;
         const chosenOneStats = await getFullUserSchema(user.id);
@@ -7490,7 +7490,7 @@ export const items = [
         return AbilityResponse.SUCCESS;
     }, "After using ATK, DEF, active (:sparkles:) and Class Skill (:fleur_de_lis:) once each, slows the enemy, where for the round the next **2** actions are timeout false. (CD: 4 rounds). For every round the user doesn't use ATK, increases ATK by **10%** (Max: 30%). This is reset by the end of the slowing round."),
 
-    new runeInfo("Coinflip Trochoid", ["extreme dungeon", "crafting"], "<:Coinflip_Trochoid:1520081150792568832>", "https://i.ibb.co/JwgcnJHC/Coinflip-Trochoid.png", {
+    new runeInfo("Coinflip Trochoid", ["extreme dungeon"], "<:Coinflip_Trochoid:1520081150792568832>", "https://i.ibb.co/JwgcnJHC/Coinflip-Trochoid.png", {
         buff: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             matchStats.lootm += 0.08;
             myStats.atk += Math.floor(myStats.atk * 0.08);
