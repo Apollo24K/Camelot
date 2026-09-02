@@ -171,11 +171,19 @@ export const skills: skillInfo[] = [
         return AbilityResponse.SUCCESS;
     }),
     new skillInfo(12, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        // Mercenary gains 15% ATK for 3 rounds. Player gets 20 coins every time
+        // Mercenary gains 15% ATK for 3 rounds. Player gets 20 coins every time ; Used once per round at most
+        if (myStats.classUsedRound === matchStats.round) {
+            myStats.sm += 40;
+            noTimeout(matchStats, myStats);
+            matchStats.sendWarning({ content: `Mercenary ability can only be used once every round.`, ephemeral: true });
+            return AbilityResponse.FAILURE;
+        };
+
         mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.15), 2));
         myStats.atk += Math.floor(myStats.atk * 0.15);
         matchStats.loot += 20;
         notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} ATK by **15%** for 3 rounds. Added **+20** coins to your loot`);
+        myStats.classUsedRound = matchStats.round;
 
         return AbilityResponse.SUCCESS;
     }),
@@ -1063,7 +1071,7 @@ export const skills: skillInfo[] = [
         eStats.burntype = 2;
         if (typeof eStats.burnduration !== "number") {// Trigger burn every round
             eStats.burnduration = 0;
-            eStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 procburn(eStats, myStats, ebuff, mybuff, matchStats, notice, ``, {});
 
                 return AbilityResponse.SUCCESS;

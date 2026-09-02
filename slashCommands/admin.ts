@@ -6,7 +6,7 @@ import { OfferRow, PageRow, activeAuctions, auctionChannelId, cowSettings } from
 import { requestVerification, dungeonTempBan } from "../Modules/components";
 import { armorInfo, entryInfo, items, ringInfo, weaponInfo } from "../Modules/items";
 import { AuctionSchema, CharacterSchema, SlashCommand, UserSchema } from '../types';
-import { deleteCharacter, deleteWeapon, doesUserExist, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
+import { countGenericItemsByItemId, countWeaponsByItemId, deleteCharacter, deleteGenericItemsByItemIdProper, deleteWeapon, deleteWeaponsByItemId, doesUserExist, getAffectedUserIdsByItemId, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
 import { query } from '../postgres';
 import { createResponseGraph, getResponseData } from '../Modules/responseGraph';
 import { startRollingCow } from '../Modules/rollingCowEvent';
@@ -29,7 +29,7 @@ const exportCommand: SlashCommand = {
 
         // List all actions
         if (cmd === "list" || cmd === "ls") {
-            return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`reset phantasmagoria`\n`guilds`\n`add vote`\n`set <key> <value>`\n`grant entry <name|all>`\n`did`", ephemeral });
+            return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`reset phantasmagoria`\n`guilds`\n`add vote`\n`set <key> <value>`\n`grant entry <name|all>`\n`remove item <itemID|itemName> [user]`\n`remove weapon <uniqueid> user`\n`did`", ephemeral });
         };
 
         // DB size
@@ -561,6 +561,110 @@ const exportCommand: SlashCommand = {
             } else {
                 return interaction.reply({ content: `Error: Item with ID \`${itemId}\` not found for ${user.toString()}`, ephemeral });
             };
+        };
+
+        // Remove item (by item ID/name from specific user or all users)
+        if (action.startsWith("remove item")) {
+            args.shift(); // Remove "item" from args
+            if (args.length === 0) return interaction.reply({ content: `Error: missing item ID or name\n\nUsage: \`/admin remove item <itemID|itemName> [user:@user]\`\n\n**Options**\n\`itemID|itemName\`: Numeric ID or name of the item to remove\n\`user\`: Optional target user. If omitted, removes from ALL users.`, ephemeral });
+
+            // Parse item identifier (first arg) and optional user mention
+            const itemIdentifier = args[0];
+            const targetUser = interaction.options.getUser('user');
+            const isAllUsers = !targetUser;
+
+            // Search for item by ID or name
+            const item = searchItem(itemIdentifier, interaction, true);
+            if (!item?.name) return interaction.reply({ content: `Error: Couldn't find item "${itemIdentifier}"`, ephemeral });
+
+            const itemId = item.id;
+            const itemName = item.name;
+            const itemGrade = item.grade;
+            const itemCategory = item.category;
+            const itemEmoji = item.emoji;
+            const itemType = item.type;
+            const itemBar = item.bar;
+
+            // Get affected user IDs for accurate count
+            let affectedUserIds: string[];
+            if (targetUser) {
+                affectedUserIds = [targetUser.id];
+            } else {
+                affectedUserIds = await getAffectedUserIdsByItemId(itemId, itemCategory);
+            }
+
+            // Get total item count across affected users
+            let totalItems = 0;
+            if (itemCategory === "weapon" || itemCategory === "armor" || itemCategory === "ring") {
+                const count = await countWeaponsByItemId(itemId, targetUser?.id);
+                totalItems = count;
+            } else {
+                const counts = await countGenericItemsByItemId(itemId, targetUser?.id);
+                totalItems = counts.totalItems;
+            }
+
+            if (totalItems === 0) {
+                return interaction.reply({ content: `No copies of ${itemBar}${itemEmoji} **${itemName}** found for ${isAllUsers ? "any user" : targetUser!.toString()}.`, ephemeral });
+            }
+
+            // Build confirmation embed
+            const targetLabel = isAllUsers ? `**ALL USERS (${affectedUserIds.length} users)**` : targetUser!.toString();
+            const confirmRow = new ActionRowBuilder<ButtonBuilder>()
+                .addComponents(
+                    new ButtonBuilder().setCustomId('confirm_delete_item').setLabel('Confirm').setStyle(ButtonStyle.Danger),
+                    new ButtonBuilder().setCustomId('cancel_delete_item').setLabel('Cancel').setStyle(ButtonStyle.Secondary),
+                );
+
+            const confirmEmbed = new EmbedBuilder()
+                .setColor(0xff4444)
+                .setTitle("⚠️ Confirm Item Deletion")
+                .setDescription(`Delete **${totalItems}** copies of ${itemBar}${itemEmoji} **${itemName}** (${itemGrade}, ${itemType}) from ${targetLabel}?`)
+                .addFields(
+                    { name: "Item ID", value: `\`${itemId}\``, inline: true },
+                    { name: "Category", value: itemCategory, inline: true },
+                    { name: "Target", value: targetLabel, inline: true },
+                    { name: "Users Affected", value: `\`${affectedUserIds.length}\``, inline: true }
+                )
+                .setFooter({ text: `Requested by ${interaction.user.tag}` });
+
+            const msg = await interaction.reply({ embeds: [confirmEmbed], components: [confirmRow], ephemeral, fetchReply: true });
+
+            const btn = await msg.awaitMessageComponent({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 }).catch(() => null);
+            if (!btn || btn.customId === 'cancel_delete_item') {
+                return interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x888888).setTitle("Cancelled").setDescription("Deletion was not performed.")], components: [] });
+            };
+
+            // Evict cache first to ensure fresh DB reads
+            for (const userId of affectedUserIds) {
+                interaction.client.userCache.delete(userId);
+            }
+
+            // Execute deletion - only deletes the item itself, no equipment/preset/itemlock cleanup
+            let deletedCount = 0;
+
+            try {
+                if (itemCategory === "weapon" || itemCategory === "armor" || itemCategory === "ring") {
+                    deletedCount = await deleteWeaponsByItemId(itemId, targetUser?.id);
+                } else {
+                    await deleteGenericItemsByItemIdProper(itemId, affectedUserIds.length === 1 ? affectedUserIds[0] : affectedUserIds);
+                    deletedCount = totalItems;
+                }
+            } catch (error) {
+                console.error(`Error deleting item ${itemId}:`, error);
+                return interaction.editReply({ embeds: [new EmbedBuilder().setColor(0xff4444).setTitle("❌ Deletion Failed").setDescription(`An error occurred: ${error instanceof Error ? error.message : String(error)}`)], components: [] });
+            }
+
+            const resultEmbed = new EmbedBuilder()
+                .setColor(0xbbffff)
+                .setTitle("✅ Item Deletion Complete")
+                .addFields(
+                    { name: "Item", value: `${itemBar}${itemEmoji} **${itemName}**`, inline: true },
+                    { name: "Copies Deleted", value: `\`${deletedCount}\``, inline: true },
+                    { name: "Users Affected", value: `\`${affectedUserIds.length}\``, inline: true }
+                )
+                .setFooter({ text: `Executed by ${interaction.user.tag}` });
+
+            return interaction.editReply({ embeds: [resultEmbed], components: [] });
         };
 
         // Leave Server

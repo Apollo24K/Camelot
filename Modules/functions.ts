@@ -818,6 +818,9 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damage = Math.floor(damage * target.vulnerabilityDynamic);
     };
 
+    // Overwrite damage — fixed damage after all modifiers
+    damage = options.overwriteDamage || damage;
+
     //* RETURN IF TEST
     if (options.isTest) return damage;
 

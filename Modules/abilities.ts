@@ -359,9 +359,9 @@ export const abilities: Record<number, Ability> = {
                     if (myStats.yoimiyaFlames < 20) myStats.yoimiyaFlames++;
                     if (myStats.yoimiyaFlames >= 3) myStats.atk += Math.floor(myStats.atk * 0.225);
 
-                    // Deals additional 12.5% HP damage for 2 rounds each timee
+                    // Deals additional 12.5% ATK damage for 2 rounds each timee
                     if (items[myStats.weapon]?.type === "bow") {
-                        ebuff.hp.push(new buffInfo("+", -Math.floor(options.damage * 0.125), 2));
+                        ebuff.hp.push(new buffInfo("+", -Math.floor(myStats.atk * 0.125), 2));
                         eStats.burnduration += 1;
                     };
 
