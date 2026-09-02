@@ -806,6 +806,78 @@ export const deleteWeapons = async (uniqueIds: string[]): Promise<void> => {
     await query(`DELETE FROM weapons WHERE uniqueid = ANY($1)`, [uniqueIds]);
 };
 
+export const deleteWeaponsByItemId = async (itemId: number, userId?: string): Promise<number> => {
+    let result;
+    if (userId) {
+        result = await query(`DELETE FROM weapons WHERE itemid = $1 AND id = $2`, [itemId, userId]);
+    } else {
+        result = await query(`DELETE FROM weapons WHERE itemid = $1`, [itemId]);
+    }
+    return (result as any).rowCount ?? 0;
+};
+
+export const countWeaponsByItemId = async (itemId: number, userId?: string): Promise<number> => {
+    const [row] = await query(
+        `SELECT COUNT(*) AS count FROM weapons WHERE itemid = $1 ${userId ? 'AND id = $2' : ''}`,
+        userId ? [itemId, userId] : [itemId]
+    ) as [{ count: string }];
+    return parseInt(row.count);
+};
+
+export const countGenericItemsByItemId = async (itemId: number, userId?: string): Promise<{ totalItems: number; totalUsers: number }> => {
+    if (userId) {
+        const [row] = await query(`SELECT items->>$1 AS count FROM users WHERE id = $2`, [itemId.toString(), userId]) as [{ count: string | null }];
+        const count = row?.count ? parseInt(row.count) : 0;
+        return { totalItems: count, totalUsers: count > 0 ? 1 : 0 };
+    } else {
+        const rows = await query(`SELECT items->>$1 AS count FROM users WHERE items ? $2`, [itemId.toString(), itemId.toString()]) as { count: string }[];
+        let totalItems = 0, totalUsers = 0;
+        for (const row of rows) {
+            const count = row.count ? parseInt(row.count) : 0;
+            if (count > 0) {
+                totalItems += count;
+                totalUsers++;
+            }
+        }
+        return { totalItems, totalUsers };
+    }
+};
+
+export const getAffectedUserIdsByItemId = async (itemId: number, category: string): Promise<string[]> => {
+    if (category === "weapon" || category === "armor" || category === "ring") {
+        const rows = await query(`SELECT DISTINCT id FROM weapons WHERE itemid = $1`, [itemId]) as { id: string }[];
+        return rows.map(r => r.id);
+    } else {
+        const rows = await query(`SELECT id FROM users WHERE items ? $1`, [itemId.toString()]) as { id: string }[];
+        return rows.map(r => r.id);
+    }
+};
+
+export const deleteGenericItemsByItemIdProper = async (itemId: number, userIds: string | string[] | "*"): Promise<void> => {
+    const itemIdStr = itemId.toString();
+    if (userIds === "*") {
+        await query(
+            `UPDATE users SET items = (
+                SELECT jsonb_object_agg(key, value)
+                FROM jsonb_each(items)
+                WHERE key != $1
+            ) WHERE items ? $1`,
+            [itemIdStr]
+        );
+    } else {
+        const ids = Array.isArray(userIds) ? userIds : [userIds];
+        const placeholders = ids.map((_, i) => `$${i + 2}`).join(',');
+        await query(
+            `UPDATE users SET items = (
+                SELECT jsonb_object_agg(key, value)
+                FROM jsonb_each(items)
+                WHERE key != $1
+            ) WHERE id IN (${placeholders}) AND items ? $1`,
+            [itemIdStr, ...ids]
+        );
+    }
+};
+
 export const deleteCharacter = async (userId: string, charId: number, print: number): Promise<CharacterSchema | undefined> => {
     const { rows: [character] } = await query(
         `DELETE FROM characters WHERE id = $1 AND charid = $2 AND print = $3 RETURNING *`,
@@ -1221,7 +1293,14 @@ export const updateUsers = async (
         })
         .join(', ');
 
-    const values = Object.values(updates).map(update => update.value);
+    const values = Object.values(updates).map(update => {
+        const value = update.value;
+        // For set_json/merge_json, if value is an object, stringify it; if already string, pass as-is
+        if ((update.type === 'set_json' || update.type === 'merge_json') && typeof value === 'object' && value !== null) {
+            return JSON.stringify(value);
+        }
+        return value;
+    });
 
     if (userIds === "*") {
         await query(
@@ -1295,13 +1374,15 @@ export const updateUsersAndCache = async (client: Client, userIds: string | stri
                                     break;
                                 case 'set_json':
                                     //@ts-ignore
-                                    user.o[key] = value;
+                                    user.o[key] = typeof value === 'string' ? JSON.parse(value) : value;
                                     break;
                                 case 'merge_json':
                                     //@ts-ignore
-                                    const mergedJson = { ...user.o[key], ...value };
+                                    const mergeValue = typeof value === 'string' ? JSON.parse(value) : value;
                                     //@ts-ignore
-                                    for (const [k, v] of Object.entries(value)) {
+                                    const mergedJson = { ...user.o[key], ...mergeValue };
+                                    //@ts-ignore
+                                    for (const [k, v] of Object.entries(mergeValue)) {
                                         //@ts-ignore
                                         mergedJson[k] = Math.max(0, (user.o[key][k] ?? 0) + v);
                                     };
