@@ -19,14 +19,14 @@ export const extremeFloorItemMapping: Record<number, ExtremeItemDrop> = {
     5: { itemId: 800, itemType: "weapon", ascensionMaterialId: 831, ascensionAmount: 240, craftingAmount: 180 },  // Atares: Kamish's Wrath
     6: { itemId: 801, itemType: "weapon", ascensionMaterialId: 830, ascensionAmount: 240, craftingAmount: 180 },  // NereID: Thalokorn
     7: { itemId: 802, itemType: "weapon", ascensionMaterialId: 803, ascensionAmount: 240, craftingAmount: 180 },  // Ryomen Sukuna: Kamutoke
-    8: { itemId: 843, itemType: "rune", ascensionMaterialId: 832, ascensionAmount: 240, craftingAmount: 180 },  // Aneira (alter): Silverlux Cascade
-    9: { itemId: 844, itemType: "rune", ascensionMaterialId: 825, ascensionAmount: 240, craftingAmount: 180 },  // Rainee (alter): Sweet Surprise
+    8: { itemId: 843, itemType: "rune", ascensionMaterialId: 832, ascensionAmount: 400, craftingAmount: 400 },  // Aneira (alter): Silverlux Cascade
+    9: { itemId: 844, itemType: "rune", ascensionMaterialId: 825, ascensionAmount: 400, craftingAmount: 400 },  // Rainee (alter): Sweet Surprise
     10: { itemId: 846, itemType: "weapon", ascensionMaterialId: 833, ascensionAmount: 240, craftingAmount: 180 },  // (next available weapon)
     11: { itemId: 837, itemType: "armor", ascensionMaterialId: 847, ascensionAmount: 240, craftingAmount: 180 },  // Oktavia von Seckendorff: Marguerite Noire Vambrace
     12: { itemId: 836, itemType: "armor", ascensionMaterialId: 847, ascensionAmount: 240, craftingAmount: 180 },  // Ophelia: Marguerite Noire Robe
     13: { itemId: 838, itemType: "armor", ascensionMaterialId: 847, ascensionAmount: 240, craftingAmount: 180 },  // Candeloro: Marguerite Noire Boots
     14: { itemId: 835, itemType: "armor", ascensionMaterialId: 847, ascensionAmount: 240, craftingAmount: 180 },  // Homulily: Marguerite Noire Hat
-    15: { itemId: 839, itemType: "rune", ascensionMaterialId: 834, ascensionAmount: 240, craftingAmount: 180 },  // Kriemhild Gretchen: Soul Gem
+    15: { itemId: 839, itemType: "rune", ascensionMaterialId: 834, ascensionAmount: 400, craftingAmount: 400 },  // Kriemhild Gretchen: Soul Gem
     16: { itemId: 845, itemType: "weapon", ascensionMaterialId: 827, ascensionAmount: 240, craftingAmount: 180 },  // Medusa: Gorgoneion Aegis
     17: { itemId: 851, itemType: "armor", ascensionMaterialId: 826, ascensionAmount: 240, craftingAmount: 180 },  // The Chosen One Armor
     18: { itemId: 848, itemType: "armor", ascensionMaterialId: 826, ascensionAmount: 240, craftingAmount: 180 },  // The Chosen One Armor

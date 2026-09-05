@@ -1,9 +1,9 @@
 import { EmbedBuilder, ComponentType } from "discord.js";
-import { armorInfo, itemInfo, items, lootInfo, weaponInfo } from "../Modules/items";
+import { armorInfo, itemInfo, items, lootInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { PageRow, OfferRow } from "../Modules/components";
 import { showPage, customEmojis, getAscensionMaterial, searchItem, getForgeMaterialCosts } from "../Modules/functions";
 import { ItemRarity, SlashCommand } from "../types";
-import { getUserSchema, insertNewWeapon, updateUsers } from "../Modules/queries";
+import { getUserSchema, insertNewWeapon, updateUsers, updateUsersAndCache } from "../Modules/queries";
 import { runeMergeRecipes } from "../Modules/runeMergeRecipes";
 import { withTransaction } from "../postgres";
 
@@ -14,17 +14,23 @@ function forgeryEmbed(elements: (itemInfo)[]) {
         .setThumbnail("https://i.imgur.com/WbPCBqR.png")
         .setDescription("Welcome, honored one. What would you like me to do today?\n(Use `/forge craft <item>` to forge an item)\n");
     for (let i = 0; i < elements.length; i++) {
-        const item = elements[i] as weaponInfo | armorInfo;
+        const item = elements[i];
         const costs = getForgeMaterialCosts(item.id);
         const ascItem = costs.ascensionMaterialId ? items[costs.ascensionMaterialId] as lootInfo : getAscensionMaterial(item.id, ascMaterials);
         const craftItem = items.find((e) => e.type === "crafting material" && e.grade === item.grade) as lootInfo;
-        const isExtreme = costs.ascension > 36;
 
         if (!ascItem || !craftItem) continue;
 
+        let statsText = "";
+        if (item instanceof weaponInfo || item instanceof armorInfo) {
+            statsText = `\`${item.psmin}-${item.psmax}\` ${customEmojis[item.primaryStat] || item.primaryStat}${item instanceof weaponInfo ? ` and \`${item.ssmin.endsWith("%") ? item.ssmin.slice(0, -1) : item.ssmin}-${item.ssmax}\` ${customEmojis[item.secondaryStat] || item.secondaryStat}` : ""}`;
+        } else if (item instanceof runeInfo) {
+            statsText = "";
+        }
+
         Embed.addFields(
-            { name: `${item.gradeEmote}`, value: `${item.bar} ${item.emoji} | ${item.name}${isExtreme ? " ⚡" : ""}`, inline: true },
-            { name: `Cost: ${craftItem.emoji}x${costs.crafting} ${ascItem.emoji}x${costs.ascension}`, value: `\`${item.psmin}-${item.psmax}\` ${customEmojis[item.primaryStat] || item.primaryStat}${item instanceof weaponInfo ? ` and \`${item.ssmin.endsWith("%") ? item.ssmin.slice(0, -1) : item.ssmin}-${item.ssmax}\` ${customEmojis[item.secondaryStat] || item.secondaryStat}` : ""}`, inline: true },
+            { name: `${item.gradeEmote}`, value: `${item.bar} ${item.emoji} | ${item.name}`, inline: true },
+            { name: `Cost: ${craftItem.emoji}x${costs.crafting} ${ascItem.emoji}x${costs.ascension}`, value: statsText, inline: true },
             { name: '_ _', value: '_ _', inline: true },
         );
     };
@@ -165,7 +171,27 @@ const exportCommand: SlashCommand = {
                                 FROM jsonb_each(COALESCE(items, '{}'::jsonb) || $1::jsonb)
                             ) WHERE id = $2`, [mergeValue, interaction.user.id]);
 
-                            await insertNewWeapon(interaction.user.id, fItem.id, fItem.category, undefined, undefined, undefined, client);
+                            if (fItem.category === "weapon") {
+                                await insertNewWeapon(interaction.user.id, fItem.id, fItem.category, undefined, undefined, undefined, client);
+                            } else {
+                                // Add item to user's items JSONB within the same transaction
+                                const itemMergeValue: Record<string, number> = { [fItem.id]: 1 };
+                                await client.query(`UPDATE users SET items = (
+                                    SELECT jsonb_object_agg(key,
+                                        CASE
+                                            WHEN items->key IS NOT NULL AND $1::jsonb->key IS NOT NULL
+                                                AND jsonb_typeof(items->key) = 'number'
+                                                AND jsonb_typeof($1::jsonb->key) = 'number' THEN
+                                                    to_jsonb(GREATEST(0, (items->key)::numeric + ($1::jsonb->key)::numeric))
+                                            WHEN $1::jsonb->key IS NOT NULL THEN
+                                                $1::jsonb->key
+                                            ELSE
+                                                items->key
+                                        END
+                                    )
+                                    FROM jsonb_each(COALESCE(items, '{}'::jsonb) || $1::jsonb)
+                                ) WHERE id = $2`, [itemMergeValue, interaction.user.id]);
+                            }
 
                             if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully crafted ${fItem.emoji} **__${fItem.name}__**!`);
                         });

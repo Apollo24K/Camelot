@@ -1169,22 +1169,23 @@ export const getAscensionMaterial = (id: string | number, ascItems: lootInfo[]) 
 };
 
 export const getForgeMaterialCosts = (itemId: number): { ascension: number, crafting: number, ascensionMaterialId?: number; } => {
-    const isExtreme = isExtremeWeapon(itemId);
+    // Check if item is any extreme drop (weapons, armor, runes, or rings)
+    const isExtreme = isExtremeItem(itemId);
 
     // Default costs for normal weapons
     let ascension = 36;
     let crafting = 24;
     let ascensionMaterialId: number | undefined = undefined;
 
-    // Apply extreme weapon configuration if applicable
+    // Apply extreme item configuration if applicable
     if (isExtreme) {
-        const config = getExtremeWeaponConfig(itemId);
+        const config = getExtremeItemConfig(itemId);
         if (config) {
             ascension = config.ascensionAmount ?? (54);  // Use custom or default extreme amount
             crafting = config.craftingAmount ?? (36);   // Use custom or default extreme amount
             ascensionMaterialId = config.ascensionMaterialId;
         } else {
-            // Fallback for extreme weapons without config
+            // Fallback for extreme items without config
             ascension = 54;  // 50% increase
             crafting = 36;   // 50% increase
         }
