@@ -1,12 +1,39 @@
-import { Message, MessageType } from "discord.js";
+import { Message, MessageType, ThreadChannel } from "discord.js";
 import { BotEvent } from "../types";
+import { query } from "../postgres";
+
+const FORUM_CHANNEL_ID = "1516163331625320559";
+const LOCK_DURATION_HOURS = 6;
 
 const emojis = ["<:LuminousPsssh:1071574041116295328>", "<:HayasakaSmile:928369469301088326>", "<:ClaraLove:1034899845539962890>", "<:DizzyWorried:1025876785470111766>", "<:KannaWave:1025884100445339660>", "<:CirWave:1025884103565914252>", "<:KazuhaWave:1025884094975967324>", "<:HowCute:1026605362960408576>", "<:KanaoSmile:1025876532587151486>", "<:KannaPat:1026921369650331648>", "<a:KannaFire:1045096950070001687>", "<:KaguyaThink:1045096923255816253>", "<:MashaWave:928370055354400799>", "<:RoxyConcern:1041990236307197972>", "<:RaphiSmile:928370490270183485>", "<:RemWink:928370529742757960>", "<:MikuHappy:1045096947876368404>", "<:LoliSip:928369879348805692>", "<:LoveHeart:928369932683595827>", "<:OhMy:928370383495770112>", "<:AzusaSmug:1025884097299615774>", "<:KotoWave:1025884105281372260>", "<:omoshiroi:1029435114637246575>", "<:wow:1020442064409874462>", "<:umu:1025876213853605919>", "<:yayyy:1031583211828035655>", "<:pewpew:928370427112357918>", "<:ara:1071573953509863465>", "<:cuteXD:1031583207562428488>", "<:ThumbsUp:1020442047712350298>", "<:TohruPoint:928370972132782090>", "<:Woah:928370799965003826>", "<:SmugSip:928368817078407229>", "<a:ShiroeGlassesPush:1027582770211463358>", "<:SataniaEvil:928369432307331162>"];
 
 const event: BotEvent = {
     name: "messageCreate",
-    execute: (message: Message) => {
+    execute: async (message: Message) => {
         if (message.author.bot) return;
+
+        // Handle forum post locking
+        if (message.channel.isThread()) {
+            const thread = message.channel as ThreadChannel;
+            if (thread.parentId === FORUM_CHANNEL_ID) {
+                try {
+                    // Upsert lock with 6-hour expiry
+                    const unlockAt = new Date(Date.now() + LOCK_DURATION_HOURS * 60 * 60 * 1000);
+                    await query(
+                        `INSERT INTO forum_thread_locks (thread_id, unlock_at) VALUES ($1, $2)
+                         ON CONFLICT (thread_id) DO UPDATE SET unlock_at = EXCLUDED.unlock_at`,
+                        [thread.id, unlockAt]
+                    );
+
+                    // Lock the thread if not already locked
+                    if (!thread.locked) {
+                        await thread.setLocked(true);
+                    }
+                } catch (error) {
+                    console.error("Failed to lock forum thread:", error);
+                }
+            }
+        }
 
         if (message.guild) {
             if (message.mentions.users.first()?.id !== message.client.user.id) return;

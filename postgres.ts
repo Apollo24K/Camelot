@@ -349,6 +349,13 @@ async function createTables() {
         CONSTRAINT unique_auctionid_userid UNIQUE(auctionid, userid)
     )`);
 
+    // Forum thread locks table
+    await query(`CREATE TABLE IF NOT EXISTS forum_thread_locks (
+        thread_id TEXT PRIMARY KEY NOT NULL,
+        unlock_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+    )`);
+
 };
 
 async function createIndexes() {
