@@ -249,7 +249,6 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema, skin
 
     } else if (currentTab === 'skins') {
         const allSkinsForSale = skins.filter(skin => skin.obtain === SKIN_SEASON);
-        const skinsForSale = allSkinsForSale.slice(skinPage * SKINS_PER_PAGE, (skinPage + 1) * SKINS_PER_PAGE);
 
         // The composed image will be attached to the message
         shopContainer.addMediaGalleryComponents(media => media
@@ -258,15 +257,23 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema, skin
             )
         );
 
+        // Get skins for current page first, then filter out owned ones
+        const pageStart = skinPage * SKINS_PER_PAGE;
+        const pageEnd = pageStart + SKINS_PER_PAGE;
+        const skinsOnThisPage = allSkinsForSale.slice(pageStart, pageEnd);
+        const skinsForSale = skinsOnThisPage
+            .map((skin, idx) => ({ skin, originalIndex: pageStart + idx }))
+            .filter(({ skin }) => !stats.skins.includes(skin.id));
+
         // Skin selection dropdown
         const skinSelect = new StringSelectMenuBuilder()
             .setCustomId('skin_select')
             .setPlaceholder('Select a skin to purchase')
             .addOptions(
-                skinsForSale.map((skin, index) => ({
-                    label: `${skinPage * SKINS_PER_PAGE + index + 1}) ${skin.name}`,
+                skinsForSale.map(({ skin, originalIndex }) => ({
+                    label: `${originalIndex + 1}) ${skin.name}`,
                     value: `buy_skin_${skin.id}`,
-                    description: `${(skin as any).cost?.season_keys ?? 0} ${currencyEmojis.season_keys}`,
+                    description: `${(skin as any).cost?.season_keys ?? 0} keys`,
                     // default: stats.skins.includes(skin.id),
                 }))
             );
@@ -275,6 +282,7 @@ const getShopPage = (currentTab: SeasonalShopTab, stats: CompactUserSchema, skin
             shopContainer.addActionRowComponents(actionRow => actionRow.addComponents(skinSelect));
         }
 
+        // Pagination based on total seasonal skins (including owned)
         if (allSkinsForSale.length > SKINS_PER_PAGE) {
             const totalPages = Math.ceil(allSkinsForSale.length / SKINS_PER_PAGE);
             const pageButtons: ButtonBuilder[] = [];

@@ -162,7 +162,7 @@ const handler: BotHandler = {
             try {
                 const expiredLocks = await query(
                     `SELECT thread_id FROM forum_thread_locks WHERE unlock_at <= NOW()`
-                ) as Array<{ thread_id: string }>;
+                ) as Array<{ thread_id: string; }>;
 
                 for (const lock of expiredLocks) {
                     try {
