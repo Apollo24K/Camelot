@@ -171,7 +171,7 @@ const exportCommand: SlashCommand = {
                                 FROM jsonb_each(COALESCE(items, '{}'::jsonb) || $1::jsonb)
                             ) WHERE id = $2`, [mergeValue, interaction.user.id]);
 
-                            if (fItem.category === "weapon") {
+                            if (fItem.category === "weapon" || fItem.category === "armor") {
                                 await insertNewWeapon(interaction.user.id, fItem.id, fItem.category, undefined, undefined, undefined, client);
                             } else {
                                 // Add item to user's items JSONB within the same transaction
