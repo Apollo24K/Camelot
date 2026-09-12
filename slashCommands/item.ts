@@ -1,6 +1,7 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { armorInfo, chestInfo, entryInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel, getRingSlotsTotal } from "../Modules/functions";
+import { getExtremeItemConfig } from "../Modules/extremeWeaponDrops";
 import { PageRow, OfferRow } from "../Modules/components";
 import { characters } from "../Modules/chars";
 import { ItemCategory, ItemRarity, ItemType, SlashCommand } from "../types";
@@ -226,6 +227,7 @@ const exportCommand: SlashCommand = {
             let itemsR: itemInfo[];
             if (type === "weapons") itemsR = items.filter((e) => e.category === "weapon");
             else if (type === "armor") itemsR = items.filter((e) => e.category === "armor");
+            else if (type === "runes") itemsR = items.filter((e) => e.category === "rune");
             else if (type === "loot") itemsR = items.filter((e) => e.category === "loot");
             else itemsR = items.filter((e) => e.type === type);
 
@@ -293,7 +295,10 @@ const exportCommand: SlashCommand = {
             // Separate ascension and levelup
             if (currLevel === limit && !(fItem instanceof ringInfo)) {
                 // Ascend
-                const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
+                const extremeConfig = getExtremeItemConfig(fItem.id);
+                const ascItem = extremeConfig?.ascensionMaterialId !== undefined
+                    ? items[extremeConfig.ascensionMaterialId] as lootInfo
+                    : getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
                 const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade) as lootInfo;
                 const awakenItem = items[683];
                 const ascMatsNeeded = (item.ascension + 4) * 12;
@@ -473,7 +478,10 @@ const exportCommand: SlashCommand = {
                     // Plan ascensions to reach target level
                     let tempAscension = item.ascension;
                     while (tempAscension < 10 && ((tempAscension * 10) + 20) < targetLevel) {
-                        const ascItem = getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
+                        const extremeConfigMax = getExtremeItemConfig(fItem.id);
+                        const ascItem = extremeConfigMax?.ascensionMaterialId !== undefined
+                            ? items[extremeConfigMax.ascensionMaterialId] as lootInfo
+                            : getAscensionMaterial(fItem.id, items.filter((e) => e.type === "ascension material"));
                         const craftItem = items.find((e) => e.type === "crafting material" && e.grade === fItem.grade) as lootInfo;
                         const awakenItem = items[683];
 

@@ -316,7 +316,7 @@ const exportCommand: SlashCommand = {
                 Embed.setDescription(`${fClass.name} level: **${level}**\nXP required to level up: **${(xpTotal - myXP) || 0}**\n${bar}\n⚜️ You can upgrade your class!`);
                 return interaction.reply({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id, componentType: ComponentType.Button, max: 1, time: 30000 });
+                    const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, max: 1, time: 30000 });
 
                     collector.on('collect', async r => {
                         collector.stop();

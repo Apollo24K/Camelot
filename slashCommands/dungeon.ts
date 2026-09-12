@@ -149,6 +149,28 @@ const exportCommand: SlashCommand = {
             if (floor > 300) floor = 300;
         };
 
+        // Determine reward floor for hidden dungeon floors
+        let rewardFloor = floor;
+        if (isHiddenFloor) {
+            let highestBossFloor = 0;
+            for (let f = 300; f >= 5; f -= 5) {
+                if (stats.dungeon_floors[f.toString()] >= floors[f]?.winsNeeded) {
+                    highestBossFloor = f;
+                    break;
+                }
+            }
+            if (highestBossFloor > 0) {
+                rewardFloor = highestBossFloor;
+            } else {
+                for (let f = 4; f >= 1; f--) {
+                    if (stats.dungeon_floors[f.toString()] >= floors[f]?.winsNeeded) {
+                        rewardFloor = f;
+                        break;
+                    }
+                }
+            }
+        };
+
         // Increase limit
         let dunLim = [10, 20, 500]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
         if (stats.premium) {
@@ -339,13 +361,13 @@ const exportCommand: SlashCommand = {
             if (resolved) return;
             resolved = true;
 
-            const stats = await getUserSchema(interaction.user.id);
-            if (!stats) return;
-            if (!stats.hidden_dungeon) (stats as any).hidden_dungeon = {};
-
-            // Clear restrictions
             clearTimeout(userTimeout);
-            dungeonInProgress.delete(stats.id);
+            dungeonInProgress.delete(author.schema.id);
+
+            const freshStats = await getUserSchema(interaction.user.id);
+            if (!freshStats) return;
+            const stats = freshStats;
+            if (!stats.hidden_dungeon) (stats as any).hidden_dungeon = {};
 
             const runsLeftStr = (Math.max(-1, dunLim[1] - stats.dungeon_limit) > -1)
                 ? `<a:arrow_orange:916716747623641210> Runs left: **${Math.max(0, dunLim[0] - stats.dungeon_limit)}** loot **${Math.max(0, dunLim[1] - stats.dungeon_limit)}** progress`
@@ -434,7 +456,7 @@ const exportCommand: SlashCommand = {
 
                 boost = Math.round(boost * 100) / 100;
 
-                let cxp = Math.floor(((floor < 100 ? floor : 100 + (Math.min(floor, 300) / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
+                let cxp = Math.floor(((rewardFloor < 100 ? rewardFloor : 100 + (Math.min(rewardFloor, 300) / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
 
                 cxp = Math.floor(cxp * 1.33);
                 if (enemy.boss) cxp = Math.floor(cxp * 1.5);
@@ -455,7 +477,7 @@ const exportCommand: SlashCommand = {
 
             // Coins
             let loot = 0;
-            if (runEligibility.loot) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
+            if (runEligibility.loot) loot = Math.floor(60 + (Math.random() * 30) + (rewardFloor < 100 ? rewardFloor * 5 : 500 + (rewardFloor < 200 ? (rewardFloor - 100) * 2.5 : (300 + ((rewardFloor - 200) * 1)))));
             if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
             loot *= matchStats.lootm;
             loot += matchStats.loot;
@@ -472,18 +494,18 @@ const exportCommand: SlashCommand = {
             // Crafting Resources
             let craftItem = items[33];
             const craftItem2 = items[33];
-            // if (floor <= 20) craftItem = items[33];
-            if (floor <= 50) craftItem = items[34];
-            else if (floor <= 90) craftItem = items[35];
-            else if (floor <= 120) craftItem = items[36];
-            else if (floor <= 190) craftItem = items[37];
-            else if (floor <= 270) craftItem = items[38];
-            else if (floor <= 300) craftItem = items[39];
+            // if (rewardFloor <= 20) craftItem = items[33];
+            if (rewardFloor <= 50) craftItem = items[34];
+            else if (rewardFloor <= 90) craftItem = items[35];
+            else if (rewardFloor <= 120) craftItem = items[36];
+            else if (rewardFloor <= 190) craftItem = items[37];
+            else if (rewardFloor <= 270) craftItem = items[38];
+            else if (rewardFloor <= 300) craftItem = items[39];
 
             // Chests
             let chestRarities = [451, 452, 453, 454];
-            if (floor > 200) chestRarities = [453, 454, 456, 457];
-            else if (floor > 100) chestRarities = [452, 453, 454, 456];
+            if (rewardFloor > 200) chestRarities = [453, 454, 456, 457];
+            else if (rewardFloor > 100) chestRarities = [452, 453, 454, 456];
             let chestDrops = [0, 0, 0, 0];
 
             // Ascension Material
@@ -505,7 +527,7 @@ const exportCommand: SlashCommand = {
 
                 // Crafting Resources
                 craftCount += drops(0.4, 7 * skipRounds);
-                if (floor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
+                if (rewardFloor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
 
                 // Ascension Materials
                 ascCount += drops(0.6, 7 * skipRounds);
@@ -519,7 +541,7 @@ const exportCommand: SlashCommand = {
             else if (runEligibility.secondaryLoot) {
                 // Crafting Resources
                 craftCount += drops(0.12, 4 * skipRounds);
-                if (floor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
+                if (rewardFloor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
 
                 // Ascension Materials
                 ascCount += drops(0.16, 4 * skipRounds);
@@ -533,14 +555,14 @@ const exportCommand: SlashCommand = {
 
             // Levelup mats
             let levelupMats = {
-                "50": floor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
-                "51": floor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
-                "52": floor <= 100 ? drops(0.18, 2 * skipRounds) : floor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
-                "53": floor <= 100 ? drops(0.18, 4 * skipRounds) : floor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
-                "54": floor > 200 ? drops(0.3, 4 * skipRounds) : floor > 100 ? drops(0.18, 2 * skipRounds) : 0,
-                "55": floor > 200 ? drops(0.3, 8 * skipRounds) : floor > 100 ? drops(0.18, 4 * skipRounds) : 0,
-                "56": floor > 200 ? drops(0.18, 2 * skipRounds) : 0,
-                "57": floor > 200 ? drops(0.18, 4 * skipRounds) : 0,
+                "50": rewardFloor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
+                "51": rewardFloor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
+                "52": rewardFloor <= 100 ? drops(0.18, 2 * skipRounds) : rewardFloor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
+                "53": rewardFloor <= 100 ? drops(0.18, 4 * skipRounds) : rewardFloor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
+                "54": rewardFloor > 200 ? drops(0.3, 4 * skipRounds) : rewardFloor > 100 ? drops(0.18, 2 * skipRounds) : 0,
+                "55": rewardFloor > 200 ? drops(0.3, 8 * skipRounds) : rewardFloor > 100 ? drops(0.18, 4 * skipRounds) : 0,
+                "56": rewardFloor > 200 ? drops(0.18, 2 * skipRounds) : 0,
+                "57": rewardFloor > 200 ? drops(0.18, 4 * skipRounds) : 0,
             };
 
             let lootArr = [];
@@ -1257,7 +1279,7 @@ const exportCommand: SlashCommand = {
             if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result], components: [ResultsRow] });
         };
 
-        newFight();
+        await newFight();
 
     },
 
@@ -1270,31 +1292,53 @@ const exportCommand: SlashCommand = {
         const floor = parseInt(floorString);
         if (!Number.isInteger(floor) || floor < 1 || floor > 300 || !interaction.channel?.isSendable()) return;
 
-        const stats = await getUserSchema(interaction.user.id);
-        if (!stats) return interaction.followUp({ content: "Couldn't find your player data.", ephemeral: true });
+        let stats;
+        let restartMsg;
+        try {
+            stats = await getUserSchema(interaction.user.id);
+            if (!stats) return interaction.followUp({ content: "Couldn't find your player data.", ephemeral: true });
 
-        const Embed = new EmbedBuilder()
-            .setColor(0x44454c)
-            .setDescription("<a:loading_square:1501264680314998995> Restarting...");
-        const message = await interaction.channel.send({ embeds: [Embed] });
-        const repeatInteraction = new Proxy(interaction, {
-            get(target, property) {
-                if (property === "commandName") return "dungeon";
-                if (property === "deferReply") return async () => undefined;
-                if (property === "editReply") return (options: Parameters<typeof message.edit>[0]) => message.edit(options);
+            const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder()
+                    .setCustomId(interaction.customId)
+                    .setEmoji("🔁")
+                    .setLabel(`Repeat Floor ${floor}`)
+                    .setStyle(ButtonStyle.Secondary)
+                    .setDisabled(true)
+            );
+            interaction.message?.edit({ components: [disabledRow] }).catch(() => {});
 
-                const value = Reflect.get(target, property, target);
-                return typeof value === "function" ? value.bind(target) : value;
-            },
-        }) as unknown as ChatInputCommandInteraction;
+            const Embed = new EmbedBuilder()
+                .setColor(0x44454c)
+                .setDescription("<a:loading_square:1501264680314998995> Restarting...");
+            const message = await interaction.channel.send({ embeds: [Embed] });
+            restartMsg = message;
+            const repeatInteraction = new Proxy(interaction, {
+                get(target, property) {
+                    if (property === "commandName") return "dungeon";
+                    if (property === "deferReply") return async () => undefined;
+                    if (property === "editReply") return (options: Parameters<typeof message.edit>[0]) => message.edit(options);
 
-        return exportCommand.execute({
-            interaction: repeatInteraction,
-            author: { schema: stats },
-            server: {},
-            locale: "en_US",
-            customFlag: { repeatFloor: floor, repeatMessage: true },
-        });
+                    const value = Reflect.get(target, property, target);
+                    return typeof value === "function" ? value.bind(target) : value;
+                },
+            }) as unknown as ChatInputCommandInteraction;
+
+            await exportCommand.execute({
+                interaction: repeatInteraction,
+                author: { schema: stats },
+                server: {},
+                locale: "en_US",
+                customFlag: { repeatFloor: floor, repeatMessage: true },
+            });
+        } catch (error) {
+            console.error(`ERROR dungeon executeButtonInteraction failed for user ${interaction.user.id}:`, error);
+            if (stats) dungeonInProgress.delete(stats.id);
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xff7d7d)
+                .setDescription("An error occurred while restarting the dungeon. Please try again.");
+            restartMsg?.edit({ embeds: [errorEmbed], components: [] }).catch(() => {});
+        }
     },
 };
 

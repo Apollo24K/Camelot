@@ -120,7 +120,7 @@ const exportCommand: SlashCommand = {
             .setAuthor({ name: `${interaction.user.username}'s inventory`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) })
             .setDescription(getDesc());
         return interaction.reply({ embeds: [Embed], components: [r1(stats)] }).then((msg) => {
-            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
+            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ex", componentType: ComponentType.Button, time: 60000 });
 
             collector.on('collect', async () => {
                 const inv = await getUserSchema(interaction.user.id);

@@ -63,14 +63,11 @@ const exportCommand: SlashCommand = {
                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                 .setDescription(`### Referrals\nInvite players to the game to get rare rewards and continued benefits for both the inviter and invited players!\n### Rewards\n- Receive milestone rewards including exlusive items <:NepOkay:538081940444545025>\n- Get **20%** of all <:genesis_gems:1034179687720681492> purchases made by your invited players\n- Make it to the leaderboard to get periodic rewards!\n### But before getting started\nIf someone invited you to Camelot, ask them for their \`/referral\` ID to get rewards, you have 24 hours!`);
             return interaction.reply({ embeds: [Embed], components: [enterRow] }).then(async (msg) => {
-                const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 120000 });
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
                 const uid = Math.random().toString();
 
                 collector.on('collect', async (r) => {
-                    if (r.user.id === interaction.user.id) return r.showModal(getModal(uid));
-                    await r.deferUpdate().catch(() => {
-                        console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-                    });
+                    r.showModal(getModal(uid));
                 });
 
                 collector.on('end', () => {
@@ -87,7 +84,7 @@ const exportCommand: SlashCommand = {
 
                     if (exists) {
                         r.reply({ content: `⚠️ You can use this command only on 1 player ⚠️\nAre you sure you want to be referred by <@${rid}>?\n\n**When to use?**\n- This feature is meant to be used by friends who invited each other, do not proceed if <@${rid}> has not invited you to the game, or otherwise helped or motivated you to play, as that is against our [Terms of Service](<https://github.com/Apollo24K/Camelot/blob/main/TERMS.md>).\n\n**What happens?**\n- If you continue <@${rid}> will receive rewards including loot, a chance at a rare character and **__20% of all gems <:genesis_gems:1157331914861052034> purchased by you in the future__** (note that this won't affect the amount of gems <:genesis_gems:1157331914861052034> you receive).`, components: [OfferRow], fetchReply: true, ephemeral: true }).then(async (ms) => {
-                            const pageCollector = ms.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60000 });
+                            const pageCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
                             pageCollector.on('collect', async (c) => {
                                 if (c.customId === "cancel") return r.editReply({ content: `Action cancelled`, components: [] });
@@ -140,7 +137,7 @@ const exportCommand: SlashCommand = {
             .setFooter({ text: `Referral ID: ${user.id}`, iconURL: user.displayAvatarURL({ size: 512 }) });
         if (referred.length === 0) return interaction.reply({ embeds: [Embed] });
         return interaction.reply({ embeds: [Embed], components: [getListRow(user.id !== interaction.user.id ? true : (stats.referrals_claimed >= passed.length))] }).then(async (msg) => {
-            const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 120000 });
+            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
             collector.on('collect', async (r) => {
                 if (r.customId === "claim") {
@@ -183,7 +180,7 @@ const exportCommand: SlashCommand = {
 
                 if (pagesTotal === 1) return r.reply({ content, ephemeral: true });
                 r.reply({ content, components: [PageRow], ephemeral: true }).then(async (ms) => {
-                    const pageCollector = ms.createMessageComponentCollector({ componentType: ComponentType.Button, time: 120000 });
+                    const pageCollector = ms.createMessageComponentCollector({ filter: (c) => c.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
                     pageCollector.on('collect', (c) => {
                         if (c.customId === "prev") {
