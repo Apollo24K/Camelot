@@ -1292,27 +1292,20 @@ const exportCommand: SlashCommand = {
         const floor = parseInt(floorString);
         if (!Number.isInteger(floor) || floor < 1 || floor > 300 || !interaction.channel?.isSendable()) return;
 
-        let stats;
+        const Embed = new EmbedBuilder()
+            .setColor(0x44454c)
+            .setDescription("<a:loading_square:1501264680314998995> Restarting...");
         let restartMsg;
+        let stats;
         try {
-            stats = await getUserSchema(interaction.user.id);
-            if (!stats) return interaction.followUp({ content: "Couldn't find your player data.", ephemeral: true });
-
-            const disabledRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-                new ButtonBuilder()
-                    .setCustomId(interaction.customId)
-                    .setEmoji("🔁")
-                    .setLabel(`Repeat Floor ${floor}`)
-                    .setStyle(ButtonStyle.Secondary)
-                    .setDisabled(true)
-            );
-            interaction.message?.edit({ components: [disabledRow] }).catch(() => {});
-
-            const Embed = new EmbedBuilder()
-                .setColor(0x44454c)
-                .setDescription("<a:loading_square:1501264680314998995> Restarting...");
             const message = await interaction.channel.send({ embeds: [Embed] });
             restartMsg = message;
+
+            stats = await getUserSchema(interaction.user.id);
+            if (!stats) {
+                return message.edit({ content: "Couldn't find your player data.", embeds: [], components: [] });
+            }
+
             const repeatInteraction = new Proxy(interaction, {
                 get(target, property) {
                     if (property === "commandName") return "dungeon";
