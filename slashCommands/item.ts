@@ -920,6 +920,8 @@ const exportCommand: SlashCommand = {
                 delete stats.equipment["ring1"];
                 delete stats.equipment["ring2"];
                 delete stats.equipment["ring3"];
+            } else if (typeChoice === "entry") {
+                delete stats.equipment["entry"];
             } else delete stats.equipment[typeChoice];
 
             // Update users table

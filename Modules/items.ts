@@ -357,7 +357,7 @@ export class runeInfo extends itemInfo {
 export class entryInfo extends itemInfo {
     private _floor: number;
 
-    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], floor: number, emoji: Emoji, image: `https://${string}`, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = true) {
+    constructor(name: string, category: ItemCategory, type: ItemType, obtain: string[], floor: number, emoji: Emoji, image: `https://${string}`, grade: ItemRarity, id: number, unique: boolean = false, tradable: boolean = true, sellable: boolean = false) {
         super(name, category, type, obtain, emoji, image, grade, id, unique, tradable, sellable);
         this._floor = floor;
     };

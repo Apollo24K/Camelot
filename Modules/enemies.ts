@@ -149,23 +149,23 @@ export const enemies: enemyInfo[] = [
     new enemyInfo("Ciel", "Lord of Wisdom", "a Manas", "NB", true, {}, {}, {}, [829], ["https://i.ibb.co/cXVv40nn/ciel.png"], [101], 49),
     new enemyInfo("McBurn", "The Blazing Demon", "the Beyond", "M", true, {}, {}, { mana: 120 }, [798], ["https://i.ibb.co/Y4Jhf9vF/mcburnsta1.png"], [102], 50),
     new enemyInfo("Father", "Homunculus", "the Dwarf in the Flask", "M", true, {}, {}, {}, [90, 804], ["https://i.ibb.co/xR0gfYT/Father-51.jpg"], [103], 51),
-    new enemyInfo("Eliza (alter)", "Merchant", "the Dealer", "F", true, {}, {}, {}, [664, 854], ["https://i.ibb.co/0mR9Lpy/c.png"], [104], 52),
+    new enemyInfo("Eliza (alter)", "Merchant", "the Dealer", "F", true, {}, {}, {}, [664, 854], ["https://i.ibb.co/mVpYmph7/c.webp"], [104], 52),
     new enemyInfo("Antares", "Dragon", "The Monarch of Destruction", "M", true, {}, {}, {}, [48, 667, 831], ["https://i.ibb.co/bgSjmKSC/Solo-leveling.webp"], [105], 53),
     new enemyInfo("Nereid", "Sea Nymph", "the Unyielding", "F", true, {}, {}, {}, [88, 830], ["https://i.ibb.co/n8sNFd3f/content.jpg"], [106], 54),
     new enemyInfo("Ryomen Sukuna", "Fingers", "the King of Curses", "M", true, { mg: 50 }, {}, {}, [663, 803], ["https://i.ibb.co/bMHzQvfy/images-7.webp"], [107], 55),
-    new enemyInfo("Aneira (alter)", "Human", "the Queen of Frost", "F", true, {}, {}, {}, [832], ["https://i.ibb.co/bXW0gcv/examiner.png"], [108], 56),
-    new enemyInfo("Rainee (alter)", "Human", "a Healer", "F", true, {}, {}, {}, [666, 825], ["https://i.ibb.co/bXW0gcv/examiner.png"], [109], 57),
+    new enemyInfo("Aneira (alter)", "Human", "the Queen of Frost", "F", true, {}, {}, {}, [832], ["https://i.ibb.co/5W81qNCw/c.png"], [108], 56),
+    new enemyInfo("Rainee (alter)", "Human", "a Healer", "F", true, {}, {}, {}, [666, 825], ["https://i.ibb.co/ZRsdwRtW/c.webp"], [109], 57),
     new enemyInfo("Sung Jin Woo", "Human", "the Shadow Monarch", "M", true, {}, {}, {}, [92, 663, 833], ["https://i.ibb.co/Vb8bdLg/Gt-Bam-O3-WEAISL7z.jpg"], [110], 58),
     new enemyInfo("Oktavia von Seckendorff", "Witch", "the Mermaid Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/JR1CZ7f5/image-1.jpg"], [111], 59),
     new enemyInfo("Ophelia", "Witch", "the Wudan Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/dw0kfh5L/image-3.jpg"], [112], 60),
     new enemyInfo("Candeloro", "Witch", "the Dress-up Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/qLFJ70mk/image-4.jpg"], [113], 61),
     new enemyInfo("Homulily", "Witch", "the Nutcracker Witch", "F", true, {}, {}, {}, [847], ["https://i.ibb.co/nMjbdtjv/image-5.jpg"], [114], 62),
     new enemyInfo("Kriemhild Gretchen", "Witch", "the Witch of Salvation", "F", true, {}, {}, { mana: 200 }, [834], ["https://i.ibb.co/qMBdXLzC/image-9.jpg"], [115], 63),
-    new enemyInfo("Medusa", "Gorgon", "the Petrifying Gorgon", "F", true, {}, {}, {}, [827], ["https://i.ibb.co/bXW0gcv/examiner.png"], [116], 64),
-    new enemyInfo("Kuronosu", "Human", "the Time Manipulator", "M", true, { mana: 500 }, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [117], 65),
-    new enemyInfo("Espathera (alter)", "Human", "the Pathfinder", "F", true, {}, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [118], 66),
-    new enemyInfo("Iustitia", "Celestial", "the Arbiter", "F", true, {}, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [119], 67),
-    new enemyInfo("Luxuria (alter)", "Human", "the Magnetic", "NB", true, { mana: 300 }, {}, {}, [826], ["https://i.ibb.co/bXW0gcv/examiner.png"], [120], 68),
+    new enemyInfo("Medusa", "Gorgon", "the Petrifying Gorgon", "F", true, {}, {}, {}, [827], ["https://i.ibb.co/4vRtQPS/c.jpg"], [116], 64),
+    new enemyInfo("Kuronosu", "Human", "the Time Manipulator", "M", true, { mana: 500 }, {}, {}, [826], ["https://i.ibb.co/20WKD1Y4/kuronosu.gif"], [117], 65),
+    new enemyInfo("Espathera (alter)", "Human", "the Pathfinder", "F", true, {}, {}, {}, [826], ["https://i.ibb.co/pjB7hsJs/c.webp"], [118], 66),
+    new enemyInfo("Iustitia", "Celestial", "the Arbiter", "F", true, {}, {}, {}, [826], ["https://i.ibb.co/DDRmSyfv/Iu-2.jpg"], [119], 67),
+    new enemyInfo("Luxuria (alter)", "Human", "the Magnetic", "NB", true, { mana: 300 }, {}, {}, [826], ["https://i.ibb.co/hRmFmPty/c.webp"], [120], 68),
 ];
 
 export const bossMobs: enemyInfo[] = [
@@ -1387,6 +1387,296 @@ export const raidBosses: enemyInfo[] = [
         }, [["Gains **6x** of the player's max HP as a shield at the start of battle", "Stores **2%** of his shield for his Void Orb every round, decreases his shield by **5%** each time", "On shield break, reverses the player's damage type for **5** rounds", "Has a **50%** chance to deal magical damage", "Every **6th** round, he uses Void Orb, dealing the stored amount of shield as damage", "**Active**: Enters a domain which lasts **5** rounds, in which he increases his crit rate by **70%**, sets his crit damage to **175%**, and deals **50%** lightning damage (**90** <:mana:1047269152957661255>)"]])
     ),
 ];
+
+export const worldBossEnemies: enemyInfo[] = [
+    new enemyInfo("Rudgiroth", "Human", "the Derek", "M", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/d0fBdfw4/Rudgiroth.jpg"], [], 100,
+        new skillInfo(100, 70, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { atkMultiplier: 1.1, magicDamage: true });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { atkMultiplier: 1.1, magicDamage: true });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { atkMultiplier: 1.1, magicDamage: true });
+            eStats.shield += myStats.maxhp - myStats.hp;
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.wbdart = 0;
+            eStats.reduceHealing ??= 0;
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === eStats) {
+                    mybuff.hp.push(new buffInfo("+", -Math.floor(myStats.hp * 0.06), 2));
+                    eStats.wbdart++;
+                    if (eStats.wbdart % 10 === 0) {
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ Empowered dart`, { atkMultiplier: 2, magicDamage: true });
+                        eStats.reduceHealing += 0.01;
+                    };
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [[" After every attack, leaves behind a dart, dealing **6%** of your current HP over **2** rounds.", " Every **10** darts are empowered, dealing **200%** damage and reduce your healing effectiveness by **1%**.", "Active: Deals **3** hits of **110%** damage before granting self a shield equal to your missing HP. (70 💧)"]])
+    ),
+    new enemyInfo("Staccato", "Human", "the Wit", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/tpgZ7Z50/staccato.jpg"], [], 101,
+        new skillInfo(101, 90, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.mr -= Math.floor(myStats.mr * 0.3);
+            mybuff.mr.push(new buffInfo("*", 0.7, 5));
+            myStats.vulnerabilityDynamic += 0.02;
+            notice.push(`\n✨ ${enemy.name} increases your damage taken!`);
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.wbactiondmg = 0;
+            eStats.mdChance = 1;
+            myStats.vulnerabilityDynamic ??= 1;
+
+            matchStats.on("action", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (caster === myStats && eStats.wbactiondmg < 4) {
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🪄 ${enemy.name}`, { atkMultiplier: 0.3, magicDamage: true });
+                    eStats.wbactiondmg++;
+                };
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                eStats.wbactiondmg = 0;
+                if (matchStats.round % 3 === 0) {
+                    eStats.md += Math.floor(eStats.md * 0.04);
+                    ebuff.md.push(new buffInfo("*", 1.04, 9999));
+                };
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["You take **30%** damage whenever you make an action (Max: 4 times per round).", "Increases own MD by **4%** every **3** rounds. Always deals magical damage.", "Active: Reduces your MR by **30%** for **5** rounds, and permanently increases your damage taken by **2%** (90 💧)"]])
+    ),
+    new enemyInfo("Nighthollow", "Monster", "the Clinging", "NB", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/Cpdd621S/nighthollow.jpg"], [], 102,
+        new skillInfo(102, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.deflectDamage += 0.15;
+            eStats.deflectDamageCritMulti = 2;
+
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                eStats.deflectDamage -= 0.15;
+                eStats.deflectDamageCritMulti = 1;
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.cr = 1;
+            eStats.def += Math.floor(eStats.def * 0.4);
+            ebuff.cr.push(new buffInfo("=", 1, 9999));
+            ebuff.def.push(new buffInfo("*", 1.4, 9999));
+            eStats.deflectDamage ??= 0;
+            eStats.deflectDamageCritMulti ??= 1;
+
+            matchStats.on("crit", {
+                maxUsage: 60,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (target == eStats) {
+                        eStats.atk += Math.floor(eStats.atk * 0.02);
+                        ebuff.atk.push(new buffInfo("*", 1.02, 9999));
+                        eStats.def -= Math.floor(eStats.def * 0.01);
+                        ebuff.def.push(new buffInfo("*", 0.99, 9999));
+
+                        return AbilityResponse.SUCCESS;
+                    };
+                }
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["Begins battles with **100%** critical rate and **+40%** DEF. Receiving a critical hit increases own ATK by **2%** but decreases own DEF by **1%**. (Max: 60 triggers)", "Active: For **3** rounds, deflects **15%** of incoming damage. This is *doubled* when the hit is critical. (60 💧)"]])
+    ),
+    new enemyInfo("The End", "Monster", "the Sillyfurby", "NB", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/n8YrzR1H/The-End.jpg"], [], 103,
+        new skillInfo(103, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.wbdomain = true;
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                eStats.wbdomain = false;
+                // Stun
+                eStats.timeFrozen = true;
+                let lastfreezemsg = eStats.frozenMessage ? eStats.frozenMessage : "stunned themselves";
+                eStats.frozenMessage = "stunned themselves";
+
+                // When stun is over
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.timeFrozen = false;
+                    eStats.frozenMessage = lastfreezemsg;
+
+                    return AbilityResponse.SUCCESS;
+                }));
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.wbatkreceived = 0;
+            eStats.damageReduction ??= 0;
+            eStats.wbdomain = false;
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                if (target === eStats) {
+                    addHeal(eStats, myStats, eStats, ebuff, mybuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.06 * (eStats.wbdomain ? 2 : 1)), {});
+                    eStats.wbatkreceived++;
+                    if (eStats.wbatkreceived % 5 === 0 && eStats.wbatkreceived <= 50) {
+                        eStats.cr += 0.01;
+                        ebuff.cr.push(new buffInfo("+", 0.01, 9999));
+                        eStats.damageReduction += 0.01;
+                    };
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["Upon taking damage, recovers HP equal to **6%** of your max HP.", "Every **5** attacks received increases own critical rate and damage reduction by **1%** (Max: 50%)", "Active: Doubles healing from passive for **3** rounds, but is stunned for **1** round after this. (100 💧)"]])
+    ),
+    new enemyInfo("Fish of the Tides", "Tidal Fish", "the Heedcaller", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/JrCjX0H/deluvion.png"], [], 104,
+        new skillInfo(104, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.tidalMeter += 20;
+            if (eStats.tidalMeter > 100) eStats.tidalMeter = 100;
+            notice.push(`\n🌊 **${enemy.name}** raised tidal meter to **${eStats.tidalMeter}%**`);
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.tidalMeter = 0;
+
+            const tidalBuff = 0.7;
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (eStats.tidalMeter > 50) {
+                    eStats.atk += Math.floor(eStats.atk * tidalBuff);
+                    eStats.md += Math.floor(eStats.md * tidalBuff);
+                };
+
+                if (eStats.tidalMeter >= 100) {
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `🌊 **${enemy.name}** summoned a Tsunami! **${enemy.name}**`, 2.5);
+                    eStats.tidalMeter = 0;
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (target === eStats) {
+                    eStats.tidalMeter += 5;
+                };
+            });
+
+            matchStats.on("miss", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (caster === eStats) {
+                    eStats.tidalMeter -= 10;
+                };
+            });
+
+            return AbilityResponse.SUCCESS;
+        }, [["Raises `Tidal Meter` by **5%** whenever attacked, but loses **10%** of it whenever it misses. When it is **>50%**, she gains **+70%** ATK & DEF. At **100%**, she deals **250%** damage and resets the meter.", "Active: Raises `Tidal Meter` by **20%**. (60 💧`)"]])
+    ),
+    new enemyInfo("Luminous (alter)", "Solo Hunter", "the Undefined", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/0ybwwL9G/c.gif"], [], 105,
+        new skillInfo(105, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ Piercing into the heavens... **${enemy.name}**`, 2);
+            if (Math.random() <= myStats.cr) {
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ Slamming unto this earth... **${enemy.name}**`, 4);
+            };
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            const crgain = Math.max((myStats.br + myStats.dodge), 0);
+            eStats.cr += crgain;
+            myStats.br = 0;
+            myStats.dodge = 0;
+            mybuff.br.push(new buffInfo("=", 0, 9999));
+            mybuff.dodge.push(new buffInfo("=", 0, 9999));
+            notice.push(`\n✨ **${enemy.name}** gained **${Math.floor(crgain * 100)}** critical rate!`);
+
+            return AbilityResponse.SUCCESS;
+        }, [["Converts the sum of your block rate and dodge rate into critical rate for herself at the start of battle.", "Active: Deals **200%** damage, and has a chance equal to critical chance to deal **400%** damage. (50 💧)"]])
+    ),
+    new enemyInfo("Dalus the Nightmare", "Twister", "the Phantom Dreamer", "M", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/gMMb1KRk/c.gif"], [], 106,
+        new skillInfo(106, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            return AbilityResponse.FAILURE;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Lose mana for ATK boost
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                // Gain 3% ATK for every 1 💧consumed
+                const atkBuff = Math.floor(eStats.atk * eStats.sm * 0.03);
+                eStats.atk += atkBuff;
+                eStats.sm = 0;
+
+                if (matchStats.round % 2 === 0) {
+                    let dmg = Math.floor(myStats.maxhp * 0.2);
+                    if (dmg > 0) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:rosie:1408505520641409127> **Rosie**`, { overwriteDamage: dmg, dodge: false });
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            // Mana Regen boost
+            eStats.mg += 20;
+            ebuff.mg.push(new buffInfo("+", 20, 9999));
+
+            return AbilityResponse.SUCCESS;
+        }, [["Consumes all 💧 at the start of every round, before gaining **3%** ATK & MD for every **1** 💧 consumed at the start of every round.", "Increases mana regeneration by **20**", "Rosie: Deals **20%** of your max HP as undodgeable absolute DMG (Ignores DEF/MR) every **2** rounds"]])
+    ),
+    new enemyInfo("Mari the poisonbearer", "Destabilizer", "the Tainted Keeper", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/FqYC1xpk/c.gif"], [], 107,
+        new skillInfo(107, 1000, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            return AbilityResponse.FAILURE;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round % 3 === 0) {
+                    Object.keys(ebuff).forEach((stat) => {
+                        ebuff[stat as keyof Buffs].forEach((buff) => {
+                            // Adds own debuffs x1.5 to enemy
+                            if (buff.isDebuff) {
+                                const debuff = new buffInfo(buff.type, buff.val * 1.5, buff.last, buff.change, buff.ctype, buff.cap);
+                                mybuff[stat as keyof Buffs].push(debuff);
+                            };
+                        });
+
+                        // Remove debuffs
+                        ebuff[stat as keyof Buffs] = ebuff[stat as keyof Buffs].filter((buff) => !buff.isDebuff);
+                    });
+
+                    // Makes a random potion (75% chance ot success)
+                    const rp = Math.random();
+                    switch (true) {
+                        case (rp < 0.25): {
+                            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** cast their signature poison!`, { overwriteDamage: Math.floor(myStats.maxhp * 0.1), dodge: false });
+                            break;
+                        };
+                        case (rp < 0.5): {
+                            myStats.maxhp -= Math.floor(myStats.maxhp * 0.03);
+                            if (myStats.hp > myStats.maxhp) myStats.hp = myStats.maxhp;
+                            notice.push(`\n✨ **${enemy.name}** reduced your max HP by **3%**!`);
+                            break;
+                        };
+                        case (rp < 0.75): {
+                            let satk = Math.floor(myStats.atk * 0.25);
+                            let smd = Math.floor(myStats.md * 0.25);
+                            myStats.atk -= satk;
+                            myStats.md -= smd;
+                            eStats.atk += satk;
+                            eStats.md += smd;
+                            notice.push(`\n✨ **${enemy.name}** stole **25%** of your ATK & MD for this round!`);
+                            break;
+                        };
+                        case (rp <= 1): {
+                            notice.push(`\n✨ **${enemy.name}** decides not to make a potion.`);
+                            break;
+                        };
+                    };
+                };
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+            return AbilityResponse.SUCCESS;
+        }, [["Every **3** rounds, removes all debuffs from itself and applies **1.5x** of them to the player.", "Every **3** rounds, makes a random potion with a **75%** chance of success. If it succeeds, either reduces your max HP by **3%**, steals **25%** of your ATK & MD for this round, or deals **10%** of your max HP as undodgeable absolute damage.", "Active: Makes a random potion with a **75%** chance of success. If it fails, deals **10%** of your max HP as undodgeable damage. If it succeeds, either reduces your max HP by **3%**, or steals **25%** of your ATK & MD for this round. (100 💧)"]])
+    ),
+    new enemyInfo("Infernal Juggernaut", "Demon", "the Unstoppable", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/5YGvbFG/c.png"], [], 108,
+        new skillInfo(108, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            return AbilityResponse.SUCCESS;
+        }, [["Placeholder ability"]])
+    ),
+    new enemyInfo("Ethereal Phantom", "Specter", "the Mana Drain", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/drsdyGm/c.png"], [], 109,
+        new skillInfo(109, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            return AbilityResponse.SUCCESS;
+        }, [["Placeholder ability"]])
+    ),
+];
+
 export const nightmareMobs: enemyInfo[] = [
     new enemyInfo("Fish of the Tidal", "Tidal Fish", "the Tidecaller", "F", true, { hp: 30_000, atk: 10_000, md: 10_000, def: 1_000, mr: 1_000, mana: 160 }, {}, {}, [], ["https://i.ibb.co/3ywY2yX7/c.gif"], [], 25,
         new skillInfo(25, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

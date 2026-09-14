@@ -24,7 +24,7 @@ const exportCommand: SlashCommand = {
             let len = userItems.length;
             while (len--) {
                 // Exclude rings
-                if (items[userItems[len - 1]?.itemid]?.category === "ring") {
+                if (items[userItems[len - 1]?.itemid]?.category === "ring" && sellType !== "ring") {
                     exclude.push(userItems[len].uniqueid.split(":")[0]);
                     continue;
                 };
@@ -37,13 +37,26 @@ const exportCommand: SlashCommand = {
             };
         };
 
+        if (sellType === "ring") {
+            const rings = userItems.filter((e) => items[e.itemid].category === "ring");
+            rings.sort((a, b) => items[a.itemid].name.localeCompare(items[b.itemid].name) || a.level - b.level);
+            let len = rings.length;
+            while (len--) {
+                if (items[rings[len - 1]?.itemid]?.name === items[rings[len].itemid].name) {
+                    exclude.push(rings[len--].uniqueid.split(":")[0]);
+                    while (items[rings[len - 1]?.itemid]?.name === items[rings[len].itemid].name) len--;
+                } else exclude.push(rings[len].uniqueid.split(":")[0]);
+            };
+        };
+
         const { itemsToDisassemble, itemIdsToDisassemble, loot } = filterItems(userItems, choice, [...exclude, ...author.schema.itemlock], sellGrade, sellType);
         if (itemsToDisassemble.length < 1) return interaction.reply(`You need to select at least 1 item.`);
 
+        const ringWarning = sellType === "ring" ? `-# ⚠️ Some rings require duplicates to be levelled and maxed. Only proceed if you acknowledge these duplicates are unneeded.\n\n` : "";
         const Embed = new EmbedBuilder()
             .setTitle("Disassemble Items")
             .setColor(0xbbffff)
-            .setDescription(`Do you want to disassemble\n${itemsToDisassemble.slice(0, 10).map((e, i) => `${e.bar}\`${itemIdsToDisassemble[i].uniqueid.split(":")[0]}\` | ${e.emoji} **__${e.name}__**`).join("\n")}${itemsToDisassemble.length > 10 ? `\n+ ${itemsToDisassemble.length - 10} more` : ""}\nfor ${Object.entries(loot).map((e) => `${items[parseInt(e[0])].emoji}x${e[1]}`).join(", ")}?`);
+            .setDescription(`${ringWarning}Do you want to disassemble\n${itemsToDisassemble.slice(0, 10).map((e, i) => `${e.bar}\`${itemIdsToDisassemble[i].uniqueid.split(":")[0]}\` | ${e.emoji} **__${e.name}__**`).join("\n")}${itemsToDisassemble.length > 10 ? `\n+ ${itemsToDisassemble.length - 10} more` : ""}\nfor ${Object.entries(loot).map((e) => `${items[parseInt(e[0])].emoji}x${e[1]}`).join(", ")}?`);
         return interaction.reply({ embeds: [Embed], components: [OfferRow] }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 

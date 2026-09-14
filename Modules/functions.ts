@@ -20,6 +20,7 @@ import { Buffs, CharacterRarity, ClassStats, CompactUserSchema, DetailedStats, E
 import { curses } from './curses';
 import { getWeaponSchema } from './queries';
 import { isExtremeWeapon, getExtremeWeaponConfig, isExtremeItem, getExtremeItemConfig } from './extremeWeaponDrops';
+import { WildcardInput } from './runeMergeRecipes';
 
 const statsOp: { base: { hp: Record<number, number>; atk: Record<number, number>; def: Record<number, number>; expertise: Record<number, string>; }; } = {
     "base": {
@@ -801,10 +802,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Deflect damage
     if (target.deflectDamage) {
-        attacker.hp = Math.floor(attacker.hp - Math.floor(damage * target.deflectDamage));
-        if (target.mitrecord) target.mitstore += Math.floor(damage * Math.min(1, target.deflectDamage));
-        if (target.deflheal) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(Math.min(target.maxhp * 0.04, Math.floor(damage * Math.min(1, target.deflectDamage)))), {});
-        damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.deflectDamage))));
+        let defl = Math.floor(damage * target.deflectDamage * ((isCrit && target.deflectDamageCritMulti) ? target.deflectDamageCritMulti : 1));
+        attacker.hp = Math.floor(attacker.hp - defl);
+        if (target.mitrecord) target.mitstore += Math.floor(defl);
+        if (target.deflheal) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(Math.min(target.maxhp * 0.04, defl)), {});
+        damage = Math.floor(damage - defl);
         if (attacker.hp < 1) attacker.hp = 0;
     };
 
@@ -1256,6 +1258,25 @@ export const filterItems = (userItems: WeaponSchema[], choice: string[], exclude
     };
 
     return { itemsToDisassemble, itemIdsToDisassemble, loot };
+};
+
+export const resolveWildcardInput = (userWeapons: WeaponSchema[], wildcard: WildcardInput): WeaponSchema[] => {
+    return userWeapons.filter(w => {
+        const item = items[w.itemid];
+        if (!item) return false;
+        if (wildcard.category && item.category !== wildcard.category) return false;
+        if (wildcard.grade && item.grade !== wildcard.grade) return false;
+        if (wildcard.type && item.type !== wildcard.type) return false;
+        return true;
+    });
+};
+
+export const formatWildcardLabel = (wildcard: WildcardInput): string => {
+    const parts: string[] = ["Any"];
+    if (wildcard.grade) parts.push(wildcard.grade);
+    if (wildcard.type) parts.push(wildcard.type);
+    else if (wildcard.category) parts.push(wildcard.category);
+    return parts.join(" ");
 };
 
 export const showPage = <T>(currPage: number, arr: T[], elements = 15): T[] => {

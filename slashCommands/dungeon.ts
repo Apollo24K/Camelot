@@ -686,7 +686,7 @@ const exportCommand: SlashCommand = {
             const extremeDropFloor = isHiddenFloor ? parseInt(hiddenFloorKey) : 0;
             if (isHiddenFloor && hasExtremeItemDrop(extremeDropFloor)) {
                 const itemDrop = getExtremeItemDrop(extremeDropFloor);
-                if (itemDrop && Math.random() < 0.0005) {
+                if (itemDrop && Math.random() < (1 - Math.pow(1 - 0.0005, skipRounds))) {
                     try {
                         // Add the item directly to player's inventory
                         if (itemDrop.itemType !== "rune") {

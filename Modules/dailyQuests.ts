@@ -57,7 +57,7 @@ class dailyQuestInfo {
         if (!todaysQuests.some((quest) => this.id === quest.id)) return;
 
         // Lock
-        const lockKey = `${user.id}:${this.id}`;
+        const lockKey = user.id;
         if (dailyLock.has(lockKey)) return;
         dailyLock.add(lockKey);
 

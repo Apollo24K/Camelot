@@ -399,6 +399,7 @@ const commands = [
 							{ name: 'Cuirass', value: 'cuirass' },
 							{ name: 'Gloves', value: 'gloves' },
 							{ name: 'Boots', value: 'boots' },
+							{ name: 'Ring', value: 'ring' },
 						)
 				)
 				.addStringOption(option => option.setName('exclude').setDescription('Select items to be excluded (use their IDs separated by comma ",")').setRequired(false))
@@ -520,8 +521,9 @@ const commands = [
 			.addSubcommand((subcommand) => subcommand.setName('craft').setDescription('Craft an item')
 				.addStringOption(option => option.setName('item').setDescription('Name or ID of the item to craft').setRequired(true))
 			)
-			.addSubcommand((subcommand) => subcommand.setName('merge').setDescription('Rune merging')
-				.addStringOption(option => option.setName('rune').setDescription('Rune to view or merge').setRequired(false))
+			.addSubcommand((subcommand) => subcommand.setName('merge').setDescription('Merge items into new ones')
+				.addStringOption(option => option.setName('item').setDescription('Output item to view or merge').setRequired(false))
+				.addStringOption(option => option.setName('sacrifice').setDescription('Unique IDs of items to sacrifice (comma-separated)').setRequired(false))
 				.addIntegerOption(option => option.setName('page').setDescription('Select a page to jump to').setRequired(false))
 			)
 	}.data.toJSON(),
@@ -625,6 +627,7 @@ const commands = [
 							{ name: 'Weekly Donations', value: 'donations_weekly' },
 							{ name: 'Exam Rank', value: 'rank' },
 							{ name: 'User ID', value: 'id' },
+							{ name: 'Guild Marks', value: 'guild_marks' },
 						)
 				)
 				.addStringOption(option => option.setName('id').setDescription('search for a guild using its ID').setRequired(false))
@@ -787,6 +790,7 @@ const commands = [
 							{ name: 'weapons', value: 'weapons' },
 							{ name: 'armor', value: 'armor' },
 							{ name: 'rings', value: 'ring' },
+							{ name: 'runes', value: 'runes' },
 							{ name: 'fish', value: 'fish' },
 							{ name: 'loot', value: 'loot' },
 							{ name: 'sword', value: 'sword' },
@@ -837,6 +841,7 @@ const commands = [
 							{ name: 'Ring 1', value: 'ring1' },
 							{ name: 'Ring 2', value: 'ring2' },
 							{ name: 'Ring 3', value: 'ring3' },
+							{ name: 'Entry', value: 'entry' },
 						)
 				))
 			.addSubcommand((subcommand) => subcommand.setName('levelup').setDescription('Levelup an item')
@@ -1704,6 +1709,13 @@ const commands = [
 			.setName('weekly')
 			.setDescription('Claim your weekly rewards! (premium only)'),
 	}.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 		.setName('world-boss')
+	// 		.setDescription('Summon or fight world bosses!')
+	// 		.addStringOption(option => option.setName('join').setDescription('Join a world boss by ID').setRequired(false))
+	// 		.addUserOption(option => option.setName('invite').setDescription('Invite a user to your private world boss').setRequired(false)),
+	// }.data.toJSON(),
 ];
 
 const rest = new REST({ version: '9' }).setToken(process.env.TOKEN);
