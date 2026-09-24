@@ -236,7 +236,7 @@ const exportCommand: SlashCommand = {
         if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply({ content: `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`, embeds: [] });
         if (dungeonInProgress.has(stats.id)) return interaction.editReply({ content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
         dungeonInProgress.add(stats.id);
-        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 300000);
+        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
 
         // Increase run count
         let skipRounds = 1;
@@ -268,11 +268,9 @@ const exportCommand: SlashCommand = {
         // Determine if level caps should be applied
         let applyLevelCaps = false;
         if (isHiddenFloor) {
-            applyLevelCaps = true;
-        } else if (floor >= 300) {
-            const hasCompletedFloor = stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded;
-            // Apply caps only if floor hasn't been manually cleared
-            applyLevelCaps = !hasCompletedFloor;
+            const hiddenFloorWins = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
+            const winsNeeded = hiddenFloors[floor]?.winsNeeded ?? Infinity;
+            applyLevelCaps = hiddenFloorWins < winsNeeded;
         };
 
         const charLevelCap = applyLevelCaps ? 1000 : undefined;
@@ -327,6 +325,15 @@ const exportCommand: SlashCommand = {
 
         let eStats = isHiddenFloor ? hiddenFloors[floor].stats(enemy) : floors[floor].stats(enemy);
         eStats.image = eImage;
+
+        // Override EP for hidden floors to match highest cleared boss floor
+        if (isHiddenFloor && rewardFloor !== floor) {
+            const rewardEnemy = floors[rewardFloor]?.monster;
+            if (rewardEnemy) {
+                eStats.ep = floors[rewardFloor].stats(rewardEnemy).ep;
+            }
+        }
+
         let eStatsC = { ...eStats };
 
         // Some match settings
@@ -712,6 +719,24 @@ const exportCommand: SlashCommand = {
                 };
             };
 
+            // Check for entry item drop (any dungeon floor)
+            const entryDropChance = (runEligibility.loot || runEligibility.progress) ? 0.00125 : 0.0005;
+            if (Math.random() < (1 - Math.pow(1 - entryDropChance, skipRounds))) {
+                const unownedEntryItems = items.filter((item): item is entryInfo => item instanceof entryInfo && (!stats.items[item.id] || stats.items[item.id] <= 0));
+                if (unownedEntryItems.length > 0) {
+                    const entryDrop = unownedEntryItems[Math.floor(Math.random() * unownedEntryItems.length)];
+                    try {
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                items: { type: "merge_json", value: { [entryDrop.id]: 1 } },
+                            },
+                        });
+                        drop += `\n<:barm:1398660875740647464> **ENTRY ITEM DROP!** You received **__${entryDrop.name}__** ${entryDrop.emoji}!`;
+                    } catch (error) {
+                        console.error(`Error adding entry item ${entryDrop.id} to user ${interaction.user.id}:`, error);
+                    };
+                };
+            };
 
             Embed.setDescription(`<:stars_v2:917023655840591963> **${interaction.user.toString()}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot${drop}\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}${xpPotions[784] ? `, ${items[784].emoji}x${xpPotions[784]}` : ""}${xpPotions[783] ? `, ${items[783].emoji}x${xpPotions[783]}` : ""}${xpPotions[782] ? `, ${items[782].emoji}x${xpPotions[782]}` : ""}`);
 
@@ -812,11 +837,11 @@ const exportCommand: SlashCommand = {
                     .setImage(isCompactEmbed ? null : eImage);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 300000 });
-                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 300000 });
-                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 300000 });
-                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 300000 });
-                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 300000 });
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
+                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 120000 });
                     matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
 
 
@@ -861,6 +886,9 @@ const exportCommand: SlashCommand = {
                         matchStats.turn = 1;
                         resolve(matchResult(wORl));
                     };
+
+                    // End match when time expires
+                    atk.on('end', () => { if (!matchStats.ended) endMatch("l"); });
 
                     function startNextRound() {
                         if (matchStats.ended) return;
@@ -1011,7 +1039,7 @@ const exportCommand: SlashCommand = {
                                     myStatsC.sm -= matchStats.costForAction;
                                 }
                             };
-                        
+
                             // If attack was replaced
                             if (myStatsC.replaceButton.atk?.run && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
                                 myStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
@@ -1243,13 +1271,13 @@ const exportCommand: SlashCommand = {
 
                             if (matchStats.costForAction > 0) {
                                 if (myStatsC.sm < matchStats.costForAction) {
-                                        myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                        if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
+                                    myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                     notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                                    } else {
-                                        myStatsC.sm -= matchStats.costForAction;
-                                    }
-                                };
+                                } else {
+                                    myStatsC.sm -= matchStats.costForAction;
+                                }
+                            };
 
                             notice.push(`\n⏩ Skipping to results...`);
                             editEmbed();
@@ -1330,7 +1358,7 @@ const exportCommand: SlashCommand = {
             const errorEmbed = new EmbedBuilder()
                 .setColor(0xff7d7d)
                 .setDescription("An error occurred while restarting the dungeon. Please try again.");
-            restartMsg?.edit({ embeds: [errorEmbed], components: [] }).catch(() => {});
+            restartMsg?.edit({ embeds: [errorEmbed], components: [] }).catch(() => { });
         }
     },
 };

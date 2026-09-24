@@ -144,7 +144,7 @@ const exportCommand: SlashCommand = {
         const subcommand = interaction.options.getSubcommand();
 
         if (subcommand === "catalog") {
-            let grade = interaction.options.getString('grade') as Omit<ItemRarity, "genesis" | "mythical"> | null;
+            let grade = interaction.options.getString('grade') as Omit<ItemRarity, "genesis"> | null;
             let page = interaction.options.getInteger('page') || 1;
 
             const itemsR = items.filter((e) => e.obtain.includes("crafting") && (grade ? e.grade === grade : true));

@@ -15,7 +15,7 @@ export const extremeFloorItemMapping: Record<number, ExtremeItemDrop> = {
     1: { itemId: 842, itemType: "weapon", ascensionMaterialId: 829, ascensionAmount: 240, craftingAmount: 180 },  // Ciel: Ciel's Blessing
     2: { itemId: 797, itemType: "weapon", ascensionMaterialId: 798, ascensionAmount: 240, craftingAmount: 180 }, // McBurn: Angbar
     3: { itemId: 799, itemType: "weapon", ascensionMaterialId: 804, ascensionAmount: 240, craftingAmount: 180 }, // Father: The Flawed
-    4: { itemId: 852, itemType: "weapon", ascensionMaterialId: 854, ascensionAmount: 240, craftingAmount: 180 }, // Eliza (alter) : Coinflip Trochoid
+    4: { itemId: 852, itemType: "rune", ascensionMaterialId: 854, ascensionAmount: 720, craftingAmount: 720 }, // Eliza (alter) : Coinflip Trochoid
     5: { itemId: 800, itemType: "weapon", ascensionMaterialId: 831, ascensionAmount: 240, craftingAmount: 180 },  // Atares: Kamish's Wrath
     6: { itemId: 801, itemType: "weapon", ascensionMaterialId: 830, ascensionAmount: 240, craftingAmount: 180 },  // NereID: Thalokorn
     7: { itemId: 802, itemType: "weapon", ascensionMaterialId: 803, ascensionAmount: 240, craftingAmount: 180 },  // Ryomen Sukuna: Kamutoke

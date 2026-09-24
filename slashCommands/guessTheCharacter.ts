@@ -23,6 +23,10 @@ const row = new ActionRowBuilder<ButtonBuilder>()
             .setCustomId('skip')
             .setLabel('Skip')
             .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId('ignore_defer-showimage')
+            .setLabel('Show Image')
+            .setStyle(ButtonStyle.Secondary),
     );
 
 function getModal(uid: string) {
@@ -129,6 +133,7 @@ const exportCommand: SlashCommand = {
             const hintLetter = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "letter", componentType: ComponentType.Button, time: 60000 });
             const hintAnime = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "anime", componentType: ComponentType.Button, time: 60000 });
             const skip = emsg.createMessageComponentCollector({ filter: (component) => (component.user.id === interaction.user.id) && component.customId === "skip", componentType: ComponentType.Button, time: 60000 });
+            const showImage = emsg.createMessageComponentCollector({ filter: (component) => (isPrivate ? (component.user.id === interaction.user.id) : true) && component.customId === "ignore_defer-showimage", componentType: ComponentType.Button, time: 60000 });
             const uid = `${Math.random()}`;
 
             let dailyPending = true;
@@ -142,7 +147,7 @@ const exportCommand: SlashCommand = {
                             modalInteraction.reply(`Wrong guess by **${modalInteraction.user.username}**: ${response}`);
                         } else {
                             isPending = false;
-                            collector.stop(), hintAnime.stop(), hintLetter.stop();
+                            collector.stop(), hintAnime.stop(), hintLetter.stop(), showImage.stop();
 
                             const stats = await getUserSchema(modalInteraction.user.id);
                             if (!stats) return modalInteraction.reply(`You don't have an account yet. Start playing with \`/pull\``);
@@ -204,8 +209,12 @@ const exportCommand: SlashCommand = {
                 emsg.edit({ embeds: [Embed] });
             });
 
+            showImage.on('collect', async component => {
+                await component.reply({ content: pick.image, ephemeral: true });
+            });
+
             skip.on('collect', async () => {
-                hintAnime.stop(), hintLetter.stop(), collector.stop(), skip.stop();
+                hintAnime.stop(), hintLetter.stop(), collector.stop(), skip.stop(), showImage.stop();
 
                 exportCommand.execute({ interaction, author, locale, server, customFlag, reply, warn });
             });
@@ -213,7 +222,7 @@ const exportCommand: SlashCommand = {
             collector.on('end', () => {
                 if (isPending) {
                     isPending = false;
-                    hintAnime.stop(), hintLetter.stop(), collector.stop();
+                    hintAnime.stop(), hintLetter.stop(), collector.stop(), showImage.stop();
 
                     const Embed = new EmbedBuilder()
                         .setColor(rarityColor(pick.rarity))
