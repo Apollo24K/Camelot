@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { Client, GatewayIntentBits, Partials, Options, Collection } from 'discord.js';
 import { ServerSchema, CompactUserSchema, SlashCommand } from './types';
 import { bootstrapApplication } from './Modules/startup';
+import { registerRestLogging } from './Modules/restLogging';
 dotenv.config();
 bootstrapApplication();
 
@@ -19,6 +20,7 @@ const client = new Client({ // GatewayIntentBits.GuildMembers
     }),
     shards: "auto",
 });
+registerRestLogging(client);
 client.login(process.env.TOKEN);
 
 // Collections
