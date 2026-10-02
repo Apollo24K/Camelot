@@ -2433,8 +2433,7 @@ export const bossAbilities: skillInfo[] = [
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.counter ??= 0;
         notice.push(`\n✧ It seems particularly dark here... ✧`);
-        myStats.damageReduction += 1;
-        if (myStats.damageReduction > 1) myStats.damageReduction = 1;
+        eStats.damageReduction = (eStats.damageReduction ?? 0) + 1;
 
         // 5% chance to turn to stone every round
         if (Math.random() < 0.05) {
@@ -2480,9 +2479,8 @@ export const bossAbilities: skillInfo[] = [
                 myStats.rev = 0;
                 notice.push(`\n✧ Is something glowing up ahead? ✧`);
                 notice.push(`\n✨ **${char.name}** is turned into stone...`);
-            } else {
-                myStats.damageReduction -= 1;
-                if (myStats.damageReduction < 0) myStats.damageReduction = 0;
+            } else if (matchStats.round === 4) {
+                eStats.damageReduction -= 1;
             };
 
             return AbilityResponse.SUCCESS;

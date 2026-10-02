@@ -6164,12 +6164,10 @@ export const items = [
         // On every 3rd ability usage: +15/22.5/20/22.5/25/27.5/30/32.5/35% ATK/MD (1 turn)
         matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats) {
-                if (myStats.ringOfHeroismLastUsed < 6) {
-                    myStats.ringOfHeroism++;
-                    myStats.ringOfHeroismLastUsed++;
-                };
+                myStats.ringOfHeroism++;
 
-                if (myStats.ringOfHeroism % 3 === 0) {
+                if (myStats.ringOfHeroism % 3 === 0 && myStats.ringOfHeroismLastUsed < 2) {
+                    myStats.ringOfHeroismLastUsed++;
                     const buffScale = [15, 22.5, 20, 22.5, 25, 27.5, 30, 32.5, 35][level - 1] / 100;
                     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * buffScale), 1));
                     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * buffScale), 1));
@@ -6200,6 +6198,7 @@ export const items = [
                         myStats.hp -= Math.floor(myStats.hp * 0.2);
                     };
                 } else if (myStats.departedOneLastUsed < 2) {
+                    myStats.departedOneLastUsed++;
                     const crBuff = [17.5, 20, 22.5, 25, 27.5, 30][level - 1] / 100;
                     mybuff.cr.push(new buffInfo("+", crBuff, 2));
                     myStats.cr += crBuff;
@@ -7217,11 +7216,12 @@ export const items = [
         usage: 9999,
         used: 0,
         ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
-            myStats.sweetSurpUlt = 1;
             if (matchStats.round < myStats.sweetSurpriseLastUsed + 10) {
                 matchStats.sendWarning({ content: `${char.name} needs to rest ${myStats.sweetSurpriseLastUsed + 10 - matchStats.round} more ${myStats.sweetSurpriseLastUsed + 10 - matchStats.round === 1 ? "round" : "rounds"}`, ephemeral: true });
                 return AbilityResponse.FAILURE;
             };
+            myStats.sweetSurpriseLastUsed = matchStats.round;
+            myStats.sweetSurpUlt = 1;
             addHeal(eStats, eStats, eStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.025), {});
 
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 10, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -7238,7 +7238,7 @@ export const items = [
             myStats.hp = Math.min(Math.floor(myStats.maxhp * 0.25), myStats.hp);
             myStats.sweetSurprise = -4;
             myStats.sweetSurpUlt = 0;
-            myStats.sweetSurpriseLastUsed = -1;
+            myStats.sweetSurpriseLastUsed = -10;
 
             matchStats.on("heal", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                 if (target === myStats && myStats.sweetSurprise + 4 <= matchStats.round && myStats.hp === myStats.maxhp) {
@@ -7320,9 +7320,8 @@ export const items = [
     new armorInfo("The Chosen One Boots", "armor", "boots", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Boots_of_the_Chosen_One:1516708449516257330>", "https://i.ibb.co/4ZybjkF9/Boots-of-the-Chosen-one.png", "mr", 13, 150, "mythical", 851, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.chosenOneState = 1;
         myStats.chosenOneLastUsed = -1;
-        myStats.chosenOneProfileLevel = 1;
         const chosenOneStats = await getFullUserSchema(user.id);
-        myStats.chosenOneCharLevel = chosenOneStats ? userLevel(chosenOneStats.xp) : 1;
+        myStats.chosenOneProfileLevel = chosenOneStats ? userLevel(chosenOneStats.xp) : 1;
         myStats.chosenOneCharLevel = chosenOneStats?.char_level?.[char.id] ?? 1;
 
         myStats.replaceButton.def = {

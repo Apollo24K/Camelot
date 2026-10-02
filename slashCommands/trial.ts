@@ -142,8 +142,11 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "play", componentType: ComponentType.Button, time: 90000 });
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
             const edit_levels = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit_levels", componentType: ComponentType.Button, time: 90000 });
+            let pendingEdits = 0;
 
             play.on('collect', () => {
+                if (play.ended) return;
+                if (pendingEdits > 0) return interaction.followUp({ content: "Please wait for your build changes to finish saving.", ephemeral: true });
                 if (!("char" in stats.trial_equipment)) return interaction.followUp({ content: `Please select a character using the \`Edit Build\` button before playing`, ephemeral: true });
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`Please finish your previous fight or wait 2 minutes.`);
@@ -158,6 +161,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 rr.showModal(getModal(uid));
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_trial_' + uid), time: 90000 }).then(async (r) => {
+                    if (play.ended) return r.reply({ content: "This setup has closed. Run /trial again to edit your build.", ephemeral: true });
                     const char = r.fields.getTextInputValue('char');
                     const cls = r.fields.getTextInputValue('class');
                     const weapon = r.fields.getTextInputValue('weapon');
@@ -231,12 +235,17 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        trial_equipment: { type: "set", value: stats.trial_equipment },
-                    });
+                    pendingEdits++;
+                    try {
+                        await updateUsers(interaction.user.id, {
+                            trial_equipment: { type: "set", value: stats.trial_equipment },
+                        });
 
-                    interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
-                    r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                        if (!play.ended) await interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
+                        r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                    } finally {
+                        pendingEdits--;
+                    };
                 });
             });
 
@@ -245,6 +254,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 rr.showModal(getModalLevels(uid));
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_trial_' + uid), time: 90000 }).then(async (r) => {
+                    if (play.ended) return r.reply({ content: "This setup has closed. Run /trial again to edit your build.", ephemeral: true });
                     const lvlFlag = r.fields.getTextInputValue('lvl');
                     const clvlFlag = r.fields.getTextInputValue('clvl');
 
@@ -267,12 +277,17 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                     };
 
                     // Update users table
-                    await updateUsers(interaction.user.id, {
-                        trial_equipment: { type: "set", value: stats.trial_equipment },
-                    });
+                    pendingEdits++;
+                    try {
+                        await updateUsers(interaction.user.id, {
+                            trial_equipment: { type: "set", value: stats.trial_equipment },
+                        });
 
-                    interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
-                    r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                        if (!play.ended) await interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
+                        r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                    } finally {
+                        pendingEdits--;
+                    };
                 });
             });
 

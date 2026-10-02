@@ -12,7 +12,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
-import { getPartyMembers, getUserSchemas, getWeaponSchemas, loadCowParticipants, updateUsers } from '../Modules/queries';
+import { awardRollingCowFight, getPartyMembers, getUserSchemas, getWeaponSchemas, loadCowParticipants, updateUsers } from '../Modules/queries';
 import { customHpBars } from '../Modules/customHpBars';
 
 type RcUserSchema = CompactUserSchema & {
@@ -229,64 +229,79 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: RcUserS
         if (footer) Embed.setFooter({ text: footer });
         interaction.reply({ embeds: [Embed], components: [getButtonRow()] }).then((msg) => {
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+            let menuBusy = false;
 
             play.on('collect', async r => {
-                if (r.customId === "confirm") {
-                    // Update users table
-                    await updateUsers([stats.id, ...partySchema.map((e) => e.id)], {
-                        cow_participation: { type: "set", value: 0 },
-                    });
+                if (play.ended || menuBusy) return;
+                menuBusy = true;
+                try {
+                    if (r.customId === "confirm") {
+                        const members = [stats, ...partySchema];
+                        const memberIds = members.map((e) => e.id);
+                        // A stale confirmation must not erase an existing participant's points.
+                        await updateUsers(memberIds, {
+                            cow_participation: { type: "set", value: 0 },
+                        }, "cow_participation IS NULL");
+                        memberIds.forEach((id) => interaction.client.userCache.delete(id));
 
-                    stats.cow_participation = 0;
-                    partySchema.forEach((e) => { e.cow_participation = 0; });
-                    Embed.setDescription(getDesc());
-                    return interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
+                        const confirmedMembers = await getUserSchemas(memberIds);
+                        for (const member of members) {
+                            member.cow_participation = confirmedMembers.find((e) => e.id === member.id)?.cow_participation ?? member.cow_participation ?? 0;
+                        };
+                        if (play.ended) return;
+                        Embed.setDescription(getDesc());
+                        return await interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
+                    };
+
+                    if (r.customId === "change") {
+                        if (tab === "details") tab = "rewards";
+                        else tab = "details";
+
+                        Embed.setDescription(getDesc());
+                        return await interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
+                    };
+
+                    if (r.customId === "roll") {
+                        if (stats.cow_rolled_today >= cowSettings.rollsPerDay) return;
+
+                        const allChars = [...stats.cow_chars];
+                        partySchema.forEach((e) => {
+                            allChars.push(...e.cow_chars);
+                        });
+
+                        let newChar = parseInt(Object.keys(abilities).filter((key) => !allChars.includes(parseInt(key))).sort(() => 0.5 - Math.random())[0]);
+                        if (Math.random() < cowSettings.goldenCowChance && stats.cow_char !== -1) newChar = -1; // Golden Cow
+
+                        stats.cow_chars.push(newChar);
+                        stats.cow_char = newChar;
+                        stats.cow_timer = Date.now();
+                        stats.cow_rolled_today++;
+                        stats.cow_enemy_index = getCowEnemyIndex(stats.cow_timer ?? 0, rollingCowMobs.length);
+
+                        // Update users table
+                        await updateUsers(stats.id, {
+                            cow_rolled_today: { type: "increment", value: 1 },
+                            cow_chars: { type: "append", value: [newChar] },
+                            cow_timer: { type: "set", value: stats.cow_timer },
+                        });
+                        interaction.client.userCache.delete(stats.id);
+
+                        if (play.ended) return;
+                        Embed.setDescription(getDesc());
+                        return await interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
+                    };
+
+                    if (r.customId !== "play") return;
+
+                    if (dungeonInProgress.has(stats.id)) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
+                        return;
+                    };
+                    resolve(1);
+                    play.stop();
+                } finally {
+                    menuBusy = false;
                 };
-
-                if (r.customId === "change") {
-                    if (tab === "details") tab = "rewards";
-                    else tab = "details";
-
-                    Embed.setDescription(getDesc());
-                    return interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
-                };
-
-                if (r.customId === "roll") {
-                    if (stats.cow_rolled_today >= cowSettings.rollsPerDay) return;
-
-                    const allChars = [...stats.cow_chars];
-                    partySchema.forEach((e) => {
-                        allChars.push(...e.cow_chars);
-                    });
-
-                    let newChar = parseInt(Object.keys(abilities).filter((key) => !allChars.includes(parseInt(key))).sort(() => 0.5 - Math.random())[0]);
-                    if (Math.random() < cowSettings.goldenCowChance && stats.cow_char !== -1) newChar = -1; // Golden Cow
-
-                    stats.cow_chars.push(newChar);
-                    stats.cow_char = newChar;
-                    stats.cow_timer = Date.now();
-                    stats.cow_rolled_today++;
-                    stats.cow_enemy_index = getCowEnemyIndex(stats.cow_timer ?? 0, rollingCowMobs.length);
-
-                    // Update users table
-                    await updateUsers(stats.id, {
-                        cow_rolled_today: { type: "increment", value: 1 },
-                        cow_chars: { type: "append", value: [newChar] },
-                        cow_timer: { type: "set", value: stats.cow_timer },
-                    });
-
-                    Embed.setDescription(getDesc());
-                    return interaction.editReply({ embeds: [Embed], components: [getButtonRow()] });
-                };
-
-                if (r.customId !== "play") return;
-
-                if (dungeonInProgress.has(stats.id)) {
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
-                    return;
-                };
-                resolve(1);
-                play.stop();
             });
 
             play.on('end', () => {
@@ -501,11 +516,9 @@ const exportCommand: SlashCommand = {
             };
 
             // Update users table
-            await updateUsers(interaction.user.id, {
-                cow_participation: { type: "set", value: (stats.cow_participation ?? 0) + pointsEarned },
-                cow_chars: { type: "append", value: [stats.cow_char] },
-                cow_timer: { type: "set", value: (stats.cow_timer ?? 0) + Math.floor(Math.random() * rollingCowMobs.length) }
-            });
+            await awardRollingCowFight(interaction.user.id, pointsEarned, stats.cow_char,
+                (stats.cow_timer ?? 0) + Math.floor(Math.random() * rollingCowMobs.length));
+            interaction.client.userCache.delete(interaction.user.id);
 
             return Embed
                 .setDescription(`### <a:RollingCowL:1241776030398677093> Rolling Cow <a:RollingCowR:1241776039093338132>\n<:stars_v2:917023655840591963> **${myChar.name}** lasted ${matchStats.round} rounds! <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> Earned **${pointsEarned}** points\n\n<:npbag:929428030554787892> Loot\n`)
