@@ -327,7 +327,7 @@ const exportCommand: SlashCommand = {
         eStats.image = eImage;
 
         // Override EP for hidden floors to match highest cleared boss floor
-        if (isHiddenFloor && rewardFloor !== floor) {
+        if (isHiddenFloor && stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded && rewardFloor !== floor) {
             const rewardEnemy = floors[rewardFloor]?.monster;
             if (rewardEnemy) {
                 eStats.ep = floors[rewardFloor].stats(rewardEnemy).ep;
