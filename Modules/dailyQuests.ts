@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, User, Client } from "discord.js";
 import { getCachedUserSchema, getUserSchema, updateUsersAndCache } from "./queries.js";
 import { isEventOngoing } from "./components.js";
 
-const dailyLock = new Set<string>();
+const dailyLock = new Map<string, Promise<void>>();
 
 function getHash(key: string, hash: number) {
     for (let i = 0; i < key.length; i++) {
@@ -56,10 +56,13 @@ class dailyQuestInfo {
         // Return if not included
         if (!todaysQuests.some((quest) => this.id === quest.id)) return;
 
-        // Lock
+        // Queue updates for the same user so no quest progress is dropped.
         const lockKey = user.id;
-        if (dailyLock.has(lockKey)) return;
-        dailyLock.add(lockKey);
+        const previousUpdate = dailyLock.get(lockKey);
+        let release!: () => void;
+        const currentUpdate = new Promise<void>((resolve) => { release = resolve; });
+        dailyLock.set(lockKey, currentUpdate);
+        await previousUpdate;
 
         try {
             // Get user stats
@@ -117,7 +120,8 @@ class dailyQuestInfo {
                 });
             };
         } finally {
-            dailyLock.delete(lockKey);
+            release();
+            if (dailyLock.get(lockKey) === currentUpdate) dailyLock.delete(lockKey);
         };
     };
 

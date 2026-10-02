@@ -621,6 +621,14 @@ export const loadRanking = async (pass: number, batchSize: number): Promise<User
     return users;
 };
 
+export const awardRollingCowFight = async (userId: string, points: number, characterId: number, timer: number): Promise<void> => {
+    await query(
+        `UPDATE users SET cow_participation = COALESCE(cow_participation, 0) + $2,
+            cow_chars = array_append(cow_chars, $3), cow_timer = $4 WHERE id = $1`,
+        [userId, points, characterId, timer]
+    );
+};
+
 export const loadCowParticipants = async (): Promise<(Pick<CompactUserSchema, "id" | "name" | "party" | "cow_chars" | "cow_participation"> & { points?: number; })[]> => {
     const users = await query(`SELECT id, name, party, cow_chars, cow_participation FROM users WHERE cow_participation IS NOT NULL ORDER BY cow_participation DESC`) as (Pick<CompactUserSchema, "id" | "name" | "party" | "cow_chars" | "cow_participation"> & { points?: number; })[];
     return users;
