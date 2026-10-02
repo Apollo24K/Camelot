@@ -93,6 +93,10 @@ const exportCommand: SlashCommand = {
     async executeButtonInteraction({ interaction }) {
         const [, , uid, cid] = interaction.customId.split("-");
 
+        if (interaction.user.id !== uid) {
+            return interaction.followUp({ content: "You can only remove your own custom skins.", ephemeral: true });
+        }
+
         const stats = await getUserSchema(uid);
         if (!stats) return interaction.followUp({ content: "Couldn't find user" });
 

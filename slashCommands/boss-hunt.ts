@@ -95,7 +95,8 @@ function bossSelection(interaction: ChatInputCommandInteraction, stats: CompactU
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
 
             collector.on('collect', async r => {
-                resolve(parseInt(r.customId));
+                const selection = parseInt(r.customId);
+                if (Number.isInteger(selection) && selection >= 0 && selection <= 3) resolve(selection);
                 collector.stop();
             });
 

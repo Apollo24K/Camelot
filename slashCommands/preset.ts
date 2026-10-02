@@ -234,6 +234,11 @@ const exportCommand: SlashCommand = {
                 else return interaction.reply(`You don't have a copy of **${char.name}**`);
             };
 
+            // Clear ring slots not in the preset
+            if (!preset.ring1) delete stats.equipment.ring1;
+            if (!preset.ring2) delete stats.equipment.ring2;
+            if (!preset.ring3) delete stats.equipment.ring3;
+
             // Equip Items
             const equipItems: Record<string, string> = {};
             (["weapon", "shield", "helmet", "cuirass", "gloves", "boots", "ring1", "ring2", "ring3"] as const).forEach((e) => {
@@ -244,6 +249,12 @@ const exportCommand: SlashCommand = {
             const userItems = await getWeaponSchemas(Object.values(equipItems));
             let ringSlot = 1;
 
+            // Check for duplicate rings within the preset
+            const presetRings = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
+            if (presetRings.length !== new Set(presetRings).size) {
+                return interaction.reply(`You can't equip the same ring twice in the same preset!`);
+            }
+
             for (const userItem of userItems) {
                 const fItem = items[userItem.itemid];
 
@@ -251,31 +262,6 @@ const exportCommand: SlashCommand = {
                 if (type === "armor" || fItem.type === "shield") type = fItem.type;
                 if (type === "shield" && (stats.premium < 4 && stats.shield_slot === 0)) type = "weapon";
                 if (type === "ring") {
-
-                    // Collect all ring choices to check for duplicates
-                    const ringChoices = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
-
-                    // Check for duplicates within the ring choices themselves
-                    if (ringChoices.length !== new Set(ringChoices).size) {
-                        return interaction.reply(`You can't equip the same ring twice in the same preset!`);
-                    }
-
-                    // Get existing preset rings and extract their item IDs for comparison
-                    const existingRings = [preset.ring1, preset.ring2, preset.ring3].filter(Boolean);
-                    let existingRingItemIds: number[] = [];
-
-                    if (existingRings.length > 0) {
-                        const userItems = await getUserWeapons(interaction.user.id);
-                        const existingRingSchemas = await getWeaponSchemas(existingRings.filter(Boolean) as string[]);
-                        existingRingItemIds = existingRingSchemas.map(ring => ring.itemid);
-                    }
-
-                    // Check for duplicates between new choices and existing preset rings
-                    const allRingItemIds = [...ringChoices, ...existingRingItemIds];
-                    if (allRingItemIds.length !== new Set(allRingItemIds).size) {
-                        return interaction.reply(`You can't equip the same ring twice in the same preset!`);
-                    }
-
                     if (ringSlotsTotal === 0) return interaction.reply(`You don't have any ring slots available!\n\nYou can unlock them by:\n- Reaching account level 20\n- Reaching class level 1000 (cumulative)\n- Defeating Floor 300 in the \`/dungeon\``);
                     type += ringSlot;
                     ringSlot++;

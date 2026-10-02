@@ -435,7 +435,13 @@ const exportCommand: SlashCommand = {
     async executeButtonInteraction({ interaction }) {
         const [imageType, id] = interaction.customId.split("-").slice(2).join("-").split(":");
 
-        // Update guilds table
+        const party = await getPartySchema(id);
+        if (!party) return interaction.followUp({ content: "Party not found.", ephemeral: true });
+        if (!party.members.includes(interaction.user.id)) {
+            return interaction.followUp({ content: "You are not a member of this party.", ephemeral: true });
+        }
+
+        // Update parties table
         await updateParties(id, {
             [imageType === 'icon' ? 'icon' : 'banner']: { type: "set", value: null },
         });

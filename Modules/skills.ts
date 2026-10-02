@@ -1926,7 +1926,7 @@ export const bossAbilities: skillInfo[] = [
         });
 
         return AbilityResponse.SUCCESS;
-    }, [309, "Win condition is inverted. Additionally, when the player reaches full health, loses.", "Opponent starts out at **50%** HP, and is healed **5%** max HP every round", "Upon death, opponent recovers **50%** max HP instead. This bypasses insta-death effects.", "Curse is set to Benevolence (<:Mermaid_Murmur:1502126075117834310>)", "Active (30 💧) : Restores **5%** max HP to the opponent\n**Lore**:\n> All life is invaluable. This strong conviction of Rainee made her a protector of all living beings. Her very being has carnal, spiritual and metaphysical healing effects to her surroundings. It is not just sunshine and roses though. As the world is full of people falling victim to mortal sins and hurting others for personal gains, she gets grief-stricken regularly. Depending on severity, the sky cries for long periods of time, plants just wither away and pestilence spreads out. That makes Rainee even more so a protector of all living beings unbeknownst to humans who are busy with drivel and vanity."]),
+    }, [309, "Win condition is inverted. Additionally, when the player reaches full health, loses.", "Opponent starts out at **50%** HP, and is healed **5%** max HP every round", "Upon death, opponent recovers **50%** max HP instead. This bypasses insta-death effects.", "Curse is set to Omni Barrier (<:Omni_Barrier:1514109158134255716>)", "Active (30 💧) : Restores **5%** max HP to the opponent\n**Lore**:\n> All life is invaluable. This strong conviction of Rainee made her a protector of all living beings. Her very being has carnal, spiritual and metaphysical healing effects to her surroundings. It is not just sunshine and roses though. As the world is full of people falling victim to mortal sins and hurting others for personal gains, she gets grief-stricken regularly. Depending on severity, the sky cries for long periods of time, plants just wither away and pestilence spreads out. That makes Rainee even more so a protector of all living beings unbeknownst to humans who are busy with drivel and vanity."]),
     new skillInfo(46, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         if (eStats.phase === 1) {
             eStats.dodge = 1;
@@ -2183,10 +2183,10 @@ export const bossAbilities: skillInfo[] = [
                 if (eStats.sm > eStats.mana) eStats.sm = eStats.mana;
             };
             if (eStats.hp < eStats.lastroundHP) {
-                eStats.md *= 1.05;
-                ebuff.md.push(new buffInfo("*", 1.05, 9999));
-                eStats.def *= 0.985;
-                ebuff.def.push(new buffInfo("*", 0.985, 9999));
+                eStats.md *= 1.03;
+                ebuff.md.push(new buffInfo("*", 1.03, 9999));
+                eStats.def *= 0.98;
+                ebuff.def.push(new buffInfo("*", 0.97, 9999));
             };
             eStats.lastroundHP = eStats.hp;
             if (eStats.hp / eStats.maxhp < 0.5) {
@@ -2201,7 +2201,7 @@ export const bossAbilities: skillInfo[] = [
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, [313, "Multiphase (2 phases)", "__Rules of Madoka Magica__: There is no servant for this floor, meaning you are led to the witch directly", "The kind witch does not attack normally, but all her potential hits are magical (scaling off MD)", "Has **+80%** dodge rate, and has a **75%** chance to additionally gain **20** 💧 at the start of the round", "When below **50%** HP at the start of the round, recovers **50%** max HP", "If the witch's HP is lower than that the last round, gains **1x** Suppressed Anger and Vulnerability, gaining **+5%** MD but loosing **1.5%** DEF", "Active (140 💧) : Only usable after healing from her passive the first time. Deals **400%** undodgeable true damage."]),
+    }, [313, "Multiphase (2 phases)", "__Rules of Madoka Magica__: There is no servant for this floor, meaning you are led to the witch directly", "The kind witch does not attack normally, but all her potential hits are magical (scaling off MD)", "Has **+80%** dodge rate, and has a **75%** chance to additionally gain **20** 💧 at the start of the round", "When below **50%** HP at the start of the round, recovers **50%** max HP", "If the witch's HP is lower than that the last round, gains **1x** Suppressed Anger and Vulnerability, gaining **+3%** MD but loosing **3%** DEF", "Active (140 💧) : Only usable after healing from her passive the first time. Deals **400%** undodgeable true damage."]),
     new skillInfo(50, 1000000, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         return AbilityResponse.FAILURE;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -2433,6 +2433,8 @@ export const bossAbilities: skillInfo[] = [
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         eStats.counter ??= 0;
         notice.push(`\n✧ It seems particularly dark here... ✧`);
+        myStats.damageReduction += 1;
+        if (myStats.damageReduction > 1) myStats.damageReduction = 1;
 
         // 5% chance to turn to stone every round
         if (Math.random() < 0.05) {
@@ -2470,7 +2472,6 @@ export const bossAbilities: skillInfo[] = [
                 myStats.rev = 0;
                 notice.push(`\n✧ Is something glowing up ahead? ✧`);
                 notice.push(`\n✨ **${char.name}** is turned into stone...`);
-                return AbilityResponse.FAILURE;
             } else eStats.counter++;
 
             // On round 4: DEF check -> Petrify
@@ -2479,14 +2480,16 @@ export const bossAbilities: skillInfo[] = [
                 myStats.rev = 0;
                 notice.push(`\n✧ Is something glowing up ahead? ✧`);
                 notice.push(`\n✨ **${char.name}** is turned into stone...`);
-                return AbilityResponse.FAILURE;
+            } else {
+                myStats.damageReduction -= 1;
+                if (myStats.damageReduction < 0) myStats.damageReduction = 0;
             };
 
             return AbilityResponse.SUCCESS;
         }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, [316, "- Has a **5%** chance every round to turn the opponent into stone, forcing them to immediately lose. If this doesn't trigger, instead counters the next hit.\n- If the opponent has used less than **3** DEFs by round **4**, they are turned to stone immediately\n- **Active** (70 :droplet:) : Deals **10%** of opponent's max HP to them, then reduce opponent's max HP by **10%**\n\n**Lore**:\n> As one of the Gorgons, Medusa lived a happy life until the fateful day when her life turned to a nightmare. Since then, she found a way to protect herself, but fate just would not have it for her. In times to come, she will be known as evil when in truth, she was only a victim of something very tragic."]),
+    }, [316, "- Has a **5%** chance every round to turn the opponent into stone, forcing them to immediately lose. If this doesn't trigger, instead counters the next hit.\n- Does not take damage from damage instances\n- If the opponent has used less than **3** DEFs by round **4**, they are turned to stone immediately. Else, disables the second passive.\n- **Active** (70 :droplet:) : Deals **10%** of opponent's max HP to them, then reduce opponent's max HP by **10%**\n\n**Lore**:\n> As one of the Gorgons, Medusa lived a happy life until the fateful day when her life turned to a nightmare. Since then, she found a way to protect herself, but fate just would not have it for her. In times to come, she will be known as evil when in truth, she was only a victim of something very tragic."]),
     new skillInfo(53, 250, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Kuronosu Active Skill: Replaces a random button permanently
         const targetKeys: (keyof typeof myStats.replaceButton)[] = ["atk", "def", "ability", "cskill", "skip"];

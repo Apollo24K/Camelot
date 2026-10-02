@@ -20,6 +20,7 @@ import { Buffs, CharacterRarity, ClassStats, CompactUserSchema, DetailedStats, E
 import { curses } from './curses';
 import { getWeaponSchema } from './queries';
 import { isExtremeWeapon, getExtremeWeaponConfig, isExtremeItem, getExtremeItemConfig } from './extremeWeaponDrops';
+import { WildcardInput } from './runeMergeRecipes';
 
 const statsOp: { base: { hp: Record<number, number>; atk: Record<number, number>; def: Record<number, number>; expertise: Record<number, string>; }; } = {
     "base": {
@@ -801,10 +802,11 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Deflect damage
     if (target.deflectDamage) {
-        attacker.hp = Math.floor(attacker.hp - Math.floor(damage * target.deflectDamage));
-        if (target.mitrecord) target.mitstore += Math.floor(damage * Math.min(1, target.deflectDamage));
-        if (target.deflheal) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(Math.min(target.maxhp * 0.04, Math.floor(damage * Math.min(1, target.deflectDamage)))), {});
-        damage = Math.floor(damage * (1 - Math.max(0, Math.min(1, target.deflectDamage))));
+        let defl = Math.floor(damage * target.deflectDamage * ((isCrit && target.deflectDamageCritMulti) ? target.deflectDamageCritMulti : 1));
+        attacker.hp = Math.floor(attacker.hp - defl);
+        if (target.mitrecord) target.mitstore += Math.floor(defl);
+        if (target.deflheal) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(Math.min(target.maxhp * 0.04, defl)), {});
+        damage = Math.floor(damage - defl);
         if (attacker.hp < 1) attacker.hp = 0;
     };
 
@@ -1169,22 +1171,23 @@ export const getAscensionMaterial = (id: string | number, ascItems: lootInfo[]) 
 };
 
 export const getForgeMaterialCosts = (itemId: number): { ascension: number, crafting: number, ascensionMaterialId?: number; } => {
-    const isExtreme = isExtremeWeapon(itemId);
+    // Check if item is any extreme drop (weapons, armor, runes, or rings)
+    const isExtreme = isExtremeItem(itemId);
 
     // Default costs for normal weapons
     let ascension = 36;
     let crafting = 24;
     let ascensionMaterialId: number | undefined = undefined;
 
-    // Apply extreme weapon configuration if applicable
+    // Apply extreme item configuration if applicable
     if (isExtreme) {
-        const config = getExtremeWeaponConfig(itemId);
+        const config = getExtremeItemConfig(itemId);
         if (config) {
             ascension = config.ascensionAmount ?? (54);  // Use custom or default extreme amount
             crafting = config.craftingAmount ?? (36);   // Use custom or default extreme amount
             ascensionMaterialId = config.ascensionMaterialId;
         } else {
-            // Fallback for extreme weapons without config
+            // Fallback for extreme items without config
             ascension = 54;  // 50% increase
             crafting = 36;   // 50% increase
         }
@@ -1255,6 +1258,25 @@ export const filterItems = (userItems: WeaponSchema[], choice: string[], exclude
     };
 
     return { itemsToDisassemble, itemIdsToDisassemble, loot };
+};
+
+export const resolveWildcardInput = (userWeapons: WeaponSchema[], wildcard: WildcardInput): WeaponSchema[] => {
+    return userWeapons.filter(w => {
+        const item = items[w.itemid];
+        if (!item) return false;
+        if (wildcard.category && item.category !== wildcard.category) return false;
+        if (wildcard.grade && item.grade !== wildcard.grade) return false;
+        if (wildcard.type && item.type !== wildcard.type) return false;
+        return true;
+    });
+};
+
+export const formatWildcardLabel = (wildcard: WildcardInput): string => {
+    const parts: string[] = ["Any"];
+    if (wildcard.grade) parts.push(wildcard.grade);
+    if (wildcard.type) parts.push(wildcard.type);
+    else if (wildcard.category) parts.push(wildcard.category);
+    return parts.join(" ");
 };
 
 export const showPage = <T>(currPage: number, arr: T[], elements = 15): T[] => {

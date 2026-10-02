@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Client } from "discord.js";
+import { Client, ThreadChannel } from "discord.js";
 import { BotHandler, UpdateUserOptions } from "../types";
 import { getAuctionSchema, getAuctionWinner, getPlayerbaseStats, insertNewStampede, removeExpiredMail, resetDailyResponses, resetDungeonLimit, transferCharacter, updateUsersAndCache } from '../Modules/queries';
 import { isStampedeMonth } from '../Modules/functions';
@@ -7,6 +7,7 @@ import { activeAuctions, auctionChannelId, isEventOngoing } from '../Modules/com
 import { characters } from '../Modules/chars';
 import { startRollingCow } from '../Modules/rollingCowEvent';
 import { sendEventStartMail } from '../Modules/eventMail';
+import { query } from '../postgres';
 
 const handler: BotHandler = {
     name: "Time",
@@ -156,6 +157,31 @@ const handler: BotHandler = {
                     });
                 };
             };
+
+            // Every minute - Check for forum thread unlocks
+            try {
+                const expiredLocks = await query(
+                    `SELECT thread_id FROM forum_thread_locks WHERE unlock_at <= NOW()`
+                ) as Array<{ thread_id: string; }>;
+
+                for (const lock of expiredLocks) {
+                    try {
+                        const thread = await client.channels.fetch(lock.thread_id) as ThreadChannel;
+                        if (thread && thread.isThread() && thread.locked) {
+                            await thread.setLocked(false);
+                        }
+                    } catch (error) {
+                        // Thread not found or already deleted/archived - remove from DB
+                        if (error instanceof Error && (error.message.includes("Unknown Thread") || error.message.includes("Missing Access"))) {
+                            await query(`DELETE FROM forum_thread_locks WHERE thread_id = $1`, [lock.thread_id]);
+                        }
+                    }
+                    // Clean up the lock entry
+                    await query(`DELETE FROM forum_thread_locks WHERE thread_id = $1`, [lock.thread_id]);
+                }
+            } catch (error) {
+                console.error("Failed to check forum thread unlocks:", error);
+            }
 
 
             // Apply Updates

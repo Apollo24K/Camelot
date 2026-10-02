@@ -149,6 +149,28 @@ const exportCommand: SlashCommand = {
             if (floor > 300) floor = 300;
         };
 
+        // Determine reward floor for hidden dungeon floors
+        let rewardFloor = floor;
+        if (isHiddenFloor) {
+            let highestBossFloor = 0;
+            for (let f = 300; f >= 5; f -= 5) {
+                if (stats.dungeon_floors[f.toString()] >= floors[f]?.winsNeeded) {
+                    highestBossFloor = f;
+                    break;
+                }
+            }
+            if (highestBossFloor > 0) {
+                rewardFloor = highestBossFloor;
+            } else {
+                for (let f = 4; f >= 1; f--) {
+                    if (stats.dungeon_floors[f.toString()] >= floors[f]?.winsNeeded) {
+                        rewardFloor = f;
+                        break;
+                    }
+                }
+            }
+        };
+
         // Increase limit
         let dunLim = [10, 20, 500]; // [0] -> loot, [1] -> progress, [2] -> 2nd loot limit
         if (stats.premium) {
@@ -214,7 +236,7 @@ const exportCommand: SlashCommand = {
         if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply({ content: `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`, embeds: [] });
         if (dungeonInProgress.has(stats.id)) return interaction.editReply({ content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
         dungeonInProgress.add(stats.id);
-        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 300000);
+        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
 
         // Increase run count
         let skipRounds = 1;
@@ -246,11 +268,9 @@ const exportCommand: SlashCommand = {
         // Determine if level caps should be applied
         let applyLevelCaps = false;
         if (isHiddenFloor) {
-            applyLevelCaps = true;
-        } else if (floor >= 300) {
-            const hasCompletedFloor = stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded;
-            // Apply caps only if floor hasn't been manually cleared
-            applyLevelCaps = !hasCompletedFloor;
+            const hiddenFloorWins = stats.hidden_dungeon[hiddenFloorKey] ?? 0;
+            const winsNeeded = hiddenFloors[floor]?.winsNeeded ?? Infinity;
+            applyLevelCaps = hiddenFloorWins < winsNeeded;
         };
 
         const charLevelCap = applyLevelCaps ? 1000 : undefined;
@@ -305,6 +325,15 @@ const exportCommand: SlashCommand = {
 
         let eStats = isHiddenFloor ? hiddenFloors[floor].stats(enemy) : floors[floor].stats(enemy);
         eStats.image = eImage;
+
+        // Override EP for hidden floors to match highest cleared boss floor
+        if (isHiddenFloor && stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded && rewardFloor !== floor) {
+            const rewardEnemy = floors[rewardFloor]?.monster;
+            if (rewardEnemy) {
+                eStats.ep = floors[rewardFloor].stats(rewardEnemy).ep;
+            }
+        }
+
         let eStatsC = { ...eStats };
 
         // Some match settings
@@ -339,13 +368,13 @@ const exportCommand: SlashCommand = {
             if (resolved) return;
             resolved = true;
 
-            const stats = await getUserSchema(interaction.user.id);
-            if (!stats) return;
-            if (!stats.hidden_dungeon) (stats as any).hidden_dungeon = {};
-
-            // Clear restrictions
             clearTimeout(userTimeout);
-            dungeonInProgress.delete(stats.id);
+            dungeonInProgress.delete(author.schema.id);
+
+            const freshStats = await getUserSchema(interaction.user.id);
+            if (!freshStats) return;
+            const stats = freshStats;
+            if (!stats.hidden_dungeon) (stats as any).hidden_dungeon = {};
 
             const runsLeftStr = (Math.max(-1, dunLim[1] - stats.dungeon_limit) > -1)
                 ? `<a:arrow_orange:916716747623641210> Runs left: **${Math.max(0, dunLim[0] - stats.dungeon_limit)}** loot **${Math.max(0, dunLim[1] - stats.dungeon_limit)}** progress`
@@ -434,7 +463,7 @@ const exportCommand: SlashCommand = {
 
                 boost = Math.round(boost * 100) / 100;
 
-                let cxp = Math.floor(((floor < 100 ? floor : 100 + (Math.min(floor, 300) / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
+                let cxp = Math.floor(((rewardFloor < 100 ? rewardFloor : 100 + (Math.min(rewardFloor, 300) / 3)) + (Math.floor(Math.random() * 8))) * boost) + 12;
 
                 cxp = Math.floor(cxp * 1.33);
                 if (enemy.boss) cxp = Math.floor(cxp * 1.5);
@@ -455,7 +484,7 @@ const exportCommand: SlashCommand = {
 
             // Coins
             let loot = 0;
-            if (runEligibility.loot) loot = Math.floor(60 + (Math.random() * 30) + (floor < 100 ? floor * 5 : 500 + (floor < 200 ? (floor - 100) * 2.5 : (300 + ((floor - 200) * 1)))));
+            if (runEligibility.loot) loot = Math.floor(60 + (Math.random() * 30) + (rewardFloor < 100 ? rewardFloor * 5 : 500 + (rewardFloor < 200 ? (rewardFloor - 100) * 2.5 : (300 + ((rewardFloor - 200) * 1)))));
             if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
             loot *= matchStats.lootm;
             loot += matchStats.loot;
@@ -472,18 +501,18 @@ const exportCommand: SlashCommand = {
             // Crafting Resources
             let craftItem = items[33];
             const craftItem2 = items[33];
-            // if (floor <= 20) craftItem = items[33];
-            if (floor <= 50) craftItem = items[34];
-            else if (floor <= 90) craftItem = items[35];
-            else if (floor <= 120) craftItem = items[36];
-            else if (floor <= 190) craftItem = items[37];
-            else if (floor <= 270) craftItem = items[38];
-            else if (floor <= 300) craftItem = items[39];
+            // if (rewardFloor <= 20) craftItem = items[33];
+            if (rewardFloor <= 50) craftItem = items[34];
+            else if (rewardFloor <= 90) craftItem = items[35];
+            else if (rewardFloor <= 120) craftItem = items[36];
+            else if (rewardFloor <= 190) craftItem = items[37];
+            else if (rewardFloor <= 270) craftItem = items[38];
+            else if (rewardFloor <= 300) craftItem = items[39];
 
             // Chests
             let chestRarities = [451, 452, 453, 454];
-            if (floor > 200) chestRarities = [453, 454, 456, 457];
-            else if (floor > 100) chestRarities = [452, 453, 454, 456];
+            if (rewardFloor > 200) chestRarities = [453, 454, 456, 457];
+            else if (rewardFloor > 100) chestRarities = [452, 453, 454, 456];
             let chestDrops = [0, 0, 0, 0];
 
             // Ascension Material
@@ -505,7 +534,7 @@ const exportCommand: SlashCommand = {
 
                 // Crafting Resources
                 craftCount += drops(0.4, 7 * skipRounds);
-                if (floor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
+                if (rewardFloor <= 20) craftCount2 += drops(0.4, 8 * skipRounds);
 
                 // Ascension Materials
                 ascCount += drops(0.6, 7 * skipRounds);
@@ -519,7 +548,7 @@ const exportCommand: SlashCommand = {
             else if (runEligibility.secondaryLoot) {
                 // Crafting Resources
                 craftCount += drops(0.12, 4 * skipRounds);
-                if (floor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
+                if (rewardFloor <= 20) craftCount2 += drops(0.4, 5 * skipRounds);
 
                 // Ascension Materials
                 ascCount += drops(0.16, 4 * skipRounds);
@@ -533,14 +562,14 @@ const exportCommand: SlashCommand = {
 
             // Levelup mats
             let levelupMats = {
-                "50": floor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
-                "51": floor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
-                "52": floor <= 100 ? drops(0.18, 2 * skipRounds) : floor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
-                "53": floor <= 100 ? drops(0.18, 4 * skipRounds) : floor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
-                "54": floor > 200 ? drops(0.3, 4 * skipRounds) : floor > 100 ? drops(0.18, 2 * skipRounds) : 0,
-                "55": floor > 200 ? drops(0.3, 8 * skipRounds) : floor > 100 ? drops(0.18, 4 * skipRounds) : 0,
-                "56": floor > 200 ? drops(0.18, 2 * skipRounds) : 0,
-                "57": floor > 200 ? drops(0.18, 4 * skipRounds) : 0,
+                "50": rewardFloor <= 100 ? drops(0.3, 4 * skipRounds) : 0,
+                "51": rewardFloor <= 100 ? drops(0.3, 8 * skipRounds) : 0,
+                "52": rewardFloor <= 100 ? drops(0.18, 2 * skipRounds) : rewardFloor <= 200 ? drops(0.3, 4 * skipRounds) : 0,
+                "53": rewardFloor <= 100 ? drops(0.18, 4 * skipRounds) : rewardFloor <= 200 ? drops(0.3, 8 * skipRounds) : 0,
+                "54": rewardFloor > 200 ? drops(0.3, 4 * skipRounds) : rewardFloor > 100 ? drops(0.18, 2 * skipRounds) : 0,
+                "55": rewardFloor > 200 ? drops(0.3, 8 * skipRounds) : rewardFloor > 100 ? drops(0.18, 4 * skipRounds) : 0,
+                "56": rewardFloor > 200 ? drops(0.18, 2 * skipRounds) : 0,
+                "57": rewardFloor > 200 ? drops(0.18, 4 * skipRounds) : 0,
             };
 
             let lootArr = [];
@@ -664,7 +693,7 @@ const exportCommand: SlashCommand = {
             const extremeDropFloor = isHiddenFloor ? parseInt(hiddenFloorKey) : 0;
             if (isHiddenFloor && hasExtremeItemDrop(extremeDropFloor)) {
                 const itemDrop = getExtremeItemDrop(extremeDropFloor);
-                if (itemDrop && Math.random() < 0.0005) {
+                if (itemDrop && Math.random() < (1 - Math.pow(1 - 0.0005, skipRounds))) {
                     try {
                         // Add the item directly to player's inventory
                         if (itemDrop.itemType !== "rune") {
@@ -690,6 +719,24 @@ const exportCommand: SlashCommand = {
                 };
             };
 
+            // Check for entry item drop (any dungeon floor)
+            const entryDropChance = (runEligibility.loot || runEligibility.progress) ? 0.00125 : 0.0005;
+            if (Math.random() < (1 - Math.pow(1 - entryDropChance, skipRounds))) {
+                const unownedEntryItems = items.filter((item): item is entryInfo => item instanceof entryInfo && (!stats.items[item.id] || stats.items[item.id] <= 0));
+                if (unownedEntryItems.length > 0) {
+                    const entryDrop = unownedEntryItems[Math.floor(Math.random() * unownedEntryItems.length)];
+                    try {
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                items: { type: "merge_json", value: { [entryDrop.id]: 1 } },
+                            },
+                        });
+                        drop += `\n<:barm:1398660875740647464> **ENTRY ITEM DROP!** You received **__${entryDrop.name}__** ${entryDrop.emoji}!`;
+                    } catch (error) {
+                        console.error(`Error adding entry item ${entryDrop.id} to user ${interaction.user.id}:`, error);
+                    };
+                };
+            };
 
             Embed.setDescription(`<:stars_v2:917023655840591963> **${interaction.user.toString()}** won${flag === "all" ? ` ${skipRounds}/${skippedTotal} fights` : ""}! <:stars_v2:917023655840591963>\n${unlocked}\n${runsLeftStr}\n<a:arrow_yellow:916716780045619200> ${cxpmsg}\n\n<:npbag:929428030554787892> Loot${drop}\n${loot ? `${loot}<:coins:872926669055356939>, ` : ""}${chestRarities.reduce((total, e, i) => total += chestDrops[i] ? `${items[e].emoji}x${chestDrops[i]}, ` : "", "")}${craftCount ? `${craftItem.emoji}x${craftCount}, ` : ""}${craftCount2 ? `${craftItem2.emoji}x${craftCount2}, ` : ""}${ascCount ? `${ascItem.emoji}x${ascCount}, ` : ""}${Object.entries(levelupMats).filter((e) => e[1]).map((e) => `${items[e[0] as any].emoji}x${e[1]}, `).join("")}\n${lootArr.join(", ")}${xpPotions[784] ? `, ${items[784].emoji}x${xpPotions[784]}` : ""}${xpPotions[783] ? `, ${items[783].emoji}x${xpPotions[783]}` : ""}${xpPotions[782] ? `, ${items[782].emoji}x${xpPotions[782]}` : ""}`);
 
@@ -790,11 +837,11 @@ const exportCommand: SlashCommand = {
                     .setImage(isCompactEmbed ? null : eImage);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 300000 });
-                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 300000 });
-                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 300000 });
-                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 300000 });
-                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 300000 });
+                    const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                    const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
+                    const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
+                    const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
+                    const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKIP", componentType: ComponentType.Button, time: 120000 });
                     matchStats.collector = { "atk": atk, "def": def, "ability": ability, "cskill": cskill, "skip": skip };
 
 
@@ -839,6 +886,9 @@ const exportCommand: SlashCommand = {
                         matchStats.turn = 1;
                         resolve(matchResult(wORl));
                     };
+
+                    // End match when time expires
+                    atk.on('end', () => { if (!matchStats.ended) endMatch("l"); });
 
                     function startNextRound() {
                         if (matchStats.ended) return;
@@ -989,7 +1039,7 @@ const exportCommand: SlashCommand = {
                                     myStatsC.sm -= matchStats.costForAction;
                                 }
                             };
-                        
+
                             // If attack was replaced
                             if (myStatsC.replaceButton.atk?.run && !(isHiddenFloor && parseInt(hiddenFloorKey) === 18)) {
                                 myStatsC.replaceButton.atk.run(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
@@ -1221,13 +1271,13 @@ const exportCommand: SlashCommand = {
 
                             if (matchStats.costForAction > 0) {
                                 if (myStatsC.sm < matchStats.costForAction) {
-                                        myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
-                                        if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
+                                    myStatsC.maxhp -= Math.floor(myStatsC.maxhp * 0.08);
+                                    if (myStatsC.hp > myStatsC.maxhp) myStatsC.hp = myStatsC.maxhp;
                                     notice.push(`\n<:mana:872926668803358218> **${myChar.name}** doesn't have enough mana and loses 8% of their max HP instead!`);
-                                    } else {
-                                        myStatsC.sm -= matchStats.costForAction;
-                                    }
-                                };
+                                } else {
+                                    myStatsC.sm -= matchStats.costForAction;
+                                }
+                            };
 
                             notice.push(`\n⏩ Skipping to results...`);
                             editEmbed();
@@ -1257,7 +1307,7 @@ const exportCommand: SlashCommand = {
             if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result], components: [ResultsRow] });
         };
 
-        newFight();
+        await newFight();
 
     },
 
@@ -1270,31 +1320,46 @@ const exportCommand: SlashCommand = {
         const floor = parseInt(floorString);
         if (!Number.isInteger(floor) || floor < 1 || floor > 300 || !interaction.channel?.isSendable()) return;
 
-        const stats = await getUserSchema(interaction.user.id);
-        if (!stats) return interaction.followUp({ content: "Couldn't find your player data.", ephemeral: true });
-
         const Embed = new EmbedBuilder()
             .setColor(0x44454c)
             .setDescription("<a:loading_square:1501264680314998995> Restarting...");
-        const message = await interaction.channel.send({ embeds: [Embed] });
-        const repeatInteraction = new Proxy(interaction, {
-            get(target, property) {
-                if (property === "commandName") return "dungeon";
-                if (property === "deferReply") return async () => undefined;
-                if (property === "editReply") return (options: Parameters<typeof message.edit>[0]) => message.edit(options);
+        let restartMsg;
+        let stats;
+        try {
+            const message = await interaction.channel.send({ embeds: [Embed] });
+            restartMsg = message;
 
-                const value = Reflect.get(target, property, target);
-                return typeof value === "function" ? value.bind(target) : value;
-            },
-        }) as unknown as ChatInputCommandInteraction;
+            stats = await getUserSchema(interaction.user.id);
+            if (!stats) {
+                return message.edit({ content: "Couldn't find your player data.", embeds: [], components: [] });
+            }
 
-        return exportCommand.execute({
-            interaction: repeatInteraction,
-            author: { schema: stats },
-            server: {},
-            locale: "en_US",
-            customFlag: { repeatFloor: floor, repeatMessage: true },
-        });
+            const repeatInteraction = new Proxy(interaction, {
+                get(target, property) {
+                    if (property === "commandName") return "dungeon";
+                    if (property === "deferReply") return async () => undefined;
+                    if (property === "editReply") return (options: Parameters<typeof message.edit>[0]) => message.edit(options);
+
+                    const value = Reflect.get(target, property, target);
+                    return typeof value === "function" ? value.bind(target) : value;
+                },
+            }) as unknown as ChatInputCommandInteraction;
+
+            await exportCommand.execute({
+                interaction: repeatInteraction,
+                author: { schema: stats },
+                server: {},
+                locale: "en_US",
+                customFlag: { repeatFloor: floor, repeatMessage: true },
+            });
+        } catch (error) {
+            console.error(`ERROR dungeon executeButtonInteraction failed for user ${interaction.user.id}:`, error);
+            if (stats) dungeonInProgress.delete(stats.id);
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xff7d7d)
+                .setDescription("An error occurred while restarting the dungeon. Please try again.");
+            restartMsg?.edit({ embeds: [errorEmbed], components: [] }).catch(() => { });
+        }
     },
 };
 
