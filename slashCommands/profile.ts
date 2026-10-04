@@ -1,3 +1,4 @@
+import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, AttachmentBuilder, ComponentType, ButtonStyle, User } from "discord.js";
 import { createCanvas, loadImage, SKRSContext2D, Image } from '@napi-rs/canvas';
 import WorkerPool from '../Modules/workerPool';
@@ -419,6 +420,7 @@ export const getProfileImage = async (user: User, stats: CompactUserSchema, prof
 
 const exportCommand: SlashCommand = {
     name: 'profile',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user') ?? interaction.user;
@@ -431,33 +433,33 @@ const exportCommand: SlashCommand = {
         const customColor2 = interaction.options.getString('custom-color-2');
 
         const bio = interaction.options.getString('bio');
-        if (bio && bio.length > 100) return interaction.reply(`Your about me can contain a maximum of 100 characters (current length: ${bio.length})`);
+        if (bio && bio.length > 100) return replyToCommand(interaction, `Your about me can contain a maximum of 100 characters (current length: ${bio.length})`);
 
-        await interaction.deferReply().catch(() => {
+        await deferCommand(interaction).catch(() => {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
         // Set Bio
         if (bio && user.id === interaction.user.id) await updateUsers(interaction.user.id, { aboutme: { type: "set", value: bio } });
-        else if (bio) return interaction.editReply("You can only edit your own bio");
+        else if (bio) return editCommandReply(interaction, "You can only edit your own bio");
 
         // Set Color
         if (color && user.id === interaction.user.id) await updateUsers(interaction.user.id, { profilecolor: { type: "set", value: color === "null" ? null : color } });
 
         // Get User Schema
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
-        if (!stats) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
+        if (!stats) return editCommandReply(interaction, user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
         const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
-        if (!ownedCharacterIds.length) return interaction.editReply(user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
-        if (!stats.battlechar) return interaction.editReply("You don't have a battle character selected. Please use `/select` first");
+        if (!ownedCharacterIds.length) return editCommandReply(interaction, user.id === interaction.user.id ? "You don't have any characters" : `${user.username} has no characters`);
+        if (!stats.battlechar) return editCommandReply(interaction, "You don't have a battle character selected. Please use `/select` first");
         if (color) stats.profilecolor = color === "null" ? null : color;
 
         // Set Custom Color
         if (customColor1 || customColor2) {
-            if (user.id !== interaction.user.id) return interaction.editReply("You can only edit your own profile color");
-            if (stats.premium < 2) return interaction.editReply("This is a `/premium` feature. If you like the bot and want to help us out we'd appreciate your support <:RaphiSmile:868998036645380197>");
-            if (customColor1 && !customColor1.match(/^#([0-9a-f]{3}){1,2}$/i)) return interaction.editReply(`Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``);
-            if (customColor2 && !customColor2.match(/^#([0-9a-f]{3}){1,2}$/i)) return interaction.editReply(`Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``);
+            if (user.id !== interaction.user.id) return editCommandReply(interaction, "You can only edit your own profile color");
+            if (stats.premium < 2) return editCommandReply(interaction, "This is a `/premium` feature. If you like the bot and want to help us out we'd appreciate your support <:RaphiSmile:868998036645380197>");
+            if (customColor1 && !customColor1.match(/^#([0-9a-f]{3}){1,2}$/i)) return editCommandReply(interaction, `Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``);
+            if (customColor2 && !customColor2.match(/^#([0-9a-f]{3}){1,2}$/i)) return editCommandReply(interaction, `Please use a valid hex color code.\nExamples: \`#112358\`, \`#bbffff\`, \`#abc\``);
             stats.profilecolor = (customColor1 || stats.profilecolor?.split(":")?.[0] || "") + ":" + (customColor2 || stats.profilecolor?.split(":")?.[1] || "");
 
             // Update users table
@@ -554,7 +556,7 @@ const exportCommand: SlashCommand = {
                         .setStyle(ButtonStyle.Primary),
                 );
 
-            return interaction.editReply({ embeds: (type === "legacy" && Embed) ? [Embed] : [], files: type === "legacy" ? [] : (img ? [img] : []), components: [row] }).then((msg) => {
+            return editCommandReply(interaction, { embeds: (type === "legacy" && Embed) ? [Embed] : [], files: type === "legacy" ? [] : (img ? [img] : []), components: [row] }).then((msg) => {
 
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "open", componentType: ComponentType.Button, time: 30000 });
 
@@ -746,7 +748,7 @@ const exportCommand: SlashCommand = {
             });
         };
 
-        return interaction.editReply({ embeds: (type === "legacy" && Embed) ? [Embed] : [], files: type === "legacy" ? [] : (img ? [img] : []) });
+        return editCommandReply(interaction, { embeds: (type === "legacy" && Embed) ? [Embed] : [], files: type === "legacy" ? [] : (img ? [img] : []) });
     },
 };
 

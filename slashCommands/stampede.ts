@@ -1,3 +1,6 @@
+import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities.js";
 import { classes } from "../Modules/classes.js";
@@ -253,7 +256,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stampede: Stamp
                 { name: "\u200B", value: `${cdLeft(interaction.user.id, 60 - stats.stampedeenergy)}${partyQuery.map((e) => `\n${cdLeft(e.id, 60 - e.stampedeenergy)}`).join("")}`, inline: true },
                 { name: "\u200B", value: "_ _", inline: true },
             );
-        interaction.editReply({ embeds: [Embed], components: [row] }).then((msg) => {
+        editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
             collector.on('collect', r => {
@@ -299,9 +302,10 @@ function adjustDEF(myStatsC: DetailedStats) { // {274: x2 atk -> x1.5 dmg, 340: 
 
 const exportCommand: SlashCommand = {
     name: 'stampede',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
 
-        await interaction.deferReply().catch((err) => {
+        await deferCommand(interaction).catch((err) => {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
@@ -309,12 +313,12 @@ const exportCommand: SlashCommand = {
         const skipOverview = interaction.options.getBoolean('skip-overview') ?? false;
 
         const stats = author.schema;
-        if (stats.stampedechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.stampedechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name> mode:stampede` to choose one.");
+        if (stats.stampedechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.stampedechar))) return editCommandReply(interaction, "You have to choose a battle character first. Use `/select <char name> mode:stampede` to choose one.");
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         const stampede = await getLatestStampede();
-        if (!stampede) return interaction.editReply("There is no active stampede right now. Please try again later!");
+        if (!stampede) return editCommandReply(interaction, "There is no active stampede right now. Please try again later!");
 
         // User stats
         let myChar = characters[stats.stampedechar];
@@ -337,7 +341,7 @@ const exportCommand: SlashCommand = {
         };
 
         // Banned builds
-        // if (myStats.class === 31 && stats.stampedechar === 5549) return interaction.editReply("The <:Rogue:964837711468969984> **Rogue** + **Yue** combination was banned from this stampede, please try something else.");
+        // if (myStats.class === 31 && stats.stampedechar === 5549) return editCommandReply(interaction, "The <:Rogue:964837711468969984> **Rogue** + **Yue** combination was banned from this stampede, please try something else.");
 
 
         // Party member stats
@@ -360,7 +364,7 @@ const exportCommand: SlashCommand = {
         if (boss === 0) return;
 
         // Check if stampede is disabled
-        if (isStampedeDisabled(stampede, boss > 1)) return interaction.editReply("Stampede is currently unavailable. Please try again later!");
+        if (isStampedeDisabled(stampede, boss > 1)) return editCommandReply(interaction, "Stampede is currently unavailable. Please try again later!");
 
         // Check if user is on cooldown
         if (dungeonInProgress.has(interaction.user.id)) {
@@ -418,11 +422,11 @@ const exportCommand: SlashCommand = {
                 captchaCooldown.set(interaction.user.id, Date.now());
                 setTimeout(() => captchaCooldown.delete(interaction.user.id), 10 * 60 * 1000);
 
-                return interaction.editReply({ content: `${dungeonTempBan.has(interaction.user.id) ? `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/stampede\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>\n` : ""}Use </captcha:1114616338581823568> to enter the code`, embeds: [], components: [], files: [captcha.attachement] });
+                return editCommandReply(interaction, { content: `${dungeonTempBan.has(interaction.user.id) ? `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/stampede\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>\n` : ""}Use </captcha:1114616338581823568> to enter the code`, embeds: [], components: [], files: [captcha.attachement] });
             };
 
             // Set up restrictions
-            if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply(`You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/stampede\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`);
+            if (dungeonTempBan.has(interaction.user.id)) return editCommandReply(interaction, `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/stampede\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`);
 
             const energyCap = 60;
             const energyLeft = energyCap - stats.stampedeenergy;
@@ -737,9 +741,15 @@ const exportCommand: SlashCommand = {
                     .setTitle(stampedes[stampede.type].title)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eStatsC.image);
-                interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
+                editCommandReply(interaction, { embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "stampede");
+                    const warnTooFast = createBattleSpeedWarning(warning => interaction.followUp(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
@@ -754,18 +764,12 @@ const exportCommand: SlashCommand = {
                     eStatsC.def += adjustDEF(myStatsC);
                     eStatsC.mr += adjustDEF(myStatsC);
 
-                    let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         if (eStats.image !== eStatsC.image) Embed.setImage(eStatsC.image);
-                        // await msg.edit({ embeds: [Embed] });
-
-                        // Debounce
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => {
-                            msg.edit({ embeds: [Embed] });
-                        }, 600);
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -932,7 +936,7 @@ const exportCommand: SlashCommand = {
                                 attack();
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     def.on('collect', async r => {
@@ -977,7 +981,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     ability.on('collect', async r => {
@@ -1021,7 +1025,7 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
                     });
@@ -1065,7 +1069,7 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             };
                         };
                     });

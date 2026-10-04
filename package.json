@@ -4,7 +4,8 @@
   "description": "Absent in the early Arthurian material, Camelot came to be described as the fantastic capital of Arthur's realm and a symbol of the Arthurian world.",
   "main": "build/camelot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test tests/*.test.cjs",
+    "typecheck": "tsc --noEmit",
     "start": "node .",
     "build": "tsc",
     "dev": "tsc --watch"

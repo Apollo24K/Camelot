@@ -1,3 +1,5 @@
+import { replyToCommand } from "../Modules/interactionResponses";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { DetailedStats, SlashCommand } from '../types';
 import { abilities, Ability } from "../Modules/abilities";
@@ -17,15 +19,16 @@ import { customHpBars } from '../Modules/customHpBars';
 
 const exportCommand: SlashCommand = {
     name: 'arena',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
 
         const user = interaction.options.getUser('user', true);
 
         const settingsTimer = interaction.options.getInteger('timer') || 240;
-        if (settingsTimer > 600) return interaction.reply(`The timer has to be under 10 minutes!`);
+        if (settingsTimer > 600) return replyToCommand(interaction, `The timer has to be under 10 minutes!`);
 
         const settingsRounds = interaction.options.getInteger('rounds') || 0;
-        if (settingsRounds < 0) return interaction.reply(`The rounds have to be at least 0!`);
+        if (settingsRounds < 0) return replyToCommand(interaction, `The rounds have to be at least 0!`);
 
         // const settingsCharLevelP1 = interaction.options.getInteger('challenger-character-level');
         // const settingsCharLevelP2 = interaction.options.getInteger('against-character-level');
@@ -34,14 +37,14 @@ const exportCommand: SlashCommand = {
 
         const stats = author.schema;
         const stats2 = await getUserSchema(user.id);
-        if (!stats2) return interaction.reply(`**${user.username}** hasn't started playing yet.`);
+        if (!stats2) return replyToCommand(interaction, `**${user.username}** hasn't started playing yet.`);
 
-        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
-        if (stats2.battlechar === null || !(await ownsCharacter(user.id, stats2.chars, stats2.battlechar))) return interaction.reply(`**${user.username}** has to choose a battle character first. Use \`/select <char name>\` to choose one.`);
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return replyToCommand(interaction, "You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats2.battlechar === null || !(await ownsCharacter(user.id, stats2.chars, stats2.battlechar))) return replyToCommand(interaction, `**${user.username}** has to choose a battle character first. Use \`/select <char name>\` to choose one.`);
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
-        if (user.id === interaction.user.id) return interaction.reply("Please don't fight yourself <:Heh:869656740667469864>");
-        if (user.bot && user.id !== "706183309943767112") return interaction.reply("You can't fight bots... or.. maybe you want...");
+        if (user.id === interaction.user.id) return replyToCommand(interaction, "Please don't fight yourself <:Heh:869656740667469864>");
+        if (user.bot && user.id !== "706183309943767112") return replyToCommand(interaction, "You can't fight bots... or.. maybe you want...");
 
         // User stats
         let myChar = characters[stats.battlechar];
@@ -231,7 +234,12 @@ const exportCommand: SlashCommand = {
                     .setFooter({ text: `Turn: ${user.username} | round 1 | time left: ${settingsTimer}s` });
                 if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "arena");
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: settingsTimer * 1000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: settingsTimer * 1000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: settingsTimer * 1000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: settingsTimer * 1000 });
@@ -259,7 +267,8 @@ const exportCommand: SlashCommand = {
                         }
                         Embed.setDescription(`You challenged ${user.username} to a match\nIt's **${myChar.name}** vs **${enemy.name}**!\n\n${eClass ? eClass.emblem : ""}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}${customEmojis.hp}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats2?.hpbar)}${Avalon.statusIcon(eStatsC)}\n${Avalon.padStats(eStatsC)}\n-----------------------------------\n${myClass ? myClass.emblem : ""}${myChar.name}'s Stats (**${myStatsC.hp}**/${myStats.hp}${customEmojis.hp}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStats.hp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Turn: ${matchStats.turn === 1 ? user.username : interaction.user.username} | round ${matchStats.round} | time left: ${settingsTimer + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
-                        msg.edit({ embeds: [Embed], components: [row] });
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed], components: [row] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -284,6 +293,7 @@ const exportCommand: SlashCommand = {
                         atk2.stop(), def2.stop(), ability2?.stop(), cskill2?.stop(), skip2?.stop();
 
                         matchStats.turn = 1;
+                        editEmbed();
                         resolve(matchResult(wORl));
                     };
 
@@ -843,7 +853,7 @@ const exportCommand: SlashCommand = {
             )
             .setFooter({ text: `Win Streak: ${stats.arenastreak} (Highest: ${stats.arenastreakhighest}) | Win Rate: ${Math.round((stats.arenawins / (stats.arenawins + stats.arenalosses)) * 100)}%` });
 
-        interaction.reply({ content: `<@${user.id}> ${interaction.user.username} challenges you to a battle`, embeds: [Embed], components: [OfferRow] }).then(msg2 => {
+        replyToCommand(interaction, { content: `<@${user.id}> ${interaction.user.username} challenges you to a battle`, embeds: [Embed], components: [OfferRow] }).then(msg2 => {
 
             const collector = msg2.createMessageComponentCollector({ filter: (r) => ((r.user.id === user.id) || (r.user.id === interaction.user.id)), componentType: ComponentType.Button, time: 30000 });
 

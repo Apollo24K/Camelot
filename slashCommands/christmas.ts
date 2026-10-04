@@ -1,3 +1,5 @@
+import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ChatInputCommandInteraction, SelectMenuComponentOptionData } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
@@ -691,7 +693,13 @@ const exportCommand: SlashCommand = {
                     .setImage(isCompactEmbed ? null : eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "christmas");
+                    const warnTooFast = createBattleSpeedWarning(warning => interaction.followUp(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: fightDuration * 1000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: fightDuration * 1000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: fightDuration * 1000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: fightDuration * 1000 });
@@ -701,17 +709,11 @@ const exportCommand: SlashCommand = {
                     // Use passives
                     if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
-                    let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${fightDuration + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
-                        // await msg.edit({ embeds: [Embed] });
-
-                        // Debounce
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => {
-                            msg.edit({ embeds: [Embed] });
-                        }, 600);
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -918,7 +920,7 @@ const exportCommand: SlashCommand = {
                                 // else attack();
                             };
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     def.on('collect', async () => {
@@ -963,7 +965,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     ability.on('collect', async () => {
@@ -1010,7 +1012,7 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
                     });
@@ -1054,7 +1056,7 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             };
                         };
                     });
@@ -1075,7 +1077,7 @@ const exportCommand: SlashCommand = {
                             endMatch("l");
                             editEmbed();
                         } else {
-                            interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            warnTooFast();
                         };
                     });
 

@@ -1,13 +1,20 @@
 import { Client, RESTEvents } from "discord.js";
+import { createTelemetrySink } from "./responsivenessTelemetry";
+
+const logRest = createTelemetrySink(line => console.warn(line));
+function routeKind(route: string) {
+    // Do not put webhook tokens, message IDs or player IDs into logs.
+    return route.includes('/messages') ? 'messages' : route.includes('/interactions') ? 'interactions'
+        : route.includes('/webhooks') ? 'webhooks' : 'other';
+}
 
 export function registerRestLogging(client: Client): void {
     client.rest.on(RESTEvents.RateLimited, (info) => {
-        console.warn(JSON.stringify({
+        logRest("discord_rest_rate_limited", {
             timestamp: new Date().toISOString(),
-            event: "discord_rest_rate_limited",
             pid: process.pid,
             method: info.method,
-            route: info.route,
+            routeKind: routeKind(info.route),
             global: info.global,
             scope: info.scope,
             bucket: info.hash,
@@ -15,7 +22,7 @@ export function registerRestLogging(client: Client): void {
             retryAfterMs: info.retryAfter,
             timeToResetMs: info.timeToReset,
             sublimitTimeoutMs: info.sublimitTimeout,
-        }));
+        });
     });
 
     client.rest.on(RESTEvents.Response, (request, response) => {
@@ -24,17 +31,16 @@ export function registerRestLogging(client: Client): void {
         const retryAfter = response.headers.get("retry-after");
         const retryAfterMs = retryAfter === null ? null : Number(retryAfter) * 1000;
 
-        console.warn(JSON.stringify({
+        logRest("discord_rest_http_429", {
             timestamp: new Date().toISOString(),
-            event: "discord_rest_http_429",
             pid: process.pid,
             status: response.status,
             method: request.method,
-            route: request.route,
+            routeKind: routeKind(request.route),
             global: response.headers.get("x-ratelimit-global") === "true",
-            scope: response.headers.get("x-ratelimit-scope"),
-            bucket: response.headers.get("x-ratelimit-bucket"),
-            retryAfterMs: Number.isFinite(retryAfterMs) ? retryAfterMs : null,
-        }));
+            scope: response.headers.get("x-ratelimit-scope") ?? undefined,
+            bucket: response.headers.get("x-ratelimit-bucket") ?? undefined,
+            retryAfterMs: retryAfterMs !== null && Number.isFinite(retryAfterMs) ? retryAfterMs : undefined,
+        });
     });
 }
