@@ -1,3 +1,6 @@
+import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ChatInputCommandInteraction, ButtonStyle } from "discord.js";
 import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
 import { abilities, Ability } from "../Modules/abilities";
@@ -9,6 +12,7 @@ import { armorInfo, entryInfo, items, ringInfo, runeInfo, weaponInfo } from "../
 import { skills, bossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { dailies } from "../Modules/dailyQuests";
+import { hasExtremeItemDrop, getExtremeItemDrop, hasExtremeWeaponDrop, getExtremeWeaponId } from "../Modules/extremeWeaponDrops";
 import { getDetailedStats, customEmojis, dealDamage, generateCaptcha, formatNumberWithQuotes, getClassLvl, classLevelToXP } from "../Modules/functions";
 import { addGuildDonation, getCachedUserSchema, getGuildSchema, getOwnedCharacterIds, getUserSchema, ownsCharacter, updateUsersAndCache, insertNewWeapon, updateUsers } from '../Modules/queries';
 import { requestVerification, dungeonTempBan, AbilityResponse, isEventOngoing } from "../Modules/components";
@@ -17,10 +21,6 @@ import { skillTree } from '../Modules/skillTree';
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
-
-import { hasExtremeItemDrop, getExtremeItemDrop, hasExtremeWeaponDrop, getExtremeWeaponId } from "../Modules/extremeWeaponDrops";
-
-
 
 const dungeonInProgress = new Set();
 const captchaCooldown = new Map();
@@ -60,7 +60,7 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
             .setTitle(pages[page][0])
             .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
             .setDescription(pages[page][1]);
-        interaction.editReply({ embeds: [Embed], components: [row] }).then((msg) => {
+        editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 180000 });
             const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "skip", componentType: ComponentType.Button, time: 180000 });
 
@@ -75,7 +75,7 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
                     resolve(1);
                 } else {
                     Embed.setTitle(pages[page][0]).setDescription(pages[page][1]);
-                    interaction.editReply({ embeds: [Embed], components: [row] });
+                    editCommandReply(interaction, { embeds: [Embed], components: [row] });
                 };
             });
 
@@ -94,13 +94,14 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
 
 const exportCommand: SlashCommand = {
     name: 'dungeon',
+    earlyAcknowledgement: "public",
     skipUserRefetch: true,
     skipServerRefetch: true,
     async execute({ interaction, author, customFlag }) {
 
         if (!customFlag?.repeatMessage) {
             try {
-                await interaction.deferReply();
+                await deferCommand(interaction);
             } catch (err) {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             };
@@ -113,7 +114,7 @@ const exportCommand: SlashCommand = {
 
         const stats = author.schema;
         if (!stats.hidden_dungeon) (stats as any).hidden_dungeon = {};
-        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.editReply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return editCommandReply(interaction, "You have to choose a battle character first. Use `/select <char name>` to choose one.");
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
@@ -142,8 +143,8 @@ const exportCommand: SlashCommand = {
             if (floorDiff > 3) floorDiff = 3;
 
             if (choice) {
-                if (choice < 1) return interaction.editReply(`There is no floor ${choice} <:EmiliaWot:868996542080622603>`);
-                if (choice + (floorDiff * 100) > floor) return interaction.editReply(`You haven't unlocked Floor ${choice} yet. You need ${floors[floor]?.winsNeeded} ${floors[floor]?.winsNeeded === 1 ? "win" : "wins"} on floor \`${Math.min(floor, 100)}/${floor <= 100 ? 0 : Math.min(floor - 100, 100)}/${Math.max(floor - 200, 0)}/${Math.max(floor - 300, 0)}\` to unlock the next one.`);
+                if (choice < 1) return editCommandReply(interaction, `There is no floor ${choice} <:EmiliaWot:868996542080622603>`);
+                if (choice + (floorDiff * 100) > floor) return editCommandReply(interaction, `You haven't unlocked Floor ${choice} yet. You need ${floors[floor]?.winsNeeded} ${floors[floor]?.winsNeeded === 1 ? "win" : "wins"} on floor \`${Math.min(floor, 100)}/${floor <= 100 ? 0 : Math.min(floor - 100, 100)}/${Math.max(floor - 200, 0)}/${Math.max(floor - 300, 0)}\` to unlock the next one.`);
                 floor = Math.round(choice + (floorDiff * 100));
             };
             if (floor > 300) floor = 300;
@@ -187,19 +188,19 @@ const exportCommand: SlashCommand = {
         };
 
         // Check if user can skip
-        if (flag === "all" && stats.premium < 3) return interaction.editReply("This is a `/premium` feature. If you like the bot and want to help us out we'd appreciate your support <:RaphiSmile:868998036645380197>");
-        if ((flag === "skip" || flag === "all") && dunLim[0] - stats.dungeon_limit <= 0) return interaction.editReply("You've already used up all your skips for this interval.");
+        if (flag === "all" && stats.premium < 3) return editCommandReply(interaction, "This is a `/premium` feature. If you like the bot and want to help us out we'd appreciate your support <:RaphiSmile:868998036645380197>");
+        if ((flag === "skip" || flag === "all") && dunLim[0] - stats.dungeon_limit <= 0) return editCommandReply(interaction, "You've already used up all your skips for this interval.");
 
         // Progressive skip limit - can only skip floors that have been manually cleared
         if (isHiddenFloor && (flag === "skip" || flag === "all")) {
             const hasCompletedFloor = stats.hidden_dungeon[hiddenFloorKey] >= hiddenFloors[floor]?.winsNeeded;
-            if (!hasCompletedFloor) return interaction.editReply(`You can only skip hidden floors that you have manually cleared. Complete Hidden Floor ${floor} first to unlock skipping!`);
+            if (!hasCompletedFloor) return editCommandReply(interaction, `You can only skip hidden floors that you have manually cleared. Complete Hidden Floor ${floor} first to unlock skipping!`);
         } else if (floor > 300 && (flag === "skip" || flag === "all")) {
             // Check if user has completed this floor and moved to the next one
             const currentFloor = parseInt(Object.keys(stats.dungeon_floors)[Object.keys(stats.dungeon_floors).length - 1]);
             const hasCompletedFloor = stats.dungeon_floors[floor.toString()] >= floors[floor]?.winsNeeded;
             const hasMovedBeyond = currentFloor > floor;
-            if (!hasCompletedFloor || !hasMovedBeyond) return interaction.editReply(`You can only skip floors that you have manually cleared and progressed beyond. Complete Floor ${floor} first to unlock skipping for this floor!`);
+            if (!hasCompletedFloor || !hasMovedBeyond) return editCommandReply(interaction, `You can only skip floors that you have manually cleared and progressed beyond. Complete Floor ${floor} first to unlock skipping for this floor!`);
         };
 
         // Captcha
@@ -225,7 +226,7 @@ const exportCommand: SlashCommand = {
             captchaCooldown.set(interaction.user.id, Date.now());
             setTimeout(() => captchaCooldown.delete(interaction.user.id), 10 * 60 * 1000);
 
-            return interaction.editReply({
+            return editCommandReply(interaction, {
                 content: `${dungeonTempBan.has(interaction.user.id) ? `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>\n` : ""}Use </captcha:1114616338581823568> to enter the code`,
                 files: [captcha.attachement],
                 embeds: [],
@@ -233,8 +234,8 @@ const exportCommand: SlashCommand = {
         };
 
         // Set up restrictions
-        if (dungeonTempBan.has(interaction.user.id)) return interaction.editReply({ content: `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`, embeds: [] });
-        if (dungeonInProgress.has(stats.id)) return interaction.editReply({ content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
+        if (dungeonTempBan.has(interaction.user.id)) return editCommandReply(interaction, { content: `You have failed to enter the captcha many times in a row.\nYou have been temporarily banned from using \`/dungeon\` for the next **${Math.ceil((dungeonTempBan.get(interaction.user.id)?.ends - Date.now()) / (60 * 1000))}** min\nYou can check how much time is left with </cd:1010317417840390158>`, embeds: [] });
+        if (dungeonInProgress.has(stats.id)) return editCommandReply(interaction, { content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
         dungeonInProgress.add(stats.id);
         const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
 
@@ -293,18 +294,18 @@ const exportCommand: SlashCommand = {
         // Enemy Stats
         if (isHiddenFloor) {
             if (!hiddenFloors[floor]) {
-                return interaction.editReply(`Invalid hidden floor ${floor}. Please try again.`);
+                return editCommandReply(interaction, `Invalid hidden floor ${floor}. Please try again.`);
             };
         } else {
             if (!floors[floor]) {
-                return interaction.editReply(`Invalid floor ${floor}. Please try again.`);
+                return editCommandReply(interaction, `Invalid floor ${floor}. Please try again.`);
             };
         };
 
         let enemy = isHiddenFloor ? hiddenFloors[floor].monster : floors[floor].monster;
 
         if (!enemy) {
-            return interaction.editReply(`No enemy found for floor ${floor}. Please contact an administrator.`);
+            return editCommandReply(interaction, `No enemy found for floor ${floor}. Please contact an administrator.`);
         };
 
         const curseRar = isHiddenFloor ? curses.filter((e) => e.tier === 1 || e.tier === 2) : (enemy.boss ? curses.filter((e) => e.tier) : curses.filter((e) => e.tier === 0));
@@ -808,7 +809,7 @@ const exportCommand: SlashCommand = {
 
             if (myStats.ep > eStats.ep) {
                 const result = await matchResult("w");
-                if (result) interaction.editReply({ embeds: [result], components: [ResultsRow] });
+                if (result) editCommandReply(interaction, { embeds: [result], components: [ResultsRow] });
                 return;
             };
             notice.push("\n<:info:1131679799207796756> You need more EP than your enemy to skip a fight");
@@ -817,7 +818,7 @@ const exportCommand: SlashCommand = {
         // If Enemy Died
         if (eStatsC.hp < 1) {// if (myStats.ep/eStats.ep >= 2) {
             const result = await matchResult("w");
-            if (result) interaction.editReply({ embeds: [result], components: [ResultsRow] });
+            if (result) editCommandReply(interaction, { embeds: [result], components: [ResultsRow] });
             return;
         };
 
@@ -835,9 +836,15 @@ const exportCommand: SlashCommand = {
                     .setTitle(isHiddenFloor ? `Hidden Dungeon Floor ${floor} ${enemy.boss ? "(Boss)" : ""}` : `Dungeon Floor ${(floor - 1) % 100 + 1} ${enemy.boss ? "(Boss)" : ""}`)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}${interaction.user.toString()} (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eImage);
-                interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
+                editCommandReply(interaction, { embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "dungeon");
+                    const warnTooFast = createBattleSpeedWarning(warning => interaction.followUp(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
@@ -848,17 +855,11 @@ const exportCommand: SlashCommand = {
                     // Use passives
                     if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
-                    let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name} (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}${interaction.user.toString()} (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${Math.max(0, 120 + Math.floor((timestart - new Date().getTime()) / 1000))}s` });
-                        // await msg.edit({ embeds: [Embed] });
-
-                        // Debounce
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => {
-                            msg.edit({ embeds: [Embed] });
-                        }, 600);
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -1068,7 +1069,7 @@ const exportCommand: SlashCommand = {
                                 attack();
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     def.on('collect', async () => {
@@ -1133,7 +1134,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                 attack();
                             }
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     ability.on('collect', async () => {
@@ -1197,7 +1198,7 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
                     });
@@ -1261,7 +1262,7 @@ const exportCommand: SlashCommand = {
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
 
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             };
                         };
                     });
@@ -1297,7 +1298,7 @@ const exportCommand: SlashCommand = {
                             }, aDelay);
                         } else {
                             matchStats.turn = 1;
-                            interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            warnTooFast();
                         };
                     });
 

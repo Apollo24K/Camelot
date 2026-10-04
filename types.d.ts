@@ -315,6 +315,7 @@ export interface SlashCommand {
     execute: ({ }: executeSlashCommand) => void,
     autocomplete?: ({ }: { interaction: AutocompleteInteraction; }) => Promise<Array<{ name: string, value: string; }>>,
     executeButtonInteraction?: ({ }: { interaction: ButtonInteraction; }) => void,
+    earlyAcknowledgement?: import("./Modules/interactionResponses").Acknowledgement | ((interaction: ChatInputCommandInteraction) => import("./Modules/interactionResponses").Acknowledgement),
     cooldown?: number, // in seconds
     skipUserRefetch?: boolean,
     skipServerRefetch?: boolean,

@@ -1,3 +1,6 @@
+import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, ColorResolvable, TextInputBuilder, TextInputStyle, ModalBuilder, StringSelectMenuBuilder, SelectMenuComponentOptionData } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
@@ -182,7 +185,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
     const Embed = new EmbedBuilder()
         .setColor(0xff3838)
         .setDescription(getDesc());
-    interaction.reply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] }).then((msg) => {
+    replyToCommand(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] }).then((msg) => {
 
         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "raid_selection", componentType: ComponentType.StringSelect, time: 120000 });
         const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 120000 });
@@ -202,7 +205,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
                 .setDescription(getDesc())
                 .setThumbnail(raids[currentlySelected].enemy.image[0])
                 .setColor(raids[currentlySelected].accentColor as ColorResolvable);
-            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
         confirm.on('collect', async () => {
@@ -219,7 +222,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
                 } else {
                     interaction.followUp({ content: "Failed to start raid, please try again later" });
                 };
-                interaction.editReply({ components: [] });
+                editCommandReply(interaction, { components: [] });
             } else {
                 interaction.followUp({ content: "You already have an active raid, please finish it before attempting to start a new one.", ephemeral: true });
             };
@@ -238,7 +241,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
 
             // Update embed
             Embed.setDescription(getDesc());
-            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
         rankdown.on('collect', async () => {
@@ -251,7 +254,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
             currentRankUp--;
 
             Embed.setDescription(getDesc());
-            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
         rankSelect.on('collect', async r => {
@@ -264,7 +267,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
             currentRankUp = parseInt(r.values[0]);
 
             Embed.setDescription(getDesc());
-            interaction.editReply({ embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
     });
@@ -276,7 +279,7 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
         const isTestBoss = isTestRun && testBoss !== null;
 
         const currentRaid = isTestBoss ? raids[parseInt(testBoss)] : raids[raid.raidid];
-        if (!currentRaid) return interaction.reply("Unexpected Error: Raid not found\nPlease open a ticket in our `/support` server if you encounter this error.");
+        if (!currentRaid) return replyToCommand(interaction, "Unexpected Error: Raid not found\nPlease open a ticket in our `/support` server if you encounter this error.");
 
         const startDate = new Date(raid.start_date);
         const endDate = new Date(startDate.getTime() + 5 * 24 * 60 * 60 * 1000);
@@ -340,7 +343,7 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
             .setColor(0xff3838)
             .setThumbnail(currentRaid.enemy.image[0])
             .setDescription(getDesc());
-        interaction.reply({ embeds: [Embed], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] }).then((msg) => {
+        replyToCommand(interaction, { embeds: [Embed], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] }).then((msg) => {
             if (interaction.guild) {
                 interaction.guild.members.fetch().then(members => {
                     members.forEach(m => { if (!m.user.bot) memberIds.add(m.user.id); });
@@ -363,7 +366,7 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
 
             ranking.on('collect', () => {
                 tab = (tab === "overview") ? "ranking" : "overview";
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] });
+                editCommandReply(interaction, { embeds: [Embed.setDescription(getDesc())], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] });
             });
 
             edit.on('collect', (rr) => {
@@ -401,7 +404,7 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
                         raid_supports: { type: "set", value: stats.raid_supports },
                     });
 
-                    interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
+                    editCommandReply(interaction, { embeds: [Embed.setDescription(getDesc())] });
                     r.reply({ content: `Edited Successfully!`, ephemeral: true });
                 });
             });
@@ -646,6 +649,7 @@ async function endRaid(raidRowId: number, equalRewardDistribution: boolean) {
 
 const exportCommand: SlashCommand = {
     name: 'raid',
+    earlyAcknowledgement: interaction => interaction.options.getBoolean("cancel") === true ? "command" : "public",
     async execute({ interaction, author }) {
 
         // Deprecated
@@ -662,7 +666,7 @@ const exportCommand: SlashCommand = {
 
         const sequence = interaction.options.getString('sequence') ?? null;
         const parsedActionSequence = parseActionSequence(sequence);
-        if (parsedActionSequence === null) return interaction.reply(ACTION_SEQUENCE_ERROR_MESSAGE);
+        if (parsedActionSequence === null) return replyToCommand(interaction, ACTION_SEQUENCE_ERROR_MESSAGE);
         const actionSequence = parsedActionSequence;
 
         // Skip by default if action sequence is used
@@ -670,12 +674,12 @@ const exportCommand: SlashCommand = {
 
         //! Experimental
         // if (!isTestRun && actionSequence.length > 0) {
-        //     return interaction.reply("Experimental action sequences are currently only available in test runs. Please use it at your own risk.");
+        //     return replyToCommand(interaction, "Experimental action sequences are currently only available in test runs. Please use it at your own risk.");
         // };
 
         // Check if user has a battle character
         const stats = author.schema;
-        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.reply("You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return replyToCommand(interaction, "You have to choose a battle character first. Use `/select <char name>` to choose one.");
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
@@ -692,7 +696,7 @@ const exportCommand: SlashCommand = {
                 .setColor(0xff3838)
                 .setThumbnail(raids[1].enemy.image[0])
                 .setDescription("### Guild Raids\nRaids are guild activities, please join one to participate!\n\nYou can search for a guild with </guild find:1090742470708563988>, find one on our [support server](https://discord.gg/myy9PBCdEW), or create your own with </guild create:1090742470708563988> <:ClaraThumbsUp:1034899843505721514>");
-            return interaction.reply({ embeds: [Embed], components: [row] });
+            return replyToCommand(interaction, { embeds: [Embed], components: [row] });
         };
 
         const raid = await getLatestRaid(guild.id);
@@ -700,7 +704,7 @@ const exportCommand: SlashCommand = {
             if ([guild.master, ...guild.elders].includes(interaction.user.id)) {
                 return raidSelection(interaction, stats, guild);
             } else {
-                return interaction.reply("There is no active raid at the moment. Please ask your guild master or an elder to start one!");
+                return replyToCommand(interaction, "There is no active raid at the moment. Please ask your guild master or an elder to start one!");
             };
         };
 
@@ -715,12 +719,12 @@ const exportCommand: SlashCommand = {
             if ([guild.master, ...guild.elders].includes(interaction.user.id)) {
                 const result = await cancelRaid(raid.rowid);
                 if (result === "success") {
-                    return interaction.reply("Raid cancelled successfully! You may start a new one.");
+                    return replyToCommand(interaction, "Raid cancelled successfully! You may start a new one.");
                 } else {
-                    return interaction.reply("Failed to cancel raid. Please try again later.");
+                    return replyToCommand(interaction, "Failed to cancel raid. Please try again later.");
                 };
             } else {
-                return interaction.reply({ content: "Only the guild master or elders can cancel a raid", ephemeral: true });
+                return replyToCommand(interaction, { content: "Only the guild master or elders can cancel a raid", ephemeral: true });
             };
         };
 
@@ -738,7 +742,7 @@ const exportCommand: SlashCommand = {
         // Defer reply if overview is skipped
         if (skipOverview) {
             try {
-                await interaction.deferReply();
+                await deferCommand(interaction);
             } catch (err) {
                 return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
             };
@@ -768,7 +772,7 @@ const exportCommand: SlashCommand = {
         if (!raidCheck) return interaction.followUp("An error occurred while checking your raid attempts. Please try again later.");
 
         // Return if ended and no test run
-        if (raidCheck.end_date && !isTestRun) return interaction.reply("The raid has ended. You can start a new one with `/raid` or use the test flag");
+        if (raidCheck.end_date && !isTestRun) return replyToCommand(interaction, "The raid has ended. You can start a new one with `/raid` or use the test flag");
 
         // Attempts left
         const attemptsUsed = raidCheck.participation[interaction.user.id]?.[1] ?? 0;
@@ -1019,9 +1023,15 @@ const exportCommand: SlashCommand = {
                     .setTitle(`Guild Raid ${isTestRun ? "(TEST RUN)" : ""}  `)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.hp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.hp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eImage);
-                interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
+                editCommandReply(interaction, { embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "raid");
+                    const warnTooFast = createBattleSpeedWarning(warning => matchStats.sendWarning(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
@@ -1032,17 +1042,11 @@ const exportCommand: SlashCommand = {
                     // Use passives
                     if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
-                    let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
-                        // await msg.edit({ embeds: [Embed] });
-
-                        // Debounce
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => {
-                            msg.edit({ embeds: [Embed] });
-                        }, 600);
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -1206,7 +1210,7 @@ const exportCommand: SlashCommand = {
                                 attack();
                             }
 
-                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     };
                     atk.on('collect', async () => {
                         if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
@@ -1254,7 +1258,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     };
                     def.on('collect', async () => {
                         if (actionSequence.length > 0) return interaction.followUp({ content: ACTION_SEQUENCE_IN_PROGRESS_MESSAGE, ephemeral: true });
@@ -1301,7 +1305,7 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             } else matchStats.sendWarning({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
                     };
@@ -1347,7 +1351,7 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             };
                         };
                     };
@@ -1363,7 +1367,7 @@ const exportCommand: SlashCommand = {
                             editEmbed();
                         } else {
                             matchStats.turn = 1;
-                            matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                            warnTooFast();
                         };
                     };
                     skip.on('collect', async () => {

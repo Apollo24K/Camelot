@@ -1,3 +1,4 @@
+import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
@@ -112,9 +113,10 @@ function detailedPage(item: WeaponSchema) {
 
 const exportCommand: SlashCommand = {
     name: 'items',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
 
-        await interaction.deferReply().catch(() => {
+        await deferCommand(interaction).catch(() => {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
@@ -125,7 +127,7 @@ const exportCommand: SlashCommand = {
         const flag = interaction.options.getString('flag');
 
         const stats = user.id === interaction.user.id ? author.schema : await getUserSchema(user.id);
-        if (!stats) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
+        if (!stats) return editCommandReply(interaction, `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
 
         const ownedCharacterIds = await getOwnedCharacterIds(user.id, stats.chars);
         let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image;
@@ -139,7 +141,7 @@ const exportCommand: SlashCommand = {
             else if (["ascension", "crafting", "levelup"].includes(type)) itemsR = itemsR.filter((e) => items[parseInt(e[0])].type === type + " material");
 
             // Return if empty
-            if (!itemsR.length) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
+            if (!itemsR.length) return editCommandReply(interaction, `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
 
             // Sort elements
             itemsR.sort((a, b) => items[parseInt(b[0])].gradeValue - items[parseInt(a[0])].gradeValue);
@@ -164,8 +166,8 @@ const exportCommand: SlashCommand = {
                 .setThumbnail(thumbnail)
                 .setDescription(desc)
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-            if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed] });
-            return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then(msg => {
+            if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [Embed] });
+            return editCommandReply(interaction, { embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async r => {
@@ -181,7 +183,7 @@ const exportCommand: SlashCommand = {
                     desc = itemsToShow(showItems);
 
                     Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
                 });
             });
         };
@@ -191,7 +193,7 @@ const exportCommand: SlashCommand = {
             itemsR = itemsR.filter((e) => (items[parseInt(e[0])].category === "rune") && e[1]);
 
             // Return if empty
-            if (!itemsR.length) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} runes.`);
+            if (!itemsR.length) return editCommandReply(interaction, `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} runes.`);
 
             // Sort elements
             itemsR.sort((a, b) => items[parseInt(b[0])].gradeValue - items[parseInt(a[0])].gradeValue);
@@ -216,8 +218,8 @@ const exportCommand: SlashCommand = {
                 .setThumbnail(thumbnail)
                 .setDescription(desc)
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-            if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed] });
-            return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then(msg => {
+            if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [Embed] });
+            return editCommandReply(interaction, { embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
                 collector.on('collect', async r => {
@@ -233,7 +235,7 @@ const exportCommand: SlashCommand = {
                     desc = itemsToShow(showItems);
 
                     Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
                 });
             });
         };
@@ -255,7 +257,7 @@ const exportCommand: SlashCommand = {
         };
 
         // Return if empty
-        if (!itemsR.length) return interaction.editReply(`${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
+        if (!itemsR.length) return editCommandReply(interaction, `${user.id === interaction.user.id ? "You don't have any" : `**${user.username}** has no`} items.`);
 
         // Sort elements
         if (type === "sets") itemsR.sort((a, b) => (items[b.itemid].gradeValue - items[a.itemid].gradeValue) + (items[b.itemid].grade === items[a.itemid].grade ? (b.level + b.ascension) - (a.level + a.ascension) : 0));
@@ -281,8 +283,8 @@ const exportCommand: SlashCommand = {
             .setThumbnail(thumbnail)
             .setDescription(desc)
             .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-        if (pagesTotal === 1) return interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed] });
-        return interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] }).then(msg => {
+        if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed] });
+        return editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
             collector.on('collect', async r => {
@@ -298,7 +300,7 @@ const exportCommand: SlashCommand = {
                 desc = itemsToShow(showItems, "weapon", stats.itemlock);
 
                 Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                interaction.editReply({ embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] });
+                editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] });
             });
         });
     },

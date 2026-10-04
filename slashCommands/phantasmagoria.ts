@@ -1,13 +1,13 @@
+import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, ColorResolvable, TextInputBuilder, TextInputStyle, ModalBuilder, StringSelectMenuBuilder } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
-// import { curses } from "../Modules/curses";
 import { armorInfo, itemInfo, items, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { skills } from "../Modules/skills";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, customEmojis, dealDamage, getClassLvl, getRingSlotsTotal, search, searchClass, searchItem, getLetterRank, formatNumberWithQuotes, displayCharge, classLevelToXP, cacheItemStats } from "../Modules/functions";
 import { AbilityResponse, dungeonTempBan } from "../Modules/components";
-
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
@@ -545,7 +545,7 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                     const totalCost = shopItem.price * qty;
 
                     // Defer granting items until after the atomic users update succeeds
-                    let pendingGrant: { itemId: number; itemType?: string; qty: number } | null = null;
+                    let pendingGrant: { itemId: number; itemType?: string; qty: number; } | null = null;
 
                     await modalSubmit.deferUpdate();
                     if (adjusted) await modalSubmit.followUp({ content: `Quantity adjusted to **${qty}** (max affordable with current balance).`, ephemeral: true });
@@ -581,7 +581,7 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                     try {
                         // Run a DB transaction that locks the user row, checks balance and purchase caps, updates the user, and inserts items
                         await withTransaction(async (client) => {
-                            const { rows: [userRow] } = await client.query(`SELECT echo, echo_purchases FROM users WHERE id = $1 FOR UPDATE`, [interaction.user.id]) as { rows: { echo: number; echo_purchases: Record<string, number>; }[] };
+                            const { rows: [userRow] } = await client.query(`SELECT echo, echo_purchases FROM users WHERE id = $1 FOR UPDATE`, [interaction.user.id]) as { rows: { echo: number; echo_purchases: Record<string, number>; }[]; };
                             if (!userRow) throw new Error('User not found');
 
                             if (userRow.echo < totalCost) throw new Error('INSUFFICIENT_ECHO');
@@ -947,7 +947,13 @@ const exportCommand: SlashCommand = {
                 // .setImage(null);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "phantasmagoria");
+                    const warnTooFast = createBattleSpeedWarning(warning => matchStats.sendWarning(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: FIGHT_DURATION * 1000 });
@@ -958,18 +964,12 @@ const exportCommand: SlashCommand = {
                     // Use passives
                     // if (myChar.id !== 4767) curse.passive(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
 
-                    let timeout: NodeJS.Timeout | undefined;
                     async function editEmbed() {
                         if (notice.length > 100) notice.splice(0, notice.length - 100);
                         Embed.setDescription(`${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------\n<:energy1:1518418164566982817><:energy2:1518418204337373194>: ${displayCharge(myStatsC.energy ?? 0)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Phase ${eStatsC.phase} | round ${matchStats.round} | time left: ${FIGHT_DURATION + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
-                        // await msg.edit({ embeds: [Embed] });
-
-                        // Debounce
-                        clearTimeout(timeout);
-                        timeout = setTimeout(() => {
-                            msg.edit({ embeds: [Embed] });
-                        }, 600);
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed] });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
@@ -1172,7 +1172,7 @@ const exportCommand: SlashCommand = {
                                 attack();
                             }
 
-                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     };
                     atk.on('collect', async (rr) => {
                         await userAttack();
@@ -1228,7 +1228,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     };
                     def.on('collect', async (rr) => {
                         await userDefense();
@@ -1284,7 +1284,7 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             } else matchStats.sendWarning({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
                     };
@@ -1338,7 +1338,7 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             };
                         };
                     };
@@ -1364,7 +1364,7 @@ const exportCommand: SlashCommand = {
                                 editEmbed();
                             };
                         } else {
-                            matchStats.sendWarning({ content: "Please wait a moment", ephemeral: true });
+                            warnTooFast();
                         };
                     };
                     skip.on('collect', async (rr) => {

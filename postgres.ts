@@ -1,5 +1,6 @@
 import { Pool, PoolClient } from 'pg';
 import dotenv from 'dotenv';
+import { measurePoolQuery, withMeasuredClient } from './Modules/databaseTiming';
 dotenv.config();
 
 const pool = new Pool({
@@ -16,7 +17,7 @@ const pool = new Pool({
 
 export const query = async (text: string, params?: any[]) => {
     try {
-        const res = await pool.query(text, params);
+        const res = await measurePoolQuery(pool, () => pool.query(text, params));
         if (text.toUpperCase().startsWith("SELECT")) return res.rows;
         return res;
     } catch (error) {
@@ -378,18 +379,17 @@ async function createIndexes() {
 };
 
 export const withTransaction = async <T>(callback: (client: PoolClient) => Promise<T>): Promise<T> => {
-    const client = await pool.connect();
-    try {
-        await client.query('BEGIN');
-        const result = await callback(client);
-        await client.query('COMMIT');
-        return result;
-    } catch (error) {
-        await client.query('ROLLBACK');
-        throw error;
-    } finally {
-        client.release();
-    };
+    return withMeasuredClient(pool, async client => {
+        try {
+            await client.query('BEGIN');
+            const result = await callback(client);
+            await client.query('COMMIT');
+            return result;
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        };
+    });
 };
 
 async function createTriggerWeaponUniqueId() {

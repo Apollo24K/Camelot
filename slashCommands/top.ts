@@ -1,3 +1,4 @@
+import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ComponentType, ButtonInteraction, Message } from "discord.js";
 import { auniq, characters } from "../Modules/chars";
 import { userLevel, getClassLvl, showPage, formatNumberWithQuotes } from "../Modules/functions";
@@ -8,14 +9,15 @@ import { getGuildSchema, getLatestStampede, getReferralLeaderboard, getServerSch
 
 const exportCommand: SlashCommand = {
     name: 'top',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
-        if (!interaction.guild) return interaction.reply("Please use this command in a server!");
+        if (!interaction.guild) return replyToCommand(interaction, "Please use this command in a server!");
 
         let page = interaction.options.getInteger('page') ?? 1;
         let flag = interaction.options.getString('flag') ?? "level";
         let scope = interaction.options.getString('scope') as "server" | "global" | "guild";
 
-        await interaction.deferReply().catch(() => {
+        await deferCommand(interaction).catch(() => {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
@@ -25,9 +27,9 @@ const exportCommand: SlashCommand = {
         let guildName: string | null = null;
         const guildId = author.schema.guild ?? undefined;
         if (scope === "guild") {
-            if (!guildId) return interaction.editReply("You are not in a guild!");
+            if (!guildId) return editCommandReply(interaction, "You are not in a guild!");
             const guildSchema = await getGuildSchema(guildId);
-            if (!guildSchema) return interaction.editReply("Guild not found!");
+            if (!guildSchema) return editCommandReply(interaction, "Guild not found!");
             guildName = guildSchema.name;
         }
 
@@ -127,7 +129,7 @@ const exportCommand: SlashCommand = {
             case "stampede":
                 const stampedeData = await getLatestStampede();
                 if (!stampedeData) {
-                    return interaction.editReply("No stampede data available");
+                    return editCommandReply(interaction, "No stampede data available");
                 };
 
                 stats = await getUserRanking(scope, user_ids, "stampede", guildId);
@@ -176,10 +178,10 @@ const exportCommand: SlashCommand = {
                 stats = await getUserRanking(scope, user_ids, "event", guildId);
                 stats = stats.filter((e) => !interaction.client.blacklist.has(e.id));
                 showUsers = stats.map((e) => `${count++}) **${e.name}** - **${e.eventpts}** 🍫`); break;
-            default: return interaction.editReply(`${flag} leaderboard is currently not available`);
+            default: return editCommandReply(interaction, `${flag} leaderboard is currently not available`);
         };
 
-        if (!stats[0]) return interaction.editReply("Empty leaderboard");
+        if (!stats[0]) return editCommandReply(interaction, "Empty leaderboard");
 
         const topChars = allCharacterIds(stats[0]);
         let thumbnail = characters[topChars[Math.floor(Math.random() * topChars.length)]]?.image || "https://i.ibb.co/jZ7fHSj/camelot.png";
@@ -198,8 +200,8 @@ const exportCommand: SlashCommand = {
             .setDescription(showPage(currPage, showUsers).join("\n"))
             .setThumbnail(thumbnail)
             .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-        if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed] });
-        return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then((msg: Message) => {
+        if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [Embed] });
+        return editCommandReply(interaction, { embeds: [Embed], components: [PageRow] }).then((msg: Message) => {
             const collector = msg.createMessageComponentCollector({ filter: (r: ButtonInteraction) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
             collector.on('collect', (r: ButtonInteraction) => {
@@ -212,7 +214,7 @@ const exportCommand: SlashCommand = {
                 };
 
                 Embed.setDescription(showPage(currPage, showUsers).join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
             });
         });
 

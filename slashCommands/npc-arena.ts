@@ -1,3 +1,6 @@
+import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { replyToCommand } from "../Modules/interactionResponses";
+import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, MessageFlags } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
 import { achievements } from "../Modules/achievements";
@@ -22,14 +25,15 @@ const luminousImages: `https://${string}`[] = ["https://i.ibb.co/QpyDLjX/l1.png"
 
 const exportCommand: SlashCommand = {
     name: 'npc-arena',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
 
         const stats = author.schema;
-        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return interaction.reply("You need to choose a battle character first. Use `/select <char>` to choose one.");
+        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return replyToCommand(interaction, "You need to choose a battle character first. Use `/select <char>` to choose one.");
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         // Set up restrictions
-        if (dungeonInProgress.has(stats.id)) return interaction.reply("You already have a run in progress, please finish it before attempting to start a new round.");
+        if (dungeonInProgress.has(stats.id)) return replyToCommand(interaction, "You already have a run in progress, please finish it before attempting to start a new round.");
         dungeonInProgress.add(stats.id);
         const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
 
@@ -185,7 +189,13 @@ const exportCommand: SlashCommand = {
                     .setImage(isCompactEmbed ? null : eStatsC.image);
                 if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then(msg => {
 
+                    const renderer = createBattleRenderer(msg, "npc-arena");
+                    const warnTooFast = createBattleSpeedWarning(warning => interaction.followUp(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
+                    // Collector end may fire inside endMatch, before its final notice is appended.
+                    atk.once('end', () => queueMicrotask(() => {
+                        void renderer.finish({ embeds: [Embed], components: [] });
+                    }));
                     const def = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "DEF", componentType: ComponentType.Button, time: 120000 });
                     const ability = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ABILITY", componentType: ComponentType.Button, time: 120000 });
                     const cskill = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "SKILL", componentType: ComponentType.Button, time: 120000 });
@@ -198,7 +208,8 @@ const exportCommand: SlashCommand = {
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
-                        await msg.edit({ embeds: [Embed] });
+                        if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
+                        renderer.request({ embeds: [Embed] });
                     };
 
                     function minionDefeated(side: "my" | "e") {
@@ -347,7 +358,7 @@ const exportCommand: SlashCommand = {
                                 attack();
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     def.on('collect', async r => {
@@ -391,7 +402,7 @@ const exportCommand: SlashCommand = {
                                 Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                             }
 
-                        } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                        } else warnTooFast();
                     });
 
                     ability.on('collect', async r => {
@@ -434,7 +445,7 @@ const exportCommand: SlashCommand = {
                                         Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                         attack();
                                     };
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             } else interaction.followUp({ content: `You can use **${myChar.name}**'s ability only ${myAbility.usage == 1 ? "once" : `${myAbility.usage} times`} per fight.`, ephemeral: true });
                         };
                     });
@@ -476,7 +487,7 @@ const exportCommand: SlashCommand = {
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                                } else warnTooFast();
                             };
                         };
                     });
@@ -501,7 +512,7 @@ const exportCommand: SlashCommand = {
                             }, aDelay);
                         } else {
                             matchStats.turn = 1;
-                            interaction.followUp({ content: "Please wait a moment", ephemeral: true });
+                            warnTooFast();
                         };
                     });
 
@@ -514,7 +525,7 @@ const exportCommand: SlashCommand = {
         if (interaction.commandName === "trial") {
             newFight();
         } else {
-            interaction.reply("Very well..");
+            replyToCommand(interaction, "Very well..");
             setTimeout(() => {
                 if (interaction.channel?.isSendable()) interaction.channel.send("I'll give it everything I've got!");
             }, 1800);

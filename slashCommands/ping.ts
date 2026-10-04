@@ -1,12 +1,14 @@
+import { replyToCommand } from "../Modules/interactionResponses";
 import { SlashCommand } from '../types';
 
 const exportCommand: SlashCommand = {
     name: 'ping',
+    earlyAcknowledgement: "public",
     skipUserRefetch: true,
     skipServerRefetch: true,
     async execute({ interaction }) {
 
-        return interaction.reply({ content: `pong! 🏓 ${Math.round(interaction.client.ws.ping)}ms` });
+        return replyToCommand(interaction, { content: `pong! 🏓 ${Math.round(interaction.client.ws.ping)}ms` });
 
     },
 };

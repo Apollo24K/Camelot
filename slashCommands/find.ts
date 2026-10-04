@@ -1,3 +1,4 @@
+import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, showPage, rarityColor, rarityEmoji } from "../Modules/functions";
 import { PageRow } from "../Modules/components";
@@ -6,11 +7,12 @@ import { getFindUsers, getServerSchema, updateUsers } from '../Modules/queries';
 
 const exportCommand: SlashCommand = {
     name: 'find',
+    earlyAcknowledgement: "public",
     async execute({ interaction, author, server }) {
-        if (!interaction.guild) return interaction.reply({ content: "This command can only be used in a server", ephemeral: true });
+        if (!interaction.guild) return replyToCommand(interaction, { content: "This command can only be used in a server", ephemeral: true });
 
         try {
-            await interaction.deferReply();
+            await deferCommand(interaction);
         } catch (err) {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         };
@@ -19,7 +21,7 @@ const exportCommand: SlashCommand = {
         const setting = interaction.options.getString('setting') as "0" | "1" | "2" | null;
 
         const servers = server.schema ?? await getServerSchema(interaction.guild.id);
-        if (!servers) return interaction.editReply({ content: "This command can only be used in a server" });
+        if (!servers) return editCommandReply(interaction, { content: "This command can only be used in a server" });
 
         const char = search(interaction.options.getString('character', true), author.schema.chars, interaction);
         if (!char) return;
@@ -30,7 +32,7 @@ const exportCommand: SlashCommand = {
             if (author.schema.findoption !== parseInt(setting)) {
                 await updateUsers(interaction.user.id, { findoption: { type: 'set', value: parseInt(setting) } });
             };
-            return interaction.editReply(`${["All your characters", "Only your dupes", "None of your characters"][parseInt(setting)]} will be visible for others in \`/find\` from now on <:ThumbsUp:1020442047712350298>`);
+            return editCommandReply(interaction, `${["All your characters", "Only your dupes", "None of your characters"][parseInt(setting)]} will be visible for others in \`/find\` from now on <:ThumbsUp:1020442047712350298>`);
         };
 
         const userCounts: { name: string, count: number; }[] = [];
@@ -44,7 +46,7 @@ const exportCommand: SlashCommand = {
 
         const users = userCounts.map(user => `**${user.name}** has **${user.count}** ${user.count == 1 ? "copy" : "copies"}`);
 
-        if (users.length < 1) return interaction.editReply(`No one on this server has a dupe of **${char.name}**`);
+        if (users.length < 1) return editCommandReply(interaction, `No one on this server has a dupe of **${char.name}**`);
 
         // Setup Pages
         const elementsPerPage = 10;
@@ -60,8 +62,8 @@ const exportCommand: SlashCommand = {
             .setColor(rarityColor(char.rarity))
             .setTitle(`Found ${users.length} ${users.length > 1 ? "Players" : "Player"}`)
             .setThumbnail(char.image);
-        if (pagesTotal === 1) return interaction.editReply({ embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n"))] });
-        return interaction.editReply({ embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
+        if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n"))] });
+        return editCommandReply(interaction, { embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
             collector.on('collect', r => {
@@ -76,7 +78,7 @@ const exportCommand: SlashCommand = {
                 showUsersF = showPage(currPage, users, elementsPerPage);
 
                 Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
             });
         });
     },
