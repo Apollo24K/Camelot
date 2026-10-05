@@ -1,4 +1,5 @@
 import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
+import { collectButtonUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { armorInfo, items, ringInfo, weaponInfo } from "../Modules/items";
@@ -168,22 +169,19 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [Embed] });
             return editCommandReply(interaction, { embeds: [Embed], components: [PageRow] }).then(msg => {
-                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && ["prev", "next"].includes(r.customId), componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
-                    if (r.customId === "prev") {
-                        if (currPage > 1) currPage--;
-                        else currPage = pagesTotal;
-                    } else {
-                        if (currPage < pagesTotal) currPage++;
-                        else currPage = 1;
-                    };
+                collectButtonUpdates(collector, async r => {
+                    const nextPage = r.customId === "prev"
+                        ? (currPage > 1 ? currPage - 1 : pagesTotal)
+                        : (currPage < pagesTotal ? currPage + 1 : 1);
 
-                    showItems = showPage(currPage, itemsR, elementsPerPage);
+                    showItems = showPage(nextPage, itemsR, elementsPerPage);
                     desc = itemsToShow(showItems);
 
-                    Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
+                    Embed.setDescription(desc).setFooter({ text: `Page ${nextPage}/${pagesTotal}` });
+                    await editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
+                    currPage = nextPage;
                 });
             });
         };
@@ -220,22 +218,19 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [Embed] });
             return editCommandReply(interaction, { embeds: [Embed], components: [PageRow] }).then(msg => {
-                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+                const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && ["prev", "next"].includes(r.customId), componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
-                    if (r.customId === "prev") {
-                        if (currPage > 1) currPage--;
-                        else currPage = pagesTotal;
-                    } else {
-                        if (currPage < pagesTotal) currPage++;
-                        else currPage = 1;
-                    };
+                collectButtonUpdates(collector, async r => {
+                    const nextPage = r.customId === "prev"
+                        ? (currPage > 1 ? currPage - 1 : pagesTotal)
+                        : (currPage < pagesTotal ? currPage + 1 : 1);
 
-                    showItems = showPage(currPage, itemsR, elementsPerPage);
+                    showItems = showPage(nextPage, itemsR, elementsPerPage);
                     desc = itemsToShow(showItems);
 
-                    Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
+                    Embed.setDescription(desc).setFooter({ text: `Page ${nextPage}/${pagesTotal}` });
+                    await editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
+                    currPage = nextPage;
                 });
             });
         };
@@ -285,22 +280,19 @@ const exportCommand: SlashCommand = {
             .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
         if (pagesTotal === 1) return editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed] });
         return editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] }).then(msg => {
-            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
+            const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && ["prev", "next"].includes(r.customId), componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', async r => {
-                if (r.customId === "prev") {
-                    if (currPage > 1) currPage--;
-                    else currPage = pagesTotal;
-                } else {
-                    if (currPage < pagesTotal) currPage++;
-                    else currPage = 1;
-                };
+            collectButtonUpdates(collector, async r => {
+                const nextPage = r.customId === "prev"
+                    ? (currPage > 1 ? currPage - 1 : pagesTotal)
+                    : (currPage < pagesTotal ? currPage + 1 : 1);
 
-                showItems = showPage(currPage, itemsR, elementsPerPage);
+                showItems = showPage(nextPage, itemsR, elementsPerPage);
                 desc = itemsToShow(showItems, "weapon", stats.itemlock);
 
-                Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[currPage - 1]).setFooter({ text: `Page ${currPage}/${pagesTotal}` }) : Embed], components: [PageRow] });
+                Embed.setDescription(desc).setFooter({ text: `Page ${nextPage}/${pagesTotal}` });
+                await editCommandReply(interaction, { embeds: [flag === "detailed" ? detailedPage(itemsR[nextPage - 1]).setFooter({ text: `Page ${nextPage}/${pagesTotal}` }) : Embed], components: [PageRow] });
+                currPage = nextPage;
             });
         });
     },

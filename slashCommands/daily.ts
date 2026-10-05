@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ComponentType } from "discord.js";
 import { userLevel, daysSince } from "../Modules/functions";
 import { achievements } from "../Modules/achievements";
@@ -77,7 +78,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ content: `You have missed a daily and are about to lose your daily streak of **${stats.dailystreak}** ${streakEmoji(stats.dailystreak)}\nWould you like to save it for **${cost}**<:genesis_gems:1034179687720681492>?`, components: [OfferRow], fetchReply: true }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-            collector.on('collect', async (r) => {
+            collectComponentUpdates(collector, async (r) => {
                 collector.stop();
 
                 const stats = await getUserSchema(interaction.user.id);

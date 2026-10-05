@@ -1,4 +1,5 @@
 import { InteractionCooldowns, cooldownMessage } from "../Modules/interactionCooldowns";
+import { deferButtonUpdate } from "../Modules/buttonInteractions";
 import { deferCommand, reportCommandError, replyToCommand } from "../Modules/interactionResponses";
 import { traceInteraction, markAcknowledged, markVisible, markInteractionFailed, timing, errorCode } from "../Modules/responsivenessTelemetry";
 import { Interaction, PermissionsBitField } from "discord.js";
@@ -36,10 +37,7 @@ const event: BotEvent = {
                     };
 
                     if (interaction.customId?.startsWith("ignore_defer")) return;
-                    if (!interaction.deferred && !interaction.replied) {
-                        await interaction.deferUpdate();
-                        markAcknowledged(interaction);
-                    }
+                    if (!await deferButtonUpdate(interaction)) return;
 
 
                     if (interaction.customId?.startsWith("ref-dungeon-")) {

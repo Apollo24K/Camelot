@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
 import { splitTitle, rarity, getRefinement, rarityColor } from "../Modules/functions";
@@ -122,7 +123,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ embeds: [Embed], components: [r1(stats)] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ex", componentType: ComponentType.Button, time: 60000 });
 
-            collector.on('collect', async () => {
+            collectComponentUpdates(collector, async () => {
                 const inv = await getUserSchema(interaction.user.id);
                 if (!inv) return;
                 stats.expulls = inv.expulls;
@@ -151,7 +152,7 @@ const exportCommand: SlashCommand = {
 
 
                 Embed.setDescription(getDesc());
-                interaction.editReply({ embeds: [Embed], components: [r1(stats)] });
+                await interaction.editReply({ embeds: [Embed], components: [r1(stats)] });
 
 
                 if (char.name === "Padoru EX") {

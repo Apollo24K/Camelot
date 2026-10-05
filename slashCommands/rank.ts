@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { getDetailedStats, showPage, baseEP, RoK, rarityEmoji } from "../Modules/functions";
@@ -111,7 +112,7 @@ export const exportCommand: SlashCommand = {
         return interaction[interaction.deferred ? "editReply" : "reply"]({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', async r => {
+            collectComponentUpdates(collector, async r => {
                 if (r.customId === "prev") {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
@@ -123,7 +124,7 @@ export const exportCommand: SlashCommand = {
                 showUsersF = showPage(currPage, sortedArr, elementsPerPage);
 
                 Embed.setDescription(showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal} ${(scope === "server" || scope === "global") ? "| Ranking updates every 6 hours" : ""}` });
-                msg.edit({ embeds: [Embed], components: [PageRow] });
+                await msg.edit({ embeds: [Embed], components: [PageRow] });
             });
 
         });

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import fs from 'fs';
 import csvWriter from 'fast-csv';
 import { ComponentType, ActionRowBuilder, ButtonBuilder, EmbedBuilder, AttachmentBuilder, ButtonStyle } from "discord.js";
@@ -148,7 +149,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: desc(showUsers), components: [PageRow], ephemeral }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -160,7 +161,7 @@ const exportCommand: SlashCommand = {
                     showUsers = showPage(currPage, uids, elementsPerPage);
 
                     // Embed.setDescription("Use `/item info <name or ID>` for more information" + desc).setFooter({text: `Page ${currPage}/${pagesTotal}`});
-                    interaction.editReply({ content: desc(showUsers) });
+                    await interaction.editReply({ content: desc(showUsers) });
                 });
             });
         };

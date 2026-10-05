@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from "discord.js";
 import { formatNumberWithQuotes } from "../Modules/functions";
 import { getUserSchema, updateUsersAndCache } from "../Modules/queries";
@@ -52,7 +53,7 @@ const exportCommand: SlashCommand = {
                     interaction.followUp({ embeds: [Embed], components: [row], fetchReply: true, ephemeral: true }).then((msg: any) => {
                         const collector = msg.createMessageComponentCollector({ filter: (r: any) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                        collector.on('collect', async () => {
+                        collectComponentUpdates(collector, async () => {
                             collector.stop();
                             await updateUsersAndCache(interaction.client, interaction.user.id, {
                                 updates: {

@@ -1,4 +1,5 @@
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { waitForComponentAcknowledgements } from "../Modules/buttonInteractions";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { errorCode, timing } from "../Modules/responsivenessTelemetry";
@@ -501,7 +502,10 @@ const exportCommand: SlashCommand = {
                         matchStats.turn = 1;
                         setTimeout(async () => {
                             showRound = finalDelivered
-                                ? embed => msg.edit({ embeds: [embed], components: [row] })
+                                ? async embed => {
+                                    await waitForComponentAcknowledgements(msg.id);
+                                    return msg.edit({ embeds: [embed], components: [row] });
+                                }
                                 : embed => interaction.followUp({ embeds: [embed], components: [row] });
                             resolve(await matchResult(wORl) ?? undefined);
                         }, 1000);

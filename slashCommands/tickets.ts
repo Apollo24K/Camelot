@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ButtonInteraction, Message } from "discord.js";
 import charInfo, { characters } from "../Modules/chars.js";
 import { splitTitle, rarity, getRefinement, showPage, rarityColor } from "../Modules/functions.js";
@@ -71,7 +72,7 @@ const exportCommand: SlashCommand = {
             const msg = await interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true });
             const collector = msg.createMessageComponentCollector({ filter: (r: ButtonInteraction) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', (r: ButtonInteraction) => {
+            collectComponentUpdates(collector, async (r: ButtonInteraction) => {
                 if (r.customId === "prev") {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
@@ -83,7 +84,7 @@ const exportCommand: SlashCommand = {
                 showItems = showPage(currPage, pulled, elementsPerPage);
 
                 Embed.setFooter({ text: `Page ${currPage}/${pagesTotal}` }).setDescription(showItems.map((e) => `> ${characters[e].name} (${stats.chars.filter((c) => c === e).length} ${stats.chars.filter((c) => c === e).length === 1 ? "copy" : "copies"})`).join("\n"));
-                interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                await interaction.editReply({ embeds: [Embed], components: [PageRow] });
             });
 
             return;
@@ -162,7 +163,7 @@ const exportCommand: SlashCommand = {
 
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
-            collector.on('collect', async (r: ButtonInteraction) => {
+            collectComponentUpdates(collector, async (r: ButtonInteraction) => {
                 stats = await getUserSchema(interaction.user.id);
                 if (!stats) return;
 
@@ -182,7 +183,7 @@ const exportCommand: SlashCommand = {
                     chars: { type: 'append', value: [tChar[tId].id] }
                 });
 
-                msg.edit({ embeds: [e1(stats)], components: [r1(), r2()] });
+                await msg.edit({ embeds: [e1(stats)], components: [r1(), r2()] });
             });
         });
 

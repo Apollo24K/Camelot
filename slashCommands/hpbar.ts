@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags } from "discord.js";
 import { CompactUserSchema, SlashCommand } from '../types';
 import { getOwnedCharacterIds, getUserSchema, updateUsersAndCache } from '../Modules/queries';
@@ -89,7 +90,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars, elementsPerPage), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])], flags: MessageFlags.IsComponentsV2 }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async (r) => {
+                collectComponentUpdates(collector, async (r) => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -122,7 +123,7 @@ const exportCommand: SlashCommand = {
                         });
                     };
 
-                    interaction.editReply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars, elementsPerPage), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])] });
+                    await interaction.editReply({ components: [getHpBarPage({ hpBars: showPage(currPage, hpBars, elementsPerPage), stats, thmbnl: thumbnail, currPage, pagesTotal, isInteractionOwner: user.id === interaction.user.id }), ...(pagesTotal === 1 ? [] : [PageRow])] });
                 });
             });
         };

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags, AttachmentBuilder, StringSelectMenuBuilder } from "discord.js";
 import { CompactUserSchema, SlashCommand } from "../types";
 import { ExternalLinks, currencyEmojis, OfferRow } from "../Modules/components";
@@ -331,7 +332,7 @@ export const exportCommand: SlashCommand = {
         return interaction.reply({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)], flags: MessageFlags.IsComponentsV2 }).then(async (msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, time: 120000 });
 
-            collector.on('collect', async (r) => {
+            collectComponentUpdates(collector, async (r) => {
                 if (r.customId.startsWith('tab_')) {
                     currentTab = r.customId.split('_')[1] as SeasonalShopTab;
                     skinPage = 0;
@@ -357,16 +358,16 @@ export const exportCommand: SlashCommand = {
                         interaction.followUp({ content, components: [BuyKeysRow] }).then(ms => {
                             const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                            buyCollector.on('collect', async rr => {
+                            collectComponentUpdates(buyCollector, async rr => {
                                 if (!rr.customId.startsWith('buy_key_')) {
-                                    ms.edit({ content: "Action cancelled", components: [] });
+                                    await ms.edit({ content: "Action cancelled", components: [] });
                                     return;
                                 };
 
                                 const amount = parseInt(rr.customId.split('_')[2]);
                                 const cost = 10 * amount;
                                 if (isNaN(amount) || isNaN(cost)) {
-                                    ms.edit({ content: "Invalid input", components: [] });
+                                    await ms.edit({ content: "Invalid input", components: [] });
                                     return;
                                 };
 
@@ -375,7 +376,7 @@ export const exportCommand: SlashCommand = {
 
                                 // Return if balance not enough
                                 if (tempStats.gems < cost) {
-                                    ms.edit({ content: `You don't have enough genesis gems (**${tempStats.gems}**/${cost} ${currencyEmojis.gems})`, components: [] });
+                                    await ms.edit({ content: `You don't have enough genesis gems (**${tempStats.gems}**/${cost} ${currencyEmojis.gems})`, components: [] });
                                     return;
                                 };
 
@@ -391,9 +392,9 @@ export const exportCommand: SlashCommand = {
                                 stats.season_keys += amount;
 
                                 // Edit replies
-                                ms.edit({ content: "Purchase Successful!", components: [] });
+                                await ms.edit({ content: "Purchase Successful!", components: [] });
                                 await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
-                            });
+                            }, msg.id);
                         });
                     };
 
@@ -407,9 +408,9 @@ export const exportCommand: SlashCommand = {
                         interaction.followUp({ content, components: [OfferRow] }).then(ms => {
                             const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                            buyCollector.on('collect', async rr => {
+                            collectComponentUpdates(buyCollector, async rr => {
                                 if (rr.customId !== "confirm") {
-                                    ms.edit({ content: "Action cancelled", components: [] });
+                                    await ms.edit({ content: "Action cancelled", components: [] });
                                     return;
                                 };
 
@@ -418,7 +419,7 @@ export const exportCommand: SlashCommand = {
 
                                 // Return if balance not enough
                                 if (tempStats.season_keys < cost) {
-                                    ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
+                                    await ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
                                     return;
                                 };
 
@@ -431,9 +432,9 @@ export const exportCommand: SlashCommand = {
                                 });
 
                                 // Edit replies
-                                ms.edit({ content: "Purchase Successful!", components: [] });
+                                await ms.edit({ content: "Purchase Successful!", components: [] });
                                 await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
-                            });
+                            }, msg.id);
                         });
                     };
 
@@ -447,9 +448,9 @@ export const exportCommand: SlashCommand = {
                         interaction.followUp({ content, components: [OfferRow] }).then(ms => {
                             const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                            buyCollector.on('collect', async rr => {
+                            collectComponentUpdates(buyCollector, async rr => {
                                 if (rr.customId !== "confirm") {
-                                    ms.edit({ content: "Action cancelled", components: [] });
+                                    await ms.edit({ content: "Action cancelled", components: [] });
                                     return;
                                 };
 
@@ -458,7 +459,7 @@ export const exportCommand: SlashCommand = {
 
                                 // Return if balance not enough
                                 if (tempStats.season_keys < cost) {
-                                    ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
+                                    await ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
                                     return;
                                 };
 
@@ -475,17 +476,14 @@ export const exportCommand: SlashCommand = {
                                 });
 
                                 // Edit replies
-                                ms.edit({ content: "Purchase Successful!", components: [] });
+                                await ms.edit({ content: "Purchase Successful!", components: [] });
                                 await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
-                            });
+                            }, msg.id);
                         });
                     };
                 };
 
                 if (r.customId === 'skin_select' && r.isStringSelectMenu()) {
-                    await r.deferUpdate().catch((err) => {
-                        console.log(`ERROR Interaction Failed 'deferUpdate()' on "${r.customId}":`, err);
-                    });
                     const selectedValue = r.values[0]; // e.g., "buy_skin_209"
                     if (!selectedValue.startsWith('buy_skin_')) return;
 
@@ -498,9 +496,9 @@ export const exportCommand: SlashCommand = {
                     interaction.followUp({ content, components: [OfferRow] }).then(ms => {
                         const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                        buyCollector.on('collect', async rr => {
+                        collectComponentUpdates(buyCollector, async rr => {
                             if (rr.customId !== "confirm") {
-                                ms.edit({ content: "Action cancelled", components: [] });
+                                await ms.edit({ content: "Action cancelled", components: [] });
                                 return;
                             };
 
@@ -509,13 +507,13 @@ export const exportCommand: SlashCommand = {
 
                             // Return if already owned
                             if (tempStats.skins.includes(skinId)) {
-                                ms.edit({ content: `You already own this skin!`, components: [] });
+                                await ms.edit({ content: `You already own this skin!`, components: [] });
                                 return;
                             };
 
                             // Return if balance not enough
                             if (tempStats.season_keys < cost) {
-                                ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
+                                await ms.edit({ content: `You don't have enough season keys (**${tempStats.season_keys}**/${cost} ${currencyEmojis.season_keys})`, components: [] });
                                 return;
                             };
 
@@ -532,9 +530,9 @@ export const exportCommand: SlashCommand = {
                             });
 
                             // Edit replies
-                            ms.edit({ content: "Purchase Successful!", components: [] });
+                            await ms.edit({ content: "Purchase Successful!", components: [] });
                             await msg.edit({ components: [getShopPage(currentTab, stats, skinPage), getSeasonalShopButtonRow(currentTab)] });
-                        });
+                        }, msg.id);
                     });
                 };
 

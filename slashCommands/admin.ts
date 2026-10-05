@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, AttachmentBuilder, User, ContainerBuilder, MessageFlags } from "discord.js";
 import { characters } from "../Modules/chars";
+import { collectComponentUpdates, deferButtonUpdate } from "../Modules/buttonInteractions";
 import { classLevelToXP, rarityColor, search, searchItem, showPage } from "../Modules/functions";
 import { OfferRow, PageRow, activeAuctions, auctionChannelId, cowSettings } from "../Modules/components";
 import { requestVerification, dungeonTempBan } from "../Modules/components";
@@ -248,6 +249,7 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `Requested by ${interaction.user.tag}` });
             const msg = await interaction.reply({ embeds: [promptEmbed], components: [confirmRow], ephemeral, fetchReply: true });
             const btn = await msg.awaitMessageComponent({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 }).catch(() => null);
+            if (btn && !await deferButtonUpdate(btn)) return;
             if (!btn || btn.customId === 'cancel') {
                 return interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x888888).setTitle("Cancelled").setDescription("Reset was not performed.")], components: [] });
             };
@@ -304,7 +306,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow], ephemeral }).then((msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -316,7 +318,7 @@ const exportCommand: SlashCommand = {
                     showAnime = showPage(currPage, guildArr, elementsPerPage);
 
                     Embed.setDescription(showAnime.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
             });
         };
@@ -630,6 +632,7 @@ const exportCommand: SlashCommand = {
             const msg = await interaction.reply({ embeds: [confirmEmbed], components: [confirmRow], ephemeral, fetchReply: true });
 
             const btn = await msg.awaitMessageComponent({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 }).catch(() => null);
+            if (btn && !await deferButtonUpdate(btn)) return;
             if (!btn || btn.customId === 'cancel_delete_item') {
                 return interaction.editReply({ embeds: [new EmbedBuilder().setColor(0x888888).setTitle("Cancelled").setDescription("Deletion was not performed.")], components: [] });
             };
@@ -899,7 +902,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Are you sure you want to proceed transferring account details?\nOld Account: ${user.toString()}\nNew Account: <@${args[0]}>`, components: [OfferRow], ephemeral }).then((msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") return interaction.followUp({ content: "Action cancelled", ephemeral });
                     if (!user || !args[0]) return interaction.followUp({ content: "Action failed", ephemeral });

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, AttachmentBuilder, MessageFlags } from "discord.js";
 import { getProfileImage } from "./profile";
 import { CostTypes, ProfileDecorations, profileSets } from "../Modules/profileDecorations";
@@ -199,7 +200,7 @@ const exportCommand: SlashCommand = {
             return interaction[isRedirect ? 'followUp' : 'editReply']({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (!background || !background.set) return;
 
                     if (r.customId === "buy" || r.customId === "buy-set") {
@@ -208,7 +209,7 @@ const exportCommand: SlashCommand = {
                         interaction.followUp({ content, components }).then(ms => {
                             const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                            buyCollector.on('collect', async rr => {
+                            collectComponentUpdates(buyCollector, async rr => {
                                 if (!background || !background.set) return;
 
                                 const tempStats = await getUserSchema(interaction.user.id);
@@ -226,7 +227,7 @@ const exportCommand: SlashCommand = {
 
                                 // Return if balance not enough
                                 if (tempStats[rr.customId as keyof CostTypes] < cost) {
-                                    ms.edit({ content: `You don't have enough ${rr.customId} (**${tempStats[rr.customId as keyof CostTypes]}**/${cost} ${currencyEmojis[rr.customId as keyof CostTypes]})`, components: [] });
+                                    await ms.edit({ content: `You don't have enough ${rr.customId} (**${tempStats[rr.customId as keyof CostTypes]}**/${cost} ${currencyEmojis[rr.customId as keyof CostTypes]})`, components: [] });
                                     return;
                                 };
 
@@ -242,9 +243,9 @@ const exportCommand: SlashCommand = {
                                 });
 
                                 // Edit replies
-                                ms.edit({ content: "Purchase Successful!", components: [] });
-                                msg.edit({ components: [getPageRow(background.set.assets[currPage - 1], cachedImages, tempStats)] });
-                            });
+                                await ms.edit({ content: "Purchase Successful!", components: [] });
+                                await msg.edit({ components: [getPageRow(background.set.assets[currPage - 1], cachedImages, tempStats)] });
+                            }, msg.id);
 
                         });
                         return;
@@ -270,7 +271,7 @@ const exportCommand: SlashCommand = {
                         .setImage(background.set.assets[currPage - 1].asset.url)
                         .setThumbnail(cachedImages[currPage - 1] ? `attachment://profile.${background.set.assets[currPage - 1].asset.fileType === "gif" ? "gif" : "jpg"}` : null)
                         .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    msg.edit({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] });
+                    await msg.edit({ embeds: [Embed], components: [getPageRow(background.set.assets[currPage - 1], cachedImages, stats)], files: cachedImages[currPage - 1] ? [cachedImages[currPage - 1]] : [] });
                 });
             });
         };

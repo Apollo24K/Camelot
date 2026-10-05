@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import charInfo, { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD, auniq } from "../Modules/chars";
 import { displayPull, pullsToResetList, userLevel, showPage } from "../Modules/functions";
@@ -203,7 +204,7 @@ const exportCommand: SlashCommand = {
             interaction.reply({ embeds: [Overview], components: [GoToCharsRow], fetchReply: true }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "view") return interaction.editReply({ embeds: [Overview], components: [GoToCharsRow] });
                     if (r.customId === "chars") return interaction.editReply({ embeds: [Embed], components: [pagesTotal === 1 ? GoToOverviewRow : FlipPagesRow] });
 
@@ -224,7 +225,7 @@ const exportCommand: SlashCommand = {
                     });
 
                     Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
             });
 

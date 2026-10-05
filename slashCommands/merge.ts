@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { itemInfo, items } from "../Modules/items";
 import { showPage } from "../Modules/functions";
@@ -67,10 +68,10 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ content: `Are you sure you want to merge **${amount * unitCost}x** ${exchangePoint.emoji} into **${amount}x** __${exchangePoint.grade}__ items for **${amount * unitCoinCost}** <:coins:872926669055356939>?`, components: [OfferRow] }).then((msg) => {
             const next = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
-            next.on('collect', async (r) => {
+            collectComponentUpdates(next, async (r) => {
                 if (r.customId === "cancel") {
                     next.stop();
-                    interaction.editReply({ components: [] });
+                    await interaction.editReply({ components: [] });
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     return;
                 };
@@ -145,7 +146,7 @@ const exportCommand: SlashCommand = {
                     return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then(() => {
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 
-                        collector.on('collect', (rr) => {
+                        collectComponentUpdates(collector, async (rr) => {
                             if (rr.customId === "prev") {
                                 if (currPage > 1) currPage--;
                                 else currPage = pagesTotal;
@@ -158,7 +159,7 @@ const exportCommand: SlashCommand = {
                             desc = itemsToShow(showItems);
 
                             Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                            interaction.editReply({ embeds: [Embed] });
+                            await interaction.editReply({ embeds: [Embed] });
                         });
                     });
                 };

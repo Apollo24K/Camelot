@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ComponentType } from "discord.js";
 import { items } from "../Modules/items";
 import { OfferRow } from "../Modules/components";
@@ -44,7 +45,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     const stats = await getUserSchema(interaction.user.id);
                     if (!stats) return;
 
@@ -65,7 +66,7 @@ const exportCommand: SlashCommand = {
                     cancel.stop();
                 });
 
-                cancel.on('collect', async r => {
+                collectComponentUpdates(cancel, async r => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -103,7 +104,7 @@ const exportCommand: SlashCommand = {
 
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
@@ -157,7 +158,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Are you sure you want to convert **${amount}**<:eternal_jade:1256124504141201428> to **${amount}**<:genesis_gems:1034179687720681492>`, components: [OfferRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");

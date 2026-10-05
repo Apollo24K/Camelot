@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, ModalBuilder, TextInputBuilder, ComponentType, ButtonStyle, TextInputStyle } from "discord.js";
 import { userLevel, showPage } from "../Modules/functions";
 import { PageRow, OfferRow } from "../Modules/components";
@@ -86,7 +87,7 @@ const exportCommand: SlashCommand = {
                         r.reply({ content: `⚠️ You can use this command only on 1 player ⚠️\nAre you sure you want to be referred by <@${rid}>?\n\n**When to use?**\n- This feature is meant to be used by friends who invited each other, do not proceed if <@${rid}> has not invited you to the game, or otherwise helped or motivated you to play, as that is against our [Terms of Service](<https://github.com/Apollo24K/Camelot/blob/main/TERMS.md>).\n\n**What happens?**\n- If you continue <@${rid}> will receive rewards including loot, a chance at a rare character and **__20% of all gems <:genesis_gems:1157331914861052034> purchased by you in the future__** (note that this won't affect the amount of gems <:genesis_gems:1157331914861052034> you receive).`, components: [OfferRow], fetchReply: true, ephemeral: true }).then(async (ms) => {
                             const pageCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
-                            pageCollector.on('collect', async (c) => {
+                            collectComponentUpdates(pageCollector, async (c) => {
                                 if (c.customId === "cancel") return r.editReply({ content: `Action cancelled`, components: [] });
 
                                 // await query(`UPDATE users SET referred_by = ${rid} WHERE id = ${interaction.user.id} AND referred_by IS null`);
@@ -96,7 +97,7 @@ const exportCommand: SlashCommand = {
                                     referred_by: { type: "set", value: rid },
                                 });
 
-                                r.editReply({ content: `Thank you!`, components: [] });
+                                await r.editReply({ content: `Thank you!`, components: [] });
                             });
                         });
                     } else {
@@ -139,7 +140,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ embeds: [Embed], components: [getListRow(user.id !== interaction.user.id ? true : (stats.referrals_claimed >= passed.length))] }).then(async (msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-            collector.on('collect', async (r) => {
+            collectComponentUpdates(collector, async (r) => {
                 if (r.customId === "claim") {
                     if (user.id === interaction.user.id) {
                         const stats = await getUserSchema(interaction.user.id);
@@ -182,7 +183,7 @@ const exportCommand: SlashCommand = {
                 r.reply({ content, components: [PageRow], ephemeral: true }).then(async (ms) => {
                     const pageCollector = ms.createMessageComponentCollector({ filter: (c) => c.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                    pageCollector.on('collect', (c) => {
+                    collectComponentUpdates(pageCollector, async (c) => {
                         if (c.customId === "prev") {
                             if (currPage > 1) currPage--;
                             else currPage = pagesTotal;
@@ -192,7 +193,7 @@ const exportCommand: SlashCommand = {
                         };
 
                         content = showPage(currPage, referred, elementsPerPage).map((e) => `- <@${e.id}> - Level **${e.level}**, Floor **${e.floor}** - Started **${e.age}** ${e.age === 1 ? "day" : "days"} ago`).join("\n");
-                        r.editReply({ content });
+                        await r.editReply({ content });
                     });
 
                 });

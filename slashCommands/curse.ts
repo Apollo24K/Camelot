@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { curses } from "../Modules/curses";
 import { PageRow } from "../Modules/components";
@@ -41,7 +42,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -53,7 +54,7 @@ const exportCommand: SlashCommand = {
                     showF = showPage(currPage, showC, elementsPerPage);
 
                     Embed.setDescription(`Use \`/curse info <name>\` for more information\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
             });
         };

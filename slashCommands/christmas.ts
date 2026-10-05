@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ChatInputCommandInteraction, SelectMenuComponentOptionData } from "discord.js";
@@ -210,7 +211,10 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
             const select = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "level_selection", componentType: ComponentType.StringSelect, time: 90000 });
 
-            play.on('collect', () => {
+            let pendingEdits = 0;
+
+            collectComponentUpdates(play, async () => {
+                if (pendingEdits > 0) return interaction.followUp({ content: 'Please wait for your build changes to finish saving.', ephemeral: true });
                 if (!("char" in stats.craze_equipment)) return interaction.followUp({ content: `Please select a character using the \`Edit Build\` button before playing`, ephemeral: true });
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
@@ -225,106 +229,108 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
                 rr.showModal(getModal(uid));
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_craze_' + uid), time: 90000 }).then(async (r) => {
-                    const char = r.fields.getTextInputValue('char');
-                    const cls = r.fields.getTextInputValue('class');
-                    const weapon = r.fields.getTextInputValue('weapon');
-                    const shield = r.fields.getTextInputValue('shield');
-                    const set = r.fields.getTextInputValue('set');
+                    if (play.ended) return r.reply({ content: 'This setup has closed. Please run the command again.', ephemeral: true });
+                    pendingEdits++;
+                    try {
+                        const char = r.fields.getTextInputValue('char');
+                        const cls = r.fields.getTextInputValue('class');
+                        const weapon = r.fields.getTextInputValue('weapon');
+                        const shield = r.fields.getTextInputValue('shield');
+                        const set = r.fields.getTextInputValue('set');
 
-                    // Match character
-                    if (char) {
-                        let getChar = search(char, stats.chars, interaction, true);
-                        if (getChar?.name) {
-                            stats.craze_equipment.char = getChar.id;
-                        };
-                        if (char === "remove") delete stats.craze_equipment.char;
-                    };
-
-                    // Match class
-                    if (cls) {
-                        let getClass = searchClass(cls, interaction, true);
-                        if (getClass?.name) {
-                            stats.craze_equipment.class = getClass.id;
-                        };
-                        if (cls === "remove") delete stats.craze_equipment.class;
-                    };
-
-                    // Match weapon
-                    if (weapon) {
-                        if (weapon === "<:GojoHeart:1194021178029920266>") {
-                            stats.craze_equipment.weapon = "<:GojoHeart:1194021178029920266>";
-                        } else {
-                            let getWeapon = searchItem(weapon, interaction, true);
-                            if (getWeapon?.name) { // && getWeapon.type !== "shield") {
-                                stats.craze_equipment.weapon = `${getWeapon.id}:706183309943767112`;
+                        // Match character
+                        if (char) {
+                            let getChar = search(char, stats.chars, interaction, true);
+                            if (getChar?.name) {
+                                stats.craze_equipment.char = getChar.id;
                             };
-                            if (weapon === "remove") delete stats.craze_equipment.weapon;
+                            if (char === "remove") delete stats.craze_equipment.char;
                         };
-                    };
 
-                    // Match shield
-                    if (shield) {
-                        let getShield = searchItem(shield, interaction, true);
-                        if (getShield?.name && getShield.type === "shield") {
-                            stats.craze_equipment.shield = `${getShield.id}:706183309943767112`;
+                        // Match class
+                        if (cls) {
+                            let getClass = searchClass(cls, interaction, true);
+                            if (getClass?.name) {
+                                stats.craze_equipment.class = getClass.id;
+                            };
+                            if (cls === "remove") delete stats.craze_equipment.class;
                         };
-                        if (shield === "remove") delete stats.craze_equipment.shield;
-                    };
 
-                    // Match set
-                    if (set) {
-                        let getSet = searchItem(set, interaction, true, { returnSet: true });
-                        if (getSet && getSet instanceof armorInfo) {
-                            let setItems = (items.filter((item) => (item instanceof armorInfo && getSet instanceof armorInfo && item.setname === getSet.setname)) ?? []) as armorInfo[];
-                            if (setItems.find((item) => item.type === "helmet")) {
-                                const helmet = setItems.find((item) => item.type === "helmet");
-                                if (helmet) stats.craze_equipment.helmet = `${helmet.id}:706183309943767112`;
-                            };
-                            if (setItems.find((item) => item.type === "cuirass")) {
-                                const cuirass = setItems.find((item) => item.type === "cuirass");
-                                if (cuirass) stats.craze_equipment.cuirass = `${cuirass.id}:706183309943767112`;
-                            };
-                            if (setItems.find((item) => item.type === "gloves")) {
-                                const gloves = setItems.find((item) => item.type === "gloves");
-                                if (gloves) stats.craze_equipment.gloves = `${gloves.id}:706183309943767112`;
-                            };
-                            if (setItems.find((item) => item.type === "boots")) {
-                                const boots = setItems.find((item) => item.type === "boots");
-                                if (boots) stats.craze_equipment.boots = `${boots.id}:706183309943767112`;
+                        // Match weapon
+                        if (weapon) {
+                            if (weapon === "<:GojoHeart:1194021178029920266>") {
+                                stats.craze_equipment.weapon = "<:GojoHeart:1194021178029920266>";
+                            } else {
+                                let getWeapon = searchItem(weapon, interaction, true);
+                                if (getWeapon?.name) { // && getWeapon.type !== "shield") {
+                                    stats.craze_equipment.weapon = `${getWeapon.id}:706183309943767112`;
+                                };
+                                if (weapon === "remove") delete stats.craze_equipment.weapon;
                             };
                         };
-                        if (set === "remove") {
-                            delete stats.craze_equipment.helmet;
-                            delete stats.craze_equipment.cuirass;
-                            delete stats.craze_equipment.gloves;
-                            delete stats.craze_equipment.boots;
+
+                        // Match shield
+                        if (shield) {
+                            let getShield = searchItem(shield, interaction, true);
+                            if (getShield?.name && getShield.type === "shield") {
+                                stats.craze_equipment.shield = `${getShield.id}:706183309943767112`;
+                            };
+                            if (shield === "remove") delete stats.craze_equipment.shield;
                         };
-                    };
 
-                    // Update users table
-                    await updateUsersAndCache(interaction.client, interaction.user.id, {
-                        updates: {
-                            craze_equipment: { type: "set", value: stats.craze_equipment },
-                        },
-                    });
+                        // Match set
+                        if (set) {
+                            let getSet = searchItem(set, interaction, true, { returnSet: true });
+                            if (getSet && getSet instanceof armorInfo) {
+                                let setItems = (items.filter((item) => (item instanceof armorInfo && getSet instanceof armorInfo && item.setname === getSet.setname)) ?? []) as armorInfo[];
+                                if (setItems.find((item) => item.type === "helmet")) {
+                                    const helmet = setItems.find((item) => item.type === "helmet");
+                                    if (helmet) stats.craze_equipment.helmet = `${helmet.id}:706183309943767112`;
+                                };
+                                if (setItems.find((item) => item.type === "cuirass")) {
+                                    const cuirass = setItems.find((item) => item.type === "cuirass");
+                                    if (cuirass) stats.craze_equipment.cuirass = `${cuirass.id}:706183309943767112`;
+                                };
+                                if (setItems.find((item) => item.type === "gloves")) {
+                                    const gloves = setItems.find((item) => item.type === "gloves");
+                                    if (gloves) stats.craze_equipment.gloves = `${gloves.id}:706183309943767112`;
+                                };
+                                if (setItems.find((item) => item.type === "boots")) {
+                                    const boots = setItems.find((item) => item.type === "boots");
+                                    if (boots) stats.craze_equipment.boots = `${boots.id}:706183309943767112`;
+                                };
+                            };
+                            if (set === "remove") {
+                                delete stats.craze_equipment.helmet;
+                                delete stats.craze_equipment.cuirass;
+                                delete stats.craze_equipment.gloves;
+                                delete stats.craze_equipment.boots;
+                            };
+                        };
 
-                    interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
-                    r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                        // Update users table
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                craze_equipment: { type: "set", value: stats.craze_equipment },
+                            },
+                        });
+
+                        if (!play.ended) await interaction.editReply({ embeds: [Embed.setDescription(getDesc())] });
+                        r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                    } finally {
+                        pendingEdits--;
+                    }
                 });
             });
 
-            select.on('collect', r => {
-                r.deferUpdate().catch(() => {
-                    console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-                });
-
+            collectComponentUpdates(select, async r => {
                 let readVal = parseInt(r.values[0]);
                 if (readVal >= levelsUnlocked) readVal = 0;
 
                 level = readVal;
                 crazeLevelSelected.set(interaction.user.id, level);
 
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [selectionRow, getButtonRow()] });
+                await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [selectionRow, getButtonRow()] });
             });
 
             play.on('end', () => {

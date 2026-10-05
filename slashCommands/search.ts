@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import charInfo, { characters, uniqueAnimeCharacters } from "../Modules/chars";
 import { searchAnime, showPage, splitTitle, rarity, rarityColor, rarityEmoji } from "../Modules/functions";
@@ -56,12 +57,12 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") currPage > 1 ? currPage-- : currPage = pagesTotal;
                     else currPage < pagesTotal ? currPage++ : currPage = 1;
 
                     Embed.setThumbnail(rarity(allChars[currPage - 1].rarity)).setDescription(`**${allChars[currPage - 1].name}**${uniq.includes(allChars[currPage - 1].id) ? " <a:check:873196253276700682>" : ""}\n**${aTitle}** (${charsOwned.length}/${allChars.length})\n**ID**: #${allChars[currPage - 1].id}`).setImage(allChars[currPage - 1].image).setColor(rarityColor(allChars[currPage - 1].rarity)).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
 
             });
@@ -107,7 +108,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', r => {
+            collectComponentUpdates(collector, async r => {
                 if (r.customId === "prev") {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
@@ -117,7 +118,7 @@ const exportCommand: SlashCommand = {
                 };
 
                 Embed.setDescription(charPage()).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                interaction.editReply({ embeds: [Embed] });
+                await interaction.editReply({ embeds: [Embed] });
             });
 
         });

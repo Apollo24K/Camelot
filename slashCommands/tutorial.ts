@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, StringSelectMenuBuilder, ComponentType, ButtonStyle, SelectMenuComponentOptionData } from "discord.js";
 import { charactersA } from "../Modules/chars";
@@ -58,7 +59,7 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "accept", componentType: ComponentType.Button, time: 120000 });
 
-                    collector.on('collect', async () => {
+                    collectComponentUpdates(collector, async () => {
                         collector.stop();
 
                         await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -116,7 +117,7 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
 
-                    collector.on('collect', () => {
+                    collectComponentUpdates(collector, async () => {
                         collector.stop();
 
                         triggerTutorial();
@@ -141,7 +142,7 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
 
-                    collector.on('collect', async () => {
+                    collectComponentUpdates(collector, async () => {
                         collector.stop();
 
                         await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -212,11 +213,8 @@ const exportCommand: SlashCommand = {
 
                             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "class_selection", componentType: ComponentType.StringSelect, time: 120000 });
 
-                            collector.on('collect', async r => {
+                            collectComponentUpdates(collector, async r => {
                                 collector.stop();
-                                await r.deferUpdate().catch(() => {
-                                    console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-                                });
 
                                 if (stats.dungeon_classes.length === 0) {
                                     const classId = parseInt(r.values[0]);
@@ -242,11 +240,11 @@ const exportCommand: SlashCommand = {
                                         .setTitle(`You have unlocked ${classes[classId].name}! 🎉`)
                                         .setThumbnail(classes[classId].image)
                                         .setDescription(`Once you reach level 40 on your ${classes[classId].name} class you will be able to upgrade it to either **${classes[classes[classId].path[0][1]].name}** or **${classes[classes[classId].path[1][1]].name}**! <a:TaigaHappy:1045396982627323975>`);
-                                    editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
+                                    await editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
 
                                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
 
-                                        collector.on('collect', () => {
+                                        collectComponentUpdates(collector, async () => {
                                             collector.stop();
 
                                             triggerTutorial();
@@ -318,11 +316,8 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "class_selection", componentType: ComponentType.StringSelect, time: 60000 });
 
-                    collector.on('collect', async r => {
+                    collectComponentUpdates(collector, async r => {
                         collector.stop();
-                        await r.deferUpdate().catch(() => {
-                            console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-                        });
 
                         const item = items[parseInt(r.values[0])];
 
@@ -362,7 +357,7 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
 
-                    collector.on('collect', async () => {
+                    collectComponentUpdates(collector, async () => {
                         collector.stop();
 
                         await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -397,7 +392,7 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 60000 });
 
-                    collector.on('collect', async () => {
+                    collectComponentUpdates(collector, async () => {
                         collector.stop();
 
                         await updateUsersAndCache(interaction.client, interaction.user.id, {

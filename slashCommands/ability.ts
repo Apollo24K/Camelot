@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { characters } from "../Modules/chars";
 import { abilities } from "../Modules/abilities";
@@ -289,7 +290,7 @@ const exportCommand: SlashCommand = {
             const view = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "view", componentType: ComponentType.Button, time: 90000 });
             const summary = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "summary", componentType: ComponentType.Button, time: 90000 });
 
-            prev.on('collect', async r => {
+            collectComponentUpdates(prev, async r => {
                 if (selection === "single") {
                     if (singleCurrPage > 1) singleCurrPage--;
                     else singleCurrPage = singlePagesTotal;
@@ -312,10 +313,10 @@ const exportCommand: SlashCommand = {
                 }
 
                 Embed = changeEmbed();
-                interaction.editReply({ embeds: [Embed], components: [r1()] });
+                await interaction.editReply({ embeds: [Embed], components: [r1()] });
             });
 
-            next.on('collect', async r => {
+            collectComponentUpdates(next, async r => {
                 if (selection === "single") {
                     if (singleCurrPage < singlePagesTotal) singleCurrPage++;
                     else singleCurrPage = 1;
@@ -338,22 +339,22 @@ const exportCommand: SlashCommand = {
                 }
 
                 Embed = changeEmbed();
-                interaction.editReply({ embeds: [Embed], components: [r1()] });
+                await interaction.editReply({ embeds: [Embed], components: [r1()] });
             });
 
-            view.on('collect', async r => {
+            collectComponentUpdates(view, async r => {
                 if (selection === "single") selection = "list";
                 else selection = "single";
 
                 Embed = changeEmbed();
-                interaction.editReply({ embeds: [Embed], components: [r1()] });
+                await interaction.editReply({ embeds: [Embed], components: [r1()] });
             });
 
-            summary.on('collect', async r => {
+            collectComponentUpdates(summary, async r => {
                 if (selection === "single" && !isEnemy) {
                     isSummary = !isSummary;
                     Embed = changeEmbed();
-                    interaction.editReply({ embeds: [Embed], components: [r1()] });
+                    await interaction.editReply({ embeds: [Embed], components: [r1()] });
                 }
             });
 

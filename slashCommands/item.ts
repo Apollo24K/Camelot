@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { armorInfo, chestInfo, entryInfo, fishInfo, itemInfo, items, lootInfo, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { searchItem, showPage, customEmojis, getAscensionMaterial, getItemLevel, getRingSlotsTotal } from "../Modules/functions";
@@ -205,7 +206,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embeds[currPage - 1]], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = Embeds.length;
@@ -214,7 +215,7 @@ const exportCommand: SlashCommand = {
                         else currPage = 1;
                     };
 
-                    interaction.editReply({ embeds: [Embeds[currPage - 1]] });
+                    await interaction.editReply({ embeds: [Embeds[currPage - 1]] });
                 });
             });
         };
@@ -258,7 +259,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -271,7 +272,7 @@ const exportCommand: SlashCommand = {
                     desc = itemsToShow(showItems);
 
                     Embed.setDescription("Use `/item info <name or ID>` for more information" + desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    await interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
             });
         };
@@ -320,7 +321,7 @@ const exportCommand: SlashCommand = {
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                    confirm.on('collect', async () => {
+                    collectComponentUpdates(confirm, async () => {
                         confirm.stop(), cancel.stop();
                         const stats = await getUserSchema(interaction.user.id);
                         if (!stats) return;
@@ -372,7 +373,7 @@ const exportCommand: SlashCommand = {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully ascended ${fItem.emoji} **__${fItem.name}__**!`);
                     });
 
-                    cancel.on('collect', () => {
+                    collectComponentUpdates(cancel, async () => {
                         confirm.stop(), cancel.stop();
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     });
@@ -394,7 +395,7 @@ const exportCommand: SlashCommand = {
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                    confirm.on('collect', async () => {
+                    collectComponentUpdates(confirm, async () => {
                         confirm.stop(), cancel.stop();
 
                         const item = await getWeaponSchema(`${itemChoice}:${interaction.user.id}`);
@@ -429,13 +430,13 @@ const exportCommand: SlashCommand = {
                             level: { type: "increment", value: 1 },
                         });
 
-                        interaction.editReply({ components: [] });
+                        await interaction.editReply({ components: [] });
                         if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully ascended ${fItem.emoji} __**${fItem.name}**__!`);
                     });
 
-                    cancel.on('collect', () => {
+                    collectComponentUpdates(cancel, async () => {
                         confirm.stop(), cancel.stop();
-                        interaction.editReply({ components: [] });
+                        await interaction.editReply({ components: [] });
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     });
                 });
@@ -604,7 +605,7 @@ const exportCommand: SlashCommand = {
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 90000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 90000 });
 
-                    addXP.on('collect', r => {
+                    collectComponentUpdates(addXP, async r => {
                         matsToUse[r.customId as keyof typeof matsToUse].use++;
                         xpSelected = totalXP(matsToUse);
                         const displayLimit = (matsToUse as any).effectiveLimit || limit;
@@ -631,10 +632,10 @@ const exportCommand: SlashCommand = {
                         embedDesc += `\n**XP left**: ${currLevel + 1 >= displayLimit ? "" : `__${missingXP(item.level + xpSelected, currLevel + 1)}__ for level ${currLevel + 1}, `}__${missingXP(item.level + xpSelected, displayLimit)}__ for level ${displayLimit}`;
 
                         Embed.setDescription(embedDesc);
-                        interaction.editReply({ embeds: [Embed], components: [row, OfferRow] });
+                        await interaction.editReply({ embeds: [Embed], components: [row, OfferRow] });
                     });
 
-                    confirm.on('collect', async () => {
+                    collectComponentUpdates(confirm, async () => {
                         addXP.stop(), confirm.stop(), cancel.stop();
 
                         const stats = await getUserSchema(interaction.user.id);
@@ -728,7 +729,7 @@ const exportCommand: SlashCommand = {
                             });
                         }
 
-                        interaction.editReply({ components: [] });
+                        await interaction.editReply({ components: [] });
 
                         const finalLevel = getItemLevel(item.level + xpSelected);
                         let successMessage = `Leveled ${fItem.emoji} __**${fItem.name}**__ up to level **${finalLevel}**!`;
@@ -744,9 +745,9 @@ const exportCommand: SlashCommand = {
                         achievements[78].check(interaction, interaction.user, itemLvl), achievements[79].check(interaction, interaction.user, itemLvl), achievements[80].check(interaction, interaction.user, itemLvl), achievements[81].check(interaction, interaction.user, itemLvl);
                     });
 
-                    cancel.on('collect', () => {
+                    collectComponentUpdates(cancel, async () => {
                         addXP.stop(), confirm.stop(), cancel.stop();
-                        interaction.editReply({ components: [] });
+                        await interaction.editReply({ components: [] });
                     });
 
                 });
@@ -1080,7 +1081,7 @@ const exportCommand: SlashCommand = {
             return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -1097,7 +1098,7 @@ const exportCommand: SlashCommand = {
                     }).join("\n");
 
                     Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    await interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
             });
         };

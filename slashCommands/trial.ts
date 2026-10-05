@@ -1,4 +1,5 @@
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { collectButtonUpdates } from "../Modules/buttonInteractions";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, ChatInputCommandInteraction } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
@@ -146,8 +147,7 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: Compact
             const edit_levels = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit_levels", componentType: ComponentType.Button, time: 90000 });
             let pendingEdits = 0;
 
-            play.on('collect', () => {
-                if (play.ended) return;
+            collectButtonUpdates(play, async () => {
                 if (pendingEdits > 0) return interaction.followUp({ content: "Please wait for your build changes to finish saving.", ephemeral: true });
                 if (!("char" in stats.trial_equipment)) return interaction.followUp({ content: `Please select a character using the \`Edit Build\` button before playing`, ephemeral: true });
                 if (dungeonInProgress.has(stats.id)) {

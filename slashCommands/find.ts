@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, showPage, rarityColor, rarityEmoji } from "../Modules/functions";
@@ -66,7 +67,7 @@ const exportCommand: SlashCommand = {
         return editCommandReply(interaction, { embeds: [Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', r => {
+            collectComponentUpdates(collector, async r => {
                 if (r.customId === "prev") {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
@@ -78,7 +79,7 @@ const exportCommand: SlashCommand = {
                 showUsersF = showPage(currPage, users, elementsPerPage);
 
                 Embed.setDescription(`**Character**: ${char.name}\n**Anime**: ${char.anime}\n**Rarity**: ${rarityEmoji(char.rarity)}\n**Copies**: ${totalCopies}\n\n` + showUsersF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
+                await editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
             });
         });
     },

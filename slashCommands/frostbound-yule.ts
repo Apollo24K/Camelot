@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, MessageFlags } from "discord.js";
 import { SlashCommand } from "../types";
 import { updateUsersAndCache } from "../Modules/queries";
@@ -57,8 +58,7 @@ export const exportCommand: SlashCommand = {
                 return interaction.editReply({ embeds: [Embed], components: [StartRow] }).then(async (msg) => {
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === 'start', componentType: ComponentType.Button, time: 120000 });
 
-                    collector.on('collect', async (r) => {
-
+                    collectComponentUpdates(collector, async (r) => {
                         stats.perpetual_fire = 20;
                         stats.yule_timestamp = new Date();
                         stats.yule_chapter_failed = false;
@@ -103,7 +103,7 @@ export const exportCommand: SlashCommand = {
             return interaction.editReply({ embeds: [Embed], components: getChapter0Row(timeLeft < 0, hasFailed) }).then(async (msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                collector.on('collect', async (r) => {
+                collectComponentUpdates(collector, async (r) => {
                     if (r.customId === 'restart') {
                         stats.perpetual_fire = 20;
                         stats.yule_timestamp = new Date();
@@ -189,7 +189,7 @@ export const exportCommand: SlashCommand = {
             return interaction.editReply({ embeds: [Embed], components: stats.perpetual_fragments >= chapterRequirement ? [NextChapterRow] : [] }).then(async (msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === 'next', componentType: ComponentType.Button, time: 120000 });
 
-                collector.on('collect', async (r) => {
+                collectComponentUpdates(collector, async (r) => {
                     stats.yule_chapter = chapter + 1;
                     stats.yule_timestamp = new Date();
                     stats.perpetual_fragments = 0;

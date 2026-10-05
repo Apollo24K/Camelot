@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, getDetailedStats, rarityColor } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
@@ -59,7 +60,7 @@ const exportCommand: SlashCommand = {
             const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
             const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-            confirm.on('collect', async () => {
+            collectComponentUpdates(confirm, async () => {
                 confirm.stop(), cancel.stop();
                 if (!char) return;
 
@@ -102,7 +103,7 @@ const exportCommand: SlashCommand = {
                 if (interaction.channel?.isSendable()) interaction.channel.send(`Raised **${char.name}**'s refinement level successfully!`);
             });
 
-            cancel.on('collect', () => {
+            collectComponentUpdates(cancel, async () => {
                 confirm.stop(), cancel.stop();
                 if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
             });

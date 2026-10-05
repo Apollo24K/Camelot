@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import fs from 'fs';
 import { EmbedBuilder, ComponentType, ChatInputCommandInteraction } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
@@ -309,7 +310,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Would you like to buy ${amount}x ${fItem.displayName} for **${cost}** ${fItem.emojiIcon}?`, components: [OfferRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");

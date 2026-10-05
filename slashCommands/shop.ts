@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonInteraction, Message, ButtonStyle } from "discord.js";
 import { items } from "../Modules/items";
 import { SlashCommand } from '../types';
@@ -100,10 +101,10 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ embeds: [pages[currentPage]], components: [row] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-            collector.on('collect', async (r) => {
+            collectComponentUpdates(collector, async (r) => {
                 if (`${currentPage}` == r.customId) return;
                 currentPage = parseInt(r.customId);
-                interaction.editReply({ embeds: [pages[currentPage]] });
+                await interaction.editReply({ embeds: [pages[currentPage]] });
             });
         });
     },
