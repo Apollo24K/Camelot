@@ -1,6 +1,6 @@
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
-import { createBattleRenderer } from "../Modules/battleRenderer";
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
+import { CoalescingRenderer } from "../Modules/battleRenderer";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, InteractionEditReplyOptions } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
@@ -566,6 +566,7 @@ const exportCommand: SlashCommand = {
                 new ButtonBuilder().setCustomId('SKILL').setEmoji(SKILL_EMOJI).setStyle(ButtonStyle.Secondary).setDisabled(myStats.class !== -1 ? false : true),
                 new ButtonBuilder().setCustomId('SKIP').setEmoji(SKIP_EMOJI).setStyle(ButtonStyle.Secondary),
             );
+        matchStats.battleComponents = [row];
 
         // If Enemy Died
         if (eStatsC.hp < 1) { // if (myStats.ep/eStats.ep >= 2) {
@@ -590,10 +591,11 @@ const exportCommand: SlashCommand = {
                     .setImage(isCompactEmbed ? null : eStatsC.image);
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
-                    const renderer = createBattleRenderer(msg, "rolling-cow");
+                    const renderer = new CoalescingRenderer<InteractionEditReplyOptions>(
+                        snapshot => interaction.editReply(snapshot), { command: "rolling-cow" }
+                    );
                     const warnTooFast = createBattleSpeedWarning(warning => interaction.followUp(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });
-                    // Collector end may fire inside endMatch, before its final notice is appended.
                     atk.once('end', () => queueMicrotask(() => {
                         void renderer.finish({ embeds: [Embed], components: [] });
                     }));
@@ -610,7 +612,7 @@ const exportCommand: SlashCommand = {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
                         Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | round ${matchStats.round} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
-                        renderer.request({ embeds: [Embed] });
+                        renderer.request({ embeds: [Embed], components: matchStats.battleComponents });
                     };
 
                     function minionDefeated(side: "my" | "enemy") {
