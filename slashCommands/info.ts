@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { search, splitTitle, baseHP, baseATK, baseDEF, baseEP, baseExpertise, getDetailedStats, rarity, rarityColor, getRefinement, customEmojis, getClassLvl } from "../Modules/functions";
 import { classes } from "../Modules/classes";
@@ -75,7 +76,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds, components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currentSkin > 1) currentSkin--;
                         else currentSkin = pagesTotal;
@@ -90,7 +91,7 @@ const exportCommand: SlashCommand = {
                         embeds[0].setFooter({ text: `ID: #${chars[0].id} | EP: ${ep}\nSkin: ${currentSkin}/${pagesTotal}` });
                     };
 
-                    interaction.editReply({ embeds });
+                    await interaction.editReply({ embeds });
                 });
             });
         };
@@ -185,7 +186,7 @@ const exportCommand: SlashCommand = {
                 const prev = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "prev" || r.customId === "next"), componentType: ComponentType.Button, time: 90000 });
                 const select = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "select", componentType: ComponentType.Button, time: 90000 });
 
-                prev.on('collect', r => {
+                collectComponentUpdates(prev, async r => {
                     if (r.customId === "prev") {
                         if (currentSkin > 1) currentSkin--;
                         else currentSkin = pagesTotal;
@@ -195,10 +196,10 @@ const exportCommand: SlashCommand = {
                     };
 
                     embeds[0].setDescription(`**${fSkins?.[currentSkin - 1]?.name || chars[0].name}**\n${splitTitle(chars[0].anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins?.[currentSkin - 1]?.image || chars[0].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${chars[0].gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ size: 2048 }) });
-                    interaction.editReply({ embeds });
+                    await interaction.editReply({ embeds });
                 });
 
-                select.on('collect', async () => {
+                collectComponentUpdates(select, async () => {
                     if (currentSkin === 1 || stats.skins.includes(fSkins[currentSkin - 1].id)) {
                         if (currentSkin === 1) {
                             delete stats.char_skin[chars[0].id];

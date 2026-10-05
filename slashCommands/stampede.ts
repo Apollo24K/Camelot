@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
@@ -259,15 +260,15 @@ function bossSelection(interaction: ChatInputCommandInteraction, stampede: Stamp
         editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', r => {
+            collectComponentUpdates(collector, async r => {
                 if (r.customId === "test") {
                     interaction.followUp({ content: "Please select an enemy", components: [monsterRow], ephemeral: true }).then((ms) => {
                         const selectionCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                        selectionCollector.on('collect', r => {
+                        collectComponentUpdates(selectionCollector, async r => {
                             resolve(parseInt(r.customId));
                             selectionCollector.stop(); collector.stop();
-                        });
+                        }, msg.id);
 
                         selectionCollector.on('end', () => {
                             resolve(0);

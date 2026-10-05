@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ComponentType } from "discord.js";
 import { search, userLevel } from "../Modules/functions.js";
 import { OfferRow } from "../Modules/components.js";
@@ -84,7 +85,7 @@ const exportCommand: SlashCommand = {
             const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
             const cancel = msg.createMessageComponentCollector({ filter: (r) => (r.user.id === user.id || r.user.id === interaction.user.id) && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-            confirm.on('collect', async () => {
+            collectComponentUpdates(confirm, async () => {
                 confirm.stop(), cancel.stop();
 
                 const stats = await getUserSchema(interaction.user.id);
@@ -140,7 +141,7 @@ const exportCommand: SlashCommand = {
                 if (interaction.channel?.isSendable()) interaction.channel.send(`Your trade was successful`);
             });
 
-            cancel.on('collect', () => {
+            collectComponentUpdates(cancel, async () => {
                 confirm.stop(), cancel.stop();
                 if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
             });

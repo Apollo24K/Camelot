@@ -1,9 +1,10 @@
 import type { Message, MessageEditOptions } from 'discord.js';
 import { performance } from 'node:perf_hooks';
 import { errorCode, timing } from './responsivenessTelemetry';
+import { waitForComponentAcknowledgements } from './buttonInteractions';
 
 type Snapshot<T> = { value: T; key: string; received: number; attempts: number; final: boolean; };
-type RendererOptions = { delayMs?: number; command?: string; now?: () => number; };
+type RendererOptions = { delayMs?: number; command?: string; now?: () => number; beforeEdit?: () => Promise<void>; };
 
 /** Replaceable visual state only. Never enqueue gameplay actions or reward writes here. */
 export class CoalescingRenderer<T> {
@@ -93,6 +94,8 @@ export class CoalescingRenderer<T> {
         const started = this.now();
         let success = false;
         try {
+            await this.options.beforeEdit?.();
+            if (this.disposed) return;
             await this.edit(snapshot.value);
             success = true;
             this.lastKey = snapshot.key;
@@ -128,6 +131,8 @@ export class CoalescingRenderer<T> {
     }
 }
 
-export function createBattleRenderer(message: Pick<Message, 'edit'>, command: string) {
-    return new CoalescingRenderer<MessageEditOptions>(snapshot => message.edit(snapshot), { command });
+export function createBattleRenderer(message: Pick<Message, 'id' | 'edit'>, command: string) {
+    return new CoalescingRenderer<MessageEditOptions>(snapshot => message.edit(snapshot), {
+        command, beforeEdit: () => waitForComponentAcknowledgements(message.id),
+    });
 }

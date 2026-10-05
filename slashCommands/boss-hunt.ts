@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
@@ -97,7 +98,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stats: CompactU
 
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
 
-            collector.on('collect', async r => {
+            collectComponentUpdates(collector, async r => {
                 const selection = parseInt(r.customId);
                 if (Number.isInteger(selection) && selection >= 0 && selection <= 3) resolve(selection);
                 collector.stop();

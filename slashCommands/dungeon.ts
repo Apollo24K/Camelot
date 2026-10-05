@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
@@ -64,7 +65,7 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 180000 });
             const skip = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "skip", componentType: ComponentType.Button, time: 180000 });
 
-            collector.on('collect', async () => {
+            collectComponentUpdates(collector, async () => {
                 if (++page === pages.length) {
                     collector.stop(), skip.stop();
                     await updateUsersAndCache(interaction.client, interaction.user.id, {
@@ -75,11 +76,11 @@ function waitForTutorial(interaction: ChatInputCommandInteraction, stats: Compac
                     resolve(1);
                 } else {
                     Embed.setTitle(pages[page][0]).setDescription(pages[page][1]);
-                    editCommandReply(interaction, { embeds: [Embed], components: [row] });
+                    await editCommandReply(interaction, { embeds: [Embed], components: [row] });
                 };
             });
 
-            skip.on('collect', async () => {
+            collectComponentUpdates(skip, async () => {
                 collector.stop(), skip.stop();
                 await updateUsersAndCache(interaction.client, interaction.user.id, {
                     updates: {
@@ -640,13 +641,13 @@ const exportCommand: SlashCommand = {
                 setTimeout(() => {
                     if (interaction.channel?.isSendable()) interaction.channel.send({ embeds: [Embed], components: [row] }).then((msg) => {
                         const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "continue", componentType: ComponentType.Button, time: 180000 });
-                        collector.on('collect', async () => {
+                        collectComponentUpdates(collector, async () => {
                             const Embed = new EmbedBuilder()
                                 .setColor(0xbbffff)
                                 .setTitle("Seems you are ready to set out now!")
                                 .setThumbnail("https://i.imgur.com/Ta2YDBN.png")
                                 .setDescription("There is nothing more I can teach you, for you have mastered all that I know and more. Now it is time for you to go out on your own journey. To follow your own path, and create your own tales!\n\nMay the spirits guard your path. Until we meet again <:MashaWave:928370055354400799>");
-                            msg.edit({ embeds: [Embed], components: [] });
+                            await msg.edit({ embeds: [Embed], components: [] });
 
                             // Finish Tutorial
                             await updateUsersAndCache(interaction.client, interaction.user.id, {

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, ContainerBuilder, MessageFlags } from "discord.js";
 import { formatNumberWithQuotes, rarityColor } from "../Modules/functions";
 import { getLatestAuction, getUserSchema, insertNewAuctionBid, updateUsersAndCache } from "../Modules/queries";
@@ -61,7 +62,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ ephemeral: true, content: `Are you sure you want to bid **${formatNumberWithQuotes(bidAmount)}**<:coins:872926669055356939> on **${auctionedChar.name}**${auction.print ? `#${auction.print}` : ""}?\n-# Fee: **${formatNumberWithQuotes(feeAmount)}**<:coins:872926669055356939> (**3%** of your bid)`, components: [OfferRow] }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60_000 });
 
-            collector.on('collect', async (r) => {
+            collectComponentUpdates(collector, async (r) => {
                 collector.stop();
                 if (r.customId === "cancel") return;
 

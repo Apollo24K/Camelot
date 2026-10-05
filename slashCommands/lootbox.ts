@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from "discord.js";
 import { SlashCommand } from "../types";
 import { getCachedUserSchema, getUserSchema, updateUsersAndCache } from "../Modules/queries";
@@ -37,7 +38,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ content: `You have **${stats.lootbox}** ${stats.lootbox === 1 ? "lootbox" : "lootboxes"} left! Open them with \`/open\` or \`/use lb\``, components: [row], fetchReply: true }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "open" || r.customId === "open_all"), componentType: ComponentType.Button, time: 60000 });
 
-            collector.on('collect', async r => {
+            collectComponentUpdates(collector, async r => {
                 const stats = await getUserSchema(user.id);
                 if (!stats?.lootbox) {
                     if (interaction.channel?.isSendable()) interaction.channel.send("You don't have any lootboxes left");
@@ -96,8 +97,8 @@ const exportCommand: SlashCommand = {
                 });
 
                 if (interaction.channel?.isSendable()) interaction.channel.send(`You've opened a lootbox! <a:MikuGold:942200295855890483>\n**Coins**: ${addCoins}<:coins:872926669055356939>\n**Shards**: ${shardmsg}\n**Tickets**: ${ticketmsg}`);
-                if (stats.lootbox) interaction.editReply({ content: `You have **${stats.lootbox}** ${stats.lootbox === 1 ? "lootbox" : "lootboxes"} left! Open them with \`/open\` or \`/use lb\`` });
-                else interaction.editReply({ content: "You don't have any lootboxes left", components: [] });
+                if (stats.lootbox) await interaction.editReply({ content: `You have **${stats.lootbox}** ${stats.lootbox === 1 ? "lootbox" : "lootboxes"} left! Open them with \`/open\` or \`/use lb\`` });
+                else await interaction.editReply({ content: "You don't have any lootboxes left", components: [] });
             });
         });
     },

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { replyToCommand } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
@@ -857,14 +858,14 @@ const exportCommand: SlashCommand = {
 
             const collector = msg2.createMessageComponentCollector({ filter: (r) => ((r.user.id === user.id) || (r.user.id === interaction.user.id)), componentType: ComponentType.Button, time: 30000 });
 
-            collector.on('collect', async r => {
+            collectComponentUpdates(collector, async r => {
                 if ((r.customId === "confirm") && (r.user.id === interaction.user.id)) return;
                 collector.stop();
 
                 if (r.customId === "confirm") {
                     newFight();
                 } else {
-                    msg2.edit({ components: [] });
+                    await msg2.edit({ components: [] });
                     interaction.followUp({ content: `${r.user.username} has cancelled the challenge` });
                     return;
                 };

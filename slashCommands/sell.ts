@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ComponentType } from "discord.js";
 import charInfo, { characters } from "../Modules/chars";
 import { search } from "../Modules/functions";
@@ -67,7 +68,7 @@ const exportCommand: SlashCommand = {
 
                 return interaction.reply({ content: `Are you sure you want to sell ${vipChars.length} VIP card${vipChars.length === 1 ? "" : "s"} for **${price}**<:coins:872926669055356939>, ${shardEmoji.SS}**x${ssShards}**?`, components: [OfferRow] }).then((msg) => {
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
-                    collector.on('collect', async (r) => {
+                    collectComponentUpdates(collector, async (r) => {
                         collector.stop();
                         if (r.customId === "cancel") return interaction.channel?.isSendable() && interaction.channel.send("Action cancelled");
 
@@ -115,7 +116,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
                     const _inv = await getUserSchema(interaction.user.id);
                     stats.chars = _inv?.chars ?? [];
@@ -162,7 +163,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""} were added to your balance`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -195,7 +196,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
                     const _inv = await getUserSchema(interaction.user.id);
                     stats.chars = _inv?.chars ?? [];
@@ -248,7 +249,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${price}**<:coins:872926669055356939>${shards.SS ? `, ${shardEmoji.SS}**x${shards.SS}**` : ""}${shards.S ? `, ${shardEmoji.S}**x${shards.S}**` : ""}${shards.A ? `, ${shardEmoji.A}**x${shards.A}**` : ""}${shards.B ? `, ${shardEmoji.B}**x${shards.B}**` : ""}${shards.C ? `, ${shardEmoji.C}**x${shards.C}**` : ""}${shards.D ? `, ${shardEmoji.D}**x${shards.D}**` : ""} were added to your balance`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });

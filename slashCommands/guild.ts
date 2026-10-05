@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable, ContainerBuilder, AttachmentBuilder, MessageFlags } from "discord.js";
 import { dailies } from "../Modules/dailyQuests";
 import { showPage, searchGuild, getDonationsPageWeek, lastActive, formatNumberWithQuotes, customEmojis, getLetterRank } from "../Modules/functions";
@@ -560,7 +561,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => (r.user.id === interaction.user.id || r.user.id === user.id) && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
@@ -583,7 +584,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${user.toString()} has joined **${guild.name}**`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -600,7 +601,7 @@ const exportCommand: SlashCommand = {
                 return interaction.reply({ content: `You are the last member in **${guild.name}**. Leaving will permanently delete any related data, do you want to proceed?`, components: [OfferRow] }).then(msg => {
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 
-                    collector.on('collect', async r => {
+                    collectComponentUpdates(collector, async r => {
                         collector.stop();
                         if (r.customId === "cancel") {
                             if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
@@ -625,7 +626,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Are you sure you want to leave **${guild.name}**?`, components: [OfferRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
@@ -671,7 +672,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     // Update users table
@@ -690,7 +691,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was kicked from **${guild.name}** by ${interaction.user.toString()}`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -728,7 +729,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     // Update users table
@@ -748,7 +749,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was banned from **${guild.name}** by ${interaction.user.toString()}`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -777,7 +778,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     // Update guilds table
@@ -788,7 +789,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was unbanned from **${guild.name}** by ${interaction.user.toString()}`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -817,7 +818,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     // Update guilds table
@@ -829,7 +830,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${interaction.user.toString()}** is now the new guild master of **${guild.name}**!`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -856,7 +857,7 @@ const exportCommand: SlashCommand = {
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                    confirm.on('collect', async () => {
+                    collectComponentUpdates(confirm, async () => {
                         confirm.stop(), cancel.stop();
 
                         // Update guilds table
@@ -871,7 +872,7 @@ const exportCommand: SlashCommand = {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was promoted to guild master!`);
                     });
 
-                    cancel.on('collect', () => {
+                    collectComponentUpdates(cancel, async () => {
                         confirm.stop(), cancel.stop();
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     });
@@ -883,7 +884,7 @@ const exportCommand: SlashCommand = {
                     const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                     const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                    confirm.on('collect', async () => {
+                    collectComponentUpdates(confirm, async () => {
                         confirm.stop(), cancel.stop();
 
                         // Update guilds table
@@ -894,7 +895,7 @@ const exportCommand: SlashCommand = {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was promoted to elder!`);
                     });
 
-                    cancel.on('collect', () => {
+                    collectComponentUpdates(cancel, async () => {
                         confirm.stop(), cancel.stop();
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                     });
@@ -923,7 +924,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     // Update guilds table
@@ -934,7 +935,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${user.toString()} was demoted by ${interaction.user.toString()}`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -980,7 +981,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -1015,7 +1016,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const stats = await getUserSchema(interaction.user.id);
@@ -1044,7 +1045,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.username} has donated **${donation}**${emoji} to **${guild.name}**!`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -1085,7 +1086,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', (r) => {
+                collectComponentUpdates(collector, async (r) => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -1095,7 +1096,7 @@ const exportCommand: SlashCommand = {
                     };
 
                     Embed.setDescription(getDonationsPageWeek(donations, members, currentWeek, currPage)).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
             });
         } else if (subcommand === "levelup") {
@@ -1110,7 +1111,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
@@ -1133,7 +1134,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully upgraded **${guild.name}** to level **${guild.level + 1}**!`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -1159,7 +1160,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
@@ -1183,7 +1184,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`Successfully upgraded the **${perkName}** perk to level **${guild[perk] + 1}**!`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -1204,7 +1205,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
@@ -1224,7 +1225,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`Converted **${amount}**<:genesis_gems:1034179687720681492> into **${1000 * amount}**<:coins:872926669055356939>`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -1266,7 +1267,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -1279,7 +1280,7 @@ const exportCommand: SlashCommand = {
                     desc = showItems.map((e) => `**${e.name}** (Guild Rank #${e.rank})\n<:barg:994958341128339536>Join Code: \`${e.id}\` | ${e.canjoin ? "Everyone can join" : "Invite only"} | \`(${e.members.length}/${10 + Math.min(e.level - 1, 10)})\``).join("\n\n");
 
                     Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
 
             });
@@ -1289,7 +1290,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)], flags: MessageFlags.IsComponentsV2 }).then(async (msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
 
-                collector.on('collect', async (r) => {
+                collectComponentUpdates(collector, async (r) => {
                     if (r.customId.startsWith('tab_')) {
                         currentTab = r.customId.split('_')[1] as GuildShopTab;
 
@@ -1307,9 +1308,9 @@ const exportCommand: SlashCommand = {
                             interaction.followUp({ content, components: [OfferRow] }).then(ms => {
                                 const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                                buyCollector.on('collect', async rr => {
+                                collectComponentUpdates(buyCollector, async rr => {
                                     if (rr.customId !== "confirm") {
-                                        ms.edit({ content: "Action cancelled", components: [] });
+                                        await ms.edit({ content: "Action cancelled", components: [] });
                                         return;
                                     };
 
@@ -1318,7 +1319,7 @@ const exportCommand: SlashCommand = {
 
                                     // Return if balance not enough
                                     if (tempStats.guild_marks < cost) {
-                                        ms.edit({ content: `You don't have enough guild marks (**${tempStats.guild_marks}**/${cost} ${currencyEmojis.guild_marks})`, components: [] });
+                                        await ms.edit({ content: `You don't have enough guild marks (**${tempStats.guild_marks}**/${cost} ${currencyEmojis.guild_marks})`, components: [] });
                                         return;
                                     };
 
@@ -1333,9 +1334,9 @@ const exportCommand: SlashCommand = {
                                     await insertNewWeapon(interaction.user.id, ring.id, ring.category);
 
                                     // Edit replies
-                                    ms.edit({ content: "Purchase Successful!", components: [] });
+                                    await ms.edit({ content: "Purchase Successful!", components: [] });
                                     await msg.edit({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)] });
-                                });
+                                }, msg.id);
                             });
                         };
 
@@ -1343,9 +1344,9 @@ const exportCommand: SlashCommand = {
                             interaction.followUp({ content: `Please select how many potions you want to purchase`, components: [BuyPotionsRow] }).then(ms => {
                                 const buyCollector = ms.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                                buyCollector.on('collect', async rr => {
+                                collectComponentUpdates(buyCollector, async rr => {
                                     if (!rr.customId.startsWith('buy_potion_')) {
-                                        ms.edit({ content: "Action cancelled", components: [] });
+                                        await ms.edit({ content: "Action cancelled", components: [] });
                                         return;
                                     };
 
@@ -1359,13 +1360,13 @@ const exportCommand: SlashCommand = {
                                     const amount = amountStr === 'max' ? (potion.amount - (tempStats.monthlyshop[potion.id] ?? 0)) : parseInt(amountStr);
                                     const cost = potion.price * amount;
                                     if (isNaN(amount) || isNaN(cost) || amount <= 0 || (amount > (potion.amount - (tempStats.monthlyshop[potion.id] ?? 0)))) {
-                                        ms.edit({ content: "Invalid input", components: [] });
+                                        await ms.edit({ content: "Invalid input", components: [] });
                                         return;
                                     };
 
                                     // Return if balance not enough
                                     if (tempStats.guild_marks < cost) {
-                                        ms.edit({ content: `You don't have enough guild marks (**${tempStats.guild_marks}**/${cost} ${currencyEmojis.guild_marks})`, components: [] });
+                                        await ms.edit({ content: `You don't have enough guild marks (**${tempStats.guild_marks}**/${cost} ${currencyEmojis.guild_marks})`, components: [] });
                                         return;
                                     };
 
@@ -1381,9 +1382,9 @@ const exportCommand: SlashCommand = {
                                     };
 
                                     // Edit replies
-                                    ms.edit({ content: `Purchase Successful! **${amount * (potion.custom.xp ?? 0)} xp** have been added to your ${classes[tempStats.class ?? 0].emblem} **${classes[tempStats.class ?? 0].name}** class`, components: [] });
+                                    await ms.edit({ content: `Purchase Successful! **${amount * (potion.custom.xp ?? 0)} xp** have been added to your ${classes[tempStats.class ?? 0].emblem} **${classes[tempStats.class ?? 0].name}** class`, components: [] });
                                     await msg.edit({ components: [getShopPage(currentTab, stats), getGuildShopButtonRow(currentTab)] });
-                                });
+                                }, msg.id);
                             });
                         };
                     };

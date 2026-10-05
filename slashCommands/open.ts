@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { chestInfo, itemInfo, items } from "../Modules/items";
 import { showPage } from "../Modules/functions";
@@ -228,7 +229,7 @@ const exportCommand: SlashCommand = {
             return interaction.editReply({ embeds: [Embed], components: [row] }).then((msg) => {
                 const next = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
-                next.on('collect', async (r) => {
+                collectComponentUpdates(next, async (r) => {
                     // Next Page
                     if ((r.customId === "next") && (page < drops.length - 1)) {
                         page++;
@@ -263,7 +264,7 @@ const exportCommand: SlashCommand = {
                         return interaction.editReply({ embeds: [Embed], components: [PageRow] }).then(() => {
                             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 45000 });
 
-                            collector.on('collect', (rr) => {
+                            collectComponentUpdates(collector, async (rr) => {
                                 if (rr.customId === "prev") {
                                     if (currPage > 1) currPage--;
                                     else currPage = pagesTotal;
@@ -276,7 +277,7 @@ const exportCommand: SlashCommand = {
                                 desc = itemsToShow(showItems);
 
                                 Embed.setDescription(desc).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                                interaction.editReply({ embeds: [Embed] });
+                                await interaction.editReply({ embeds: [Embed] });
                             });
                         });
                     };

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { PageRow } from "../Modules/components";
 import { showPage } from "../Modules/functions";
@@ -48,7 +49,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ embeds: [Embed], components: [PageRow], fetchReply: true }).then((msg) => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            collector.on('collect', r => {
+            collectComponentUpdates(collector, async r => {
                 if (r.customId === "prev") {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
@@ -60,7 +61,7 @@ const exportCommand: SlashCommand = {
                 showChars = showPage(currPage, [...stats.animelock, ":", ...stats.charlock], elementsPerPage);
 
                 Embed.setDescription(getDesc(showChars, stats, currPage * elementsPerPage)).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                interaction.editReply({ embeds: [Embed] });
+                await interaction.editReply({ embeds: [Embed] });
             });
 
         });

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { armorInfo, itemInfo, items, lootInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { PageRow, OfferRow } from "../Modules/components";
@@ -160,7 +161,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [forgeryEmbed(showItems).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -170,7 +171,7 @@ const exportCommand: SlashCommand = {
                     };
 
                     showItems = showPage(currPage, itemsR, elementsPerPage);
-                    interaction.editReply({ embeds: [forgeryEmbed(showItems).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] });
+                    await interaction.editReply({ embeds: [forgeryEmbed(showItems).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] });
                 });
             });
         };
@@ -207,7 +208,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
                     try {
                         await withTransaction(async (client) => {
@@ -274,7 +275,7 @@ const exportCommand: SlashCommand = {
                     };
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -312,7 +313,7 @@ const exportCommand: SlashCommand = {
                 return interaction.reply({ embeds: [mergeEmbed(buildData()).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                    collector.on('collect', async r => {
+                    collectComponentUpdates(collector, async r => {
                         if (r.customId === "prev") {
                             if (currPage > 1) currPage--;
                             else currPage = pagesTotal;
@@ -322,7 +323,7 @@ const exportCommand: SlashCommand = {
                         };
 
                         showRecipes = showPage(currPage, mergeRecipes, elementsPerPage);
-                        interaction.editReply({ embeds: [mergeEmbed(buildData()).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] });
+                        await interaction.editReply({ embeds: [mergeEmbed(buildData()).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] });
                     });
                 });
             };
@@ -350,7 +351,7 @@ const exportCommand: SlashCommand = {
                 return interaction.reply({ embeds: [mergeEmbed(buildData()).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] }).then(msg => {
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                    collector.on('collect', async r => {
+                    collectComponentUpdates(collector, async r => {
                         if (r.customId === "prev") {
                             if (currPage > 1) currPage--;
                             else currPage = pagesTotal;
@@ -360,7 +361,7 @@ const exportCommand: SlashCommand = {
                         };
 
                         showRecipes = showPage(currPage, matchingRecipes, elementsPerPage);
-                        interaction.editReply({ embeds: [mergeEmbed(buildData()).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] });
+                        await interaction.editReply({ embeds: [mergeEmbed(buildData()).setFooter({ text: `Page ${currPage}/${pagesTotal}` })], components: [PageRow] });
                     });
                 });
             };
@@ -376,7 +377,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 30000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 30000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
                     try {
                         await withTransaction(async (client) => {
@@ -532,7 +533,7 @@ const exportCommand: SlashCommand = {
                     };
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });

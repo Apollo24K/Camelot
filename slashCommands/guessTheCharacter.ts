@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ModalBuilder, TextInputBuilder, ComponentType, ButtonStyle, TextInputStyle } from "discord.js";
 import charInfo, { characters, charactersSS, charactersS, charactersA, charactersB, charactersC, charactersD } from "../Modules/chars";
 import { rarityColor, splitTitle } from "../Modules/functions";
@@ -175,7 +176,7 @@ const exportCommand: SlashCommand = {
                 };
             });
 
-            hintAnime.on('collect', () => {
+            collectComponentUpdates(hintAnime, async () => {
                 if (points < 6) {
                     if (interaction.channel?.isSendable()) interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>");
                     return;
@@ -183,10 +184,10 @@ const exportCommand: SlashCommand = {
                 points -= 6;
                 animeTitle = splitTitle(pick.anime);
                 Embed.setDescription(`**Anime**: ${animeTitle}\n${scores}`);
-                emsg.edit({ embeds: [Embed] });
+                await emsg.edit({ embeds: [Embed] });
             });
 
-            hintLetter.on('collect', () => {
+            collectComponentUpdates(hintLetter, async () => {
                 if (points < 2) {
                     if (interaction.channel?.isSendable()) interaction.channel.send("You've already used up all points <:BigSad:928369010217746442>");
                     return;
@@ -206,14 +207,14 @@ const exportCommand: SlashCommand = {
                     };
                 };
                 Embed.setDescription(`**Anime**: ${animeTitle}\n${scores}`);
-                emsg.edit({ embeds: [Embed] });
+                await emsg.edit({ embeds: [Embed] });
             });
 
             showImage.on('collect', async component => {
                 await component.reply({ content: pick.image, ephemeral: true });
             });
 
-            skip.on('collect', async () => {
+            collectComponentUpdates(skip, async () => {
                 hintAnime.stop(), hintLetter.stop(), collector.stop(), skip.stop(), showImage.stop();
 
                 exportCommand.execute({ interaction, author, locale, server, customFlag, reply, warn });

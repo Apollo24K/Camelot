@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle, ColorResolvable } from "discord.js";
 import { characters } from "../Modules/chars";
 import { abilities } from "../Modules/abilities";
@@ -192,7 +193,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => party.members.includes(r.user.id) && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => (r.user.id === interaction.user.id || party.members.includes(r.user.id)) && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const party = stats2.party ? await getPartySchema(stats2.party) : null;
@@ -221,7 +222,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${interaction.user.username}** has joined **${party.name}**!`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -252,7 +253,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => (r.user.id === interaction.user.id || r.user.id === user.id) && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const stats = await getUserSchema(interaction.user.id);
@@ -293,7 +294,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${user.toString()} has joined **${party.name}**`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -313,7 +314,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const party = stats.party ? await getPartySchema(stats.party) : undefined;
@@ -341,7 +342,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You have left **${party.name}**`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -367,7 +368,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     // Update parties table
@@ -385,7 +386,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.toString()}** was kicked from **${party.name}** by ${interaction.user.toString()}`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -402,7 +403,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 45000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 45000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const party = stats.party ? await getPartySchema(stats.party) : undefined;
@@ -424,7 +425,7 @@ const exportCommand: SlashCommand = {
                     if (interaction.channel?.isSendable()) interaction.channel.send(`You have left **${party.name}**`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
@@ -193,11 +194,7 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
         const rankdown = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "rankdown", componentType: ComponentType.Button, time: 120000 });
         const rankSelect = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "rank_select", componentType: ComponentType.StringSelect, time: 120000 });
 
-        collector.on('collect', async r => {
-            await r.deferUpdate().catch(() => {
-                console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-            });
-
+        collectComponentUpdates(collector, async r => {
             currentlySelected = parseInt(r.values[0]);
             currentRankUp = 0;
 
@@ -205,10 +202,10 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
                 .setDescription(getDesc())
                 .setThumbnail(raids[currentlySelected].enemy.image[0])
                 .setColor(raids[currentlySelected].accentColor as ColorResolvable);
-            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            await editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
-        confirm.on('collect', async () => {
+        collectComponentUpdates(confirm, async () => {
             collector.stop(); confirm.stop(); rankup.stop(); rankdown.stop(); rankSelect.stop();
 
             if (currentlySelected === undefined) return interaction.followUp({ content: "Please select a raid first", ephemeral: true });
@@ -222,13 +219,13 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
                 } else {
                     interaction.followUp({ content: "Failed to start raid, please try again later" });
                 };
-                editCommandReply(interaction, { components: [] });
+                await editCommandReply(interaction, { components: [] });
             } else {
                 interaction.followUp({ content: "You already have an active raid, please finish it before attempting to start a new one.", ephemeral: true });
             };
         });
 
-        rankup.on('collect', async () => {
+        collectComponentUpdates(rankup, async () => {
             if (currentlySelected === undefined) return interaction.followUp({ content: "Please select a raid first", ephemeral: true });
 
             // Check if rank is maxed
@@ -241,10 +238,10 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
 
             // Update embed
             Embed.setDescription(getDesc());
-            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            await editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
-        rankdown.on('collect', async () => {
+        collectComponentUpdates(rankdown, async () => {
             if (currentlySelected === undefined) return interaction.followUp({ content: "Please select a raid first", ephemeral: true });
 
             if (currentRankUp <= 0) {
@@ -254,20 +251,16 @@ async function raidSelection(interaction: ChatInputCommandInteraction, stats: Co
             currentRankUp--;
 
             Embed.setDescription(getDesc());
-            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            await editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
-        rankSelect.on('collect', async r => {
-            await r.deferUpdate().catch(() => {
-                console.log(`ERROR Interaction Failed 'deferUpdate()', command: "${interaction.commandName}"`);
-            });
-
+        collectComponentUpdates(rankSelect, async r => {
             if (currentlySelected === undefined) return;
 
             currentRankUp = parseInt(r.values[0]);
 
             Embed.setDescription(getDesc());
-            editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
+            await editCommandReply(interaction, { embeds: [Embed], components: [selection, getRankRow(), getButtonRow()] });
         });
 
     });
@@ -354,7 +347,10 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
             const ranking = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ranking", componentType: ComponentType.Button, time: 90000 });
             const edit = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer-edit", componentType: ComponentType.Button, time: 90000 });
 
-            play.on('collect', () => {
+            let pendingEdits = 0;
+
+            collectComponentUpdates(play, async () => {
+                if (pendingEdits > 0) return interaction.followUp({ content: 'Please wait for your build changes to finish saving.', ephemeral: true });
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send("You already have a fight in progress, please finish it before attempting to start a new one.");
                     return;
@@ -364,9 +360,9 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
                 play.stop();
             });
 
-            ranking.on('collect', () => {
+            collectComponentUpdates(ranking, async () => {
                 tab = (tab === "overview") ? "ranking" : "overview";
-                editCommandReply(interaction, { embeds: [Embed.setDescription(getDesc())], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] });
+                await editCommandReply(interaction, { embeds: [Embed.setDescription(getDesc())], components: [getRaidButtonRow(tab, isTestRun || attemptsLeft > 0, raid.enemy_hp <= 0, isTestRun)] });
             });
 
             edit.on('collect', (rr) => {
@@ -374,38 +370,44 @@ function raidOverview({ interaction, stats, guild, raid, userItems, isTestRun, t
                 rr.showModal(getModal(uid));
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_raid_' + uid), time: 90000 }).then(async (r) => {
-                    const support1 = r.fields.getTextInputValue('support1');
-                    const support2 = r.fields.getTextInputValue('support2');
+                    if (play.ended) return r.reply({ content: 'This setup has closed. Please run the command again.', ephemeral: true });
+                    pendingEdits++;
+                    try {
+                        const support1 = r.fields.getTextInputValue('support1');
+                        const support2 = r.fields.getTextInputValue('support2');
 
-                    // Match character
-                    if (support1) {
-                        let getChar = search(support1, stats.chars, interaction, true);
-                        if (getChar?.name) {
-                            if (!(await ownsCharacter(interaction.user.id, stats.chars, getChar.id))) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
-                            if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
-                            stats.raid_supports[0] = getChar.id;
+                        // Match character
+                        if (support1) {
+                            let getChar = search(support1, stats.chars, interaction, true);
+                            if (getChar?.name) {
+                                if (!(await ownsCharacter(interaction.user.id, stats.chars, getChar.id))) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                                if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
+                                stats.raid_supports[0] = getChar.id;
+                            };
+                            if (support1 === "remove") stats.raid_supports.shift();
                         };
-                        if (support1 === "remove") stats.raid_supports.shift();
-                    };
 
-                    if (support2) {
-                        let getChar = search(support2, stats.chars, interaction, true);
-                        if (getChar?.name) {
-                            if (!(await ownsCharacter(interaction.user.id, stats.chars, getChar.id))) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
-                            if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
-                            if (stats.raid_supports[0] !== 0) stats.raid_supports[1] = getChar.id;
-                            else stats.raid_supports[0] = getChar.id;
+                        if (support2) {
+                            let getChar = search(support2, stats.chars, interaction, true);
+                            if (getChar?.name) {
+                                if (!(await ownsCharacter(interaction.user.id, stats.chars, getChar.id))) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                                if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
+                                if (stats.raid_supports[0] !== 0) stats.raid_supports[1] = getChar.id;
+                                else stats.raid_supports[0] = getChar.id;
+                            };
+                            if (support2 === "remove") stats.raid_supports.pop();
                         };
-                        if (support2 === "remove") stats.raid_supports.pop();
-                    };
 
-                    // Update users table
-                    await updateUsers(interaction.user.id, {
-                        raid_supports: { type: "set", value: stats.raid_supports },
-                    });
+                        // Update users table
+                        await updateUsers(interaction.user.id, {
+                            raid_supports: { type: "set", value: stats.raid_supports },
+                        });
 
-                    editCommandReply(interaction, { embeds: [Embed.setDescription(getDesc())] });
-                    r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                        if (!play.ended) await editCommandReply(interaction, { embeds: [Embed.setDescription(getDesc())] });
+                        r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                    } finally {
+                        pendingEdits--;
+                    }
                 });
             });
 

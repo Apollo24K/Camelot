@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
@@ -57,7 +58,7 @@ function rankupOverview(interaction: ChatInputCommandInteraction, stats: Compact
         replyToCommand(interaction, { embeds: [Embed], components: [rankupButtonRow] }).then((msg) => {
             const play = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-            play.on('collect', () => {
+            collectComponentUpdates(play, async () => {
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send("You already have an exam in progress, please finish it before attempting to start a new one.");
                     return;

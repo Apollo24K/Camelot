@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { achievements } from "../Modules/achievements";
@@ -65,7 +66,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const stats = await getUserSchema(interaction.user.id);
@@ -97,7 +98,7 @@ const exportCommand: SlashCommand = {
                     if (chnl?.isSendable()) chnl.send({ embeds: [Embed] });
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -134,7 +135,7 @@ const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
 
-                confirm.on('collect', async () => {
+                collectComponentUpdates(confirm, async () => {
                     confirm.stop(), cancel.stop();
 
                     const stats = await getUserSchema(interaction.user.id);
@@ -201,7 +202,7 @@ const exportCommand: SlashCommand = {
                     if (chnl?.isSendable()) chnl.send({ embeds: [Embed] });
                 });
 
-                cancel.on('collect', async () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                 });
@@ -296,7 +297,7 @@ const exportCommand: SlashCommand = {
 
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");

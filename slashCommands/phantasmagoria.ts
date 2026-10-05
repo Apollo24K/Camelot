@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, ColorResolvable, TextInputBuilder, TextInputStyle, ModalBuilder, StringSelectMenuBuilder } from "discord.js";
@@ -229,7 +230,10 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
             const shopBuy = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "shop_buy", componentType: ComponentType.StringSelect, time: 90000 });
             const strategies = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "strategies", componentType: ComponentType.Button, time: 90000 });
 
-            play.on('collect', async (rr) => {
+            let pendingEdits = 0;
+
+            collectComponentUpdates(play, async (rr) => {
+                if (pendingEdits > 0) return interaction.followUp({ content: 'Please wait for your build changes to finish saving.', ephemeral: true });
                 if (dungeonInProgress.has(stats.id)) {
                     if (interaction.channel?.isSendable()) interaction.channel.send("You already have a fight in progress, please finish it before attempting to start a new one.").catch(() => null);
                     return;
@@ -239,12 +243,12 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                 play.stop();
             });
 
-            overviewBtn.on('collect', async (rr) => {
+            collectComponentUpdates(overviewBtn, async (rr) => {
                 tab = "overview";
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, EVENT_ACTIVE), getBossSelectRow(stats)] });
+                await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, EVENT_ACTIVE), getBossSelectRow(stats)] });
             });
 
-            ranking.on('collect', async (rr) => {
+            collectComponentUpdates(ranking, async (rr) => {
                 tab = "ranking";
                 const bossId = String(stats.phantasmagoria_selected_boss ?? 0);
                 const rows = await query("SELECT id, name, phantasmagoria_boss_data FROM users WHERE phantasmagoria_boss_data != '{}'::jsonb") as { id: string; name: string; phantasmagoria_boss_data: Record<string, { best_damage: number; best_phases: number; }>; }[];
@@ -268,7 +272,7 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                         return `-# ${i + 1}. <@${p.id}> — **${formatNumberWithQuotes(dmg)}** damage (Phase ${bossData.best_phases ?? 0})`;
                     })
                     : [`-# No participants yet`];
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: getRaidButtonRow(tab, EVENT_ACTIVE) });
+                await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: getRaidButtonRow(tab, EVENT_ACTIVE) });
             });
 
             edit.on('collect', (rr) => {
@@ -276,116 +280,122 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                 rr.showModal(getModal(uid));
 
                 interaction.awaitModalSubmit({ filter: (r) => r.customId === ('edit_phantasmagoria_' + uid), time: 90000 }).then(async (r) => {
-                    if (r.customId !== 'edit_phantasmagoria_' + uid) return;
-                    const support1 = r.fields.getTextInputValue('support1');
-                    const support2 = r.fields.getTextInputValue('support2');
-                    const phantasmClass = r.fields.getTextInputValue('phantasm_class');
-                    const weaponShield = r.fields.getTextInputValue('weapon_shield');
-                    const armorSet = r.fields.getTextInputValue('armor_set');
+                    if (play.ended) return r.reply({ content: 'This setup has closed. Please run the command again.', ephemeral: true });
+                    pendingEdits++;
+                    try {
+                        if (r.customId !== 'edit_phantasmagoria_' + uid) return;
+                        const support1 = r.fields.getTextInputValue('support1');
+                        const support2 = r.fields.getTextInputValue('support2');
+                        const phantasmClass = r.fields.getTextInputValue('phantasm_class');
+                        const weaponShield = r.fields.getTextInputValue('weapon_shield');
+                        const armorSet = r.fields.getTextInputValue('armor_set');
 
-                    if (!stats.phantasmagoria_equipment) stats.phantasmagoria_equipment = {};
+                        if (!stats.phantasmagoria_equipment) stats.phantasmagoria_equipment = {};
 
-                    // Match character
-                    if (support1) {
-                        if (support1.toLowerCase() === "remove") {
-                            stats.phantasmagoria_supports[0] = null as any;
-                        } else {
-                            let getChar = search(support1, stats.chars, interaction, true);
-                            if (getChar?.name) {
-                                if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
-                                if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
-                                if (stats.phantasmagoria_supports.includes(getChar.id)) return r.reply({ content: `**${getChar.name}** is already set as a support!`, ephemeral: true });
-                                stats.phantasmagoria_supports[0] = getChar.id;
-                            };
-                        };
-                    };
-
-                    if (support2) {
-                        if (support2.toLowerCase() === "remove") {
-                            stats.phantasmagoria_supports[1] = null as any;
-                        } else {
-                            let getChar = search(support2, stats.chars, interaction, true);
-                            if (getChar?.name) {
-                                if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
-                                if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
-                                if (stats.phantasmagoria_supports.includes(getChar.id)) return r.reply({ content: `**${getChar.name}** is already set as a support!`, ephemeral: true });
-                                if (stats.phantasmagoria_supports[0] != null) stats.phantasmagoria_supports[1] = getChar.id;
-                                else stats.phantasmagoria_supports[0] = getChar.id;
-                            };
-                        };
-                    };
-
-                    // Match class
-                    if (phantasmClass) {
-                        if (phantasmClass.toLowerCase() === "remove") {
-                            stats.phantasmagoria_class = null as any;
-                        } else {
-                            let getCls = searchClass(phantasmClass, interaction, true);
-                            if (getCls?.name) {
-                                stats.phantasmagoria_class = classes.indexOf(getCls);
-                            };
-                        };
-                    };
-
-                    // Match weapon / shield
-                    if (weaponShield) {
-                        const parts = weaponShield.split(" / ").map(s => s.trim());
-                        const weaponPart = parts[0];
-                        const shieldPart = parts[1];
-
-                        if (weaponPart && weaponPart.toLowerCase() === "remove") {
-                            delete stats.phantasmagoria_equipment.weapon;
-                        } else if (weaponPart) {
-                            let item = searchItem(weaponPart, interaction, true);
-                            if (item?.name) {
-                                if (item.category !== "weapon" || item.type === "shield") {
-                                    return r.reply({ content: `**${item.name}** is not a weapon!`, ephemeral: true });
+                        // Match character
+                        if (support1) {
+                            if (support1.toLowerCase() === "remove") {
+                                stats.phantasmagoria_supports[0] = null as any;
+                            } else {
+                                let getChar = search(support1, stats.chars, interaction, true);
+                                if (getChar?.name) {
+                                    if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                                    if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
+                                    if (stats.phantasmagoria_supports.includes(getChar.id)) return r.reply({ content: `**${getChar.name}** is already set as a support!`, ephemeral: true });
+                                    stats.phantasmagoria_supports[0] = getChar.id;
                                 };
-                                stats.phantasmagoria_equipment.weapon = item.id;
                             };
                         };
 
-                        if (shieldPart && shieldPart.toLowerCase() === "remove") {
-                            delete stats.phantasmagoria_equipment.shield;
-                        } else if (shieldPart) {
-                            let item = searchItem(shieldPart, interaction, true);
-                            if (item?.name) {
-                                if (item.type !== "shield") {
-                                    return r.reply({ content: `**${item.name}** is not a shield!`, ephemeral: true });
+                        if (support2) {
+                            if (support2.toLowerCase() === "remove") {
+                                stats.phantasmagoria_supports[1] = null as any;
+                            } else {
+                                let getChar = search(support2, stats.chars, interaction, true);
+                                if (getChar?.name) {
+                                    if (!stats.chars.includes(getChar.id)) return r.reply({ content: `You don't have a copy of **${getChar.name}**`, ephemeral: true });
+                                    if (stats.battlechar === getChar.id) return r.reply({ content: `You can't use your equipped character as a support!`, ephemeral: true });
+                                    if (stats.phantasmagoria_supports.includes(getChar.id)) return r.reply({ content: `**${getChar.name}** is already set as a support!`, ephemeral: true });
+                                    if (stats.phantasmagoria_supports[0] != null) stats.phantasmagoria_supports[1] = getChar.id;
+                                    else stats.phantasmagoria_supports[0] = getChar.id;
                                 };
-                                stats.phantasmagoria_equipment.shield = item.id;
                             };
                         };
-                    };
 
-                    // Match armor set
-                    if (armorSet) {
-                        if (armorSet.toLowerCase() === "remove") {
-                            delete stats.phantasmagoria_equipment.helmet;
-                            delete stats.phantasmagoria_equipment.cuirass;
-                            delete stats.phantasmagoria_equipment.gloves;
-                            delete stats.phantasmagoria_equipment.boots;
-                        } else {
-                            const getSet = searchItem(armorSet, interaction, true, { returnSet: true });
-                            if (!getSet || !(getSet instanceof armorInfo)) {
-                                return r.reply({ content: `No armor set named **${armorSet}** found!`, ephemeral: true });
-                            };
-                            const setItems = items.filter((item) => item instanceof armorInfo && item.setname === getSet.setname) as armorInfo[];
-                            for (const piece of setItems) {
-                                if (piece.type) stats.phantasmagoria_equipment[piece.type] = piece.id;
+                        // Match class
+                        if (phantasmClass) {
+                            if (phantasmClass.toLowerCase() === "remove") {
+                                stats.phantasmagoria_class = null as any;
+                            } else {
+                                let getCls = searchClass(phantasmClass, interaction, true);
+                                if (getCls?.name) {
+                                    stats.phantasmagoria_class = classes.indexOf(getCls);
+                                };
                             };
                         };
-                    };
 
-                    // Update users table
-                    await updateUsers(interaction.user.id, {
-                        phantasmagoria_supports: { type: "set", value: stats.phantasmagoria_supports },
-                        phantasmagoria_class: { type: "set", value: stats.phantasmagoria_class },
-                        phantasmagoria_equipment: { type: "set", value: stats.phantasmagoria_equipment ?? {} },
-                    });
+                        // Match weapon / shield
+                        if (weaponShield) {
+                            const parts = weaponShield.split(" / ").map(s => s.trim());
+                            const weaponPart = parts[0];
+                            const shieldPart = parts[1];
 
-                    interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow("overview", EVENT_ACTIVE), getBossSelectRow(stats)] });
-                    r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                            if (weaponPart && weaponPart.toLowerCase() === "remove") {
+                                delete stats.phantasmagoria_equipment.weapon;
+                            } else if (weaponPart) {
+                                let item = searchItem(weaponPart, interaction, true);
+                                if (item?.name) {
+                                    if (item.category !== "weapon" || item.type === "shield") {
+                                        return r.reply({ content: `**${item.name}** is not a weapon!`, ephemeral: true });
+                                    };
+                                    stats.phantasmagoria_equipment.weapon = item.id;
+                                };
+                            };
+
+                            if (shieldPart && shieldPart.toLowerCase() === "remove") {
+                                delete stats.phantasmagoria_equipment.shield;
+                            } else if (shieldPart) {
+                                let item = searchItem(shieldPart, interaction, true);
+                                if (item?.name) {
+                                    if (item.type !== "shield") {
+                                        return r.reply({ content: `**${item.name}** is not a shield!`, ephemeral: true });
+                                    };
+                                    stats.phantasmagoria_equipment.shield = item.id;
+                                };
+                            };
+                        };
+
+                        // Match armor set
+                        if (armorSet) {
+                            if (armorSet.toLowerCase() === "remove") {
+                                delete stats.phantasmagoria_equipment.helmet;
+                                delete stats.phantasmagoria_equipment.cuirass;
+                                delete stats.phantasmagoria_equipment.gloves;
+                                delete stats.phantasmagoria_equipment.boots;
+                            } else {
+                                const getSet = searchItem(armorSet, interaction, true, { returnSet: true });
+                                if (!getSet || !(getSet instanceof armorInfo)) {
+                                    return r.reply({ content: `No armor set named **${armorSet}** found!`, ephemeral: true });
+                                };
+                                const setItems = items.filter((item) => item instanceof armorInfo && item.setname === getSet.setname) as armorInfo[];
+                                for (const piece of setItems) {
+                                    if (piece.type) stats.phantasmagoria_equipment[piece.type] = piece.id;
+                                };
+                            };
+                        };
+
+                        // Update users table
+                        await updateUsers(interaction.user.id, {
+                            phantasmagoria_supports: { type: "set", value: stats.phantasmagoria_supports },
+                            phantasmagoria_class: { type: "set", value: stats.phantasmagoria_class },
+                            phantasmagoria_equipment: { type: "set", value: stats.phantasmagoria_equipment ?? {} },
+                        });
+
+                        if (!play.ended) await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow("overview", EVENT_ACTIVE), getBossSelectRow(stats)] });
+                        r.reply({ content: `Edited Successfully!`, ephemeral: true });
+                    } finally {
+                        pendingEdits--;
+                    }
                 }).catch(() => null);
             });
 
@@ -403,15 +413,15 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                 return { embeds: [Embed.setDescription(getDesc())], components: [actionRow, getRaidButtonRow(tab, EVENT_ACTIVE)[0]] };
             };
 
-            strategies.on('collect', async (rr) => {
+            collectComponentUpdates(strategies, async (rr) => {
                 tab = "strategies";
                 const activeStrategy = phantasmaStrategies.findIndex((s) => s.id === stats.phantasmagoria_strategy);
                 strategyIndex = activeStrategy >= 0 ? activeStrategy : 0;
-                interaction.editReply(getStrategyPageOptions());
+                await interaction.editReply(getStrategyPageOptions());
             });
 
             const strategyNav = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && ["strategy_prev", "strategy_next", "strategy_select"].includes(r.customId), componentType: ComponentType.Button, time: 90000 });
-            strategyNav.on('collect', async (rr) => {
+            collectComponentUpdates(strategyNav, async (rr) => {
                 if (rr.customId === "strategy_prev") strategyIndex = strategyIndex === 0 ? phantasmaStrategies.length - 1 : strategyIndex - 1;
                 else if (rr.customId === "strategy_next") strategyIndex = strategyIndex >= phantasmaStrategies.length - 1 ? 0 : strategyIndex + 1;
                 else if (rr.customId === "strategy_select") {
@@ -422,18 +432,17 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                         interaction.followUp({ content: `Strategy set to **${s.name}**!`, ephemeral: true }).catch(() => null);
                     };
                 };
-                interaction.editReply(getStrategyPageOptions());
+                await interaction.editReply(getStrategyPageOptions());
             });
 
             const bossSelect = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "select_boss", componentType: ComponentType.StringSelect, time: 90000 });
-            bossSelect.on('collect', async (rr) => {
-                await rr.deferUpdate();
+            collectComponentUpdates(bossSelect, async (rr) => {
                 const bossId = parseInt(rr.values[0]);
                 stats.phantasmagoria_selected_boss = bossId;
                 await updateUsers(interaction.user.id, { phantasmagoria_selected_boss: { type: "set", value: bossId } });
                 tab = "overview";
                 Embed.setThumbnail(phantasmagoriaBosses[bossId].image[0]);
-                interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, EVENT_ACTIVE), getBossSelectRow(stats)] });
+                await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, EVENT_ACTIVE), getBossSelectRow(stats)] });
             });
 
             function getShopSelectRow() {
@@ -458,9 +467,9 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                     );
             };
 
-            rewards.on('collect', async (rr) => {
+            collectComponentUpdates(rewards, async (rr) => {
                 tab = "rewards";
-                interaction.editReply({
+                await interaction.editReply({
                     embeds: [Embed.setDescription(getDesc())],
                     components: [...getRaidButtonRow(tab, false), getShopSelectRow()]
                 });
@@ -655,7 +664,7 @@ function raidOverview({ interaction, stats, userItems }: { interaction: ChatInpu
                         pendingGrant = null;
 
                         await modalSubmit.followUp({ content: `Successfully purchased **${qty}x** ${shopItem.emoji} **${shopItem.name}** for **${totalCost}** <a:echo:1510653732029857802>!`, ephemeral: true });
-                        await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, false), getShopSelectRow()] });
+                        if (!play.ended) await interaction.editReply({ embeds: [Embed.setDescription(getDesc())], components: [...getRaidButtonRow(tab, false), getShopSelectRow()] });
                     } catch (err) {
                         if ((err as Error).message === 'INSUFFICIENT_ECHO') {
                             await modalSubmit.followUp({ content: `Your balance changed! Need **${totalCost}** but you don't have enough Echoes.`, ephemeral: true });

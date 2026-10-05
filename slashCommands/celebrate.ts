@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsers } from "../Modules/queries";
@@ -71,7 +72,7 @@ export const exportCommand: SlashCommand = {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "confirm" || r.customId === "anonymous"), componentType: ComponentType.Button, time: 120000 });
                 const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 120000 });
 
-                confirm.on('collect', async (r) => {
+                collectComponentUpdates(confirm, async (r) => {
                     confirm.stop(), cancel.stop();
 
                     const stats = await getUserSchema(interaction.user.id);
@@ -89,7 +90,7 @@ export const exportCommand: SlashCommand = {
                     user.send(`You have received some <:valentines_choco_2026:1472686937277071442> __Valentine's Chocolate__${r.customId === "confirm" ? ` from ${interaction.user.toString()}` : ""}!${message ? `\n> ${message}` : ""}`);
                 });
 
-                cancel.on('collect', () => {
+                collectComponentUpdates(cancel, async () => {
                     confirm.stop(), cancel.stop();
                     interaction.followUp({ content: "Action cancelled", ephemeral: true });
                 });

@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { characters } from "../Modules/chars";
 import { achievements } from "../Modules/achievements";
@@ -63,7 +64,7 @@ const exportCommand: SlashCommand = {
         return interaction.reply({ embeds: [Embed], components: [OfferRow], fetchReply: true }).then(msg => {
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-            collector.on('collect', async r => {
+            collectComponentUpdates(collector, async r => {
                 collector.stop();
                 if (r.customId === "cancel") {
                     if (interaction.channel?.isSendable()) return interaction.channel.send("Action cancelled");

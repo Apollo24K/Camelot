@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder } from 'discord.js';
 import { getUserSchema, updateUsers } from '../Modules/queries';
 import { skillTree } from '../Modules/skillTree';
@@ -48,7 +49,7 @@ const exportCommand: SlashCommand = {
             else return interaction.reply({ embeds: [Embed], components: [PageRow] }).then((msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -60,7 +61,7 @@ const exportCommand: SlashCommand = {
                     showSkills = showPage(currPage, skillList, elementsPerPage);
 
                     Embed.setFooter({ text: `Page ${currPage}/${pagesTotal}` }).setDescription(`${showSkills.map(skill => `**${skill.fullName(stats.skill_tree[skill.id], true)}**\n> - ${skill.desc(stats.skill_tree[skill.id])}`).join("\n\n")}\n\n`);
-                    interaction.editReply({ embeds: [Embed] });
+                    await interaction.editReply({ embeds: [Embed] });
                 });
             });
         };
@@ -116,7 +117,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ embeds: [Embed], components: [row] }).then((msg) => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 120000 });
 
-                collector.on('collect', async (r) => {
+                collectComponentUpdates(collector, async (r) => {
                     const skillid = parseInt(r.customId);
                     const skill = skillTree[skillid];
                     if (!skill) return;
@@ -149,8 +150,8 @@ const exportCommand: SlashCommand = {
                     for (const id of [94, 95, 96, 97, 98]) await achievements[id].check(interaction, interaction.user, updatedSkillUpgrades);
 
                     const { Embed, row } = createComponents(stats);
-                    if (!Embed || !row) interaction.editReply({ components: [] });
-                    else interaction.editReply({ embeds: [Embed], components: [row] });
+                    if (!Embed || !row) await interaction.editReply({ components: [] });
+                    else await interaction.editReply({ embeds: [Embed], components: [row] });
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`Unlocked **${skill.fullName(stats.skill_tree[skillid])}**!`);
                 });

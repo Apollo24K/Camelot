@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, AttachmentBuilder, ComponentType, ButtonStyle, User } from "discord.js";
 import { createCanvas, loadImage, SKRSContext2D, Image } from '@napi-rs/canvas';
@@ -560,7 +561,7 @@ const exportCommand: SlashCommand = {
 
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "open", componentType: ComponentType.Button, time: 30000 });
 
-                collector.on('collect', async () => {
+                collectComponentUpdates(collector, async () => {
                     const stats = await getUserSchema(user.id);
                     if (!stats) return;
 

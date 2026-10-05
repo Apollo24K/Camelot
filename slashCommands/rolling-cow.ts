@@ -1,4 +1,5 @@
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
+import { deferButtonUpdate, waitForComponentAcknowledgements } from "../Modules/buttonInteractions";
 import { CoalescingRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, InteractionEditReplyOptions } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
@@ -237,6 +238,9 @@ function levelSelection(interaction: ChatInputCommandInteraction, stats: RcUserS
                 if (play.ended || menuBusy) return;
                 menuBusy = true;
                 try {
+                    if (!await deferButtonUpdate(r) || play.ended) return;
+                    await waitForComponentAcknowledgements(msg.id);
+                    if (play.ended) return;
                     if (r.customId === "confirm") {
                         const members = [stats, ...partySchema];
                         const memberIds = members.map((e) => e.id);
@@ -592,7 +596,9 @@ const exportCommand: SlashCommand = {
                 interaction.editReply({ embeds: [Embed], components: [row] }).then(msg => {
 
                     const renderer = new CoalescingRenderer<InteractionEditReplyOptions>(
-                        snapshot => interaction.editReply(snapshot), { command: "rolling-cow" }
+                        snapshot => interaction.editReply(snapshot), {
+                            command: "rolling-cow", beforeEdit: () => waitForComponentAcknowledgements(msg.id),
+                        }
                     );
                     const warnTooFast = createBattleSpeedWarning(warning => interaction.followUp(warning));
                     const atk = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ATK", componentType: ComponentType.Button, time: 120000 });

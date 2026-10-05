@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { EmbedBuilder, ComponentType, ButtonInteraction, Message } from "discord.js";
 import { auniq, characters } from "../Modules/chars";
@@ -204,7 +205,7 @@ const exportCommand: SlashCommand = {
         return editCommandReply(interaction, { embeds: [Embed], components: [PageRow] }).then((msg: Message) => {
             const collector = msg.createMessageComponentCollector({ filter: (r: ButtonInteraction) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 60000 });
 
-            collector.on('collect', (r: ButtonInteraction) => {
+            collectComponentUpdates(collector, async (r: ButtonInteraction) => {
                 if (r.customId === "prev") {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
@@ -214,7 +215,7 @@ const exportCommand: SlashCommand = {
                 };
 
                 Embed.setDescription(showPage(currPage, showUsers).join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
+                await editCommandReply(interaction, { embeds: [Embed], components: [PageRow] });
             });
         });
 

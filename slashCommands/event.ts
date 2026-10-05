@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType, ButtonStyle } from 'discord.js';
 import { PageRow, OfferRow, ongoingEvent, isEventOngoing, seasonalEventEnd, seasonalEventStart, ExternalLinks } from "../Modules/components";
 import { showPage } from "../Modules/functions";
@@ -629,7 +630,7 @@ const exportCommand: SlashCommand = {
                 const nextCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "nextskin", componentType: ComponentType.Button, time: 120000 });
                 const buyCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "buy", componentType: ComponentType.Button, time: 120000 });
 
-                pageCollector.on('collect', async r => {
+                collectComponentUpdates(pageCollector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -646,10 +647,10 @@ const exportCommand: SlashCommand = {
                     disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
                     Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
+                    await interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
-                tabCollector.on('collect', async r => {
+                collectComponentUpdates(tabCollector, async r => {
                     if (tab === r.customId) return;
                     if (r.customId !== "current" && r.customId !== "past" && r.customId !== "other") return;
 
@@ -666,10 +667,10 @@ const exportCommand: SlashCommand = {
                     disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
                     Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
+                    await interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
-                nextCollector.on('collect', async () => {
+                collectComponentUpdates(nextCollector, async () => {
                     selected++;
                     if (selected >= showSkins.length) selected = 0;
 
@@ -678,10 +679,10 @@ const exportCommand: SlashCommand = {
                     disableBuy = stats.skins.includes(showSkins[selected]) || (skins[showSkins[selected]].cost.eventpts === undefined) || ((skins[showSkins[selected]].cost.eventpts ?? 0) > stats.eventpts2);
 
                     Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${skins[showSkins[selected]].cost.eventpts}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
+                    await interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
-                buyCollector.on('collect', async () => {
+                collectComponentUpdates(buyCollector, async () => {
                     const cost = skins[showSkins[selected]].cost.eventpts;
                     if (stats.skins.includes(showSkins[selected])) {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`You already own this skin`);
@@ -706,7 +707,7 @@ const exportCommand: SlashCommand = {
                     disableBuy = stats.skins.includes(showSkins[selected]) || (cost > stats.eventpts2);
 
                     Embed.setDescription(`Your balance: **${stats.eventpts2}**🌙\nPrice of selected skin: **${cost}**🌙`).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
+                    await interaction.editReply({ embeds: [Embed], components: [getShopRow(tab), getRow(disableBuy)], files: [file] });
                 });
 
             });
@@ -728,7 +729,7 @@ const exportCommand: SlashCommand = {
             interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage--;
                         else currPage = pagesTotal;
@@ -740,7 +741,7 @@ const exportCommand: SlashCommand = {
                     showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**<:valentines_choco_2026:1472686937277071442>${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
 
                     Embed.setDescription(`Your balance: **${stats.eventpts}**<:valentines_choco_2026:1472686937277071442>\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    await interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
             });
         };
@@ -792,7 +793,7 @@ const exportCommand: SlashCommand = {
                 const premiumCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "premium", componentType: ComponentType.Button, time: 120000 });
                 const claimCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "claim", componentType: ComponentType.Button, time: 120000 });
 
-                pageCollector.on('collect', async r => {
+                collectComponentUpdates(pageCollector, async r => {
                     if (r.customId === "prev") {
                         if (currPage > 1) currPage -= ((currPage - 1) % 5) || 5;
                         else currPage = pagesTotal;
@@ -802,15 +803,15 @@ const exportCommand: SlashCommand = {
                     };
 
                     let file = await getPassImage(stats, currPage - 1);
-                    interaction.editReply({ files: [file] });
+                    await interaction.editReply({ files: [file] });
                 });
 
-                premiumCollector.on('collect', () => {
+                collectComponentUpdates(premiumCollector, async () => {
                     const content = stats.pass ? "Do you want to unlock the next reward for **100** <:genesis_gems:1034179687720681492>?" : "Do you want to upgrade your event pass for **1000** <:genesis_gems:1034179687720681492>?";
                     interaction.followUp({ content, components: [OfferRow], fetchReply: true, ephemeral: true }).then(message => {
                         const collector = message.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
-                        collector.on('collect', async r => {
+                        collectComponentUpdates(collector, async r => {
                             if (r.customId === "cancel") return collector.stop();
                             if (stats.pass === 0) collector.stop();
 
@@ -847,12 +848,12 @@ const exportCommand: SlashCommand = {
                             };
 
                             let file = await getPassImage(stats, currPage - 1);
-                            interaction.editReply({ components: [getPassRow(stats)], files: [file] });
-                        });
+                            await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                        }, msg.id);
                     });
                 });
 
-                claimCollector.on('collect', async () => {
+                collectComponentUpdates(claimCollector, async () => {
                     const stats2 = await getUserSchema(interaction.user.id);
                     Object.assign(stats, stats2);
 
@@ -888,7 +889,7 @@ const exportCommand: SlashCommand = {
                     if (stats.pass) stats.premiumpassclaimed = Math.min(stats.passlevel, passRewards[0].length);
 
                     let file = await getPassImage(stats, currPage - 1);
-                    interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                    await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
                 });
 
             });

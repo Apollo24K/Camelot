@@ -1,3 +1,4 @@
+import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType, ButtonBuilder, SelectMenuComponentOptionData, ButtonStyle } from "discord.js";
 import { classes } from "../Modules/classes";
 import { skills } from "../Modules/skills";
@@ -57,7 +58,7 @@ const exportCommand: SlashCommand = {
                 const prev = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "prev", componentType: ComponentType.Button, time: 90000 });
                 const next = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "next", componentType: ComponentType.Button, time: 90000 });
 
-                prev.on('collect', () => {
+                collectComponentUpdates(prev, async () => {
                     if (currPage > 1) currPage--;
                     else currPage = pagesTotal;
 
@@ -73,10 +74,10 @@ const exportCommand: SlashCommand = {
                     };
 
                     Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    await interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
 
-                next.on('collect', () => {
+                collectComponentUpdates(next, async () => {
                     if (currPage < pagesTotal) currPage++;
                     else currPage = 1;
 
@@ -92,7 +93,7 @@ const exportCommand: SlashCommand = {
                     };
 
                     Embed.setDescription(`Use \`/class info <name or ID>\` for more information\nNot yet picked any class? See \`/class pick\`\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
-                    interaction.editReply({ embeds: [Embed], components: [PageRow] });
+                    await interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
             });
         };
@@ -188,7 +189,7 @@ const exportCommand: SlashCommand = {
 
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "class_selection", componentType: ComponentType.StringSelect, time: 60000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     if (stats.dungeon_classes.filter((e) => classes[e].tier === 1).length > Math.floor(level / 10)) {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`You have already claimed ${Math.floor(level / 10) ? `**${Math.floor(level / 10) + 1}**` : "a"} beginner ${Math.floor(level / 10) ? "classes" : "class"}. You can pick another one when you reach level **${10 * (Math.floor(level / 10) + 1)}**`);
                         return;
@@ -240,7 +241,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Are you sure you want to upgrade from your **${cClass.name}** class to **${fClass.name}**?`, components: [OfferRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
@@ -318,7 +319,7 @@ const exportCommand: SlashCommand = {
 
                     const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, max: 1, time: 30000 });
 
-                    collector.on('collect', async r => {
+                    collectComponentUpdates(collector, async r => {
                         collector.stop();
                         const stats = await getUserSchema(interaction.user.id);
                         if (!stats) return;
@@ -371,7 +372,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Are you sure you want to transfer your xp from **${oldClass.name}** to **${newClass.name}** for **30**<:genesis_gems:1034179687720681492>?`, components: [OfferRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 15000 });
 
-                collector.on('collect', async r => {
+                collectComponentUpdates(collector, async r => {
                     collector.stop();
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
@@ -432,7 +433,7 @@ const exportCommand: SlashCommand = {
             return interaction.reply({ content: `Are you sure you want to switch from your current **${fClass.tier === 2 ? oldAdvanced.name : oldMaster.name}** class to **${fClass.tier === 2 ? newAdvanced.name : newMaster.name}** for 100<:genesis_gems:1034179687720681492>?`, components: [OfferRow] }).then(msg => {
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, max: 1, time: 15000 });
 
-                confirm.on('collect', async r => {
+                collectComponentUpdates(confirm, async r => {
                     if (r.customId === "cancel") {
                         if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
                         return;
