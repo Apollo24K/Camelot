@@ -1,4 +1,4 @@
-import { EmbedBuilder, User, ButtonInteraction, ChatInputCommandInteraction, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
+import { EmbedBuilder, User, ButtonInteraction, ChatInputCommandInteraction, InteractionEditReplyOptions, SlashCommandBuilder, SlashCommandOptionsOnlyBuilder, SlashCommandSubcommandsOnlyBuilder } from "discord.js";
 
 
 export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
@@ -738,6 +738,7 @@ export type MatchStats = {
     combodmg: number;
     revivedTotal: number;
     collector: Record<string, any>;
+    battleComponents?: InteractionEditReplyOptions['components'];
     abilityUsed: number;
     blockAbilities: number;
     loot: number;

@@ -3783,7 +3783,7 @@ export const rollingCowAbilities: skillInfo[] = [
             const row = new ActionRowBuilder<ButtonBuilder>()
                 .addComponents(...buttons);
 
-            matchStats.interaction.editReply({ components: [row] });
+            if (!matchStats.ended) matchStats.battleComponents = [row];
 
             return AbilityResponse.SUCCESS;
         }, 9999));

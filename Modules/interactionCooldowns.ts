@@ -1,12 +1,12 @@
-type UserWindow = { count: number; expires: number; warned: number };
-export type CooldownDecision = { reason: 'user' | 'channel'; retryAfterMs: number; feedback: boolean };
+type UserWindow = { count: number; expires: number; warned: number; };
+export type CooldownDecision = { reason: 'user' | 'channel'; retryAfterMs: number; feedback: boolean; };
 const bypassedCommands = new Set(['admin', 'balance', 'buy', 'camelot', 'guess', 'info', 'item', 'mod', 'pull', 'rp', 'shop']);
 
 export class InteractionCooldowns {
     private users = new Map<string, UserWindow>();
     private channels = new Map<string, number>();
     private nextPrune = 0;
-    constructor(private readonly now = Date.now) {}
+    constructor(private readonly now = Date.now) { }
 
     checkUser(userId: string, command: string): CooldownDecision | undefined {
         const now = this.now();
@@ -36,11 +36,11 @@ export class InteractionCooldowns {
         const expires = this.channels.get(channelId) ?? 0;
         if (expires > now) {
             const user = this.users.get(userId)!;
-            const feedback = now - user.warned >= 750;
+            const feedback = now - user.warned >= 600;
             if (feedback) user.warned = now;
             return { reason: 'channel', retryAfterMs: expires - now, feedback };
         }
-        this.channels.set(channelId, now + 750);
+        this.channels.set(channelId, now + 600);
     }
 
     private prune(now: number) {
@@ -55,6 +55,6 @@ export class InteractionCooldowns {
 export function cooldownMessage(decision: CooldownDecision) {
     const seconds = Math.max(1, Math.ceil(decision.retryAfterMs / 1000));
     return decision.reason === 'channel'
-        ? `This channel is busy. Please try again in ${seconds}s.`
-        : `You're sending commands too quickly. Please wait ${seconds}s before trying again.`;
+        ? `This channel is busy, please try again in a second or use another channel`
+        : `You're going too fast, please wait a few seconds before trying again`;
 }
