@@ -2,6 +2,7 @@ import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { characters } from "../Modules/chars";
 import { abilities } from "../Modules/abilities";
+import { ascensions } from "../Modules/ascensions";
 import { achievements } from "../Modules/achievements";
 import { search, showPage } from "../Modules/functions";
 import { SlashCommand } from "../types";
@@ -246,6 +247,11 @@ const exportCommand: SlashCommand = {
         let singlePagesTotal = isEnemy ? allEnemies.length : charsID.length;
         let singleCurrPage = isEnemy ? allEnemies.findIndex(e => e.name === fArray?.name) + 1 : charsID.indexOf("" + fArray?.id) + 1;
 
+        function ascensionHint(): string {
+            if (!fArray || !(fArray.id in ascensions)) return "";
+            return `\n\n**Ascension**: This ability has ascension upgrades — view them with \`/ascend view ${fArray.name}\``;
+        };
+
         function changeEmbed() {
             const isEnemyView = isEnemy && enemyData;
             const title = selection === "single"
@@ -255,9 +261,9 @@ const exportCommand: SlashCommand = {
             const description = selection === "single"
                 ? (isEnemyView
                     ? formatEnemyTraits(enemyData)
-                    : isSummary
+                    : (isSummary
                         ? abilities[fArray.id].shortdesc
-                        : abilities[fArray.id].desc)
+                        : abilities[fArray.id].desc) + ascensionHint())
                 : `Use \`/ability <char>\` for more information\n\n${showCharsF.join("\n")}`;
 
             return new EmbedBuilder()

@@ -5,6 +5,7 @@ import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ChatInputCommandInteraction, ButtonStyle } from "discord.js";
 import { CompactUserSchema, DetailedStats, SlashCommand } from '../types';
 import { abilities, Ability } from "../Modules/abilities";
+import { getUserAbility } from "../Modules/ascensions";
 import { achievements } from "../Modules/achievements";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
@@ -282,7 +283,7 @@ const exportCommand: SlashCommand = {
         let myStatsC: DetailedStats = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
         let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : undefined;
-        let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : undefined;
+        let myAbility = getUserAbility(myChar.id, stats);
 
         if (myStats.rune) {
             const rune = items[parseInt(myStats.rune)];

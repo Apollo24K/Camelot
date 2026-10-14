@@ -3,6 +3,7 @@ import { deferButtonUpdate, waitForComponentAcknowledgements } from "../Modules/
 import { CoalescingRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, InteractionEditReplyOptions } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
+import { getUserAbility } from "../Modules/ascensions";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
 import { floors, rollingCowMobs } from "../Modules/enemies";
@@ -462,7 +463,7 @@ const exportCommand: SlashCommand = {
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
         let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : undefined;
-        let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : undefined;
+        let myAbility = getUserAbility(myChar.id, stats);
 
         // Enemy Stats
         let enemy = rollingCowMobs[stats.cow_enemy_index];

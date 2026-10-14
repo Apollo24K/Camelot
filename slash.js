@@ -62,6 +62,15 @@ const commands = [
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
+			.setName('ascend')
+			.setDescription('Ascend a character\'s ability by sacrificing a duplicate')
+			.addSubcommand((subcommand) => subcommand.setName('sacrifice').setDescription('Sacrifice a duplicate to ascend a character\'s ability')
+				.addStringOption(option => option.setName('character').setDescription('Select a character you own').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('view').setDescription('View a character\'s ascension path')
+				.addStringOption(option => option.setName('character').setDescription('Select a character').setRequired(true))),
+	}.data.toJSON(),
+	{
+		data: new SlashCommandBuilder()
 			.setName('arena')
 			.setDescription('Challenge someone to a 1v1')
 			.addUserOption(option => option.setName('user').setDescription('user to challenge').setRequired(true))
@@ -509,6 +518,7 @@ const commands = [
 			.addSubcommand((subcommand) => subcommand.setName('catalog').setDescription('View forge catalog')
 				.addStringOption(option => option.setName('grade').setDescription('filter for a specific grade').setRequired(false)
 					.addChoices(
+						{ name: 'mythical', value: 'mythical' },
 						{ name: 'legendary', value: 'legendary' },
 						{ name: 'unique', value: 'unique' },
 						{ name: 'rare', value: 'rare' },
@@ -1417,6 +1427,7 @@ const commands = [
 					.setRequired(false)
 					.addChoices(
 						{ name: 'stampede', value: 'stampede' },
+						{ name: 'boss hunt', value: 'bosshunt' },
 					)
 			)
 	}.data.toJSON(),

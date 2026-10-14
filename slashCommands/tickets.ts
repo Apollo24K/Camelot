@@ -46,10 +46,12 @@ const exportCommand: SlashCommand = {
                 pulled.push(available[Math.floor(available.length * Math.random())].id);
             }
             stats.chars.push(...pulled);
+            stats.ticketsopened = (stats.ticketsopened ?? 0) + amount;
 
             // Update tickets
             await updateUsers(interaction.user.id, {
                 [ticketToOpen]: { type: 'increment', value: -amount },
+                ticketsopened: { type: 'increment', value: amount },
                 chars: { type: 'append', value: pulled }
             });
 
@@ -176,10 +178,12 @@ const exportCommand: SlashCommand = {
                 displayMy(tChar[tId], stats.chars, stats.char_ref[tChar[tId].id], interaction);
 
                 stats[ticketType]--;
+                stats.ticketsopened = (stats.ticketsopened ?? 0) + 1;
 
 
                 await updateUsers(interaction.user.id, {
                     [ticketType]: { type: 'increment', value: -1 },
+                    ticketsopened: { type: 'increment', value: 1 },
                     chars: { type: 'append', value: [tChar[tId].id] }
                 });
 

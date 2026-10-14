@@ -387,7 +387,7 @@ export default class Avalon {
 
     static applyBuffs(stats: DetailedStats, eStats: DetailedStats, obj: Buffs, ebuff: Buffs, matchstats: MatchStats, notice: string[]) {
         (Object.keys(obj) as (keyof Buffs)[]).forEach((stat) => {
-            if (obj[stat].length) obj[stat].forEach((buff) => {
+            if (obj[stat].length && !stats.unbuffable) obj[stat].forEach((buff) => {
                 if (stat === "hp" && buff.type === "+") {
                     const heal = buff.isDebuff
                         ? Math.min(buff.range[1], Math.max(buff.range[0], (buff.val * Math.pow(0.99895, Math.max(stats.def, stats.mr)))))

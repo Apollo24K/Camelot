@@ -747,7 +747,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     };
     if (attacker.critbonus && (isCrit || attacker.shorekeeperUsedActive)) damage = Math.floor(damage * (1 + attacker.critbonus));
     attacker.crittedTotal ||= 0;
-    attacker.crittedTotal++;
+    if (isCrit) attacker.crittedTotal++;
 
     if (options.element && !options.isLightning && !options.isBurn) {
         switch (options.element) {
@@ -974,7 +974,6 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         if (selfHealedTotal >= healCap) attacker.lastSelfHealRoundCapped = matchStats.round;
     };
     if (options.selfdmg && Math.random() < attacker.selfdmg) attacker.hp -= damage;
-    if ("gintokiStacks" in attacker && isCrit) attacker.gintokiStacks = 0;
     if (damage && attacker.guinaifenStackRounds?.filter((e: number) => e >= (matchStats.round - attacker.guinaifenStackLast)).length < attacker.guinaifenStackMax) {
         targetBuff.hp.push(new buffInfo("+", -Math.floor(0.06 * damage), attacker.guinaifenStackLast));
         attacker.guinaifenStackRounds.push(matchStats.round);

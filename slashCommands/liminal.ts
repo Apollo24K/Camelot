@@ -3,6 +3,7 @@ import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ChatInputCommandInteraction, SelectMenuComponentOptionData } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
+import { getUserAbility } from "../Modules/ascensions";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
 import { armorInfo, itemInfo, items, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
@@ -739,7 +740,7 @@ const exportCommand: SlashCommand = {
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
         let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : undefined;
-        let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : undefined;
+        let myAbility = getUserAbility(myChar.id, stats);
 
         if (myStats.rune) {
             const rune = items[parseInt(myStats.rune)];

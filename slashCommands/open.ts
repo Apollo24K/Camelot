@@ -131,9 +131,12 @@ const exportCommand: SlashCommand = {
             const shardmsg = obtShards.map((e) => `${e[1]}x ${shardEmojis[e[0] as keyof typeof shardEmojis]}`).join(", ");
             const ticketmsg = obtTickets.map((e) => `${e[1]}x ${ticketEmojis[e[0] as keyof typeof ticketEmojis]}`).join(", ");
 
+            stats.lootboxesopened = (stats.lootboxesopened ?? 0) + amount;
+
             // Update users table
             await updateUsers(interaction.user.id, {
                 lootbox: { type: "increment", value: -amount },
+                lootboxesopened: { type: "increment", value: amount },
                 coins: { type: "increment", value: addCoins },
                 ssshard: { type: "increment", value: addShards["ss"] },
                 sshard: { type: "increment", value: addShards["s"] },
@@ -169,8 +172,11 @@ const exportCommand: SlashCommand = {
             if (chest.id === 458) newItemsValues[677] = amount; // Deluxe Chest adds mythical points
             if (chest.id === 457) newItemsValues[678] = amount; // Royal Chest adds Legendary points
 
+            stats.chestsopened = (stats.chestsopened ?? 0) + amount;
+
             await updateUsers(interaction.user.id, {
                 items: { type: "merge_json", value: newItemsValues },
+                chestsopened: { type: "increment", value: amount },
             });
 
             // Get already owned items

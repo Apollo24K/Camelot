@@ -75,6 +75,7 @@ async function createTables() {
         arenastreakhighest INT DEFAULT 0 NOT NULL,
         animationdelay INT DEFAULT 1200 NOT NULL,
         achievements INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
+        newbie INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         lastpull TIMESTAMP,
         pullreminder INT DEFAULT 0 NOT NULL,
         votereminder INT DEFAULT 1 NOT NULL,
@@ -99,6 +100,7 @@ async function createTables() {
         itemlock TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
         party TEXT,
         stampedechar INT,
+        bosshuntchar INT,
         mailreceived INT DEFAULT 0,
         class INT,
         aboutme TEXT,
@@ -110,6 +112,9 @@ async function createTables() {
         premiumpassclaimed INT DEFAULT 0 NOT NULL,
         celebrateclaimed BIGINT DEFAULT 0 NOT NULL,
         expulls INT DEFAULT 0 NOT NULL,
+        chestsopened INT DEFAULT 0 NOT NULL,
+        lootboxesopened INT DEFAULT 0 NOT NULL,
+        ticketsopened INT DEFAULT 0 NOT NULL,
         level INT DEFAULT 1 NOT NULL,
         bank BIGINT DEFAULT -1 NOT NULL,
         charxp BIGINT DEFAULT 0 NOT NULL,
@@ -162,6 +167,7 @@ async function createTables() {
         -- Characters table columns
         chars INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         char_ref JSONB DEFAULT '{}' NOT NULL,          -- renamed from 'ref' to avoid conflicts
+        char_ascension JSONB DEFAULT '{}' NOT NULL,    -- charId -> dupe-ascension rank
         char_level JSONB DEFAULT '{}' NOT NULL,        -- renamed from 'level' to avoid conflicts
         char_class JSONB DEFAULT '{}' NOT NULL,        -- renamed from 'class' to avoid conflicts
         char_skin JSONB DEFAULT '{}' NOT NULL,         -- renamed from 'skin' to avoid conflicts
@@ -357,6 +363,27 @@ async function createTables() {
         created_at TIMESTAMPTZ DEFAULT NOW()
     )`);
 
+    // // World Bosses table
+    // await query(`CREATE SEQUENCE IF NOT EXISTS world_bosses_rowid_seq`);
+    // await query(`CREATE TABLE IF NOT EXISTS world_bosses (
+    //     rowid BIGINT NOT NULL DEFAULT nextval('world_bosses_rowid_seq'::regclass),
+    //     id TEXT UNIQUE NOT NULL,
+    //     summoner_id TEXT,
+    //     enemy_id INT NOT NULL,
+    //     enemy_hp BIGINT NOT NULL,
+    //     enemy_hpmax BIGINT NOT NULL,
+    //     rank_letter TEXT NOT NULL DEFAULT 'A+',
+    //     participation JSONB DEFAULT '{}' NOT NULL,
+    //     banned_users JSONB DEFAULT '[]' NOT NULL,
+    //     status TEXT DEFAULT 'active' NOT NULL,
+    //     visibility TEXT DEFAULT 'public' NOT NULL,
+    //     type TEXT DEFAULT 'personal' NOT NULL,
+    //     pos_modifier INT DEFAULT 1 NOT NULL,
+    //     neg_modifier INT DEFAULT 1 NOT NULL,
+    //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    //     expires_at TIMESTAMP NOT NULL
+    // )`);
+
 };
 
 async function createIndexes() {
@@ -376,6 +403,15 @@ async function createIndexes() {
     await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_guild_donations_guildid ON guild_donations(guildid)`);
     await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_trades_receiver ON trades(receiver)`);
     await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_characters_owner_charid ON characters(id, charid)`);
+    // await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_world_bosses_status_expires ON world_bosses(status, expires_at)`);
+    // await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_world_bosses_summoner ON world_bosses(summoner_id, status)`);
+    // await query(`CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_world_bosses_expires ON world_bosses(expires_at)`);
+    // await query(`ALTER TABLE world_bosses ADD COLUMN IF NOT EXISTS visibility TEXT DEFAULT 'public' NOT NULL`);
+    // await query(`ALTER TABLE world_bosses ALTER COLUMN summoner_id DROP NOT NULL`);
+    // await query(`ALTER TABLE world_bosses ADD COLUMN IF NOT EXISTS banned_users JSONB DEFAULT '[]' NOT NULL`);
+    // await query(`ALTER TABLE world_bosses ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'personal' NOT NULL`);
+    // await query(`ALTER TABLE world_bosses ADD COLUMN IF NOT EXISTS pos_modifier INT DEFAULT 1 NOT NULL`);
+    // await query(`ALTER TABLE world_bosses ADD COLUMN IF NOT EXISTS neg_modifier INT DEFAULT 1 NOT NULL`);
 };
 
 export const withTransaction = async <T>(callback: (client: PoolClient) => Promise<T>): Promise<T> => {
@@ -604,6 +640,9 @@ async function alterTables() {
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_boss_data JSONB DEFAULT \'{}\'::jsonb NOT NULL;');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_selected_boss INT DEFAULT 0 NOT NULL;');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS echo INT DEFAULT 0 NOT NULL');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS chestsopened INT DEFAULT 0 NOT NULL');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS lootboxesopened INT DEFAULT 0 NOT NULL');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS ticketsopened INT DEFAULT 0 NOT NULL');
     // Only migrate legacy phantasmagoria columns if they exist to avoid failing on a clean DB
     await query(`DO $$
     BEGIN
@@ -619,6 +658,10 @@ async function alterTables() {
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_class INT DEFAULT NULL');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS phantasmagoria_equipment JSONB DEFAULT \'{}\'::jsonb NOT NULL');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hidden_dungeon JSONB DEFAULT \'{}\' NOT NULL');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS newbie INT[] DEFAULT ARRAY[]::INT[] NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS bosshuntchar INT;');
+    await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS char_ascension JSONB DEFAULT '{}' NOT NULL`);
+    // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS worldboss_attempts INT DEFAULT 12 NOT NULL');
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INT DEFAULT 0 NOT NULL');
 
     // add genesisdupepity INT DEFAULT 0 NOT NULL,

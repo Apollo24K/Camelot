@@ -4,6 +4,7 @@ import { replyToCommand, deferCommand, editCommandReply } from "../Modules/inter
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities";
+import { getUserAbility } from "../Modules/ascensions";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
 import { bossMobs } from "../Modules/enemies";
@@ -15,7 +16,7 @@ import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, SlashCommand, UpdateUserOptions } from '../types';
-import { getGuildSchema, getOwnedCharacterIds, getUserSchema, ownsCharacter, updateGuilds, updateUsers } from '../Modules/queries';
+import { getGuildSchema, getOwnedCharacterIds, getUserSchema, getUserSchemas, ownsCharacter, updateGuilds, updateUsers } from '../Modules/queries';
 import { AbilityResponse, isEventOngoing, ongoingEvent } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
@@ -158,7 +159,7 @@ const exportCommand: SlashCommand = {
         });
 
         let stats = author.schema;
-        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return editCommandReply(interaction, "You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.bosshuntchar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.bosshuntchar))) return editCommandReply(interaction, "You have to choose a boss hunt character first. Use `/select <char> mode:bosshunt` to choose one.");
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         if (!guild) return editCommandReply(interaction, `You need to be in a guild to participate in this event!\nYou can find one using \`/guild find\` or create your own using \`/guild create\``);
@@ -169,8 +170,24 @@ const exportCommand: SlashCommand = {
         if (selection === -1) return;
 
         stats = await getUserSchema(interaction.user.id) ?? stats;
-        if (stats.battlechar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.battlechar))) return editCommandReply(interaction, "You have to choose a battle character first. Use `/select <char name>` to choose one.");
+        if (stats.bosshuntchar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.bosshuntchar))) return editCommandReply(interaction, "You have to choose a boss hunt character first. Use `/select <char> mode:bosshunt` to choose one.");
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
+
+        // Guild support characters
+        const guildMembers = await getUserSchemas(guild.members);
+        const collision = guildMembers.find((e) => e.id !== interaction.user.id && e.bosshuntchar === stats.bosshuntchar);
+        if (collision) return editCommandReply(interaction, `${collision.name} in your guild has also selected **${characters[stats.bosshuntchar].name}**. Use \`/select <char> mode:bosshunt\` to choose another character.`);
+
+        const supportOwners = new Map<number, CompactUserSchema>();
+        for (const member of guildMembers) {
+            if (member.id === interaction.user.id || member.bosshuntchar === null) continue;
+            if (!supportOwners.has(member.bosshuntchar)) supportOwners.set(member.bosshuntchar, member);
+        };
+        const partyChars = [...supportOwners.keys()].map((id) => characters[id]);
+        let partyStats: DetailedStats[] = [];
+        for (const owner of supportOwners.values()) partyStats.push(await getDetailedStats(owner.bosshuntchar as number, owner, owner.dungeon_classlevels));
+        let partyStatsC = _.cloneDeep(partyStats);
+        const partyAbility: (Ability | undefined)[] = [];
 
         // Set up restrictions
         if (stats.bosshuntruns === 5) {
@@ -194,7 +211,7 @@ const exportCommand: SlashCommand = {
         });
 
         // User stats
-        let myChar = characters[stats.battlechar];
+        let myChar = characters[stats.bosshuntchar];
         let myStats = await getDetailedStats(myChar.id, stats, stats.dungeon_classlevels);
 
         myStats.thumbnail = myChar.getImage(stats.premium, stats.custom_skins[myChar.id], stats.char_skin[myChar.id]);
@@ -213,7 +230,7 @@ const exportCommand: SlashCommand = {
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
         let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : undefined;
-        let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : undefined;
+        let myAbility = getUserAbility(myChar.id, stats);
 
         if (myStats.rune) {
             const rune = items[parseInt(myStats.rune)];
@@ -238,7 +255,7 @@ const exportCommand: SlashCommand = {
         let eStats = {
             "name": enemy.name,
             "hp": guild[`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`],
-            "maxhp": Math.round(bossBaseHP[enemy.id] * (0.8 + (guild.bosshuntstage * 0.2))),
+            "maxhp": Math.round(bossBaseHP[enemy.id] * (0.8 + (guild.bosshuntstage * (guild.bosshuntstage > 25 ? 1.5 : 0.3)))),
             "atk": 400,
             "def": 20,
             "ep": 0,
@@ -258,40 +275,42 @@ const exportCommand: SlashCommand = {
             "mdChance": 0,
         } as any;
 
+        const modi = guild.bosshuntstage > 25 ? 2.4 : 1.2;
+
         // Adjust enemy stats
         if (enemy.id === 0) {
             eStats.shield = Math.floor(eStats.hp * 0.01);
-            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.16 + (guild.bosshuntstage * 0.022), 0.35));
-            eStats.md = Math.floor(myStatsC.hp * Math.min(0.14 + (guild.bosshuntstage * 0.018), 0.32));
-            eStats.def = 350 * (0.9 + (guild.bosshuntstage * 0.12));
-            eStats.mr = 350 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.16 + (modi * 0.022), 0.35));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.14 + (modi * 0.018), 0.32));
+            eStats.def = 350 * (0.9 + (modi * 0.12));
+            eStats.mr = 350 * (0.9 + (modi * 0.12));
             eStats.cr = 0.22;
             eStats.cd = 1.33;
         } else if (enemy.id === 1) {
             eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.003) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * (0.15 + Math.min(guild.bosshuntstage * 0.019), 0.34));
-            eStats.md = Math.floor(myStatsC.hp * (0.14 + Math.min(guild.bosshuntstage * 0.016), 0.32));
-            eStats.def = 250 * (0.9 + (guild.bosshuntstage * 0.12));
-            eStats.mr = 250 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.atk = Math.floor(myStatsC.hp * (0.15 + Math.min(modi * 0.019), 0.34));
+            eStats.md = Math.floor(myStatsC.hp * (0.14 + Math.min(modi * 0.016), 0.32));
+            eStats.def = 250 * (0.9 + (modi * 0.12));
+            eStats.mr = 250 * (0.9 + (modi * 0.12));
             eStats.cr = 0.1;
             eStats.cd = 1.4;
             eStats.mana = 160;
         } else if (enemy.id === 2) {
             eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.003) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.024), 0.36));
-            eStats.md = Math.floor(myStatsC.hp * Math.min(0.18 + (guild.bosshuntstage * 0.023), 0.4));
-            eStats.def = 200 * (0.9 + (guild.bosshuntstage * 0.12));
-            eStats.mr = 200 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (modi * 0.024), 0.36));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.18 + (modi * 0.023), 0.4));
+            eStats.def = 200 * (0.9 + (modi * 0.12));
+            eStats.mr = 200 * (0.9 + (modi * 0.12));
             eStats.cr = 0.33;
             eStats.cd = 1.6;
             eStats.mdChance = 1;
             eStats.mana = 200;
         } else if (enemy.id === 3) {
             eStats.shield = (guild.bosshuntstage >= 3) ? Math.floor(eStats.hp * 0.003) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.026), 0.36));
-            eStats.md = Math.floor(myStatsC.hp * Math.min(0.17 + (guild.bosshuntstage * 0.025), 0.36));
-            eStats.def = 250 * (0.9 + (guild.bosshuntstage * 0.12));
-            eStats.mr = 250 * (0.9 + (guild.bosshuntstage * 0.12));
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (modi * 0.026), 0.36));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.17 + (modi * 0.025), 0.36));
+            eStats.def = 250 * (0.9 + (modi * 0.12));
+            eStats.mr = 250 * (0.9 + (modi * 0.12));
             eStats.cr = 0.285;
             eStats.cd = 1.4;
             eStats.mdChance = 0.5;
@@ -372,9 +391,9 @@ const exportCommand: SlashCommand = {
 
             // Event Points // Damage dealt: (guild["boss"+(enemy.id+1)] - eStatsC.hp)
             let eventpts = 300 + Math.round((guild[`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`] - eStatsC.hp) / 200);
-            if (eventpts > 800) eventpts = 800;
+            if (eventpts > 500) eventpts = 500;
             eventpts = Math.floor(eventpts * (0.8 + (guild.bosshuntstage * 0.2)));
-            if (eventpts > 2400) eventpts = 2400;
+            if (eventpts > 2000) eventpts = 2000;
 
             // Update guilds table
             await updateGuilds(guild.id, {
@@ -645,6 +664,24 @@ const exportCommand: SlashCommand = {
         if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+
+        matchStats.partyChars = partyChars;
+        matchStats.partyStats = partyStatsC;
+
+        for (const [i, e] of partyStatsC.entries()) {
+            if (e.id in abilities) {
+                partyAbility[i] = _.cloneDeep(abilities[e.id]);
+
+                const runeAbility = e.rune ? items[parseInt(e.rune)] as runeInfo : undefined;
+                if (runeAbility && runeAbility.party) {
+                    await runeAbility.party(partyStatsC[i], myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+                } else {
+                    await partyAbility[i]?.party?.(partyStatsC[i], myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
+                };
+            } else {
+                partyAbility[i] = undefined;
+            };
+        };
 
         const ATK_EMOJI = myStatsC.replaceButton?.atk?.emoji || '⚔️',
             DEF_EMOJI = myStatsC.replaceButton?.def?.emoji || '🛡️',

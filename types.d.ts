@@ -11,7 +11,7 @@ export type ItemRarity = 'genesis' | 'mythical' | 'legendary' | 'unique' | 'rare
 
 export type PrimaryStat = 'hp' | 'hp%' | 'atk' | 'atk%' | 'def' | 'def%' | 'md' | 'md%' | 'mr' | 'cr' | 'cd' | 'dodge' | 'br' | 'mana' | 'sm' | 'mg' | 'shield';
 
-export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring" | "rune" | "consumable" | "dungeon access";
+export type ItemCategory = "fish" | "loot" | "weapon" | "armor" | "ring" | "rune" | "consumable" | "dungeon access" | "gadget";
 
 export type ItemType =
     | "fish"
@@ -27,7 +27,8 @@ export type ItemType =
     | "ring"
     | "rune"
     | "potion"
-    | "entry item";
+    | "entry item"
+    | "gadget";
 
 export type Emoji = `<:${string}:${number}>` | `<a:${string}:${number}>`;
 
@@ -367,6 +368,7 @@ export interface UserSchema {
     arenastreakhighest: number;
     animationdelay: number;
     achievements: number[];
+    newbie: number[];
     lastpull: Date | null;
     pullreminder: number;
     votereminder: number;
@@ -402,6 +404,7 @@ export interface UserSchema {
     itemlock: string[];
     party: string | null;
     stampedechar: number | null;
+    bosshuntchar: number | null;
     mailreceived: number;
     eventpts2: number;
     class: number | null;
@@ -414,6 +417,9 @@ export interface UserSchema {
     premiumpassclaimed: number;
     celebrateclaimed: number;
     expulls: number;
+    chestsopened: number;
+    lootboxesopened: number;
+    ticketsopened: number;
     level: number;
     bank: number;
     charxp: number;
@@ -475,6 +481,7 @@ export interface UserSchema {
 
     chars: number[];
     char_ref: Record<string, number>;
+    char_ascension: Record<string, number>;
     char_level: Record<string, any>;
     char_class: Record<string, any>;
     char_skin: Record<string, any>;
@@ -615,6 +622,28 @@ export interface RaidSchema {
     participation: Record<string, [number, number]>;
     start_date: Date;
     end_date: Date | null;
+}
+
+export interface WorldBossSchema {
+    rowid: number;
+    id: string;
+    summoner_id: string;
+    enemy_id: number;
+    enemy_hp: number;
+    enemy_hpmax: number;
+    rank_letter: RaidRank;
+    /**
+     * [damage, roundsPlayed, claimed: 0|1, fights: number]
+     */
+    participation: Record<string, [number, number, number, number]>;
+    banned_users: string[];
+    status: "active" | "defeated";
+    visibility: "public" | "private" | "global";
+    type: "personal" | "global";
+    pos_modifier: number;
+    neg_modifier: number;
+    created_at: Date;
+    expires_at: Date;
 }
 
 export interface CharacterSchema {
