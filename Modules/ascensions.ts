@@ -88,7 +88,7 @@ export const ascensions: Record<number, AscensionNode[]> = {
         },
         {
             desc: "ATK, DEF and active costs **10** less 💧.",
-            apply: (ability) => { ability.manaCostReduction += 10; },
+            apply: (ability) => { ability.manaCostReduction += 10; ability.cost = Math.max(0, ability.cost - 10); },
         },
         {
             name: "✧ The Laplace's Breakthrough ✧",

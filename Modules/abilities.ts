@@ -4141,15 +4141,13 @@ export const abilities: Record<number, Ability> = {
         shortdesc: "**Uses**: `3`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ACTIVE are *enhanced* on the **5th** and **10th** rounds, having permanent upgrades.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of DEFEND)\n- **+50%-75%** dodge rate that round\n- Enemy has **0%** dodge rate for **3** rounds\n- **-15-25%** enemy's DEF/MR for **2** rounds (Max: 2x damage)\n\n__**Active**__ (<:stormbolt:1340378654919884981>)\n- Deals **150**/**170**/**200%** DMG (Depends on *enhancement* of ACTIVE)\n\n__**Party**__ (👥)\n- every round: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** rounds",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Rudeus Greyrat | Rudy | Rudeus EX
-            let atkbuff = 1.5, mana_cost = 0 - this.manaCostReduction;
+            let atkbuff = 1.5, mana_cost = 0;
             switch (true) {
                 case (myStats.rudyBT && matchStats.round > 20): atkbuff += this.activeBonus * 3, mana_cost += 30; break;
                 case (matchStats.round > 10): atkbuff += this.activeBonus * 2, mana_cost += 20; break;
                 case (matchStats.round > 5): atkbuff += this.activeBonus, mana_cost += 10; break;
                 default: break;
             };
-
-            mana_cost = Math.max(mana_cost, -this.manaCostReduction);
 
             if (this.cost + mana_cost > myStats.sm) {
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
@@ -6292,6 +6290,7 @@ export const abilities: Record<number, Ability> = {
             return AbilityResponse.SUCCESS;
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            myStats.psvBurst = false;
             eStats.vulnerabilityDynamic ??= 1;
             myStats.replaceButton.atk = {
                 emoji: "🪷",
@@ -6328,19 +6327,18 @@ export const abilities: Record<number, Ability> = {
 
             // Delayed Buff
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                if (myStats.hp / myStats.maxhp < 0.3) {
+                if (myStats.hp / myStats.maxhp < 0.3 && !myStats.psvBurst) {
+                    myStats.psvBurst = true;
                     const hp = Math.floor(myStats.maxhp * this.heal);
                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hp, {});
                     myStats.sm += this.mana;
                     if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
                     if (typeof myStats.manaGained !== "undefined") myStats.manaGained += this.mana;
                     notice.push(`\n🍑 **${char.name}** has rejuvenated **${hp}** HP and **${this.mana}** mana!`);
-                    //@ts-ignore
-                    this._used++;
                 };
 
                 return AbilityResponse.SUCCESS;
-            }, 9999, 1));
+            }, 9999));
 
             return AbilityResponse.SUCCESS;
         },
