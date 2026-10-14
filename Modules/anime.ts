@@ -735,6 +735,9 @@ export const anime: animeInfo[] = [
     new animeInfo("SHIBOYUGI: Playing Death Games to Put Food on the Table", ["Shibou Yuugi de Meshi wo Kuu", "Shibouyugi", "SYMK"], 700),
     new animeInfo("The Demon King's Daughter is Too Kind!!", ["Maou no Musume wa Yasashi Sugiru!!",], 701),
     new animeInfo("Job Switch Log;", ["Ctrl+Alt+Resign", "Job Change Log;",], 702),
+    new animeInfo("BNA: Brand New Animal", [], 703),
+    new animeInfo("The NoexistenceN of you AND me", [], 704),
+    new animeInfo("Drifting Home", [], 705),
 
 ];
 

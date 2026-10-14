@@ -1389,7 +1389,7 @@ export const raidBosses: enemyInfo[] = [
 ];
 
 export const worldBossEnemies: enemyInfo[] = [
-    new enemyInfo("Rudgiroth", "Human", "the Derek", "M", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/d0fBdfw4/Rudgiroth.jpg"], [], 100,
+    new enemyInfo("Rudgiroth", "Human", "the Derek", "M", true, {}, {}, {}, [], ["https://i.ibb.co/d0fBdfw4/Rudgiroth.jpg"], [], 100,
         new skillInfo(100, 70, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { atkMultiplier: 1.1, magicDamage: true });
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ ${enemy.name}`, { atkMultiplier: 1.1, magicDamage: true });
@@ -1412,9 +1412,9 @@ export const worldBossEnemies: enemyInfo[] = [
             });
 
             return AbilityResponse.SUCCESS;
-        }, [[" After every attack, leaves behind a dart, dealing **6%** of your current HP over **2** rounds.", " Every **10** darts are empowered, dealing **200%** damage and reduce your healing effectiveness by **1%**.", "Active: Deals **3** hits of **110%** damage before granting self a shield equal to your missing HP. (70 💧)"]])
+        }, [[" After every attack, leaves behind a dart, dealing **6%** of your current HP over **2** rounds.", " Every **10** darts are empowered, dealing **200%** damage and reduce your healing effectiveness by **1%**.", "**Active**: Deals **3** hits of **110%** damage before granting self a shield equal to your missing HP. (70 💧)"]])
     ),
-    new enemyInfo("Staccato", "Human", "the Wit", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/tpgZ7Z50/staccato.jpg"], [], 101,
+    new enemyInfo("Staccato", "Human", "the Wit", "F", true, {}, {}, {}, [], ["https://i.ibb.co/tpgZ7Z50/staccato.jpg"], [], 101,
         new skillInfo(101, 90, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             myStats.mr -= Math.floor(myStats.mr * 0.3);
             mybuff.mr.push(new buffInfo("*", 0.7, 5));
@@ -1445,9 +1445,9 @@ export const worldBossEnemies: enemyInfo[] = [
             }, 9999));
 
             return AbilityResponse.SUCCESS;
-        }, [["You take **30%** damage whenever you make an action (Max: 4 times per round).", "Increases own MD by **4%** every **3** rounds. Always deals magical damage.", "Active: Reduces your MR by **30%** for **5** rounds, and permanently increases your damage taken by **2%** (90 💧)"]])
+        }, [["You take **30%** damage whenever you make an action (Max: 4 times per round).", "Increases own MD by **4%** every **3** rounds. Always deals magical damage.", "**Active**: Reduces your MR by **30%** for **5** rounds, and permanently increases your damage taken by **2%** (90 💧)"]])
     ),
-    new enemyInfo("Nighthollow", "Monster", "the Clinging", "NB", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/Cpdd621S/nighthollow.jpg"], [], 102,
+    new enemyInfo("Nighthollow", "Monster", "the Clinging", "NB", true, {}, {}, {}, [], ["https://i.ibb.co/Cpdd621S/nighthollow.jpg"], [], 102,
         new skillInfo(102, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.deflectDamage += 0.15;
             eStats.deflectDamageCritMulti = 2;
@@ -1483,9 +1483,9 @@ export const worldBossEnemies: enemyInfo[] = [
             });
 
             return AbilityResponse.SUCCESS;
-        }, [["Begins battles with **100%** critical rate and **+40%** DEF. Receiving a critical hit increases own ATK by **2%** but decreases own DEF by **1%**. (Max: 60 triggers)", "Active: For **3** rounds, deflects **15%** of incoming damage. This is *doubled* when the hit is critical. (60 💧)"]])
+        }, [["Begins battles with **100%** critical rate and **+40%** DEF. Receiving a critical hit increases own ATK by **2%** but decreases own DEF by **1%**. (Max: 60 triggers)", "**Active**: For **3** rounds, deflects **15%** of incoming damage. This is *doubled* when the hit is critical. (60 💧)"]])
     ),
-    new enemyInfo("The End", "Monster", "the Sillyfurby", "NB", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/n8YrzR1H/The-End.jpg"], [], 103,
+    new enemyInfo("The End", "Monster", "the Sillyfurby", "NB", true, {}, {}, {}, [], ["https://i.ibb.co/n8YrzR1H/The-End.jpg"], [], 103,
         new skillInfo(103, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.wbdomain = true;
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 3, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1504,7 +1504,7 @@ export const worldBossEnemies: enemyInfo[] = [
                 }));
 
                 return AbilityResponse.SUCCESS;
-            }, 9999));
+            }));
 
             return AbilityResponse.SUCCESS;
         }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1524,9 +1524,9 @@ export const worldBossEnemies: enemyInfo[] = [
             });
 
             return AbilityResponse.SUCCESS;
-        }, [["Upon taking damage, recovers HP equal to **6%** of your max HP.", "Every **5** attacks received increases own critical rate and damage reduction by **1%** (Max: 50%)", "Active: Doubles healing from passive for **3** rounds, but is stunned for **1** round after this. (100 💧)"]])
+        }, [["Upon taking damage, recovers HP equal to **6%** of your max HP.", "Every **5** attacks received increases own critical rate and damage reduction by **1%** (Max: 50%)", "**Active**: Doubles healing from passive for **3** rounds, but is stunned for **1** round after this. (100 💧)"]])
     ),
-    new enemyInfo("Fish of the Tides", "Tidal Fish", "the Heedcaller", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/JrCjX0H/deluvion.png"], [], 104,
+    new enemyInfo("Fish of the Tides", "Tidal Fish", "the Heedcaller", "F", true, {}, {}, {}, [], ["https://i.ibb.co/JrCjX0H/deluvion.png"], [], 104,
         new skillInfo(104, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             eStats.tidalMeter += 20;
             if (eStats.tidalMeter > 100) eStats.tidalMeter = 100;
@@ -1562,9 +1562,9 @@ export const worldBossEnemies: enemyInfo[] = [
             });
 
             return AbilityResponse.SUCCESS;
-        }, [["Raises `Tidal Meter` by **5%** whenever attacked, but loses **10%** of it whenever it misses. When it is **>50%**, she gains **+70%** ATK & DEF. At **100%**, she deals **250%** damage and resets the meter.", "Active: Raises `Tidal Meter` by **20%**. (60 💧`)"]])
+        }, [["Raises `Tidal Meter` by **5%** whenever attacked, but loses **10%** of it whenever it misses. When it is **>50%**, she gains **+70%** ATK & DEF. At **100%**, she deals **250%** damage and resets the meter.", "**Active**: Raises `Tidal Meter` by **20%**. (60 💧`)"]])
     ),
-    new enemyInfo("Luminous (alter)", "Solo Hunter", "the Undefined", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/0ybwwL9G/c.gif"], [], 105,
+    new enemyInfo("Luminous (alter)", "Solo Hunter", "the Undefined", "F", true, {}, {}, {}, [], ["https://i.ibb.co/0ybwwL9G/c.gif"], [], 105,
         new skillInfo(105, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ Piercing into the heavens... **${enemy.name}**`, 2);
             if (Math.random() <= myStats.cr) {
@@ -1581,9 +1581,9 @@ export const worldBossEnemies: enemyInfo[] = [
             notice.push(`\n✨ **${enemy.name}** gained **${Math.floor(crgain * 100)}** critical rate!`);
 
             return AbilityResponse.SUCCESS;
-        }, [["Converts the sum of your block rate and dodge rate into critical rate for herself at the start of battle.", "Active: Deals **200%** damage, and has a chance equal to critical chance to deal **400%** damage. (50 💧)"]])
+        }, [["Converts the sum of your block rate and dodge rate into critical rate for herself at the start of battle.", "**Active**: Deals **200%** damage, and has a chance equal to critical chance to deal **400%** damage. (50 💧)"]])
     ),
-    new enemyInfo("Dalus the Nightmare", "Twister", "the Phantom Dreamer", "M", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/gMMb1KRk/c.gif"], [], 106,
+    new enemyInfo("Dalus the Nightmare", "Twister", "the Phantom Dreamer", "M", true, {}, {}, {}, [], ["https://i.ibb.co/gMMb1KRk/c.gif"], [], 106,
         new skillInfo(106, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             return AbilityResponse.FAILURE;
         }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1608,7 +1608,7 @@ export const worldBossEnemies: enemyInfo[] = [
             return AbilityResponse.SUCCESS;
         }, [["Consumes all 💧 at the start of every round, before gaining **3%** ATK & MD for every **1** 💧 consumed at the start of every round.", "Increases mana regeneration by **20**", "Rosie: Deals **20%** of your max HP as undodgeable absolute DMG (Ignores DEF/MR) every **2** rounds"]])
     ),
-    new enemyInfo("Mari the poisonbearer", "Destabilizer", "the Tainted Keeper", "F", true, {}, {}, { mana: 300 }, [], ["https://i.ibb.co/FqYC1xpk/c.gif"], [], 107,
+    new enemyInfo("Mari the poisonbearer", "Destabilizer", "the Tainted Keeper", "F", true, {}, {}, {}, [], ["https://i.ibb.co/FqYC1xpk/c.gif"], [], 107,
         new skillInfo(107, 1000, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             return AbilityResponse.FAILURE;
         }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -1659,21 +1659,179 @@ export const worldBossEnemies: enemyInfo[] = [
                 return AbilityResponse.SUCCESS;
             }, 9999));
             return AbilityResponse.SUCCESS;
-        }, [["Every **3** rounds, removes all debuffs from itself and applies **1.5x** of them to the player.", "Every **3** rounds, makes a random potion with a **75%** chance of success. If it succeeds, either reduces your max HP by **3%**, steals **25%** of your ATK & MD for this round, or deals **10%** of your max HP as undodgeable absolute damage.", "Active: Makes a random potion with a **75%** chance of success. If it fails, deals **10%** of your max HP as undodgeable damage. If it succeeds, either reduces your max HP by **3%**, or steals **25%** of your ATK & MD for this round. (100 💧)"]])
+        }, [["Every **3** rounds, removes all debuffs from itself and applies **1.5x** of them to you.", "Every **3** rounds, makes a random potion with a **75%** chance of success. If it succeeds, either reduces your max HP by **3%**, steals **25%** of your ATK & MD for this round, or deals **10%** of your max HP as undodgeable absolute damage.", "**Active**: Makes a random potion with a **75%** chance of success. If it fails, deals **10%** of your max HP as undodgeable damage. If it succeeds, either reduces your max HP by **3%**, or steals **25%** of your ATK & MD for this round. (100 💧)"]])
     ),
-    new enemyInfo("Infernal Juggernaut", "Demon", "the Unstoppable", "M", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/5YGvbFG/c.png"], [], 108,
+    new enemyInfo("Anti Spiral", "Alien", "the Cosmic", "NB", true, {}, {}, {}, [], ["https://i.ibb.co/5YGvbFG/c.png"], [], 108,
         new skillInfo(108, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { ignoreShield: true, magicDamage: true, critChance: 0, defMultiplier: 0.7 });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { ignoreShield: true, magicDamage: true, critChance: 0, defMultiplier: 0.5 });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { ignoreShield: true, magicDamage: true, critChance: 0, defMultiplier: 0.3 });
+            dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { ignoreShield: true, magicDamage: true, critChance: 0, defMultiplier: 0.1 });
+            // Note: defMultiplier already accounts for both DEF and MR.
+            myStats.timeFrozen = true;
+            myStats.frozenMessage = `is stunned by **${enemy.name}**`;
+
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 2, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.timeFrozen = false;
+
+                return AbilityResponse.SUCCESS;
+            }));
+
             return AbilityResponse.SUCCESS;
         }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.asatkcount = 0;
+            eStats.damageReduction ??= 0;
+            eStats.reduceHealing ??= 0;
+            eStats.cd += 0.03;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round <= 30) {
+                    eStats.cd += 0.03 * matchStats.round;
+                    if (matchStats.round === 30) ebuff.cd.push(new buffInfo("+", 0.9, 9999));
+                } else { // Multiversal Labyrinth
+                    myStats.unbuffable = true;
+                    eStats.damageReduction += 0.5;
+                    matchStats.on("attack", {
+                        maxUsage: 40,
+                        callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                            if (target === eStats) {
+                                eStats.asatkcount++;
+                                if (eStats.asatkcount === 40) { // Exit Multiversal Labyrinth
+                                    myStats.unbuffable = false;
+                                    eStats.damageReduction -= 0.5;
+                                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `💢 **${enemy.name}**'s Infinity Big Bang Storm`, { atkMultiplier: 4, ignoreShield: true, magicDamage: true, critChance: 0 });
+                                    eStats.reduceHealing += 0.25;
+                                };
+                                return true;
+                            };
+                        },
+                    });
+                };
+
+                return AbilityResponse.SUCCESS;
+            }));
+
             return AbilityResponse.SUCCESS;
-        }, [["Placeholder ability"]])
+        }, [["-# Infinite Evolution\nDuring the first **30** rounds, gains **3%** critical damage every round.", "-# Multiversal Labyrinth | Infinity Big Bang Storm\nOn round **30** onwards, stops the processing of non-instant stat buffs on you, while taking **50%** less damage. After being hit **40** times, looses this effect and deals **400%** critical damage before cutting your healing effectiveness by **25%**.", "**Active**:\n-# Giga Drill Breaker\nDeals **4** hits of **100%** true damage, ignoring **30%**, **50%**, **70%** and **90%** of DEF & MR respectively. This also stuns you for **2** rounds (100 💧)"]])
     ),
-    new enemyInfo("Ethereal Phantom", "Specter", "the Mana Drain", "F", true, {}, {}, { mana: 120 }, [], ["https://i.ibb.co/drsdyGm/c.png"], [], 109,
+    new enemyInfo("Hajun", "Hadou God", "the Infinite", "M", true, {}, {}, {}, [], ["https://i.ibb.co/ymqppHPk/hajun.jpg"], [], 109,
         new skillInfo(109, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Sixth Law: Annihilation
+            eStats.ignoreDefPercent += 0.2;
+            eStats.ignoreMrPercent += 0.2;
+            notice.push(`\n✨ **${enemy.name}** ignores **+20%** of your DEF/MR.`);
+            if (eStats.ignoreDefPercent >= 1 || eStats.ignoreMrPercent >= 1) {
+                eStats.ignoreDefPercent = 1;
+                eStats.ignoreMrPercent = 1;
+
+                // Locusts
+                let dmg = Math.floor(myStats.maxhp * 0.3);
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s locusts`, { overwriteDamage: dmg, dodge: false });
+                mybuff.hp.push(new buffInfo("+", -Math.floor(dmg / 5), 5));
+            };
             return AbilityResponse.SUCCESS;
         }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.ignoreDefPercent ??= 0;
+            eStats.ignoreMrPercent ??= 0;
+            myStats.vulnerabilityDynamic ??= 1;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.vulnerabilityDynamic += 0.02;
+
+                return AbilityResponse.SUCCESS;
+            }));
+
             return AbilityResponse.SUCCESS;
-        }, [["Placeholder ability"]])
+        }, [["-# Heaven Tumor\nYou take **+2%** damage after every passing round (stackable)", "**Active**:\n-# Sixth Law: Annihilation\nAttacks ignore **+20%** DEF/MR (Max: 100%). After reaching **100%**, instead summons a sea of Locusts, dealing **30%** of your max HP as undodgeable absolute damage, before inflicting a DoT of the equivalent over **5** rounds. (100 💧)"]])
+    ),
+    new enemyInfo("Dio Brando", "Vampire", "the Lord", "M", true, {}, {}, {}, [], ["https://i.ibb.co/ymqppHPk/hajun.jpg"], [], 109,
+        new skillInfo(110, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // The World
+            eStats.dbabilityUsed++;
+            myStats.timeFrozen = true;
+            myStats.frozenMessage = `is stunned by **${enemy.name}**`;
+            notice.push(`\n✨ **${enemy.name}** ZA WARUDOOO!`);
+
+            myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.timeFrozen = false;
+                for (let i = 1; i <= Math.max(eStats.dbabilityUsed, 5); i++) {
+                    eStats.atk += Math.floor(eStats.atk * 0.1);
+                    eStats.md += Math.floor(eStats.md * 0.1);
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: 1, magicDamage: true });
+                };
+
+                return AbilityResponse.SUCCESS;
+            }));
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.dbFollowup = 0;
+            eStats.dbHitReceived = 0;
+            eStats.dbabilityUsed = 0;
+            matchStats.on("attack", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (caster === eStats) {
+                    myStats.hp -= Math.floor(myStats.hp * 0.04);
+                    if (Math.random() <= 0.6 && eStats.dbFollowup < 2) {
+                        eStats.dbFollowup++;
+                        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}** followed up and`, { ignoreShield: true, magicDamage: true, critChance: 0, defMultiplier: 0.7 });
+                    };
+                };
+
+                if (target === eStats) {
+                    eStats.dbHitReceived++;
+                    if (eStats.dbHitReceived % 8 === 0 && eStats.dbHitReceived <= 40) eStats.damageReduction += 0.03;
+                };
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                eStats.dbFollowup = 0;
+
+                return AbilityResponse.SUCCESS;
+            }));
+
+            return AbilityResponse.SUCCESS;
+        }, [["Every time Dio lands an attack, he has a **60%** chance to immediately follow up with an extra hit dealing **60%** damage (Max: 2 times per round).", "Every attack landed steals **4%** of the target’s current HP.", "Every **8** attacks received permanently increases damage reduction by **3%** (Max: 15%).", "**Active**: Stops time for **1** round (considered as freeze). After that round, for every time the active was used, gains **20%** ATK & MD for this round and deals**100%** damage (100 💧)"]])
+    ),
+    new enemyInfo("Testarossa", "Killer Lord", "the Primordial White", "M", true, {}, {}, {}, [], ["https://i.ibb.co/ymqppHPk/hajun.jpg"], [], 109,
+        new skillInfo(111, 100, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            // Nihilistic End
+            if (matchStats.round < 40) {
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: 1.5, magicDamage: true });
+            } else {
+                dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**`, { atkMultiplier: 1.5 + ((matchStats.round - 40) * 0.2), magicDamage: true });
+            };
+
+            return AbilityResponse.SUCCESS;
+        }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.deathCounter = 0;
+            eStats.reduceHealing ??= 0;
+
+            matchStats.on("ABILITY", ({ trigger, caster, target, casterBuff, targetBuff, matchStats }) => {
+                if (caster === myStats) {
+                    myStats.deathCounter++;
+                    if (myStats.deathCounter % 3 === 0) myStats.isAbilityBlocked = true;
+                    notice.push(`\n✨ **${enemy.name}** blocks your ability this round!`);
+                    myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                        myStats.isAbilityBlocked = false;
+                        return AbilityResponse.SUCCESS;
+                    }));
+                };
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (matchStats.round >= 40) {
+                    if (matchStats.round === 40) notice.push(`\n✨ **${enemy.name}**'s casts Nihilistic End!`);
+                    eStats.reduceHealing += 0.04;
+                    if (eStats.reduceHealing > 1) eStats.reduceHealing = 1;
+                    eStats.mg += 1;
+                    ebuff.mg.push(new buffInfo("+", 1, 9999));
+                };
+
+                return AbilityResponse.SUCCESS;
+            }));
+
+            return AbilityResponse.SUCCESS;
+        }, [["Whenever you use an ability, applies **1** Death Counter (DC) to you. At **3** DC, you become Suppressed for **2** rounds, preventing you from using Active (:sparkles:). DC reset after triggering.", "On round **40**, casts Nihilistic End, whereby you receive **4%** less healing and the enemy regenerates **1** more mana for every round beyond **40**.", "**Active**: Deals **150%** magical damage, with an additional **20%** for every round past **40**. (100 :droplet:)"]])
     ),
 ];
 
@@ -1964,7 +2122,7 @@ export const nightmareMobs: enemyInfo[] = [
 
                 if (matchStats.round % 2 === 0) {
                     let dmg = Math.floor(eStats.maxhp * 0.05);
-                    if (dmg > 0) dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:rosie:1408505520641409127> **Rosie**`, { overwriteDamage: dmg, dodge: false });
+                    dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `<:rosie:1408505520641409127> **Rosie**`, { overwriteDamage: dmg, dodge: false });
                 };
                 return AbilityResponse.SUCCESS;
             }, 9999));
@@ -2503,6 +2661,7 @@ export const nightmareMobs: enemyInfo[] = [
 ];
 
 export const phantasmagoriaBosses: enemyInfo[] = [
+
     new enemyInfo("Feyra", "Phantom", "the Monolith's Guard", "F", true, { mana: 1000, mg: 30 }, {}, {}, [], ["https://i.ibb.co/35LSQJRZ/Feyra.png"], [], 0,
         new skillInfo(0, 300, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
             // Feyra

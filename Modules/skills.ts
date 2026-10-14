@@ -922,18 +922,40 @@ export const skills: skillInfo[] = [
 
         return AbilityResponse.SUCCESS;
     }),
-    new skillInfo(44, 20, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new skillInfo(44, 0, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Warmachine increases DEF and MR depending on the mana consumption
-        let idef = 100 + myStats.sm * 8, imr = 25 + myStats.sm * 2;
-        mybuff.def.push(new buffInfo("+", idef, 5));
-        mybuff.mr.push(new buffInfo("+", imr, 5));
-        myStats.def += idef;
-        myStats.mr += imr;
-        myStats.sm = 0;
-        notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} DEF by **${idef}** and Magic Resist by **${imr}** for 3 rounds`);
+        // let idef = 100 + myStats.sm * 8, imr = 25 + myStats.sm * 2;
+        // mybuff.def.push(new buffInfo("+", idef, 5));
+        // mybuff.mr.push(new buffInfo("+", imr, 5));
+        // myStats.def += idef;
+        // myStats.mr += imr;
+        // myStats.sm = 0;
+        // notice.push(`\n⚜️ **${char.name}** increased ${char.gender === "F" ? "her" : "his"} DEF by **${idef}** and Magic Resist by **${imr}** for 3 rounds`);
+        if (matchStats.round === myStats.warmachineLastUsed) {
+            matchStats.sendWarning({ content: "You can only use this skill once per round.", ephemeral: true });
+            return AbilityResponse.FAILURE;
+        };
+
+        matchStats.turn = matchStats.turnSkill;
+        let hpLoss = Math.floor(myStats.hp * 0.2 / 2);
+        myStats.hp -= hpLoss * 2;
+        myStats.def += hpLoss;
+        myStats.mr += hpLoss;
+        notice.push(`\n⚜️ **${char.name}** sacrificed **${hpLoss * 2} HP** to increase ${char.gender === "F" ? "her" : "his"} DEF and MR by **${hpLoss}** this round.`);
+        myStats.warmachineLastUsed = matchStats.round;
 
         return AbilityResponse.SUCCESS;
     }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        myStats.ignoreDefPercent ??= 0;
+        myStats.ignoreMrPercent ??= 0;
+        myStats.warmachineLastUsed = -1;
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            let buff = Math.min(Math.max(1 - (myStats.hp / myStats.maxhp), 0), 0.7);
+            myStats.ignoreDefPercent = buff;
+            myStats.ignoreMrPercent = buff;
+
+            return AbilityResponse.SUCCESS;
+        }, 9999));
         matchStats.xpboost += 0.25;
 
         return AbilityResponse.SUCCESS;
@@ -1100,7 +1122,6 @@ export const skills: skillInfo[] = [
     }),
     new skillInfo(50, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Grappler removes all counter, lowers enemy's dodge to 0% for 7 rounds
-
         if (myStats.classUsedRound > matchStats.round - 7) {
             myStats.sm += 60;
             noTimeout(matchStats, myStats);
@@ -1114,8 +1135,9 @@ export const skills: skillInfo[] = [
         eStats.dodge = 0;
         ebuff.dodge.push(new buffInfo("=", 0, 7));
         noTimeout(matchStats, myStats);
+        eStats.vulnerabilityDynamic += 0.2;
 
-        // Free-Flow effects (7 rounds) : Enemy receives 5% more damage for every round the domain lasts, up to 35% by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain.
+        // Free-Flow effects (7 rounds) : Enemy receives 20%, then 5% more damage for every round the domain lasts, up to 55% by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain.
         myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             eStats.vulnerabilityDynamic += 0.05;
 
@@ -1123,7 +1145,7 @@ export const skills: skillInfo[] = [
         }, 7));
 
         myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 7, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-            eStats.vulnerabilityDynamic -= 0.35;
+            eStats.vulnerabilityDynamic -= 0.55;
             notice.push(`\n⚜️ **${char.name}** exited Free-Flow`);
 
             return AbilityResponse.SUCCESS;
@@ -1147,6 +1169,8 @@ export const skills: skillInfo[] = [
             if (!(myStats.classUsedRound > matchStats.round - 7) || myStats.classUsedRound < 0) {
                 let hhp = Math.floor((myStats.maxhp - myStats.hp) * 0.03);
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, {});
+            } else {
+                if (Math.random() < (eStats.vulnerabilityDynamic - 1)) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});
             };
             return AbilityResponse.SUCCESS;
         }, 9999));
@@ -1995,8 +2019,8 @@ export const bossAbilities: skillInfo[] = [
                 callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
                     if (target === eStats) {
                         eStats.counterChanceDynamic -= 0.1;
+                        return true;
                     };
-                    return true;
                 }
             });
             notice.push(`\n✨ **${enemy.name}** parries in the form of soundwaves...`);

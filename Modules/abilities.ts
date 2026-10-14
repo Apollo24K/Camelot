@@ -95,14 +95,16 @@ export const abilities: Record<number, Ability> = {
         usage: 9999,
         used: 0,
         cost: 30,
+        activeBonus: 1,
+        dodgeScalingBonus: 1,
         desc: "**Total Usage**: `unlimited`\n**Mana**: `30`\\💧\n**Timeout**: `yes`\n**Role**: `DPS`\n\nWith her trusted rifle, Sinon hits every target in the bullseye, dealing critical hits. Against her, trying to dodge is not just futile, but she will deal more damage the more her target tries to dodge, as if she were mocking it (every 1% dodge = +1% dmg). She will abuse every weakness of her opponents, dealing magic or physical damage accordingly.",
         shortdesc: "**Uses**: `Unlimited`\n**Cost**: `30`💧\n**Timeout**: `Yes`\n**Role**: `DPS`\n\n__**Active**__ (✨)\n- Deals an undodgeable critical hit\n- The hit's DMG scaling is increased by **1%** for every **1%** of dodge the enemy has\n- Deals Physical DMG if the enemy has lower DEF than MR, else the other way round",
-        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+        ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Sinon ignores dodge chance, deals more damage the more dodge% the enemy has, deals a guaranteed crit, and deals atk/matk depending on enemy weakness
             if (eStats.mr < eStats.def) {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, magicDamage: true, mdChance: -1, critChance: 0, dodge: false });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: (0.95 + (eStats.dodge * this.dodgeScalingBonus)) * this.activeBonus, magicDamage: true, mdChance: -1, critChance: 0, dodge: false });
             } else {
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: 0.95 + eStats.dodge, critChance: 0, dodge: false });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `✨ **${char.name}**`, { atkMultiplier: (0.95 + (eStats.dodge * this.dodgeScalingBonus)) * this.activeBonus, critChance: 0, dodge: false });
             };
 
             return AbilityResponse.SUCCESS;
@@ -4129,16 +4131,27 @@ export const abilities: Record<number, Ability> = {
         usage: 3,
         used: 0,
         cost: 80,
-        desc: "**Total Usage**: `unlimited`, `unlimited`, `3`\n**Mana**: `10-20`\\💧, `20-30`\\💧, `80-100`\\💧\n**Timeout**: `yes`, `yes`, `yes`\n**Role**: `DPS/Support`\n\nRudeus Greyrat encapsulates the progression and versatility of a mage that requires keen management of his considerable mana pool said to rival that of the ancient Demon God Laplace. His mana generation is increased by **+20** as well, reflecting his proficiency and natural talent in magic. And as the fight continues, Rudeus keeps learning and growing as a mage, increasing the potency of his spells on the 5th and 10th rounds each. His 3 spells are as follows:\n\n**Stone Cannon**: Rudeus can utilize this spell to fire a powerful projectile at his opponent. Notably, this attack has both a physical and magical damage component, dealing **100-120%** magic damage, and an additional **10-20%** physical damage caused by the impact. If Rudeus is low on mana only the physical impact will cause damage.\n\n**Quagmire**: Upon casting, Rudeus will drastically increase his dodge rate to **50-75%**, making him harder to hit in the subsequent round. It also weakens the opponent, reducing their dodge rate to **0%** for **3** rounds, as well as reducing their DEF & MR by **15-25%** for 2 rounds.\n\n**Electric**: Electric channels a surge of magical energy to electrocute the opponent. A high cost high damage spell with limited use, dealing **150-200%** magic damage to the opponent.\n\nIn a party, Rudeus offers a unique advantage backing his party members from the rear. He has a **30%** chance to intervene randomly, delivering a magical blow to the enemy dealing **60%** magic damage and reducing enemy DEF & MR by **10%** for 2 rounds.",
-        shortdesc: "**Uses**: `3`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ACTIVE are *enhanced* on the **5th** and **10th** rounds, having permanent upgrades.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of DEFEND)\n- **+50%-75%** dodge rate that round\n- Enemy has **0%** dodge rate for **3** rounds\n- **-15-25%** enemy's DEF/MR for **2** rounds\n\n__**Active**__ (<:stormbolt:1340378654919884981>)\n- Deals **150**/**170**/**200%** DMG (Depends on *enhancement* of ACTIVE)\n\n__**Party**__ (👥)\n- every round: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** rounds",
+        magicDamage: 0.2,
+        defMrCap: 660,
+        defMrDuration: 1,
+        manaCostReduction: 0,
+        rudyBT: false,
+        activeBonus: 0.25,
+        desc: "**Total Usage**: `unlimited`, `unlimited`, `3`\n**Mana**: `10-20`\\💧, `20-30`\\💧, `80-100`\\💧\n**Timeout**: `yes`, `yes`, `yes`\n**Role**: `DPS/Support`\n\nRudeus Greyrat encapsulates the progression and versatility of a mage that requires keen management of his considerable mana pool said to rival that of the ancient Demon God Laplace. His mana generation is increased by **+20** as well, reflecting his proficiency and natural talent in magic. And as the fight continues, Rudeus keeps learning and growing as a mage, increasing the potency of his spells on the 5th and 10th rounds each. His 3 spells are as follows:\n\n**Stone Cannon**: Rudeus can utilize this spell to fire a powerful projectile at his opponent. Notably, this attack has both a physical and magical damage component, dealing **100-120%** magic damage, and an additional **10-20%** physical damage caused by the impact. If Rudeus is low on mana only the physical impact will cause damage.\n\n**Quagmire**: Upon casting, Rudeus will drastically increase his dodge rate to **50-75%**, making him harder to hit in the subsequent round. It also weakens the opponent, reducing their dodge rate to **0%** for **3** rounds, as well as reducing their DEF & MR by **15-25%** for 2 rounds. (Max: 2x damage)\n\n**Electric**: Electric channels a surge of magical energy to electrocute the opponent. A high cost high damage spell with limited use, dealing **150-200%** magic damage to the opponent.\n\nIn a party, Rudeus offers a unique advantage backing his party members from the rear. He has a **30%** chance to intervene randomly, delivering a magical blow to the enemy dealing **60%** magic damage and reducing enemy DEF & MR by **10%** for 2 rounds.",
+        shortdesc: "**Uses**: `3`\n**Cost**: `80-100 💧`\n**Timeout**: `Yes`\n**Role**: `DPS (Progressive, DMG-boost, Dodge)`\n\n__**Passive**__\n- **+20** mana regeneration\n- **+500** mana pool (capacity)\n- His ATTACK , DEFEND & ACTIVE are *enhanced* on the **5th** and **10th** rounds, having permanent upgrades.\n\nATTACK:\n**Cost**: `10-20 💧` (Depends on *enhancement* of ATTACK)\n- Deal **100-120%** MD + **10-20%** ATK (Depends on *enhancement* of ATTACK)\n- If he does not have enough 💧, this only deals the ATK DMG.\n\nDEFEND:\n**Cost**: `20-30 💧` (Depends on *enhancement* of DEFEND)\n- **+50%-75%** dodge rate that round\n- Enemy has **0%** dodge rate for **3** rounds\n- **-15-25%** enemy's DEF/MR for **2** rounds (Max: 2x damage)\n\n__**Active**__ (<:stormbolt:1340378654919884981>)\n- Deals **150**/**170**/**200%** DMG (Depends on *enhancement* of ACTIVE)\n\n__**Party**__ (👥)\n- every round: **30%** chance to deal **60%** MD & **-10%** Enemy's DEF/MR for **2** rounds",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Rudeus Greyrat | Rudy | Rudeus EX
             let atkbuff = 1.5, mana_cost = 0;
-            if (matchStats.round > 10) atkbuff = 2, mana_cost = 20;
-            else if (matchStats.round > 5) atkbuff = 1.75, mana_cost = 10;
+            switch (true) {
+                case (myStats.rudyBT && matchStats.round > 20): atkbuff += this.activeBonus * 3, mana_cost += 30; break;
+                case (matchStats.round > 10): atkbuff += this.activeBonus * 2, mana_cost += 20; break;
+                case (matchStats.round > 5): atkbuff += this.activeBonus, mana_cost += 10; break;
+                default: break;
+            };
 
             if (this.cost + mana_cost > myStats.sm) {
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                this.used--;
                 myStats.sm += this.cost;
                 return AbilityResponse.FAILURE;
             };
@@ -4148,7 +4161,13 @@ export const abilities: Record<number, Ability> = {
 
             return AbilityResponse.SUCCESS;
         },
-        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
+            // Ascension
+            myStats.ascmagicDamage = this.magicDamage;
+            myStats.ascdefMrDuration = this.defMrDuration;
+            myStats.ascdefMrCap = this.defMrCap;
+            myStats.manaCostReduction = this.manaCostReduction;
+            myStats.rudyBT = this.rudyBT;
 
             // Mana Boost
             myStats.mana += 500;
@@ -4162,15 +4181,19 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.atk = {
                 "emoji": "<:stonecannon:1340376201058844733>",
                 "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    let mana_cost = 10, normal_dmg = 0.1, magic_damage = 1;
-                    if (matchStats.round > 10) mana_cost = 20, normal_dmg = 0.4, magic_damage = 1.2;
-                    else if (matchStats.round > 5) mana_cost = 15, normal_dmg = 0.2, magic_damage = 1.1;
+                    let mana_cost = 10 - myStats.manaCostReduction, magic_damage = 1;
+                    switch (true) {
+                        case (myStats.rudyBT && matchStats.round > 20): mana_cost += 15, magic_damage += myStats.ascmagicDamage * 2; break;
+                        case (matchStats.round > 10): mana_cost += 10, magic_damage += myStats.ascmagicDamage; break;
+                        case (matchStats.round > 5): mana_cost += 5, magic_damage += myStats.ascmagicDamage / 2; break;
+                        default: break;
+                    };
 
-                    if (mana_cost > myStats.sm) return dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}** is out of mana and`, { atkMultiplier: normal_dmg, magicDamage: false });
+                    if (mana_cost > myStats.sm) return dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `⚔️ **${char.name}** is out of mana and`, { atkMultiplier: 0.1, magicDamage: false });
 
                     myStats.sm -= mana_cost;
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${char.name}**`, { atkMultiplier: magic_damage, magicDamage: true, mdChance: -1 }); // normal magical damage
-                    dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${char.name}**`, { atkMultiplier: normal_dmg, magicDamage: false }); // 10% physical damage
+                    let dmg = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${char.name}**`, { atkMultiplier: magic_damage, magicDamage: true, mdChance: -1 }); // normal magical damage
+                    if (dmg) dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stonecannon:1340376201058844733> **${char.name}**`, { overwriteDamage: Math.floor(dmg * 0.2), magicDamage: false }); // 20% of dealt damage as physical damage
 
                     return AbilityResponse.SUCCESS;
                 },
@@ -4180,21 +4203,30 @@ export const abilities: Record<number, Ability> = {
             myStats.replaceButton.def = {
                 "emoji": "<:quagmire:1340378636284461116>",
                 "run": async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                    let mana_cost = 20, dodge_buff = 0.5, def_debuff = 0.15;
-                    if (matchStats.round > 10) mana_cost = 30, dodge_buff = 0.75, def_debuff = 0.25;
-                    else if (matchStats.round > 5) mana_cost = 25, dodge_buff = 0.625, def_debuff = 0.2;
+                    let mana_cost = 20 - myStats.manaCostReduction, dodge_buff = 0.5, def_debuff = 0.15;
+                    switch (true) {
+                        case (myStats.rudyBT && matchStats.round > 20): mana_cost += 10, dodge_buff += 0.35, def_debuff += 0.15; break;
+                        case (matchStats.round > 10): mana_cost += 10, dodge_buff += 0.25, def_debuff += 0.1; break;
+                        case (matchStats.round > 5): mana_cost += 5, dodge_buff += 0.125, def_debuff += 0.05; break;
+                        default: break;
+                    };
 
-                    if (mana_cost > myStats.sm) matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                    if (mana_cost > myStats.sm) {
+                        matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
+                        return AbilityResponse.FAILURE;
+                    };
 
                     myStats.sm -= mana_cost;
                     myStats.dodge = dodge_buff;
+                    let defDebuff = Math.min(Math.floor(eStats.def * def_debuff), myStats.ascdefMrCap);
+                    let mrDebuff = Math.min(Math.floor(eStats.mr * def_debuff), myStats.ascdefMrCap);
                     ebuff.dodge.push(new buffInfo("=", 0, 3));
-                    ebuff.def.push(new buffInfo("+", -Math.floor(eStats.def * def_debuff), 1));
-                    ebuff.mr.push(new buffInfo("+", -Math.floor(eStats.mr * def_debuff), 1));
+                    ebuff.def.push(new buffInfo("+", -defDebuff, myStats.ascdefMrDuration));
+                    ebuff.mr.push(new buffInfo("+", -mrDebuff, myStats.ascdefMrDuration));
                     eStats.dodge = 0;
-                    eStats.def -= Math.floor(eStats.def * def_debuff);
-                    eStats.mr -= Math.floor(eStats.mr * def_debuff);
-                    notice.push(`\n<:quagmire:1340378636284461116> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%**`);
+                    eStats.def -= defDebuff;
+                    eStats.mr -= mrDebuff;
+                    notice.push(`\n<:quagmire:1340378636284461116> **${char.name}** decreased enemy's DEF and MR by **${def_debuff * 100}%** for **${myStats.ascdefMrDuration + 1}** rounds!`);
 
                     return AbilityResponse.SUCCESS;
                 },
@@ -4743,10 +4775,16 @@ export const abilities: Record<number, Ability> = {
         usage: 9999,
         used: 0,
         cost: 60,
-        stacks: 1,
+        psvMaxStacks: 5,
+        psvVulnerability: 1.2,
+        actDamageOnHold: 0.33,
+        actTimeout: true,
+        actCounterChance: 0.25,
+        injuriesSpread: 15,
+        gintokiBT: false,
         pause: -5,
         desc: "**Total Usage**: `unlimited (CD: 6)`\n**Mana**: `60`\\💧\n**Timeout**: `yes`\n**Role**: `DPS/Support`\n\nAh, so you want to know about my abilities, huh? Well, let me tell you, all those formal descriptions are just too dull, aren't they? I mean, who needs all that jargon when you can have a bit of fun, right? So, here's the deal with my kit, straight from the Yorozuya's mouth!\n\nFirst up, we've got my passive. You see, I'm not really into the whole training thing. I prefer just to match the level of the toughest guy around. Makes life easier, you know? Every attack, I get this itch to swing my sword a bit harder and aim a bit sharper. That's me increasing my attack and crit rate by **5%**, stacking up to **5** times. But when I'm really pushed to the edge, like under **30%** HP, I get a surge of \"I-don't-wanna-die\" energy, and suddenly I'm hitting (and getting hit) **20%** harder.\n\nNow, let's talk about my active! When things get too hot, I switch to Endurance mode for **6** rounds. It's like playing a game of chicken with the enemy. **33%** of the damage coming my way? I just shrug it off and store it as `Injuries`. And while I'm at it, there's a **25%** chance I'll just casually counter an attack. Cool, right? But here's the catch: when my endurance mode times out, those `Injuries` I shrugged off earlier come back to haunt me over the next **15** rounds.\n\nLastly, my party ability lets me share the endurance, but spare the pain. You see, I'm a team player when I feel like it. Every **3** rounds, I let my allies experience my Endurance mode for a turn, minus the annoying part where you pay for it later. It's my way of saying, \"Here, have some fun, but don't worry about the consequences.\"\n\nSo, that's me in a nutshell. A lazy samurai who somehow avoids hard work. Remember, it's not about how strong your abilities are, it's about how you use them... or avoid using them, in my case.",
-        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `6 rounds`\n**Cost**: `60 💧`\n**Timeout**: `yes`\n**Role**: `DPS/Tank (DMG-boost, DMG-delay, Counter)`\n\n__**Passive**__\n- Attacks increase his ATK, MD & critical rate by **5%** (Up to **25%**)\nWhen below **30%** HP:\n- Takes **+20%** DMG\n- Deals **+20%** DMG\n\n__**Active**__ (✨)\nEnters Endurance Mode for **6** rounds\n- Absorbs **33%** of DMG taken as `Injuries`\n- **+25%** counter chance\n- By the end of the domain: Reinflicts `Injuries` as DoT on Gintoki over **15** rounds\n\n__**Party**__ (👥)\nEvery **3** rounds:\n- Allies enter Endurance Mode (**33%** DMG mitigation + **25%** counter chance) with no side effects (injuries)",
+        shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `6 rounds`\n**Cost**: `60 💧`\n**Timeout**: `yes`\n**Role**: `DPS/Tank (DMG-boost, DMG-delay, Counter)`\n\n__**Passive**__\n- Attacks increase his ATK & critical rate by **5%** (Up to **25%**)\nWhen below **30%** HP:\n- Takes **+20%** DMG\n- Deals **+20%** DMG\n\n__**Active**__ (✨)\nEnters Endurance Mode for **6** rounds\n- Absorbs **33%** of DMG taken as `Injuries`\n- **+25%** counter chance\n- By the end of the domain: Reinflicts `Injuries` as DoT on Gintoki over **15** rounds\n\n__**Party**__ (👥)\nEvery **3** rounds:\n- Allies enter Endurance Mode (**33%** DMG mitigation + **25%** counter chance) with no side effects (injuries)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
             // Gintoki EX
             if (this.pause > matchStats.round) {
@@ -4756,16 +4794,17 @@ export const abilities: Record<number, Ability> = {
                 this.used--;
                 return AbilityResponse.FAILURE;
             };
-            this.pause = matchStats.round + 6;
 
+            if (!this.actTimeout) noTimeout(matchStats, myStats);
             const domainLast = 6;
+            this.pause = matchStats.round + domainLast;
 
             // Enter Endurance Mode
-            myStats.putDamageOnHold = 0.33; // 33%
-            if (Math.random() < 0.25) myStats.counter += 1;
+            myStats.putDamageOnHold = this.actDamageOnHold; // 33%
+            if (Math.random() < this.actCounterChance) myStats.counter += 1;
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 // Chance to counter
-                if (Math.random() < 0.25) myStats.counter += 1;
+                if (Math.random() < this.actCounterChance) myStats.counter += 1;
 
                 return AbilityResponse.SUCCESS;
             }, domainLast - 1));
@@ -4773,10 +4812,20 @@ export const abilities: Record<number, Ability> = {
             // When Endurance Mode Ends
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.damageOnHold) {
-                    const dmg = Math.floor(myStats.damageOnHold / 15);
+                    if (this.gintokiBT) {
+                        const maxHPBuff = Math.floor(myStats.damageOnHold * 0.33);
+                        myStats.maxhp += maxHPBuff;
+                        myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + domainLast - 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                            myStats.maxhp -= maxHPBuff;
+                            return AbilityResponse.SUCCESS;
+                        }));
+                        myStats.damageOnHold -= maxHPBuff;
+                    };
+
+                    const dmg = Math.floor(myStats.damageOnHold / this.injuriesSpread);
                     myStats.hp -= dmg;
                     if (myStats.hp < 0) myStats.hp = 0;
-                    mybuff.hp.push(new buffInfo("+", -dmg, 14));
+                    mybuff.hp.push(new buffInfo("+", -dmg, this.injuriesSpread - 1));
                 };
 
                 myStats.putDamageOnHold = 0;
@@ -4789,22 +4838,30 @@ export const abilities: Record<number, Ability> = {
 
             return AbilityResponse.SUCCESS;
         },
-        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            myStats.gintokiStacks = 0;
+        passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             eStats.vulnerability ??= 1;
             myStats.vulnerability ??= 1;
             myStats.counter ??= 0;
-            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-                myStats.atk += Math.floor(myStats.atk * (myStats.gintokiStacks * 0.05));
-                myStats.md += Math.floor(myStats.md * (myStats.gintokiStacks * 0.05));
-                myStats.cr += myStats.gintokiStacks * 0.05;
-                if (myStats.cr > 1) myStats.cr = 1;
-                myStats.gintokiStacks = Math.min(5, myStats.gintokiStacks + 1);
 
+            matchStats.on("attack", {
+                maxUsage: this.psvMaxStacks,
+                callback: ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
+                    if (caster === myStats) {
+                        myStats.atk += Math.floor(myStats.atk * 0.05);
+                        mybuff.atk.push(new buffInfo("*", 1.05, 9999));
+                        myStats.cr += 0.05;
+                        if (myStats.cr > 1) myStats.cr = 1;
+                        mybuff.cr.push(new buffInfo("+", 0.05, 9999));
+                        return true;
+                    };
+                }
+            });
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 // Enraged
                 if ((myStats.hp / myStats.maxhp) < 0.3) {
-                    if (myStats.vulnerability < 1.2) myStats.vulnerability = 1.2;
-                    if (eStats.vulnerability < 1.2) eStats.vulnerability = 1.2;
+                    if (myStats.vulnerability < this.psvVulnerability) myStats.vulnerability = this.psvVulnerability;
+                    if (eStats.vulnerability < this.psvVulnerability) eStats.vulnerability = this.psvVulnerability;
                 } else {
                     myStats.vulnerability = 1;
                     eStats.vulnerability = 1;
@@ -6164,8 +6221,13 @@ export const abilities: Record<number, Ability> = {
         used: 0,
         cost: 0,
         pause: -10,
+        cd: 6,
         lotus: 0,
         attackNumber: 0,
+        mana: 50,
+        heal: 0.2,
+        asc: 0,
+        vulnStack: 0,
         desc: "**Total Usage**: `unlimited`\n**Cost**: `9`🪷\n**Timeout**: `yes` (6 round cd)\n**Role**: `DPS`\n\n_\"Stream forth... the gleam of old blades.\"_ Acheron's blade is resisted by none. Her basic attacks deal **100%**/**120%**/**140%** damage when attacking in succession, then resetting back to **100%**. On the first hit, she inflicts **1** stack of :lotus:, on the second hit, she inflicts **3** stacks of :lotus: and on the third, she inflicts **5** stacks of :lotus:. For each stack of :lotus:, she shreds the enemy's defense by **3%**.\n\nMoreover, Acheron instantly defeats non-boss enemies who have **2.5x** less EP than herself.\n\n_\"I weep for the departed. Dusk's rain... it too shall fall.\"_ Acheron draws the blade that epitomizes Nihility; the blade of Naught. It consumes all **9** stacks of :lotus:, hitting **4** times dealing **77%** damage per hit. For each hit landed successfully, reduces the enemy's defense by **5%** for the next **3** rounds.\n\nWhen her health falls below **30%**, she rejuvenates **50** mana and **20%** of her max HP by eating a :peach:.\n\nIn a party, Acheron aids her party members by reducing the enemy's **DEF** and **MR** by **3%** after every critical hit landed (max **18%**).",
         shortdesc: "**Uses**: `Unlimited`\n**Cooldown**: `6 rounds`\n**Cost**: `0 💧`\n**Timeout**: `Yes`\n**Role**: `DPS/Farming (Progressive, Burst)`\n\n__**Passive**__\n- When she has **2.5x** of a non-boss enemy’s EP: Instantly eliminates them\n\nATTACK is altered to deal **100%**, **120%** and finally **140%** DMG (in a set rotation):\n- These apply **1x**, **3x**, and **5x** `Knot`\n- For every `Knot`, **-3%** enemy’s DEF & MR\n\nWhen fallen below **30%** HP:\n- Gains **50** 💧\n- Restores **20%** max HP\n\n__**Active**__ (✨)\n- Deals **4** hits of **77%** DMG\n- For every hit landed: **-5%** enemy’s DEF & MR for the next **3** rounds\n\n__**Party**__ (👥)\n- When allies score a critical hit: **-3%** enemy’s DEF & MR (Up to 18%)",
         ability: async function (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) {
@@ -6185,8 +6247,16 @@ export const abilities: Record<number, Ability> = {
             };
 
             // Consume lotus
-            this.pause = matchStats.round + 6;
+            this.pause = matchStats.round + this.cd;
             this.lotus = 0;
+
+            // Boost (Asc. 5)
+            if (this.asc >= 5) {
+                myStats.cr += 1;
+                let excessCR = Math.min(myStats.cr - 1, 1);
+                myStats.cr -= excessCR;
+                myStats.cd += excessCR;
+            };
 
             // Attack
             const dmg1 = dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `🪷 **${char.name}**`, { atkMultiplier: 0.77, magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
@@ -6201,10 +6271,27 @@ export const abilities: Record<number, Ability> = {
             eStats.def -= Math.floor(eStats.def * 0.05 * successfulHits);
             eStats.mr -= Math.floor(eStats.mr * 0.05 * successfulHits);
 
+            // Stun (Asc. 4)
+            if (this.asc >= 4) {
+                eStats.timeFrozen = true;
+                eStats.frozenMessage = "was stunned for **1** round";
+                myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 1, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                    eStats.timeFrozen = false;
+
+                    return AbilityResponse.SUCCESS;
+                }));
+
+                if (this.asc >= 5 && this.vulnStack < 6) {
+                    eStats.vulnerabilityDynamic += 0.05;
+                    this.vulnStack++;
+                };
+            };
+
             return AbilityResponse.SUCCESS;
         },
         passive: async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-
+            myStats.psvBurst = false;
+            eStats.vulnerabilityDynamic ??= 1;
             myStats.replaceButton.atk = {
                 emoji: "🪷",
                 run: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
@@ -6224,6 +6311,12 @@ export const abilities: Record<number, Ability> = {
                 eStats.def -= Math.floor(eStats.def * 0.03 * this.lotus);
                 eStats.mr -= Math.floor(eStats.mr * 0.03 * this.lotus);
 
+                if (this.asc >= 3) {
+                    // Boost CR by 5% for every debuff on the enemy
+                    const debuffCount = Object.keys(ebuff).reduce((count, buffName) => count + ebuff[buffName as keyof typeof ebuff].filter((buff) => buff.isDebuff).length, 0);
+                    myStats.cr = Math.min(1, myStats.cr + (debuffCount * 0.05));
+                };
+
                 return AbilityResponse.SUCCESS;
             }, 9999));
 
@@ -6233,26 +6326,23 @@ export const abilities: Record<number, Ability> = {
             };
 
             // Delayed Buff
-            myStats.delayedBuffs.push(new delayedBuffs(0, async function (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
-                if (myStats.hp / myStats.maxhp < 0.3) {
-                    const hp = Math.floor(myStats.maxhp * 0.2);
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                if (myStats.hp / myStats.maxhp < 0.3 && !myStats.psvBurst) {
+                    myStats.psvBurst = true;
+                    const hp = Math.floor(myStats.maxhp * this.heal);
                     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hp, {});
-                    const mana = Math.min(50, myStats.mana - myStats.sm);
-                    myStats.sm += mana;
-                    if (typeof myStats.manaGained !== "undefined") myStats.manaGained += 50;
-                    notice.push(`\n🍑 **${char.name}** has rejuvenated **${hp}** HP and **${mana}** mana!`);
-                    //@ts-ignore
-                    this._used++;
+                    myStats.sm += this.mana;
+                    if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
+                    if (typeof myStats.manaGained !== "undefined") myStats.manaGained += this.mana;
+                    notice.push(`\n🍑 **${char.name}** has rejuvenated **${hp}** HP and **${this.mana}** mana!`);
                 };
 
                 return AbilityResponse.SUCCESS;
-            }, 9999, 1));
+            }, 9999));
 
             return AbilityResponse.SUCCESS;
         },
         party: async (pStats, myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            myStats.critShred = 0.03;
-
             myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 eStats.def -= Math.floor(eStats.def * 0.03 * Math.min(6, myStats.crittedTotal));
                 eStats.mr -= Math.floor(eStats.mr * 0.03 * Math.min(6, myStats.crittedTotal));

@@ -5,12 +5,15 @@ import { collectComponentUpdates, deferButtonUpdate } from "../Modules/buttonInt
 import { classLevelToXP, rarityColor, search, searchItem, showPage } from "../Modules/functions";
 import { OfferRow, PageRow, activeAuctions, auctionChannelId, cowSettings } from "../Modules/components";
 import { requestVerification, dungeonTempBan } from "../Modules/components";
-import { armorInfo, entryInfo, items, ringInfo, weaponInfo } from "../Modules/items";
+import { armorInfo, entryInfo, /*gadgetInfo,*/ items, ringInfo, weaponInfo } from "../Modules/items";
 import { AuctionSchema, CharacterSchema, SlashCommand, UserSchema } from '../types';
-import { countGenericItemsByItemId, countWeaponsByItemId, deleteCharacter, deleteGenericItemsByItemIdProper, deleteWeapon, deleteWeaponsByItemId, doesUserExist, getAffectedUserIdsByItemId, getGuildSchema, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, transferAccount, updateUsers, updateUsersAndCache } from '../Modules/queries';
+import { countGenericItemsByItemId, countWeaponsByItemId, deleteCharacter, deleteGenericItemsByItemIdProper, deleteWeapon, deleteWeaponsByItemId, doesUserExist, getAffectedUserIdsByItemId, getGuildSchema, getLatestRaid, getPastStampedes, getResponseTimes, getUserSchema, getUserTransaction, getUserTransactions, insertNewAuction, insertNewCharacter, insertNewWeapon, refundRaidAttempts, transferAccount, updateUsers, updateUsersAndCache/*, deleteAllWorldBosses, getGlobalWorldBoss, insertGlobalWorldBoss*/ } from '../Modules/queries';
 import { query } from '../postgres';
 import { createResponseGraph, getResponseData } from '../Modules/responseGraph';
 import { startRollingCow } from '../Modules/rollingCowEvent';
+// import { worldBosses, GLOBAL_BOSS_HP, GLOBAL_BOSS_CHANNEL_ID } from '../Modules/worldBoss';
+// import { posWorldBossModifiers, negWorldBossModifiers } from '../Modules/worldBossModifiers';
+// import { formatNumberWithQuotes } from '../Modules/functions';
 
 const exportCommand: SlashCommand = {
     name: 'admin',
@@ -30,7 +33,7 @@ const exportCommand: SlashCommand = {
 
         // List all actions
         if (cmd === "list" || cmd === "ls") {
-            return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`reset phantasmagoria`\n`guilds`\n`add vote`\n`set <key> <value>`\n`grant entry <name|all>`\n`remove item <itemID|itemName> [user]`\n`remove weapon <uniqueid> user`\n`did`", ephemeral });
+            return interaction.reply({ content: ">>> `list`\n`reset pulls`\n`reset daily`\n`reset weekly`\n`reset dungeon`\n`reset phantasmagoria`\n`reset worldboss`\n`refresh wbattempt`\n`spawn globalwb`\n`guilds`\n`add vote`\n`set <key> <value>`\n`raid refund [count]`\n`grant entry <name|all>`\n`remove item <itemID|itemName> [user]`\n`remove weapon <uniqueid> user`\n`did`", ephemeral });
         };
 
         // DB size
@@ -281,6 +284,52 @@ const exportCommand: SlashCommand = {
                 .setFooter({ text: `Executed by ${interaction.user.tag}` });
             return interaction.editReply({ embeds: [resultEmbed], components: [] });
         };
+
+        // Reset World Bosses
+        // if (action === "reset worldboss") {
+        //     const deleted = await deleteAllWorldBosses();
+        //     return interaction.reply({ content: `Action Successful: Deleted **${deleted}** world boss instance(s). Everyone starts fresh.`, ephemeral });
+        // };
+
+        // // Refresh World Boss Attempts
+        // if (action === "refresh wbattempt") {
+        //     if (!user) return interaction.reply({ content: "Error: missing user object\n\nUsage: `/admin refresh wbattempt user:@user`", ephemeral });
+
+        //     await updateUsers(user.id, {
+        //         worldboss_attempts: { type: "set", value: 12 },
+        //     });
+
+        //     return interaction.reply({ content: `Action Successful: Refreshed world boss attempts to **12** for ${user.toString()}`, ephemeral });
+        // };
+
+        // // Spawn Global World Boss
+        // if (action === "spawn globalwb") {
+        //     const existing = await getGlobalWorldBoss();
+        //     if (existing) return interaction.reply({ content: `Error: A global world boss already exists (ID: \`${existing.id}\`). Defeat or wait for it to expire first.`, ephemeral });
+
+        //     const wbIndex = Math.floor(Math.random() * worldBosses.length);
+        //     const wb = worldBosses[wbIndex];
+        //     const posMod = posWorldBossModifiers[Math.floor(Math.random() * posWorldBossModifiers.length)];
+        //     const negMod = negWorldBossModifiers[Math.floor(Math.random() * negWorldBossModifiers.length)];
+        //     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000);
+
+        //     const boss = await insertGlobalWorldBoss(wbIndex, GLOBAL_BOSS_HP, "A-", expiresAt, posMod.id, negMod.id);
+        //     if (!boss) return interaction.reply({ content: "Error: Failed to spawn global world boss", ephemeral });
+
+        //     const bossChannel = interaction.client.channels.cache.get(GLOBAL_BOSS_CHANNEL_ID);
+        //     if (bossChannel?.isSendable()) {
+        //         bossChannel.send({
+        //             embeds: [new EmbedBuilder()
+        //                 .setColor(wb.accentColor as any)
+        //                 .setTitle("Global World Boss Spawned!")
+        //                 .setDescription(`### ${wb.name}\n**HP**: ${formatNumberWithQuotes(GLOBAL_BOSS_HP)}\n**Duration**: 2 hours\n\n${posMod.emoji} **${posMod.name}**: ${posMod.description}\n${negMod.emoji} **${negMod.name}**: ${negMod.description}\n\nUse \`/world-boss\` to join the fight!`)
+        //                 .setThumbnail(wb.enemy.image[0])
+        //             ]
+        //         });
+        //     }
+
+        //     return interaction.reply({ content: `Action Successful: Spawned global world boss **${wb.name}** (ID: \`${boss.id}\`)`, ephemeral });
+        // };
 
         // List Guilds
         if (action === "guilds") {
@@ -545,6 +594,45 @@ const exportCommand: SlashCommand = {
 
             return interaction.reply({ content: `Action Successful: Granted ${item.emoji} **${item.name}** to ${user.toString()}`, ephemeral });
         };
+
+        // Grant gadget item(s)
+        // if (action.startsWith("grant gadget")) {
+        //     if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin grant gadget <name|all> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the gadget to grant, or \`all\` to grant every gadget`, ephemeral });
+
+        //     args.shift(); // Remove "gadget"
+        //     const gadgetArg = args.join(" ").trim().toLowerCase();
+
+        // Grant all gadgets
+        // if (gadgetArg === "all") {
+        //     const gadgets = items.filter((item): item is gadgetInfo => item instanceof gadgetInfo);
+        //     const addItems: Record<string, number> = {};
+        //     for (const item of gadgets) {
+        //         addItems[item.id] = (addItems[item.id] ?? 0) + 1;
+        //     };
+
+        //     await updateUsersAndCache(interaction.client, user.id, {
+        //         updates: {
+        //             items: { type: "merge_json", value: addItems },
+        //         },
+        //     });
+
+        //     return interaction.reply({ content: `Action Successful: Granted **${gadgets.length}** gadgets to ${user.toString()}`, ephemeral });
+        // };
+
+        // Grant a specific gadget
+        // const item = searchItem(args.join(" "), interaction, true);
+        // if (!item) return interaction.reply({ content: `Error: Couldn't find gadget "${args.join(" ")}"\n\nUsage: \`/admin grant gadget <name|all> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the gadget to grant`, ephemeral });
+
+        // if (!(item instanceof gadgetInfo)) return interaction.reply({ content: `Error: **${item.name}** is not a gadget`, ephemeral });
+
+        // await updateUsersAndCache(interaction.client, user.id, {
+        //     updates: {
+        //         items: { type: "merge_json", value: { [item.id]: 1 } },
+        //     },
+        // });
+
+        // return interaction.reply({ content: `Action Successful: Granted ${item.emoji} **${item.name}** to ${user.toString()}`, ephemeral });
+        //};
 
         // Remove weapon
         if (action.startsWith("remove weapon")) {
@@ -1054,6 +1142,44 @@ const exportCommand: SlashCommand = {
             const global = Object.values(participation).reduce((acc, cur) => acc + (Array.isArray(cur) ? cur[0] : cur), 0);
 
             return interaction.reply({ content: `Stampede #${stampedes[past - 1].rowid} - Participation of ${user.username}\nDamage: ${damage}\nParticipation: ${participation[user.id]?.[1] ?? 0}\nGlobal share: ${Math.floor(10000 * damage / global) / 100}% (${damage}/${global})`, ephemeral });
+        };
+
+        // Refund raid attempts
+        if (cmd === "raid") {
+            const usage = "Refund raid attempts\n\n**Usage**: `/admin action:raid refund [count] user:<user>`\n\n**Options**\n`count`: Number of attempts to refund. Defaults to `1`\n`user`: User whose attempts will be refunded. The raid targeted is the latest raid of their guild";
+
+            if (args[0] !== "refund") return interaction.reply({ content: usage, ephemeral });
+
+            if (!user || user.bot) return interaction.reply({ content: `Error: missing user object\n\n${usage}`, ephemeral });
+
+            if (args[1] !== undefined && !/^\d+$/.test(args[1])) return interaction.reply({ content: `Error: \`count\` must be a whole number of at least 1\n\n${usage}`, ephemeral });
+
+            const count = args[1] === undefined ? 1 : parseInt(args[1]);
+            if (isNaN(count) || count < 1) return interaction.reply({ content: `Error: \`count\` must be a number of at least 1\n\n${usage}`, ephemeral });
+
+            const stats = await getUserSchema(user.id);
+            if (!stats?.guild) return interaction.reply({ content: `Error: ${user.toString()} is not in a guild, so there is no raid to refund attempts for`, ephemeral });
+
+            const raid = await getLatestRaid(stats.guild);
+            if (!raid) return interaction.reply({ content: `Error: ${user.toString()}'s guild has no recent raid`, ephemeral });
+
+            const attemptsUsed = raid.participation[user.id]?.[1] ?? 0;
+            if (attemptsUsed === 0) return interaction.reply({ content: `Error: ${user.toString()} has no recorded attempts in raid \`#${raid.rowid}\``, ephemeral });
+
+            // 4 = DAILY_RAID_ATTEMPTS in raid.ts
+            const attemptsTotal = Math.min(5, Math.floor((Date.now() - new Date(raid.start_date).getTime()) / (24 * 60 * 60 * 1000)) + 1) * 4;
+
+            const refund = Math.min(count, attemptsUsed);
+            const result = await refundRaidAttempts(raid.rowid, user.id, refund);
+            if (!result) return interaction.reply({ content: `Error: failed to refund attempts for raid \`#${raid.rowid}\``, ephemeral });
+
+            if (result.after >= result.before) return interaction.reply({ content: `Error: no attempts were refunded for ${user.toString()} in raid \`#${raid.rowid}\``, ephemeral });
+
+            let notes = "";
+            if (refund < count) notes += `\n> Clamped to **${refund}**; ${user.toString()} only had **${result.before}** attempt${result.before > 1 ? "s" : ""} used.`;
+            if (raid.end_date) notes += `\n> Note: this raid has already ended, so the refunded attempts have no effect.`;
+
+            return interaction.reply({ content: `Refunded **${result.before - result.after}** raid attempt${result.before - result.after > 1 ? "s" : ""} for ${user.toString()}\nRaid: \`#${raid.rowid}\`\nAttempts used: **${result.before}** -# **${result.after}**/${attemptsTotal} (${attemptsTotal - result.after} left)${notes}`, ephemeral });
         };
 
         // Response Time

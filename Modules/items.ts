@@ -7,7 +7,6 @@ import { AbilityResponse } from "./components";
 import { Ability } from "./abilities";
 import { getFullUserSchema, getUserSchema } from "./queries";
 import { itemInfo } from "./itemInfo";
-// export { gadgetInfo } from "./gadgets";
 export { itemInfo };
 
 export class fishInfo extends itemInfo {

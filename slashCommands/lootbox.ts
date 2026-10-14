@@ -80,6 +80,7 @@ const exportCommand: SlashCommand = {
                 await updateUsersAndCache(interaction.client, user.id, {
                     updates: {
                         lootbox: { type: "increment", value: -openAmount },
+                        lootboxesopened: { type: "increment", value: openAmount },
                         coins: { type: "increment", value: addCoins },
                         ssshard: { type: "increment", value: addShards["ss"] },
                         sshard: { type: "increment", value: addShards["s"] },

@@ -1,15 +1,39 @@
 import { dailies } from "../Modules/dailyQuests";
 import { characters } from "../Modules/chars";
-import { EmbedBuilder } from "discord.js";
-import { SlashCommand } from '../types';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder } from "discord.js";
+import { SlashCommand, CompactUserSchema } from '../types';
 import { currencyEmojis } from '../Modules/components';
-import { getOwnedCharacterIds, updateUsersAndCache } from '../Modules/queries';
+import { getOwnedCharacterIds, updateUsersAndCache, getCachedUserSchema, getUserWeapons } from '../Modules/queries';
+import { collectComponentUpdates } from '../Modules/buttonInteractions';
+import { newbieCategories, getNewbieQuests, newbieChains, claimNewbieQuests, formatNewbieRewards, NewbieCategory, NewbieData, newbieQuestInfo } from '../Modules/newbieQuests';
+
+const BUTTON_TAB_DAILY = "quest_tab_daily";
+const BUTTON_TAB_NEWBIE = "quest_tab_newbie";
+const BUTTON_CLAIM = "newbie_claim";
+const SELECT_CATEGORY = "newbie_category";
+
+const MAX_MESSAGE_LENGTH = 1900;
+
+function chunkByLine(text: string, maxLength = MAX_MESSAGE_LENGTH): string[] {
+    const chunks: string[] = [];
+    let current = "";
+    for (const line of text.split("\n")) {
+        if (current.length && current.length + line.length + 1 > maxLength) {
+            chunks.push(current);
+            current = line;
+        } else {
+            current = current.length ? `${current}\n${line}` : line;
+        };
+    };
+    if (current.length) chunks.push(current);
+    return chunks;
+};
 
 function getHash(key: string, hash: number) {
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
         hash |= 0;
-    }
+    };
     return hash;
 };
 
@@ -98,7 +122,23 @@ const exportCommand: SlashCommand = {
             };
         };
 
-        const Embed = new EmbedBuilder()
+        const isSelf = user.id === interaction.user.id;
+        let questStats: CompactUserSchema = stats;
+        if (!isSelf) {
+            const otherStats = await getCachedUserSchema(user.id, interaction.client);
+            if (!otherStats) return interaction.reply(`**${user.username}** hasn't started playing yet`);
+            questStats = otherStats;
+        };
+
+        let questData: NewbieData = {
+            weapons: await getUserWeapons(user.id),
+            ownedCharacterIds: await getOwnedCharacterIds(user.id, questStats.chars),
+        };
+
+        let activeTab: "daily" | "newbie" = "daily";
+        let activeCategory: NewbieCategory = "progression";
+
+        const buildDailyEmbed = () => new EmbedBuilder()
             .setColor(0xbbffff)
             .setTitle(`Daily Quests (${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0)}/4)`)
             .setDescription(`**Completion Rewards**: 5 ${currencyEmojis.season_keys}, 500<:coins:872926669055356939>, 2<:genesis_gems:1034179687720681492>, 10XP ${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0) === 4 ? "<a:check:873196253276700682>" : ""}\nㅤ`)
@@ -118,7 +158,115 @@ const exportCommand: SlashCommand = {
                 { name: '\u200B', value: '_ _', inline: true },
             )
             .setFooter({ text: `dailies reset in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\nneed help? ➜ see /support` });
-        return interaction.reply({ embeds: [Embed] });
+
+        const newbieProgress = (quest: newbieQuestInfo) => {
+            if (quest.check(questStats, questData)) return achvmBar(1);
+            const { value, target } = quest.progress(questStats, questData);
+            return achvmBar(Math.max(0, Math.min(0.999, target > 0 ? value / target : 0)), ` (${value}/${target})\n`);
+        };
+
+        const claimableCount = (source: CompactUserSchema, data: NewbieData) => getNewbieQuests(activeCategory).filter((quest) => !source.newbie.includes(quest.id) && quest.check(source, data)).length;
+
+        const buildNewbieEmbed = () => {
+            const questList = getNewbieQuests(activeCategory);
+            const claimed = questList.filter((quest) => questStats.newbie.includes(quest.id)).length;
+            const category = newbieCategories.find((e) => e.id === activeCategory)!;
+
+            const Embed = new EmbedBuilder()
+                .setColor(0xbbffff)
+                .setTitle(`Newbie Quests — ${category.label} (${claimed}/${questList.length})`)
+                .setThumbnail(thumbnail)
+                .setDescription(`${category.description}\nCompleted quests can be collected with the **Claim Rewards** button below.\nㅤ`);
+
+            for (const chain of newbieChains(activeCategory)) {
+                let dots = "";
+                let next: newbieQuestInfo | undefined;
+                for (const quest of chain.quests) {
+                    const claimedQuest = questStats.newbie.includes(quest.id);
+                    dots += claimedQuest ? "<:st:942946747334918216>" : "<:st_h:942946747452387408>";
+                    if (!claimedQuest && !next) next = quest;
+                };
+                const target = next ?? chain.quests[chain.quests.length - 1];
+
+                Embed.addFields(
+                    { name: `${chain.title} ${dots}`, value: next ? `> ${next.description}${newbieProgress(next)}` : `> All milestones collected!${achvmBar(1)}`, inline: true },
+                    { name: `Rewards${next ? "" : " <a:check:873196253276700682>"}`, value: formatNewbieRewards(target), inline: true },
+                    { name: '\u200B', value: '_ _', inline: true },
+                );
+            };
+
+            return Embed;
+        };
+
+        const buildTabRow = () => new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(
+                new ButtonBuilder().setCustomId(BUTTON_TAB_DAILY).setLabel("Daily").setStyle(activeTab === "daily" ? ButtonStyle.Primary : ButtonStyle.Secondary),
+                new ButtonBuilder().setCustomId(BUTTON_TAB_NEWBIE).setLabel("Newbie").setStyle(activeTab === "newbie" ? ButtonStyle.Primary : ButtonStyle.Secondary),
+            );
+
+        const buildCategoryRow = () => new ActionRowBuilder<StringSelectMenuBuilder>()
+            .addComponents(
+                new StringSelectMenuBuilder()
+                    .setCustomId(SELECT_CATEGORY)
+                    .setPlaceholder(`Category: ${newbieCategories.find((e) => e.id === activeCategory)!.label}`)
+                    .addOptions(newbieCategories.map((e) => ({ label: e.label, description: e.description, value: e.id, emoji: e.emoji }))),
+            );
+
+        const buildClaimRow = () => {
+            const claimable = claimableCount(questStats, questData);
+            if (!isSelf) return [];
+            return [new ActionRowBuilder<ButtonBuilder>().addComponents(
+                new ButtonBuilder().setCustomId(BUTTON_CLAIM).setLabel(claimable ? `Claim Rewards (${claimable})` : "Claim Rewards").setStyle(ButtonStyle.Success).setDisabled(!claimable),
+            )];
+        };
+
+        const render = () => activeTab === "daily"
+            ? { embeds: [buildDailyEmbed()], components: [buildTabRow()] }
+            : { embeds: [buildNewbieEmbed()], components: [buildTabRow(), buildCategoryRow(), ...buildClaimRow()] };
+
+        return interaction.reply({ ...render(), fetchReply: true }).then(msg => {
+
+            const buttonCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && [BUTTON_TAB_DAILY, BUTTON_TAB_NEWBIE, BUTTON_CLAIM].includes(r.customId), componentType: ComponentType.Button, time: 120000 });
+
+            collectComponentUpdates(buttonCollector, async r => {
+                if (r.customId === BUTTON_TAB_DAILY) activeTab = "daily";
+                else if (r.customId === BUTTON_TAB_NEWBIE) activeTab = "newbie";
+                else if (r.customId === BUTTON_CLAIM) {
+                    const claimed = await claimNewbieQuests(interaction.client, interaction.user.id, getNewbieQuests(activeCategory));
+                    if (!claimed.length) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send("You have no newbie quests to claim right now.");
+                        return;
+                    };
+                    const freshStats = await getCachedUserSchema(interaction.user.id, interaction.client);
+                    if (freshStats) questStats = freshStats;
+                    const freshData: NewbieData = {
+                        weapons: await getUserWeapons(interaction.user.id),
+                        ownedCharacterIds: await getOwnedCharacterIds(interaction.user.id, questStats.chars),
+                    };
+                    questData = freshData;
+                    const summary = claimed.map((quest) => `> **${quest.title}**: ${quest.description} — ${formatNewbieRewards(quest)}`).join("\n");
+                    if (interaction.channel?.isSendable()) {
+                        for (const chunk of chunkByLine(summary)) {
+                            await interaction.channel.send(`<a:starsL:942573254730715246> Newbie quests completed! <a:starsR:942573194802511923>\n${chunk}`);
+                        };
+                    };
+                };
+                await msg.edit(render());
+            }, msg.id);
+
+            const categoryCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === SELECT_CATEGORY, componentType: ComponentType.StringSelect, time: 120000 });
+
+            collectComponentUpdates(categoryCollector, async r => {
+                const value = r.values[0];
+                if (!newbieCategories.some((e) => e.id === value)) return;
+                activeCategory = value as NewbieCategory;
+                await msg.edit(render());
+            }, msg.id);
+
+            const stripComponents = () => { msg.edit({ components: [] }).catch(() => { }); };
+            buttonCollector.on('end', stripComponents);
+            categoryCollector.on('end', stripComponents);
+        });
     },
 };
 

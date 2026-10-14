@@ -1,6 +1,6 @@
 import { Client } from "discord.js";
 import { query, withTransaction } from "../postgres";
-import { AuctionBidSchema, AuctionSchema, CharacterSchema, CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateGuildOptions, UpdatePartyOptions, UpdateStampedeOptions, UpdateUserOptions, UpdateWeaponOptions, UserSchema, UserSchemaForStats, WeaponSchema } from "../types";
+import { AuctionBidSchema, AuctionSchema, CharacterSchema, CompactUserSchema, FAQSchema, GuildDonationSchema, GuildSchema, PartySchema, RaidSchema, ServerSchema, StampedeSchema, TradeSchema, UpdateGuildOptions, UpdatePartyOptions, UpdateStampedeOptions, UpdateUserOptions, UpdateWeaponOptions, UserSchema, UserSchemaForStats, WeaponSchema /*,WorldBossSchema*/ } from "../types";
 import { donationWeekStart } from "./components";
 
 import LRUCache from "./LRUCache";
@@ -56,6 +56,11 @@ function fixBigintForRaid(value: Partial<RaidSchema>) {
     if ("enemy_hpmax" in value) value.enemy_hpmax = Number(value.enemy_hpmax);
 };
 
+// function fixBigintForWorldBoss(value: Partial<WorldBossSchema>) {
+//     if ("enemy_hp" in value) value.enemy_hp = Number(value.enemy_hp);
+//     if ("enemy_hpmax" in value) value.enemy_hpmax = Number(value.enemy_hpmax);
+// };
+
 //---------------------------------//
 //           GET SCHEMAS           //
 //---------------------------------//
@@ -78,7 +83,7 @@ export const getMinimalUserSchemas = async (ids: string[]): Promise<Pick<UserSch
     return users;
 };
 
-const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_skin, dungeon_floors, hidden_dungeon, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments, phantasmagoria_supports, phantasmagoria_boss_data, phantasmagoria_selected_boss, echo, echo_purchases, phantasmagoria_strategy, phantasmagoria_class, phantasmagoria_equipment FROM users`;
+const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, newbie, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, bosshuntchar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_ascension, char_skin, dungeon_floors, hidden_dungeon, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments, phantasmagoria_supports, phantasmagoria_boss_data, phantasmagoria_selected_boss, echo, echo_purchases, phantasmagoria_strategy, phantasmagoria_class, phantasmagoria_equipment, chestsopened, lootboxesopened, ticketsopened FROM users`;
 
 export const getUserSchema = async (id: string): Promise<CompactUserSchema | undefined> => {
     const [user] = await query(`${SELECT_COMPACT_USER_SCHEMA} WHERE id = $1`, [id]) as [CompactUserSchema];
@@ -828,17 +833,17 @@ export const countWeaponsByItemId = async (itemId: number, userId?: string): Pro
     const [row] = await query(
         `SELECT COUNT(*) AS count FROM weapons WHERE itemid = $1 ${userId ? 'AND id = $2' : ''}`,
         userId ? [itemId, userId] : [itemId]
-    ) as [{ count: string }];
+    ) as [{ count: string; }];
     return parseInt(row.count);
 };
 
-export const countGenericItemsByItemId = async (itemId: number, userId?: string): Promise<{ totalItems: number; totalUsers: number }> => {
+export const countGenericItemsByItemId = async (itemId: number, userId?: string): Promise<{ totalItems: number; totalUsers: number; }> => {
     if (userId) {
-        const [row] = await query(`SELECT items->>$1 AS count FROM users WHERE id = $2`, [itemId.toString(), userId]) as [{ count: string | null }];
+        const [row] = await query(`SELECT items->>$1 AS count FROM users WHERE id = $2`, [itemId.toString(), userId]) as [{ count: string | null; }];
         const count = row?.count ? parseInt(row.count) : 0;
         return { totalItems: count, totalUsers: count > 0 ? 1 : 0 };
     } else {
-        const rows = await query(`SELECT items->>$1 AS count FROM users WHERE items ? $2`, [itemId.toString(), itemId.toString()]) as { count: string }[];
+        const rows = await query(`SELECT items->>$1 AS count FROM users WHERE items ? $2`, [itemId.toString(), itemId.toString()]) as { count: string; }[];
         let totalItems = 0, totalUsers = 0;
         for (const row of rows) {
             const count = row.count ? parseInt(row.count) : 0;
@@ -853,10 +858,10 @@ export const countGenericItemsByItemId = async (itemId: number, userId?: string)
 
 export const getAffectedUserIdsByItemId = async (itemId: number, category: string): Promise<string[]> => {
     if (category === "weapon" || category === "armor" || category === "ring") {
-        const rows = await query(`SELECT DISTINCT id FROM weapons WHERE itemid = $1`, [itemId]) as { id: string }[];
+        const rows = await query(`SELECT DISTINCT id FROM weapons WHERE itemid = $1`, [itemId]) as { id: string; }[];
         return rows.map(r => r.id);
     } else {
-        const rows = await query(`SELECT id FROM users WHERE items ? $1`, [itemId.toString()]) as { id: string }[];
+        const rows = await query(`SELECT id FROM users WHERE items ? $1`, [itemId.toString()]) as { id: string; }[];
         return rows.map(r => r.id);
     }
 };
@@ -1127,6 +1132,35 @@ export const updateRaidParticipation = async (raidRowId: number, userId: string,
             )
         WHERE rowid = $1
     `, [raidRowId, participation, damage]);
+};
+
+export const refundRaidAttempts = async (raidRowId: number, userId: string, count: number): Promise<{ before: number; after: number; } | undefined> => {
+    // participation[string]: [0: damage, 1: attempts used]. Only attempts are refunded, damage and enemy_hp are left untouched.
+    // Participants missing from the target raid never get an entry created; they report back as undefined instead.
+    const { rows: [raid] } = await query(`
+        WITH prev AS (
+            SELECT rowid, (participation->$1->>1)::numeric AS attempts
+            FROM raids
+            WHERE rowid = $4 AND participation ? $1
+            FOR UPDATE
+        )
+        UPDATE raids
+        SET participation = jsonb_set(
+            participation,
+            $2,
+            jsonb_build_array(
+                COALESCE((participation->$1->>0)::numeric, 0),
+                GREATEST(0, COALESCE((participation->$1->>1)::numeric, 0) - $3::numeric)
+            ),
+            false
+        )
+        FROM prev
+        WHERE raids.rowid = prev.rowid
+        RETURNING prev.attempts AS before, (raids.participation->$1->>1)::numeric AS after
+    `, [userId, `{${userId}}`, count, raidRowId]) as { rows: { before: string | null; after: string | null; }[]; };
+
+    if (!raid || raid.before === null || raid.after === null) return undefined;
+    return { before: Number(raid.before), after: Number(raid.after) };
 };
 
 export const updateRaidPhase = async (raidRowId: number, newRaidId: number, newEnemyHp: number): Promise<RaidSchema | undefined> => {
@@ -1690,3 +1724,156 @@ export const updateGuildDonationsGuildId = async (guildId: string, newGuildId: s
 export const updateRaidsGuildId = async (guildId: string, newGuildId: string): Promise<void> => {
     await query(`UPDATE raids SET guildid = $1 WHERE guildid = $2`, [newGuildId, guildId]);
 };
+
+//---------------------------------//
+//        WORLD BOSS QUERIES       //
+//---------------------------------//
+
+// const BOSS_ID_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-";
+
+// function generateBossIdPart(len: number): string {
+//     let gen = "";
+//     for (let i = 0; i < len; i++) gen += BOSS_ID_CHARS[Math.floor(Math.random() * BOSS_ID_CHARS.length)];
+//     return gen;
+// };
+
+// async function generateWorldBossId(): Promise<string> {
+//     let len = 2;
+//     for (let attempt = 0; attempt < 100; attempt++) {
+//         const gen = generateBossIdPart(len);
+//         const exists = await query(`SELECT 1 FROM world_bosses WHERE id = $1`, [gen]) as any[];
+//         if (!exists || exists.length === 0) return gen;
+//         if (attempt % 10 === 0) len++;
+//     }
+//     for (let attempt = 0; attempt < 100; attempt++) {
+//         const fallback = generateBossIdPart(8);
+//         const exists = await query(`SELECT 1 FROM world_bosses WHERE id = $1`, [fallback]) as any[];
+//         if (!exists || exists.length === 0) return fallback;
+//     }
+//     throw new Error("Failed to generate unique world boss ID");
+// };
+
+// export const insertWorldBoss = async (summonerId: string, enemyId: number, enemyHp: number, rank: string, expiresAt: Date, visibility: "public" | "private" = "public", posModifier: number = 1, negModifier: number = 1): Promise<WorldBossSchema | undefined> => {
+//     const id = await generateWorldBossId();
+//     // A user may only ever have one active personal boss
+//     const { rows: [boss] } = await query(`INSERT INTO world_bosses (id, summoner_id, enemy_id, enemy_hp, enemy_hpmax, rank_letter, participation, banned_users, visibility, pos_modifier, neg_modifier, expires_at) SELECT $1, $2, $3, $4, $5, $6, $7::jsonb, $8::jsonb, $9, $10, $11, $12 WHERE NOT EXISTS (SELECT 1 FROM world_bosses WHERE (summoner_id = $2 OR participation ? $2) AND status = 'active' AND expires_at > NOW() AND type <> 'global') RETURNING *`, [id, summonerId, enemyId, enemyHp, enemyHp, rank, JSON.stringify({ [summonerId]: [0, 0, 0, 0] }), '[]', visibility, posModifier, negModifier, expiresAt]) as { rows: WorldBossSchema[]; };
+//     if (boss) fixBigintForWorldBoss(boss);
+//     return boss;
+// };
+
+// export const insertGlobalWorldBoss = async (enemyId: number, enemyHp: number, rank: string, expiresAt: Date, posModifier: number, negModifier: number): Promise<WorldBossSchema | undefined> => {
+//     const id = await generateWorldBossId();
+//     const { rows: [boss] } = await query(`INSERT INTO world_bosses (id, summoner_id, enemy_id, enemy_hp, enemy_hpmax, rank_letter, participation, banned_users, visibility, type, pos_modifier, neg_modifier, expires_at) VALUES ($1, NULL, $2, $3, $4, $5, '{}'::jsonb, '[]'::jsonb, 'global', 'global', $6, $7, $8) RETURNING *`, [id, enemyId, enemyHp, enemyHp, rank, posModifier, negModifier, expiresAt]) as { rows: WorldBossSchema[]; };
+//     if (boss) fixBigintForWorldBoss(boss);
+//     return boss;
+// };
+
+// export const getGlobalWorldBoss = async (): Promise<WorldBossSchema | undefined> => {
+//     const [boss] = await query(`SELECT * FROM world_bosses WHERE type = 'global' AND expires_at > NOW() LIMIT 1`) as WorldBossSchema[];
+//     if (boss) fixBigintForWorldBoss(boss);
+//     return boss;
+// };
+
+// export const deleteGlobalWorldBoss = async (): Promise<void> => {
+//     await query(`DELETE FROM world_bosses WHERE type = 'global'`);
+// };
+
+// export const getWorldBoss = async (bossId: string): Promise<WorldBossSchema | undefined> => {
+//     const [boss] = await query(`SELECT * FROM world_bosses WHERE id = $1`, [bossId]) as WorldBossSchema[];
+//     if (boss) fixBigintForWorldBoss(boss);
+//     return boss;
+// };
+
+// export const getUserWorldBosses = async (userId: string): Promise<WorldBossSchema[]> => {
+//     const bosses = await query(`SELECT * FROM world_bosses WHERE expires_at > NOW() AND (summoner_id = $1 OR participation ? $1) ORDER BY created_at ASC`, [userId]) as WorldBossSchema[];
+//     bosses.forEach(fixBigintForWorldBoss);
+//     return bosses;
+// };
+
+// export const changeWorldBossAttempts = async (userId: string, delta: number): Promise<boolean> => {
+//     const { rows } = await query(`UPDATE users SET worldboss_attempts = GREATEST(0, LEAST(12, worldboss_attempts + $2)) WHERE id = $1 AND worldboss_attempts + $2 >= 0 RETURNING 1`, [userId, delta]) as { rows: unknown[]; };
+//     return rows.length > 0;
+// };
+
+// // A user may only ever have one active personal boss
+// export const joinWorldBoss = async (bossId: string, userId: string): Promise<boolean> => {
+//     const participation = { [userId]: [0, 0, 0, 0] };
+//     const result = await query(`UPDATE world_bosses SET participation = participation || $1::jsonb WHERE id = $2 AND status = 'active' AND expires_at > NOW() AND NOT (participation ? $3) AND NOT (banned_users ? $3) AND (summoner_id IS NULL OR summoner_id != $3) AND NOT EXISTS (SELECT 1 FROM world_bosses WHERE (summoner_id = $3 OR participation ? $3) AND status = 'active' AND expires_at > NOW() AND type <> 'global' AND id <> $2)`, [JSON.stringify(participation), bossId, userId]);
+//     return ((result as any).rowCount ?? 0) > 0;
+// };
+
+// export const updateWorldBossParticipation = async (bossId: string, userId: string, damage: number, roundsDelta: number): Promise<{ enemy_hp: number; status: string } | undefined> => {
+//     const participation = {
+//         [userId]: [damage, roundsDelta, 0, 1]
+//     };
+
+//     const { rows: [result] } = await query(`
+//         UPDATE world_bosses
+//         SET enemy_hp = GREATEST(enemy_hp - $2, 0),
+//             status = CASE WHEN GREATEST(enemy_hp - $2, 0) <= 0 THEN 'defeated' ELSE status END,
+//             participation = (
+//                 SELECT jsonb_object_agg(
+//                     key,
+//                     CASE
+//                         WHEN participation->key IS NOT NULL AND $3::jsonb->key IS NOT NULL THEN
+//                             jsonb_build_array(
+//                                 (COALESCE((participation->key->>0)::numeric, 0) + COALESCE(($3::jsonb->key->>0)::numeric, 0)),
+//                                 (COALESCE((participation->key->>1)::numeric, 0) + COALESCE(($3::jsonb->key->>1)::numeric, 0)),
+//                                 (COALESCE((participation->key->>2)::numeric, 0)),
+//                                 (COALESCE((participation->key->>3)::numeric, 0) + COALESCE(($3::jsonb->key->>3)::numeric, 0))
+//                             )
+//                         WHEN $3::jsonb->key IS NOT NULL THEN
+//                             $3::jsonb->key
+//                         ELSE
+//                             participation->key
+//                     END
+//                 )
+//                 FROM jsonb_each(COALESCE(participation, '{}'::jsonb) || $3::jsonb)
+//             )
+//         WHERE id = $1 AND status = 'active' AND expires_at > NOW() AND COALESCE((participation->$4->>3)::int, 0) < 3
+//         RETURNING enemy_hp, status
+//     `, [bossId, damage, participation, userId]) as { rows: { enemy_hp: number; status: string }[]; };
+
+//     if (result) fixBigintForWorldBoss(result as any);
+//     return result;
+// };
+
+// export const claimWorldBossRewards = async (bossId: string, userId: string): Promise<boolean> => {
+//     const path = `{${userId},2}`;
+//     const result = await query(`UPDATE world_bosses SET participation = jsonb_set(participation, $1, '1'::jsonb) WHERE id = $2 AND participation->$3->>2 = '0' AND status = 'defeated'`, [path, bossId, userId]);
+//     return ((result as any).rowCount ?? 0) > 0;
+// };
+
+// export const deleteExpiredWorldBosses = async (): Promise<void> => {
+//     await query(`DELETE FROM world_bosses WHERE expires_at <= NOW() AND type != 'global'`);
+// };
+
+// export const forfeitWorldBoss = async (bossId: string, userId: string): Promise<void> => {
+//     await query(`UPDATE world_bosses SET participation = participation - $2, banned_users = banned_users || jsonb_build_array($2), summoner_id = CASE WHEN summoner_id = $2 THEN NULL ELSE summoner_id END, visibility = CASE WHEN summoner_id = $2 THEN 'public' ELSE visibility END WHERE id = $1 AND status = 'active'`, [bossId, userId]);
+// };
+
+// export const forfeitWorldBossRewards = async (bossId: string, userId: string): Promise<void> => {
+//     await query(`UPDATE world_bosses SET participation = participation - $2 WHERE id = $1 AND status = 'defeated'`, [bossId, userId]);
+// };
+
+// export const toggleWorldBossVisibility = async (bossId: string, summonerId: string): Promise<"public" | "private" | undefined> => {
+//     const { rows: [result] } = await query(`UPDATE world_bosses SET visibility = CASE WHEN visibility = 'public' THEN 'private' ELSE 'public' END WHERE id = $1 AND summoner_id = $2 AND status = 'active' RETURNING visibility`, [bossId, summonerId]) as { rows: { visibility: string }[]; };
+//     return result?.visibility as "public" | "private" | undefined;
+// };
+
+// export const getPublicWorldBosses = async (userId: string): Promise<WorldBossSchema[]> => {
+//     const bosses = await query(`SELECT * FROM world_bosses WHERE status = 'active' AND expires_at > NOW() AND (visibility = 'public' OR visibility = 'global') AND (summoner_id IS NULL OR summoner_id != $1) AND NOT (participation ? $1) AND NOT (banned_users ? $1)`, [userId]) as WorldBossSchema[];
+//     bosses.forEach(fixBigintForWorldBoss);
+//     return bosses;
+// };
+
+// export const deleteAllWorldBosses = async (): Promise<number> => {
+//     const result = await query(`DELETE FROM world_bosses`);
+//     return (result as any).rowCount ?? 0;
+// };
+
+// export const inviteToWorldBoss = async (bossId: string, summonerId: string, targetUserId: string): Promise<boolean> => {
+//     const participation = { [targetUserId]: [0, 0, 0, 0] };
+//     const result = await query(`UPDATE world_bosses SET participation = participation || $1::jsonb WHERE id = $2 AND summoner_id = $3 AND status = 'active' AND expires_at > NOW() AND NOT (participation ? $4) AND NOT (banned_users ? $4) AND NOT EXISTS (SELECT 1 FROM world_bosses WHERE (summoner_id = $4 OR participation ? $4) AND status = 'active' AND expires_at > NOW() AND type <> 'global' AND id <> $2)`, [JSON.stringify(participation), bossId, summonerId, targetUserId]);
+//     return ((result as any).rowCount ?? 0) > 0;
+// };

@@ -3,10 +3,11 @@ import fs from 'fs';
 import { EmbedBuilder, ComponentType } from "discord.js";
 import { achievements } from "../Modules/achievements";
 import charInfo, { characters } from "../Modules/chars";
-import { userLevel, search, formatNumberWithQuotes } from "../Modules/functions";
+import { userLevel, search, formatNumberWithQuotes, searchItem } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { CharacterSchema, CompactUserSchema, SlashCommand } from '../types';
 import { getCharacterSchemasOfUser, getUserSchema, insertNewTrade, transferCharacter, updateUsersAndCache } from '../Modules/queries';
+// import { gadgetInfo } from "../Modules/items";
 
 type GiftCharacter = {
     char: charInfo;
@@ -335,6 +336,68 @@ const exportCommand: SlashCommand = {
 
             });
         };
+
+        // Give gadgets
+        // if (subcommand === "gadget") {
+        //     const choice = interaction.options.getString('gadget', true).trim();
+        //     const amount = interaction.options.getInteger('amount') ?? 1;
+
+        //     if (userLevel(author.schema.xp) < 25) return interaction.reply(`You must be level 25 or higher to give gadgets`);
+
+        //     const gadget = searchItem(choice, interaction, true);
+        //     if (!gadget) return;
+        //     if (!(gadget instanceof gadgetInfo)) return interaction.reply(`**${gadget.name}** is not a gadget.`);
+
+        //     const itemId = String(gadget.id);
+        //     const giverCount = author.schema.items[itemId] ?? 0;
+        //     if (giverCount < amount) return interaction.reply(`You don't have enough ${gadget.emoji} **${gadget.name}** (you have **${giverCount}**).`);
+        //     if (amount < 1) return interaction.reply(`You need to give at least 1.`);
+
+        //     return interaction.reply({ content: `Are you sure you want to give **${amount}x** ${gadget.emoji} **${gadget.name}** to **${user.username}**?${userLevel(_stats.xp) < 25 ? `\n⚠️ **${user.username}** is below level 25 and won't be able to use \`/give\` commands until then.` : ""}`, components: [OfferRow] }).then(msg => {
+
+        //         const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
+        //         const cancel = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "cancel", componentType: ComponentType.Button, time: 15000 });
+
+        //         confirm.on('collect', async () => {
+        //             confirm.stop(), cancel.stop();
+
+        //             const stats = await getUserSchema(interaction.user.id);
+        //             if (!stats) return;
+        //             const currentCount = stats.items[itemId] ?? 0;
+        //             if (currentCount < amount) {
+        //                 if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have enough ${gadget.emoji} **${gadget.name}** (you have **${currentCount}**).`);
+        //                 return;
+        //             };
+
+        //             await updateUsersAndCache(interaction.client, interaction.user.id, {
+        //                 updates: {
+        //                     items: { type: 'merge_json', value: { [itemId]: -amount } },
+        //                 },
+        //             });
+        //             await updateUsersAndCache(interaction.client, user.id, {
+        //                 updates: {
+        //                     items: { type: 'merge_json', value: { [itemId]: amount } },
+        //                 },
+        //             });
+
+        //             if (interaction.channel?.isSendable()) interaction.channel.send(`${interaction.user.toString()} has sent **${amount}x** ${gadget.emoji} **${gadget.name}** to ${user.toString()}`);
+
+        //             // Trade Log
+        //             await insertNewTrade(interaction.user.id, user.id, "coins", amount);
+        //             const chnl = interaction.client.channels.cache.find(channel => channel.id === "1042922243933622362");
+        //             const Embed = new EmbedBuilder()
+        //                 .setColor(0xbbffff)
+        //                 .setDescription(`${interaction.user.tag} sent **${amount}x** ${gadget.emoji} **${gadget.name}** to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
+        //             if (chnl?.isSendable()) chnl.send({ embeds: [Embed] });
+        //         });
+
+        //         cancel.on('collect', () => {
+        //             confirm.stop(), cancel.stop();
+        //             if (interaction.channel?.isSendable()) interaction.channel.send("Action cancelled");
+        //         });
+
+        //     });
+        // };
 
     },
 };

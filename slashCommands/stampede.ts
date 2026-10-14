@@ -4,6 +4,7 @@ import { deferCommand, editCommandReply } from "../Modules/interactionResponses"
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
 import { abilities, Ability } from "../Modules/abilities.js";
+import { getUserAbility } from "../Modules/ascensions.js";
 import { classes } from "../Modules/classes.js";
 import { curses } from "../Modules/curses.js";
 import { armorInfo, items, ringInfo, runeInfo, weaponInfo } from "../Modules/items.js";
@@ -331,7 +332,7 @@ const exportCommand: SlashCommand = {
         let myStatsC = { ...myStats };
         let myClass = myStats.class !== -1 ? classes[myStats.class] : undefined;
         let skill = myStats.class !== -1 ? _.cloneDeep(skills[myStats.class]) : undefined;
-        let myAbility = myChar.id in abilities ? _.cloneDeep(abilities[myChar.id]) : undefined;
+        let myAbility = getUserAbility(myChar.id, stats);
 
         if (myStats.rune) {
             const rune = items[parseInt(myStats.rune)];

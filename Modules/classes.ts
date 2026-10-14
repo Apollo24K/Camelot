@@ -66,7 +66,9 @@ const skillDescs: SkillDescription[] = [
     { "active": `Increases own ATK by **1%** for every 50 characters in the players inventory for 3 rounds (max 75%). (Timeout true)`, "passive": `Gets 25% more coins in the dungeon.` },
     { "active": `Gains **200** DEF and Magic Resist for 3 rounds. (Timeout true)`, "passive": `Heals **5%** of max HP after each round.` },
     { "active": `Deals **100%** damage, which ignores **60%** of enemy DEF and MR. (Timeout true)`, "passive": `None` },
-    { "active": `Increases own DEF and Magic Resist depending on mana consumtion for 6 rounds. Starting with **100** DEF and **25** Magic Resist, the user gains **+8** DEF and **+2** Magic Resist for every mana consumed above 20. (Timeout false)`, "passive": `Gains **+25%** increased class xp from the dungeon.` },
+    // Warmachine
+    //{ "active": `Increases own DEF and Magic Resist depending on mana consumtion for 6 rounds. Starting with **100** DEF and **25** Magic Resist, the user gains **+8** DEF and **+2** Magic Resist for every mana consumed above 20. (Timeout false)`, "passive": `Gains **+25%** increased class xp from the dungeon.` },
+    { "active": `Sacrifices **20%** current HP to increase DEF and MR by half of the equivalent this round. (Timeout true, usable once per round)`, "passive": `The lower your HP, the more DEF & MR you ignore (Max: 70%). Gains **+25%** increased class xp from the dungeon.` },
     { "active": `Summons a spirit to fight for you. The spirit will have **30%** of your stats, but has a **20%** chance of summoning a stronger spirit which has **50%** of your stats. During this mode your mana generation will halt until the spirit is defeated. Once the spirit dies, you will continue fighting with your character. (Timeout false)`, "passive": `Has a **20%** chance of dealing magic damage.` },
     { "active": `Creates a shield equal to **20%** of max HP. (Timeout false)`, "passive": `When shield breaks down from taking damage, freezes the enemy and increases own ATK and MD by **50%** for **1** round. All attacks deal magic damage by default.` },
     { "active": `Deals **125%** magic damage and causes burning, dealing **6%** damage over 2 rounds. (Timeout true)`, "passive": `All attacks deal magic damage.` },
@@ -77,8 +79,8 @@ const skillDescs: SkillDescription[] = [
 
     { "active": "Deals **110%** physical damage which increases by **+1%** for every mana consumed above 10. (Timeout true)", "passive": `None` },
     { // Grappler
-        "active": `Removes the enemy's prepared counters before entering __Free-Flow__ for **7** rounds. During this period, the enemy has **0%** dodge rate, and receives **5%** more damage for every round the domain lasts, up to **35%** by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain. (CD: 7, Timeout false)`,
-        "passive": "Evades the first two lethal hits. When not in __Free-Flow__, restores **3%** missing HP every round."
+        "active": `Removes the enemy's prepared counters before entering __Free-Flow__ for **7** rounds. During this period, the enemy has **0%** dodge rate, and receives **20%** more damage, increased by another **5%** for every round the domain lasts, up to **55%** by the last round. This stacks on top of other vulnerability effects, but is reset after leaving the domain. (CD: 7, Timeout false)`,
+        "passive": "Evades the first two lethal hits. When not in __Free-Flow__, restores **3%** missing HP every round. Else, has chance equal to enemy's stackable vulnerability percent to recover **10%** max HP."
     },
     { "active": `Increases own ATK by **10%** permanently. (Uses: 3, Timeout false)`, "passive": `The user builds up a combo attack increasing their damage by **10%** after every attack. This resets when the user misses their target or uses another action.` },
     { "active": `Increases dodge chance and crit rate by **10%** for 3 and 4 rounds respectively. (Timeout false)`, "passive": `Gains a **4%** ATK boost after every dodge lasting 5 rounds.` },
