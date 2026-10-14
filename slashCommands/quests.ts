@@ -12,6 +12,23 @@ const BUTTON_TAB_NEWBIE = "quest_tab_newbie";
 const BUTTON_CLAIM = "newbie_claim";
 const SELECT_CATEGORY = "newbie_category";
 
+const MAX_MESSAGE_LENGTH = 1900;
+
+function chunkByLine(text: string, maxLength = MAX_MESSAGE_LENGTH): string[] {
+    const chunks: string[] = [];
+    let current = "";
+    for (const line of text.split("\n")) {
+        if (current.length && current.length + line.length + 1 > maxLength) {
+            chunks.push(current);
+            current = line;
+        } else {
+            current = current.length ? `${current}\n${line}` : line;
+        };
+    };
+    if (current.length) chunks.push(current);
+    return chunks;
+};
+
 function getHash(key: string, hash: number) {
     for (let i = 0; i < key.length; i++) {
         hash = ((hash << 5) - hash) + key.charCodeAt(i);
@@ -215,22 +232,24 @@ const exportCommand: SlashCommand = {
                 if (r.customId === BUTTON_TAB_DAILY) activeTab = "daily";
                 else if (r.customId === BUTTON_TAB_NEWBIE) activeTab = "newbie";
                 else if (r.customId === BUTTON_CLAIM) {
-                    const freshStats = await getCachedUserSchema(interaction.user.id, interaction.client);
-                    if (!freshStats) return;
-                    const freshData: NewbieData = {
-                        weapons: await getUserWeapons(interaction.user.id),
-                        ownedCharacterIds: await getOwnedCharacterIds(interaction.user.id, freshStats.chars),
-                    };
-                    const claimable = getNewbieQuests(activeCategory).filter((quest) => !freshStats.newbie.includes(quest.id) && quest.check(freshStats, freshData));
-                    if (!claimable.length) {
+                    const claimed = await claimNewbieQuests(interaction.client, interaction.user.id, getNewbieQuests(activeCategory));
+                    if (!claimed.length) {
                         if (interaction.channel?.isSendable()) interaction.channel.send("You have no newbie quests to claim right now.");
                         return;
                     };
-                    await claimNewbieQuests(interaction.client, interaction.user.id, freshStats, freshData, claimable);
-                    questStats = freshStats;
+                    const freshStats = await getCachedUserSchema(interaction.user.id, interaction.client);
+                    if (freshStats) questStats = freshStats;
+                    const freshData: NewbieData = {
+                        weapons: await getUserWeapons(interaction.user.id),
+                        ownedCharacterIds: await getOwnedCharacterIds(interaction.user.id, questStats.chars),
+                    };
                     questData = freshData;
-                    const summary = claimable.map((quest) => `> **${quest.title}**: ${quest.description} — ${formatNewbieRewards(quest)}`).join("\n");
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`<a:starsL:942573254730715246> Newbie quests completed! <a:starsR:942573194802511923>\n${summary}`);
+                    const summary = claimed.map((quest) => `> **${quest.title}**: ${quest.description} — ${formatNewbieRewards(quest)}`).join("\n");
+                    if (interaction.channel?.isSendable()) {
+                        for (const chunk of chunkByLine(summary)) {
+                            await interaction.channel.send(`<a:starsL:942573254730715246> Newbie quests completed! <a:starsR:942573194802511923>\n${chunk}`);
+                        };
+                    };
                 };
                 await msg.edit(render());
             }, msg.id);

@@ -1,5 +1,5 @@
 import { Client } from "discord.js";
-import { updateUsersAndCache } from "./queries.js";
+import { getOwnedCharacterIds, getUserSchema, getUserWeapons, updateUsersAndCache } from "./queries.js";
 import { items } from "./items.js";
 import { classes } from "./classes.js";
 import { userLevel, getItemLevel, getClassLvl } from "./functions.js";
@@ -23,6 +23,8 @@ const ticketEmojis = {
     "c": "<:c_ticket:929420424645853214>",
     "d": "<:d_ticket:929420447102152714>",
 } as const;
+
+const newbieLock = new Map<string, Promise<void>>();
 
 export type NewbieCategory = "progression" | "characters" | "dungeon" | "chest";
 
@@ -377,30 +379,50 @@ export function formatNewbieRewards(quest: newbieQuestInfo): string {
     return parts.join(", ") || "None";
 };
 
-export async function claimNewbieQuests(client: Client, userId: string, stats: CompactUserSchema, data: NewbieData, quests: newbieQuestInfo[]): Promise<newbieQuestInfo[]> {
-    const claimable = quests.filter((quest) => !stats.newbie.includes(quest.id) && quest.check(stats, data));
-    if (!claimable.length) return [];
+export async function claimNewbieQuests(client: Client, userId: string, quests: newbieQuestInfo[]): Promise<newbieQuestInfo[]> {
+    // Serialize claims per user so two quest messages can't pay out twice.
+    const previousUpdate = newbieLock.get(userId);
+    let release!: () => void;
+    const currentUpdate = new Promise<void>((resolve) => { release = resolve; });
+    newbieLock.set(userId, currentUpdate);
+    await previousUpdate;
 
-    const increments: Record<string, number> = {};
-    const bump = (key: string, amount: number) => increments[key] = (increments[key] ?? 0) + amount;
-
-    for (const quest of claimable) {
-        for (const rew of quest.rewards) {
-            const amount = parseInt(rew.split("|")[1]) || 0;
-            if (/^xp\|/i.test(rew)) bump("xp", amount);
-            else if (rew.match(/coins/i)) bump("coins", amount);
-            else if (rew.match(/gems/i)) bump("gems", amount);
-            else if (rew.match(/shard/i)) bump(`${rew.split(" ")[0]}shard`, amount);
-            else if (rew.match(/ticket/i)) bump(`${rew.split(" ")[0]}ticket`, amount);
-            else if (rew.match(/lb\|/i)) bump("lootbox", amount);
+    try {
+        // Re-read inside the lock: the caller's snapshot may predate a concurrent claim.
+        const freshStats = await getUserSchema(userId);
+        if (!freshStats) return [];
+        const freshData: NewbieData = {
+            weapons: await getUserWeapons(userId),
+            ownedCharacterIds: await getOwnedCharacterIds(userId, freshStats.chars),
         };
+
+        const claimable = quests.filter((quest) => !freshStats.newbie.includes(quest.id) && quest.check(freshStats, freshData));
+        if (!claimable.length) return [];
+
+        const increments: Record<string, number> = {};
+        const bump = (key: string, amount: number) => increments[key] = (increments[key] ?? 0) + amount;
+
+        for (const quest of claimable) {
+            for (const rew of quest.rewards) {
+                const amount = parseInt(rew.split("|")[1]) || 0;
+                if (/^xp\|/i.test(rew)) bump("xp", amount);
+                else if (rew.match(/coins/i)) bump("coins", amount);
+                else if (rew.match(/gems/i)) bump("gems", amount);
+                else if (rew.match(/shard/i)) bump(`${rew.split(" ")[0]}shard`, amount);
+                else if (rew.match(/ticket/i)) bump(`${rew.split(" ")[0]}ticket`, amount);
+                else if (rew.match(/lb\|/i)) bump("lootbox", amount);
+            };
+        };
+
+        const updates: UpdateUserOptions = { newbie: { type: "append_unique", value: claimable.map((quest) => quest.id) } };
+        Object.entries(increments).forEach(([key, value]) => {
+            if (value > 0) (updates as Record<string, { type: "increment"; value: number; }>)[key] = { type: "increment", value };
+        });
+
+        await updateUsersAndCache(client, userId, { updates });
+        return claimable;
+    } finally {
+        release();
+        if (newbieLock.get(userId) === currentUpdate) newbieLock.delete(userId);
     };
-
-    const updates: UpdateUserOptions = { newbie: { type: "append_unique", value: claimable.map((quest) => quest.id) } };
-    Object.entries(increments).forEach(([key, value]) => {
-        if (value > 0) (updates as Record<string, { type: "increment"; value: number; }>)[key] = { type: "increment", value };
-    });
-
-    await updateUsersAndCache(client, userId, { updates });
-    return claimable;
 };

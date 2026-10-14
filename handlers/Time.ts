@@ -223,6 +223,7 @@ const handler: BotHandler = {
                 //         }
                 //     }
                 // };
+                };
 
                 // Monthly
                 if (now.getDate() === 1 && now.getHours() === 0 && now.getMinutes() === 0) {
@@ -305,7 +306,6 @@ const handler: BotHandler = {
                     await updateUsersAndCache(client, "*", { updates: userUpdates });
                 };
 
-            }
         }, 60000), 60000 - (Date.now() % 60000));
     },
 };

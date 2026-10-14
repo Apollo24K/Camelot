@@ -4146,10 +4146,10 @@ export const abilities: Record<number, Ability> = {
                 case (myStats.rudyBT && matchStats.round > 20): atkbuff += this.activeBonus * 3, mana_cost += 30; break;
                 case (matchStats.round > 10): atkbuff += this.activeBonus * 2, mana_cost += 20; break;
                 case (matchStats.round > 5): atkbuff += this.activeBonus, mana_cost += 10; break;
-                default: mana_cost = 0;
+                default: break;
             };
 
-            if (mana_cost < 0) mana_cost = 0;
+            mana_cost = Math.max(mana_cost, -this.manaCostReduction);
 
             if (this.cost + mana_cost > myStats.sm) {
                 matchStats.sendWarning({ content: `You don't have enough mana! (**${myStats.sm}**/${this.cost + mana_cost}<:mana:1047269152957661255>)`, ephemeral: true });
@@ -6335,6 +6335,8 @@ export const abilities: Record<number, Ability> = {
                     if (myStats.sm > myStats.mana) myStats.sm = myStats.mana;
                     if (typeof myStats.manaGained !== "undefined") myStats.manaGained += this.mana;
                     notice.push(`\n🍑 **${char.name}** has rejuvenated **${hp}** HP and **${this.mana}** mana!`);
+                    //@ts-ignore
+                    this._used++;
                 };
 
                 return AbilityResponse.SUCCESS;

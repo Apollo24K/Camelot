@@ -950,7 +950,7 @@ export const skills: skillInfo[] = [
         myStats.ignoreMrPercent ??= 0;
         myStats.warmachineLastUsed = -1;
         myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-            let buff = Math.max(parseInt((myStats.hp / myStats.maxhp).toFixed(2)), 0.7);
+            let buff = Math.min(Math.max(1 - (myStats.hp / myStats.maxhp), 0), 0.7);
             myStats.ignoreDefPercent = buff;
             myStats.ignoreMrPercent = buff;
 
@@ -1170,7 +1170,7 @@ export const skills: skillInfo[] = [
                 let hhp = Math.floor((myStats.maxhp - myStats.hp) * 0.03);
                 addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, hhp, {});
             } else {
-                if (Math.random() < eStats.vulnerabilityDynamic) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});
+                if (Math.random() < (eStats.vulnerabilityDynamic - 1)) addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, Math.floor(myStats.maxhp * 0.1), {});
             };
             return AbilityResponse.SUCCESS;
         }, 9999));

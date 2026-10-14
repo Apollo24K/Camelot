@@ -25,6 +25,10 @@ const dungeonInProgress = new Set();
 
 const bossBaseHP = [126080, 168260, 121720, 149640];
 
+// Single source of truth for boss HP scaling. Spawn, display and combat must all use this,
+// otherwise a guild's stored boss HP drifts out of sync with the HP bar shown in a fight.
+const bossMaxHP = (baseHP: number, stage: number) => Math.round(baseHP * (0.8 + (stage * (stage > 25 ? 1.5 : 0.3))));
+
 function toOrdinal(num: number) {
     if (num % 100 >= 11 && num % 100 <= 13) return num + "th";
     switch (num % 10) {
@@ -93,7 +97,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stats: CompactU
             .setColor(0x2aad9d)
             .setTitle("Boss Hunt ➜ Stage " + guild.bosshuntstage + `${guild.bosshuntstage === 30 ? " (last stage)" : ""}`)
             .setThumbnail("https://i.imgur.com/ZUdnLZO.png") // .setThumbnail("https://i.imgur.com/4i61ERG.png")
-            .setDescription(`**Guild**: ${guild.name}\n\nDefeat Rumbleguard, Sylvanoss and Celestion to fight Malevokar. Once Malevokar is defeated, you'll reach the next stage!\nEvery cleared stage awards all guild members 5000 <:coins:872926669055356939> & 5 <:genesis_gems:1034179687720681492>, and your guild with \`stage * 10000\` <:coins:872926669055356939> (current stage: ${guild.bosshuntstage * 10000} <:coins:872926669055356939>)\n\n<:DEF:1047269141662417037> **Rumbleguard** ➜ **${guild.boss1 < 1 ? 0 : guild.boss1}**/${Math.round(bossBaseHP[0] * (0.8 + (guild.bosshuntstage * 0.2)))}💖\n<:HP:1062043800979116143> **Sylvanoss** ➜ **${guild.boss2 < 1 ? 0 : guild.boss2}**/${Math.round(bossBaseHP[1] * (0.8 + (guild.bosshuntstage * 0.2)))}💖\n<:magic_dmg:948568336621527040> **Celestion** ➜ **${guild.boss3 < 1 ? 0 : guild.boss3}**/${Math.round(bossBaseHP[2] * (0.8 + (guild.bosshuntstage * 0.2)))}💖\n✨ **Malevokar** ➜ **${guild.boss4 < 1 ? 0 : guild.boss4}**/${Math.round(bossBaseHP[3] * (0.8 + (guild.bosshuntstage * 0.2)))}💖`)
+            .setDescription(`**Guild**: ${guild.name}\n\nDefeat Rumbleguard, Sylvanoss and Celestion to fight Malevokar. Once Malevokar is defeated, you'll reach the next stage!\nEvery cleared stage awards all guild members 5000 <:coins:872926669055356939> & 5 <:genesis_gems:1034179687720681492>, and your guild with \`stage * 10000\` <:coins:872926669055356939> (current stage: ${guild.bosshuntstage * 10000} <:coins:872926669055356939>)\n\n<:DEF:1047269141662417037> **Rumbleguard** ➜ **${guild.boss1 < 1 ? 0 : guild.boss1}**/${bossMaxHP(bossBaseHP[0], guild.bosshuntstage)}💖\n<:HP:1062043800979116143> **Sylvanoss** ➜ **${guild.boss2 < 1 ? 0 : guild.boss2}**/${bossMaxHP(bossBaseHP[1], guild.bosshuntstage)}💖\n<:magic_dmg:948568336621527040> **Celestion** ➜ **${guild.boss3 < 1 ? 0 : guild.boss3}**/${bossMaxHP(bossBaseHP[2], guild.bosshuntstage)}💖\n✨ **Malevokar** ➜ **${guild.boss4 < 1 ? 0 : guild.boss4}**/${bossMaxHP(bossBaseHP[3], guild.bosshuntstage)}💖`)
             .setFooter({ text: stats.bosshuntruns === 5 ? `You can play again in ${timeLeftToNextEvenHour()}` : `You can fight now! Runs left: ${5 - stats.bosshuntruns}/5 (refills every 2h)`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
 
@@ -163,7 +167,7 @@ const exportCommand: SlashCommand = {
 
         const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         if (!guild) return editCommandReply(interaction, `You need to be in a guild to participate in this event!\nYou can find one using \`/guild find\` or create your own using \`/guild create\``);
-        if (guild.bosshuntstage >= 30) guild.bosshuntstage = 30, guild.boss1 = Math.round(bossBaseHP[0] * (1 + (guild.bosshuntstage * 0.2))), guild.boss2 = Math.round(bossBaseHP[1] * (1 + (guild.bosshuntstage * 0.2))), guild.boss3 = Math.round(bossBaseHP[2] * (1 + (guild.bosshuntstage * 0.2))), guild.boss4 = Math.round(bossBaseHP[3] * (1 + (guild.bosshuntstage * 0.2)));
+        if (guild.bosshuntstage >= 30) guild.bosshuntstage = 30, guild.boss1 = bossMaxHP(bossBaseHP[0], 30), guild.boss2 = bossMaxHP(bossBaseHP[1], 30), guild.boss3 = bossMaxHP(bossBaseHP[2], 30), guild.boss4 = bossMaxHP(bossBaseHP[3], 30);
 
         // Tutorial
         const selection = await bossSelection(interaction, stats, guild);
@@ -255,7 +259,7 @@ const exportCommand: SlashCommand = {
         let eStats = {
             "name": enemy.name,
             "hp": guild[`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`],
-            "maxhp": Math.round(bossBaseHP[enemy.id] * (0.8 + (guild.bosshuntstage * (guild.bosshuntstage > 25 ? 1.5 : 0.3)))),
+            "maxhp": bossMaxHP(bossBaseHP[enemy.id], guild.bosshuntstage),
             "atk": 400,
             "def": 20,
             "ep": 0,
@@ -608,10 +612,10 @@ const exportCommand: SlashCommand = {
                     // Update guilds table
                     await updateGuilds(guild.id, {
                         treasury: { type: "increment", value: guild.bosshuntstage * 10000 },
-                        boss1: { type: "set", value: Math.round(bossBaseHP[0] * (1 + (guild.bosshuntstage * 0.2))) },
-                        boss2: { type: "set", value: Math.round(bossBaseHP[1] * (1 + (guild.bosshuntstage * 0.2))) },
-                        boss3: { type: "set", value: Math.round(bossBaseHP[2] * (1 + (guild.bosshuntstage * 0.2))) },
-                        boss4: { type: "set", value: Math.round(bossBaseHP[3] * (1 + (guild.bosshuntstage * 0.2))) },
+                        boss1: { type: "set", value: bossMaxHP(bossBaseHP[0], guild.bosshuntstage + 1) },
+                        boss2: { type: "set", value: bossMaxHP(bossBaseHP[1], guild.bosshuntstage + 1) },
+                        boss3: { type: "set", value: bossMaxHP(bossBaseHP[2], guild.bosshuntstage + 1) },
+                        boss4: { type: "set", value: bossMaxHP(bossBaseHP[3], guild.bosshuntstage + 1) },
                         bosshuntstage: { type: "increment", value: 1 },
                     });
 

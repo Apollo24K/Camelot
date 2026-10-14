@@ -3,7 +3,7 @@ import { replyToCommand } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
 import { DetailedStats, SlashCommand } from '../types';
-import { abilities, Ability } from "../Modules/abilities";
+import { Ability } from "../Modules/abilities";
 import { getUserAbility } from "../Modules/ascensions";
 import { achievements } from "../Modules/achievements";
 import { classes } from "../Modules/classes";
@@ -74,7 +74,7 @@ const exportCommand: SlashCommand = {
         let eStatsC = { ...eStats };
         let eClass = eStats.class !== -1 ? classes[eStats.class] : undefined;
         let eSkill = eStats.class !== -1 ? _.cloneDeep(skills[eStats.class]) : undefined;
-        let eAbility = enemy.id in abilities ? _.cloneDeep(abilities[enemy.id]) : undefined;
+        let eAbility = getUserAbility(enemy.id, stats2);
 
         if (eStats.rune) {
             const rune = items[parseInt(eStats.rune)];
