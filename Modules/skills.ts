@@ -2791,48 +2791,177 @@ export const bossAbilities: skillInfo[] = [
 ];
 
 export const eventBossAbilities: skillInfo[] = [
-    new skillInfo(0, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+    new skillInfo(0, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Rumbleguard
         eStats.shield += Math.floor(eStats.hp * 0.001);
-        notice.push(`\n✨ **${enemy.name}** has recovered **${Math.floor(eStats.hp * 0.001)}** shield`);
+        eStats.atk += Math.floor(eStats.atk * 0.5);
+        notice.push(`\n✨ **${enemy.name}** has gained a **${Math.floor(eStats.hp * 0.001)}** shield`);
 
         return AbilityResponse.SUCCESS;
-    }, async () => AbilityResponse.SUCCESS, [99, "Rumbleguard deals 300% magic damage, heals himself for 20% missing health"]),
-    new skillInfo(1, 80, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        eStats.def += 100;
-        eStats.mr += 100;
-        notice.push(`\n✨ **${enemy.name}** increased his DEF and MR by **${100}**`);
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.absoluteDmgMit ??= 0;
+        eStats.absoluteDmgMit += 0.85;
+        eStats.counter ??= 0;
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            let lowHP = eStats.hp / eStats.maxhp < 0.5;
+            if (lowHP ? true : Math.random() < 0.5) eStats.counter++;
+            return AbilityResponse.SUCCESS;
+        }, 9999));
 
         return AbilityResponse.SUCCESS;
-    }, async () => AbilityResponse.SUCCESS, [99, "Sylvanoss deals 300% magic damage, heals himself for 20% missing health"]),
-    new skillInfo(2, 60, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2 * Math.random()))) * 1.5);
-        addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, {});
-        if (myStats.hp < 0) myStats.hp = 0;
-        eStats.sm -= 40;
-        notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** magic damage`);
-
-        return AbilityResponse.SUCCESS;
-    }, async () => AbilityResponse.SUCCESS, [99, "Celestion deals 200% magic damage"]),
-    new skillInfo(3, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-        if (Math.random() < 0.32) {
-            const md = Math.random() < 0.5;
-            let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2 * Math.random()))) * 1.25);
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, {});
-            if (myStats.hp < 0) myStats.hp = 0;
-            notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
-        } else if (Math.random() < 0.33) {
-            const md = Math.random() < 0.5;
-            if (md) eStats.md += Math.floor(eStats.md * 0.1);
-            else eStats.atk += Math.floor(eStats.atk * 0.1);
-            notice.push(`\n✨ **${enemy.name}** has increased ${md ? "MD" : "ATK"} by **10%**`);
+    }, [99, "Rumbleguard takes significantly less absolute damage and counters more often when at lower health. His active summons a shield and grants him a temporary ATK buff. (40 :droplet:)"]),
+    new skillInfo(1, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Sylvanoss
+        if (myStats.atk > myStats.md) {
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.4), 9999));
+            notice.push(`\n✨ **${enemy.name}** inflicted a DoT equal to 40% of his ATK/MD.`);
         } else {
-            addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.1), {});
-            if (myStats.hp < 0) myStats.hp = 0;
-            notice.push(`\n✨ **${enemy.name}** has burned **${10}%** of your HP`);
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.4), 9999));
+            notice.push(`\n✨ **${enemy.name}** inflicted a DoT equal to 40% of his ATK/MD.`);
         };
 
         return AbilityResponse.SUCCESS;
-    }, async () => AbilityResponse.SUCCESS, [99, "Malevokar deals 300% magic damage, heals himself for 20% missing health"]),
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        if (myStats.atk > myStats.md) {
+            eStats.atk = Math.floor(eStats.atk += myStats.atk);
+            myStats.atk = 0;
+            mybuff.atk.push(new buffInfo("=", 0, 9999));
+            notice.push(`\n⚠️ Sylvanoss steals all your ATK!`);
+        } else {
+            eStats.md = Math.floor(eStats.md += myStats.md);
+            myStats.md = 0;
+            mybuff.md.push(new buffInfo("=", 0, 9999));
+            notice.push(`\n⚠️ Sylvanoss steals all your MD!`);
+        };
+
+        return AbilityResponse.SUCCESS;
+    }, [99, "Sylvanoss steals all ATK / MD from the player depending on which is higher. His active inflicts DoT equal to own ATK / MD (whichever is higher) (40 :droplet:)"]),
+    new skillInfo(2, 50, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Celestion
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s planetary crash`, { atkMultiplier: 2, magicDamage: true, mdChance: -1, dodge: false, block: false });
+        // let satk = Math.floor(((eStats.md * Math.pow(0.99895, myStats.mr)) * (1 - (0.2 * Math.random()))) * 1.5);
+        // addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, {});
+        // if (myStats.hp < 0) myStats.hp = 0;
+        // eStats.sm -= 40;
+        // notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** magic damage`);
+
+        return AbilityResponse.FAILURE;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        eStats.mana = 500;
+        eStats.sm += myStats.sm;
+        myStats.sm = 0;
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.sm += myStats.sm;
+            myStats.sm = 0;
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [99, "Celestion devours all mana every round. Her active deals **200%** undodgeable unblockable magical damage. (50 :droplet:)"]),
+    new skillInfo(3, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // RumbleGuard
+        eStats.shield += Math.floor(eStats.hp * 0.0005);
+        eStats.atk += Math.floor(eStats.atk * 0.25);
+        notice.push(`\n✨ **Rumbleguard** granted the enemy a **${Math.floor(eStats.hp * 0.0005)}** shield`);
+
+        // Sylvanoss
+        if (myStats.atk > myStats.md) {
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
+            notice.push(`\n✨ **Sylvanoss** inflicted a DoT equal to 20% of his ATK/MD.`);
+        } else {
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
+            notice.push(`\n✨ **Sylvanoss** inflicted a DoT equal to 20% of his ATK/MD.`);
+        };
+
+        // Celestion
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **Celestion**'s planetary crash`, { atkMultiplier: 1, magicDamage: true, mdChance: -1, dodge: false, block: false });
+
+        // Steals 10% ATK & MD permanently. Shreds 10% max HP
+        // let satk = Math.floor(myStats.atk * 0.1);
+        // let smd = Math.floor(myStats.md * 0.1);
+        // myStats.atk -= satk;
+        // myStats.md -= smd;
+        // mybuff.atk.push(new buffInfo("+", -satk, 9999));
+        // mybuff.md.push(new buffInfo("+", -smd, 9999));
+        // eStats.atk += satk;
+        // eStats.md += smd;
+        // ebuff.atk.push(new buffInfo("+", satk, 9999));
+        // ebuff.md.push(new buffInfo("+", smd, 9999));
+        myStats.maxhp -= Math.floor(myStats.maxhp * 0.1);
+        eStats.reduceHealing += 0.05;
+        if (eStats.reduceHealing > 1) eStats.reduceHealing = 1;
+        notice.push(`\n✨ **${enemy.name}** flaps the wings of death, reducing your max HP and healing effectiveness...`);
+
+        // if (Math.random() < 0.32) {
+        //     const md = Math.random() < 0.5;
+        //     let satk = Math.floor((((md ? eStats.md : eStats.atk) * Math.pow(0.99895, (md ? myStats.mr : myStats.def))) * (1 - (0.2 * Math.random()))) * 1.25);
+        //     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -satk, {});
+        //     if (myStats.hp < 0) myStats.hp = 0;
+        //     notice.push(`\n✨ **${enemy.name}** has dealt **${satk}** ${md ? "magic " : ""}damage`);
+        // } else if (Math.random() < 0.33) {
+        //     const md = Math.random() < 0.5;
+        //     if (md) eStats.md += Math.floor(eStats.md * 0.1);
+        //     else eStats.atk += Math.floor(eStats.atk * 0.1);
+        //     notice.push(`\n✨ **${enemy.name}** has increased ${md ? "MD" : "ATK"} by **10%**`);
+        // } else {
+        //     addHeal(myStats, eStats, myStats, mybuff, ebuff, matchStats, notice, ``, -Math.floor(myStats.maxhp * 0.1), {});
+        //     if (myStats.hp < 0) myStats.hp = 0;
+        //     notice.push(`\n✨ **${enemy.name}** has burned **${10}%** of your HP`);
+        // };
+
+        return AbilityResponse.SUCCESS;
+    }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        // Rumble guard
+        eStats.absoluteDmgMit ??= 0;
+        eStats.absoluteDmgMit += 0.42;
+        eStats.counter ??= 0;
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            let lowHP = eStats.hp / eStats.maxhp < 0.5;
+            if (lowHP ? true : Math.random() < 0.5) eStats.counter++;
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        // Sylvanoss
+        if (myStats.atk > myStats.md) {
+            let satk = Math.floor(myStats.atk * 0.5);
+            eStats.atk += satk;
+            ebuff.atk.push(new buffInfo("+", satk, 9999));
+            myStats.atk -= satk;
+            mybuff.atk.push(new buffInfo("+", -satk, 9999));
+            notice.push(`\n⚠️ Sylvanoss steals **50%** of your ATK!`);
+        } else {
+            let smd = Math.floor(myStats.md * 0.5);
+            eStats.md += smd;
+            ebuff.md.push(new buffInfo("+", smd, 9999));
+            myStats.md -= smd;
+            mybuff.md.push(new buffInfo("+", -smd, 9999));
+            notice.push(`\n⚠️ Sylvanoss steals **50%** of your MD!`);
+        };
+
+        // Celestion
+        eStats.mana = 500;
+        eStats.sm += Math.floor(myStats.sm * 0.5);
+        myStats.sm -= Math.floor(myStats.sm * 0.5);
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            eStats.sm += Math.floor(myStats.sm * 0.5);
+            myStats.sm -= Math.floor(myStats.sm * 0.5);
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        // Self
+        myStats.vulnerability ??= 1;
+        eStats.reduceHealing ??= 0;
+        myStats.vulnerability = 1 + (1 - (eStats.hp / eStats.maxhp));
+
+        dealDamage(myStats, eStats, mybuff, ebuff, matchStats, notice, `✨ **${enemy.name}**'s planetary crash`, { atkMultiplier: 2, magicDamage: true, mdChance: -1, dodge: false, canCounter: false, block: false });
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.vulnerability = 1 + (1 - (eStats.hp / eStats.maxhp));
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+
+        return AbilityResponse.SUCCESS;
+    }, [99, "Malevokar deals **300%** absolute true damage upon entering battle, which cannot be dodged, blocked or countered. He deals **1%** more damage for every **1%** missing HP. His passives and actives call upon the fallen bosses for help... good luck."]),
     new skillInfo(4, 30, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         if ((eStats.hp / eStats.maxhp) > 0.6) {
             ebuff.def.push(new buffInfo("+", 100, 4));

@@ -1,15 +1,43 @@
 import { collectComponentUpdates } from "../Modules/buttonInteractions";
-import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType, ButtonStyle } from 'discord.js';
-import { PageRow, OfferRow, ongoingEvent, isEventOngoing, seasonalEventEnd, seasonalEventStart, ExternalLinks } from "../Modules/components";
+import { EmbedBuilder, ButtonBuilder, ActionRowBuilder, AttachmentBuilder, ComponentType, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle, MessageFlags } from 'discord.js';
+import { PageRow, OfferRow, ongoingEvent, ExternalLinks, eventPointsReward, isEventStarted } from "../Modules/components";
 import { showPage } from "../Modules/functions";
 import { characters } from "../Modules/chars";
 import { skins } from "../Modules/skins";
+import { items } from "../Modules/items";
+import { customHpBars } from '../Modules/customHpBars';
 import { CompactUserSchema, SlashCommand, UpdateUserOptions } from '../types';
 import { createCanvas, Image, loadImage } from '@napi-rs/canvas';
-import { getUserSchema, updateUsers } from '../Modules/queries';
+import { getUserSchema, updateUsers, updateUsersAndCache } from '../Modules/queries';
+
+// Pass mutations are serialized per user so multiple open /event pass messages cannot
+// claim the same rewards or spend the same gems twice.
+const passLocks = new Map<string, Promise<void>>();
+
+async function withPassLock<T>(userId: string, fn: () => Promise<T>): Promise<T> {
+    const previous = passLocks.get(userId);
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => { release = resolve; });
+    passLocks.set(userId, current);
+    try {
+        await previous;
+        return await fn();
+    } finally {
+        release();
+        if (passLocks.get(userId) === current) passLocks.delete(userId);
+    };
+};
+
+const eventNames = {
+    anniversary: "Anniversary Event",
+    halloween: "Halloween Event",
+    christmas: "Christmas Event",
+    valentines: "Valentine's Event",
+    easter: "Easter Event",
+} as const;
 
 // Event Rewards
-const milestones: { id: number; required: number; query: UpdateUserOptions; rew: string; image?: string; }[] = [
+const milestones: { id: number; required: number; query: UpdateUserOptions; rew: string; image?: string; hpbarId?: number; }[] = [
     {
         id: 0,
         required: 250,
@@ -169,8 +197,9 @@ const milestones: { id: number; required: number; query: UpdateUserOptions; rew:
     {
         id: 26,
         required: 100000,
-        query: { gems: { type: "increment", value: 20 }, expulls: { type: "increment", value: 1 } },
-        rew: "1x <a:EXTRA:1138530846144462968> and 20<:genesis_gems:1034179687720681492>",
+        query: { gems: { type: "increment", value: 20 }, expulls: { type: "increment", value: 1 }, hpbars: { type: "append_unique", value: [23] } },
+        rew: "1x <a:EXTRA:1138530846144462968>, 20<:genesis_gems:1034179687720681492> and the **Soulbound** HP bar",
+        hpbarId: 23,
     },
 ];
 
@@ -220,6 +249,33 @@ function getShopRow(tab: "current" | "past" | "other") {
 
 const loadedImages: Record<string, Image> = {};
 
+// Item art on imgur is unreachable from the production host, so an item reward uses the item's
+// own emoji instead, which Discord's CDN serves as a PNG (same path as the deluxe chest icon).
+function getItemEmojiImageUrl(itemid: number) {
+    const match = items[itemid]?.emoji?.match(/:(\d+)>$/);
+    return match ? `https://cdn.discordapp.com/emojis/${match[1]}.png` : undefined;
+};
+
+// Loads and caches a pass reward's artwork.
+async function getPassRewardImage(reward: PassRewardInfo) {
+    if (reward.type === "hpbar") return loadedImages.hpbar;
+    if (reward.type !== "item") return loadedImages[reward.type];
+
+    const key = `item-${reward.itemid}`;
+    if (!loadedImages[key]) {
+        // The item image is only a fallback for items that lack a custom emoji.
+        const url = getItemEmojiImageUrl(reward.itemid!) ?? items[reward.itemid!]?.image;
+        if (url) loadedImages[key] = await loadImage(url);
+    };
+    return loadedImages[key];
+};
+
+// HP bar rewards have no individual artwork, so the tile uses the bar's name instead of an amount.
+const getPassRewardLabel = (reward: PassRewardInfo) =>
+    reward.type === "hpbar" && reward.hpbarId !== undefined
+        ? customHpBars[reward.hpbarId].name
+        : `${reward.amount}`;
+
 async function getPageImage(showSkins: number[], selected: number) {
     // Create a canvas
     const canvas = createCanvas(1000, 760);
@@ -253,9 +309,15 @@ async function getPageImage(showSkins: number[], selected: number) {
     return new AttachmentBuilder(buffer);
 };
 
-type PassReward = "coins" | "gems" | "ex" | "ssticket" | "sticket" | "ssshard" | "sshard" | "deluxe";
+// "deluxe" always renders the deluxe chest artwork, while "item" grants any registered item
+// (scrolls, consumables, etc.) and renders that item's own artwork.
+type PassReward = "coins" | "gems" | "ex" | "ssticket" | "sticket" | "ssshard" | "sshard" | "deluxe" | "item" | "hpbar";
 
-const passRewards: [{ id: number; type: PassReward; amount: number; itemid?: number; }[], { id: number; type: PassReward; amount: number; itemid?: number; }[]] = [
+type PassRewardInfo = { id: number; type: PassReward; amount: number; itemid?: number; hpbarId?: number; };
+
+type PassCurrencyReward = Exclude<PassReward, "deluxe" | "item" | "hpbar">;
+
+const passRewards: [PassRewardInfo[], PassRewardInfo[]] = [
     [ // 0: Free
         { id: 0, type: "coins", amount: 2000 },
         { id: 1, type: "ssshard", amount: 2 },
@@ -264,7 +326,7 @@ const passRewards: [{ id: number; type: PassReward; amount: number; itemid?: num
         { id: 4, type: "ssticket", amount: 1 },
         { id: 5, type: "ex", amount: 1 },
         { id: 6, type: "coins", amount: 2200 },
-        { id: 7, type: "ssticket", amount: 1 },
+        { id: 7, type: "ex", amount: 1 },
         { id: 8, type: "sshard", amount: 4 },
         { id: 9, type: "coins", amount: 2250 },
         { id: 10, type: "ex", amount: 1 },
@@ -272,24 +334,24 @@ const passRewards: [{ id: number; type: PassReward; amount: number; itemid?: num
         { id: 12, type: "coins", amount: 2500 },
         { id: 13, type: "ex", amount: 1 },
         { id: 14, type: "sticket", amount: 2 },
-        { id: 15, type: "ssshard", amount: 2 },
+        { id: 15, type: "ex", amount: 1 },
         { id: 16, type: "ssticket", amount: 1 },
         { id: 17, type: "coins", amount: 2600 },
         { id: 18, type: "ex", amount: 1 },
         { id: 19, type: "sshard", amount: 6 },
-        { id: 20, type: "sticket", amount: 2 },
+        { id: 20, type: "ex", amount: 1 },
         { id: 21, type: "ssshard", amount: 3 },
         { id: 22, type: "ex", amount: 1 },
         { id: 23, type: "ssticket", amount: 1 },
         { id: 24, type: "gems", amount: 10 },
         { id: 25, type: "ex", amount: 2 },
         { id: 26, type: "coins", amount: 3000 },
-        { id: 27, type: "ssshard", amount: 3 },
+        { id: 27, type: "ex", amount: 1 },
         { id: 28, type: "sticket", amount: 2 },
         { id: 29, type: "ssticket", amount: 1 },
         { id: 30, type: "ex", amount: 1 },
         { id: 31, type: "coins", amount: 3200 },
-        { id: 32, type: "sshard", amount: 6 },
+        { id: 32, type: "ex", amount: 1 },
         { id: 33, type: "ssshard", amount: 3 },
         { id: 34, type: "ex", amount: 1 },
         { id: 35, type: "sticket", amount: 2 },
@@ -297,7 +359,7 @@ const passRewards: [{ id: number; type: PassReward; amount: number; itemid?: num
         { id: 37, type: "ex", amount: 1 },
         { id: 38, type: "ssticket", amount: 1 },
         { id: 39, type: "gems", amount: 10 },
-        { id: 40, type: "coins", amount: 3300 },
+        { id: 40, type: "ex", amount: 1 },
         { id: 41, type: "sticket", amount: 2 },
         { id: 42, type: "sshard", amount: 6 },
         { id: 43, type: "ex", amount: 1 },
@@ -305,61 +367,115 @@ const passRewards: [{ id: number; type: PassReward; amount: number; itemid?: num
         { id: 45, type: "coins", amount: 3500 },
         { id: 46, type: "ex", amount: 2 },
         { id: 47, type: "ssshard", amount: 4 },
-        { id: 48, type: "coins", amount: 3400 },
+        { id: 48, type: "ex", amount: 1 },
         { id: 49, type: "ssticket", amount: 2 },
         { id: 50, type: "sticket", amount: 2 },
         { id: 51, type: "ex", amount: 1 },
         { id: 52, type: "gems", amount: 10 },
         { id: 53, type: "ssticket", amount: 2 },
         { id: 54, type: "ex", amount: 1 },
-        { id: 55, type: "deluxe", amount: 1, itemid: 458 },
+        { id: 55, type: "ex", amount: 1 },
+        { id: 56, type: "ssshard", amount: 4 },
+        { id: 57, type: "ex", amount: 1 },
+        { id: 58, type: "ssticket", amount: 2 },
+        { id: 59, type: "ex", amount: 1 },
+        { id: 60, type: "coins", amount: 3700 },
+        { id: 61, type: "sshard", amount: 6 },
+        { id: 62, type: "ssshard", amount: 4 },
+        { id: 63, type: "item", amount: 10, itemid: 52 },
+        { id: 64, type: "gems", amount: 10 },
+        { id: 65, type: "coins", amount: 3800 },
+        { id: 66, type: "ssticket", amount: 2 },
+        { id: 67, type: "sticket", amount: 2 },
+        { id: 68, type: "item", amount: 10, itemid: 53 },
+        { id: 69, type: "gems", amount: 10 },
+        { id: 70, type: "coins", amount: 3900 },
+        { id: 71, type: "coins", amount: 3900 },
+        { id: 72, type: "ssticket", amount: 2 },
+        { id: 73, type: "item", amount: 10, itemid: 52 },
+        { id: 74, type: "gems", amount: 10 },
+        { id: 75, type: "ssshard", amount: 4 },
+        { id: 76, type: "sticket", amount: 3 },
+        { id: 77, type: "sshard", amount: 6 },
+        { id: 78, type: "item", amount: 10, itemid: 53 },
+        { id: 79, type: "ssticket", amount: 2 },
+        { id: 80, type: "coins", amount: 4100 },
+        { id: 81, type: "ssticket", amount: 2 },
+        { id: 82, type: "item", amount: 5, itemid: 54 },
+        { id: 83, type: "gems", amount: 10 },
+        { id: 84, type: "sticket", amount: 3 },
+        { id: 85, type: "sticket", amount: 3 },
+        { id: 86, type: "ssticket", amount: 2 },
+        { id: 87, type: "ssshard", amount: 4 },
+        { id: 88, type: "item", amount: 5, itemid: 55 },
+        { id: 89, type: "coins", amount: 4100 },
+        { id: 90, type: "sshard", amount: 8 },
+        { id: 91, type: "sticket", amount: 3 },
+        { id: 92, type: "item", amount: 5, itemid: 54 },
+        { id: 93, type: "gems", amount: 10 },
+        { id: 94, type: "gems", amount: 10 },
+        { id: 95, type: "ssticket", amount: 2 },
+        { id: 96, type: "ssshard", amount: 4 },
+        { id: 97, type: "item", amount: 2, itemid: 56 },
+        { id: 98, type: "coins", amount: 4500 },
+        { id: 99, type: "hpbar", amount: 1, hpbarId: 24 },
+        { id: 100, type: "sticket", amount: 3 },
+        { id: 101, type: "sshard", amount: 8 },
+        { id: 102, type: "gems", amount: 10 },
+        { id: 103, type: "coins", amount: 4600 },
+        { id: 104, type: "ssticket", amount: 2 },
+        { id: 105, type: "ssshard", amount: 4 },
+        { id: 106, type: "item", amount: 2, itemid: 57 },
+        { id: 107, type: "coins", amount: 4700 },
+        { id: 108, type: "sshard", amount: 8 },
+        { id: 109, type: "deluxe", amount: 1, itemid: 458 },
     ],
     [ // 1: Premium
         { id: 0, type: "coins", amount: 2000 },
         { id: 1, type: "sshard", amount: 3 },
         { id: 2, type: "ex", amount: 2 },
-        { id: 3, type: "coins", amount: 2200 },
-        { id: 4, type: "ssshard", amount: 1 },
-        { id: 7, type: "ssticket", amount: 1 },
-        { id: 5, type: "ex", amount: 1 },
-        { id: 6, type: "ssshard", amount: 2 },
-        { id: 9, type: "coins", amount: 2400 },
-        { id: 8, type: "sshard", amount: 4 },
+        { id: 3, type: "ex", amount: 1 },
+        { id: 4, type: "ex", amount: 1 },
+        { id: 5, type: "ssticket", amount: 1 },
+        { id: 6, type: "ex", amount: 1 },
+        { id: 7, type: "ssshard", amount: 2 },
+        { id: 8, type: "ex", amount: 1 },
+        { id: 9, type: "sshard", amount: 4 },
         { id: 10, type: "ssticket", amount: 1 },
         { id: 11, type: "ex", amount: 1 },
-        { id: 12, type: "coins", amount: 2500 },
+        { id: 12, type: "ex", amount: 1 },
         { id: 13, type: "sticket", amount: 2 },
         { id: 14, type: "ssshard", amount: 2 },
         { id: 15, type: "ex", amount: 1 },
-        { id: 16, type: "ssticket", amount: 1 },
-        { id: 17, type: "coins", amount: 2600 },
+        { id: 16, type: "ex", amount: 1 },
+        { id: 17, type: "ex", amount: 1 },
         { id: 18, type: "sshard", amount: 5 },
         { id: 19, type: "ex", amount: 2 },
         { id: 20, type: "sticket", amount: 2 },
-        { id: 21, type: "coins", amount: 3000 },
+        { id: 21, type: "ex", amount: 1 },
         { id: 22, type: "ssticket", amount: 1 },
         { id: 23, type: "ssshard", amount: 4 },
         { id: 24, type: "ex", amount: 1 },
-        { id: 25, type: "sshard", amount: 6 },
+        { id: 25, type: "ex", amount: 1 },
         { id: 26, type: "sticket", amount: 1 },
-        { id: 27, type: "coins", amount: 3200 },
+        { id: 27, type: "ex", amount: 1 },
         { id: 28, type: "ex", amount: 2 },
         { id: 29, type: "ssshard", amount: 4 },
-        { id: 30, type: "ssticket", amount: 1 },
+        { id: 30, type: "ex", amount: 1 },
         { id: 31, type: "coins", amount: 3300 },
         { id: 32, type: "ex", amount: 1 },
         { id: 33, type: "sshard", amount: 6 },
         { id: 34, type: "sticket", amount: 2 },
-        { id: 35, type: "coins", amount: 3400 },
+        { id: 35, type: "ex", amount: 1 },
         { id: 36, type: "ssshard", amount: 4 },
         { id: 37, type: "ex", amount: 2 },
         { id: 38, type: "ssticket", amount: 2 },
         { id: 39, type: "sshard", amount: 8 },
-        { id: 40, type: "coins", amount: 3500 },
+        { id: 40, type: "ex", amount: 1 },
         { id: 41, type: "ssshard", amount: 5 },
         { id: 42, type: "ex", amount: 1 },
         { id: 43, type: "ssticket", amount: 2 },
-        { id: 44, type: "coins", amount: 3600 },
+        { id: 44, type: "ex", amount: 1 },
         { id: 45, type: "ssshard", amount: 6 },
         { id: 46, type: "ssticket", amount: 2 },
         { id: 47, type: "ex", amount: 1 },
@@ -367,12 +483,68 @@ const passRewards: [{ id: number; type: PassReward; amount: number; itemid?: num
         { id: 49, type: "sticket", amount: 3 },
         { id: 50, type: "ex", amount: 1 },
         { id: 51, type: "ssticket", amount: 2 },
-        { id: 52, type: "coins", amount: 4000 },
+        { id: 52, type: "ex", amount: 1 },
         { id: 53, type: "ssticket", amount: 2 },
         { id: 54, type: "ex", amount: 2 },
-        { id: 55, type: "deluxe", amount: 1, itemid: 458 },
+        { id: 55, type: "coins", amount: 4000 },
+        { id: 56, type: "ex", amount: 1 },
+        { id: 57, type: "ex", amount: 2 },
+        { id: 58, type: "ssticket", amount: 2 },
+        { id: 59, type: "deluxe", amount: 1, itemid: 458 },
+        { id: 60, type: "ex", amount: 1 },
+        { id: 61, type: "ssshard", amount: 5 },
+        { id: 62, type: "ex", amount: 1 },
+        { id: 63, type: "ex", amount: 1 },
+        { id: 64, type: "gems", amount: 10 },
+        { id: 65, type: "ex", amount: 1 },
+        { id: 66, type: "sshard", amount: 8 },
+        { id: 67, type: "ex", amount: 2 },
+        { id: 68, type: "ex", amount: 1 },
+        { id: 69, type: "ssshard", amount: 5 },
+        { id: 70, type: "ex", amount: 1 },
+        { id: 71, type: "ex", amount: 1 },
+        { id: 72, type: "ex", amount: 1 },
+        { id: 73, type: "ssticket", amount: 2 },
+        { id: 74, type: "ex", amount: 1 },
+        { id: 75, type: "coins", amount: 4500 },
+        { id: 76, type: "ex", amount: 1 },
+        { id: 77, type: "ssshard", amount: 5 },
+        { id: 78, type: "ex", amount: 2 },
+        { id: 79, type: "ex", amount: 1 },
+        { id: 80, type: "ex", amount: 1 },
+        { id: 81, type: "ex", amount: 1 },
+        { id: 82, type: "ex", amount: 1 },
+        { id: 83, type: "ssticket", amount: 2 },
+        { id: 84, type: "sticket", amount: 3 },
+        { id: 85, type: "ex", amount: 1 },
+        { id: 86, type: "ssshard", amount: 5 },
+        { id: 87, type: "ex", amount: 2 },
+        { id: 88, type: "ex", amount: 1 },
+        { id: 89, type: "ex", amount: 1 },
+        { id: 90, type: "sticket", amount: 3 },
+        { id: 91, type: "ex", amount: 1 },
+        { id: 92, type: "ex", amount: 1 },
+        { id: 93, type: "ssticket", amount: 2 },
+        { id: 94, type: "coins", amount: 4900 },
+        { id: 95, type: "ssshard", amount: 5 },
+        { id: 96, type: "ex", amount: 2 },
+        { id: 97, type: "ex", amount: 1 },
+        { id: 98, type: "sshard", amount: 10 },
+        { id: 99, type: "hpbar", amount: 1, hpbarId: 22 },
+        { id: 100, type: "ex", amount: 2 },
+        { id: 101, type: "gems", amount: 10 },
+        { id: 102, type: "ssticket", amount: 2 },
+        { id: 103, type: "ex", amount: 1 },
+        { id: 104, type: "ssshard", amount: 6 },
+        { id: 105, type: "ex", amount: 2 },
+        { id: 106, type: "ex", amount: 1 },
+        { id: 107, type: "sshard", amount: 10 },
+        { id: 108, type: "ssticket", amount: 3 },
+        { id: 109, type: "deluxe", amount: 1, itemid: 458 },
     ],
 ];
+
+export const passLevelCap = 110;
 
 function getPassRow(stats: CompactUserSchema) {
     return new ActionRowBuilder<ButtonBuilder>()
@@ -389,12 +561,13 @@ function getPassRow(stats: CompactUserSchema) {
                 .setCustomId('claim')
                 .setLabel('Claim Rewards')
                 .setStyle(ButtonStyle.Success)
-                .setDisabled(!((stats.freepassclaimed < Math.min(stats.passlevel, passRewards[0].length)) || (stats.pass && stats.premiumpassclaimed < Math.min(stats.passlevel, passRewards[0].length)))),
+                .setDisabled(!((stats.freepassclaimed < Math.min(stats.passlevel, passLevelCap)) || (stats.pass && stats.premiumpassclaimed < Math.min(stats.passlevel, passLevelCap)))),
             new ButtonBuilder()
-                .setCustomId('premium')
+                // No deferral: pass owners answer with a modal, which needs an unacknowledged click.
+                .setCustomId('ignore_defer_pass_levels')
                 .setLabel(stats.pass ? 'Unlock Next Level' : 'Unlock Premium!')
                 .setStyle(ButtonStyle.Primary)
-                .setDisabled(!!stats.pass && stats.passlevel >= passRewards[0].length),
+                .setDisabled(!!stats.pass && stats.passlevel >= passLevelCap),
         );
 };
 
@@ -463,9 +636,9 @@ async function getPassImage(stats: CompactUserSchema, page: number) {
     ctx.font = 'bold 30px Arial';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`Event Pass ${Math.min(stats.passlevel, passRewards[0].length)}/${passRewards[0].length}`, 10, 20, 200);
+    ctx.fillText(`Event Pass ${Math.min(stats.passlevel, passLevelCap)}/${passLevelCap}`, 10, 20, 200);
     ctx.fillStyle = premiumColor;
-    ctx.fillText({ anniversary: "Anniversary Event", halloween: "Halloween Event", christmas: "Christmas Event", valentines: "Valentine's Event", easter: "Easter Event" }[ongoingEvent], 230, 20, 500);
+    ctx.fillText(eventNames[ongoingEvent], 230, 20, 500);
 
     // Tiles
     for (let i = 0; i < 6; i++) {
@@ -515,8 +688,11 @@ async function getPassImage(stats: CompactUserSchema, page: number) {
             loadedImages["ssticket"] ||= await loadImage("https://cdn.discordapp.com/emojis/927503239396622336.png");
             loadedImages["ex"] ||= await loadImage("https://i.ibb.co/dtc3rLG/ex.png");
             loadedImages["deluxe"] ||= await loadImage("https://cdn.discordapp.com/emojis/1069301259603026061.png");
-            ctx.drawImage(loadedImages[passRewards[0][i + page].type], 20 + 60 + (i * 185) + 15, 85 + 15, 110, 110);
-            ctx.drawImage(loadedImages[passRewards[1][i + page].type], 20 + 60 + (i * 185) + 15, 320 + 15, 110, 110);
+            loadedImages["hpbar"] ||= await loadImage("https://cdn.discordapp.com/emojis/1062043800979116143.png");
+            const freeRewardImage = await getPassRewardImage(passRewards[0][i + page]);
+            if (freeRewardImage) ctx.drawImage(freeRewardImage, 20 + 60 + (i * 185) + 15, 85 + 15, 110, 110);
+            const premiumRewardImage = await getPassRewardImage(passRewards[1][i + page]);
+            if (premiumRewardImage) ctx.drawImage(premiumRewardImage, 20 + 60 + (i * 185) + 15, 320 + 15, 110, 110);
 
             // Amount
             ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
@@ -527,8 +703,8 @@ async function getPassImage(stats: CompactUserSchema, page: number) {
             ctx.font = 'bold 30px Arial';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText("" + passRewards[0][i + page].amount, 90 + 60 + (i * 185), 200, 130);
-            ctx.fillText("" + passRewards[1][i + page].amount, 90 + 60 + (i * 185), 435, 130);
+            ctx.fillText(getPassRewardLabel(passRewards[0][i + page]), 90 + 60 + (i * 185), 200, 130);
+            ctx.fillText(getPassRewardLabel(passRewards[1][i + page]), 90 + 60 + (i * 185), 435, 130);
 
             // Lock
             ctx.fillStyle = '#495366'; // Grey
@@ -718,13 +894,15 @@ const exportCommand: SlashCommand = {
             const pagesTotal = Math.ceil(milestones.length / elementsPerPage);
             let currPage = 1;
 
-            let showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**<:valentines_choco_2026:1472686937277071442>${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
+            const formatMilestone = (e: (typeof milestones)[number]) => `${e.id + 1}) Required: **${e.required}**${eventPointsReward.emoji}${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}${e.hpbarId !== undefined ? `\n${customHpBars[e.hpbarId].getHpBar(0.7, 0.4)}` : ""}\n`;
+
+            let showF = showPage(currPage, milestones, elementsPerPage).map(formatMilestone);
 
             const Embed = new EmbedBuilder()
-                .setTitle('Valentine\'s Event Rewards')
+                .setTitle(`${eventNames[ongoingEvent]} Rewards`)
                 .setColor(0x2aad9d)
                 .setThumbnail(ExternalLinks.BotPfp)
-                .setDescription(`Your balance: **${stats.eventpts}**<:valentines_choco_2026:1472686937277071442>\n\n` + showF.join("\n"))
+                .setDescription(`Your balance: **${stats.eventpts}**${eventPointsReward.emoji}\n\n` + showF.join("\n"))
                 .setFooter({ text: `Page ${currPage}/${pagesTotal}` });
             interaction.reply({ embeds: [Embed], components: [PageRow] }).then(msg => {
                 const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 90000 });
@@ -738,59 +916,30 @@ const exportCommand: SlashCommand = {
                         else currPage = 1;
                     };
 
-                    showF = showPage(currPage, milestones, elementsPerPage).map((e) => `${e.id + 1}) Required: **${e.required}**<:valentines_choco_2026:1472686937277071442>${stats.eventpts >= e.required ? " <a:check:873196253276700682>" : ""}\n ➥ ${e.rew}\n`);
+                    showF = showPage(currPage, milestones, elementsPerPage).map(formatMilestone);
 
-                    Embed.setDescription(`Your balance: **${stats.eventpts}**<:valentines_choco_2026:1472686937277071442>\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
+                    Embed.setDescription(`Your balance: **${stats.eventpts}**${eventPointsReward.emoji}\n\n` + showF.join("\n")).setFooter({ text: `Page ${currPage}/${pagesTotal}` });
                     await interaction.editReply({ embeds: [Embed], components: [PageRow] });
                 });
             });
         };
 
         if (subcommand === "pass") {
-            const pagesTotal = passRewards[0].length - 4;
-            let currPage = Math.min(Math.max(Math.min(stats.passlevel, passRewards[0].length) - 1, 1), pagesTotal);
+            if (!isEventStarted()) return interaction.reply({ content: "The event hasn't started yet.", ephemeral: true });
+
+            const pagesTotal = passLevelCap - 4;
+            let currPage = Math.min(Math.max(Math.min(stats.passlevel, passLevelCap) - 1, 1), pagesTotal);
 
             let file = await getPassImage(stats, currPage - 1);
-
-            let footer = "";
-            if (isEventOngoing()) {
-                const timeLeft = seasonalEventEnd.getTime() - Date.now();
-                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
-                const timeComponents: string[] = [];
-                if (days > 0) timeComponents.push(`${days}d`);
-                if (hours > 0) timeComponents.push(`${hours}h`);
-                if (minutes > 0) timeComponents.push(`${minutes}min`);
-
-                footer = `The event will end in ${timeComponents.join(' ')}`;
-            } else if (Date.now() > seasonalEventEnd.getTime()) {
-                footer = "The event has ended!";
-            } else {
-                // Return how much time is left till start
-                const timeLeft = seasonalEventStart.getTime() - Date.now();
-                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-
-                const timeComponents: string[] = [];
-                if (days > 0) timeComponents.push(`${days}d`);
-                if (hours > 0) timeComponents.push(`${hours}h`);
-                if (minutes > 0) timeComponents.push(`${minutes}min`);
-
-                footer = `The event will start in ${timeComponents.join(' ')}`;
-            };
 
             const Embed = new EmbedBuilder()
                 .setColor({ anniversary: 0x2aad9d, halloween: 0xff8733, christmas: 0x94f7ff, valentines: 0xf8c8dc, easter: 0x69ffb9 }[ongoingEvent] || 0x2aad9d)
                 .setImage(`attachment://file.jpg`)
-                .setFooter({ text: footer, iconURL: "https://cdn.discordapp.com/emojis/1131679799207796756.webp?size=56" })
                 .setDescription(`Complete daily </quests:1087099255652622433> to unlock rewards!\nWith </give pass:1013437508933128242> you can gift someone a premium pass! (**${Math.max(0, 5 - stats.passpurchaselimit)}**/5 left)`);
             interaction.reply({ embeds: [Embed], components: [getPassRow(stats)], files: [file] }).then(msg => {
 
                 const pageCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && (r.customId === "prev" || r.customId === "next"), componentType: ComponentType.Button, time: 120000 });
-                const premiumCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "premium", componentType: ComponentType.Button, time: 120000 });
+                const premiumCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "ignore_defer_pass_levels", componentType: ComponentType.Button, time: 120000 });
                 const claimCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "claim", componentType: ComponentType.Button, time: 120000 });
 
                 collectComponentUpdates(pageCollector, async r => {
@@ -806,8 +955,106 @@ const exportCommand: SlashCommand = {
                     await interaction.editReply({ files: [file] });
                 });
 
-                collectComponentUpdates(premiumCollector, async () => {
-                    const content = stats.pass ? "Do you want to unlock the next reward for **100** <:genesis_gems:1034179687720681492>?" : "Do you want to upgrade your event pass for **1000** <:genesis_gems:1034179687720681492>?";
+                collectComponentUpdates(premiumCollector, async r => {
+                    // Pass owners choose how many levels to buy in one go.
+                    if (stats.pass) {
+                        // Unique per click so a second open modal cannot resolve this one.
+                        const modalId = `pass_levels_${Math.random().toString(36).substring(2, 15)}`;
+                        const remaining = Math.max(0, passLevelCap - stats.passlevel);
+                        const affordable = Math.min(remaining, Math.floor(stats.gems / 50));
+                        const hint = remaining < 1
+                            ? `You're already at level ${stats.passlevel}/${passLevelCap}`
+                            : `Level ${stats.passlevel}/${passLevelCap} • up to ${affordable} affordable`;
+
+                        await r.showModal(
+                            new ModalBuilder()
+                                .setCustomId(modalId)
+                                .setTitle('Unlock Levels')
+                                .addComponents(
+                                    new ActionRowBuilder<TextInputBuilder>().addComponents(
+                                        new TextInputBuilder()
+                                            .setCustomId('amount')
+                                            .setLabel('How many levels? (50 💎 each)')
+                                            .setStyle(TextInputStyle.Short)
+                                            .setMinLength(1)
+                                            .setMaxLength(3)
+                                            .setRequired(true)
+                                            .setValue('1')
+                                            .setPlaceholder(hint),
+                                    ),
+                                ),
+                        );
+
+                        let submit;
+                        try {
+                            submit = await interaction.awaitModalSubmit({
+                                filter: (m) => m.customId === modalId && m.user.id === interaction.user.id,
+                                time: 120000,
+                            });
+                        } catch {
+                            // Dismissed or timed out. The click was consumed by the modal, so there is nothing to answer.
+                            return;
+                        };
+
+                        await submit.deferReply({ flags: MessageFlags.Ephemeral });
+
+                        const raw = submit.fields.getTextInputValue('amount').trim();
+                        const requested = /^\d+$/.test(raw) ? parseInt(raw, 10) : NaN;
+                        if (!Number.isSafeInteger(requested) || requested < 1) {
+                            return submit.editReply({ content: `Enter a whole number of levels, for example **1**.` });
+                        };
+
+                        await withPassLock(interaction.user.id, async () => {
+                            const stats2 = await getUserSchema(interaction.user.id);
+                            if (!stats2) return submit.editReply({ content: `Something went wrong. Please try again.` });
+                            Object.assign(stats, stats2);
+
+                            if (stats.pass === 0) return submit.editReply({ content: `You don't own the premium pass.` });
+
+                            const remaining = Math.max(0, passLevelCap - stats.passlevel);
+                            const affordable = Math.floor(stats.gems / 50);
+                            if (remaining < 1) return submit.editReply({ content: `You've reached the max level!` });
+                            if (affordable < 1) return submit.editReply({ content: `You need 50 <:genesis_gems:1034179687720681492> per level, but you only have **${stats.gems}**<:genesis_gems:1034179687720681492>.` });
+
+                            // Buy what was asked for, capped by the remaining levels and the current balance.
+                            const amount = Math.min(requested, remaining, affordable);
+                            const cost = 50 * amount;
+
+                            // One conditional update so concurrent submissions cannot overdraw or pass the cap.
+                            const applied = await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                updates: {
+                                    passlevel: { type: "increment", value: amount },
+                                    gems: { type: "increment", value: -cost },
+                                },
+                                condition: `pass = 1 AND passlevel + ${amount} <= ${passLevelCap} AND gems >= ${cost}`,
+                                evictCache: true,
+                            });
+                            if (!applied) return submit.editReply({ content: `Your level or gem balance changed. Please try again.` });
+
+                            stats.passlevel += amount;
+                            stats.gems -= cost;
+                            currPage = Math.min(Math.max(stats.passlevel - 1, 1), pagesTotal);
+
+                            try {
+                                const file = await getPassImage(stats, currPage - 1);
+                                await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                            } catch (error) {
+                                // The purchase already went through; a broken asset must not hide that.
+                                console.error('Failed to render /event pass after unlocking levels:', error);
+                            };
+
+                            const note = amount < requested
+                                ? (amount === remaining ? ` You've reached the max level.` : ` That's all your gems could cover.`)
+                                : '';
+                            await submit.editReply({
+                                content: `Unlocked **${amount}** level${amount === 1 ? '' : 's'} for **${cost}**<:genesis_gems:1034179687720681492>! You're now level **${stats.passlevel}/${passLevelCap}**.${note}`,
+                            });
+                        });
+                        return;
+                    };
+
+                    // Players without the pass still get the one-click 1000 gem upgrade prompt.
+                    const content = "Do you want to upgrade your event pass for **1000** <:genesis_gems:1034179687720681492>?";
                     interaction.followUp({ content, components: [OfferRow], fetchReply: true, ephemeral: true }).then(message => {
                         const collector = message.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 30000 });
 
@@ -815,81 +1062,119 @@ const exportCommand: SlashCommand = {
                             if (r.customId === "cancel") return collector.stop();
                             if (stats.pass === 0) collector.stop();
 
-                            const stats2 = await getUserSchema(interaction.user.id);
-                            if (!stats2) return;
+                            await withPassLock(interaction.user.id, async () => {
+                                const stats2 = await getUserSchema(interaction.user.id);
+                                if (!stats2) return;
 
-                            if (stats.pass !== stats2.pass) return interaction.followUp({ content: `You've already bought the premium pass!`, ephemeral: true });
-                            Object.assign(stats, stats2);
+                                if (stats.pass !== stats2.pass) return interaction.followUp({ content: `You've already bought the premium pass!`, ephemeral: true });
+                                Object.assign(stats, stats2);
 
-                            if (stats.pass) {
-                                if (stats.passlevel >= passRewards[0].length) return interaction.followUp({ content: `You've reached the max level!`, ephemeral: true });
-                                if (stats.gems < 100) return interaction.followUp({ content: `You don't have enough gems (**${stats.gems}**/100<:genesis_gems:1034179687720681492>)`, ephemeral: true });
+                                if (stats.pass) {
+                                    if (stats.passlevel >= passLevelCap) return interaction.followUp({ content: `You've reached the max level!`, ephemeral: true });
+                                    if (stats.gems < 50) return interaction.followUp({ content: `You don't have enough gems (**${stats.gems}**/50<:genesis_gems:1034179687720681492>)`, ephemeral: true });
 
-                                // Update users table
-                                await updateUsers(interaction.user.id, {
-                                    passlevel: { type: "increment", value: 1 },
-                                    gems: { type: "increment", value: -100 },
-                                });
+                                    // Conditional update so concurrent messages cannot spend the same gems twice.
+                                    const applied = await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                        updates: {
+                                            passlevel: { type: "increment", value: 1 },
+                                            gems: { type: "increment", value: -50 },
+                                        },
+                                        condition: `pass = 1 AND gems >= 50 AND passlevel < ${passLevelCap}`,
+                                        evictCache: true,
+                                    });
+                                    if (!applied) return interaction.followUp({ content: `You couldn't unlock the next level. Please try again.`, ephemeral: true });
 
-                                stats.passlevel += 1;
-                                stats.gems -= 100;
-                                currPage = Math.min(Math.max(stats.passlevel - 1, 1), pagesTotal);
-                            } else {
-                                if (stats.gems < 1000) return interaction.followUp({ content: `You don't have enough gems (**${stats.gems}**/1000<:genesis_gems:1034179687720681492>)`, ephemeral: true });
+                                    stats.passlevel += 1;
+                                    stats.gems -= 50;
+                                    currPage = Math.min(Math.max(stats.passlevel - 1, 1), pagesTotal);
+                                } else {
+                                    if (stats.gems < 1000) return interaction.followUp({ content: `You don't have enough gems (**${stats.gems}**/1000<:genesis_gems:1034179687720681492>)`, ephemeral: true });
 
-                                // Update users table
-                                await updateUsers(interaction.user.id, {
-                                    pass: { type: "set", value: 1 },
-                                    gems: { type: "increment", value: -1000 },
-                                });
+                                    // Conditional update so concurrent messages cannot buy the pass twice.
+                                    const applied = await updateUsersAndCache(interaction.client, interaction.user.id, {
+                                        updates: {
+                                            pass: { type: "set", value: 1 },
+                                            gems: { type: "increment", value: -1000 },
+                                        },
+                                        condition: `pass = 0 AND gems >= 1000`,
+                                        evictCache: true,
+                                    });
+                                    if (!applied) return interaction.followUp({ content: `You couldn't upgrade your event pass. Please try again.`, ephemeral: true });
 
-                                stats.pass = 1;
-                                stats.gems -= 1000;
-                            };
+                                    stats.pass = 1;
+                                    stats.gems -= 1000;
+                                };
 
-                            let file = await getPassImage(stats, currPage - 1);
-                            await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                                let file = await getPassImage(stats, currPage - 1);
+                                await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                            });
                         }, msg.id);
                     });
                 });
 
                 collectComponentUpdates(claimCollector, async () => {
-                    const stats2 = await getUserSchema(interaction.user.id);
-                    Object.assign(stats, stats2);
+                    await withPassLock(interaction.user.id, async () => {
+                        const stats2 = await getUserSchema(interaction.user.id);
+                        if (!stats2) return;
+                        Object.assign(stats, stats2);
 
-                    const addRewards: Record<PassReward, number> = { coins: 0, gems: 0, ex: 0, ssticket: 0, sticket: 0, ssshard: 0, sshard: 0, deluxe: 0 };
-                    const newItems: Record<number, number> = {};
-                    for (const tier of [0, 1] as const) {
-                        if (tier && stats.pass === 0) break;
-                        for (let i = (tier ? stats.premiumpassclaimed : stats.freepassclaimed); i < Math.min(stats.passlevel, passRewards[0].length); i++) {
-                            const reward = passRewards[tier][i];
-                            const rewardType = reward.type;
-                            const itemid = reward.itemid;
-                            if (rewardType === "deluxe" && itemid !== undefined) newItems[itemid] = (newItems[itemid] + reward.amount) || reward.amount;
-                            else addRewards[rewardType] += reward.amount;
+                        const maxLevel = Math.min(stats.passlevel, passLevelCap);
+                        const freeClaimable = stats.freepassclaimed < maxLevel;
+                        const premiumClaimable = !!stats.pass && stats.premiumpassclaimed < maxLevel;
+
+                        if (!freeClaimable && !premiumClaimable) {
+                            return interaction.followUp({ content: `You have no rewards to claim!`, ephemeral: true });
                         };
-                    };
 
-                    // Update users table
-                    const userUpdates: UpdateUserOptions = {
-                        freepassclaimed: { type: "set", value: Math.min(stats.passlevel, passRewards[0].length) },
-                        coins: { type: "increment", value: addRewards.coins },
-                        gems: { type: "increment", value: addRewards.gems },
-                        expulls: { type: "increment", value: addRewards.ex },
-                        ssshard: { type: "increment", value: addRewards.ssshard },
-                        sshard: { type: "increment", value: addRewards.sshard },
-                        ssticket: { type: "increment", value: addRewards.ssticket },
-                        sticket: { type: "increment", value: addRewards.sticket },
-                        items: { type: "merge_json", value: newItems },
-                    };
-                    if (stats.pass) userUpdates.premiumpassclaimed = { type: "set", value: Math.min(stats.passlevel, passRewards[0].length) };
-                    await updateUsers(interaction.user.id, userUpdates);
+                        const addRewards: Record<PassCurrencyReward, number> = { coins: 0, gems: 0, ex: 0, ssticket: 0, sticket: 0, ssshard: 0, sshard: 0 };
+                        const newItems: Record<number, number> = {};
+                        const newHpbars = new Set<number>();
+                        for (const tier of [0, 1] as const) {
+                            if (tier && stats.pass === 0) break;
+                            for (let i = (tier ? stats.premiumpassclaimed : stats.freepassclaimed); i < maxLevel; i++) {
+                                const reward = passRewards[tier][i];
+                                const rewardType = reward.type;
+                                const itemid = reward.itemid ?? 458;
+                                // "deluxe" and "item" rewards are both stored in the user's items JSON.
+                                if (rewardType === "hpbar") {
+                                    if (reward.hpbarId !== undefined) newHpbars.add(reward.hpbarId);
+                                } else if (rewardType === "deluxe" || rewardType === "item") newItems[itemid] = (newItems[itemid] || 0) + reward.amount;
+                                else addRewards[rewardType] += reward.amount;
+                            };
+                        };
 
-                    stats.freepassclaimed = Math.min(stats.passlevel, passRewards[0].length);
-                    if (stats.pass) stats.premiumpassclaimed = Math.min(stats.passlevel, passRewards[0].length);
+                        // Update users table
+                        const userUpdates: UpdateUserOptions = {
+                            freepassclaimed: { type: "set", value: Math.max(stats.freepassclaimed, maxLevel) },
+                            coins: { type: "increment", value: addRewards.coins },
+                            gems: { type: "increment", value: addRewards.gems },
+                            expulls: { type: "increment", value: addRewards.ex },
+                            ssshard: { type: "increment", value: addRewards.ssshard },
+                            sshard: { type: "increment", value: addRewards.sshard },
+                            ssticket: { type: "increment", value: addRewards.ssticket },
+                            sticket: { type: "increment", value: addRewards.sticket },
+                        };
+                        if (stats.pass) userUpdates.premiumpassclaimed = { type: "set", value: Math.max(stats.premiumpassclaimed, maxLevel) };
+                        // An empty merge would produce NULL for an empty inventory and violate the NOT NULL constraint.
+                        if (Object.keys(newItems).length > 0) userUpdates.items = { type: "merge_json", value: newItems };
+                        if (newHpbars.size > 0) userUpdates.hpbars = { type: "append_unique", value: [...newHpbars] };
 
-                    let file = await getPassImage(stats, currPage - 1);
-                    await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                        // Only apply the claim if the counters we read are still current.
+                        const conditions = [`freepassclaimed = ${stats.freepassclaimed}`];
+                        if (stats.pass) conditions.push(`pass = 1`, `premiumpassclaimed = ${stats.premiumpassclaimed}`);
+
+                        const applied = await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: userUpdates,
+                            condition: conditions.join(" AND "),
+                        });
+                        if (!applied) return interaction.followUp({ content: `You have no rewards to claim!`, ephemeral: true });
+
+                        stats.freepassclaimed = Math.max(stats.freepassclaimed, maxLevel);
+                        if (stats.pass) stats.premiumpassclaimed = Math.max(stats.premiumpassclaimed, maxLevel);
+
+                        let file = await getPassImage(stats, currPage - 1);
+                        await interaction.editReply({ components: [getPassRow(stats)], files: [file] });
+                    });
                 });
 
             });

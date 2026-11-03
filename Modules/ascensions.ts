@@ -45,7 +45,7 @@ export const ascensions: Record<number, AscensionNode[]> = {
             apply: (ability) => { ability.dodgeScalingBonus += 0.5; },
         },
     ],
-    // Eren
+    // Eren Yeager
     274: [
         {
             desc: "Active costs **5** less mana.",
@@ -70,6 +70,42 @@ export const ascensions: Record<number, AscensionNode[]> = {
         {
             desc: "Active can be used another time.",
             apply: (ability) => { ability.usage = ability.usage + 1; },
+        },
+    ],
+    // David Martinez
+    10125: [
+        {
+            desc: "Using ✨ additionally boosts critical damage by **25%** for that round.",
+            apply: (ability) => { ability.critdmgBuff += 0.25; },
+        },
+        {
+            desc: "Cyberpsychosis grants **+10%** critical rate permanently (once).",
+            apply: (ability) => { ability.crBuff += 0.1; },
+        },
+        {
+            desc: "Cyberpsychosis reduces enemy's DEF & MR by **+5%** (once).",
+            apply: (ability) => { ability.defMrShred += 0.05; },
+        },
+        {
+            desc: "Active max HP cost **-2%**.",
+            apply: (ability) => { ability.hpSac -= 0.02; },
+        },
+        {
+            desc: "Cyberpsychosis recovers **+10%** missing HP.",
+            apply: (ability) => { ability.mHpHeal += 0.1; },
+        },
+        {
+            desc: "When in a party with Lucy EX, active's cooldown is reduced by **1** round.",
+            apply: (ability) => { ability.asc = 6; },
+        },
+        {
+            desc: "Active max HP cost instead scales off of current HP.",
+            apply: (ability) => { ability.asc = 7; },
+        },
+        {
+            name: "✧ I’ll Take You To The Moon! I Promise! ✧",
+            desc: "Ascension **6** no longer requires being in a party with Lucy EX. With Lucy EX however, the enemy has **33%** less dodge chance in his battles.",
+            apply: (ability) => { ability.asc = 8; },
         },
     ],
     // Rudeus EX
@@ -118,6 +154,30 @@ export const ascensions: Record<number, AscensionNode[]> = {
             name: "✧ The White Yakasha ✧",
             desc: "Only **67%** of original Injuries are passed on to haunt. The remaining is converted into max HP buff for **6** rounds.",
             apply: (ability) => { ability.gintokiBT = true; },
+        },
+    ],
+    // Lucy EX
+    21930: [
+        {
+            desc: "Immediately uploads Daemon upon entering battle, crippling the enemy for **1** round.",
+            apply: (ability) => { ability.asc = 1; },
+        },
+        {
+            desc: "Immediately uses her active once when entering battle (Ignores active-replacing effects).",
+            apply: (ability) => { ability.asc = 2; },
+        },
+        {
+            desc: "Using active when the enemy is crippled allows her to deal *doubled* the initial damage.",
+            apply: (ability) => { ability.asc = 3; },
+        },
+        {
+            desc: "When in a party with David Martinez, she cripples enemy in her own battles once every **3** rounds instead of 4.",
+            apply: (ability) => { ability.asc = 4; },
+        },
+        {
+            name: "✧ You never had to save me. ✧",
+            desc: "The restriction on Ascension **4** is lifted. However with David Martinez, she evades first lethal death. If successful, she will recover all health and double her cripple vulenrability effect in her own battles. However, her instability will cause her to lose **8%** max HP every round.",
+            apply: (ability) => { ability.asc = 5; },
         },
     ],
     // Acheron EX

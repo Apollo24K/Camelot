@@ -3,7 +3,7 @@ import { characters } from "../Modules/chars";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder, StringSelectMenuBuilder } from "discord.js";
 import { SlashCommand, CompactUserSchema } from '../types';
 import { currencyEmojis } from '../Modules/components';
-import { getOwnedCharacterIds, updateUsersAndCache, getCachedUserSchema, getUserWeapons } from '../Modules/queries';
+import { getOwnedCharacterIds, updateUsersAndCache, getCachedUserSchema, getUserSchema, getUserWeapons } from '../Modules/queries';
 import { collectComponentUpdates } from '../Modules/buttonInteractions';
 import { newbieCategories, getNewbieQuests, newbieChains, claimNewbieQuests, formatNewbieRewards, NewbieCategory, NewbieData, newbieQuestInfo } from '../Modules/newbieQuests';
 
@@ -80,11 +80,31 @@ const exportCommand: SlashCommand = {
             stats.dailies[12] = 1;
         };
 
-        const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
-        let thumbnail = characters[ownedCharacterIds[Math.floor(Math.random() * ownedCharacterIds.length)]]?.image || "https://i.imgur.com/Ta2YDBN.png";
-        if (stats.favchar !== null) thumbnail = characters[stats.favchar].getImage(stats.premium, stats.custom_skins[stats.favchar], stats.char_skin[stats.favchar]);
+        const isSelf = user.id === interaction.user.id;
+        let questStats: CompactUserSchema = stats;
+        if (!isSelf) {
+            const otherStats = await getCachedUserSchema(user.id, interaction.client);
+            if (!otherStats) return interaction.reply(`**${user.username}** hasn't started playing yet`);
+            questStats = otherStats;
+        };
 
         const todaysQuests = getQuests(user.id, dailies.length);
+
+        let ownedCharacterIds: number[] | undefined;
+        const getOwnedIds = async () => {
+            if (!ownedCharacterIds) ownedCharacterIds = await getOwnedCharacterIds(user.id, questStats.chars);
+            return ownedCharacterIds;
+        };
+
+        let thumbnail = "https://i.imgur.com/Ta2YDBN.png";
+        const favoriteId = questStats.favchar;
+        const favorite = favoriteId !== null ? characters[favoriteId] : undefined;
+        if (favoriteId !== null && favorite) thumbnail = favorite.getImage(questStats.premium, questStats.custom_skins[favoriteId], questStats.char_skin[favoriteId]);
+        else {
+            const ids = await getOwnedIds();
+            const ownedId = ids[Math.floor(Math.random() * ids.length)];
+            if (ownedId !== undefined) thumbnail = characters[ownedId]?.image || thumbnail;
+        };
 
         function achvmBar(ratio: number, sep = "\n") {
             let step = 1 / 14;
@@ -104,35 +124,41 @@ const exportCommand: SlashCommand = {
         };
 
         function progress(id: number) {
-            if (dailies[id].check(stats.dailies[id])) return achvmBar(1);
+            if (dailies[id].check(questStats.dailies[id])) return achvmBar(1);
             switch (id) {
-                case 0: return achvmBar((stats.dailies[id] || 0) / 20, ` (${stats.dailies[id] || 0}/20)\n`);
-                case 1: return achvmBar((stats.dailies[id] || 0) / 50, ` (${stats.dailies[id] || 0}/50)\n`);
-                case 2: return achvmBar((stats.dailies[id] || 0) / 20, ` (${stats.dailies[id] || 0}/20)\n`);
-                case 3: return achvmBar((stats.dailies[id] || 0) / 3, ` (${stats.dailies[id] || 0}/3)\n`);
+                case 0: return achvmBar((questStats.dailies[id] || 0) / 20, ` (${questStats.dailies[id] || 0}/20)\n`);
+                case 1: return achvmBar((questStats.dailies[id] || 0) / 50, ` (${questStats.dailies[id] || 0}/50)\n`);
+                case 2: return achvmBar((questStats.dailies[id] || 0) / 20, ` (${questStats.dailies[id] || 0}/20)\n`);
+                case 3: return achvmBar((questStats.dailies[id] || 0) / 3, ` (${questStats.dailies[id] || 0}/3)\n`);
                 case 4:
                 case 5:
                 case 6: return achvmBar(0);
-                case 7: return achvmBar((stats.dailies[id] || 0) / 5, ` (${stats.dailies[id] || 0}/5)\n`);
+                case 7: return achvmBar((questStats.dailies[id] || 0) / 5, ` (${questStats.dailies[id] || 0}/5)\n`);
                 case 8: return achvmBar(0);
-                case 9: return achvmBar((stats.dailies[id] || 0) / 2000, ` (${stats.dailies[id] || 0}/2000)\n`);
+                case 9: return achvmBar((questStats.dailies[id] || 0) / 2000, ` (${questStats.dailies[id] || 0}/2000)\n`);
                 case 10: return achvmBar(0);
-                case 11: return achvmBar((stats.dailies[id] || 0) / 3, ` (${stats.dailies[id] || 0}/3)\n`);
+                case 11: return achvmBar((questStats.dailies[id] || 0) / 3, ` (${questStats.dailies[id] || 0}/3)\n`);
                 default: return achvmBar(0);
             };
         };
 
-        const isSelf = user.id === interaction.user.id;
-        let questStats: CompactUserSchema = stats;
-        if (!isSelf) {
-            const otherStats = await getCachedUserSchema(user.id, interaction.client);
-            if (!otherStats) return interaction.reply(`**${user.username}** hasn't started playing yet`);
-            questStats = otherStats;
-        };
-
-        let questData: NewbieData = {
-            weapons: await getUserWeapons(user.id),
-            ownedCharacterIds: await getOwnedCharacterIds(user.id, questStats.chars),
+        let questData: NewbieData | undefined;
+        let questDataPromise: Promise<NewbieData> | undefined;
+        const ensureQuestData = async (): Promise<NewbieData> => {
+            if (questData) return questData;
+            if (!questDataPromise) {
+                questDataPromise = Promise.all([
+                    getUserWeapons(user.id),
+                    getOwnedIds(),
+                ]).then(([weapons, ownedCharacterIds]) => {
+                    const data = { weapons, ownedCharacterIds };
+                    questData = data;
+                    return data;
+                }).finally(() => {
+                    questDataPromise = undefined;
+                });
+            };
+            return questDataPromise;
         };
 
         let activeTab: "daily" | "newbie" = "daily";
@@ -140,41 +166,41 @@ const exportCommand: SlashCommand = {
 
         const buildDailyEmbed = () => new EmbedBuilder()
             .setColor(0xbbffff)
-            .setTitle(`Daily Quests (${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0)}/4)`)
-            .setDescription(`**Completion Rewards**: 5 ${currencyEmojis.season_keys}, 500<:coins:872926669055356939>, 2<:genesis_gems:1034179687720681492>, 10XP ${todaysQuests.reduce((count, e) => count + (e.check(stats.dailies[e.id]) ? 1 : 0), 0) === 4 ? "<a:check:873196253276700682>" : ""}\nㅤ`)
+            .setTitle(`Daily Quests (${todaysQuests.reduce((count, e) => count + (e.check(questStats.dailies[e.id]) ? 1 : 0), 0)}/4)`)
+            .setDescription(`**Completion Rewards**: 5 ${currencyEmojis.season_keys}, 500<:coins:872926669055356939>, 2<:genesis_gems:1034179687720681492>, 10XP ${todaysQuests.reduce((count, e) => count + (e.check(questStats.dailies[e.id]) ? 1 : 0), 0) === 4 ? "<a:check:873196253276700682>" : ""}\nㅤ`)
             .setThumbnail(thumbnail)
             .addFields(
                 { name: todaysQuests[0].title, value: `> ${todaysQuests[0].description + progress(todaysQuests[0].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[0].check(stats.dailies[todaysQuests[0].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[0].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
+                { name: `Rewards ${todaysQuests[0].check(questStats.dailies[todaysQuests[0].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[0].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
                 { name: todaysQuests[1].title, value: `> ${todaysQuests[1].description + progress(todaysQuests[1].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[1].check(stats.dailies[todaysQuests[1].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[1].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
+                { name: `Rewards ${todaysQuests[1].check(questStats.dailies[todaysQuests[1].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[1].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
                 { name: todaysQuests[2].title, value: `> ${todaysQuests[2].description + progress(todaysQuests[2].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[2].check(stats.dailies[todaysQuests[2].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[2].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
+                { name: `Rewards ${todaysQuests[2].check(questStats.dailies[todaysQuests[2].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[2].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
                 { name: todaysQuests[3].title, value: `> ${todaysQuests[3].description + progress(todaysQuests[3].id)}`, inline: true },
-                { name: `Rewards ${todaysQuests[3].check(stats.dailies[todaysQuests[3].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[3].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
+                { name: `Rewards ${todaysQuests[3].check(questStats.dailies[todaysQuests[3].id]) ? "<a:check:873196253276700682>" : ""}`, value: `${[10, 12].includes(todaysQuests[3].id) ? `**5** ${currencyEmojis.season_keys}, ` : ""}**500**<:coins:872926669055356939>, **2**<:genesis_gems:1034179687720681492>, 10XP`, inline: true },
                 { name: '\u200B', value: '_ _', inline: true },
             )
             .setFooter({ text: `dailies reset in ${(23 - new Date().getHours()) ? `${23 - new Date().getHours()}h ` : ""}${60 - new Date().getMinutes()}min\nneed help? ➜ see /support` });
 
-        const newbieProgress = (quest: newbieQuestInfo) => {
-            if (quest.check(questStats, questData)) return achvmBar(1);
-            const { value, target } = quest.progress(questStats, questData);
+        const newbieProgress = (quest: newbieQuestInfo, data: NewbieData) => {
+            if (quest.check(questStats, data)) return achvmBar(1);
+            const { value, target } = quest.progress(questStats, data);
             return achvmBar(Math.max(0, Math.min(0.999, target > 0 ? value / target : 0)), ` (${value}/${target})\n`);
         };
 
         const claimableCount = (source: CompactUserSchema, data: NewbieData) => getNewbieQuests(activeCategory).filter((quest) => !source.newbie.includes(quest.id) && quest.check(source, data)).length;
 
-        const buildNewbieEmbed = () => {
+        const buildNewbieEmbed = (data: NewbieData) => {
             const questList = getNewbieQuests(activeCategory);
             const claimed = questList.filter((quest) => questStats.newbie.includes(quest.id)).length;
             const category = newbieCategories.find((e) => e.id === activeCategory)!;
 
             const Embed = new EmbedBuilder()
                 .setColor(0xbbffff)
-                .setTitle(`Newbie Quests — ${category.label} (${claimed}/${questList.length})`)
+                .setTitle(`Beginner Quests — ${category.label} (${claimed}/${questList.length})`)
                 .setThumbnail(thumbnail)
                 .setDescription(`${category.description}\nCompleted quests can be collected with the **Claim Rewards** button below.\nㅤ`);
 
@@ -189,7 +215,7 @@ const exportCommand: SlashCommand = {
                 const target = next ?? chain.quests[chain.quests.length - 1];
 
                 Embed.addFields(
-                    { name: `${chain.title} ${dots}`, value: next ? `> ${next.description}${newbieProgress(next)}` : `> All milestones collected!${achvmBar(1)}`, inline: true },
+                    { name: `${chain.title} ${dots}`, value: next ? `> ${next.description}${newbieProgress(next, data)}` : `> All milestones collected!${achvmBar(1)}`, inline: true },
                     { name: `Rewards${next ? "" : " <a:check:873196253276700682>"}`, value: formatNewbieRewards(target), inline: true },
                     { name: '\u200B', value: '_ _', inline: true },
                 );
@@ -212,19 +238,21 @@ const exportCommand: SlashCommand = {
                     .addOptions(newbieCategories.map((e) => ({ label: e.label, description: e.description, value: e.id, emoji: e.emoji }))),
             );
 
-        const buildClaimRow = () => {
-            const claimable = claimableCount(questStats, questData);
+        const buildClaimRow = (data: NewbieData) => {
             if (!isSelf) return [];
+            const claimable = claimableCount(questStats, data);
             return [new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder().setCustomId(BUTTON_CLAIM).setLabel(claimable ? `Claim Rewards (${claimable})` : "Claim Rewards").setStyle(ButtonStyle.Success).setDisabled(!claimable),
             )];
         };
 
-        const render = () => activeTab === "daily"
-            ? { embeds: [buildDailyEmbed()], components: [buildTabRow()] }
-            : { embeds: [buildNewbieEmbed()], components: [buildTabRow(), buildCategoryRow(), ...buildClaimRow()] };
+        const render = async () => {
+            if (activeTab === "daily") return { embeds: [buildDailyEmbed()], components: [buildTabRow()] };
+            const data = await ensureQuestData();
+            return { embeds: [buildNewbieEmbed(data)], components: [buildTabRow(), buildCategoryRow(), ...buildClaimRow(data)] };
+        };
 
-        return interaction.reply({ ...render(), fetchReply: true }).then(msg => {
+        return interaction.reply({ ...(await render()), fetchReply: true }).then(msg => {
 
             const buttonCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && [BUTTON_TAB_DAILY, BUTTON_TAB_NEWBIE, BUTTON_CLAIM].includes(r.customId), componentType: ComponentType.Button, time: 120000 });
 
@@ -232,26 +260,24 @@ const exportCommand: SlashCommand = {
                 if (r.customId === BUTTON_TAB_DAILY) activeTab = "daily";
                 else if (r.customId === BUTTON_TAB_NEWBIE) activeTab = "newbie";
                 else if (r.customId === BUTTON_CLAIM) {
-                    const claimed = await claimNewbieQuests(interaction.client, interaction.user.id, getNewbieQuests(activeCategory));
-                    if (!claimed.length) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send("You have no newbie quests to claim right now.");
-                        return;
-                    };
-                    const freshStats = await getCachedUserSchema(interaction.user.id, interaction.client);
-                    if (freshStats) questStats = freshStats;
-                    const freshData: NewbieData = {
-                        weapons: await getUserWeapons(interaction.user.id),
-                        ownedCharacterIds: await getOwnedCharacterIds(interaction.user.id, questStats.chars),
-                    };
-                    questData = freshData;
-                    const summary = claimed.map((quest) => `> **${quest.title}**: ${quest.description} — ${formatNewbieRewards(quest)}`).join("\n");
-                    if (interaction.channel?.isSendable()) {
-                        for (const chunk of chunkByLine(summary)) {
-                            await interaction.channel.send(`<a:starsL:942573254730715246> Newbie quests completed! <a:starsR:942573194802511923>\n${chunk}`);
+                    const { claimed, failed, stats: freshStats } = await claimNewbieQuests(interaction.client, interaction.user.id, getNewbieQuests(activeCategory));
+                    if (failed) {
+                        await r.followUp({ content: "Something went wrong while claiming your rewards. Please check your quests and try again in a moment.", ephemeral: true }).catch(() => { });
+                    } else if (!claimed.length) {
+                        if (freshStats) questStats = freshStats;
+                        await r.followUp({ content: "You have no beginner quests to claim right now.", ephemeral: true }).catch(() => { });
+                    } else {
+                        const updatedStats = await getUserSchema(interaction.user.id);
+                        if (updatedStats) questStats = updatedStats;
+                        const summary = claimed.map((quest) => `> **${quest.title}**: ${quest.description} — ${formatNewbieRewards(quest)}`).join("\n");
+                        if (interaction.channel?.isSendable()) {
+                            for (const chunk of chunkByLine(summary)) {
+                                await interaction.channel.send(`<a:starsL:942573254730715246> Beginner quests completed! <a:starsR:942573194802511923>\n${chunk}`);
+                            };
                         };
                     };
                 };
-                await msg.edit(render());
+                await msg.edit(await render());
             }, msg.id);
 
             const categoryCollector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === SELECT_CATEGORY, componentType: ComponentType.StringSelect, time: 120000 });
@@ -260,7 +286,7 @@ const exportCommand: SlashCommand = {
                 const value = r.values[0];
                 if (!newbieCategories.some((e) => e.id === value)) return;
                 activeCategory = value as NewbieCategory;
-                await msg.edit(render());
+                await msg.edit(await render());
             }, msg.id);
 
             const stripComponents = () => { msg.edit({ components: [] }).catch(() => { }); };

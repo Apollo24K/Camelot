@@ -214,8 +214,14 @@ const exportCommand: SlashCommand = {
 
         // Reset Dailies
         if (action === "reset daily") {
-            await updateUsers(user ? user.id : "*", {
-                dailyclaimed: { type: "set", value: 0 }
+            // Clearing lastdaily as well reopens the /daily gate, which keys off it rather than
+            // dailyclaimed (the latter only drives the /balance availability label).
+            await updateUsersAndCache(interaction.client, user ? user.id : "*", {
+                updates: {
+                    dailyclaimed: { type: "set", value: 0 },
+                    lastdaily: { type: "set", value: null },
+                },
+                evictCache: true,
             });
 
             return interaction.reply({ content: `Action Successful: Reset daily for ${user ? user.toString() : "all users"}`, ephemeral });
@@ -411,18 +417,36 @@ const exportCommand: SlashCommand = {
 
         // Add char
         if (action.startsWith("add char")) {
-            if (!user) return interaction.reply({ content: `Error: missing user object\n\nUsage: \`/admin add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
+            const usage = "Usage: `/admin add char <name> [quantity] user:@user`\n\n**Options**\n`name`: Name or ID of the character to be added\n`quantity`: Number of copies to add, from `1` to `1000`. Defaults to `1`";
+
+            if (!user) return interaction.reply({ content: `Error: missing user object\n\n${usage}`, ephemeral });
 
             args.shift();
-            const char = search(args.join(" "), [0], interaction, true);
-            if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\nUsage: \`/admin add char <name> user:@user\`\n\n**Options**\n\`name\`: Name or ID of the character to be added`, ephemeral });
 
-            if (char.rarity === "VIP") await insertNewCharacter(user.id, char.id, char.rarityValue);
-            else await updateUsers(user.id, {
-                chars: { type: "append", value: [char.id] },
-            });
+            // The name itself may end with a number (e.g. "Android 18"), so only
+            // treat the trailing number as a quantity when the full string isn't a character
+            let quantity = 1;
+            let char = search(args.join(" "), [0], interaction, true);
+            if (!char && args.length > 1 && /^\d+$/.test(args[args.length - 1])) {
+                quantity = parseInt(args.pop() as string);
+                if (isNaN(quantity) || quantity < 1 || quantity > 1000) return interaction.reply({ content: `Error: \`quantity\` must be a whole number between 1 and 1000\n\n${usage}`, ephemeral });
+                char = search(args.join(" "), [0], interaction, true);
+            };
 
-            return interaction.reply({ content: `Action Successful: Added **${char.name}** to ${user.toString()}`, ephemeral });
+            if (!char) return interaction.reply({ content: `Error: Couldn't find character "${args.join(" ")}"\n\n${usage}`, ephemeral });
+
+            // Defer since adding many VIP prints takes multiple queries
+            await interaction.deferReply({ ephemeral });
+
+            if (char.rarity === "VIP") {
+                for (let i = 0; i < quantity; i++) await insertNewCharacter(user.id, char.id, char.rarityValue);
+            } else {
+                await updateUsers(user.id, {
+                    chars: { type: "append", value: Array(quantity).fill(char.id) },
+                });
+            };
+
+            return interaction.editReply({ content: `Action Successful: Added **${char.name}**${quantity > 1 ? ` **x${quantity}**` : ""} to ${user.toString()}` });
         };
 
         // Add all chars

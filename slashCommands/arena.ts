@@ -1,7 +1,7 @@
 import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { replyToCommand } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle } from "discord.js";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, Message } from "discord.js";
 import { DetailedStats, SlashCommand } from '../types';
 import { Ability } from "../Modules/abilities";
 import { getUserAbility } from "../Modules/ascensions";
@@ -855,7 +855,18 @@ const exportCommand: SlashCommand = {
             )
             .setFooter({ text: `Win Streak: ${stats.arenastreak} (Highest: ${stats.arenastreakhighest}) | Win Rate: ${Math.round((stats.arenawins / (stats.arenawins + stats.arenalosses)) * 100)}%` });
 
-        replyToCommand(interaction, { content: `<@${user.id}> ${interaction.user.username} challenges you to a battle`, embeds: [Embed], components: [OfferRow] }).then(msg2 => {
+        const challengeContent = `<@${user.id}> ${interaction.user.username} challenges you to a battle`;
+
+        const sendChallenge = async (): Promise<Message> => {
+            const channel = interaction.channel;
+            if (channel?.isSendable()) {
+                await interaction.deleteReply().catch(() => { });
+                return channel.send({ content: challengeContent, embeds: [Embed], components: [OfferRow] });
+            }
+            return replyToCommand(interaction, { content: challengeContent, embeds: [Embed], components: [OfferRow] }) as Promise<Message>;
+        };
+
+        sendChallenge().then(msg2 => {
 
             const collector = msg2.createMessageComponentCollector({ filter: (r) => ((r.user.id === user.id) || (r.user.id === interaction.user.id)), componentType: ComponentType.Button, time: 30000 });
 
@@ -867,7 +878,9 @@ const exportCommand: SlashCommand = {
                     newFight();
                 } else {
                     await msg2.edit({ components: [] });
-                    interaction.followUp({ content: `${r.user.username} has cancelled the challenge` });
+                    const cancelContent = `${r.user.username} has cancelled the challenge`;
+                    if (interaction.channel?.isSendable()) interaction.channel.send(cancelContent);
+                    else interaction.followUp({ content: cancelContent });
                     return;
                 };
             });

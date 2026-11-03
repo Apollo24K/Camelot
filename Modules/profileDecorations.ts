@@ -340,4 +340,18 @@ export const profileSets = [
         new Background("On the Other Side of the Ocean", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/summer-fun/on-the-other-side-of-the-ocean.gif", url: "https://i.ibb.co/qL78vjqx/on-the-other-side-of-the-ocean.gif" }), { delay: 100 }),
     ]),
 
+    new ProfileSet("Midnight Halloween", 30, { jades: 1500, gems: 1800, season_keys: 90 }, [
+        new Background("Shikimori’s Midnight Mischief", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/midnight-halloween/mhallo1.png", url: "https://i.ibb.co/9H6yggMy/file-00000000f94c820e8a3f0f8452f79a3a.png" })),
+        new Background("Hori’s Happy Haunt", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/midnight-halloween/mhallo2.png", url: "https://i.ibb.co/fVM77hbn/file-000000002fc481faacf69ad2d2dddeca.png" })),
+        new Background("Furina’s Blue Moon Treat", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/midnight-halloween/mhallo3.png", url: "https://i.ibb.co/8LP1tP1B/file-000000005c6c820998de573801905f8c.png" })),
+        new Background("Makima’s Crimson Control", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/midnight-halloween/mhallo4.png", url: "https://i.ibb.co/KjxHYvkm/1000043476-640x360.png" })),
+        new Background("Rias’ Scarlet Dominion", { gems: 500 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/midnight-halloween/mhallo5.png", url: "https://i.ibb.co/8LGgwzFp/1000043478-640x360.png" })),
+    ]),
+    // Haven't handled Asset path
+    new ProfileSet("Moonlit Nights", 31, { jades: 2000, gems: 2400, season_keys: 120 }, [
+        new Background("Crimson Hour", { gems: 700 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moonlit-nights/mnights1.gif", url: "https://i.ibb.co/p6Fhrbv6/halloween-gif-1-640x360-no-padding.gif" }), { delay: 20 }),
+        new Background("Ghoul's Eclipse", { gems: 700 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moonlit-nights/mnights2.gif", url: "https://i.ibb.co/tpwNqNhk/halloween-gif-2-640x360-no-padding.gif" }), { delay: 55 }),
+        new Background("Doll of Bread", { gems: 700 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moonlit-nights/mnights3.gif", url: "https://i.ibb.co/7dsGBxbR/halloween-gif-3-640x360-no-padding.gif" }), { delay: 100 }),
+        new Background("Blood Moon", { gems: 700 }, ["shop"], new Asset({ path: "Images/ui/profile/backgrounds/moonlit-nights/mnights4.gif", url: "https://i.ibb.co/MkLX3tkZ/halloween-gif-4-640x360-no-padding.gif" }), { delay: 100 }),
+    ]),
 ];

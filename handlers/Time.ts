@@ -13,6 +13,49 @@ import { query } from '../postgres';
 // import { items } from '../Modules/items';
 // import { EmbedBuilder } from 'discord.js';
 
+const BOSSHUNT_REFILL_MS = 2 * 60 * 60 * 1000;
+
+function currentBossHuntRefillSlot(now: Date) {
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours() - (now.getHours() % 2), 0, 0, 0).getTime();
+};
+
+let lastKnownBossHuntRefillSlot = 0;
+async function refillBossHuntRuns(client: Client, now: Date) {
+    const slot = currentBossHuntRefillSlot(now);
+    if (slot === lastKnownBossHuntRefillSlot) return;
+
+    const [state] = await query(`SELECT value FROM bot_state WHERE key = 'bosshunt_refill_slot'`) as { value: string | number; }[];
+    if (!state) {
+        await query(`INSERT INTO bot_state(key, value) VALUES ('bosshunt_refill_slot', $1) ON CONFLICT (key) DO NOTHING`, [slot]);
+        lastKnownBossHuntRefillSlot = slot;
+        return;
+    };
+
+    const last = Number(state.value);
+    if (!Number.isFinite(last)) {
+        await query(`UPDATE bot_state SET value = $1 WHERE key = 'bosshunt_refill_slot'`, [slot]);
+        lastKnownBossHuntRefillSlot = slot;
+        return;
+    };
+
+    const refills = Math.floor((slot - last) / BOSSHUNT_REFILL_MS);
+    if (refills < 1) {
+        lastKnownBossHuntRefillSlot = slot;
+        return;
+    };
+
+    await updateUsersAndCache(client, "*", {
+        updates: { bosshuntruns: { type: "set", value: 0 } },
+        condition: `bosshuntruns > 0 AND bosshuntruns <= ${refills}`,
+    });
+    await updateUsersAndCache(client, "*", {
+        updates: { bosshuntruns: { type: "increment", value: -refills } },
+        condition: `bosshuntruns > ${refills}`,
+    });
+    await query(`UPDATE bot_state SET value = $1 WHERE key = 'bosshunt_refill_slot'`, [slot]);
+    lastKnownBossHuntRefillSlot = slot;
+};
+
 const handler: BotHandler = {
     name: "Time",
     once: true,
@@ -84,16 +127,11 @@ const handler: BotHandler = {
             //     await deleteExpiredWorldBosses();
             // };
 
+            // Bosshunt runs refill (catch-up aware, persisted across restarts)
+            await refillBossHuntRuns(client, now);
+
             // Every 2 hours
             if (now.getHours() % 2 === 0 && now.getMinutes() === 0) {
-                // Bosshunt Reset
-                await updateUsersAndCache(client, "*", {
-                    updates: {
-                        bosshuntruns: { type: "increment", value: -1 },
-                    },
-                    condition: "bosshuntruns > 0",
-                });
-
                 // Global World Boss
                 //     const globalBoss = await getGlobalWorldBoss();
                 //     const bossChannel = client.channels.cache.get(GLOBAL_BOSS_CHANNEL_ID);

@@ -405,6 +405,7 @@ export interface UserSchema {
     party: string | null;
     stampedechar: number | null;
     bosshuntchar: number | null;
+    bosshuntchanged: number;
     mailreceived: number;
     eventpts2: number;
     class: number | null;
@@ -429,7 +430,15 @@ export interface UserSchema {
     referred_gems: number;
     referrals_claimed: number;
     passpurchaselimit: number;
+    /** @deprecated Replaced by the per-banner counters below. */
     expity: number;
+    expity_standard: number;
+    expity_rateup: number;
+    expity_limited: number;
+    /** @deprecated Replaced by the per-banner guarantees below. */
+    exguarantee: boolean;
+    exguarantee_rateup: boolean;
+    exguarantee_limited: boolean;
     craze_equipment: Record<string, any>;
     equipment: Record<string, string>;
     trial_equipment: Record<string, any>;
@@ -439,6 +448,7 @@ export interface UserSchema {
     valentine: string | null;
     bosshuntruns: number;
     bosshuntrevreceived: number;
+    bosshuntdamage: number;
     monthlyshop: Record<string, any>;
     itemwishlist: number[];
     stampedeenergy: number;
@@ -781,6 +791,8 @@ export type MatchStats = {
     shieldBreak: number;
     damageFormula: "default" | `log_scale_${number}`;
     allowSelfheal?: boolean;
+    /** Set by gamemodes that support parties (undefined means the mode has no party feature). */
+    partyChars?: IcharInfo[];
 
     sendWarning: ({ content, ephemeral = true }: { content: string, ephemeral?: boolean; }) => void;
 

@@ -4,7 +4,7 @@ import { items } from "./items.js";
 import { classes } from "./classes.js";
 import { userLevel, getItemLevel, getClassLvl } from "./functions.js";
 import { characters } from "./chars.js";
-import { CompactUserSchema, UpdateUserOptions, WeaponSchema, CharacterRarity } from "../types.js";
+import { CompactUserSchema, UpdateUserOptions, WeaponSchema, CharacterRarity, ItemCategory } from "../types.js";
 
 const shardEmojis = {
     "ss": "<:ss_shard:917203009543503892>",
@@ -23,6 +23,85 @@ const ticketEmojis = {
     "c": "<:c_ticket:929420424645853214>",
     "d": "<:d_ticket:929420447102152714>",
 } as const;
+
+const rewardRarities = ["ss", "s", "a", "b", "c", "d"] as const;
+type RewardRarity = typeof rewardRarities[number];
+
+type NewbieIncrementField =
+    | "xp"
+    | "coins"
+    | "gems"
+    | "lootbox"
+    | "expulls"
+    | `${RewardRarity}shard`
+    | `${RewardRarity}ticket`;
+
+type ParsedNewbieReward =
+    | { kind: "increment"; field: NewbieIncrementField; amount: number; }
+    | { kind: "item"; itemId: number; amount: number; };
+
+const grantableItemCategories = new Set<ItemCategory>(["fish", "loot", "consumable", "dungeon access", "rune", "gadget"]);
+
+function parsePositiveAmount(raw: string | undefined): number | null {
+    if (!raw || !/^\d+$/.test(raw)) return null;
+    const amount = Number(raw);
+    return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
+};
+
+export function parseNewbieReward(raw: string): ParsedNewbieReward | null {
+    let match = raw.match(/^xp\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[1]);
+        return amount ? { kind: "increment", field: "xp", amount } : null;
+    };
+
+    match = raw.match(/^coins\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[1]);
+        return amount ? { kind: "increment", field: "coins", amount } : null;
+    };
+
+    match = raw.match(/^gems\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[1]);
+        return amount ? { kind: "increment", field: "gems", amount } : null;
+    };
+
+    match = raw.match(/^ex pull\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[1]);
+        return amount ? { kind: "increment", field: "expulls", amount } : null;
+    };
+
+    match = raw.match(/^lb\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[1]);
+        return amount ? { kind: "increment", field: "lootbox", amount } : null;
+    };
+
+    match = raw.match(/^(ss|s|a|b|c|d) shard\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[2]);
+        return amount ? { kind: "increment", field: `${match[1].toLowerCase() as RewardRarity}shard`, amount } : null;
+    };
+
+    match = raw.match(/^(ss|s|a|b|c|d) ticket\|(\d+)$/i);
+    if (match) {
+        const amount = parsePositiveAmount(match[2]);
+        return amount ? { kind: "increment", field: `${match[1].toLowerCase() as RewardRarity}ticket`, amount } : null;
+    };
+
+    match = raw.match(/^item\|(\d+)\|(\d+)$/i);
+    if (match) {
+        const itemId = Number(match[1]);
+        const amount = parsePositiveAmount(match[2]);
+        const item = Number.isSafeInteger(itemId) ? items[itemId] : undefined;
+        if (!amount || !item || item.id !== itemId || !grantableItemCategories.has(item.category)) return null;
+        return { kind: "item", itemId, amount };
+    };
+
+    return null;
+};
 
 const newbieLock = new Map<string, Promise<void>>();
 
@@ -196,162 +275,171 @@ function addChain(
 
 // Progression
 addChain("progression", "Level Up", (t) => `Reach account level ${t}`, (stats) => accountLevel(stats), [
-    [5, ["xp|50", "coins|500"]],
+    [5, ["xp|50", "coins|500", "ex pull|1"]],
     [10, ["xp|100", "coins|1000"]],
     [15, ["xp|200", "coins|2000", "a ticket|1"]],
-    [25, ["xp|300", "coins|3000", "a ticket|2"]],
-    [40, ["xp|400", "coins|5000", "s ticket|1"]],
-    [50, ["xp|500", "coins|10000", "ss ticket|1"]],
+    [25, ["xp|300", "coins|3000", "s ticket|1"]],
+    [40, ["xp|400", "coins|5000", "lb|1"]],
+    [50, ["xp|500", "coins|10000", "ex pull|1"]],
 ]);
 
 addChain("progression", "Master of Classes", (t) => `Reach a combined master class level of ${t}`, (stats) => masterClassLevel(stats), [
-    [25, ["xp|50", "coins|500"]],
+    [25, ["xp|50", "coins|500", "ex pull|1"]],
     [50, ["xp|100", "coins|1000"]],
     [150, ["xp|200", "coins|1500", "a ticket|1"]],
-    [250, ["xp|300", "coins|2000", "a ticket|2"]],
-    [350, ["xp|450", "coins|3000", "s ticket|1"]],
-    [500, ["xp|600", "coins|5000", "ss ticket|1"]],
+    [250, ["xp|300", "coins|2000", "s ticket|1"]],
+    [350, ["xp|450", "coins|3000", "lb|1"]],
+    [500, ["xp|600", "coins|5000", "ex pull|1"]],
 ]);
 
 addChain("progression", "Refinement", (t) => `Refine a character to level ${t}`, (stats) => maxRefinement(stats), [
-    [2, ["xp|50", "coins|500"]],
-    [3, ["xp|100", "coins|1000", "b shard|4"]],
-    [4, ["xp|150", "coins|2000", "b shard|8"]],
-    [5, ["xp|250", "coins|3000", "a shard|4"]],
-    [6, ["xp|400", "coins|5000", "a shard|8"]],
+    [2, ["xp|50", "coins|500", "ex pull|1"]],
+    [3, ["xp|100", "coins|1000", "b shard|8"]],
+    [4, ["xp|150", "coins|2000", "a shard|8"]],
+    [5, ["xp|250", "coins|3000", "s shard|8"]],
+    [6, ["xp|400", "coins|5000", "ex pull|1"]],
 ]);
 
 addChain("progression", "Masterwork", (t) => `Max-refine ${t} character${t > 1 ? "s" : ""}`, (stats) => maxRefinedCount(stats), [
-    [2, ["xp|75", "coins|1000"]],
-    [5, ["xp|150", "coins|2500", "a shard|8"]],
-    [10, ["xp|300", "coins|5000", "s shard|4"]],
-    [15, ["xp|450", "coins|7500", "s shard|8"]],
-    [20, ["xp|600", "coins|10000", "ss shard|4"]],
-    [30, ["xp|800", "coins|15000", "ss shard|8"]],
+    [2, ["xp|75", "coins|1000", "ex pull|1"]],
+    [5, ["xp|150", "coins|2500", "s shard|4"]],
+    [7, ["xp|300", "coins|5000", "s shard|8"]],
+    [10, ["xp|450", "coins|7500", "ss shard|4"]],
+    [15, ["xp|600", "coins|10000", "ss shard|8"]],
+    [20, ["xp|800", "coins|15000", "ex pull|1"]],
 ]);
 
 addChain("progression", "Unboxing", (t) => `Open ${t} lootboxes`, (stats) => stats.lootboxesopened, [
-    [2, ["xp|20", "coins|200"]],
-    [5, ["xp|40", "coins|400"]],
-    [10, ["xp|75", "coins|600"]],
-    [20, ["xp|125", "coins|1000"]],
+    [2, ["xp|20", "coins|200", "ex pull|1"]],
+    [5, ["xp|40", "coins|400", "gems|1"]],
+    [10, ["xp|75", "coins|600", "gems|1"]],
+    [20, ["xp|125", "coins|1000", "gems|2"]],
     [40, ["xp|200", "coins|2000", "gems|2"]],
-    [80, ["xp|300", "coins|3000", "gems|4"]],
+    [80, ["xp|300", "coins|3000", "ex pull|1"]],
 ]);
 
 // Characters
-addChain("characters", "Rarity Collector", (t) => `Own ${t} character${t > 1 ? "s" : ""} of every rarity`, (_stats, data) => minRarityCount(data), [
-    [2, ["xp|50", "coins|500"]],
-    [5, ["xp|100", "coins|1000", "a ticket|2"]],
-    [10, ["xp|200", "coins|2000", "s ticket|1"]],
-    [20, ["xp|350", "coins|3500", "s ticket|2"]],
+addChain("characters", "Rarity Collector", (t) => `Own ${t} character${t > 1 ? "s" : ""} of every rarity (excluding EX & VIP)`, (_stats, data) => minRarityCount(data), [
+    [2, ["xp|50", "coins|500", "ex pull|1"]],
+    [5, ["xp|100", "coins|1000", "b ticket|1"]],
+    [10, ["xp|200", "coins|2000", "a ticket|1"]],
+    [20, ["xp|350", "coins|3500", "s ticket|1"]],
     [30, ["xp|500", "coins|5000", "ss ticket|1"]],
-    [50, ["xp|750", "coins|7500", "ss ticket|2"]],
+    [50, ["xp|750", "coins|7500", "ex pull|1"]],
 ]);
 
 addChain("characters", "Collector", (t) => `Own ${t} characters`, (_stats, data) => data.ownedCharacterIds.length, [
-    [25, ["xp|25", "coins|500"]],
+    [25, ["xp|25", "coins|500", "ex pull|1"]],
     [50, ["xp|50", "coins|1000"]],
     [100, ["xp|100", "coins|1500", "a ticket|1"]],
-    [200, ["xp|200", "coins|2000", "a ticket|2"]],
-    [300, ["xp|300", "coins|3000", "s ticket|1"]],
-    [400, ["xp|500", "coins|5000", "s ticket|2"]],
+    [200, ["xp|200", "coins|2000", "s ticket|1"]],
+    [300, ["xp|300", "coins|3000", "lb|1"]],
+    [400, ["xp|500", "coins|5000", "ex pull|1"]],
 ]);
 
 addChain("characters", "EX Hunter", (t) => `Own ${t} EX-tier character${t > 1 ? "s" : ""}`, (_stats, data) => ownedExCount(data), [
-    [1, ["xp|75", "coins|1000", "gems|2"]],
-    [2, ["xp|150", "coins|2000", "gems|3"]],
-    [3, ["xp|250", "coins|3000", "gems|4"]],
-    [4, ["xp|400", "coins|5000", "gems|5"]],
+    [1, ["xp|75", "coins|1000", "ex pull|1"]],
+    [2, ["xp|150", "coins|2000", "gems|2"]],
+    [3, ["xp|250", "coins|3000", "gems|3"]],
+    [4, ["xp|400", "coins|5000", "gems|4"]],
     [5, ["xp|600", "coins|7500", "gems|5"]],
-    [6, ["xp|900", "coins|10000", "gems|5"]],
+    [6, ["xp|900", "coins|10000", "ex pull|1"]],
 ]);
 
 addChain("characters", "A ticket to Camelot", (t) => `Open ${t} tickets`, (stats) => stats.ticketsopened, [
-    [5, ["xp|25", "coins|250"]],
-    [15, ["xp|50", "coins|500"]],
-    [25, ["xp|100", "coins|1000"]],
-    [35, ["xp|150", "coins|1500", "a shard|4"]],
-    [50, ["xp|250", "coins|2500", "s shard|4"]],
-    [100, ["xp|400", "coins|4000", "ss shard|4"]],
+    [5, ["xp|25", "coins|250", "ex pull|1"]],
+    [15, ["xp|50", "coins|500", "b shard|4"]],
+    [25, ["xp|100", "coins|1000", "a shard|4"]],
+    [35, ["xp|150", "coins|1500", "s shard|4"]],
+    [50, ["xp|250", "coins|2500", "ss shard|4"]],
+    [100, ["xp|400", "coins|4000", "ex pull|1"]],
 ]);
 
 // Dungeon
 addChain("dungeon", "Sweep the floors", (t) => `Clear dungeon floor ${t}`, (stats) => currentDungeonFloor(stats), [
-    [5, ["xp|50", "coins|500"]],
-    [10, ["xp|100", "coins|1000", "c ticket|2"]],
-    [20, ["xp|200", "coins|2000", "b ticket|1"]],
-    [30, ["xp|350", "coins|3500", "b ticket|2"]],
-    [40, ["xp|500", "coins|5000", "a ticket|1"]],
-    [50, ["xp|750", "coins|7500", "a ticket|2"]],
+    [5, ["xp|50", "coins|500", "ex pull|1"]],
+    [10, ["xp|100", "coins|1000", "item|35|15"]],
+    [20, ["xp|200", "coins|2000", "item|35|15"]],
+    [30, ["xp|350", "coins|3500", "item|35|15"]],
+    [40, ["xp|500", "coins|5000", "item|36|15"]],
+    [50, ["xp|750", "coins|7500", "item|36|15"]],
 ]);
 
 addChain("dungeon", "Dungeon Delver", (t) => `Win ${t} dungeon battles`, (stats) => totalDungeonWins(stats), [
-    [20, ["xp|50", "coins|500"]],
-    [40, ["xp|100", "coins|700"]],
+    [20, ["xp|50", "coins|500", "ex pull|1"]],
+    [40, ["xp|100", "coins|700", "d shard|4"]],
     [80, ["xp|200", "coins|1000", "c shard|4"]],
     [160, ["xp|350", "coins|1500", "b shard|4"]],
     [320, ["xp|500", "coins|2000", "a shard|4"]],
-    [500, ["xp|750", "coins|4000", "s shard|4"]],
+    [500, ["xp|750", "coins|4000", "ex pull|1"]],
 ]);
 
 addChain("dungeon", "Crafter", (t) => `Have ${t} crafting items combined`, (stats) => craftingCount(stats), [
-    [50, ["xp|300", "coins|500", "b shard|4"]],
-    [100, ["xp|300", "coins|1000", "b shard|8"]],
-    [150, ["xp|300", "coins|1500", "a shard|4"]],
-    [200, ["xp|300", "coins|2000", "a shard|8"]],
-    [250, ["xp|300", "coins|2500", "s shard|4"]],
-    [400, ["xp|300", "coins|3000", "s shard|8"]],
+    [50, ["xp|300", "coins|500", "ex pull|1"]],
+    [100, ["xp|300", "coins|1000", "item|52|10"]],
+    [150, ["xp|300", "coins|1500", "item|53|10"]],
+    [200, ["xp|300", "coins|2000", "item|54|10"]],
+    [250, ["xp|300", "coins|2500", "item|55|10"]],
+    [400, ["xp|300", "coins|3000", "ex pull|1"]],
 ]);
 
 addChain("dungeon", "Hidden secrets", (t) => `Have ${t} entry item${t > 1 ? "s" : ""}`, (stats) => entryItemCount(stats), [
-    [1, ["xp|100", "coins|1000", "gems|2"]],
-    [2, ["xp|200", "coins|2000", "gems|3"]],
+    [1, ["xp|100", "coins|1000", "gems|5"]],
+    [2, ["xp|200", "coins|2000", "gems|5"]],
     [3, ["xp|300", "coins|3000", "gems|5"]],
 ]);
 
 // Chest
 addChain("chest", "Weapon Smithing", (t) => `Have a weapon at level ${t}`, (_stats, data) => maxWeaponLevel(data), [
-    [20, ["xp|50", "coins|500"]],
-    [40, ["xp|100", "coins|1000", "a shard|4"]],
-    [60, ["xp|200", "coins|2000", "s shard|4"]],
-    [80, ["xp|350", "coins|3000", "s shard|8"]],
-    [100, ["xp|500", "coins|5000", "ss shard|4"]],
-    [120, ["xp|750", "coins|7000", "ss shard|8"]],
+    [20, ["xp|50", "coins|500", "ex pull|1"]],
+    [40, ["xp|100", "coins|1000", "item|52|10"]],
+    [60, ["xp|200", "coins|2000", "item|53|10"]],
+    [80, ["xp|350", "coins|3000", "item|54|10"]],
+    [100, ["xp|500", "coins|5000", "item|55|10"]],
+    [120, ["xp|750", "coins|7000", "ex pull|1"]],
 ]);
 
 addChain("chest", "Armguard", (t) => `Have a helmet or glove at level ${t}`, (_stats, data) => maxArmorLevel(data, ["helmet", "gloves"]), [
-    [20, ["xp|50", "coins|500"]],
-    [40, ["xp|100", "coins|1000", "b shard|4"]],
-    [60, ["xp|200", "coins|2000", "a shard|4"]],
-    [80, ["xp|350", "coins|3500", "a shard|8"]],
-    [100, ["xp|500", "coins|5000", "s shard|4"]],
-    [120, ["xp|750", "coins|7500", "s shard|8"]],
+    [20, ["xp|50", "coins|500", "ex pull|1"]],
+    [40, ["xp|100", "coins|1000", "item|52|10"]],
+    [60, ["xp|200", "coins|2000", "item|53|10"]],
+    [80, ["xp|350", "coins|3000", "item|54|10"]],
+    [100, ["xp|500", "coins|5000", "item|55|10"]],
+    [120, ["xp|750", "coins|7000", "ex pull|1"]],
 ]);
 
 addChain("chest", "Raiment", (t) => `Have a robe or boot at level ${t}`, (_stats, data) => maxArmorLevel(data, ["cuirass", "boots"]), [
-    [20, ["xp|50", "coins|500"]],
-    [40, ["xp|100", "coins|1000", "b shard|4"]],
-    [60, ["xp|200", "coins|2000", "a shard|4"]],
-    [80, ["xp|350", "coins|3500", "a shard|8"]],
-    [100, ["xp|500", "coins|5000", "s shard|4"]],
-    [120, ["xp|750", "coins|7500", "s shard|8"]],
+    [20, ["xp|50", "coins|500", "ex pull|1"]],
+    [40, ["xp|100", "coins|1000", "item|52|10"]],
+    [60, ["xp|200", "coins|2000", "item|53|10"]],
+    [80, ["xp|350", "coins|3000", "item|54|10"]],
+    [100, ["xp|500", "coins|5000", "item|55|10"]],
+    [120, ["xp|750", "coins|7000", "ex pull|1"]],
 ]);
 
 addChain("chest", "Ring Ascension", (t) => `Have a ring at ascension ${t}`, (_stats, data) => maxRingAscension(data), [
-    [2, ["xp|150", "coins|1000", "a shard|4"]],
-    [3, ["xp|300", "coins|2000", "a shard|8"]],
-    [4, ["xp|500", "coins|3000", "s shard|4"]],
+    [2, ["xp|150", "coins|1000", "gems|2"]],
+    [3, ["xp|300", "coins|2000", "gems|2"]],
+    [4, ["xp|500", "coins|3000", "lb|1"]],
 ]);
 
 addChain("chest", "Chest Opener", (t) => `Open ${t} chests`, (stats) => stats.chestsopened, [
-    [25, ["xp|25", "coins|500"]],
-    [50, ["xp|50", "coins|1000"]],
-    [100, ["xp|100", "coins|1500", "a ticket|1"]],
-    [200, ["xp|200", "coins|2000", "a ticket|2"]],
-    [300, ["xp|300", "coins|2500", "s ticket|1"]],
-    [400, ["xp|500", "coins|3000", "s ticket|2"]],
+    [25, ["xp|25", "coins|500", "ex pull|1"]],
+    [50, ["xp|50", "coins|1000", "item|52|10"]],
+    [100, ["xp|100", "coins|1500", "item|53|10"]],
+    [200, ["xp|200", "coins|2000", "item|54|10"]],
+    [300, ["xp|300", "coins|2500", "item|55|10"]],
+    [400, ["xp|500", "coins|3000", "ex pull|1"]],
 ]);
+
+const invalidNewbieRewards = newbieQuests.flatMap((quest) =>
+    quest.rewards
+        .filter((reward) => !parseNewbieReward(reward))
+        .map((reward) => `- ${quest.title} (id ${quest.id}): "${reward}"`)
+);
+if (invalidNewbieRewards.length) {
+    throw new Error(`Invalid beginner quest rewards:\n${invalidNewbieRewards.join("\n")}`);
+};
 
 export const getNewbieQuests = (category: NewbieCategory) => newbieQuests.filter((e) => e.category === category);
 
@@ -365,21 +453,38 @@ export function newbieChains(category: NewbieCategory) {
     return chains;
 };
 
+function formatNewbieReward(reward: ParsedNewbieReward): string {
+    if (reward.kind === "item") return `**${reward.amount}** ${items[reward.itemId].emoji}`;
+
+    switch (reward.field) {
+        case "xp": return `**${reward.amount}** XP`;
+        case "coins": return `**${reward.amount}** <:coins:872926669055356939>`;
+        case "gems": return `**${reward.amount}** <:genesis_gems:1034179687720681492>`;
+        case "lootbox": return `**${reward.amount}** ${reward.amount === 1 ? "lootbox" : "lootboxes"}`;
+        case "expulls": return `**${reward.amount}** <a:EXTRA:1138530846144462968> Pull`;
+        default: {
+            if (reward.field.endsWith("shard")) {
+                const rarity = reward.field.slice(0, -"shard".length) as keyof typeof shardEmojis;
+                return `**${reward.amount}** ${shardEmojis[rarity]}`;
+            };
+            const rarity = reward.field.slice(0, -"ticket".length) as keyof typeof ticketEmojis;
+            return `**${reward.amount}** ${ticketEmojis[rarity]}`;
+        };
+    };
+};
+
 export function formatNewbieRewards(quest: newbieQuestInfo): string {
     const parts: string[] = [];
-    for (const rew of quest.rewards) {
-        const amount = rew.split("|")[1];
-        if (/^xp\|/i.test(rew)) parts.push(`**${amount}** XP`);
-        else if (rew.match(/coins/i)) parts.push(`**${amount}** <:coins:872926669055356939>`);
-        else if (rew.match(/gems/i)) parts.push(`**${amount}** <:genesis_gems:1034179687720681492>`);
-        else if (rew.match(/shard/i)) parts.push(`**${amount}** ${shardEmojis[rew.split(" ")[0] as keyof typeof shardEmojis]}`);
-        else if (rew.match(/ticket/i)) parts.push(`**${amount}** ${ticketEmojis[rew.split(" ")[0] as keyof typeof ticketEmojis]}`);
-        else if (rew.match(/lb\|/i)) parts.push(`**${amount}** ${amount === "1" ? "lootbox" : "lootboxes"}`);
+    for (const raw of quest.rewards) {
+        const reward = parseNewbieReward(raw);
+        parts.push(reward ? formatNewbieReward(reward) : `⚠ invalid reward \`${raw}\``);
     };
     return parts.join(", ") || "None";
 };
 
-export async function claimNewbieQuests(client: Client, userId: string, quests: newbieQuestInfo[]): Promise<newbieQuestInfo[]> {
+export type ClaimNewbieResult = { claimed: newbieQuestInfo[]; failed: boolean; stats?: CompactUserSchema; };
+
+export async function claimNewbieQuests(client: Client, userId: string, quests: newbieQuestInfo[]): Promise<ClaimNewbieResult> {
     // Serialize claims per user so two quest messages can't pay out twice.
     const previousUpdate = newbieLock.get(userId);
     let release!: () => void;
@@ -390,37 +495,74 @@ export async function claimNewbieQuests(client: Client, userId: string, quests: 
     try {
         // Re-read inside the lock: the caller's snapshot may predate a concurrent claim.
         const freshStats = await getUserSchema(userId);
-        if (!freshStats) return [];
-        const freshData: NewbieData = {
-            weapons: await getUserWeapons(userId),
-            ownedCharacterIds: await getOwnedCharacterIds(userId, freshStats.chars),
+        if (!freshStats) return { claimed: [], failed: true };
+        const [weapons, ownedCharacterIds] = await Promise.all([
+            getUserWeapons(userId),
+            getOwnedCharacterIds(userId, freshStats.chars),
+        ]);
+        const freshData: NewbieData = { weapons, ownedCharacterIds };
+
+        const pending: { quest: newbieQuestInfo; rewards: ParsedNewbieReward[]; }[] = [];
+        const invalidRewards: string[] = [];
+
+        for (const quest of quests) {
+            if (freshStats.newbie.includes(quest.id) || !quest.check(freshStats, freshData)) continue;
+            const parsed = quest.rewards.map(parseNewbieReward);
+            if (parsed.some((reward) => reward === null)) {
+                parsed.forEach((reward, index) => {
+                    if (!reward) invalidRewards.push(`- ${quest.title} (id ${quest.id}): "${quest.rewards[index]}"`);
+                });
+                continue;
+            };
+            pending.push({ quest, rewards: parsed as ParsedNewbieReward[] });
         };
 
-        const claimable = quests.filter((quest) => !freshStats.newbie.includes(quest.id) && quest.check(freshStats, freshData));
-        if (!claimable.length) return [];
+        if (invalidRewards.length) {
+            console.error(`Invalid beginner quest rewards for ${userId}:\n${invalidRewards.join("\n")}`);
+            return { claimed: [], failed: true };
+        };
+        if (!pending.length) {
+            client.userCache.delete(userId);
+            return { claimed: [], failed: false, stats: freshStats };
+        };
 
         const increments: Record<string, number> = {};
         const bump = (key: string, amount: number) => increments[key] = (increments[key] ?? 0) + amount;
+        const itemRewards: Record<string, number> = {};
 
-        for (const quest of claimable) {
-            for (const rew of quest.rewards) {
-                const amount = parseInt(rew.split("|")[1]) || 0;
-                if (/^xp\|/i.test(rew)) bump("xp", amount);
-                else if (rew.match(/coins/i)) bump("coins", amount);
-                else if (rew.match(/gems/i)) bump("gems", amount);
-                else if (rew.match(/shard/i)) bump(`${rew.split(" ")[0]}shard`, amount);
-                else if (rew.match(/ticket/i)) bump(`${rew.split(" ")[0]}ticket`, amount);
-                else if (rew.match(/lb\|/i)) bump("lootbox", amount);
+        for (const { rewards } of pending) {
+            for (const reward of rewards) {
+                if (reward.kind === "item") {
+                    const itemId = String(reward.itemId);
+                    itemRewards[itemId] = (itemRewards[itemId] ?? 0) + reward.amount;
+                } else {
+                    bump(reward.field, reward.amount);
+                };
             };
         };
 
+        const claimable = pending.map(({ quest }) => quest);
         const updates: UpdateUserOptions = { newbie: { type: "append_unique", value: claimable.map((quest) => quest.id) } };
         Object.entries(increments).forEach(([key, value]) => {
             if (value > 0) (updates as Record<string, { type: "increment"; value: number; }>)[key] = { type: "increment", value };
         });
+        if (Object.keys(itemRewards).length) updates.items = { type: "merge_json", value: itemRewards };
 
-        await updateUsersAndCache(client, userId, { updates });
-        return claimable;
+        const applied = await updateUsersAndCache(client, userId, { updates, evictCache: true });
+        if (!applied) {
+            // The write may have succeeded even if the cache update threw, so confirm against the database.
+            const confirmed = await getUserSchema(userId);
+            if (!confirmed || !claimable.every((quest) => confirmed.newbie.includes(quest.id))) {
+                console.error(`Failed to apply beginner quest rewards for ${userId} (applied rows: ${applied ?? "undefined"})`);
+                return { claimed: [], failed: true };
+            };
+        };
+        client.userCache.delete(userId);
+
+        return { claimed: claimable, failed: false };
+    } catch (error) {
+        console.error(`Failed to claim beginner quests for ${userId}:`, error);
+        return { claimed: [], failed: true };
     } finally {
         release();
         if (newbieLock.get(userId) === currentUpdate) newbieLock.delete(userId);

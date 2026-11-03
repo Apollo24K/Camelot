@@ -206,11 +206,6 @@ const commands = [
 				.addStringOption(option => option.setName('item').setDescription('select an item').setRequired(true).setAutocomplete(true))
 				.addStringOption(option => option.setName('amount').setDescription('Amount to purchase | Keywords: max').setRequired(false)))
 	}.data.toJSON(),
-	// {
-	// 	data: new SlashCommandBuilder()
-	// 		.setName('calendar')
-	// 		.setDescription('Monthly log-in rewards'),
-	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('camelot')
@@ -301,8 +296,8 @@ const commands = [
 		// valentines-chocolate: Indulge in a sweet treat! 🍫 🎀
 		// egg-hunt: See what you find! 🧺 🐰
 		data: new SlashCommandBuilder()
-			.setName('celebrate')
-			.setDescription('Celebrate our 4th Anniversary! ✨')
+			.setName('trick-or-treat')
+			.setDescription('Trick, or treat? 👻 🍬')
 		// .addUserOption(option => option.setName('give').setDescription('Gift someone some valentine\'s chocolate! Can only be used once!'))
 		// .addStringOption(option => option.setName('message').setDescription('Send a message together with your valentine\'s chocolate!')),
 	}.data.toJSON(),
@@ -467,8 +462,7 @@ const commands = [
 	{
 		data: new SlashCommandBuilder()
 			.setName('ex')
-			.setDescription('Pull for a chance of getting an EX character!')
-			.addSubcommand((subcommand) => subcommand.setName('pull').setDescription('Pull for a chance of getting an EX character!')),
+			.setDescription('Pull for a chance of getting an EX character on the Standard, Rate-up or Event banner!'),
 	}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
@@ -575,7 +569,7 @@ const commands = [
 			.setName('give')
 			.setDescription('Give coins or characters to other players')
 			.addSubcommand((subcommand) => subcommand.setName('coins').setDescription('Give someone coins').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addIntegerOption(option => option.setName('amount').setDescription('How much coins should be sent?').setRequired(true)))
-			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Give someone characters').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addStringOption(option => option.setName('characters').setDescription('Select characters separated by comma (,)').setRequired(true)))
+			.addSubcommand((subcommand) => subcommand.setName('characters').setDescription('Give someone characters').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addStringOption(option => option.setName('characters').setDescription('Select characters separated by comma (,)').setRequired(true)).addIntegerOption(option => option.setName('quantity').setDescription('How many copies of each character should be given? | Default: 1').setRequired(false).setMinValue(1).setMaxValue(200)))
 			.addSubcommand((subcommand) => subcommand.setName('premium').setDescription('Give someone premium (premium only)').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)).addIntegerOption(option => option.setName('tier').setDescription('Select the tier you want to gift').setRequired(true)))
 			.addSubcommand((subcommand) => subcommand.setName('pass').setDescription('Give someone a premium pass').addUserOption(option => option.setName('user').setDescription('Select a user').setRequired(true)))
 	}.data.toJSON(),
@@ -1527,7 +1521,18 @@ const commands = [
 	// 					)
 	// 			)
 	// 		)
-	// }.data.toJSON(),
+	// 		.addSubcommand(subcommand => subcommand
+	// 			.setName('dungeon')
+	// 			.setDescription('Set your dungeon floor between 1 to 300')
+	// 			.addIntegerOption(option =>
+	// 				option.setName('value')
+	// 					.setDescription('The level to set | 1-300')
+	// 					.setRequired(true)
+	// 					.setMinValue(1)
+	// 					.setMaxValue(300)
+	// 			)
+	// 		)
+	//}.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('settings')
@@ -1597,12 +1602,12 @@ const commands = [
 			.setDescription('A recurring special battle event')
 			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the stampede overview and go directly into battle').setRequired(false))
 	}.data.toJSON(),
-	{
-		data: new SlashCommandBuilder()
-			.setName('phantasm')
-			.setDescription('Phantasmagoria boss challenges')
-			.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the overview and go directly into battle').setRequired(false)),
-	}.data.toJSON(),
+	// {
+	// 	data: new SlashCommandBuilder()
+	// 		.setName('phantasm')
+	// 		.setDescription('Phantasmagoria boss challenges')
+	// 		.addBooleanOption(option => option.setName('skip-overview').setDescription('Skip the overview and go directly into battle').setRequired(false)),
+	// }.data.toJSON(),
 	{
 		data: new SlashCommandBuilder()
 			.setName('stats')

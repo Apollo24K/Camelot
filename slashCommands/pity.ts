@@ -2,6 +2,7 @@ import { EmbedBuilder } from "discord.js";
 import { characters } from "../Modules/chars";
 import { SlashCommand } from '../types';
 import { getOwnedCharacterIds, getUserSchema } from '../Modules/queries';
+import { exBanners, HARD_PITY } from '../Modules/banners';
 
 const exportCommand: SlashCommand = {
     name: 'pity',
@@ -32,7 +33,13 @@ const exportCommand: SlashCommand = {
         const Embed = new EmbedBuilder()
             .setColor(0xbbffff)
             .setAuthor({ name: `${user.username}'s profile`, iconURL: user.displayAvatarURL({ size: 1024 }) })
-            .setDescription(`Since last <:STier:869316518675095552> pull: **${stats.lasts}**/${sPit}\nSince last <:SSTier:869316489931546644> pull: **${stats.lastss}**/${ssPit}\n\nYou have pulled a total of **${stats.pullstotal}** times!`)
+            .setDescription(`Since last <:STier:869316518675095552> pull: **${stats.lasts}**/${sPit}\nSince last <:SSTier:869316489931546644> pull: **${stats.lastss}**/${ssPit}\n\n` +
+                `${exBanners.standard.name} <a:EXTRA:1138530846144462968> pity: **${stats.expity_standard}**/${HARD_PITY}\n` +
+                `${exBanners.rateup.name} <a:EXTRA:1138530846144462968> pity: **${stats.expity_rateup}**/${HARD_PITY}\n` +
+                `${exBanners.limited.name} <a:EXTRA:1138530846144462968> pity: **${stats.expity_limited}**/${HARD_PITY}\n` +
+                `${stats.exguarantee_rateup ? "\nYour next <a:EXTRA:1138530846144462968> on the Rate-up banner is guaranteed to be the on-banner character!" : ""}` +
+                `${stats.exguarantee_limited ? "\nYour next <a:EXTRA:1138530846144462968> on the Event banner is guaranteed to be the on-banner character!" : ""}\n\n` +
+                `You have pulled a total of **${stats.pullstotal}** times!`)
             .setThumbnail(thumbnail);
         return interaction.reply({ embeds: [Embed] });
     },

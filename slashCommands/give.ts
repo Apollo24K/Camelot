@@ -6,7 +6,7 @@ import charInfo, { characters } from "../Modules/chars";
 import { userLevel, search, formatNumberWithQuotes, searchItem } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { CharacterSchema, CompactUserSchema, SlashCommand } from '../types';
-import { getCharacterSchemasOfUser, getUserSchema, insertNewTrade, transferCharacter, updateUsersAndCache } from '../Modules/queries';
+import { getCharacterSchemasOfUser, getUserSchema, insertNewTrade, transferCharacterCopies, updateUsersAndCache } from '../Modules/queries';
 // import { gadgetInfo } from "../Modules/items";
 
 type GiftCharacter = {
@@ -112,8 +112,11 @@ const exportCommand: SlashCommand = {
             if (userLevel(author.schema.xp) < 25) return interaction.reply(`You must be level 25 or higher to give characters`);
 
             const choice = [...new Set((interaction.options.getString('characters') || "").split(",").map((e) => e.trim()))];
+            const quantity = interaction.options.getInteger('quantity') ?? 1;
+            if (quantity < 1) return interaction.reply(`You need to give at least 1 copy of each character`);
 
             const stats = author.schema;
+            const formatCopy = (entry: GiftCharacter) => `${entry.print === undefined && quantity > 1 ? `${quantity}x ` : ""}${formatGiftCharacter(entry)}`;
 
             let hasLockedCharacters = false;
             let hasUntradeableCharacters = false;
@@ -128,9 +131,14 @@ const exportCommand: SlashCommand = {
             };
 
             if (chars.length === 0) return interaction.reply(hasLockedCharacters ? "⚠️ You're trying to give locked characters, please unlock them first." : hasUntradeableCharacters ? "⚠️ You're trying to give VIP characters that are not tradeable." : `No match found`);
-            if (chars.length > 200) return interaction.reply(`You can't give more than 200 chars at once`);
 
-            const charList = chars.map((c) => formatGiftCharacter(c).slice(0, 24)).join(", ");
+            const missingCopies = chars.find((entry) => (entry.print !== undefined ? 1 : stats.chars.filter((id) => id === entry.char.id).length) < quantity);
+            if (missingCopies) return interaction.reply(`You don't have **${quantity}x** **${formatGiftCharacter(missingCopies)}** (you have **${missingCopies.print !== undefined ? 1 : stats.chars.filter((id) => id === missingCopies.char.id).length}**)`);
+
+            const totalCopies = chars.reduce((total, entry) => total + (entry.print !== undefined ? 1 : quantity), 0);
+            if (totalCopies > 200) return interaction.reply(`You can't give more than 200 chars at once`);
+
+            const charList = chars.map((c) => formatCopy(c).slice(0, 24)).join(", ");
             return interaction.reply({ content: `Are you sure you want to give **${charList.length > 1800 ? (charList + " __+ more__") : charList}** to **${user.username}**?${hasLockedCharacters ? "\n⚠️ You're trying to give locked characters, please unlock them first." : ""}${hasUntradeableCharacters ? "\n⚠️ Some VIP characters were skipped because they are not tradeable." : ""}${userLevel(_stats.xp) < 25 ? `\n⚠️ **${user.username}** is below level 25 and won't be able to use \`/give\` commands until then.` : ""}`, components: [OfferRow] }).then(msg => {
 
                 const confirm = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id && r.customId === "confirm", componentType: ComponentType.Button, time: 15000 });
@@ -154,42 +162,47 @@ const exportCommand: SlashCommand = {
                         if (interaction.channel?.isSendable()) interaction.channel.send(hasLockedCharacters ? "⚠️ You've tried giving locked characters, please unlock them first." : `No match found`);
                         return;
                     };
-                    if (chars.length > 200) return interaction.reply(`You can't give more than 200 chars at once`);
+
+                    const missingCopies = chars.find((entry) => (entry.print !== undefined ? 1 : stats.chars.filter((id) => id === entry.char.id).length) < quantity);
+                    if (missingCopies) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have **${quantity}x** **${formatGiftCharacter(missingCopies)}** (you have **${missingCopies.print !== undefined ? 1 : stats.chars.filter((id) => id === missingCopies.char.id).length}**)`);
+                        return;
+                    };
+
+                    const totalCopies = chars.reduce((total, entry) => total + (entry.print !== undefined ? 1 : quantity), 0);
+                    if (totalCopies > 200) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You can't give more than 200 chars at once`);
+                        return;
+                    };
 
                     // Achievements
                     achievements[30].check(interaction, interaction.user, chars.some((e) => e.char.rarity === "S")), achievements[31].check(interaction, interaction.user, chars.some((e) => e.char.rarity === "SS")); // Shared Happiness
                     achievements[32].check(interaction, interaction.user, chars.some((e) => stats.chars[stats.chars.length - 1] === e.char.id && e.char.rarity === "SS")); // Shared Happiness
 
+                    const normalCharacterIds = chars.filter((entry) => entry.print === undefined).flatMap((entry) => Array(quantity).fill(entry.char.id));
+                    const printedChars = chars.filter((entry) => entry.print !== undefined);
+
+                    // Update users table
+                    const transferred = await transferCharacterCopies(interaction.user.id, user.id, normalCharacterIds, printedChars.map((entry) => ({ charid: entry.char.id, print: entry.print! })));
+                    if (!transferred) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send("Your character inventory changed. Please try again.");
+                        return;
+                    };
+
+                    interaction.client.userCache.delete(interaction.user.id);
+                    interaction.client.userCache.delete(user.id);
+
                     for (const char of chars) {
                         // Log Trades
                         if (char.char.rarity === "SS" || char.char.rarity === "EX" || char.print !== undefined) {
-                            await insertNewTrade(interaction.user.id, user.id, "char", char.char.id);
+                            for (let i = 0; i < (char.print !== undefined ? 1 : quantity); i++) {
+                                await insertNewTrade(interaction.user.id, user.id, "char", char.char.id);
+                            };
                         };
                     };
 
-                    const normalChars = chars.filter((e) => e.print === undefined);
-                    const printedChars = chars.filter((e) => e.print !== undefined);
-
-                    // Update users table
-                    if (normalChars.length > 0) {
-                        await updateUsersAndCache(interaction.client, interaction.user.id, {
-                            updates: {
-                                chars: { type: 'remove', value: normalChars.map((e) => e.char.id) },
-                            },
-                        });
-                        await updateUsersAndCache(interaction.client, user.id, {
-                            updates: {
-                                chars: { type: 'append', value: normalChars.map((e) => e.char.id) },
-                            },
-                        });
-                    };
-
-                    for (const entry of printedChars) {
-                        await transferCharacter(user.id, entry.char.id, entry.print!);
-                    };
-
-                    const charList = chars.map((c) => formatGiftCharacter(c).slice(0, 24)).join(", ");
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`**${charList.length > 1800 ? (charList + " __+ more__") : charList}** ${chars.length === 1 ? "was" : "were"} gifted to **${user.toString()}**`);
+                    const charList = chars.map((c) => formatCopy(c).slice(0, 24)).join(", ");
+                    if (interaction.channel?.isSendable()) interaction.channel.send(`**${charList.length > 1800 ? (charList + " __+ more__") : charList}** ${chars.length === 1 && quantity === 1 ? "was" : "were"} gifted to **${user.toString()}**`);
 
                     // Achievements
                     achievements[1].check(interaction, user), achievements[2].check(interaction, user), achievements[3].check(interaction, user); // Collector
@@ -199,7 +212,7 @@ const exportCommand: SlashCommand = {
                     const chnl = interaction.client.channels.cache.find(channel => channel.id === "1042922243933622362");
                     const Embed = new EmbedBuilder()
                         .setColor(0xbbffff)
-                        .setDescription(`${interaction.user.tag} sent ${chars.map((entry) => `**${characters[entry.char.id].rarity}** **${formatGiftCharacter(entry).slice(0, 22)}**`).join(", ")} to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
+                        .setDescription(`${interaction.user.tag} sent ${chars.map((entry) => `**${characters[entry.char.id].rarity}** **${formatCopy(entry).slice(0, 22)}**`).join(", ")} to **${user.tag}**\n${interaction.user.toString()} ➜ ${interaction.user.id}\n${user.toString()} ➜ ${user.id}`);
                     if (chnl?.isSendable()) chnl.send({ embeds: [Embed] });
                 });
 
@@ -313,23 +326,46 @@ const exportCommand: SlashCommand = {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`You dont have enough jades (**${stats.jades}**/1000<:eternal_jade:1256124504141201428>)`);
                         return;
                     };
+                    if (stats.passpurchaselimit >= 5) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You can only gift up to 5 passes`);
+                        return;
+                    };
                     if (stats2.pass) {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.username}** already has a premium pass!`);
                         return;
                     };
 
-                    // Update users table
-                    await updateUsersAndCache(interaction.client, interaction.user.id, {
+                    // Charge the giver only if they can still afford it and are under the gift limit.
+                    const charged = await updateUsersAndCache(interaction.client, interaction.user.id, {
                         updates: {
                             jades: { type: 'increment', value: -1000 },
                             passpurchaselimit: { type: 'increment', value: 1 },
                         },
+                        condition: `jades >= 1000 AND passpurchaselimit < 5`,
                     });
-                    await updateUsersAndCache(interaction.client, user.id, {
+                    if (!charged) {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You dont have enough jades or have reached the gift limit.`);
+                        return;
+                    };
+
+                    // Only grant the pass if the recipient still does not have one.
+                    const gifted = await updateUsersAndCache(interaction.client, user.id, {
                         updates: {
                             pass: { type: 'set', value: 1 },
                         },
+                        condition: `pass = 0`,
                     });
+                    if (!gifted) {
+                        // Refund the giver because the pass was not delivered.
+                        await updateUsersAndCache(interaction.client, interaction.user.id, {
+                            updates: {
+                                jades: { type: 'increment', value: 1000 },
+                                passpurchaselimit: { type: 'increment', value: -1 },
+                            },
+                        });
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`**${user.username}** already has a premium pass!`);
+                        return;
+                    };
 
                     if (interaction.channel?.isSendable()) interaction.channel.send(`${user.toString()} has received a premium pass from ${interaction.user.toString()}!`);
                 });

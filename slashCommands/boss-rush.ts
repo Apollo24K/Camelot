@@ -140,7 +140,7 @@ const exportCommand: SlashCommand = {
 
 
             // Event Rewards
-            const milestones: { id: number; required: number; query: UpdateUserOptions; rew: string; image?: string; }[] = [
+            const milestones: { id: number; required: number; query: UpdateUserOptions; rew: string; image?: string; hpbarId?: number; }[] = [
                 {
                     id: 0,
                     required: 250,
@@ -300,8 +300,9 @@ const exportCommand: SlashCommand = {
                 {
                     id: 26,
                     required: 100000,
-                    query: { gems: { type: "increment", value: 20 }, expulls: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 20<:genesis_gems:1034179687720681492>",
+                    query: { gems: { type: "increment", value: 20 }, expulls: { type: "increment", value: 1 }, hpbars: { type: "append_unique", value: [23] } },
+                    rew: "1x <a:EXTRA:1138530846144462968>, 20<:genesis_gems:1034179687720681492> and the **Soulbound** HP bar",
+                    hpbarId: 23,
                 },
             ];
 

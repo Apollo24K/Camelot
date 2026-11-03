@@ -9128,7 +9128,7 @@ export const characters: charInfo[] = [
     new charInfo("Shunsui Kyoraku", ["Jirou Souzousa Shunsui Kyoraku", "Shunsui Sōzōsuke Jirō Kyōraku", "Shunsui Kyōraku"], anime[218], "M", "https://i.ibb.co/FD2t9mR/c.png", 9009, "S"),
     new charInfo("Gin Ichimaru", [], anime[218], "M", "https://i.ibb.co/FHWkmVY/c.png", 9010, "S"),
     new charInfo("Renji Abarai", [], anime[218], "M", "https://i.ibb.co/GTzBFKg/c.png", 9011, "A"),
-    new charInfo("Nelliel Tu Odelschwanck", ["Nelliel Tu Oderschvank"], anime[218], "F", "https://i.ibb.co/RPFphby/c.png", 9012, "S"),
+    new charInfo("Nelliel Tu Odelschwanck", ["Nelliel Tu Oderschvank"], anime[218], "F", "https://i.postimg.cc/k4Njtcds/c.png", 9012, "SS"),
     new charInfo("Shinji Hirako", [], anime[218], "M", "https://i.ibb.co/d4w5RxY/c.png", 9013, "A"),
     new charInfo("Uryuu Ishida", [], anime[218], "M", "https://i.ibb.co/PZ1m58X/c.png", 9014, "A"),
     new charInfo("Rangiku Matsumoto", ["Matsumoto Rangiku"], anime[218], "F", "https://i.ibb.co/fn8trQw/c.png", 9015, "SS"),
@@ -12148,7 +12148,7 @@ export const characters: charInfo[] = [
     new charInfo("Honey", [], anime[267], "F", "https://i.ibb.co/s3xj6nW/c.png", 12029, "D"),
     new charInfo("Kokuou (HMC)", [], anime[267], "M", "https://i.ibb.co/ftySZM3/c.png", 12030, "D"),
     new charInfo("Calcifer", [], anime[267], "M", "https://i.ibb.co/8DqvBBj/c.png", 12031, "B"),
-    new charInfo("Nazuna Nanakusa", [], anime[268], "F", "https://i.ibb.co/XYX5GMq/c.png", 12032, "S"),
+    new charInfo("Nazuna Nanakusa", [], anime[268], "F", "https://i.ibb.co/9HVg6dg6/c.png", 12032, "SS"),
     new charInfo("Akira Asai", [], anime[268], "F", "https://i.ibb.co/8z7MB62/c.png", 12033, "A"),
     new charInfo("Kou Yamori", [], anime[268], "M", "https://i.ibb.co/PG96Ts3/c.png", 12034, "A"),
     new charInfo("Anko Uguisu", [], anime[268], "F", "https://i.ibb.co/R4Dz2nk/c.png", 12035, "B"),
@@ -26389,8 +26389,8 @@ export const characters: charInfo[] = [
     new charInfo("Luminous VIP", ["Lumine VIP", "Lumi VIP"], anime[242], "F", "https://i.ibb.co/vbdmBfg/lumi.gif", 26271, "VIP"),
     new charInfo("Hiyuki EX", ["Feixue EX"], anime[560], "F", "https://i.ibb.co/5xwLj3xr/c.png", 26272, "EX"),
     new charInfo("Lloyd Frontera EX", ["Lloyd EX"], anime[375], "M", "https://i.ibb.co/Q3rnnqRy/c.png", 26273, "EX"),
-    new charInfo("Ainz Ooal Gown EX", ["Ainz EX", "Momonga EX"], anime[67], "M", "https://i.ibb.co/pch1/c.png", 26274, "EX"),
-    new charInfo("Denji EX", ["Chainsaw EX"], anime[243], "M", "https://i.ibb.co/pch2/c.png", 26275, "EX"),
+    new charInfo("Ainz Ooal Gown EX", ["Ainz EX", "Momonga EX"], anime[67], "M", "https://i.postimg.cc/vH7n9ZTq/halloween-ainz.gif", 26274, "EX"),
+    new charInfo("Denji EX", ["Chainsaw EX"], anime[243], "M", "https://i.postimg.cc/hvdtrfpP/denjicardww.gif", 26275, "EX"),
     new charInfo("Michiru Kagemori", [], anime[703], "F", "https://i.ibb.co/m5fnMq15/c.png", 26276, "SS"),
     new charInfo("Shirou Oogami", [], anime[703], "M", "https://i.ibb.co/YTbrMCwp/c.png", 26277, "SS"),
     new charInfo("Alan Sylvasta", [], anime[703], "M", "https://i.ibb.co/mVYh5Ccr/c.png", 26278, "S"),
@@ -26448,7 +26448,8 @@ export const characters: charInfo[] = [
     new charInfo("Yasuji Kumagaya", [], anime[705], "M", "https://i.ibb.co/mrWHWcFW/c.png", 26330, "D"),
     new charInfo("Yuzuru Tachibana", [], anime[705], "M", "https://i.ibb.co/hJK15Xp4/c.png", 26331, "D"),
     new charInfo("Satoko Tonai", [], anime[705], "F", "https://i.ibb.co/7dPDwpBg/c.png", 26332, "D"),
-
+    new charInfo("Toji Fushiguro", ["Toji"], anime[42], "M", "https://i.ibb.co/prRDzVnY/c.png", 26333, "S"),
+    new charInfo("Eta", [""], anime[145], "F", "https://i.ibb.co/MDJPYc7M/c.png", 26334, "A"),
 ];
 
 export const auniq = anime.map((e) => e.name);

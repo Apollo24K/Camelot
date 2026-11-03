@@ -1,12 +1,11 @@
 import { EmbedBuilder } from "discord.js";
 import { achievements } from "../Modules/achievements";
 import { rarityColor, search } from "../Modules/functions";
-import { SlashCommand } from '../types';
+import { SlashCommand, UpdateUserOptions } from '../types';
 import { getCharacterSchemasOfUser, getGuildSchema, getPartyMembers, getLatestStampede, getUserSchemas, updateUsersAndCache } from '../Modules/queries';
-import { isEventOngoing } from '../Modules/components';
+import { isBossHuntOngoing } from '../Modules/components';
 
 const dungeonInProgress = new Set();
-const bossHuntInProgress = new Set();
 
 const exportCommand: SlashCommand = {
     name: 'select',
@@ -40,6 +39,7 @@ const exportCommand: SlashCommand = {
         };
 
         // Set up restrictions
+        let lockBosshuntChange = false;
         if (mode === "stampede") {
             const stampede = await getLatestStampede();
             if (!stampede) return interaction.reply("Couldn't find an active stampede.");
@@ -55,10 +55,17 @@ const exportCommand: SlashCommand = {
             const members = await getUserSchemas(guild.members);
             const member = members.find((e) => e.id !== interaction.user.id && e.bosshuntchar === char.id);
             if (member) return interaction.reply(`Someone in your guild (${member.name}) has already selected **${char.name}**, please choose another character.`);
-            if (isEventOngoing()) {
-                if (bossHuntInProgress.has(interaction.user.id)) return interaction.reply("You need to wait 8h before you can change your character for boss hunts again.");
-                bossHuntInProgress.add(interaction.user.id);
-                setTimeout(() => bossHuntInProgress.delete(interaction.user.id), 8 * 60 * 60 * 1000);
+            const changing = stats.bosshuntchar !== char.id;
+            if (changing && isBossHuntOngoing()) {
+                const elapsed = Date.now() - (stats.bosshuntchanged ?? 0);
+                const cooldown = 8 * 60 * 60 * 1000;
+                if (elapsed < cooldown) {
+                    const left = cooldown - elapsed;
+                    const hours = Math.floor(left / (60 * 60 * 1000));
+                    const minutes = Math.ceil((left % (60 * 60 * 1000)) / 60000);
+                    return interaction.reply(`You need to wait ${hours > 0 ? `${hours}h ` : ""}${minutes}m before you can change your character for boss hunts again.`);
+                };
+                lockBosshuntChange = true;
             };
         };
 
@@ -69,11 +76,11 @@ const exportCommand: SlashCommand = {
         interaction.reply({ embeds: [Embed] });
 
         // Update db
-        await updateUsersAndCache(interaction.client, interaction.user.id, {
-            updates: {
-                [mode === "stampede" ? "stampedechar" : mode === "bosshunt" ? "bosshuntchar" : "battlechar"]: { type: "set", value: char.id },
-            },
-        });
+        const updates: UpdateUserOptions = {
+            [mode === "stampede" ? "stampedechar" : mode === "bosshunt" ? "bosshuntchar" : "battlechar"]: { type: "set", value: char.id },
+        };
+        if (lockBosshuntChange) updates.bosshuntchanged = { type: "set", value: Date.now() };
+        await updateUsersAndCache(interaction.client, interaction.user.id, { updates });
 
         // Achievements
         achievements[46].check(interaction); // First Steps

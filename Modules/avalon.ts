@@ -41,6 +41,14 @@ export default class Avalon {
 
                 // Achievements
                 achievements[24].check(interaction, interaction.user, myStatsC.revivedTotal), achievements[25].check(interaction, interaction.user, myStatsC.revivedTotal), achievements[26].check(interaction, interaction.user, myStatsC.revivedTotal); // The Show Must Go On
+            } else if (myStatsC.phase && myStatsC.maxphase && myStatsC.phase < myStatsC.maxphase && eStatsC.hp >= 1) {
+                myStatsC.hp = Math.max(myStatsC.maxhp, 1);
+                notice.push(`\n🔄️ **PHASE CHANGE!** ${(myStatsC.phaseNotif) ? myStatsC.phaseNotif[myStatsC.phase - 1] : `${myStatsC.name} recovered all health.`}`);
+                myStatsC.phase++;
+                matchStats.trigger("phaseChange", myStatsC, eStatsC, mybuffs, ebuffs, {});
+                myStatsC.timeFrozen = false;
+                editEmbed();
+                return;
             } else {
                 if (eStatsC.playerDeathMessage) {
                     if (Array.isArray(eStatsC.playerDeathMessage)) {
@@ -232,6 +240,8 @@ export default class Avalon {
                 default: iconbar += "<a:burn:1475075402295803914>"; break;
             };
         };
+
+        if (side.critbleed) iconbar += "<a:critbleed:1561929438109630474>";
 
         if (side.SPshield) {
             switch (side.SPshieldType) {

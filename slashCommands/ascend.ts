@@ -3,7 +3,7 @@ import { EmbedBuilder, ComponentType } from "discord.js";
 import { search, rarityColor } from "../Modules/functions";
 import { OfferRow } from "../Modules/components";
 import { SlashCommand } from "../types";
-import { getUserSchema, ownsCharacter, updateUsers } from '../Modules/queries';
+import { ascendCharacter, getUserSchema, ownsCharacter } from '../Modules/queries';
 import { ascensions, formatAscensionNodes, getAscensionRank } from '../Modules/ascensions';
 
 // Guards against two confirmations (from separate /ascend runs) validating against
@@ -73,7 +73,7 @@ const exportCommand: SlashCommand = {
         const Embed = new EmbedBuilder()
             .setTitle(`${char.name}'s Ascension`.slice(0, 256))
             .setColor(rarityColor(char.rarity))
-            .setDescription(`**Ascension Rank**: **${rank}/${maxRank}**\n\n${formatAscensionNodes(char.id, rank)}\n\n**Currently unlocking:**\n✨ **${rank + 1}. ${next.name}**\n> ${next.desc}\n\nSacrificing a duplicate costs **1** copy of **${char.name}** (you own **${dupes}**)`)
+            .setDescription(`**Ascension Rank**: **${rank}/${maxRank}**\n\n${formatAscensionNodes(char.id, rank)}\n\n**Currently unlocking:**\n✨ **${rank + 1}${next.name ? `. ${next.name}` : ""}**\n> ${next.desc}\n\nSacrificing a duplicate costs **1** copy of **${char.name}** (you own **${dupes}**)`)
             .setThumbnail(thumbnail);
         interaction.reply({ embeds: [Embed], components: [OfferRow], fetchReply: true }).then(msg => {
 
@@ -101,26 +101,22 @@ const exportCommand: SlashCommand = {
                         return;
                     };
 
-                    const freshRank = getAscensionRank(char.id, invCheck);
-                    if (freshRank !== rank || freshRank >= maxRank) {
-                        if (interaction.channel?.isSendable()) interaction.channel.send("An error occurred, please try again");
-                        return;
-                    };
+                    const result = await ascendCharacter(interaction.user.id, char.id, rank, maxRank);
 
-                    const freshDupes = invCheck.chars.filter(e => e === char.id).length;
-                    if (freshDupes < 2) {
+                    if (result === "success") {
+                        // The command cache holds the pre-ascension schema; drop it so the next command re-reads.
+                        interaction.client.userCache.delete(interaction.user.id);
+
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`<a:KannaFire:1045096950070001687> Sacrificed a duplicate of **${char.name}**. Their ability ascended to rank **${rank + 1}/${maxRank}**${nodes[rank].name ? ` — **${nodes[rank].name}**` : ''} unlocked!`);
+                    } else if (result === "max-rank") {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`<a:check:873196253276700682> **${char.name}**'s ability has already reached the max ascension rank`);
+                    } else if (result === "duplicate-required") {
                         if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have a duplicate copy of **${char.name}** to sacrifice`);
-                        return;
+                    } else if (result === "not-owned") {
+                        if (interaction.channel?.isSendable()) interaction.channel.send(`You don't have a copy of **${char.name}**`);
+                    } else {
+                        if (interaction.channel?.isSendable()) interaction.channel.send("An error occurred, please try again");
                     };
-
-                    await updateUsers(interaction.user.id, {
-                        chars: { type: 'remove', value: [char.id] },
-                        char_ascension: { type: 'merge_json', value: { [char.id]: 1 } },
-                    });
-                    // The command cache holds the pre-ascension schema; drop it so the next command re-reads.
-                    interaction.client.userCache.delete(interaction.user.id);
-
-                    if (interaction.channel?.isSendable()) interaction.channel.send(`<a:KannaFire:1045096950070001687> Sacrificed a duplicate of **${char.name}**. Their ability ascended to rank **${freshRank + 1}/${maxRank}**${nodes[freshRank].name ? ` — **${nodes[freshRank].name}**` : ''} unlocked!`);
                 } finally {
                     ascendInProgress.delete(interaction.user.id);
                 };

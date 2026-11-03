@@ -188,4 +188,46 @@ export const customHpBars: CustomHpBar[] = [
         end: { empty: "<:dbr:1512302468338548917>", hp_only: "<:dbrh:1512302491016892416>", mana_only: "<:dbrm:1512302519194222683>", full: "<:dbrhm:1512302542602899546>" },
     }),
 
+    new CustomHpBar("Blood Moon", 18, 0xb91c1c, {
+        start: { empty: "<:dbl:1564994061268549632>", hp_only: "<:dblh:1564994028066312232>", mana_only: "<:dblm:1564994034873671740>", full: "<:dblhm:1564994032227196928>" },
+        middle: { empty: "<:db:1564994052833681409>", hp_only: "<:dbh:1564994055698645032>", mana_only: "<:dbm:1564994038204203008>", full: "<:dbhm:1564994058013769888>" },
+        end: { empty: "<:dbr:1564994041081364570>", hp_only: "<:dbrh:1564994043774107668>", mana_only: "<:dbrm:1564994049629491290>", full: "<:dbrhm:1564994046324244600>" },
+    }),
+
+    new CustomHpBar("Haunted Lantern", 19, 0x7349ac, {
+        start: { empty: "<:dbl:1564995470185603173>", hp_only: "<:dblh:1564995473042051103>", mana_only: "<:dblm:1564995475935989780>", full: "<:dblhm:1564995478414958603>" },
+        middle: { empty: "<:db:1564995462870736986>", hp_only: "<:dbh:1564995465240649738>", mana_only: "<:dbm:1564995483569496075>", full: "<:dbhm:1564995467954233456>" },
+        end: { empty: "<:dbr:1564995495686832178>", hp_only: "<:dbrh:1564995498161475664>", mana_only: "<:dbrm:1564995481233399848>", full: "<:dbrhm:1564995500145512518>" },
+    }),
+
+    new CustomHpBar("Hellsylvania", 20, 0x8a0303, {
+        start: { empty: "<:dbl:1564996872928501861>", hp_only: "<:dblh:1564996827290411018>", mana_only: "<:dblm:1564996834685096096>", full: "<:dblhm:1564996830838657084>" },
+        middle: { empty: "<:db:1564996860702363659>", hp_only: "<:dbh:1564996865034948708>", mana_only: "<:dbm:1564996838753575023>", full: "<:dbhm:1564996869166473277>" },
+        end: { empty: "<:dbr:1564996842876305551>", hp_only: "<:dbrh:1564996846735335564>", mana_only: "<:dbrm:1564996857275490374>", full: "<:dbrhm:1564996853978894417>" },
+    }),
+
+    new CustomHpBar("Pumpkin Spice", 21, 0x63c328, {
+        start: { empty: "<:dbl:1565390689251098825>", hp_only: "<a:dblh:1565390668090576946>", mana_only: "<a:dblm:1565390648293458010>", full: "<a:dblhm:1565390663812382750>" },
+        middle: { empty: "<:db:1565390678890913853>", hp_only: "<a:dbh:1565390676290572360>", mana_only: "<a:dbm:1565390645151924445>", full: "<a:dbhm:1565390672742056098>" },
+        end: { empty: "<:dbr:1565390692304425151>", hp_only: "<a:dbrh:1565390641507205250>", mana_only: "<a:dbrm:1565390699988263012>", full: "<a:dbrhm:1565390696188346492>" },
+    }),
+
+
+    new CustomHpBar("Haunted Mire", 22, 0x006a6e, {
+        start: { empty: "<a:dbl:1566081348349853796>", hp_only: "<a:dblh:1566081352523317398>", mana_only: "<a:dblm:1566081311007834204>", full: "<a:dblhm:1566081307870765156>" },
+        middle: { empty: "<a:db:1566081334751793303>", hp_only: "<a:dbh:1566081342117249024>", mana_only: "<a:dbm:1566081314317275287>", full: "<a:dbhm:1566081345845985440>" },
+        end: { empty: "<a:dbr:1566081317727113367>", hp_only: "<a:dbrh:1566081322408091698>", mana_only: "<a:dbrm:1566081330423267439>", full: "<a:dbrhm:1566081326484824214>" },
+    }),
+
+    new CustomHpBar("Soulbound", 23, 0xae0303, {
+        start: { empty: "<a:dbl:1566083620366458981>", hp_only: "<a:dblh:1566083574623506525>", mana_only: "<a:dblm:1566083580185280582>", full: "<a:dblhm:1566083568621322372>" },
+        middle: { empty: "<a:db:1566083583163240580>", hp_only: "<a:dbh:1566083592298434570>", mana_only: "<a:dbm:1566083596094152744>", full: "<a:dbhm:1566083587432779999>" },
+        end: { empty: "<a:dbr:1566083601148411954>", hp_only: "<a:dbrh:1566083611164283131>", mana_only: "<a:dbrm:1566083615652061235>", full: "<a:dbrhm:1566083606462603294>" },
+    }),
+
+    new CustomHpBar("Stitched Spirits", 24, 0x826d8c, {
+        start: { empty: "<:dbl:1566089395675860992>", hp_only: "<:dblh:1566089399651803338>", mana_only: "<:dblm:1566089408917143653>", full: "<:dblhm:1566089404492292196>" },
+        middle: { empty: "<:db:1566089383424037027>", hp_only: "<:dbh:1566089387178065970>", mana_only: "<:dbm:1566089413006721266>", full: "<:dbhm:1566089391800062082>" },
+        end: { empty: "<:dbr:1566089416873746432>", hp_only: "<:dbrh:1566089437128040479>", mana_only: "<:dbrm:1566089445566844929>", full: "<:dbrhm:1566089441767067769>" },
+    }),
 ];
