@@ -6,6 +6,7 @@ import { getCharacterSchemasOfUser, getGuildSchema, getPartyMembers, getLatestSt
 import { isBossHuntOngoing } from '../Modules/components';
 
 const dungeonInProgress = new Set();
+const bossHuntInProgress = new Set();
 
 const exportCommand: SlashCommand = {
     name: 'select',
