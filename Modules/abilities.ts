@@ -662,13 +662,13 @@ export const abilities: Record<number, Ability> = {
         },
         passive: async function (this: Ability, myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) {
             const ainzInParty = myStats.id === 26274 || (matchStats.partyChars ?? []).some((e: IcharInfo) => e?.name === "Ainz Ooal Gown EX");
-            if (!ainzInParty) {
+            if (ainzInParty) {
                 this.usage *= 6;
 
                 myStats.selfhealChance.push(1);
                 myStats.selfheal.push(0.05);
 
-                notice.push(`\n✨ **${char.name}** can use her active **8x** more times and gains **+5%** lifesteal.`);
+                notice.push(`\n✨ **${char.name}** can use her active **6x** more times and gains **+5%** lifesteal.`);
             };
             return AbilityResponse.SUCCESS;
         },
@@ -9470,7 +9470,7 @@ export const abilities: Record<number, Ability> = {
             myStats.delayedBuffs.push(new delayedBuffs(matchStats.round + 5, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 const mana = myStats.sm;
                 myStats.sm = 0;
-                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stm:1563227275950817410> **${char.name}**'s Super Tier Magic`, { atkMultiplier: 5 + Math.floor(mana / 3), magicDamage: true, mdChance: -1, ignoreShield: true, dodge: false });
+                dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:stm:1563227275950817410> **${char.name}**'s Super Tier Magic`, { atkMultiplier: 5 + mana * 0.03, magicDamage: true, mdChance: -1, ignoreShield: true, dodge: false });
 
                 return AbilityResponse.SUCCESS;
             }));
@@ -9624,6 +9624,7 @@ export const abilities: Record<number, Ability> = {
             myStats.delayedBuffs.push(new delayedBuffs(phaseRound, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
                 if (myStats.phase === 1 && matchStats.round === phaseRound) {
                     myStats.phase = 2;
+                    myStats.hp = Math.max(myStats.maxhp, 1);
                     matchStats.trigger("phaseChange", myStats, eStats, mybuff, ebuff, {});
                 };
 

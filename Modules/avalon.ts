@@ -419,7 +419,7 @@ export default class Avalon {
                 };
                 buff.last--;
             });
-            if (obj[stat].length) obj[stat] = obj[stat].filter((buff) => buff.last);
+            if (obj[stat].length) obj[stat] = obj[stat].filter((buff) => buff.last > 0);
         });
         stats.sm += stats.mg;
         if (typeof stats.manaGained !== 'undefined') stats.manaGained += stats.mg;

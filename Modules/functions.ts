@@ -891,9 +891,9 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         // Apply 1x Bleed
         let bleedDmg = Math.floor(Math.min(attacker.maxhp, target.maxhp * 2) * (target.critbleedAmount ?? 0.05)) * (target.critbleedMulti ?? 1);
         if (!target.critbleedInstant) {
-            attackerBuff.hp.push(new buffInfo("+", -bleedDmg, (target.critbleedlast ?? 2)));
+            attackerBuff.hp.push(new buffInfo("+", -bleedDmg, (target.critbleedlast || 2)));
         } else {
-            bleedDmg *= (target.critbleedlast ?? 2);
+            bleedDmg *= (target.critbleedlast || 2);
             let dmg = dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `<a:critbleed:1561929438109630474> **${target.name}**`, { overwriteDamage: Math.floor(bleedDmg), magicDamage: true, critbleed: false, canTwinshot: false, critChance: 1 });
             if (target.critbleedHeal > 0 && dmg) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(bleedDmg * target.critbleedHeal), {});
         };
@@ -974,9 +974,9 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     if (options.critbleed && isCrit) {
         let bleedDmg = Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * (attacker.critbleedAmount ?? 0.05)) * (attacker.critbleedMulti ?? 1);
         if (!attacker.critbleedInstant) {
-            targetBuff.hp.push(new buffInfo("+", -bleedDmg, (attacker.critbleedlast ?? 2)));
+            targetBuff.hp.push(new buffInfo("+", -bleedDmg, (attacker.critbleedlast || 2)));
         } else {
-            bleedDmg *= (attacker.critbleedlast ?? 2);
+            bleedDmg *= (attacker.critbleedlast || 2);
             let dmg = dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, `<a:critbleed:1561929438109630474> **${attacker.name}**`, { overwriteDamage: Math.floor(bleedDmg), magicDamage: true, critbleed: false, canTwinshot: false, critChance: 1 });
             if (attacker.critbleedHeal > 0 && dmg) addHeal(attacker, target, attacker, attackerBuff, targetBuff, matchStats, notice, ``, Math.floor(bleedDmg * attacker.critbleedHeal), {});
         };

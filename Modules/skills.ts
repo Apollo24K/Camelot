@@ -2812,11 +2812,11 @@ export const eventBossAbilities: skillInfo[] = [
     }, [99, "Rumbleguard takes significantly less absolute damage and counters more often when at lower health. His active summons a shield and grants him a temporary ATK buff. (40 :droplet:)"]),
     new skillInfo(1, 40, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         // Sylvanoss
-        if (myStats.atk > myStats.md) {
+        if (eStats.atk > eStats.md) {
             mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.4), 9999));
             notice.push(`\n✨ **${enemy.name}** inflicted a DoT equal to 40% of his ATK/MD.`);
         } else {
-            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.4), 9999));
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.4), 9999));
             notice.push(`\n✨ **${enemy.name}** inflicted a DoT equal to 40% of his ATK/MD.`);
         };
 
@@ -2865,11 +2865,11 @@ export const eventBossAbilities: skillInfo[] = [
         notice.push(`\n✨ **Rumbleguard** granted the enemy a **${Math.floor(eStats.hp * 0.0005)}** shield`);
 
         // Sylvanoss
-        if (myStats.atk > myStats.md) {
+        if (eStats.atk > eStats.md) {
             mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
             notice.push(`\n✨ **Sylvanoss** inflicted a DoT equal to 20% of his ATK/MD.`);
         } else {
-            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.atk * 0.2), 9999));
+            mybuff.hp.push(new buffInfo("+", -Math.floor(eStats.md * 0.2), 9999));
             notice.push(`\n✨ **Sylvanoss** inflicted a DoT equal to 20% of his ATK/MD.`);
         };
 
