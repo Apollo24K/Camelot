@@ -7318,10 +7318,10 @@ export const items = [
     new armorInfo("The Chosen One Gloves", "armor", "gloves", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Gloves_of_the_Chosen_One:1516708293442146385>", "https://i.ibb.co/xKM6WWgy/Gloves-of-the-Chosen-one.png", "def", 15, 175, "mythical", 850),
     new armorInfo("The Chosen One Boots", "armor", "boots", "The Chosen One Set", ["crafting", "extreme dungeon drop"], "<:Boots_of_the_Chosen_One:1516708449516257330>", "https://i.ibb.co/4ZybjkF9/Boots-of-the-Chosen-one.png", "mr", 13, 150, "mythical", 851, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
         myStats.chosenOneState = 1;
-        myStats.chosenOneLastUsed = -1;
+        myStats.chosenOneLastUsed = 0;
         const chosenOneStats = await getFullUserSchema(user.id);
         myStats.chosenOneProfileLevel = chosenOneStats ? userLevel(chosenOneStats.xp) : 1;
-        myStats.chosenOneCharLevel = chosenOneStats?.char_level?.[char.id] ?? 1;
+        myStats.chosenOneCharLevel = myStats.lvl;
 
         myStats.replaceButton.def = {
             "emoji": "<:Helmet_of_the_Chosen_One:1516708125397221446>",
@@ -7337,17 +7337,6 @@ export const items = [
 
         // Effect 4 - Register listeners once
         matchStats.on("ATK", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
-            if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
-                myStats.chosenTimeout = matchStats.round;
-                if (Math.random() < 0.2) {
-                    noTimeout(matchStats, myStats);
-                    notice.push(`\n<:Helmet_of_the_Chosen_One:1516708125397221446> **${char.name}** can make another action.`);
-                };
-            };
-            return AbilityResponse.SUCCESS;
-        });
-
-        matchStats.on("DEF", ({ trigger, caster, target, casterBuff, targetBuff, matchStats, options }) => {
             if (caster === myStats && myStats.chosenOneState === 4 && matchStats.round !== myStats.chosenTimeout) {
                 myStats.chosenTimeout = matchStats.round;
                 if (Math.random() < 0.2) {
@@ -7504,6 +7493,55 @@ export const items = [
             return AbilityResponse.SUCCESS;
         },
     }, "- Begins battles with a **25%** max HP shield\n- When the enemy attacks you while you have a shield, you gain **4** 💧 and they take **15%** damage (scaling off the other's ATK/MD, whichever is higher).\n- For the first time when a shield breaks, sacrifices **25%** current HP for another **25%** max HP shield. If you have more than **50%** of your mana pool filled, increases the shield's HP to **35%**.", "rare", 856),
+    new runeInfo("Neon Ghoul", ["seasonal shop"], "<:Neon_Ghoul:1565362236262715472>", "https://i.ibb.co/YBBVYh5v/Neon-Ghoul.png", {
+        passive: async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+
+            myStats.oneHitDmgBuff ??= 0;
+            myStats.oneHitDmgBuff += 0.4;
+            myStats.oneHitUsed = false;
+
+            myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+                myStats.oneHitUsed = false;
+                if (matchStats.round % 10 === 0) {
+                    myStats.oneHitDmgBuff += 0.05;
+                    if (myStats.oneHitDmgBuff > 0.9) myStats.oneHitDmgBuff = 0.9;
+                };
+
+                return AbilityResponse.SUCCESS;
+            }, 9999));
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- The first hit every round are aided by ghouls, dealing **40%** more damage.\n- The damage amplification effect is increased by **5%** every **10** rounds, up to a total of **90%**.", "rare", 857),
+    new runeInfo("Lost in Red", ["seasonal shop"], "<:Lost_in_Red:1565362299605360803>", "https://i.ibb.co/mF8Nt23T/Lost-in-Red.png", {
+        cost: 50,
+        usage: 9999,
+        used: 0,
+        ability: async (myStats, myStatsFixed, eStats, eStatsFixed, mybuff, ebuff, char, enemy, matchStats, notice, embed, message, ...list) => {
+            dealDamage(eStats, myStats, ebuff, mybuff, matchStats, notice, `<:Lost_in_Red:1565362299605360803> **${char.name}**`, { atkMultiplier: 1, magicDamage: true, critChance: 0, critbleed: true });
+            myStats.cr += 0.2;
+            if (myStats.cr > 1) myStats.cr = 1;
+            mybuff.cr.push(new buffInfo("+", 0.2, 2));
+
+            return AbilityResponse.SUCCESS;
+        },
+    }, "- Immediately lands a critical hit, inflicting the critical bleed effect. Afterwards, boosts critical rate by **20%** for **2** rounds. (50 💧, unlimited uses, Timeout true)", "rare", 858),
+    new weaponInfo("Glassteeth", "weapon", "shield", ["chest"], "<:glass_teeth:1403409733662150818>", "https://i.ibb.co/Y4rQ7vG5/i.png", "shield", 250, 1200, "cd", 0.1, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+        mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.4), 9999));
+        mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.4), 9999));
+
+        myStats.md += Math.floor(myStats.md * 0.4);
+        myStats.atk += Math.floor(myStats.atk * 0.4);
+        myStats.def -= Math.floor(myStats.def * 0.5);
+        myStats.mr -= Math.floor(myStats.mr * 0.5);
+
+        myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
+            myStats.def -= Math.floor(myStats.def * 0.5);
+            myStats.mr -= Math.floor(myStats.mr * 0.5);
+            return AbilityResponse.SUCCESS;
+        }, 9999));
+        return AbilityResponse.SUCCESS;
+    }, "Reduces the wielders DEF & MR by **50%**, but increases the wielders attack and magic damage by **40%**.", "*\"To wield it is to bleed for strength.\"* Forged from the remains of a shattered mirror said to reflect the soul's hunger, Glassteeth was never meant to protect. Its jagged surface bites into the bearer's aura, splintering their defenses in exchange for raw, unbridled aggression. It does not guard. It goads.", "genesis", 859),
     // new weaponInfo("Abyssal Cleaver", "weapon", "axe", ["chest"], "<:abyssal_cleaver:1403303014936084562>", "https://i.ibb.co/bgVW9Vsn/i.png", "atk", 173, 976, "def", 62, 255, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
     //     myStats.boneCap ??= 30;
     //     myStats.flesh ??= 0;
@@ -7540,23 +7578,6 @@ export const items = [
 
     //     return AbilityResponse.SUCCESS;
     // }, "Sends a chilling hum into the abyss every **8** non-critical hits, enhancing `« Abyssal Echo »` level by **1** (Up to **4** times, upgrading its effect)\n\n`« Abyssal Echo »` : Decreases the enemy's MR by **1**/**1.5**/**1.5**/**2**/**2%** for every **1x** `🥩` owned (Up to **1.5**/**1.5**/**2**/**2.5**/**3x** damage). This is defaulted to level 1.\n\n_This item is synergistic with other `Flesh and Bone` items._", "The Abyssal Shrimpsong is an eerie dagger integrated with a beastly shrimp, which was rumored to be near the shores with the power to call upon tides and unite creatures of the abyss. The wielders of the dagger mysteriously vanish after a few decades of use, leaving the histories and past of the dagger a blur. Whenever the dagger touches the shoreline, it glitters with an otherwordly shimmer, as it resounds with the vibrations of the wuthering tides.", "mythical", 779),
-
-    // new weaponInfo("Glassteeth", "weapon", "shield", ["chest"], "<:glass_teeth:1403409733662150818>", "https://i.ibb.co/Y4rQ7vG5/i.png", "shield", 1, 1200, "cd", 0.1, 0.54, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //     mybuff.md.push(new buffInfo("+", Math.floor(myStats.md * 0.4), 9999));
-    //     mybuff.atk.push(new buffInfo("+", Math.floor(myStats.atk * 0.4), 9999));
-
-    //     myStats.md += Math.floor(myStats.md * 0.4);
-    //     myStats.atk += Math.floor(myStats.atk * 0.4);
-    //     myStats.def -= Math.floor(myStats.def * 0.6);
-    //     myStats.mr -= Math.floor(myStats.mr * 0.6);
-
-    //     myStats.delayedBuffs.push(new delayedBuffs(0, async (myStats, myStatsFixed, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
-    //         myStats.def -= Math.floor(myStats.def * 0.5);
-    //         myStats.mr -= Math.floor(myStats.mr * 0.5);
-    //         return AbilityResponse.SUCCESS;
-    //     }, 9999));
-    //     return AbilityResponse.SUCCESS;
-    // }, "Reduces the wielders **DEF|MR by 50%**, but increases the wielders attack and magic damage by **40%**.", "*\"To wield it is to bleed for strength.\"* Forged from the remains of a shattered mirror said to reflect the soul's hunger, Glassteeth was never meant to protect. Its jagged surface bites into the bearer's aura, splintering their defenses in exchange for raw, unbridled aggression. It does not guard. It goads.", "genesis", 780),    
 ];
 
 export const fishing = items.filter((e) => e.obtain.includes("fishing"));

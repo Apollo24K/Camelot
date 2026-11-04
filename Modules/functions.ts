@@ -27,7 +27,7 @@ const statsOp: { base: { hp: Record<number, number>; atk: Record<number, number>
         "hp": { "238": -20, "405": -6, "460": 54, "512": 60, "2016": -10, "2079": 12, "2360": 12, "2597": 24, "3150": 6, "3307": -20, "3408": -20, "3409": 12, "3886": 20, "4769": -20, "5032": -9, "5341": 20, "5344": 16, "5819": -20, "8188": 30, "8189": 40, "8521": 12, "8582": 20, "9606": -6, "10520": 37, "10521": -14, "10523": 30, "10530": 40, "12000": 16, "12121": 10, "12424": 1, "17583": -11, "17688": -25, "17689": 12, "17871": -13, "18011": -9 },
         "atk": { "238": -11, "405": 12, "460": -12, "512": -10, "2079": 9, "2016": -2, "3150": 4, "3409": 14, "3886": 4, "4250": 10, "4712": -8, "5341": 6, "5344": 10, "6082": -13, "8187": 7, "8189": 10, "8521": 5, "9606": 3, "10517": 10, "10520": 20, "10521": -4, "10523": 5, "10530": 8, "12000": 10, "12121": 7, "12393": -5, "12424": 15, "17583": -10, "17689": -2, "17871": -4, "18011": -6 },
         "def": { "405": 1, "460": 1, "512": 15, "2360": 9, "2597": 5, "3150": 8, "3409": 6, "9606": 19, "10517": 5, "12121": 5, "12393": 10, "12424": 10, "17583": -18, "17871": -5, "18011": -4 },
-        "expertise": { "72": "sword", "73": "sword", "77": "bow", "159": "sword", "405": "sword", "408": "any", "460": "sword", "463": "sword", "512": "shield", "523": "sword", "577": "staff", "578": "staff", "680": "lance", "688": "sword", "712": "lance", "733": "sword", "735": "bow", "767": "staff", "769": "sword", "844": "dagger", "999": "lance", "1001": "sword", "1550": "sword", "1824": "dagger", "1850": "lance", "1851": "lance", "2078": "staff", "2079": "axe", "2080": "lance", "2291": "staff", "2420": "sword", "2597": "sword", "2814": "bow", "2848": "dagger", "3109": "shield", "3150": "dagger", "3307": "axe", "3308": "lance", "4250": "sword", "4474": "staff", "4767": "sword", "4769": "staff", "4942": "sword", "5224": "dagger", "5341": "lance", "6029": "bow", "6030": "bow", "8189": "sword", "8521": "dagger", "9000": "sword", "9365": "staff", "9454": "dagger", "9648": "dagger", "9677": "sword", "9824": "axe", "10300": "lance", "10324": "sword", "10517": "sword", "10520": "lance", "10521": "staff", "10522": "dagger", "10523": "bow", "10524": "staff", "10527": "dagger", "10800": "sword", "10958": "sword", "11244": "sword", "11246": "sword", "12345": "staff", "12387": "axe", "12388": "any", "12393": "bow", "12399": "bow", "12450": "lance", "12451": "sword", "12775": "dagger", "12776": "dagger", "12857": "sword", "13186": "bow", "13285": "sword", "13288": "staff", "13574": "staff", "13780": "sword", "14091": "bow", "14405": "bow", "14126": "any", "14903": "bow", "14904": "sword", "15251": "lance", "16107": "bow", "16109": "sword", "16110": "lance", "16119": "bow", "16919": "sword", "17115": "sword", "17116": "sword", "17117": "staff", "17118": "sword", "17583": "any", "17686": "axe", "17687": "bow", "17688": "any", "17689": "any", "19048": "staff", "19050": "sword", "19051": "bow", "19277": "dagger", "21928": "bow", "21931": "sword", "22611": "staff", "23185": "sword", "24185": "sword", "26272": "sword", "26273": "axe" },
+        "expertise": { "72": "sword", "73": "sword", "77": "bow", "159": "sword", "405": "sword", "408": "any", "460": "sword", "463": "sword", "512": "shield", "523": "sword", "577": "staff", "578": "staff", "680": "lance", "688": "sword", "712": "lance", "733": "sword", "735": "bow", "767": "staff", "769": "sword", "844": "dagger", "999": "lance", "1001": "sword", "1550": "sword", "1824": "dagger", "1850": "lance", "1851": "lance", "2078": "staff", "2079": "axe", "2080": "lance", "2291": "staff", "2420": "sword", "2597": "sword", "2814": "bow", "2848": "dagger", "3109": "shield", "3150": "dagger", "3307": "axe", "3308": "lance", "4250": "sword", "4474": "staff", "4767": "sword", "4769": "staff", "4942": "sword", "5224": "dagger", "5341": "lance", "6029": "bow", "6030": "bow", "8189": "sword", "8521": "dagger", "9000": "sword", "9365": "staff", "9454": "dagger", "9648": "dagger", "9677": "sword", "9824": "axe", "10300": "lance", "10324": "sword", "10517": "sword", "10520": "lance", "10521": "staff", "10522": "dagger", "10523": "bow", "10524": "staff", "10527": "dagger", "10800": "sword", "10958": "sword", "11244": "sword", "11246": "sword", "12345": "staff", "12387": "axe", "12388": "any", "12393": "bow", "12399": "bow", "12450": "lance", "12451": "sword", "12775": "dagger", "12776": "dagger", "12857": "sword", "13186": "bow", "13285": "sword", "13288": "staff", "13574": "staff", "13780": "sword", "14091": "bow", "14405": "bow", "14126": "any", "14903": "bow", "14904": "sword", "15251": "lance", "16107": "bow", "16109": "sword", "16110": "lance", "16119": "bow", "16919": "sword", "17115": "sword", "17116": "sword", "17117": "staff", "17118": "sword", "17583": "any", "17686": "axe", "17687": "bow", "17688": "any", "17689": "any", "19048": "staff", "19050": "sword", "19051": "bow", "19277": "dagger", "21928": "bow", "21931": "sword", "22611": "staff", "23185": "sword", "24185": "sword", "26272": "sword", "26273": "axe", "26274": "staff" },
     },
 };
 
@@ -736,14 +736,15 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         combo: ((options.combodmg && attacker.combodmg) ? (1 + Math.min(1.4, attacker.attackStreak * attacker.combodmg)) : 1),
         lightning: options.isLightning ? ((1 + (attacker.lightningMultiplier || 0) + ((attacker.tempLightningBuff && attacker.tempLightningBuffActive) ? attacker.tempLightningBuff : 0)) * (1 - (target.lightningResistance || 0))) : 1,
         burn: options.isBurn ? (1 + (attacker.burnbonus || 0)) * (1 - (target.burnResistance || 0)) : 1,
+        temp: (attacker.oneHitDmgBuff && attacker.oneHitUsed !== true) ? (1 + attacker.oneHitDmgBuff) : 1,
         rng: (1 - (0.2 * Math.random())),
     };
 
     // Removed redundant line: crit scaling now handled in multipliers.crit
     if (options.magicDamage && options.mdChance < attacker.mdChance) {
-        damage = options.overwriteDamage || Math.floor(multipliers.burn * multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
+        damage = options.overwriteDamage || Math.floor(multipliers.burn * multipliers.md * multipliers.mr * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.temp * multipliers.rng);
     } else {
-        damage = options.overwriteDamage || Math.floor(multipliers.burn * multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.rng);
+        damage = options.overwriteDamage || Math.floor(multipliers.burn * multipliers.atk * multipliers.def * multipliers.crit * multipliers.combo * multipliers.lightning * multipliers.temp * multipliers.rng);
     };
     if (attacker.critbonus && (isCrit || attacker.shorekeeperUsedActive)) damage = Math.floor(damage * (1 + attacker.critbonus));
     attacker.crittedTotal ||= 0;
@@ -800,16 +801,6 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         }
     };
 
-    // Deflect damage
-    if (target.deflectDamage) {
-        let defl = Math.floor(damage * target.deflectDamage * ((isCrit && target.deflectDamageCritMulti) ? target.deflectDamageCritMulti : 1));
-        attacker.hp = Math.floor(attacker.hp - defl);
-        if (target.mitrecord) target.mitstore += Math.floor(defl);
-        if (target.deflheal) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(Math.min(target.maxhp * 0.04, defl)), {});
-        damage = Math.floor(damage - defl);
-        if (attacker.hp < 1) attacker.hp = 0;
-    };
-
     // Vulnerability // **For effects that have one-time vulnerability effects / only the highest apply (Replace)
     if (target.vulnerability) {
         damage = Math.floor(damage * target.vulnerability);
@@ -820,8 +811,22 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
         damage = Math.floor(damage * target.vulnerabilityDynamic);
     };
 
+    // Deflect damage
+    if (target.deflectDamage || target.deflectMD && options.magicDamage && options.mdChance < attacker.mdChance) {
+        let deflScaling = target.deflectDamage ? target.deflectDamage : 0;
+        deflScaling += (target.deflectMD && options.magicDamage && options.mdChance < attacker.mdChance) ? target.deflectMD : 0;
+        let defl = Math.floor(damage * deflScaling * ((isCrit && target.deflectDamageCritMulti) ? target.deflectDamageCritMulti : 1));
+        if (target.deflTotal !== undefined) target.deflTotal += defl;
+        attacker.hp = Math.floor(attacker.hp - defl);
+        if (target.mitrecord) target.mitstore += Math.floor(defl);
+        if (target.deflheal) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(Math.min(target.maxhp * 0.04, defl)), {});
+        damage = Math.floor(damage - defl);
+        if (attacker.hp < 1) attacker.hp = 0;
+    };
+
     // Overwrite damage — fixed damage after all modifiers
     damage = options.overwriteDamage || damage;
+    if (options.overwriteDamage && target.absoluteDmgMit) damage -= Math.floor(damage * target.absoluteDmgMit);
 
     //* RETURN IF TEST
     if (options.isTest) return damage;
@@ -879,6 +884,22 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     // Apply damage to target
 
+    // Nazuna phase through (if available)
+    if (target.nazunaPT && Math.random() < (0.2 + 0.02 * (1 - (target.hp / target.maxhp)) / 0.05) * (target.name === "Nazuna Nanakusa" ? 1 : (target.critbleed ? 1 : 0.5))) {
+        target.nazunaNotif = true;
+        damage = Math.floor(damage / 2);
+        // Apply 1x Bleed
+        let bleedDmg = Math.floor(Math.min(attacker.maxhp, target.maxhp * 2) * (target.critbleedAmount ?? 0.05)) * (target.critbleedMulti ?? 1);
+        if (!target.critbleedInstant) {
+            attackerBuff.hp.push(new buffInfo("+", -bleedDmg, (target.critbleedlast || 2)));
+        } else {
+            bleedDmg *= (target.critbleedlast || 2);
+            let dmg = dealDamage(attacker, target, attackerBuff, targetBuff, matchStats, notice, `<a:critbleed:1561929438109630474> **${target.name}**`, { overwriteDamage: Math.floor(bleedDmg), magicDamage: true, critbleed: false, canTwinshot: false, critChance: 1 });
+            if (target.critbleedHeal > 0 && dmg) addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor(bleedDmg * target.critbleedHeal), {});
+        };
+        addHeal(target, attacker, target, targetBuff, attackerBuff, matchStats, notice, ``, Math.floor((target.maxhp - target.hp) * 0.05), {});
+    };
+
     // Special Shield
     if (target.SPshield) {
         switch (target.SPshieldType) {
@@ -887,7 +908,7 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
                 attacker.hp -= Math.floor(options.ignoreShield ? damage * 4 : damage * 2);
                 target.SPshield = Math.floor(target.SPshield - damage);
                 if (target.SPshield < 0 || options.shieldBreak) {
-                    notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : options.element === 1 ? " <a:frost1:1504497507185725473><a:frost2:1504497408233705512>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s special shield broke down!` : ""}`);
+                    notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : options.element === 1 ? " <a:frost1:1504497507185725473><a:frost2:1504497408233705512>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.nazunaNotif ? " [ <:nazunaPT:1563399894520172564> ]" : ""}${target.shield === 0 ? `. **${target.name}**'s special shield broke down!` : ""}`);
                     matchStats.trigger("shieldBreak", attacker, target, attackerBuff, targetBuff, { special: true });
                     target.SPshield = 0;
                 };
@@ -921,11 +942,12 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
             };
         };
 
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : options.element === 1 ? " <a:frost1:1504497507185725473><a:frost2:1504497408233705512>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : options.element === 1 ? " <a:frost1:1504497507185725473><a:frost2:1504497408233705512>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.nazunaNotif ? " [ <:nazunaPT:1563399894520172564> ]" : ""}${target.shield === 0 ? `. **${target.name}**'s shield broke down!` : ""}`);
     } else {
+        // Damage gets processed
         target.hp = Math.floor(target.hp - damage);
         if (target.hp < 1) target.hp = 0;
-        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : options.element === 1 ? " <a:frost1:1504497507185725473><a:frost2:1504497408233705512>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage`);
+        notice.push(options.overwriteNotice ? log : `\n${log} has dealt${isCrit ? " a critical hit!" : ""} **${damage}**${options.isLightning ? " <a:lightning1:1466832810005364928><a:lightning2:1466832855190737036><a:lightning3:1466832917014778085>" : options.element === 1 ? " <a:frost1:1504497507185725473><a:frost2:1504497408233705512>" : ""}${(options.magicDamage && options.mdChance < attacker.mdChance) ? " magic" : ""} damage${target.nazunaNotif ? " [ <:nazunaPT:1563399894520172564> ]" : ""}`);
     };
 
     // Reflect damage (skip if target already died from the hit)
@@ -950,8 +972,14 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
     target.damageTaken += damage;
     if (options.combodmg && attacker.combodmg) attacker.attackStreak++;
     if (options.critbleed && isCrit) {
-        const bleedPercentage = attacker.critbleedAmount ?? 0.05;
-        targetBuff.hp.push(new buffInfo("+", -Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * bleedPercentage), attacker.critbleedlast));
+        let bleedDmg = Math.floor(Math.min(target.maxhp, attacker.maxhp * 2) * (attacker.critbleedAmount ?? 0.05)) * (attacker.critbleedMulti ?? 1);
+        if (!attacker.critbleedInstant) {
+            targetBuff.hp.push(new buffInfo("+", -bleedDmg, (attacker.critbleedlast || 2)));
+        } else {
+            bleedDmg *= (attacker.critbleedlast || 2);
+            let dmg = dealDamage(target, attacker, targetBuff, attackerBuff, matchStats, notice, `<a:critbleed:1561929438109630474> **${attacker.name}**`, { overwriteDamage: Math.floor(bleedDmg), magicDamage: true, critbleed: false, canTwinshot: false, critChance: 1 });
+            if (attacker.critbleedHeal > 0 && dmg) addHeal(attacker, target, attacker, attackerBuff, targetBuff, matchStats, notice, ``, Math.floor(bleedDmg * attacker.critbleedHeal), {});
+        };
     };
     if (attacker.critmana && isCrit) {
         attacker.sm += attacker.critmana;
@@ -984,6 +1012,8 @@ export const dealDamage = (target: DetailedStats, attacker: DetailedStats, targe
 
     if (options.isLightning) attacker.lightningcount = (attacker.lightningcount ?? 0) + 1;
     if (options.isLightning && attacker.tempLightningBuff && attacker.tempLightningBuffActive) attacker.tempLightningBuffActive--;
+    if (attacker.oneHitDmgBuff && attacker.oneHitUsed !== true && damage > 0 && !options.overwriteDamage) attacker.oneHitUsed = true;
+    if (target.nazunaNotif) target.nazunaNotif = false;
 
     // if (attacker.sjwUsedActive) {
     //     if (damage) targetBuff.hp.push(new buffInfo("+", Math.floor(damage * 0.07), 2)); // Beru
@@ -1705,16 +1735,26 @@ export const searchGuild = <T extends GuildSchema>(name: string, guilds: T[]) =>
 
 export const daysSince = (lastOnlineDate: Date | number) => {
     if (!lastOnlineDate) return 0;
-    if (typeof lastOnlineDate === "number") lastOnlineDate = new Date(lastOnlineDate);
+    // Clone so callers' Date instances (often the cached user schema) are never mutated.
+    const last = typeof lastOnlineDate === "number" ? new Date(lastOnlineDate) : new Date(lastOnlineDate.getTime());
     const now = new Date();
 
     // set to midnight
     now.setHours(0, 0, 0, 0);
-    lastOnlineDate.setHours(0, 0, 0, 0);
+    last.setHours(0, 0, 0, 0);
 
-    const diffTime = now.getTime() - lastOnlineDate.getTime();
+    const diffTime = now.getTime() - last.getTime();
     const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+};
+
+/** Human readable time remaining until the next local midnight reset (e.g. "**2**h **5**min left"). */
+export const timeUntilMidnight = (now: Date = new Date()) => {
+    const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
+    const totalMinutes = Math.max(0, Math.ceil((midnight.getTime() - now.getTime()) / (60 * 1000)));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${hours ? `**${hours}**h ` : ""}**${minutes}**min left`;
 };
 
 const downloadImage = async (url: string) => {

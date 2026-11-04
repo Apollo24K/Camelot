@@ -38,7 +38,7 @@ const exportCommand: SlashCommand = {
                         christmas: "🎄 Christmas Event",
                         valentines: "💖 Valentine's Event",
                         easter: "🐣 Easter Event",
-                    }[ongoingEvent], value: "`/celebrate` `/seasonal shop` `/event pass` `/ex pull`"
+                    }[ongoingEvent], value: "`/celebrate` `/seasonal shop` `/event pass` `/ex`"
                 },
             );
             Embed.addFields(
@@ -112,7 +112,11 @@ const exportCommand: SlashCommand = {
                 Embed.setDescription("**Usage**: `/buy monthly`\n**Options**: `item`\n\nBuy an item from the monthly shop. Use `/monthly shop` to access the available items for purchase.\n\n**Options**\n`item`: Choose what item you want to buy from the monthly shop.");
                 break;
             case 'daily':
-                Embed.setDescription("**Usage**: </daily:1011371510759428136>\n\nUsed to claim daily coins. The amount of <:coins:872926669055356939> is proportional to your account level and daily streak. Starting with **600** <:coins:872926669055356939>, each level and streak add **+10** <:coins:872926669055356939> to it. Premium users additionally have a multiplier between **120**-**600**%.");
+                Embed.setDescription("**Usage**: </daily:1011371510759428136>\n\nUsed to claim daily coins. The amount of <:coins:872926669055356939> is proportional to your account level and daily streak. Starting with **400** <:coins:872926669055356939>, each account level adds **+10** <:coins:872926669055356939> and each day of daily streak adds **+20** <:coins:872926669055356939> to it. Premium users additionally have a multiplier between **120**-**600**%.");
+                break;
+            case 'ex':
+                Embed.setDescription("**Usage**: `/ex`\n\nSpend your <a:EXTRA:1138530846144462968> pulls on one of three banners. All three roll at the same rates, the difference is which pool an <a:EXTRA:1138530846144462968> character comes from.\n**Standard Banner**: <a:EXTRA:1138530846144462968> characters are drawn at random from the standard pool.\n**Rate-up Banner**: one character is featured. An <a:EXTRA:1138530846144462968> is the on-banner character **50%** of the time, otherwise it comes from the standard pool.\n**Event Banner**: only available during an event. The event's characters are featured. An <a:EXTRA:1138530846144462968> is one of them **70%** of the time, otherwise it comes from the standard pool.\n\nPulling an <a:EXTRA:1138530846144462968> that is not on-banner guarantees your next one on the Rate-up or Event banner is the on-banner character.\n\nEvery banner has its own **hard pity at 80 pulls**, and its own pity counter. View `/help pity` to check your progress.");
+                Embed.addFields({ name: 'Rates', value: "<a:EXTRA:1138530846144462968> **Tier**: 1.3%\n<:SSTier:869316489931546644> **Tier**: 48.1%", inline: true }, { name: '_ _', value: "<:STier:869316518675095552> **Tier**: 50.6%", inline: true });
                 break;
             case 'fav':
                 Embed.setDescription("**Usage**: `/fav character:<character name or ID>`\n\nSelect your favourite character. You have to own it to be able to select it. The image of that character will then be displayed as a thumbnail on various commands of yours like on your `/profile` or `/level`.");
@@ -121,7 +125,7 @@ const exportCommand: SlashCommand = {
                 Embed.setDescription("**Usage:** `/find <character name or ID>`\n**Options:** `character, page, settings`\n\nFind users who own a character in your server. If there are multiple users owning that character, it will be sorted according to the amount of copies they have. You can choose for your name not to be displayed in find by using the “settings” flag.\n\n**Options**\n`character:` Identifies the character that is being looked for through ID or name.\n`page:` Select a page to jump to.\n`settings:` Decide what you want to be visible on /find: \n         1) Show all my cards\n 2) Show only my dupes\n 3) Don't show any of my cards");
                 break;
             case 'give characters':
-                Embed.setDescription("**Usage:** `/give characters`\n**Options:** `user, characters`\n\nGives one or more characters to another user. This command is only accessible for users with a `/profile` level of 25+. The maximum number of characters that can be given through a single command is 200.\n\n**Options**\n`user:` Select the user you intend to give one or more characters to.\n`characters:` List the name(s) of the character/characters you intend to give to another user (separated by commas (,)).");
+                Embed.setDescription("**Usage:** `/give characters`\n**Options:** `user, characters, quantity`\n\nGives one or more characters to another user. This command is only accessible for users with a `/profile` level of 25+. The maximum number of characters that can be given through a single command is 200.\n\n**Options**\n`user:` Select the user you intend to give one or more characters to.\n`characters:` List the name(s) of the character/characters you intend to give to another user (separated by commas (,)).\n`quantity:` How many copies of each listed character to give (default: 1). The list is deduplicated, so use this for duplicates. VIP prints can only be given one copy at a time.");
                 break;
             case 'give coins':
                 Embed.setDescription("**Usage:** `/give coins`\n**Options:** `user, amount`\n\nGive coins to another player. This command is only accessible for users with a `/profile` level of 25+. The maximum number of coins that can be given to another player with a single command usage is 10 million.\n\n**Options**\n`user:` Select the user you intend to give coins to.\n`amount:` Write the number of coins you intend to give to another user.");
@@ -154,7 +158,7 @@ const exportCommand: SlashCommand = {
                 Embed.setDescription("**Usage:** `/open`\n**Options:** `item`\n\nOpen a loot box or a chest of your choice.\n\n**Options**\n`item:` Choose the item you would like to open up to 1000 at once (either a loot box or a type of chest).");
                 break;
             case 'pity':
-                Embed.setDescription("**Usage**: `/pity`\n**Options:** `user`\n\nIf players don't get an <:STier:869316518675095552>-Tier or <:SSTier:869316489931546644>-Tier character in their last 80 and 210 pulls, their next pull will be a guaranteed <:STier:869316518675095552>-Tier or <:SSTier:869316489931546644>-Tier character. `/pity` will show your progress. Note that premium users will have a lower pity.\n\n**Options**\n`user:` Select the user whose pity you want to see");
+                Embed.setDescription("**Usage**: `/pity`\n**Options:** `user`\n\nIf players don't get an <:STier:869316518675095552>-Tier or <:SSTier:869316489931546644>-Tier character in their last 80 and 210 pulls, their next pull will be a guaranteed <:STier:869316518675095552>-Tier or <:SSTier:869316489931546644>-Tier character. `/pity` will show your progress. Note that premium users will have a lower pity.\n\nEach <a:EXTRA:1138530846144462968> banner has its own hard pity at 80 pulls, shown as the three <a:EXTRA:1138530846144462968> pity counters below.\n\n**Options**\n`user:` Select the user whose pity you want to see");
                 break;
             case 'profile':
                 Embed.setDescription("**Usage:** </profile:1010583712527810641>\n**Options:** `user`, `type`, `quality`, `force-static`, `bio`, `color`, `custom-color-1`, `custom-color-2`\n\nGenerates a profile card of a given player including stats like level, balance, dungeon progress, equipped items, class, premium status, character stats and more.\n\n**Options**\n`user:` See another player's profile.\n`type:` Choose between the new (image) or old (legacy) layouts.\n`quality:` Change the image resolution.\n`force-static:` Force the image to be static (not a gif).\n`bio:` Set a custom bio to be displayed on your profile.\n`color:` Choose between predefined color options.\n`custom-color:` Enter Hex codes of custom colors for your profile (premium only).");
@@ -453,7 +457,7 @@ const exportCommand: SlashCommand = {
                 Embed.setDescription("**Usage:** `/disassemble items`\n**Options:** `items`\n\nPick particular items to disassemble based on their IDs.\n\n**Options**\n`items:` Insert the item IDs you intend to disassemble.");
                 break;
             case 'event pass':
-                Embed.setDescription("**Usage:** `/event pass`\n\nDisplays a seasonal Event Pass, containing a plethora of rewards which rotate depending on the last ongoing event. When the Event Pass is active, it can be leveled by completing daily `/quests`. Afterwards, it can only be upgraded with Genesis Gems (100 per 1 level).");
+                Embed.setDescription("**Usage:** `/event pass`\n\nDisplays an Event Pass, containing a plethora of rewards which rotate depending on the last ongoing event. It can be leveled at any time by completing daily `/quests`, with levels persisting until the pass is reset for a new event. Any remaining levels can also be unlocked with Genesis Gems (50 per level).");
                 break;
             case 'ex pull':
                 Embed.setDescription("**Usage:** `/ex pull`\n\nBrings up a gacha with a low chance of pulling an EX character when an EX pull is used. Otherwise, an S or SS character is pulled. EX pulls are primarily obtained from events and the monthly shop. Within the gacha, some EX characters are less common than others, and characters rotate after every event.");

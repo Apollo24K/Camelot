@@ -1,6 +1,6 @@
 import { ChatInputCommandInteraction, User, Client } from "discord.js";
 import { getCachedUserSchema, getUserSchema, updateUsersAndCache } from "./queries.js";
-import { isEventOngoing } from "./components.js";
+import { isEventStarted } from "./components.js";
 
 const dailyLock = new Map<string, Promise<void>>();
 
@@ -79,8 +79,7 @@ class dailyQuestInfo {
             // Check if it was completed now
             if (this.check(stats.dailies[this.id])) {
 
-                // Check if event is active
-                const passlevel = isEventOngoing()
+                const passlevel = isEventStarted()
                     ? ({ passlevel: { type: "increment", value: 1 } } as const)
                     : {};
 

@@ -1,6 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 import dotenv from 'dotenv';
 import { measurePoolQuery, withMeasuredClient } from './Modules/databaseTiming';
+import { BOSS_BASE_HP, bossMaxHP, legacyStageMultiplier, stageMultiplier } from './Modules/bossHuntScaling';
 dotenv.config();
 
 const pool = new Pool({
@@ -125,6 +126,12 @@ async function createTables() {
         referrals_claimed INT DEFAULT 0 NOT NULL,
         passpurchaselimit INT DEFAULT 0 NOT NULL,
         expity INT DEFAULT 0 NOT NULL,
+        expity_standard INT DEFAULT 0 NOT NULL,
+        expity_rateup INT DEFAULT 0 NOT NULL,
+        expity_limited INT DEFAULT 0 NOT NULL,
+        exguarantee BOOLEAN DEFAULT FALSE NOT NULL,
+        exguarantee_rateup BOOLEAN DEFAULT FALSE NOT NULL,
+        exguarantee_limited BOOLEAN DEFAULT FALSE NOT NULL,
         craze_equipment JSONB DEFAULT '{}' NOT NULL,
         equipment JSONB DEFAULT '{}' NOT NULL,
         trial_equipment JSONB DEFAULT '{}' NOT NULL,
@@ -134,6 +141,7 @@ async function createTables() {
         valentine TEXT,
         bosshuntruns INT DEFAULT 0 NOT NULL,
         bosshuntrevreceived INT DEFAULT 0 NOT NULL,
+        bosshuntdamage BIGINT DEFAULT 0 NOT NULL,
         monthlyshop JSONB DEFAULT '{}' NOT NULL,
         itemwishlist INT[] DEFAULT ARRAY[]::INT[] NOT NULL,
         stampedeenergy INT DEFAULT 0 NOT NULL,
@@ -192,6 +200,12 @@ async function createTables() {
         user_ids TEXT[] NOT NULL
     )`);
 
+    // Global bot state (refill markers, one-time migration markers, etc.)
+    await query(`CREATE TABLE IF NOT EXISTS bot_state (
+        key TEXT PRIMARY KEY NOT NULL,
+        value BIGINT NOT NULL
+    )`);
+
     // Weapons table
     await query(`CREATE SEQUENCE IF NOT EXISTS weapons_rowid_seq`);
     await query(`CREATE TABLE IF NOT EXISTS weapons (
@@ -235,10 +249,10 @@ async function createTables() {
 
         eventpoints INT DEFAULT 0 NOT NULL,
         bosshuntstage INT DEFAULT 1 NOT NULL,
-        boss1 BIGINT DEFAULT 126080 NOT NULL,
-        boss2 BIGINT DEFAULT 168260 NOT NULL,
-        boss3 BIGINT DEFAULT 121720 NOT NULL,
-        boss4 BIGINT DEFAULT 149640 NOT NULL,
+        boss1 BIGINT DEFAULT 138688 NOT NULL,
+        boss2 BIGINT DEFAULT 185086 NOT NULL,
+        boss3 BIGINT DEFAULT 133892 NOT NULL,
+        boss4 BIGINT DEFAULT 164604 NOT NULL,
         
         lastlevelup TIMESTAMP,
 
@@ -660,7 +674,81 @@ async function alterTables() {
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS hidden_dungeon JSONB DEFAULT \'{}\' NOT NULL');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS newbie INT[] DEFAULT ARRAY[]::INT[] NOT NULL;');
     await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS bosshuntchar INT;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS bosshuntchanged BIGINT DEFAULT 0 NOT NULL;');
+    await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS bosshuntdamage BIGINT DEFAULT 0 NOT NULL;');
+    await query('ALTER TABLE guilds ALTER COLUMN boss1 SET DEFAULT 138688');
+    await query('ALTER TABLE guilds ALTER COLUMN boss2 SET DEFAULT 185086');
+    await query('ALTER TABLE guilds ALTER COLUMN boss3 SET DEFAULT 133892');
+    await query('ALTER TABLE guilds ALTER COLUMN boss4 SET DEFAULT 164604');
+    await query(`DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM bot_state WHERE key = 'boss_stage1_hp_migrated') THEN
+            INSERT INTO bot_state(key, value) VALUES ('boss_stage1_hp_migrated', 1) ON CONFLICT (key) DO NOTHING;
+            IF FOUND THEN
+                UPDATE guilds
+                SET boss1 = ROUND(boss1 * 1.1)::bigint,
+                    boss2 = ROUND(boss2 * 1.1)::bigint,
+                    boss3 = ROUND(boss3 * 1.1)::bigint,
+                    boss4 = ROUND(boss4 * 1.1)::bigint
+                WHERE bosshuntstage = 1;
+            END IF;
+        END IF;
+    END$$;`);
+    // Boss Hunt curve rework: stages 26-30 were spawned with the old cap-30 curve, whose
+    // multipliers are far above the current curve. Rescale those rows once so stored HP matches
+    // the max the new curve displays, keeping the fraction of HP the guild had already removed.
+    // Rows that already fit the current curve, and defeated bosses, are left untouched. Stages
+    // above 30 never held legacy data (the old cap was 30).
+    await withTransaction(async (client) => {
+        const alreadyMigrated = await client.query(`SELECT 1 FROM bot_state WHERE key = 'boss_hp_scaling_v2_migrated' LIMIT 1`);
+        if (alreadyMigrated.rowCount) return;
+
+        for (let stage = 26; stage <= 30; stage++) {
+            const maxHp = BOSS_BASE_HP.map((baseHp) => bossMaxHP(baseHp, stage));
+            const ratio = stageMultiplier(stage) / legacyStageMultiplier(stage);
+            await client.query(
+                `UPDATE guilds
+                 SET boss1 = CASE WHEN boss1 > $1 THEN GREATEST(1::bigint, ROUND(boss1::numeric * $5::numeric)::bigint) ELSE boss1 END,
+                     boss2 = CASE WHEN boss2 > $2 THEN GREATEST(1::bigint, ROUND(boss2::numeric * $5::numeric)::bigint) ELSE boss2 END,
+                     boss3 = CASE WHEN boss3 > $3 THEN GREATEST(1::bigint, ROUND(boss3::numeric * $5::numeric)::bigint) ELSE boss3 END,
+                     boss4 = CASE WHEN boss4 > $4 THEN GREATEST(1::bigint, ROUND(boss4::numeric * $5::numeric)::bigint) ELSE boss4 END
+                 WHERE bosshuntstage = $6`,
+                [...maxHp, ratio, stage]
+            );
+        }
+
+        await client.query(`INSERT INTO bot_state(key, value) VALUES ('boss_hp_scaling_v2_migrated', 1) ON CONFLICT (key) DO NOTHING`);
+    });
     await query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS char_ascension JSONB DEFAULT '{}' NOT NULL`);
+
+    // EX banner rework: pity is now tracked per banner, and a separate flag remembers that the
+    // next EX is owed to the on-banner character. The data migration has to run only once, so it's
+    // keyed off the column not existing yet rather than being replayed on every boot.
+    await query(`DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'expity_standard') THEN
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS expity_standard INT DEFAULT 0 NOT NULL;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS expity_rateup INT DEFAULT 0 NOT NULL;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS expity_limited INT DEFAULT 0 NOT NULL;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS exguarantee BOOLEAN DEFAULT FALSE NOT NULL;
+            -- Carry the old single counter (cap 24) into the limited banner pity (cap 80),
+            -- preserving the proportion of progress. Capped at 79 so nobody lands on an
+            -- immediately-firing pity.
+            UPDATE users SET expity_limited = LEAST(79, ROUND(expity / 24.0 * 80)::int) WHERE expity > 0;
+        END IF;
+    END$$;`);
+
+    // The on-banner guarantee is now tracked per featured banner instead of a single shared
+    // exguarantee. The Standard banner has no on-banner character, so it has no guarantee. Guarded
+    // on the new Rate-up column so it runs exactly once, and backfills any outstanding guarantee.
+    await query(`DO $$
+    BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'exguarantee_rateup') THEN
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS exguarantee_rateup BOOLEAN DEFAULT FALSE NOT NULL;
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS exguarantee_limited BOOLEAN DEFAULT FALSE NOT NULL;
+            UPDATE users SET exguarantee_rateup = exguarantee, exguarantee_limited = exguarantee WHERE exguarantee = TRUE;
+        END IF;
+    END$$;`);
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS worldboss_attempts INT DEFAULT 12 NOT NULL');
     // await query('ALTER TABLE users ADD COLUMN IF NOT EXISTS coins INT DEFAULT 0 NOT NULL');
 

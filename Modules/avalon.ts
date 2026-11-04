@@ -41,6 +41,14 @@ export default class Avalon {
 
                 // Achievements
                 achievements[24].check(interaction, interaction.user, myStatsC.revivedTotal), achievements[25].check(interaction, interaction.user, myStatsC.revivedTotal), achievements[26].check(interaction, interaction.user, myStatsC.revivedTotal); // The Show Must Go On
+            } else if (myStatsC.phase && myStatsC.maxphase && myStatsC.phase < myStatsC.maxphase && eStatsC.hp >= 1) {
+                myStatsC.hp = Math.max(myStatsC.maxhp, 1);
+                notice.push(`\n🔄️ **PHASE CHANGE!** ${(myStatsC.phaseNotif) ? myStatsC.phaseNotif[myStatsC.phase - 1] : `${myStatsC.name} recovered all health.`}`);
+                myStatsC.phase++;
+                matchStats.trigger("phaseChange", myStatsC, eStatsC, mybuffs, ebuffs, {});
+                myStatsC.timeFrozen = false;
+                editEmbed();
+                return;
             } else {
                 if (eStatsC.playerDeathMessage) {
                     if (Array.isArray(eStatsC.playerDeathMessage)) {
@@ -233,6 +241,8 @@ export default class Avalon {
             };
         };
 
+        if (side.critbleed) iconbar += "<a:critbleed:1561929438109630474>";
+
         if (side.SPshield) {
             switch (side.SPshieldType) {
                 case 1: iconbar += "<:spshield1:1501752295182827560>"; break; // NereID
@@ -409,7 +419,7 @@ export default class Avalon {
                 };
                 buff.last--;
             });
-            if (obj[stat].length) obj[stat] = obj[stat].filter((buff) => buff.last);
+            if (obj[stat].length) obj[stat] = obj[stat].filter((buff) => buff.last > 0);
         });
         stats.sm += stats.mg;
         if (typeof stats.manaGained !== 'undefined') stats.manaGained += stats.mg;

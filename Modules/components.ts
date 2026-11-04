@@ -54,11 +54,16 @@ export const OfferRow = new ActionRowBuilder<ButtonBuilder>()
     );
 
 // Event
-export const ongoingEvent = "anniversary" as SeasonalEvent;
-export const seasonalEventStart = new Date('2026-08-29 00:00:00');
-export const seasonalEventLastsDays = 16;
+export const ongoingEvent = "halloween" as SeasonalEvent;
+export const seasonalEventStart = new Date('2026-11-01 00:00:00');
+export const seasonalEventLastsDays = 20;
 export const seasonalEventEnd = new Date(seasonalEventStart.getTime() + (seasonalEventLastsDays * 24 * 60 * 60 * 1000));
+export const isEventStarted = () => seasonalEventStart.getTime() <= Date.now();
 export const isEventOngoing = () => seasonalEventStart.getTime() <= Date.now() && Date.now() < seasonalEventEnd.getTime();
+export const isBossHuntOngoing = () => isEventOngoing() && ongoingEvent === "halloween" && new Date().getFullYear() === 2026;
+export const eventPointsReward = ongoingEvent === "halloween"
+    ? { name: "Hallopop", emoji: "🍭" }
+    : { name: "Valentine's Chocolate", emoji: "<:valentines_choco_2026:1472686937277071442>" };
 
 // Misc
 export const requestVerification = new Map();
@@ -103,8 +108,8 @@ export const currencyEmojis = {
     "lilies": "<:lilium:974057059618291732>",
     "jades": "<:eternal_jade:1256124504141201428>",
     "guild_marks": "<:guild_mark:1317944450814840923>",
-    "season_keys": seasonalKeys.summer,
-    "eventpts": "🌙",
+    "season_keys": seasonalKeys.halloween,
+    "eventpts": "🍬",
 } as const;
 
 export const profileColors = {

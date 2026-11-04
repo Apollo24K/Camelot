@@ -415,7 +415,7 @@ export const raidBosses: enemyInfo[] = [
         new skillInfo(6, 90, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {
 
             eStats.counter = 2;
-            notice.push(`\n<:counter:1340459549374546032>  **${enemy.name}** prepares to counter the next **2** attacks`);
+            notice.push(`\n<:counter:1340459549374546032> **${enemy.name}** prepares to counter the next **2** attacks`);
 
             return AbilityResponse.SUCCESS;
         }, async (myStats, eStats, mybuff, ebuff, char, enemy, matchStats, notice, embed, user, ...list) => {

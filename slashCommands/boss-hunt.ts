@@ -2,8 +2,8 @@ import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { createBattleSpeedWarning } from "../Modules/battleWarnings";
 import { replyToCommand, deferCommand, editCommandReply } from "../Modules/interactionResponses";
 import { createBattleRenderer } from "../Modules/battleRenderer";
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction } from "discord.js";
-import { abilities, Ability } from "../Modules/abilities";
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ComponentType, ButtonStyle, ChatInputCommandInteraction, MessageFlags } from "discord.js";
+import { abilities, Ability, partyAbilityEmoji } from "../Modules/abilities";
 import { getUserAbility } from "../Modules/ascensions";
 import { classes } from "../Modules/classes";
 import { curses } from "../Modules/curses";
@@ -11,23 +11,258 @@ import { bossMobs } from "../Modules/enemies";
 import { armorInfo, items, ringInfo, runeInfo, weaponInfo } from "../Modules/items";
 import { skills, eventBossAbilities } from "../Modules/skills";
 import { characters } from "../Modules/chars";
-import { getDetailedStats, customEmojis, dealDamage } from "../Modules/functions";
+import { getDetailedStats, customEmojis, dealDamage, formatNumberWithQuotes } from "../Modules/functions";
 import Avalon from "../Modules/avalon";
 import buffInfo from "../Modules/buffs";
 import _ from 'lodash';
 import { CompactUserSchema, DetailedStats, GuildSchema, SlashCommand, UpdateUserOptions } from '../types';
-import { getGuildSchema, getOwnedCharacterIds, getUserSchema, getUserSchemas, ownsCharacter, updateGuilds, updateUsers } from '../Modules/queries';
-import { AbilityResponse, isEventOngoing, ongoingEvent } from '../Modules/components';
+import { advanceBossHuntStage, getGuildSchema, getOwnedCharacterIds, getUserSchema, getUserSchemas, ownsCharacter, updateGuilds, updateUsers } from '../Modules/queries';
+import { AbilityResponse, eventPointsReward, isBossHuntOngoing } from '../Modules/components';
 import { customHpBars } from '../Modules/customHpBars';
 import { skillTree } from '../Modules/skillTree';
+import { BOSS_BASE_HP as bossBaseHP, BOSS_HUNT_MAX_STAGE, bossMaxHP } from '../Modules/bossHuntScaling';
 
 const dungeonInProgress = new Set();
 
-const bossBaseHP = [126080, 168260, 121720, 149640];
+const BOSS_HUNT_MAX_ROUNDS = 50;
 
-// Single source of truth for boss HP scaling. Spawn, display and combat must all use this,
-// otherwise a guild's stored boss HP drifts out of sync with the HP bar shown in a fight.
-const bossMaxHP = (baseHP: number, stage: number) => Math.round(baseHP * (0.8 + (stage * (stage > 25 ? 1.5 : 0.3))));
+const RANDOM_EVENT_FALLOFF_START_LEVEL = 21;
+const RANDOM_EVENT_DISABLED_LEVEL = 30;
+const RANDOM_EVENT_LOW_LEVEL_BOOST = 0.5; // +50% chance for guild level 20 and below
+
+const EVENT_POINTS_BASE = 300;
+const EVENT_POINTS_DAMAGE_MAX = 100;
+const EVENT_POINTS_DAMAGE_DIVISOR = 400;
+const EVENT_POINTS_STAGE_BASE = 0.8;
+const EVENT_POINTS_STAGE_GROWTH = 0.2;
+const EVENT_POINTS_MAX = 2000;
+
+// Event point milestones. Static data, kept out of the per-fight hot path.
+const milestones: { id: number; required: number; query: UpdateUserOptions; rew: string; image?: string; hpbarId?: number; }[] = [
+    {
+        id: 0,
+        required: 250,
+        query: { coins: { type: "increment", value: 300 }, sshard: { type: "increment", value: 4 } },
+        rew: "300<:coins:872926669055356939> and 4<:s_shard:917202925514817566>",
+    },
+    {
+        id: 1,
+        required: 500,
+        query: { coins: { type: "increment", value: 400 }, lootbox: { type: "increment", value: 1 } },
+        rew: "400<:coins:872926669055356939> and a lootbox",
+    },
+    {
+        id: 2,
+        required: 800,
+        query: { coins: { type: "increment", value: 500 }, sticket: { type: "increment", value: 1 } },
+        rew: "500<:coins:872926669055356939> and 1x <:s_ticket:927642487705722890>",
+    },
+    {
+        id: 3,
+        required: 1250,
+        query: { coins: { type: "increment", value: 550 }, lootbox: { type: "increment", value: 1 }, sticket: { type: "increment", value: 2 } },
+        rew: "550<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890> and a lootbox",
+    },
+    {
+        id: 4,
+        required: 1800,
+        query: { coins: { type: "increment", value: 600 }, lootbox: { type: "increment", value: 1 }, sshard: { type: "increment", value: 8 } },
+        rew: "600<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
+    },
+    {
+        id: 5,
+        required: 2500,
+        query: { expulls: { type: "increment", value: 1 }, gems: { type: "increment", value: 10 } },
+        rew: "1x <a:EXTRA:1138530846144462968> & 10<:genesis_gems:1034179687720681492>",
+    },
+    {
+        id: 6,
+        required: 3200,
+        query: { coins: { type: "increment", value: 700 }, lootbox: { type: "increment", value: 2 }, sshard: { type: "increment", value: 10 } },
+        rew: "700<:coins:872926669055356939>, 10x <:s_shard:917202925514817566> and 2 lootboxes",
+    },
+    {
+        id: 7,
+        required: 3800,
+        query: { coins: { type: "increment", value: 750 }, sticket: { type: "increment", value: 2 } },
+        rew: "750<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890>",
+    },
+    {
+        id: 8,
+        required: 4400,
+        query: { coins: { type: "increment", value: 800 }, lootbox: { type: "increment", value: 2 }, ssshard: { type: "increment", value: 4 } },
+        rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and 2 lootboxes",
+    },
+    {
+        id: 9,
+        required: 5000,
+        query: { expulls: { type: "increment", value: 1 }, sticket: { type: "increment", value: 3 } },
+        rew: "1x <a:EXTRA:1138530846144462968> and 3x <:s_ticket:927642487705722890>",
+    },
+    {
+        id: 10,
+        required: 6000,
+        query: { coins: { type: "increment", value: 900 }, lootbox: { type: "increment", value: 1 }, ssshard: { type: "increment", value: 4 } },
+        rew: "900<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
+    },
+    {
+        id: 11,
+        required: 7250,
+        query: { coins: { type: "increment", value: 1000 }, ssshard: { type: "increment", value: 6 } },
+        rew: "1000<:coins:872926669055356939>, 6x <:ss_shard:917203009543503892>",
+    },
+    {
+        id: 12,
+        required: 8500,
+        query: { coins: { type: "increment", value: 1000 }, sticket: { type: "increment", value: 3 } },
+        rew: "1000<:coins:872926669055356939>, 3x <:s_ticket:927642487705722890>",
+    },
+    {
+        id: 13,
+        required: 10000,
+        query: { expulls: { type: "increment", value: 1 }, ssticket: { type: "increment", value: 1 } },
+        rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
+    },
+    {
+        id: 14,
+        required: 12500,
+        query: { coins: { type: "increment", value: 1200 }, lootbox: { type: "increment", value: 3 } },
+        rew: "1200<:coins:872926669055356939> and 3 lootboxes",
+    },
+    {
+        id: 15,
+        required: 15000,
+        query: { expulls: { type: "increment", value: 1 }, ssticket: { type: "increment", value: 1 } },
+        rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
+    },
+    {
+        id: 16,
+        required: 18000,
+        query: { coins: { type: "increment", value: 1250 }, lootbox: { type: "increment", value: 2 }, ssticket: { type: "increment", value: 1 } },
+        rew: "1250<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 2 lootboxes",
+    },
+    {
+        id: 17,
+        required: 22500,
+        query: { expulls: { type: "increment", value: 1 }, ssticket: { type: "increment", value: 1 } },
+        rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
+    },
+    {
+        id: 18,
+        required: 26000,
+        query: { lootbox: { type: "increment", value: 6 } },
+        rew: "6 lootboxes",
+    },
+    {
+        id: 19,
+        required: 30000,
+        query: { expulls: { type: "increment", value: 2 } },
+        rew: "2x <a:EXTRA:1138530846144462968>",
+    },
+    {
+        id: 20,
+        required: 36000,
+        query: { coins: { type: "increment", value: 1250 }, gems: { type: "increment", value: 10 }, lootbox: { type: "increment", value: 2 } },
+        rew: "1250<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492> and 2 lootboxes",
+    },
+    {
+        id: 21,
+        required: 42000,
+        query: { coins: { type: "increment", value: 3000 }, expulls: { type: "increment", value: 1 } },
+        rew: "1x <a:EXTRA:1138530846144462968> and 3000<:coins:872926669055356939>",
+    },
+    {
+        id: 22,
+        required: 50000,
+        query: { gems: { type: "increment", value: 20 }, lootbox: { type: "increment", value: 3 }, ssticket: { type: "increment", value: 1 } },
+        rew: "20<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+    },
+    {
+        id: 23,
+        required: 60000,
+        query: { coins: { type: "increment", value: 3000 }, gems: { type: "increment", value: 10 }, lootbox: { type: "increment", value: 3 }, ssticket: { type: "increment", value: 1 } },
+        rew: "3000<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+    },
+    {
+        id: 24,
+        required: 72000,
+        query: { expulls: { type: "increment", value: 1 }, lootbox: { type: "increment", value: 3 }, ssticket: { type: "increment", value: 1 } },
+        rew: "1x <a:EXTRA:1138530846144462968>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
+    },
+    {
+        id: 25,
+        required: 80000,
+        query: { ssticket: { type: "increment", value: 2 }, sticket: { type: "increment", value: 6 } },
+        rew: "2x <:ss_ticket:927503239396622336> and 6x <:s_ticket:927642487705722890>",
+    },
+    {
+        id: 26,
+        required: 100000,
+        query: { gems: { type: "increment", value: 20 }, expulls: { type: "increment", value: 1 }, hpbars: { type: "append_unique", value: [23] } },
+        rew: "1x <a:EXTRA:1138530846144462968>, 20<:genesis_gems:1034179687720681492> and the **Soulbound** HP bar",
+        hpbarId: 23,
+    },
+];
+
+function applyStageCap(guild: GuildSchema) {
+    if (guild.bosshuntstage >= BOSS_HUNT_MAX_STAGE) {
+        guild.bosshuntstage = BOSS_HUNT_MAX_STAGE;
+        guild.boss1 = bossMaxHP(bossBaseHP[0], BOSS_HUNT_MAX_STAGE);
+        guild.boss2 = bossMaxHP(bossBaseHP[1], BOSS_HUNT_MAX_STAGE);
+        guild.boss3 = bossMaxHP(bossBaseHP[2], BOSS_HUNT_MAX_STAGE);
+        guild.boss4 = bossMaxHP(bossBaseHP[3], BOSS_HUNT_MAX_STAGE);
+    };
+};
+
+// Malevokar's HP is a shared guild pool, so a run that ends in a loss or times out can
+// still land the final hit. Older code only advanced on the killer's win, leaving the
+// guild with every boss at 0 HP on the same stage and no way to start another fight.
+// Detect that exact state and finish the advance so `/boss hunt` can continue.
+async function repairClearedBossHuntStage(guild: GuildSchema): Promise<boolean> {
+    if (guild.bosshuntstage >= BOSS_HUNT_MAX_STAGE) return false;
+    if (guild.boss1 > 0 || guild.boss2 > 0 || guild.boss3 > 0 || guild.boss4 > 0) return false;
+
+    return advanceBossHuntStage({
+        guildId: guild.id,
+        stage: guild.bosshuntstage,
+        bossHp: [
+            bossMaxHP(bossBaseHP[0], guild.bosshuntstage + 1),
+            bossMaxHP(bossBaseHP[1], guild.bosshuntstage + 1),
+            bossMaxHP(bossBaseHP[2], guild.bosshuntstage + 1),
+            bossMaxHP(bossBaseHP[3], guild.bosshuntstage + 1),
+        ],
+        memberIds: guild.members,
+        maxStage: BOSS_HUNT_MAX_STAGE,
+        memberReward: { coins: 5000, gems: 5 },
+    });
+};
+
+async function applyBossDamage(guildId: string, bossKey: "boss1" | "boss2" | "boss3" | "boss4", damage: number, stage: number): Promise<number> {
+    const claimed = Math.floor(damage);
+    if (!(claimed > 0)) return 0;
+
+    // The final stage is the intentional "last farms" stage: its HP is reset every run,
+    // so don't persist damage there. Report the full damage for event points.
+    if (stage >= BOSS_HUNT_MAX_STAGE) return claimed;
+
+    for (let attempt = 0; attempt < 3; attempt++) {
+        const current = await getGuildSchema(guildId);
+        if (!current) return 0;
+
+        const remaining = Math.max(0, current[bossKey]);
+        if (remaining < 1) return 0;
+
+        const applied = Math.min(claimed, remaining);
+        const updated = await updateGuilds(guildId, {
+            [bossKey]: { type: "increment", value: -applied },
+        }, `${bossKey} = ${remaining} AND bosshuntstage = ${stage}`);
+
+        if (updated > 0) return applied;
+        if (current.bosshuntstage !== stage) return 0;
+    };
+
+    return 0;
+};
 
 function toOrdinal(num: number) {
     if (num % 100 >= 11 && num % 100 <= 13) return num + "th";
@@ -91,19 +326,55 @@ function bossSelection(interaction: ChatInputCommandInteraction, stats: CompactU
                     .setLabel('Malevokar')
                     .setStyle(ButtonStyle.Danger)
                     .setDisabled(!((guild.boss1 < 1) && (guild.boss2 < 1) && (guild.boss3 < 1))),
+            )
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('bosshunt_info')
+                    .setEmoji('🔍')
+                    .setStyle(ButtonStyle.Secondary),
             );
 
         const Embed = new EmbedBuilder()
             .setColor(0x2aad9d)
-            .setTitle("Boss Hunt ➜ Stage " + guild.bosshuntstage + `${guild.bosshuntstage === 30 ? " (last stage)" : ""}`)
+            .setTitle("Boss Hunt ➜ Stage " + guild.bosshuntstage + `${guild.bosshuntstage === BOSS_HUNT_MAX_STAGE ? " (last stage)" : ""}`)
             .setThumbnail("https://i.imgur.com/ZUdnLZO.png") // .setThumbnail("https://i.imgur.com/4i61ERG.png")
-            .setDescription(`**Guild**: ${guild.name}\n\nDefeat Rumbleguard, Sylvanoss and Celestion to fight Malevokar. Once Malevokar is defeated, you'll reach the next stage!\nEvery cleared stage awards all guild members 5000 <:coins:872926669055356939> & 5 <:genesis_gems:1034179687720681492>, and your guild with \`stage * 10000\` <:coins:872926669055356939> (current stage: ${guild.bosshuntstage * 10000} <:coins:872926669055356939>)\n\n<:DEF:1047269141662417037> **Rumbleguard** ➜ **${guild.boss1 < 1 ? 0 : guild.boss1}**/${bossMaxHP(bossBaseHP[0], guild.bosshuntstage)}💖\n<:HP:1062043800979116143> **Sylvanoss** ➜ **${guild.boss2 < 1 ? 0 : guild.boss2}**/${bossMaxHP(bossBaseHP[1], guild.bosshuntstage)}💖\n<:magic_dmg:948568336621527040> **Celestion** ➜ **${guild.boss3 < 1 ? 0 : guild.boss3}**/${bossMaxHP(bossBaseHP[2], guild.bosshuntstage)}💖\n✨ **Malevokar** ➜ **${guild.boss4 < 1 ? 0 : guild.boss4}**/${bossMaxHP(bossBaseHP[3], guild.bosshuntstage)}💖`)
-            .setFooter({ text: stats.bosshuntruns === 5 ? `You can play again in ${timeLeftToNextEvenHour()}` : `You can fight now! Runs left: ${5 - stats.bosshuntruns}/5 (refills every 2h)`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
+            .setDescription(`**Guild**: ${guild.name}\n\nDefeat Rumbleguard, Sylvanoss and Celestion to fight Malevokar. Once Malevokar is defeated, you'll reach the next stage!\nEvery cleared stage awards all guild members 5000 <:coins:872926669055356939> & 5 <:genesis_gems:1034179687720681492>, and your guild with \`stage * 10000\` <:coins:872926669055356939> (Stage 1 to Stage 30 only; current stage: ${guild.bosshuntstage <= 30 ? guild.bosshuntstage * 10000 : 0} <:coins:872926669055356939>)\n\n<:DEF:1047269141662417037> **Rumbleguard** ➜ **${guild.boss1 < 1 ? 0 : guild.boss1}**/${bossMaxHP(bossBaseHP[0], guild.bosshuntstage)}💖\n> ${eventBossAbilities[0].list[1]}\n<:HP:1062043800979116143> **Sylvanoss** ➜ **${guild.boss2 < 1 ? 0 : guild.boss2}**/${bossMaxHP(bossBaseHP[1], guild.bosshuntstage)}💖\n> ${eventBossAbilities[1].list[1]}\n<:magic_dmg:948568336621527040> **Celestion** ➜ **${guild.boss3 < 1 ? 0 : guild.boss3}**/${bossMaxHP(bossBaseHP[2], guild.bosshuntstage)}💖\n> ${eventBossAbilities[2].list[1]}\n✨ **Malevokar** ➜ **${guild.boss4 < 1 ? 0 : guild.boss4}**/${bossMaxHP(bossBaseHP[3], guild.bosshuntstage)}💖\n> ${eventBossAbilities[3].list[1]}`)
+            .setFooter({ text: stats.bosshuntruns >= 5 ? `You can play again in ${timeLeftToNextEvenHour()}` : `You can fight now! Runs left: ${Math.max(0, 5 - stats.bosshuntruns)}/5 (refills every 2h)`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) });
         editCommandReply(interaction, { embeds: [Embed], components: [row] }).then((msg) => {
 
             const collector = msg.createMessageComponentCollector({ filter: (r) => r.user.id === interaction.user.id, componentType: ComponentType.Button, time: 180000 });
 
             collectComponentUpdates(collector, async r => {
+                if (r.customId === 'bosshunt_info') {
+                    const members = await getUserSchemas(guild.members);
+                    const total = members.reduce((sum, m) => sum + m.bosshuntdamage, 0);
+                    const lines = members
+                        .slice()
+                        .sort((a, b) => b.bosshuntdamage - a.bosshuntdamage || a.name.localeCompare(b.name))
+                        .map((m, i) => {
+                            const char = m.bosshuntchar !== null && m.chars.includes(m.bosshuntchar)
+                                ? characters[m.bosshuntchar]
+                                : undefined;
+                            const emoji = char ? partyAbilityEmoji(char.id) : null;
+                            const selected = char
+                                ? ` — **${char.name}**${emoji ? ` [${emoji}]` : ""}`
+                                : " — _Not selected_";
+                            return `-# ${i + 1}. <@${m.id}> - **${formatNumberWithQuotes(m.bosshuntdamage)}** damage${selected}`;
+                        });
+
+                    await r.followUp({
+                        embeds: [
+                            new EmbedBuilder()
+                                .setColor(0x2aad9d)
+                                .setTitle(`🔍 Boss Hunt Roster ➜ ${guild.name}`)
+                                .setDescription(lines.join("\n") || "No guild members found.")
+                                .setFooter({ text: `Total guild damage: ${formatNumberWithQuotes(total)}` }),
+                        ],
+                        flags: MessageFlags.Ephemeral,
+                    });
+                    return;
+                };
+
                 const selection = parseInt(r.customId);
                 if (Number.isInteger(selection) && selection >= 0 && selection <= 3) resolve(selection);
                 collector.stop();
@@ -114,7 +385,7 @@ function bossSelection(interaction: ChatInputCommandInteraction, stats: CompactU
                 resolve(-1);
             });
 
-        });
+        }).catch(() => resolve(-1));
 
     });
 };
@@ -145,6 +416,13 @@ function calculateTriggerChance(atk: number) {
     return 0.04;
 };
 
+// Random events keep a boosted chance up to level 20, then lose 10% per guild level, disappearing at level 30+.
+function randomEventGuildLevelMultiplier(guildLevel: number) {
+    if (guildLevel < RANDOM_EVENT_FALLOFF_START_LEVEL) return 1 + RANDOM_EVENT_LOW_LEVEL_BOOST;
+    if (guildLevel >= RANDOM_EVENT_DISABLED_LEVEL) return 0;
+    return (RANDOM_EVENT_DISABLED_LEVEL - guildLevel) / 10;
+};
+
 function adjustDEF(myStatsC: DetailedStats) { // {274: x2 atk -> x1.5 dmg, 340: x2 atk -> x1.4 dmg, 395: x2 atk -> x1.32 dmg}
     return Math.max(myStatsC.atk, myStatsC.md) > 128 ? Math.floor(((Math.log(Math.max(myStatsC.atk, myStatsC.md)) / Math.log(2)) - 7) * 395) : 0;
 };
@@ -154,7 +432,7 @@ const exportCommand: SlashCommand = {
     earlyAcknowledgement: "public",
     async execute({ interaction, author }) {
 
-        if (!isEventOngoing() || !(ongoingEvent === "valentines" && new Date().getFullYear() === 2026)) {
+        if (!isBossHuntOngoing()) {
             return replyToCommand(interaction, "This is an event game mode, but there is currently no ongoing event.\nPlease see our </support:1011293280702578694> server for more information.");
         };
 
@@ -162,25 +440,71 @@ const exportCommand: SlashCommand = {
             return console.log(`ERROR Interaction Failed 'deferReply()', command: "${interaction.commandName}"`);
         });
 
-        let stats = author.schema;
-        if (stats.bosshuntchar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.bosshuntchar))) return editCommandReply(interaction, "You have to choose a boss hunt character first. Use `/select <char> mode:bosshunt` to choose one.");
+        let stats = await getUserSchema(interaction.user.id) ?? author.schema;
 
-        const guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
+        let guild = stats.guild ? await getGuildSchema(stats.guild) : undefined;
         if (!guild) return editCommandReply(interaction, `You need to be in a guild to participate in this event!\nYou can find one using \`/guild find\` or create your own using \`/guild create\``);
-        if (guild.bosshuntstage >= 30) guild.bosshuntstage = 30, guild.boss1 = bossMaxHP(bossBaseHP[0], 30), guild.boss2 = bossMaxHP(bossBaseHP[1], 30), guild.boss3 = bossMaxHP(bossBaseHP[2], 30), guild.boss4 = bossMaxHP(bossBaseHP[3], 30);
+        applyStageCap(guild);
+
+        // Recover a stage that was cleared without being advanced by a previous run.
+        if (await repairClearedBossHuntStage(guild)) {
+            guild = await getGuildSchema(guild.id) ?? guild;
+            applyStageCap(guild);
+        };
 
         // Tutorial
+        const stageAtSelection = guild.bosshuntstage;
         const selection = await bossSelection(interaction, stats, guild);
-        if (selection === -1) return;
+        if (selection === -1) {
+            return editCommandReply(interaction, { content: "Boss selection timed out. Use `/boss hunt` again to start a new run.", embeds: [], components: [] });
+        };
 
+        // Pressing a boss button is what starts a run: only now do we require a boss hunt
+        // character and take the run lock. Refresh state after the selection window in case
+        // guildmates progressed meanwhile.
         stats = await getUserSchema(interaction.user.id) ?? stats;
-        if (stats.bosshuntchar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.bosshuntchar))) return editCommandReply(interaction, "You have to choose a boss hunt character first. Use `/select <char> mode:bosshunt` to choose one.");
+        if (stats.bosshuntchar === null || !(await ownsCharacter(interaction.user.id, stats.chars, stats.bosshuntchar))) {
+            return editCommandReply(interaction, "You have to choose a boss hunt character first. Use `/select <char> mode:bosshunt` to choose one.");
+        };
+        if (stats.bosshuntruns >= 5) return editCommandReply(interaction, `You can play again in ${timeLeftToNextEvenHour()}`);
+        if (dungeonInProgress.has(stats.id)) return editCommandReply(interaction, { content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
+        dungeonInProgress.add(stats.id);
+        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 6 * 60 * 1000);
+        guild = await getGuildSchema(guild.id) ?? guild;
+        applyStageCap(guild);
+
+        // A guildmate's run may have cleared the stage (even by losing) during selection.
+        // Finish that advance before comparing stages so the player isn't dead-ended.
+        if (await repairClearedBossHuntStage(guild)) {
+            guild = await getGuildSchema(guild.id) ?? guild;
+            applyStageCap(guild);
+        };
+
+        // Guildmates can clear the stage while this player is picking a boss. The boss they picked
+        // belonged to the old stage, so the fight would be against a stale HP pool.
+        if (guild.bosshuntstage !== stageAtSelection) {
+            clearTimeout(userTimeout);
+            dungeonInProgress.delete(stats.id);
+            return editCommandReply(interaction, `Your guild advanced to **Stage ${guild.bosshuntstage}** while you were picking a boss. Use \`/boss hunt\` again to fight the new bosses.`);
+        };
+
+        const selectedBossKey = `boss${selection + 1}` as "boss1" | "boss2" | "boss3" | "boss4";
+        if (guild[selectedBossKey] < 1) {
+            clearTimeout(userTimeout);
+            dungeonInProgress.delete(stats.id);
+            return editCommandReply(interaction, `**${bossMobs[selection].name}** has already been defeated. Use \`/boss hunt\` to pick another boss.`);
+        };
+
         const ownedCharacterIds = await getOwnedCharacterIds(interaction.user.id, stats.chars);
 
         // Guild support characters
         const guildMembers = await getUserSchemas(guild.members);
         const collision = guildMembers.find((e) => e.id !== interaction.user.id && e.bosshuntchar === stats.bosshuntchar);
-        if (collision) return editCommandReply(interaction, `${collision.name} in your guild has also selected **${characters[stats.bosshuntchar].name}**. Use \`/select <char> mode:bosshunt\` to choose another character.`);
+        if (collision) {
+            clearTimeout(userTimeout);
+            dungeonInProgress.delete(stats.id);
+            return editCommandReply(interaction, `${collision.name} in your guild has also selected **${characters[stats.bosshuntchar].name}**. Use \`/select <char> mode:bosshunt\` to choose another character.`);
+        };
 
         const supportOwners = new Map<number, CompactUserSchema>();
         for (const member of guildMembers) {
@@ -192,27 +516,6 @@ const exportCommand: SlashCommand = {
         for (const owner of supportOwners.values()) partyStats.push(await getDetailedStats(owner.bosshuntchar as number, owner, owner.dungeon_classlevels));
         let partyStatsC = _.cloneDeep(partyStats);
         const partyAbility: (Ability | undefined)[] = [];
-
-        // Set up restrictions
-        if (stats.bosshuntruns === 5) {
-            if (interaction.channel?.isSendable()) interaction.channel.send(`You can play again in ${timeLeftToNextEvenHour()}`);
-            return;
-        };
-        if (dungeonInProgress.has(stats.id)) return editCommandReply(interaction, { content: "You already have a run in progress, please finish it before attempting to start a new round.", embeds: [] });
-        dungeonInProgress.add(stats.id);
-        const userTimeout = setTimeout(() => dungeonInProgress.delete(stats.id), 120000);
-
-        // if (dungeonInProgress.has(stats.id)) return interaction.channel.send(`You can play again in${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000) > 0 ? ` **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 60000)}**min` : ""} **${Math.floor((dungeonInProgress.get(stats.id) - new Date().getTime()) / 1000) % 60}**s`);
-        // dungeonInProgress.set(stats.id, new Date().getTime() + 20 * 60 * 1000);
-        // setTimeout(() => {
-        //     dungeonInProgress.delete(stats.id);
-        //     interaction.channel.send(`${interaction.user.toString()} is off </boss hunt:1056333974814859365> cooldown!`);
-        // }, 20 * 60 * 1000);
-
-        // Update users table
-        await updateUsers(interaction.user.id, {
-            bosshuntruns: { type: "increment", value: 1 },
-        });
 
         // User stats
         let myChar = characters[stats.bosshuntchar];
@@ -256,10 +559,16 @@ const exportCommand: SlashCommand = {
         const eAbility = eventBossAbilities[boss.id];
         let eImage = enemy.image[0];
 
+        const bossHpKey = `boss${(enemy.id + 1) as 1 | 2 | 3 | 4}` as "boss1" | "boss2" | "boss3" | "boss4";
+        const bossStartHp = guild[bossHpKey];
+        const formulaMaxHp = bossMaxHP(bossBaseHP[enemy.id], guild.bosshuntstage);
+
         let eStats = {
             "name": enemy.name,
-            "hp": guild[`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`],
-            "maxhp": bossMaxHP(bossBaseHP[enemy.id], guild.bosshuntstage),
+            "hp": bossStartHp,
+            // Legacy rows can hold more HP than the current curve produces. Keep the larger value so
+            // the round-2 clamp cannot silently delete damage the boss never actually took.
+            "maxhp": Math.max(formulaMaxHp, bossStartHp),
             "atk": 400,
             "def": 20,
             "ep": 0,
@@ -279,11 +588,11 @@ const exportCommand: SlashCommand = {
             "mdChance": 0,
         } as any;
 
-        const modi = guild.bosshuntstage > 25 ? 2.4 : 1.2;
+        const modi = guild.bosshuntstage > 40 ? 3.2 : guild.bosshuntstage > 30 ? 2.8 : guild.bosshuntstage > 25 ? 2.4 : 1.2;
 
         // Adjust enemy stats
         if (enemy.id === 0) {
-            eStats.shield = Math.floor(eStats.hp * 0.01);
+            eStats.shield = Math.floor(eStats.maxhp * 0.01);
             eStats.atk = Math.floor(myStatsC.hp * Math.min(0.16 + (modi * 0.022), 0.35));
             eStats.md = Math.floor(myStatsC.hp * Math.min(0.14 + (modi * 0.018), 0.32));
             eStats.def = 350 * (0.9 + (modi * 0.12));
@@ -291,16 +600,16 @@ const exportCommand: SlashCommand = {
             eStats.cr = 0.22;
             eStats.cd = 1.33;
         } else if (enemy.id === 1) {
-            eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.003) : 0;
-            eStats.atk = Math.floor(myStatsC.hp * (0.15 + Math.min(modi * 0.019), 0.34));
-            eStats.md = Math.floor(myStatsC.hp * (0.14 + Math.min(modi * 0.016), 0.32));
+            eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.maxhp * 0.003) : 0;
+            eStats.atk = Math.floor(myStatsC.hp * Math.min(0.15 + (modi * 0.019), 0.34));
+            eStats.md = Math.floor(myStatsC.hp * Math.min(0.14 + (modi * 0.016), 0.32));
             eStats.def = 250 * (0.9 + (modi * 0.12));
             eStats.mr = 250 * (0.9 + (modi * 0.12));
             eStats.cr = 0.1;
             eStats.cd = 1.4;
             eStats.mana = 160;
         } else if (enemy.id === 2) {
-            eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.hp * 0.003) : 0;
+            eStats.shield = (guild.bosshuntstage >= 5) ? Math.floor(eStats.maxhp * 0.003) : 0;
             eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (modi * 0.024), 0.36));
             eStats.md = Math.floor(myStatsC.hp * Math.min(0.18 + (modi * 0.023), 0.4));
             eStats.def = 200 * (0.9 + (modi * 0.12));
@@ -310,7 +619,7 @@ const exportCommand: SlashCommand = {
             eStats.mdChance = 1;
             eStats.mana = 200;
         } else if (enemy.id === 3) {
-            eStats.shield = (guild.bosshuntstage >= 3) ? Math.floor(eStats.hp * 0.003) : 0;
+            eStats.shield = (guild.bosshuntstage >= 3) ? Math.floor(eStats.maxhp * 0.003) : 0;
             eStats.atk = Math.floor(myStatsC.hp * Math.min(0.17 + (modi * 0.026), 0.36));
             eStats.md = Math.floor(myStatsC.hp * Math.min(0.17 + (modi * 0.025), 0.36));
             eStats.def = 250 * (0.9 + (modi * 0.12));
@@ -393,189 +702,37 @@ const exportCommand: SlashCommand = {
             if (guild?.lootbuff) loot *= 1 + (0.2 * guild.lootbuff);
             loot = Math.floor((loot * matchStats.lootm) + matchStats.loot);
 
-            // Event Points // Damage dealt: (guild["boss"+(enemy.id+1)] - eStatsC.hp)
-            let eventpts = 300 + Math.round((guild[`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`] - eStatsC.hp) / 200);
-            if (eventpts > 500) eventpts = 500;
-            eventpts = Math.floor(eventpts * (0.8 + (guild.bosshuntstage * 0.2)));
-            if (eventpts > 2000) eventpts = 2000;
+            // Event Points // Damage dealt
+            const bossKey = `boss${(enemy.id + 1) as 1 | 2 | 3 | 4}` as "boss1" | "boss2" | "boss3" | "boss4";
+            const claimedDamage = Math.max(0, guild[bossKey] - eStatsC.hp);
+            const damageDealt = await applyBossDamage(guild.id, bossKey, claimedDamage, guild.bosshuntstage);
 
-            // Update guilds table
-            await updateGuilds(guild.id, {
-                [`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`]: { type: "increment", value: -(guild[`boss${(enemy.id + 1) as 1 | 2 | 3 | 4}`] - eStatsC.hp) },
-            });
+            // Show what happened in this player's own battle: the HP snapshot they started
+            // with minus the boss' remaining in-battle HP. A defeated boss always counts as
+            // the full starting HP. The shared pool (and event points) still use the damage
+            // actually applied above, so concurrent guildmate fights don't distort this line.
+            const bossDefeated = r === "w" || eStatsC.hp <= 0;
+            const bossRemainingHp = bossDefeated ? 0 : Math.max(0, eStatsC.hp);
+            const displayedDamage = Math.max(0, Math.floor(bossStartHp - bossRemainingHp));
+
+            const damageBonus = Math.min(
+                EVENT_POINTS_DAMAGE_MAX,
+                Math.floor(damageDealt / EVENT_POINTS_DAMAGE_DIVISOR),
+            );
+            let eventpts = EVENT_POINTS_BASE + damageBonus;
+            eventpts = Math.floor(eventpts * (EVENT_POINTS_STAGE_BASE + (guild.bosshuntstage * EVENT_POINTS_STAGE_GROWTH)));
+            if (eventpts > EVENT_POINTS_MAX) eventpts = EVENT_POINTS_MAX;
 
             // Update users table
             await updateUsers(interaction.user.id, {
                 coins: { type: "increment", value: loot },
                 eventpts: { type: "increment", value: eventpts },
+                bosshuntdamage: { type: "increment", value: damageDealt },
                 dungeon_classlevels: { type: "set", value: stats.dungeon_classlevels },
             });
+            interaction.client.userCache.delete(interaction.user.id);
 
             // Event Rewards
-            const milestones: { id: number; required: number; query: UpdateUserOptions; rew: string; image?: string; }[] = [
-                {
-                    id: 0,
-                    required: 250,
-                    query: { coins: { type: "increment", value: 300 }, sshard: { type: "increment", value: 4 } },
-                    rew: "300<:coins:872926669055356939> and 4<:s_shard:917202925514817566>",
-                },
-                {
-                    id: 1,
-                    required: 500,
-                    query: { coins: { type: "increment", value: 400 }, lootbox: { type: "increment", value: 1 } },
-                    rew: "400<:coins:872926669055356939> and a lootbox",
-                },
-                {
-                    id: 2,
-                    required: 800,
-                    query: { coins: { type: "increment", value: 500 }, sticket: { type: "increment", value: 1 } },
-                    rew: "500<:coins:872926669055356939> and 1x <:s_ticket:927642487705722890>",
-                },
-                {
-                    id: 3,
-                    required: 1250,
-                    query: { coins: { type: "increment", value: 550 }, lootbox: { type: "increment", value: 1 }, sticket: { type: "increment", value: 2 } },
-                    rew: "550<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890> and a lootbox",
-                },
-                {
-                    id: 4,
-                    required: 1800,
-                    query: { coins: { type: "increment", value: 600 }, lootbox: { type: "increment", value: 1 }, sshard: { type: "increment", value: 8 } },
-                    rew: "600<:coins:872926669055356939>, 8x <:s_shard:917202925514817566> and a lootbox",
-                },
-                {
-                    id: 5,
-                    required: 2500,
-                    query: { expulls: { type: "increment", value: 1 }, gems: { type: "increment", value: 10 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> & 10<:genesis_gems:1034179687720681492>",
-                },
-                {
-                    id: 6,
-                    required: 3200,
-                    query: { coins: { type: "increment", value: 700 }, lootbox: { type: "increment", value: 2 }, sshard: { type: "increment", value: 10 } },
-                    rew: "700<:coins:872926669055356939>, 10x <:s_shard:917202925514817566> and 2 lootboxes",
-                },
-                {
-                    id: 7,
-                    required: 3800,
-                    query: { coins: { type: "increment", value: 750 }, sticket: { type: "increment", value: 2 } },
-                    rew: "750<:coins:872926669055356939>, 2x <:s_ticket:927642487705722890>",
-                },
-                {
-                    id: 8,
-                    required: 4400,
-                    query: { coins: { type: "increment", value: 800 }, lootbox: { type: "increment", value: 2 }, ssshard: { type: "increment", value: 4 } },
-                    rew: "800<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and 2 lootboxes",
-                },
-                {
-                    id: 9,
-                    required: 5000,
-                    query: { expulls: { type: "increment", value: 1 }, sticket: { type: "increment", value: 3 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 3x <:s_ticket:927642487705722890>",
-                },
-                {
-                    id: 10,
-                    required: 6000,
-                    query: { coins: { type: "increment", value: 900 }, lootbox: { type: "increment", value: 1 }, ssshard: { type: "increment", value: 4 } },
-                    rew: "900<:coins:872926669055356939>, 4x <:ss_shard:917203009543503892> and a lootbox",
-                },
-                {
-                    id: 11,
-                    required: 7250,
-                    query: { coins: { type: "increment", value: 1000 }, ssshard: { type: "increment", value: 6 } },
-                    rew: "1000<:coins:872926669055356939>, 6x <:ss_shard:917203009543503892>",
-                },
-                {
-                    id: 12,
-                    required: 8500,
-                    query: { coins: { type: "increment", value: 1000 }, sticket: { type: "increment", value: 3 } },
-                    rew: "1000<:coins:872926669055356939>, 3x <:s_ticket:927642487705722890>",
-                },
-                {
-                    id: 13,
-                    required: 10000,
-                    query: { expulls: { type: "increment", value: 1 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
-                },
-                {
-                    id: 14,
-                    required: 12500,
-                    query: { coins: { type: "increment", value: 1200 }, lootbox: { type: "increment", value: 3 } },
-                    rew: "1200<:coins:872926669055356939> and 3 lootboxes",
-                },
-                {
-                    id: 15,
-                    required: 15000,
-                    query: { expulls: { type: "increment", value: 1 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
-                },
-                {
-                    id: 16,
-                    required: 18000,
-                    query: { coins: { type: "increment", value: 1250 }, lootbox: { type: "increment", value: 2 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "1250<:coins:872926669055356939>, 1x <:ss_ticket:927503239396622336> and 2 lootboxes",
-                },
-                {
-                    id: 17,
-                    required: 22500,
-                    query: { expulls: { type: "increment", value: 1 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 1x <:ss_ticket:927503239396622336>",
-                },
-                {
-                    id: 18,
-                    required: 26000,
-                    query: { lootbox: { type: "increment", value: 6 } },
-                    rew: "6 lootboxes",
-                },
-                {
-                    id: 19,
-                    required: 30000,
-                    query: { expulls: { type: "increment", value: 2 } },
-                    rew: "2x <a:EXTRA:1138530846144462968>",
-                },
-                {
-                    id: 20,
-                    required: 36000,
-                    query: { coins: { type: "increment", value: 1250 }, gems: { type: "increment", value: 10 }, lootbox: { type: "increment", value: 2 } },
-                    rew: "1250<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492> and 2 lootboxes",
-                },
-                {
-                    id: 21,
-                    required: 42000,
-                    query: { coins: { type: "increment", value: 3000 }, expulls: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 3000<:coins:872926669055356939>",
-                },
-                {
-                    id: 22,
-                    required: 50000,
-                    query: { gems: { type: "increment", value: 20 }, lootbox: { type: "increment", value: 3 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "20<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
-                },
-                {
-                    id: 23,
-                    required: 60000,
-                    query: { coins: { type: "increment", value: 3000 }, gems: { type: "increment", value: 10 }, lootbox: { type: "increment", value: 3 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "3000<:coins:872926669055356939>, 10<:genesis_gems:1034179687720681492>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
-                },
-                {
-                    id: 24,
-                    required: 72000,
-                    query: { expulls: { type: "increment", value: 1 }, lootbox: { type: "increment", value: 3 }, ssticket: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968>, 1x <:ss_ticket:927503239396622336> and 3 lootboxes",
-                },
-                {
-                    id: 25,
-                    required: 80000,
-                    query: { ssticket: { type: "increment", value: 2 }, sticket: { type: "increment", value: 6 } },
-                    rew: "2x <:ss_ticket:927503239396622336> and 6x <:s_ticket:927642487705722890>",
-                },
-                {
-                    id: 26,
-                    required: 100000,
-                    query: { gems: { type: "increment", value: 20 }, expulls: { type: "increment", value: 1 } },
-                    rew: "1x <a:EXTRA:1138530846144462968> and 20<:genesis_gems:1034179687720681492>",
-                },
-            ];
 
             const Embed = new EmbedBuilder();
 
@@ -588,8 +745,9 @@ const exportCommand: SlashCommand = {
                         eventrewreceived: { type: "increment", value: 1 },
                         ...milestones[stats.eventrewreceived].query,
                     });
+                    interaction.client.userCache.delete(interaction.user.id);
 
-                    rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}<:valentines_choco_2026:1472686937277071442>` : ""}`;
+                    rewMessage = `\n<a:starsL:942573254730715246> You have unlocked the ${(milestones.length - 1) === milestones[stats.eventrewreceived].id ? "last" : toOrdinal(milestones[stats.eventrewreceived].id + 1)} reward! <a:starsR:942573194802511923>\nYou received ${milestones[stats.eventrewreceived].rew}!${milestones[stats.eventrewreceived + 1] ? `\nNext target: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived + 1].required}${eventPointsReward.emoji}` : ""}`;
                     Embed.setImage(milestones[stats.eventrewreceived]?.image || null);
                 } else {
                     rewMessage = `\nNext reward: **${stats.eventpts + eventpts}**/${milestones[stats.eventrewreceived].required}`;
@@ -602,42 +760,55 @@ const exportCommand: SlashCommand = {
                 .setThumbnail(myStatsC.thumbnail)
                 .setTitle(`Boss Hunt (${enemy.name})`)
                 .setFooter({ text: `Balance: ${stats.coins + loot} coins`, iconURL: interaction.user.displayAvatarURL({ size: 512 }) })
-                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${guild[`boss${enemy.id + 1 as 1 | 2 | 3 | 4}`] - eStatsC.hp}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> Valentine's Chocolate: ${eventpts}<:valentines_choco_2026:1472686937277071442>\n\n<:npbag:929428030554787892> **Loot**: ${loot}<:coins:872926669055356939>\n${rewMessage}`);
+                .setDescription(`<:stars_v2:917023655840591963> **${myChar.name}** ${r === "w" ? "won" : "lost"} <:stars_v2:917023655840591963>\n<a:arrow_green:916716811842621450> dealt **${displayedDamage}** damage\n<a:arrow_orange:916716747623641210> ${cxpmsg}\n<a:arrow_white:916716862962819092> ${eventPointsReward.name}: ${eventpts}${eventPointsReward.emoji}\n\n<:npbag:929428030554787892> **Loot**: ${loot}<:coins:872926669055356939>\n${rewMessage}`);
 
             // Add Stage rewards
-            if (r === "w" && boss.id === 3) {
-                const checkGuild = await getGuildSchema(guild.id);
-                if (checkGuild?.bosshuntstage === guild.bosshuntstage) {
+            if (boss.id === 3) {
+                // Malevokar's HP is a shared guild pool, so any member can land the final
+                // hit — including with a run that ends in a loss or times out. Advance the
+                // stage whenever the pool is empty instead of only on this player's win,
+                // otherwise the guild is left with every boss at 0 HP on a stuck stage.
+                const latestGuild = await getGuildSchema(guild.id);
+                const poolCleared = r === "w" || (
+                    guild.bosshuntstage < BOSS_HUNT_MAX_STAGE
+                    && !!latestGuild
+                    && latestGuild.bosshuntstage === guild.bosshuntstage
+                    && latestGuild.boss4 < 1
+                );
 
-                    // Update guilds table
-                    await updateGuilds(guild.id, {
-                        treasury: { type: "increment", value: guild.bosshuntstage * 10000 },
-                        boss1: { type: "set", value: bossMaxHP(bossBaseHP[0], guild.bosshuntstage + 1) },
-                        boss2: { type: "set", value: bossMaxHP(bossBaseHP[1], guild.bosshuntstage + 1) },
-                        boss3: { type: "set", value: bossMaxHP(bossBaseHP[2], guild.bosshuntstage + 1) },
-                        boss4: { type: "set", value: bossMaxHP(bossBaseHP[3], guild.bosshuntstage + 1) },
-                        bosshuntstage: { type: "increment", value: 1 },
+                if (poolCleared) {
+                    const stage = guild.bosshuntstage;
+                    const advanced = await advanceBossHuntStage({
+                        guildId: guild.id,
+                        stage,
+                        bossHp: [
+                            bossMaxHP(bossBaseHP[0], stage + 1),
+                            bossMaxHP(bossBaseHP[1], stage + 1),
+                            bossMaxHP(bossBaseHP[2], stage + 1),
+                            bossMaxHP(bossBaseHP[3], stage + 1),
+                        ],
+                        memberIds: guild.members,
+                        maxStage: BOSS_HUNT_MAX_STAGE,
+                        memberReward: { coins: 5000, gems: 5 },
                     });
 
-                    // Update users table
-                    await updateUsers(guild.members, {
-                        bosshuntrevreceived: { type: "increment", value: 1 },
-                        coins: { type: "increment", value: 5000 },
-                        gems: { type: "increment", value: 5 },
-                    }, `bosshuntrevreceived < 30`);
+                    if (advanced) {
+                        // advanceBossHuntStage rewrote every member's coins/gems in the database.
+                        for (const memberId of guild.members) interaction.client.userCache.delete(memberId);
 
-                    // if ([3, 5, 10].includes(guild.bosshuntstage)) {
-                    //     const skins = await query(`SELECT id, skins FROM users WHERE id IN (${guild.members})`);
-                    //     for (let i = 0; i < skins.length; i++) {
-                    //         const skin = JSON.parse(skins[i].skins);
-                    //         skin.push(guild.bosshuntstage === 3 ? 25 : (guild.bosshuntstage === 5 ? 27 : 28));
-                    //         await query(`UPDATE users SET skins = '${JSON.stringify(skin)}' WHERE id = ${skins[i].id}`);
-                    //     };
-                    // };
+                        // if ([3, 5, 10].includes(stage)) {
+                        //     const skins = await query(`SELECT id, skins FROM users WHERE id IN (${guild.members})`);
+                        //     for (let i = 0; i < skins.length; i++) {
+                        //         const skin = JSON.parse(skins[i].skins);
+                        //         skin.push(stage === 3 ? 25 : (stage === 5 ? 27 : 28));
+                        //         await query(`UPDATE users SET skins = '${JSON.stringify(skin)}' WHERE id = ${skins[i].id}`);
+                        //     };
+                        // };
 
-                    setTimeout(() => {
-                        if (interaction.channel?.isSendable()) interaction.channel.send(`You have defeated Malevokar (Stage ${guild.bosshuntstage}) <a:TaigaHappy:1045396982627323975>\nUnlocked Stage ${guild.bosshuntstage + 1}\nYour guild has been awarded ${guild.bosshuntstage * 10000} <:coins:872926669055356939>\n\nAll members of your guild have received the following rewards:\n> 5000<:coins:872926669055356939>\n> 5<:genesis_gems:1034179687720681492>`);
-                    }, 1000);
+                        setTimeout(() => {
+                            if (interaction.channel?.isSendable()) interaction.channel.send(`You have defeated Malevokar (Stage ${stage}) <a:TaigaHappy:1045396982627323975>\nUnlocked Stage ${stage + 1}\n${stage <= 30 ? `Your guild has been awarded ${stage * 10000} <:coins:872926669055356939>\n\n` : "\n"}All members of your guild have received the following rewards:\n> 5000<:coins:872926669055356939>\n> 5<:genesis_gems:1034179687720681492>`);
+                        }, 1000);
+                    };
                 };
             };
 
@@ -646,10 +817,8 @@ const exportCommand: SlashCommand = {
 
         let matchStats = Avalon.getMatchStats(interaction, { allowExecution: false });
         let notice = ["", "", "", ""];
-
-        // Adjust DEF
-        eStatsC.def += adjustDEF(myStatsC);
-        eStatsC.mr += adjustDEF(myStatsC);
+        matchStats.partyChars = partyChars;
+        matchStats.partyStats = partyStatsC;
 
         // Apply skill tree
         for (const [skill, level] of Object.entries(stats.skill_tree)) {
@@ -668,9 +837,6 @@ const exportCommand: SlashCommand = {
         if (myStats.ring1) await (items[myStats.ring1] as ringInfo).getBuff(myStats.ring1info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring2) await (items[myStats.ring2] as ringInfo).getBuff(myStats.ring2info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
         if (myStats.ring3) await (items[myStats.ring3] as ringInfo).getBuff(myStats.ring3info?.level)(myStatsC, myStats, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, new EmbedBuilder(), interaction.user);
-
-        matchStats.partyChars = partyChars;
-        matchStats.partyStats = partyStatsC;
 
         for (const [i, e] of partyStatsC.entries()) {
             if (e.id in abilities) {
@@ -703,7 +869,7 @@ const exportCommand: SlashCommand = {
 
         // Random Events
         const triggerChance = calculateTriggerChance(Math.max(myStatsC.atk, myStatsC.md));
-        if (Math.random() < triggerChance) {
+        if (Math.random() < triggerChance * randomEventGuildLevelMultiplier(guild.level)) {
             const randomEvents = ["Leyline Surge", "Celestial Alignment", "Gravity Anomaly", "Phantom Pain"];
             const randomEvent = randomEvents[Math.floor(randomEvents.length * Math.random())];
 
@@ -755,7 +921,7 @@ const exportCommand: SlashCommand = {
                 const Embed = new EmbedBuilder()
                     .setColor(embedColor)
                     .setThumbnail(isCompactEmbed ? eImage : myStatsC.thumbnail)
-                    .setFooter({ text: `Enemy EP: ${eStatsC.ep} | time left: 120s` })
+                    .setFooter({ text: `Round ${matchStats.round}/50 | Time left: 120s` })
                     .setTitle(`Boss Hunt (${enemy.name})`)
                     .setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStats.maxhp}\\💖${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStats.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStats.hp}\\💖${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}`)
                     .setImage(isCompactEmbed ? null : eImage);
@@ -784,7 +950,7 @@ const exportCommand: SlashCommand = {
 
                     async function editEmbed() {
                         Embed.setDescription(`${threatLevelWarning}${curse.emblem}${enemy.name}'s Stats (**${eStatsC.hp}**/${eStatsC.maxhp}${eStatsC.hp === 0 ? "\\💔" : "\\💖"}${eStatsC.shield > 0 ? `+ **${eStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${eStatsC.sm}**/${eStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(eStatsC.hp / eStatsC.maxhp, eStatsC.sm / eStatsC.mana, stats.hpbar)}${Avalon.statusIcon(eStatsC)}${showEnemyStats ? `\n${Avalon.padStats(eStatsC)}` : ""}\n${myClass ? myClass.emblem : ""}Your Stats (**${myStatsC.hp}**/${myStatsC.maxhp}${myStatsC.hp === 0 ? "\\💔" : "\\💖"}${myStatsC.shield > 0 ? `+ **${myStatsC.shield}** ${customEmojis["shield"]}` : ""}, **${myStatsC.sm}**/${myStatsC.mana}${customEmojis.mana})\n${Avalon.hpbar(myStatsC.hp / myStatsC.maxhp, myStatsC.sm / myStatsC.mana, stats.hpbar)}${Avalon.statusIcon(myStatsC)}\n${Avalon.padStats(myStatsC)}\n-----------------------------------${notice.slice(-(parseInt(author.schema.user_settings.battle_log_length || "4") || 4)).join("")}`);
-                        Embed.setFooter({ text: `Enemy EP: ${eStatsC.ep} | time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
+                        Embed.setFooter({ text: `Round ${matchStats.round}/50 | Time left: ${120 + Math.floor((timestart - new Date().getTime()) / 1000)}s` });
                         if (matchStats.ended) return renderer.finish({ embeds: [Embed], components: [] });
                         renderer.request({ embeds: [Embed] });
                     };
@@ -817,6 +983,14 @@ const exportCommand: SlashCommand = {
 
                     function startNextRound() {
                         if (matchStats.ended) return;
+
+                        // Force end at max rounds — counts as a loss
+                        if (matchStats.round >= BOSS_HUNT_MAX_ROUNDS) {
+                            notice.push(`\n🕗 You've reached the end`);
+                            endMatch("l");
+                            return;
+                        };
+
                         if (matchStats.round === matchStats.roundCheck) return;
                         matchStats.roundCheck = matchStats.round;
 
@@ -868,11 +1042,11 @@ const exportCommand: SlashCommand = {
                     };
 
                     function attack() {
+                        if (matchStats.ended) return;
                         if (matchStats.turn === 1) return;
                         if (eStatsC.timeFrozen) {
                             if (eStatsC.frozenMessage) notice.push(`\n✨ **${enemy.name}** ${eStatsC.frozenMessage}.`);
                             if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
-                            matchStats.turn = 1;
                             matchStats.round++;
                             startNextRound();
                             editEmbed();
@@ -882,13 +1056,14 @@ const exportCommand: SlashCommand = {
                             };
                         } else {
                             setTimeout(() => {
+                                if (matchStats.ended) return;
                                 if (matchStats.blockAbilities-- <= 0 && myChar.id !== 4767 && eStatsC.sm >= curse.cost && Math.random() < 0.3) {
                                     curse.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                     eStatsC.sm -= curse.cost;
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     attack();
-                                } else if (matchStats.blockAbilities-- < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5) {
+                                } else if (matchStats.blockAbilities < 0 && myChar.id !== 4767 && eAbility && eStatsC.sm >= eAbility.cost && Math.random() < 0.5) {
                                     eAbility.skill(myStatsC, eStatsC, buffs, eBuffs, myChar, enemy, matchStats, notice, Embed, interaction.user);
                                     editEmbed();
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
@@ -897,7 +1072,6 @@ const exportCommand: SlashCommand = {
                                     dealDamage(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, `⚔️ **${enemy.name}**`, { magicDamage: true, combodmg: true, selfdmg: true, selfheal: true });
                                     Avalon.checkIfEnded(myStatsC, eStatsC, buffs, eBuffs, matchStats, notice, interaction, minionDefeated, editEmbed, endMatch);
                                     if (!(matchStats.playerPausingRounds > 0)) matchStats.turn = 1;
-                                    matchStats.turn = 1;
                                     matchStats.round++;
                                     startNextRound();
                                     editEmbed();
@@ -1084,6 +1258,8 @@ const exportCommand: SlashCommand = {
                         if (120 + Math.floor((timestart - new Date().getTime()) / 1000) < 1) {
                             atk.stop(), def.stop(), ability.stop(), cskill.stop();
 
+                            // Mark the match over so any in-flight round callbacks stop resolving attacks.
+                            matchStats.ended = true;
                             resolve(matchResult("t"));
                         };
                     });
@@ -1092,6 +1268,16 @@ const exportCommand: SlashCommand = {
 
             });
             if (result && interaction.channel?.isSendable()) interaction.channel.send({ embeds: [result] });
+        };
+
+        const consumed = await updateUsers(interaction.user.id, {
+            bosshuntruns: { type: "increment", value: 1 },
+        }, "bosshuntruns < 5");
+
+        if (consumed === 0) {
+            clearTimeout(userTimeout);
+            dungeonInProgress.delete(stats.id);
+            return editCommandReply(interaction, `You can play again in ${timeLeftToNextEvenHour()}`);
         };
 
         newFight();

@@ -2,7 +2,10 @@ import { collectComponentUpdates } from "../Modules/buttonInteractions";
 import { ComponentType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js";
 import { SlashCommand } from "../types";
 import { getUserSchema, updateUsers } from "../Modules/queries";
-import { isEventOngoing, ongoingEvent, seasonalEventEnd, seasonalEventStart } from "../Modules/components";
+import { isEventOngoing, ongoingEvent, seasonalEventEnd, seasonalEventStart, seasonalEventLastsDays } from "../Modules/components";
+
+// One use per day; target ~10 EX pulls over the event.
+const EX_PULL_CHANCE = Math.min(1, 10 / seasonalEventLastsDays);
 
 // Get # of days since
 function daysAgo(lastOnlineDate: Date) {
@@ -105,7 +108,7 @@ export const exportCommand: SlashCommand = {
         const reward = {
             coins: Math.floor(1200 + (Math.random() * 600)),
             gems: 1 + (Math.random() < 0.33 ? 1 : 0),
-            expulls: 0 + (Math.random() < 0.4 ? 1 : 0),
+            expulls: 0 + (Math.random() < EX_PULL_CHANCE ? 1 : 0),
             ssshard: Math.floor(Math.random() * 2),
             sshard: Math.floor(1 + (Math.random() * 3)),
             ssticket: 0 + (Math.random() < 0.42 ? 1 : 0),

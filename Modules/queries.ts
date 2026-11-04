@@ -27,6 +27,8 @@ function fixBigintForUser(value: Partial<UserSchema>) {
     if ("bank" in value) value.bank = Number(value.bank);
     if ("charxp" in value) value.charxp = Number(value.charxp);
     if ("cow_timer" in value) value.cow_timer = Number(value.cow_timer);
+    if ("bosshuntchanged" in value) value.bosshuntchanged = Number(value.bosshuntchanged);
+    if ("bosshuntdamage" in value) value.bosshuntdamage = Number(value.bosshuntdamage);
     if ("rankscore" in value) value.rankscore = Number(value.rankscore);
     if ("guild_marks" in value) value.guild_marks = Number(value.guild_marks);
 };
@@ -83,7 +85,7 @@ export const getMinimalUserSchemas = async (ids: string[]): Promise<Pick<UserSch
     return users;
 };
 
-const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, newbie, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, bosshuntchar, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_ascension, char_skin, dungeon_floors, hidden_dungeon, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments, phantasmagoria_supports, phantasmagoria_boss_data, phantasmagoria_selected_boss, echo, echo_purchases, phantasmagoria_strategy, phantasmagoria_class, phantasmagoria_equipment, chestsopened, lootboxesopened, ticketsopened FROM users`;
+const SELECT_COMPACT_USER_SCHEMA = `SELECT rowid, id, name, xp, coins, lilies, season_keys, favchar, battlechar, lootbox, created, lastvote, lastvoteserver, weeklyclaimed, dailyclaimed, dailystreak, lastdaily, lastonline, pullcount, pullstacks, pullstacksinterval, pullstotal, lastss, lasts, premium, pullresets, ssshard, sshard, ashard, bshard, cshard, dshard, ssticket, sticket, aticket, bticket, cticket, dticket, votestotal, arenawins, arenalosses, arenastreak, arenastreakhighest, animationdelay, achievements, newbie, lastpull, pullreminder, votereminder, items, skins, hpbars, hpbar, eventpts, eventpts2, brbest, mailbox, eventrewreceived, gems, tutorial, dailies, guild, donatedtotal, genesispity, genesisdupepity, presets, itemlock, party, stampedechar, bosshuntchar, bosshuntchanged, mailreceived, class, aboutme, profilecolor, jades, pass, passlevel, freepassclaimed, premiumpassclaimed, celebrateclaimed, expulls, level, bank, charxp, feedlimit, findoption, referred_by, referred_gems, referrals_claimed, passpurchaselimit, expity, expity_standard, expity_rateup, expity_limited, exguarantee, exguarantee_rateup, exguarantee_limited, craze_equipment, equipment, trial_equipment, craze_levels, shield_slot, lastguildjoin, valentine, bosshuntruns, bosshuntrevreceived, bosshuntdamage, monthlyshop, itemwishlist, stampedeenergy, background, backgrounds, charlock, animelock, cow_participation, cow_chars, cow_timer, cow_rolled_today, rankscore, guild_marks, chars, char_ref, char_ascension, char_skin, dungeon_floors, hidden_dungeon, dungeon_limit, dungeon_classes, dungeon_classlevels, image_credits, skill_tree, skill_points, raid_supports, stamps, user_settings, custom_skins, discovered_via, yule_chapter, yule_chapter_failed, yule_timestamp, perpetual_fire, perpetual_fragments, phantasmagoria_supports, phantasmagoria_boss_data, phantasmagoria_selected_boss, echo, echo_purchases, phantasmagoria_strategy, phantasmagoria_class, phantasmagoria_equipment, chestsopened, lootboxesopened, ticketsopened FROM users`;
 
 export const getUserSchema = async (id: string): Promise<CompactUserSchema | undefined> => {
     const [user] = await query(`${SELECT_COMPACT_USER_SCHEMA} WHERE id = $1`, [id]) as [CompactUserSchema];
@@ -1011,6 +1013,54 @@ export const transferCharacter = async (userid: string, charId: number, print: n
     return character;
 };
 
+export const transferCharacterCopies = async (
+    giverId: string,
+    receiverId: string,
+    normalCharacterIds: number[],
+    vipCharacters: Pick<CharacterSchema, "charid" | "print">[],
+): Promise<boolean> => {
+    try {
+        await withTransaction(async (client) => {
+            const { rows: [giver] } = await client.query<{ chars: number[]; }>(`SELECT chars FROM users WHERE id = $1 FOR UPDATE`, [giverId]);
+            if (!giver) throw new Error(`User ${giverId} not found while giving characters`);
+
+            const remainingNormalCharacters = [...giver.chars];
+            for (const charId of normalCharacterIds) {
+                const index = remainingNormalCharacters.indexOf(charId);
+                if (index === -1) throw new Error(`Normal character ${charId} is no longer owned by ${giverId}`);
+                remainingNormalCharacters.splice(index, 1);
+            };
+
+            if (vipCharacters.length) {
+                const { rowCount } = await client.query(
+                    `UPDATE characters c
+                    SET id = $1
+                    FROM unnest($2::int[], $3::int[]) AS requested(charid, print)
+                    WHERE c.id = $4 AND c.charid = requested.charid AND c.print = requested.print`,
+                    [receiverId, vipCharacters.map((character) => character.charid), vipCharacters.map((character) => character.print), giverId]
+                );
+                if (rowCount !== vipCharacters.length) throw new Error(`VIP inventory changed while ${giverId} was giving characters`);
+            };
+
+            await client.query(
+                `UPDATE users SET chars = $2 WHERE id = $1`,
+                [giverId, remainingNormalCharacters]
+            );
+            if (normalCharacterIds.length) {
+                await client.query(
+                    `UPDATE users SET chars = array_cat(chars, $2) WHERE id = $1`,
+                    [receiverId, normalCharacterIds]
+                );
+            };
+        });
+        invalidateCharacterCache(giverId, receiverId);
+        return true;
+    } catch (error) {
+        console.error(error);
+        return false;
+    };
+};
+
 //-------------------------------------------//
 //             UPDATE STATEMENTS             //
 //-------------------------------------------//
@@ -1254,11 +1304,42 @@ export const updateRaidEnded = async (raidRowId: number): Promise<void> => {
 //     }
 // };
 
+export type AscendCharacterResult = "success" | "missing-user" | "not-owned" | "duplicate-required" | "max-rank" | "rank-changed";
+
+export const ascendCharacter = async (userId: string, charId: number, expectedRank: number, maxRank: number): Promise<AscendCharacterResult> => {
+    return withTransaction(async (client) => {
+        const { rows: [user] } = await client.query<{ chars: number[]; char_ascension: Record<string, number> | null; }>(
+            `SELECT chars, char_ascension FROM users WHERE id = $1 FOR UPDATE`,
+            [userId]
+        );
+        if (!user) return "missing-user";
+
+        const storedRank = Number(user.char_ascension?.[charId] ?? 0);
+        const currentRank = Number.isFinite(storedRank) ? Math.min(Math.max(storedRank, 0), maxRank) : 0;
+        if (currentRank >= maxRank) return "max-rank";
+        if (currentRank !== expectedRank) return "rank-changed";
+
+        const index = user.chars.indexOf(charId);
+        if (index === -1) return "not-owned";
+
+        const remainingChars = [...user.chars];
+        remainingChars.splice(index, 1);
+        if (!remainingChars.includes(charId)) return "duplicate-required";
+
+        await client.query(
+            `UPDATE users SET chars = $2, char_ascension = jsonb_set(COALESCE(char_ascension, '{}'::jsonb), ARRAY[$3::text], to_jsonb($4::integer), true) WHERE id = $1`,
+            [userId, remainingChars, String(charId), currentRank + 1]
+        );
+
+        return "success";
+    });
+};
+
 export const updateUsers = async (
     userIds: string | string[] | "*",
     updates: UpdateUserOptions,
     condition?: string,
-): Promise<void> => {
+): Promise<number> => {
     const setStatements = Object.entries(updates)
         .map(([key, { type, value }], index) => {
             const paramIndex = index + (userIds === "*" ? 1 : 2);
@@ -1314,7 +1395,7 @@ export const updateUsers = async (
                 case 'set_json':
                     return `${key} = $${paramIndex}::jsonb`;
                 case 'merge_json':
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT jsonb_object_agg(key,
                             CASE
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
@@ -1328,7 +1409,7 @@ export const updateUsers = async (
                             END
                         )
                         FROM jsonb_each(COALESCE(${key}, '{}'::jsonb) || $${paramIndex}::jsonb)
-                    )`;
+                    ), '{}'::jsonb)`;
                 default:
                     throw new Error(`Unknown update type: ${type}`);
             };
@@ -1345,29 +1426,74 @@ export const updateUsers = async (
     });
 
     if (userIds === "*") {
-        await query(
+        const res = await query(
             `UPDATE users SET ${setStatements} ${condition ? `WHERE ${condition}` : ""}`,
             values
-        );
+        ) as unknown as { rowCount: number | null; };
+        return res?.rowCount ?? 0;
     } else {
         const ids = Array.isArray(userIds) ? userIds : [userIds];
-        await query(
+        const res = await query(
             `UPDATE users SET ${setStatements} WHERE id = ANY($1) ${condition ? `AND ${condition}` : ""}`,
             [ids, ...values]
-        );
+        ) as unknown as { rowCount: number | null; };
+        return res?.rowCount ?? 0;
     };
+};
+
+export const advanceBossHuntStage = async ({
+    guildId,
+    stage,
+    bossHp,
+    memberIds,
+    maxStage,
+    memberReward,
+}: {
+    guildId: string;
+    stage: number;
+    bossHp: [number, number, number, number];
+    memberIds: string[];
+    maxStage: number;
+    memberReward: { coins: number; gems: number; };
+}): Promise<boolean> => {
+    return withTransaction(async (client) => {
+        const advanced = await client.query(
+            `UPDATE guilds
+             SET treasury = treasury + $2,
+                 boss1 = $3,
+                 boss2 = $4,
+                 boss3 = $5,
+                 boss4 = $6,
+                 bosshuntstage = bosshuntstage + 1
+             WHERE id = $1 AND bosshuntstage = $7`,
+            [guildId, stage <= 30 ? stage * 10000 : 0, ...bossHp, stage]
+        );
+
+        if (!advanced.rowCount) return false;
+
+        await client.query(
+            `UPDATE users
+             SET bosshuntrevreceived = bosshuntrevreceived + 1,
+                 coins = coins + $3,
+                 gems = gems + $4
+             WHERE id = ANY($1) AND bosshuntrevreceived < $2`,
+            [memberIds, maxStage, memberReward.coins, memberReward.gems]
+        );
+
+        return true;
+    });
 };
 
 export const updateUsersAndCache = async (client: Client, userIds: string | string[] | "*", { updates, condition, evictCache }: {
     updates: UpdateUserOptions,
     condition?: string,
     evictCache?: boolean,
-}): Promise<void> => {
+}): Promise<number | undefined> => {
     try {
-        await updateUsers(userIds, updates, condition);
+        const applied = await updateUsers(userIds, updates, condition);
         if (userIds === "*") {
             client.userCache.clear();
-        } else {
+        } else if (applied > 0) {
             const ids = Array.isArray(userIds) ? userIds : [userIds];
             if (evictCache || (Array.isArray(userIds) && userIds.length > 20)) {
                 for (const id of ids) {
@@ -1437,8 +1563,10 @@ export const updateUsersAndCache = async (client: Client, userIds: string | stri
                 };
             };
         };
+        return applied;
     } catch (error) {
         console.error(`Error updating users and cache: ${error}`);
+        return undefined;
     };
 };
 
@@ -1481,7 +1609,7 @@ export const updateGuilds = async (
     guildIds: string | string[] | "*",
     updates: UpdateGuildOptions,
     condition?: string,
-): Promise<void> => {
+): Promise<number> => {
     const setStatements = Object.entries(updates)
         .map(([key, { type, value }], index) => {
             const paramIndex = index + 2;
@@ -1532,7 +1660,7 @@ export const updateGuilds = async (
                 case 'set_json':
                     return `${key} = $${paramIndex}::jsonb`;
                 case 'merge_json':
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT jsonb_object_agg(key,
                             CASE
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
@@ -1546,7 +1674,7 @@ export const updateGuilds = async (
                             END
                         )
                         FROM jsonb_each(COALESCE(${key}, '{}'::jsonb) || $${paramIndex}::jsonb)
-                    )`;
+                    ), '{}'::jsonb)`;
                 default:
                     throw new Error(`Unknown update type: ${type}`);
             };
@@ -1556,16 +1684,18 @@ export const updateGuilds = async (
     const values = Object.values(updates).map(update => update.value);
 
     if (guildIds === "*") {
-        await query(
+        const res = await query(
             `UPDATE guilds SET ${setStatements} ${condition ? `WHERE ${condition}` : ""}`,
             values
-        );
+        ) as unknown as { rowCount: number | null; };
+        return res?.rowCount ?? 0;
     } else {
         const ids = Array.isArray(guildIds) ? guildIds : [guildIds];
-        await query(
+        const res = await query(
             `UPDATE guilds SET ${setStatements} WHERE id = ANY($1) ${condition ? `AND ${condition}` : ""}`,
             [ids, ...values]
-        );
+        ) as unknown as { rowCount: number | null; };
+        return res?.rowCount ?? 0;
     };
 };
 
@@ -1624,7 +1754,7 @@ export const updateParties = async (
                 case 'set_json':
                     return `${key} = $${paramIndex}::jsonb`;
                 case 'merge_json':
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT jsonb_object_agg(key,
                             CASE
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
@@ -1638,7 +1768,7 @@ export const updateParties = async (
                             END
                         )
                         FROM jsonb_each(COALESCE(${key}, '{}'::jsonb) || $${paramIndex}::jsonb)
-                    )`;
+                    ), '{}'::jsonb)`;
                 default:
                     throw new Error(`Unknown update type: ${type}`);
             };
@@ -1680,7 +1810,7 @@ export const updateStampedes = async (
                 case 'set_json':
                     return `${key} = $${paramIndex}::jsonb`;
                 case 'merge_json':
-                    return `${key} = (
+                    return `${key} = COALESCE((
                         SELECT jsonb_object_agg(key,
                             CASE
                                 WHEN ${key}->key IS NOT NULL AND $${paramIndex}::jsonb->key IS NOT NULL 
@@ -1694,7 +1824,7 @@ export const updateStampedes = async (
                             END
                         )
                         FROM jsonb_each(COALESCE(${key}, '{}'::jsonb) || $${paramIndex}::jsonb)
-                    )`;
+                    ), '{}'::jsonb)`;
                 default:
                     throw new Error(`Unknown update type: ${type}`);
             };

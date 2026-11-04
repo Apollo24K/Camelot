@@ -74,7 +74,7 @@ export const monthlyShopItems = [
 
     new MonthlyShopItemInfos("EX Pull", "<a:EXTRA:1138530846144462968> Pull", "EX Pulls", 5, 100000, "coins", 2),
     new MonthlyShopItemInfos("EX Pull", "<a:EXTRA:1138530846144462968> Pull (last chance)", "EX Pulls", 1, 500000, "coins", 3),
-    new MonthlyShopItemInfos("EX Pull", "<a:EXTRA:1138530846144462968> Pull", "EX Pulls", 3, 300, "gems", 4),
+    new MonthlyShopItemInfos("EX Pull", "<a:EXTRA:1138530846144462968> Pull", "EX Pulls", 20, 100, "gems", 4),
 
     new MonthlyShopItemInfos("Kernel", "<:starlight_kernel:1106121205515288659> Starlight Kernel", "Kernel", 15, 5000, "coins", 5),
     new MonthlyShopItemInfos("Kernel", "<:starlight_kernel:1106121205515288659> Starlight Kernel", "Kernel", 5, 300, "lilies", 6),

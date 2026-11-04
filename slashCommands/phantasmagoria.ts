@@ -23,10 +23,9 @@ import { phantasmaStrategies } from '../Modules/phantasmaStrategies';
 
 const dungeonInProgress = new Set();
 
-//! FOR THE BETA ONLY: 20
 const FIGHT_DURATION = 240; // in seconds
 const MAX_ROUNDS = 201; // max rounds per fight
-const EVENT_ACTIVE = true;
+const EVENT_ACTIVE = false;
 
 function getRaidButtonRow(tab: string, canPlay: boolean): ActionRowBuilder<ButtonBuilder>[] {
     if (tab === "overview") {

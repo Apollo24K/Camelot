@@ -1,5 +1,6 @@
 import { dailies } from "../Modules/dailyQuests";
 import { dungeonTempBan } from "../Modules/components";
+import { timeUntilMidnight } from "../Modules/functions";
 import { SlashCommand } from "../types";
 import { getUserSchema, getGuildSchema } from "../Modules/queries";
 
@@ -67,9 +68,9 @@ const exportCommand: SlashCommand = {
         if (dungeonTempBan.has(user.id)) dungeon = `\`banned\` for **${Math.ceil((dungeonTempBan.get(user.id)?.ends - Date.now()) / (60 * 1000))}**min`;
         else if (stats.dungeon_limit >= dunLim) dungeon = `${(7 - (new Date().getHours() % 8)) ? `**${7 - (new Date().getHours() % 8)}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
         // Daily
-        if (stats.dailyclaimed) dailymsg = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
+        if (stats.dailyclaimed) dailymsg = timeUntilMidnight();
         // Daily Quests
-        if (Object.keys(stats.dailies).length >= 4 && Object.entries(stats.dailies).reduce((acc, e) => acc + (dailies[e[0] as any].check(e[1]) ? 1 : 0), 0) >= 4) dailyquest = `${(23 - new Date().getHours()) ? `**${23 - new Date().getHours()}**h` : ""} **${60 - new Date().getMinutes()}**min left`;
+        if (Object.keys(stats.dailies).length >= 4 && Object.entries(stats.dailies).reduce((acc, e) => acc + (dailies[e[0] as any].check(e[1]) ? 1 : 0), 0) >= 4) dailyquest = timeUntilMidnight();
         // Vote
         if (stats.lastvote && ((new Date().getTime() - (stats.lastvote?.getTime() ?? 0)) < 12 * 60 * 60 * 1000)) {
             let hr = Math.floor(((12 * 60 * 60 * 1000) - (new Date().getTime() - (stats.lastvote?.getTime() ?? 0))) / (60 * 60 * 1000));

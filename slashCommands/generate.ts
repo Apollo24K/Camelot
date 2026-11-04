@@ -60,7 +60,7 @@ const exportCommand: SlashCommand = {
         };
 
         try {
-            if (stats.image_credits < numberOfImages) return interaction.reply("You don't have enough image credits left <:KonataCry:794983219229098004>\nYou can get more in the `/monthly shop`!");
+            if (stats.image_credits < numberOfImages) return interaction.reply("You don't have enough image credits left <:KonataCry:928368968660553758>\nYou can get more in the `/monthly shop`!");
             await interaction.reply({ content: `Generating images...\n\n-# **Tip**: ${tips[Math.floor(Math.random() * tips.length)]}` });
         } catch {
             return console.log(`ERROR Interaction Failed to reply, command: "${interaction.commandName}"`);
@@ -110,7 +110,7 @@ const exportCommand: SlashCommand = {
 
         let reply: Message | undefined;
         try {
-            if (stats.image_credits < 1) return interaction.followUp({ content: "You don't have enough image credits left <:KonataCry:794983219229098004>\nYou can get more in the `/monthly shop`!", flags: MessageFlags.Ephemeral });
+            if (stats.image_credits < 1) return interaction.followUp({ content: "You don't have enough image credits left <:KonataCry:928368968660553758>\nYou can get more in the `/monthly shop`!", flags: MessageFlags.Ephemeral });
             reply = await interaction.followUp({ content: `Removing backgrounds...\n\n-# **Tip**: ${tips[Math.floor(Math.random() * tips.length)]}` });
         } catch {
             return;

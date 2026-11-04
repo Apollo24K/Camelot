@@ -7,6 +7,22 @@ import { PageRow } from "../Modules/components";
 import { DetailedStats, SlashCommand } from '../types';
 import { getCharacterSchemasOfUser, getUserSchema, updateUsers } from '../Modules/queries';
 import charInfo from '../Modules/chars';
+import { ascensions, getAscensionRank } from '../Modules/ascensions';
+
+// Compact ascension summary for the owner's embed: rank/max plus the latest
+// unlocked node name when that node has one. Empty for non-ascendable chars.
+const ascensionProgress = (
+    charId: number,
+    schema: { char_ascension?: Record<string, number>; } | null | undefined
+): string => {
+    const nodes = ascensions[charId];
+    if (!nodes) return "";
+    const rank = getAscensionRank(charId, schema);
+    const latest = rank > 0 ? nodes[rank - 1] : undefined;
+    const suffix = latest?.name ? ` — **${latest.name}**` : "";
+    const max = rank >= nodes.length ? " (Max)" : "";
+    return `**Ascension**: ${rank}/${nodes.length}${max}${suffix}`;
+};
 
 const exportCommand: SlashCommand = {
     name: 'info',
@@ -45,12 +61,13 @@ const exportCommand: SlashCommand = {
                 def = baseDEF(char.id);
                 ep = baseEP(char.id);
                 expertise = baseExpertise(char.id);
+                const ascension = ownedCharacterIds.has(char.id) ? ascensionProgress(char.id, stats) : "";
 
                 const Embed = new EmbedBuilder()
                     .setColor(rarityColor(char.rarity))
                     .setImage(char.image)
                     .setThumbnail(rarity(char.rarity))
-                    .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n`)
+                    .setDescription(`**${char.name}**\n${splitTitle(char.anime)}\n${ascension ? `${ascension}\n` : ""}`)
                     .addFields(
                         { name: 'HP ️️️💖', value: "" + hp, inline: true },
                         { name: 'ATK ️️⚔️', value: "" + atk, inline: true },
@@ -85,8 +102,9 @@ const exportCommand: SlashCommand = {
                         else currentSkin = 1;
                     };
 
+                    const ascension = ownedCharacterIds.has(chars[0].id) ? ascensionProgress(chars[0].id, stats) : "";
                     //@ts-ignore
-                    embeds[0].setDescription(`**${fSkins ? fSkins[currentSkin - 1].name : chars[0].name}**\n${splitTitle(chars[0].anime)}\n${fSkins?.[currentSkin - 1]?.obtain ? "Obtain: `" + fSkins[currentSkin - 1].obtain + "`" + (stats.skins.includes(fSkins[currentSkin - 1].id) ? "<a:check:873196253276700682>" : "") : ""}`).setImage(fSkins?.[currentSkin - 1]?.image || chars[0].image);
+                    embeds[0].setDescription(`**${fSkins ? fSkins[currentSkin - 1].name : chars[0].name}**\n${splitTitle(chars[0].anime)}\n${ascension ? `${ascension}\n` : ""}${fSkins?.[currentSkin - 1]?.obtain ? "Obtain: `" + fSkins[currentSkin - 1].obtain + "`" + (stats.skins.includes(fSkins[currentSkin - 1].id) ? "<a:check:873196253276700682>" : "") : ""}`).setImage(fSkins?.[currentSkin - 1]?.image || chars[0].image);
                     if (skins.filter((e) => e.cid == chars[0].id).length > 0) {
                         embeds[0].setFooter({ text: `ID: #${chars[0].id} | EP: ${ep}\nSkin: ${currentSkin}/${pagesTotal}` });
                     };
@@ -119,6 +137,7 @@ const exportCommand: SlashCommand = {
                 charstats = await getDetailedStats(char.id, stats, stats.dungeon_classlevels);
                 cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
                 dupes = stats.chars.filter((e) => e === char.id).length + vipChars.filter((e) => e.charid === char.id).length;
+                const ascension = ascensionProgress(char.id, stats);
 
                 img = char.getImage(stats.premium, stats.custom_skins[char.id], stats.char_skin[char.id]);
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
@@ -130,6 +149,7 @@ const exportCommand: SlashCommand = {
                     .setDescription(
                         `**${char.name}**\n${splitTitle(char.anime)}\n\n` +
                         `**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n` +
+                        `${ascension ? `${ascension}\n` : ""}` +
                         `**Class**: ${cls}\n` +
                         `**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n` +
                         `**Items**: `
@@ -152,7 +172,7 @@ const exportCommand: SlashCommand = {
                     currentSkin = foundSkin ? fSkins.indexOf(foundSkin) + 1 : 1;
                     pagesTotal = fSkins.length;
 
-                    Embed.setDescription(`**${fSkins[currentSkin - 1].name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins[currentSkin - 1].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ size: 2048 }) });
+                    Embed.setDescription(`**${fSkins[currentSkin - 1].name}**\n${splitTitle(char.anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n${ascension ? `${ascension}\n` : ""}**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins[currentSkin - 1].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${char.gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ size: 2048 }) });
                 };
 
                 embeds.push(Embed);
@@ -195,7 +215,8 @@ const exportCommand: SlashCommand = {
                         else currentSkin = 1;
                     };
 
-                    embeds[0].setDescription(`**${fSkins?.[currentSkin - 1]?.name || chars[0].name}**\n${splitTitle(chars[0].anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins?.[currentSkin - 1]?.image || chars[0].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${chars[0].gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ size: 2048 }) });
+                    const ascension = ascensionProgress(chars[0].id, stats);
+                    embeds[0].setDescription(`**${fSkins?.[currentSkin - 1]?.name || chars[0].name}**\n${splitTitle(chars[0].anime)}\n\n **Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n${ascension ? `${ascension}\n` : ""}**Class**: ${cls}\n**Equipment**: ${charstats.weaponicon}${stats.premium > 3 && charstats.shieldicon ? charstats.shieldicon : ""} ${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}${charstats.cuirassicon || "<:cuirass_empty:1034499890165858305>"}${charstats.glovesicon || "<:gloves_empty:1034499892409794570>"}${charstats.bootsicon || "<:boots_empty:1034499893919764480>"}\n**Items**: <:rune_empty:1034507494539669635> <:ring_empty:1034509903886299136><:locked:1034511902417621002><:locked:1034511902417621002>`).setImage(fSkins?.[currentSkin - 1]?.image || chars[0].image).setFooter({ text: `You have ${dupes} ${dupes === 1 ? "copy" : "copies"} of ${chars[0].gender === "F" ? "her" : "him"}\nEP: ${charstats.ep} | Skin: ${currentSkin}/${pagesTotal}`, iconURL: user.displayAvatarURL({ size: 2048 }) });
                     await interaction.editReply({ embeds });
                 });
 
@@ -242,6 +263,7 @@ const exportCommand: SlashCommand = {
                 if (!ownedCharacterIds.has(char.id)) return interaction.reply(`You don't have a copy of **${char.name}**`);
                 let charstats = await getDetailedStats(char.id, stats, stats.dungeon_classlevels);
                 let cls = charstats.class === -1 ? "None" : `${classes[charstats.class].name}${classes[charstats.class].emblem}Lvl. ${charstats.clvl}`;
+                const ascension = ascensionProgress(char.id, stats);
 
                 img = char.getImage(stats.premium, stats.custom_skins[char.id], stats.char_skin[char.id]);
                 if (char.id === 18011 && charstats.maskinfo) img = { "phantasmal": "https://i.imgur.com/vKmnIqq.png", "verdant": "https://i.imgur.com/sWYC62u.png", "valkyrie": "https://i.imgur.com/Sn3MQZ7.png" }[charstats.maskinfo as "phantasmal" | "verdant" | "valkyrie"];
@@ -253,6 +275,7 @@ const exportCommand: SlashCommand = {
                         `**${char.name}** - ${char.anime}\n` +
                         `**Level** ${charstats.lvl}ㅤ**Ref.** ${getRefinement(charstats.ref)}\n` +
                         `**Class**: ${cls}\n` +
+                        `${ascension ? `${ascension}\n` : ""}` +
                         `**Equipment**: ${charstats.weaponicon}`
                         + `${(stats.premium > 3 || stats.shield_slot) && charstats.shieldicon ? charstats.shieldicon : ""} `
                         + `${charstats.helmeticon || "<:helmet_empty:1034499888878198885>"}`

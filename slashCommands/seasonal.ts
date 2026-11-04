@@ -14,30 +14,31 @@ type SeasonalShopTab = 'runes' | 'hpbars' | 'backgrounds' | 'skins';
 
 const EMBED_COLOR = 0x2aad9d;
 
-const SEASON_END_DATE = new Date('2026-10-20 00:00:00');
+const SEASON_END_DATE = new Date('2026-12-28 00:00:00');
 
 const loadedImages: Record<string | number, Image> = {};
 
 const RUNES_FOR_SALE = [
-    { name: "The Sereflame", item: items[855] as runeInfo, price: 80, isNew: true },
-    { name: "Tideborn Keep", item: items[856] as runeInfo, price: 80, isNew: true },
-    { name: "Arcane Rebirth", item: items[785] as runeInfo, price: 60, isNew: false },
+    { name: "Neon Ghoul", item: items[857] as runeInfo, price: 80, isNew: true },
+    { name: "Lost in Red", item: items[858] as runeInfo, price: 80, isNew: true },
+    { name: "Voidseer", item: items[791] as runeInfo, price: 60, isNew: false },
 ] as const; // Total cost: 220
 
 const HP_BARS_FOR_SALE = [
-    { name: "Beach Break", id: 16, price: 100, isNew: true },
-    { name: "Neon Heartbeats", id: 12, price: 70, isNew: false },
-    { name: "Cupid's Pulse", id: 13, price: 70, isNew: false },
-    { name: "Pinkish Fantasy", id: 2, price: 70, isNew: false },
-] as const; // Total cost: 310
+    { name: "BLood Moon", id: 18, price: 80, isNew: true },
+    { name: "Haunted Lantern", id: 19, price: 80, isNew: true },
+    { name: "Hellsylvania", id: 20, price: 80, isNew: true },
+    { name: "Pumpkin Spice", id: 21, price: 80, isNew: true },
+] as const; // Total cost: 320
 
 const BACKGROUNDS_FOR_SALE = [
-    { name: "Summer Fun", id: 29, price: 90, isNew: true },
-    { name: "Silken Currents", id: 27, price: 70, isNew: true },
-    { name: "Project: SUN", id: 28, price: 70, isNew: true },
-] as const; // Total cost: 230
+    { name: "Midnight Halloween", id: 30, price: 90, isNew: true },
+    { name: "Moonlit Nights", id: 31, price: 120, isNew: true },
+    { name: "Devastation", id: 14, price: 60, isNew: false },
+    { name: "Augury", id: 15, price: 60, isNew: false },
+] as const; // Total cost: 330
 
-const SKIN_SEASON = "summer season 2026"; // Total cost: 640
+const SKIN_SEASON = "halloween event 2026"; // Total cost: 640
 // Keep each skins page below Discord's 40-component limit. A page of 25
 // skins creates five action rows, which exceeds the limit once the container's
 // other components are included.
