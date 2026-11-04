@@ -214,13 +214,16 @@ const exportCommand: SlashCommand = {
 
         // Reset Dailies
         if (action === "reset daily") {
-            // Clearing lastdaily as well reopens the /daily gate, which keys off it rather than
-            // dailyclaimed (the latter only drives the /balance availability label).
+            const now = new Date();
+            const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")} 00:00:00`;
+            const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
             await updateUsersAndCache(interaction.client, user ? user.id : "*", {
                 updates: {
                     dailyclaimed: { type: "set", value: 0 },
-                    lastdaily: { type: "set", value: null },
+                    lastdaily: { type: "set", value: yesterday },
                 },
+                condition: `lastdaily >= '${today}'`,
                 evictCache: true,
             });
 
